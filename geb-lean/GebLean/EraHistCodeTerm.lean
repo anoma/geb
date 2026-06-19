@@ -314,6 +314,25 @@ theorem eraListProd_eval {p : ℕ} (L : List (ETm p)) (ctx : Fin p → ℕ) :
     rw [← ih, eraListProd, emul, Tm.eval, eraInterp]
     simp only [fcons]
 
+open GebLean.EraCompleteness in
+/-- A finite sum of `Era` terms: the right fold of addition with unit
+`Era.zero`. The `+ᵉ` analogue of `eraListProd`, used with `List.map` to realise a
+sum over an `Era`-term family. -/
+def eraListSum {p : ℕ} (L : List (ETm p)) : ETm p :=
+  L.foldr (· +ᵉ ·) .zero
+
+/-- `eraListSum L` evaluates to the sum of the evaluations of its summands. -/
+theorem eraListSum_eval {p : ℕ} (L : List (ETm p)) (ctx : Fin p → ℕ) :
+    Tm.eval eraInterp (eraListSum L) ctx
+      = (L.map (fun e => Tm.eval eraInterp e ctx)).sum := by
+  induction L with
+  | nil => simp [eraListSum, Tm.eval]
+  | cons e L ih =>
+    rw [eraListSum, List.foldr_cons]
+    simp only [List.map_cons, List.sum_cons]
+    rw [← ih, eraListSum, eadd, Tm.eval, eraInterp]
+    simp only [fcons]
+
 /-- Drop a cube-independent term to the parameter scope: substitute the `k`
 cube slots by `.zero`, keeping the `p` parameter slots as variables. -/
 def ETm.paramProject {p k : ℕ} (e : ETm (p + k)) : ETm p :=
@@ -610,5 +629,342 @@ theorem eraConstPart_eval {p : ℕ} (epsTerm tTerm wTerm : ETm p) (k : ℕ)
     ← hw_def, ← heps_def]
   rw [hmono, Finset.mul_sum]
   exact Finset.sum_congr rfl (fun a _ => by ring)
+
+/-- The reduced-system eval-sum over the regrouped monomials at a cube point is
+non-negative: by `ZMonomial.cubeRegroup_eval` it equals the native reduced
+eval-sum at a re-associated context, which `sepReduce_eval_split` exhibits as a
+sum of squares of integers. -/
+theorem reducedCubeEval_nonneg {p k : ℕ} (s : SosSystem (p + k)) (ctx : Fin p → ℕ)
+    (a : Fin (k + (sepReduce s).1) → ℕ) :
+    0 ≤ (((sepReduce s).2).map
+        (fun mon => mon.cubeRegroup.eval (Fin.append ctx a))).sum := by
+  have hcongr : (((sepReduce s).2).map
+      (fun mon => mon.cubeRegroup.eval (Fin.append ctx a))).sum
+      = (((sepReduce s).2).map (fun mon => mon.eval
+        (Fin.append ctx a ∘ finCongr (Nat.add_assoc p k (sepReduce s).1)))).sum := by
+    refine congrArg List.sum (List.map_congr_left (fun mon _ => ?_))
+    exact ZMonomial.cubeRegroup_eval mon (Fin.append ctx a)
+  rw [hcongr, sepReduce_eval_split]
+  exact add_nonneg
+    (List.sum_nonneg (fun x hx => by
+      obtain ⟨c, _, rfl⟩ := List.mem_map.mp hx
+      exact List.sum_nonneg (fun y hy => by
+        obtain ⟨i, _, rfl⟩ := List.mem_map.mp hy
+        exact sq_nonneg _)))
+    (sq_nonneg _)
+
+/-- The reduced-system eval-sum over the regrouped monomials at a cube point
+equals the cast of its `toNat`, since the sum is non-negative
+(`reducedCubeEval_nonneg`). This is the integer/natural bridge for the cube
+predicate `P a` (arXiv:2407.12928, Lemma 3.3). -/
+theorem reducedCubeEval {p k : ℕ} (s : SosSystem (p + k)) (ctx : Fin p → ℕ)
+    (a : Fin (k + (sepReduce s).1) → ℕ) :
+    (((sepReduce s).2).map
+        (fun mon => mon.cubeRegroup.eval (Fin.append ctx a))).sum
+      = ((((((sepReduce s).2).map
+          (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+            mon.cubeRegroup.eval (Fin.append ctx a))).sum).toNat : ℕ) : ℤ) :=
+  (Int.toNat_of_nonneg (reducedCubeEval_nonneg s ctx a)).symm
+
+/-- The signed-eval weighted cube-sum of a single regrouped monomial: the
+weighted cube-sum of its `ℤ`-valued `eval` equals its sign factor times the
+weighted cube-sum of its `ℕ`-valued magnitude, by `ZMonomial.eval_eq`. -/
+theorem weightedSignedMonoSum {p K : ℕ} (mon : ZMonomial (p + K)) (ctx : Fin p → ℕ)
+    (w t : ℕ) :
+    (∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+        (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a)
+          * mon.eval (Fin.append ctx a))
+      = (if mon.sign then -1 else 1)
+        * ∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+            (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a)
+              * (mon.evalNat (Fin.append ctx a) : ℤ) := by
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl (fun a _ => ?_)
+  rw [ZMonomial.eval_eq]
+  split <;> ring
+
+/-- Interchange a `Finset.sum` with a `List.sum` of mapped summands: summing a
+list-sum of `a`-indexed summands over a finite index set equals the list-sum of
+the per-element index-sums. Proved by induction on the list, distributing the
+`Finset.sum` over each `List.sum_cons` by `Finset.sum_add_distrib`. -/
+theorem Finset.sum_list_map_comm {α β : Type*} [AddCommMonoid β] {ι : Type*}
+    (s : Finset ι) (L : List α) (g : ι → α → β) :
+    (∑ i ∈ s, (L.map (fun x => g i x)).sum)
+      = (L.map (fun x => ∑ i ∈ s, g i x)).sum := by
+  induction L with
+  | nil => simp only [List.map_nil, List.sum_nil, Finset.sum_const_zero]
+  | cons x L ih =>
+    simp only [List.map_cons, List.sum_cons]
+    rw [Finset.sum_add_distrib, ih]
+
+/-- Split a signed `List.sum` by a `Bool` flag: the sum of `σ(x) · M x` with
+`σ(x) = if flag x then -1 else 1` is the unsigned sum over the flag-`false`
+sublist minus the unsigned sum over the flag-`true` sublist. Proved by induction,
+peeling each head into the matching filtered sublist. -/
+theorem signPartition_sum {α : Type*} (L : List α) (flag : α → Bool) (M : α → ℤ) :
+    (L.map (fun x => (if flag x then -1 else 1) * M x)).sum
+      = ((L.filter (fun x => !flag x)).map M).sum
+        - ((L.filter (fun x => flag x)).map M).sum := by
+  induction L with
+  | nil => simp only [List.map_nil, List.sum_nil, List.filter_nil, sub_zero]
+  | cons x L ih =>
+    rw [List.map_cons, List.sum_cons, ih]
+    cases hx : flag x <;>
+      simp only [hx, List.filter_cons, Bool.not_false, Bool.not_true, if_true, if_false,
+        Bool.false_eq_true, List.map_cons, List.sum_cons] <;> ring
+
+/-- The load-bearing bridge (arXiv:2407.12928, Lemma 3.3, the `Σⱼ A(mⱼ,k)`
+sum): the weighted cube-sum of the reduced predicate `P a` equals the signed
+list-sum, over the regrouped reduced monomials, of each monomial's weighted
+magnitude cube-sum. The predicate `P a` is `(Σ_{mon} mon.cubeRegroup.eval (append
+ctx a)).toNat`; `reducedCubeEval` re-casts it to the `ℤ`-valued eval-sum,
+`Finset.sum_list_map_comm` swaps the cube-`Finset.sum` past the monomial
+`List.sum`, and `weightedSignedMonoSum` splits each monomial's signed eval into
+sign factor times magnitude sum. -/
+theorem packM_signed_sum {p k : ℕ} (s : SosSystem (p + k)) (ctx : Fin p → ℕ)
+    (w t : ℕ) :
+    (∑ a ∈ GebLean.EraHypercube.cubePoints (k + (sepReduce s).1) t,
+        (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix (k + (sepReduce s).1) t a)
+          * ((((sepReduce s).2).map
+              (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+                mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat : ℤ))
+      = (((sepReduce s).2.map ZMonomial.cubeRegroup).map (fun mon =>
+          (if mon.sign then -1 else 1)
+            * ∑ a ∈ GebLean.EraHypercube.cubePoints (k + (sepReduce s).1) t,
+                (2 : ℤ) ^ (2 * w
+                    * GebLean.EraHypercube.mixedRadix (k + (sepReduce s).1) t a)
+                  * (mon.evalNat (Fin.append ctx a) : ℤ))).sum := by
+  -- per cube point: recast `P a` and distribute the weight into the list-sum
+  have hpt : ∀ a, (2 : ℤ) ^ (2 * w
+        * GebLean.EraHypercube.mixedRadix (k + (sepReduce s).1) t a)
+      * ((((sepReduce s).2).map
+          (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+            mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat : ℤ)
+      = (((sepReduce s).2.map ZMonomial.cubeRegroup).map
+          (fun mon => (2 : ℤ) ^ (2 * w
+              * GebLean.EraHypercube.mixedRadix (k + (sepReduce s).1) t a)
+            * mon.eval (Fin.append ctx a))).sum := by
+    intro a
+    rw [← reducedCubeEval s ctx a, List.map_map, ← List.sum_map_mul_left]
+    simp only [Function.comp_def]
+  rw [Finset.sum_congr rfl (fun a _ => hpt a), Finset.sum_list_map_comm]
+  refine congrArg List.sum (List.map_congr_left (fun mon _ => ?_))
+  exact weightedSignedMonoSum mon ctx w t
+
+/-- The packed witness as an integer affine combination of the weighted cube-sum
+of the predicate (arXiv:2407.12928, Eqs (7), (8)): under the block bound,
+`deltaBlock_affine` turns each block into `(2^w − 1)(2^w + 1) − (2^w − 1)·P a`,
+and distributing the `Finset.sum` over ℤ gives the constant cube-sum minus the
+`(2^w − 1)`-weighted predicate cube-sum. -/
+theorem packM_affine_int {K w t : ℕ} (P : (Fin K → ℕ) → ℕ) (hw : 0 < w)
+    (hP : ∀ a ∈ GebLean.EraHypercube.cubePoints K t, P a < 2 ^ w) :
+    (GebLean.EraHypercube.packM K w t P : ℤ)
+      = (∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+          (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a)
+            * ((2 ^ w - 1) * (2 ^ w + 1)))
+        - (2 ^ w - 1) * ∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+            (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a) * (P a : ℤ) := by
+  rw [GebLean.EraHypercube.packM, Nat.cast_sum]
+  rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl (fun a ha => ?_)
+  have hbound : P a < 2 ^ w := hP a ha
+  rw [Nat.cast_mul, GebLean.EraHistCodeTerm.deltaBlock_affine hbound, Nat.cast_sub (by
+    have h1 : (2 : ℕ) ^ w - 1 ≥ 1 := by
+      have : (2 : ℕ) ≤ 2 ^ w := by
+        calc (2 : ℕ) = 2 ^ 1 := (pow_one 2).symm
+          _ ≤ 2 ^ w := Nat.pow_le_pow_right (by norm_num) hw
+      omega
+    have hle : (2 ^ w - 1) * P a ≤ (2 ^ w - 1) * (2 ^ w + 1) :=
+      Nat.mul_le_mul_left _ (by omega)
+    exact hle)]
+  have h2w : (1 : ℕ) ≤ 2 ^ w := Nat.one_le_two_pow
+  push_cast [Nat.cast_sub h2w]
+  ring
+
+open GebLean.EraCompleteness in
+/-- The packed-witness term for the reduced system `sepReduce s`
+(arXiv:2407.12928, Lemma 3.3, Eqs (7), (8)): with uniform `ε = 0`, the constant
+part `C(0, k)` plus the `(2^w − 1)`-weighted sum of the negative-sign regrouped
+reduced monomials' per-monomial terms, minus the `(2^w − 1)`-weighted sum of the
+positive-sign ones. The regrouped reduced monomials are
+`(sepReduce s).2.map ZMonomial.cubeRegroup`; `eraMonoTerm` realises each
+monomial's weighted cube-sum; `eraListSum` collects each sign block; the single
+`∸ᵉ` realises the signed combination `δ = (2^w − 1)(2^w + 1) − (2^w − 1)·P`. -/
+def packM_term {p k : ℕ} (s : SosSystem (p + k)) (tTerm wTerm : ETm p) : ETm p :=
+  let Rg := (sepReduce s).2.map ZMonomial.cubeRegroup
+  let posPart := (Rg.filter (fun mon => !mon.sign)).map (eraMonoTerm · tTerm wTerm)
+  let negPart := (Rg.filter (fun mon => mon.sign)).map (eraMonoTerm · tTerm wTerm)
+  let factor := eraNumeral 2 ^ᵉ wTerm ∸ᵉ eraNumeral 1
+  let minuend := eraConstPart (eraNumeral 0) tTerm wTerm (k + (sepReduce s).1)
+    +ᵉ (factor *ᵉ eraListSum negPart)
+  let subtrahend := factor *ᵉ eraListSum posPart
+  minuend ∸ᵉ subtrahend
+
+open GebLean.EraCompleteness in
+/-- Each regrouped reduced monomial's per-monomial term evaluates to its weighted
+cube-sum magnitude (arXiv:2407.12928, Cor 3.6): `eraMonoTerm_eval` applied to
+`mon.cubeRegroup`, with the degree bound discharged by `sepReduce_degree` and the
+three separability conjuncts by `sepReduce_separable`. -/
+theorem eraMonoTerm_eval_reduced {p k : ℕ} (s : SosSystem (p + k)) (tTerm wTerm : ETm p)
+    (ctx : Fin p → ℕ) (hzero : s.PolyExpZero) (hcoeff : s.CoeffVarProduct)
+    (hbase : s.BasePaired) (ht : 0 < Tm.eval eraInterp tTerm ctx)
+    (hw : 0 < Tm.eval eraInterp wTerm ctx)
+    (mon : ZMonomial (p + k + (sepReduce s).1)) (hmem : mon ∈ (sepReduce s).2) :
+    Tm.eval eraInterp (eraMonoTerm mon.cubeRegroup tTerm wTerm) ctx
+      = ∑ a ∈ GebLean.EraHypercube.cubePoints (k + (sepReduce s).1)
+          (Tm.eval eraInterp tTerm ctx),
+          2 ^ (2 * Tm.eval eraInterp wTerm ctx
+              * GebLean.EraHypercube.mixedRadix (k + (sepReduce s).1)
+                  (Tm.eval eraInterp tTerm ctx) a)
+            * mon.cubeRegroup.evalNat (Fin.append ctx a) := by
+  obtain ⟨hsc, hsp, hscube⟩ := sepReduce_separable s hcoeff hbase ctx mon hmem
+  have hdeg : ∀ i, mon.cubeRegroup.polyExp i ≤ 2 := by
+    intro i
+    simp only [ZMonomial.cubeRegroup, ZMonomial.weaken]
+    cases preimage (finCongr (Nat.add_assoc p k (sepReduce s).1)) i with
+    | none => exact Nat.zero_le 2
+    | some j => exact sepReduce_degree s hzero mon hmem j
+  exact eraMonoTerm_eval mon.cubeRegroup tTerm wTerm ctx hdeg hsc hsp hscube ht hw
+
+open GebLean.EraCompleteness in
+/-- The packed-witness term evaluates to the packed witness `packM` of the
+reduced predicate (arXiv:2407.12928, Lemma 3.3, Eq (8)). The cube width is
+`K = k + (sepReduce s).1`; the predicate is the `toNat` of the regrouped
+reduced eval-sum. The hypotheses (`hzero`/`hcoeff`/`hbase` for the
+degree/separability discharge, `ht`/`hw` positivity, and `hP` the block bound)
+are exactly those the surrounding completeness assembly supplies. -/
+theorem packM_term_eval {p k : ℕ} (s : SosSystem (p + k)) (tTerm wTerm : ETm p)
+    (ctx : Fin p → ℕ) (hzero : s.PolyExpZero) (hcoeff : s.CoeffVarProduct)
+    (hbase : s.BasePaired) (ht : 0 < Tm.eval eraInterp tTerm ctx)
+    (hw : 0 < Tm.eval eraInterp wTerm ctx)
+    (hP : ∀ a ∈ GebLean.EraHypercube.cubePoints (k + (sepReduce s).1)
+            (Tm.eval eraInterp tTerm ctx),
+          (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+            mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat
+            < 2 ^ Tm.eval eraInterp wTerm ctx) :
+    Tm.eval eraInterp (packM_term s tTerm wTerm) ctx
+      = GebLean.EraHypercube.packM (k + (sepReduce s).1)
+          (Tm.eval eraInterp wTerm ctx) (Tm.eval eraInterp tTerm ctx)
+          (fun a => (((sepReduce s).2).map
+            (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+              mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat) := by
+  set t := Tm.eval eraInterp tTerm ctx with ht_def
+  set w := Tm.eval eraInterp wTerm ctx with hw_def
+  set K := k + (sepReduce s).1 with hK_def
+  set Rg := (sepReduce s).2.map ZMonomial.cubeRegroup with hRg_def
+  set P : (Fin K → ℕ) → ℕ := fun a => (((sepReduce s).2).map
+    (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+      mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat with hP_def
+  -- the per-monomial weighted magnitude cube-sum
+  set M : ZMonomial (p + K) → ℕ := fun mon => ∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+    2 ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a) * mon.evalNat (Fin.append ctx a)
+    with hM_def
+  -- uniform: every regrouped monomial's term evaluates to its magnitude cube-sum
+  have hmono : ∀ mon ∈ Rg, Tm.eval eraInterp (eraMonoTerm mon tTerm wTerm) ctx = M mon := by
+    intro mon hmon
+    obtain ⟨mon₀, hmon₀, rfl⟩ := List.mem_map.mp hmon
+    exact eraMonoTerm_eval_reduced s tTerm wTerm ctx hzero hcoeff hbase ht hw mon₀ hmon₀
+  -- the two sign blocks as ℕ sums of magnitude cube-sums over the filtered sublists
+  set posSum := ((Rg.filter (fun mon => !mon.sign)).map M).sum with hpos_def
+  set negSum := ((Rg.filter (fun mon => mon.sign)).map M).sum with hneg_def
+  -- the constant cube-sum factor `C = ∑_a 2^(2w·v)·(2^w−1)·(2^w+1)`
+  set C := ∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+    2 ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a) * (2 ^ w - 1) * (2 ^ w + 1) with hC_def
+  -- evaluate the two halves of the term
+  have heval_factor : Tm.eval eraInterp (eraNumeral 2 ^ᵉ wTerm ∸ᵉ eraNumeral 1) ctx
+      = 2 ^ w - 1 := by
+    simp only [epow, etsub, Tm.eval, eraInterp, fcons, eraNumeral_eval, ← hw_def]
+  -- evaluate an `eraListSum` of per-monomial terms over a filtered sublist
+  have hlistsum : ∀ (q : ZMonomial (p + K) → Bool),
+      Tm.eval eraInterp
+        (eraListSum ((Rg.filter q).map (eraMonoTerm · tTerm wTerm))) ctx
+        = ((Rg.filter q).map M).sum := by
+    intro q
+    rw [eraListSum_eval, List.map_map]
+    refine congrArg List.sum (List.map_congr_left (fun mon hmon => ?_))
+    exact hmono mon (List.mem_of_mem_filter hmon)
+  have hconst : Tm.eval eraInterp (eraConstPart (eraNumeral 0) tTerm wTerm K) ctx = C := by
+    rw [eraConstPart_eval (eraNumeral 0) tTerm wTerm K ctx ht hw, hC_def]
+    refine Finset.sum_congr rfl (fun a _ => ?_)
+    simp only [eraNumeral_eval, Nat.sub_zero, ← hw_def, ← ht_def]
+  have heval_minuend : Tm.eval eraInterp
+      (eraConstPart (eraNumeral 0) tTerm wTerm K
+        +ᵉ ((eraNumeral 2 ^ᵉ wTerm ∸ᵉ eraNumeral 1)
+          *ᵉ eraListSum ((Rg.filter (fun mon => mon.sign)).map
+            (eraMonoTerm · tTerm wTerm)))) ctx
+      = C + (2 ^ w - 1) * negSum := by
+    rw [eadd, Tm.eval, eraInterp]
+    simp only [fcons]
+    rw [emul, Tm.eval, eraInterp]
+    simp only [fcons]
+    rw [hconst, heval_factor, hlistsum (fun mon => mon.sign), ← hneg_def]
+  have heval_subtrahend : Tm.eval eraInterp
+      ((eraNumeral 2 ^ᵉ wTerm ∸ᵉ eraNumeral 1)
+        *ᵉ eraListSum ((Rg.filter (fun mon => !mon.sign)).map
+          (eraMonoTerm · tTerm wTerm))) ctx
+      = (2 ^ w - 1) * posSum := by
+    rw [emul, Tm.eval, eraInterp]
+    simp only [fcons]
+    rw [heval_factor, hlistsum (fun mon => !mon.sign), ← hpos_def]
+  -- the magnitude cube-sum of a monomial, cast to ℤ
+  have hMcast : ∀ mon : ZMonomial (p + K), (M mon : ℤ)
+      = ∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+          (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a)
+            * (mon.evalNat (Fin.append ctx a) : ℤ) := by
+    intro mon
+    rw [hM_def, Nat.cast_sum]
+    refine Finset.sum_congr rfl (fun a _ => ?_)
+    rw [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat]
+  -- 1 ≤ 2^w, for casting the truncated factor
+  have h2w : (1 : ℕ) ≤ 2 ^ w := Nat.one_le_two_pow
+  -- the integer magnitude cube-sum as a function, for the sign partition
+  set Mz : ZMonomial (p + K) → ℤ := fun mon => ∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+    (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a)
+      * (mon.evalNat (Fin.append ctx a) : ℤ) with hMz_def
+  -- a filtered list-sum of `Mz` is the ℤ-cast of the same `M`-sum
+  have hcastSum : ∀ q : ZMonomial (p + K) → Bool,
+      ((Rg.filter q).map Mz).sum = (((Rg.filter q).map M).sum : ℤ) := by
+    intro q
+    rw [Nat.cast_list_sum, List.map_map]
+    refine congrArg List.sum (List.map_congr_left (fun mon _ => ?_))
+    simp only [hMz_def, Function.comp_apply]
+    exact (hMcast mon).symm
+  -- the signed-sum bridge specialised to this `P`, then sign-partitioned
+  have hsigned : (∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+        (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a) * (P a : ℤ))
+      = (posSum : ℤ) - (negSum : ℤ) := by
+    rw [hP_def, packM_signed_sum s ctx w t]
+    rw [show (List.map ZMonomial.cubeRegroup (sepReduce s).snd) = Rg from hRg_def.symm]
+    rw [signPartition_sum Rg (fun mon => mon.sign) Mz]
+    rw [hcastSum (fun mon => !mon.sign), hcastSum (fun mon => mon.sign),
+      ← hpos_def, ← hneg_def]
+  -- the integer identity `eval(minuend) = eval(subtrahend) + packM`
+  have hZ : ((C + (2 ^ w - 1) * negSum : ℕ) : ℤ)
+      = ((2 ^ w - 1) * posSum : ℕ) + (GebLean.EraHypercube.packM K w t P : ℤ) := by
+    rw [packM_affine_int (K := K) (w := w) (t := t) P hw (fun a ha => hP a ha)]
+    push_cast [Nat.cast_sub h2w]
+    rw [hC_def, hsigned, Nat.cast_sum]
+    have hCsum : (∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+        ((2 ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a) * (2 ^ w - 1) * (2 ^ w + 1) : ℕ) : ℤ))
+        = ∑ a ∈ GebLean.EraHypercube.cubePoints K t,
+            (2 : ℤ) ^ (2 * w * GebLean.EraHypercube.mixedRadix K t a)
+              * ((2 ^ w - 1) * (2 ^ w + 1)) := by
+      refine Finset.sum_congr rfl (fun a _ => ?_)
+      push_cast [Nat.cast_sub h2w]
+      ring
+    rw [hCsum]
+    ring
+  -- descend to ℕ and discharge the truncated subtraction
+  have hN : C + (2 ^ w - 1) * negSum
+      = (2 ^ w - 1) * posSum + GebLean.EraHypercube.packM K w t P := by
+    have := hZ
+    push_cast at this
+    exact_mod_cast this
+  have hfinal : Tm.eval eraInterp (packM_term s tTerm wTerm) ctx
+      = GebLean.EraHypercube.packM K w t P := by
+    rw [packM_term, etsub, Tm.eval, eraInterp]
+    simp only [fcons]
+    rw [heval_minuend, heval_subtrahend, hN, Nat.add_sub_cancel_left]
+  exact hfinal
 
 end GebLean
