@@ -410,4 +410,40 @@ theorem eraBProd_eval {k : ℕ} (g : ETm (k + 1)) (ctx : Fin (k + 1) → ℕ) :
       (fun j hj => prodMajorant_bound g ctx' j (hbound0 ▸ hj)),
     recSeq_eq_natBProd, hbound0, hparam]
 
+/-- `Era`-term completeness for the elementary recursive functions
+(arXiv:2606.09336, Theorem 2): every `ERMor1 n` function is the denotation of an
+`Era` arithmetic term `t : ETm n`, with `Tm.eval eraInterp t` agreeing with the
+standard interpretation `ERMor1.interp` at every context. The generators map to
+their `Era`-term counterparts: `zero`/`succ`/`proj`/`sub` to the corresponding
+atomic terms, `comp` to term substitution (`Tm.eval_subst`), and `bsum`/`bprod`
+to the bounded-sum and bounded-product combinators `eraBSum`/`eraBProd`. -/
+theorem era_complete {n : ℕ} (f : ERMor1 n) :
+    ∃ t : ETm n, ∀ ctx : Fin n → ℕ, Tm.eval eraInterp t ctx = f.interp ctx := by
+  induction f with
+  | zero => exact ⟨Tm.zero, fun _ => rfl⟩
+  | succ => exact ⟨Tm.succ (Tm.var 0), fun _ => rfl⟩
+  | proj i => exact ⟨Tm.var i, fun _ => rfl⟩
+  | sub =>
+    refine ⟨Tm.var 0 ∸ᵉ Tm.var 1, fun ctx => ?_⟩
+    rw [etsub_eval, ERMor1.interp_sub]
+    rfl
+  | comp f g ihf ihg =>
+    obtain ⟨tf, htf⟩ := ihf
+    set tg : Fin _ → ETm _ := fun i => Classical.choose (ihg i) with htg_def
+    have htg : ∀ i ctx, Tm.eval eraInterp (tg i) ctx = (g i).interp ctx :=
+      fun i => Classical.choose_spec (ihg i)
+    refine ⟨tf.subst tg, fun ctx => ?_⟩
+    rw [Tm.eval_subst, htf, ERMor1.interp_comp]
+    exact congrArg f.interp (funext (fun i => htg i ctx))
+  | bsum f ihf =>
+    obtain ⟨tf, htf⟩ := ihf
+    refine ⟨eraBSum tf, fun ctx => ?_⟩
+    rw [eraBSum_eval, ERMor1.interp_bsum]
+    exact congrArg _ (funext (fun i => htf _))
+  | bprod f ihf =>
+    obtain ⟨tf, htf⟩ := ihf
+    refine ⟨eraBProd tf, fun ctx => ?_⟩
+    rw [eraBProd_eval, ERMor1.interp_bprod]
+    exact congrArg _ (funext (fun i => htf _))
+
 end GebLean
