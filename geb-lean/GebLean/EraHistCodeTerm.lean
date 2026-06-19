@@ -29,6 +29,10 @@ module supplies the read-off that consumes its output.
   the per-cube-coordinate geometric base of the separable normal form of a
   `ZMonomial (p + k)` whose cube coordinates are the last `k` slots, both
   evaluated at the cube-zero reference context `Fin.append ctx 0`.
+* `packM_term` — the packed-witness term for the reduced system `sepReduce s`,
+  assembled from `eraConstPart` and per-monomial `eraMonoTerm` contributions.
+* `eraCount` — the count of vanishing reduced-predicate cube points as an `Era`
+  term: `eraCountOfPack` applied to `packM_term` at cube width `k + (sepReduce s).1`.
 
 ## Main statements
 
@@ -55,14 +59,18 @@ module supplies the read-off that consumes its output.
   into `cubeConst ctx` times a product over cube coordinates of per-coordinate
   inner geometric sums with bases `cubeBase ctx c · 2 ^ (2 * w * t ^ c)`
   (arXiv:2407.12928, Lemma 3.2).
+* `packM_term_eval` — the packed-witness term evaluates to `packM` of the
+  reduced predicate at the extended cube width (arXiv:2407.12928, Lemma 3.3).
+* `eraCount_eval` — `eraCount` evaluates to the count of vanishing reduced-predicate
+  cube points (arXiv:2407.12928, Lemma 3.3 / Cor 3.6).
 
 ## Implementation notes
 
 The combinator is stated against a supplied packed-witness term `packMTerm`
 together with the hypothesis that it evaluates to `packM`. The cube-sum
-factorisation that constructs such a `packMTerm` from a degree-≤2 simple
-exponential polynomial predicate (arXiv:2407.12928, Eqs (7), (8)) is the
-remaining piece of the count combinator.
+factorisation that constructs `packM_term` from a degree-≤2 simple exponential
+polynomial predicate (arXiv:2407.12928, Eqs (7), (8)) is realised in this
+module; `eraCount` chains the two layers.
 
 ## References
 
@@ -966,5 +974,42 @@ theorem packM_term_eval {p k : ℕ} (s : SosSystem (p + k)) (tTerm wTerm : ETm p
     simp only [fcons]
     rw [heval_minuend, heval_subtrahend, hN, Nat.add_sub_cancel_left]
   exact hfinal
+
+open GebLean.EraHistCodeTerm (eraCountOfPack eraCountOfPack_eval) in
+/-- The count of cube points where the reduced predicate vanishes, as an `Era`
+term (arXiv:2407.12928, Lemma 3.3 read-off): `eraCountOfPack` applied to the
+packed-witness term `packM_term s tTerm wTerm` for the extended cube width
+`k + (sepReduce s).1`. -/
+def eraCount {p k : ℕ} (s : SosSystem (p + k)) (tTerm wTerm : ETm p) : ETm p :=
+  eraCountOfPack (k + (sepReduce s).1) (packM_term s tTerm wTerm) tTerm wTerm
+
+open GebLean.EraCompleteness in
+open GebLean.EraHistCodeTerm (eraCountOfPack eraCountOfPack_eval) in
+/-- The count read-off identity (arXiv:2407.12928, Lemma 3.3 / Cor 3.6):
+`eraCount s tTerm wTerm` evaluates to the number of cube points of the
+side-`t` cube `cubePoints (k + (sepReduce s).1) t` where the reduced predicate
+`(Σ_{mon} mon.cubeRegroup.eval (append ctx a)).toNat` vanishes. -/
+theorem eraCount_eval {p k : ℕ} (s : SosSystem (p + k)) (tTerm wTerm : ETm p)
+    (ctx : Fin p → ℕ)
+    (hzero : s.PolyExpZero) (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired)
+    (ht : 0 < Tm.eval eraInterp tTerm ctx) (hw : 0 < Tm.eval eraInterp wTerm ctx)
+    (hP : ∀ a ∈ GebLean.EraHypercube.cubePoints (k + (sepReduce s).1)
+            (Tm.eval eraInterp tTerm ctx),
+          (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+            mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat
+            < 2 ^ Tm.eval eraInterp wTerm ctx) :
+    Tm.eval eraInterp (eraCount s tTerm wTerm) ctx
+      = ((GebLean.EraHypercube.cubePoints (k + (sepReduce s).1)
+            (Tm.eval eraInterp tTerm ctx)).filter
+          (fun a => (((sepReduce s).2).map
+            (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+              mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat = 0)).card := by
+  rw [eraCount]
+  set P : (Fin (k + (sepReduce s).1) → ℕ) → ℕ :=
+    fun a => (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+      mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat with hP_def
+  exact eraCountOfPack_eval (k + (sepReduce s).1) (packM_term s tTerm wTerm) tTerm wTerm
+    ctx P ht hw hP
+    (packM_term_eval s tTerm wTerm ctx hzero hcoeff hbase ht hw hP)
 
 end GebLean
