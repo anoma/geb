@@ -1964,6 +1964,212 @@ theorem hitGapTm_eval_zero_iff {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 
   rw [GebLean.EraRecurrence.hitsAt, Nat.add_eq_zero_iff]
   omega
 
+/-- The `j`-dropping substitution of arXiv:2407.12928, Corollary 3.6 (input-side):
+rewrite a term over the hit-gap context `[x, n, ambient(k), j]` to one over the
+parameter context `[x, n, ambient(k)]` by replacing the moved input slot `j`
+(`Fin.last (2 + k)`) with the loop bound `n` (variable `1`) and keeping every
+parameter slot as itself. Used to lift the `j`-dependent witness bounds of the
+hit-gap predicate's encoding to `j := n`, the largest value a counted index can
+take (`hitGapTm_eval_zero_iff` forces `j < n`). -/
+def dropJ {k : ℕ} (t : ETm ((2 + k) + 1)) : ETm (2 + k) :=
+  t.subst (Fin.lastCases (Tm.var 1) (fun i => Tm.var i))
+
+/-- The `j`-dropping substitution evaluates a term at `j := n` (arXiv:2407.12928,
+Cor 3.6): `dropJ t` at the parameter context `ctx` equals `t` at the hit-gap
+context obtained by appending `ctx 1` (the loop bound `n`) in the moved-input
+slot, i.e. `Fin.snoc ctx (ctx 1)`. -/
+theorem dropJ_eval {k : ℕ} (t : ETm ((2 + k) + 1)) (ctx : Fin (2 + k) → ℕ) :
+    Tm.eval eraInterp (dropJ t) ctx = Tm.eval eraInterp t (Fin.snoc ctx (ctx 1)) := by
+  rw [dropJ, Tm.eval_subst]
+  congr 1
+  funext i
+  refine Fin.lastCases ?_ ?_ i
+  · simp only [Fin.lastCases_last, Fin.snoc_last, Tm.eval]
+  · intro j
+    simp only [Fin.lastCases_castSucc, Fin.snoc_castSucc, Tm.eval]
+
+/-- The input-side base majorant of arXiv:2407.12928, Corollary 3.6: a
+parameter-only `ETm (2 + k)` whose value dominates, at every cube zero of the
+hit-gap predicate's input-side re-indexed system, the moved input `j` (forced
+`< n`), the pinned output `0`, and each `j`-dependent witness bound `bound i`
+lifted to `j := n` (`dropJ`). The head summand `n + 1` dominates `n`; each tail
+summand `dropJ (eraMajorant …)` dominates its witness bound for any `j ≤ n` by
+`eraMajorant_spec`/`eraMajorant_mono`. The count of `eraHitCount_cubeCount` is
+taken at this base side. -/
+def eraHitBase {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k)) : ETm (2 + k) :=
+  eraListSum ((Tm.var 1 +ᵉ eraNumeral 1)
+    :: dropJ (eraMajorant (diophOf (hitGapTm stepTm ATerm)).valBound)
+    :: (List.finRange (diophOf (hitGapTm stepTm ATerm)).witArity).map
+        (fun i => dropJ (eraMajorant ((diophOf (hitGapTm stepTm ATerm)).bound i))))
+
+/-- The input-side base majorant dominates the moved input `n` (arXiv:2407.12928,
+Cor 3.6): the loop bound `n = ctx 1` is below the head summand `n + 1` of the
+`eraListSum`. -/
+theorem eraHitBase_n {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
+    (ctx : Fin (2 + k) → ℕ) :
+    Tm.eval eraInterp (Tm.var 1) ctx < Tm.eval eraInterp (eraHitBase stepTm ATerm) ctx := by
+  calc Tm.eval eraInterp (Tm.var 1) ctx
+      < Tm.eval eraInterp (Tm.var 1 +ᵉ eraNumeral 1) ctx := by
+        simp only [eadd_eval, eraNumeral_eval, eraInterp, fcons, Tm.eval]; omega
+    _ ≤ Tm.eval eraInterp (eraHitBase stepTm ATerm) ctx := by
+        rw [eraHitBase, eraListSum_eval, List.map_cons]
+        exact List.le_sum_of_mem (List.mem_cons_self ..)
+
+/-- The input-side base majorant is positive (arXiv:2407.12928, Cor 3.6): its
+head summand `n + 1` is at least `1` and is a summand of the `eraListSum`. -/
+theorem eraHitBase_pos {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
+    (ctx : Fin (2 + k) → ℕ) :
+    0 < Tm.eval eraInterp (eraHitBase stepTm ATerm) ctx :=
+  Nat.lt_of_le_of_lt (Nat.zero_le _) (eraHitBase_n stepTm ATerm ctx)
+
+/-- The input-side base majorant dominates each `j`-dependent witness bound at any
+`j₀ ≤ n` (arXiv:2407.12928, Cor 3.6): `bound i` at the hit-gap context with moved
+input `j₀` is strictly below `eraMajorant (bound i)` there (`eraMajorant_spec`),
+which is monotone up to `j := n` (`eraMajorant_mono`), equals the tail summand
+`dropJ (eraMajorant (bound i))` (`dropJ_eval`), and is at most the whole
+`eraListSum`. -/
+theorem eraHitBase_bound {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
+    (ctx : Fin (2 + k) → ℕ) (i : Fin (diophOf (hitGapTm stepTm ATerm)).witArity)
+    (j₀ : ℕ) (hj₀ : j₀ ≤ ctx 1) :
+    Tm.eval eraInterp ((diophOf (hitGapTm stepTm ATerm)).bound i) (Fin.snoc ctx j₀)
+      ≤ Tm.eval eraInterp (eraHitBase stepTm ATerm) ctx := by
+  set bnd := (diophOf (hitGapTm stepTm ATerm)).bound i with hbnd
+  refine Nat.le_of_lt ?_
+  calc Tm.eval eraInterp bnd (Fin.snoc ctx j₀)
+      < Tm.eval eraInterp (eraMajorant bnd) (Fin.snoc ctx j₀) := eraMajorant_spec _ _
+    _ ≤ Tm.eval eraInterp (eraMajorant bnd) (Fin.snoc ctx (ctx 1)) := by
+        refine eraMajorant_mono bnd (fun c => ?_)
+        refine Fin.lastCases ?_ ?_ c
+        · simp only [Fin.snoc_last]; exact hj₀
+        · intro c'; simp only [Fin.snoc_castSucc]; exact Nat.le_refl _
+    _ = Tm.eval eraInterp (dropJ (eraMajorant bnd)) ctx := (dropJ_eval _ ctx).symm
+    _ ≤ Tm.eval eraInterp (eraHitBase stepTm ATerm) ctx := by
+        rw [eraHitBase, eraListSum_eval, List.map_cons, List.map_cons, List.map_map]
+        refine List.le_sum_of_mem ?_
+        refine List.mem_cons_of_mem _ (List.mem_cons_of_mem _ ?_)
+        exact List.mem_map.mpr ⟨i, List.mem_finRange i, rfl⟩
+
+open GebLean.EraCompleteness in
+/-- The inner hit counter of arXiv:2407.12928, Corollary 3.6 and arXiv:2606.09336,
+Claim 3: for the hit-gap predicate `hitGapTm stepTm ATerm` over the context
+`[x, n, ambient(k)]`, the `Era` term whose value at `ctx` is the number of cube
+points — moved input `j`, pinned output, and `diophOf` witnesses — at which the
+input-side re-indexed system `reindexInputSys (hitGapTm …)` vanishes, i.e. the
+number of indices `j < n` that hit for code `x`. It is the count read-off
+`eraCount` of the Lemma 3.5-reduced input-side re-indexed system, taken at the
+enlarged side `eraTheta` over the input-side base majorant `eraHitBase` (so the
+unique chain witness is a valid cube coordinate) and modulus `eraW + 1`. -/
+def eraHitCount {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k)) : ETm (2 + k) :=
+  eraCount (reindexInputSys (hitGapTm stepTm ATerm))
+    (eraTheta (reindexInputSys (hitGapTm stepTm ATerm)) (eraHitBase stepTm ATerm))
+    (eraW (reindexInputSys (hitGapTm stepTm ATerm))
+        (eraTheta (reindexInputSys (hitGapTm stepTm ATerm)) (eraHitBase stepTm ATerm))
+      +ᵉ eraNumeral 1)
+
+open GebLean.EraCompleteness in
+/-- The inner hit-counting identity of arXiv:2407.12928, Corollary 3.6 and
+arXiv:2606.09336, Claim 3: `eraHitCount stepTm ATerm` evaluates to the number of
+cube points — moved input `j`, pinned output, and `diophOf` witnesses — at side
+`eraHitBase` at which the input-side re-indexed system vanishes. The proof composes
+the count read-off `eraCount_eval` at the enlarged side (its block bound by
+`eraW_spec`, its positivity by the `+ 1` modulus), the fibre collapse
+`reducedCount_eq` (its chain-witness bound by `eraTheta_spec` over the input-side
+coordinate bound `reindexInputSys_coord_bound`), and the shell collapse
+`predCount_side_eq` (its shell emptiness by the same coordinate bound). The
+input-side coordinate bound is discharged from `eraHitBase`: the output slot is
+pinned to `0`, the witnesses are below their `j`-dependent bounds lifted to `j := n`
+(`eraHitBase_bound`), and the moved input `j` is forced `< n` by
+`hitGapTm_eval_zero_iff` then dominated by `eraHitBase_n`. The system is kept as
+`reindexInputSys`, the form consumed downstream via `reindexInputSys_eval_zero_iff`. -/
+theorem eraHitCount_cubeCount {k : ℕ} (stepTm : ETm (2 + k)) (ATerm : ETm (1 + k))
+    (ctx : Fin (2 + k) → ℕ) :
+    Tm.eval eraInterp (eraHitCount stepTm ATerm) ctx
+      = ((GebLean.EraHypercube.cubePoints (1 + 1 + (diophOf (hitGapTm stepTm ATerm)).witArity)
+            (Tm.eval eraInterp (eraHitBase stepTm ATerm) ctx)).filter
+          (fun a => SosSystem.eval (reindexInputSys (hitGapTm stepTm ATerm))
+            (Fin.append ctx a) = 0)).card := by
+  set pred := hitGapTm stepTm ATerm with hpred
+  set sysW := reindexInputSys pred with hsysW
+  set tBaseT := eraHitBase stepTm ATerm with htBaseT
+  set tθT := eraTheta sysW tBaseT with htθT
+  set tBase := Tm.eval eraInterp tBaseT ctx with htBase
+  set tθ := Tm.eval eraInterp tθT ctx with htθ
+  have hzero : sysW.PolyExpZero := reindexInputSys_polyExpZero pred
+  have hcoeff : sysW.CoeffVarProduct := reindexInputSys_coeffVarProduct pred
+  have hbase : sysW.BasePaired := reindexInputSys_basePaired pred
+  have ht : 0 < tθ := by rw [htθ, htθT, eraTheta]; exact eraMajorant_pos _ ctx
+  have hwpos : 0 < Tm.eval eraInterp (eraW sysW tθT +ᵉ eraNumeral 1) ctx := by
+    rw [eadd, Tm.eval, eraInterp]
+    simp only [fcons, eraNumeral_eval]
+    omega
+  -- the moved index of any cube zero is forced below the loop bound `n = ctx 1`
+  have hmovedlt : ∀ a : Fin (1 + 1 + (diophOf pred).witArity) → ℕ,
+      SosSystem.eval sysW (Fin.append ctx a) = 0 →
+        a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 (0 : Fin 1))) < ctx 1 := by
+    intro a h0
+    rw [reindexInputSys_eval_zero_iff] at h0
+    obtain ⟨hsys, hout⟩ := h0
+    have hgraph := (diophOf_encodes pred).1
+      (Fin.append ctx (fun i => a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 i))))
+      (a (Fin.castAdd (diophOf pred).witArity (Fin.last 1)))
+      (fun i => a (Fin.natAdd (1 + 1) i)) hsys
+    rw [hout] at hgraph
+    have hpz : Tm.eval eraInterp pred
+        (Fin.append ctx
+          (fun i => a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 i)))) = 0 :=
+      hgraph.symm
+    have hsnoc := Fin.append_right_eq_snoc ctx
+      (fun i => a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 i)))
+    rw [hsnoc] at hpz
+    have hjlt := ((hitGapTm_eval_zero_iff stepTm ATerm _).mp hpz).2
+    have h1 : (1 : Fin ((2 + k) + 1)) = Fin.castSucc (1 : Fin (2 + k)) := by
+      refine Fin.ext ?_
+      simp only [Fin.val_castSucc, Fin.val_one']
+      rw [Nat.one_mod_eq_one.mpr (by omega), Nat.one_mod_eq_one.mpr (by omega)]
+    rwa [Fin.snoc_last, h1, Fin.snoc_castSucc] at hjlt
+  -- the input-side base coordinate bound for the re-indexed system's zeros
+  have hcoord : ∀ a : Fin (1 + 1 + (diophOf pred).witArity) → ℕ,
+      SosSystem.eval sysW (Fin.append ctx a) = 0 → ∀ c, a c < tBase := by
+    intro a h0
+    refine reindexInputSys_coord_bound pred ctx tBase
+      (eraHitBase_pos stepTm ATerm ctx) a h0 ?hbnd ?hmoved
+    case hbnd =>
+      intro i
+      rw [Fin.append_right_eq_snoc ctx
+        (fun j => a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 j)))]
+      exact eraHitBase_bound stepTm ATerm ctx i _ (Nat.le_of_lt (hmovedlt a h0))
+    case hmoved =>
+      intro i
+      rw [Subsingleton.elim i (0 : Fin 1)]
+      exact Nat.lt_trans (hmovedlt a h0) (eraHitBase_n stepTm ATerm ctx)
+  -- step 1: the count read-off at the enlarged side
+  rw [eraHitCount, eraCount_eval sysW tθT (eraW sysW tθT +ᵉ eraNumeral 1) ctx
+    hzero hcoeff hbase ht hwpos ?hP]
+  case hP =>
+    intro a ha
+    refine lt_of_lt_of_le (eraW_spec sysW tθT ctx hzero hcoeff hbase ht a ha) ?_
+    refine Nat.pow_le_pow_right (by norm_num) ?_
+    rw [eadd, Tm.eval, eraInterp]
+    simp only [fcons, eraNumeral_eval]
+    omega
+  -- step 2: the fibre collapse
+  rw [reducedCount_eq sysW ctx tθ hcoeff hbase ?hθ]
+  case hθ =>
+    intro x hx hx0 c i
+    have hxbase : ∀ c, x c < tBase := hcoord x hx0
+    exact eraTheta_spec sysW tBaseT ctx x hxbase c i
+  -- step 3: the shell collapse to the base side
+  rw [predCount_side_eq sysW ctx tBase tθ ?htθ ?hshell]
+  case htθ =>
+    rw [htθ, htθT, eraTheta]
+    refine le_trans ?_ (le_of_lt (eraMajorant_spec _ ctx))
+    rw [epow_eval, eraInterp, eraNumeral_eval]
+    simp only [fcons]
+    exact Nat.le_self_pow (by omega) _
+  case hshell =>
+    intro x _ hx0 c
+    exact hcoord x hx0 c
+
 open GebLean.EraCompleteness in
 /-- The Era-term witness counter of arXiv:2407.12928, Corollary 3.6 (via
 Theorem 3.4): for a `diophOf`-encoded predicate `τ`, the closed `Era` term whose
