@@ -1787,6 +1787,90 @@ theorem reindexInputSys_eval_zero_iff {p r : ℕ} (pred : ETm (p + r)) (ctx : Fi
   simp only [SimpleSum.eval, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
     Nat.add_zero, SimpleMonomial.var_eval, Fin.append_right]
 
+/-- The input-side re-indexed system inherits the polynomial-exponent-zero
+invariant of the `diophOf` encoding (`diophOf_polyExpZero`): the weakened part
+through `SosSystem.weaken_polyExpZero`, and the appended `sqDist [output] []` pin
+atom (the mirror of the `diophZero` atom `sqDist [] [var]`) through the singleton
+sum / atom helpers (arXiv:2407.12928, Cor 3.6). -/
+theorem reindexInputSys_polyExpZero {p r : ℕ} (pred : ETm (p + r)) :
+    (reindexInputSys pred).PolyExpZero :=
+  (SosSystem.polyExpZero_append _ _).mpr
+    ⟨SosSystem.weaken_polyExpZero (diophOf_polyExpZero pred) _,
+      SosSystem.cons_polyExpZero
+        (SosTerm.sqDist_polyExpZero
+          (SimpleSum.singleton_polyExpZero (SimpleMonomial.var_polyExpZero _))
+          SimpleSum.nil_polyExpZero)
+        SosSystem.nil_polyExpZero⟩
+
+/-- The input-side re-indexed system inherits the coefficient-variable-product
+invariant of the `diophOf` encoding (`diophOf_coeffVarProduct`): the weakened part
+through `SosSystem.weaken_coeffVarProduct`, and the appended `sqDist [output] []`
+pin atom (the mirror of the `diophZero` atom `sqDist [] [var]`) through the
+singleton sum / atom helpers (arXiv:2407.12928, Cor 3.6). -/
+theorem reindexInputSys_coeffVarProduct {p r : ℕ} (pred : ETm (p + r)) :
+    (reindexInputSys pred).CoeffVarProduct :=
+  (SosSystem.coeffVarProduct_append _ _).mpr
+    ⟨SosSystem.weaken_coeffVarProduct (diophOf_coeffVarProduct pred) _,
+      SosSystem.cons_coeffVarProduct
+        (SosTerm.sqDist_coeffVarProduct
+          (SimpleSum.singleton_coeffVarProduct (SimpleMonomial.var_coeffVarProduct _))
+          SimpleSum.nil_coeffVarProduct)
+        SosSystem.nil_coeffVarProduct⟩
+
+/-- The input-side re-indexed system inherits the base-paired invariant of the
+`diophOf` encoding (`diophOf_basePaired`): the weakened part through
+`SosSystem.weaken_basePaired`, and the appended `sqDist [output] []` pin atom (the
+mirror of the `diophZero` atom `sqDist [] [var]`) through the singleton sum / atom
+helpers (arXiv:2407.12928, Cor 3.6). -/
+theorem reindexInputSys_basePaired {p r : ℕ} (pred : ETm (p + r)) :
+    (reindexInputSys pred).BasePaired :=
+  (SosSystem.basePaired_append _ _).mpr
+    ⟨SosSystem.weaken_basePaired (diophOf_basePaired pred) _,
+      SosSystem.cons_basePaired
+        (SosTerm.sqDist_basePaired
+          (SimpleSum.singleton_basePaired (SimpleMonomial.var_basePaired _))
+          SimpleSum.nil_basePaired)
+        SosSystem.nil_basePaired⟩
+
+/-- The input-side base coordinate bound of arXiv:2407.12928, Corollary 3.6: every
+cube point `a` at which the input-side re-indexed system vanishes has all
+coordinates strictly below the supplied majorant `B`. The output coordinate (cube
+slot `r`) is pinned to `0` by `reindexInputSys_eval_zero_iff`; each witness
+coordinate (cube slots `r + 1 + k`) is below its bound `bound k`
+(`diophOf_bound`) hence below `B` by `hbnd`; each moved-input coordinate (cube
+slots `0 … r-1`) is below `B` by the supplied hypothesis `hmoved` (the encoding
+does not bound these free inputs). -/
+theorem reindexInputSys_coord_bound {p r : ℕ} (pred : ETm (p + r)) (ctx : Fin p → ℕ)
+    (B : ℕ) (hpos : 0 < B)
+    (a : Fin (r + 1 + (diophOf pred).witArity) → ℕ)
+    (h0 : SosSystem.eval (reindexInputSys pred) (Fin.append ctx a) = 0)
+    (hbnd : ∀ i : Fin (diophOf pred).witArity,
+        Tm.eval eraInterp ((diophOf pred).bound i)
+          (Fin.append ctx
+            (fun j => a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 j)))) ≤ B)
+    (hmoved : ∀ i : Fin r,
+        a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 i)) < B) :
+    ∀ c, a c < B := by
+  rw [reindexInputSys_eval_zero_iff] at h0
+  obtain ⟨hsys, hout⟩ := h0
+  have hwit : ∀ i : Fin (diophOf pred).witArity, a (Fin.natAdd (r + 1) i) < B := by
+    intro i
+    have hbi := diophOf_bound pred
+      (Fin.append ctx
+        (fun j => a (Fin.castAdd (diophOf pred).witArity (Fin.castAdd 1 j))))
+      (a (Fin.castAdd (diophOf pred).witArity (Fin.last r)))
+      (fun i => a (Fin.natAdd (r + 1) i)) hsys i
+    exact lt_of_lt_of_le hbi (hbnd i)
+  intro c
+  refine Fin.addCases ?_ ?_ c
+  · intro io
+    refine Fin.lastCases ?_ ?_ io
+    · rw [hout]; exact hpos
+    · intro j
+      exact hmoved j
+  · intro i
+    exact hwit i
+
 open GebLean.EraCompleteness in
 /-- The Era-term witness counter of arXiv:2407.12928, Corollary 3.6 (via
 Theorem 3.4): for a `diophOf`-encoded predicate `τ`, the closed `Era` term whose
