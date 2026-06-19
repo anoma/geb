@@ -1201,4 +1201,163 @@ theorem eraW_spec {p k : ℕ} (s : SosSystem (p + k)) (tTerm : ETm p) (ctx : Fin
       (Tm.eval eraInterp (eraNumeral 1) ctx) t a ha
   exact lt_of_le_of_lt hbound Nat.lt_two_pow_self
 
+/-- The fibre collapse of arXiv:2407.12928, Corollary 3.6 (via Lemma 3.5). At the
+enlarged side `tθ`, the number of zeros of the reduced predicate `Pred` over the
+enlarged cube `cubePoints (k + (sepReduce s).1) tθ` equals the number of zeros of the
+source system `SosSystem.eval s (Fin.append ctx ·)` over the base cube
+`cubePoints k tθ`. The chain-witness fibre over each base-zero is a singleton (the
+unique zeroing witness of `sepReduce_unique`, valid by the per-coordinate bound `hθ`)
+and is empty over each base-non-zero (`sepReduce_sound`). `hθ` is supplied at the
+assembly site from `eraTheta_spec`. -/
+theorem reducedCount_eq {p k : ℕ} (s : SosSystem (p + k)) (ctx : Fin p → ℕ) (tθ : ℕ)
+    (hcoeff : s.CoeffVarProduct) (hbase : s.BasePaired)
+    (hθ : ∀ x ∈ GebLean.EraHypercube.cubePoints k tθ,
+        SosSystem.eval s (Fin.append ctx x) = 0 →
+        ∀ (c : Fin k) (i : Fin (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))),
+          x c ^ (i.val + 1) < tθ) :
+    ((GebLean.EraHypercube.cubePoints (k + (sepReduce s).1) tθ).filter
+        (fun a => (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+          mon.cubeRegroup.eval (Fin.append ctx a))).sum.toNat = 0)).card
+      = ((GebLean.EraHypercube.cubePoints k tθ).filter
+          (fun x => SosSystem.eval s (Fin.append ctx x) = 0)).card := by
+  set f := (sepReduce s).1 with hf
+  -- the explicit chain-power witness over a base point, as a total function
+  set b₀ : (Fin k → ℕ) → Fin f → ℕ :=
+    fun x j => x ((finProdFinEquiv.symm j).1) ^ ((finProdFinEquiv.symm j).2.val + 1)
+    with hb₀
+  -- the `.toNat = 0 ↔ reduced sum = 0` and `cubeRegroup_append_eq` bridge
+  have hbridge : ∀ (x : Fin k → ℕ) (b : Fin f → ℕ),
+      (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+          mon.cubeRegroup.eval (Fin.append ctx (Fin.append x b)))).sum.toNat = 0
+        ↔ (((sepReduce s).2).map
+            (fun mon => mon.eval (Fin.append (Fin.append ctx x) b))).sum = 0 := by
+    intro x b
+    have hmap : (((sepReduce s).2).map (fun (mon : ZMonomial (p + k + (sepReduce s).1)) =>
+        mon.cubeRegroup.eval (Fin.append ctx (Fin.append x b)))).sum
+        = (((sepReduce s).2).map
+            (fun mon => mon.eval (Fin.append (Fin.append ctx x) b))).sum := by
+      refine congrArg List.sum (List.map_congr_left (fun mon _ => ?_))
+      exact cubeRegroup_append_eq mon ctx x b
+    have hnn : 0 ≤ (((sepReduce s).2).map
+        (fun mon => mon.eval (Fin.append (Fin.append ctx x) b))).sum := by
+      rw [← hmap]
+      exact reducedCubeEval_nonneg s ctx (Fin.append x b)
+    rw [hmap, Int.toNat_eq_zero]
+    exact ⟨fun h => le_antisymm h hnn, fun h => le_of_eq h⟩
+  -- `ChainHolds` for the explicit witness `b₀ x`, mirroring `sepReduce_unique`
+  have hCH₀ : ∀ x : Fin k → ℕ,
+      ChainHolds (Fin.append (Fin.append ctx x) (b₀ x)) := by
+    intro x c i
+    rw [append_chainSlot, append_cubeSlot, hb₀]
+    simp only [Fin.append_right]
+    rw [show finProdFinEquiv.symm (chainIdx c i) = (c, i) from by
+      rw [chainIdx, Equiv.symm_apply_apply]]
+  -- the explicit witness `b₀ x` zeros the reduced sum over a base-zero `x`
+  have hb₀_zero : ∀ x : Fin k → ℕ, SosSystem.eval s (Fin.append ctx x) = 0 →
+      (((sepReduce s).2).map
+          (fun mon => mon.eval (Fin.append (Fin.append ctx x) (b₀ x)))).sum = 0 := by
+    intro x hx0
+    rw [sepReduce_eval_split]
+    have hchain : ((List.finRange k).map (fun c =>
+        ((List.finRange (max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))).map
+          (fun i => (((chainEqList c i).map
+            (fun mon => mon.eval (Fin.append (Fin.append ctx x) (b₀ x)))).sum)
+            ^ 2)).sum)).sum = 0 := by
+      refine List.sum_eq_zero (fun y hy => ?_)
+      obtain ⟨c, _, rfl⟩ := List.mem_map.mp hy
+      refine List.sum_eq_zero (fun z hz => ?_)
+      obtain ⟨i, _, rfl⟩ := List.mem_map.mp hz
+      rw [chainHolds_imp_chainEqList_zero _ (hCH₀ x) c i]
+      ring
+    have hpred : ((((SosSystem.toZ s).map
+        (fun mon => mon.weaken (Fin.castAdd
+          (k * max 1 (ZMonomial.maxCubeDegree (SosSystem.toZ s)))))).map chainSub).map
+        (fun mon => mon.eval (Fin.append (Fin.append ctx x) (b₀ x)))).sum ^ 2 = 0 := by
+      rw [sepReduce_psub_eval s hcoeff hbase (Fin.append ctx x) (b₀ x) (hCH₀ x), hx0,
+        Nat.cast_zero]
+      norm_num
+    rw [show (0 : ℤ) = 0 + 0 from (add_zero 0).symm]
+    exact congrArg₂ (· + ·) hchain hpred
+  -- uniqueness: any zeroing witness over a base-zero `x` equals `b₀ x`
+  have hb₀_uniq : ∀ (x : Fin k → ℕ) (b : Fin f → ℕ),
+      SosSystem.eval s (Fin.append ctx x) = 0 →
+      (((sepReduce s).2).map
+          (fun mon => mon.eval (Fin.append (Fin.append ctx x) b))).sum = 0 →
+        b = b₀ x := by
+    intro x b hx0 hb
+    obtain ⟨bw, _, hbw_uniq⟩ := sepReduce_unique s hcoeff hbase (Fin.append ctx x) hx0
+    rw [hbw_uniq b hb, hbw_uniq (b₀ x) (hb₀_zero x hx0)]
+  -- the explicit witness `b₀ x` lies in the chain cube, by the per-coordinate bound `hθ`
+  have hb₀_mem : ∀ x ∈ GebLean.EraHypercube.cubePoints k tθ,
+      SosSystem.eval s (Fin.append ctx x) = 0 →
+      b₀ x ∈ GebLean.EraHypercube.cubePoints f tθ := by
+    intro x hx hx0
+    rw [GebLean.EraHypercube.mem_cubePoints]
+    intro j
+    rw [hb₀]
+    exact hθ x hx hx0 (finProdFinEquiv.symm j).1 (finProdFinEquiv.symm j).2
+  refine Finset.card_nbij' (fun a => a ∘ Fin.castAdd f)
+    (fun x => Fin.append x (b₀ x)) ?_ ?_ ?_ ?_
+  · intro a ha
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at ha ⊢
+    obtain ⟨ha_mem, ha_pred⟩ := ha
+    set x := a ∘ Fin.castAdd f with hx_def
+    set b := a ∘ Fin.natAdd k with hb_def
+    have ha_split : a = Fin.append x b := (append_castAdd_natAdd a).symm
+    refine ⟨((mem_cubePoints_append x b).mp (ha_split ▸ ha_mem)).1, ?_⟩
+    refine sepReduce_sound s hcoeff hbase (Fin.append ctx x) b ?_
+    rw [← (hbridge x b).mp]
+    rw [← ha_split]
+    exact ha_pred
+  · intro x hx
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at hx ⊢
+    obtain ⟨hx_mem, hx0⟩ := hx
+    refine ⟨(mem_cubePoints_append x (b₀ x)).mpr ⟨hx_mem, hb₀_mem x hx_mem hx0⟩, ?_⟩
+    exact (hbridge x (b₀ x)).mpr (hb₀_zero x hx0)
+  · intro a ha
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at ha
+    obtain ⟨ha_mem, ha_pred⟩ := ha
+    set x := a ∘ Fin.castAdd f with hx_def
+    set b := a ∘ Fin.natAdd k with hb_def
+    have ha_split : Fin.append x b = a := append_castAdd_natAdd a
+    have hx0 : SosSystem.eval s (Fin.append ctx x) = 0 := by
+      refine sepReduce_sound s hcoeff hbase (Fin.append ctx x) b ?_
+      rw [← (hbridge x b).mp]
+      rw [ha_split]
+      exact ha_pred
+    have hbzero : (((sepReduce s).2).map
+        (fun mon => mon.eval (Fin.append (Fin.append ctx x) b))).sum = 0 := by
+      rw [← (hbridge x b).mp]
+      rw [ha_split]
+      exact ha_pred
+    change Fin.append x (b₀ x) = a
+    rw [← hb₀_uniq x b hx0 hbzero]
+    exact ha_split
+  · intro x _
+    funext i
+    exact Fin.append_left x (b₀ x) i
+
+/-- The shell-empty side collapse of arXiv:2407.12928, Corollary 3.6, Condition 9:
+the number of base-cube zeros of `SosSystem.eval s (Fin.append ctx ·)` is the same at
+the enlarged side `tθ` as at the base side `t`. The shell `[t, tθ)` contributes no
+zeros: by `hshell` every base-zero of the side-`tθ` cube already has all coordinates
+below `t`, so the two filtered cubes coincide as `Finset`s
+(`cubePoints k t ⊆ cubePoints k tθ` by `mem_cubePoints`). `hshell` is supplied at the
+assembly site from the per-coordinate solution bound `diophOf_bound`. -/
+theorem predCount_side_eq {p k : ℕ} (s : SosSystem (p + k)) (ctx : Fin p → ℕ)
+    (t tθ : ℕ) (htθ : t ≤ tθ)
+    (hshell : ∀ x ∈ GebLean.EraHypercube.cubePoints k tθ,
+        SosSystem.eval s (Fin.append ctx x) = 0 → ∀ c, x c < t) :
+    ((GebLean.EraHypercube.cubePoints k tθ).filter
+        (fun x => SosSystem.eval s (Fin.append ctx x) = 0)).card
+      = ((GebLean.EraHypercube.cubePoints k t).filter
+          (fun x => SosSystem.eval s (Fin.append ctx x) = 0)).card := by
+  refine congrArg Finset.card (Finset.ext (fun x => ?_))
+  simp only [Finset.mem_filter, GebLean.EraHypercube.mem_cubePoints]
+  constructor
+  · rintro ⟨hx, hzero⟩
+    exact ⟨hshell x (GebLean.EraHypercube.mem_cubePoints.mpr hx) hzero, hzero⟩
+  · rintro ⟨hx, hzero⟩
+    exact ⟨fun c => lt_of_lt_of_le (hx c) htθ, hzero⟩
+
 end GebLean
