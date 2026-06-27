@@ -1,0 +1,77 @@
+name: geb-mathlib refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * 1'   # weekly; tune as desired
+
+concurrency:
+  group: geb-mathlib-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+defaults:
+  run:
+    working-directory: geb-lean
+    shell: bash
+
+jobs:
+  refresh:
+    # origin-only: never run in the canonical upstream repository.
+    if: ${{ github.repository_owner == 'rokopt' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: leanprover/lean-action@v1  # matches geb-lean's lean_action_ci.yml
+        with:
+          lake-package-directory: geb-lean
+          auto-config: false
+      - name: Refresh and re-apply the back-port patch
+        id: refresh
+        run: bash scripts/refresh-geb-mathlib.sh
+      - name: Build, test, and lint the whole vendored lib
+        run: |
+          lake build Geb
+          lake test
+          # Lint every vendored module (list computed from disk, generic).
+          VMODS=$(cd vendor/geb-mathlib && find . -name '*.lean' -printf '%P\n' \
+            | sed 's|\.lean$||; s|/|.|g' | tr '\n' ' ')
+          lake lint -- $VMODS
+      - name: Open or update the refresh pull request
+        if: success()
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1  # v8.1.1
+        with:
+          branch: auto-refresh-geb-mathlib
+          base: main
+          title: 'chore(deps): refresh vendored geb-mathlib'
+          body: |
+            Update local vendored copy of `geb-mathlib` repo with its latest
+            `main` branch, and apply the pre-existing patch to make it build
+            against `geb-lean`'s older version of `mathlib`.
+      - name: File an issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # User-authored failure-triage prose; the run URL is appended in
+          # the shell step below (the only interpolated, non-prose field).
+          ISSUE_BODY: |
+            Attempt to update local vendored copy of `geb-mathlib` repo with its latest
+            `main` branch failed:  either the pre-existing patch to make it build
+            against `geb-lean`'s older version of `mathlib` failed to apply cleanly,
+            or it applied cleanly but the ensuing build failed.  For details, see
+        run: |
+          # Ensure the dedupe label exists (gh issue create errors otherwise).
+          gh label create geb-mathlib-refresh --force >/dev/null 2>&1 || true
+          # Dedupe: only open an issue if no open one already exists.
+          existing=$(gh issue list --label geb-mathlib-refresh --state open \
+                      --json number --jq 'length')
+          if [ "$existing" = "0" ]; then
+            RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            gh issue create --label geb-mathlib-refresh \
+              --title 'geb-mathlib refresh failed' \
+              --body "${ISSUE_BODY}${RUN_URL}"
+          fi
