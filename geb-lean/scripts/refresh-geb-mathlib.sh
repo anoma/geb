@@ -31,8 +31,7 @@ cat > "$VENDOR/PROVENANCE.md" <<EOF
 - Source: $REPO_URL
 - Source commit: $SRC_SHA
 - Back-port patch: scripts/geb-mathlib-backport.patch (commit $PATCH_SHA)
-- The files under \`Geb/\` are an unmodified mirror of the source commit
-  except where the back-port patch changes them.
+- The files under \`Geb/\` are an unmodified mirror of the source commit except where the back-port patch changes them; modified files carry a change notice in their header comment.
 EOF
 
 # Apply the back-port patch; a rejection is a hard, reportable failure.
