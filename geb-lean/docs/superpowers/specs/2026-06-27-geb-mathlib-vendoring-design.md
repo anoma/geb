@@ -188,9 +188,11 @@ Two build scopes follow. Ordinary `lake build` / `lake test` (this
 repository's default `GebLean` targets) compile only the vendored
 modules that `geb-lean` actually imports, on demand through Lake's import
 graph, so day-to-day builds stay fast. The refresh workflow additionally
-builds and lints the whole vendored library (`lake build Geb`,
-`lake lint Geb`), so a vendored module that nothing yet imports cannot
-drift undetected and the patch is kept complete.
+builds the whole vendored library (`lake build Geb`) and lints the
+vendored modules (`lake lint --` over the module list computed from the
+vendored `.lean` files on disk — `lake lint` names modules, not a lib),
+so a vendored module that nothing yet imports cannot drift undetected and
+the patch is kept complete.
 
 ### Layout and import-path identity
 
@@ -228,10 +230,12 @@ separation, not directory separation, that keeps the builds distinct.
   the same early signal the design relies on for hard breaks. A
   narrowly-scoped relaxation can be added later only if such warnings
   prove to be routine churn rather than meaningful drift.
-- The vendored library is linted by the refresh workflow's
-  `lake lint Geb` (the `batteries/runLinter` driver named on the vendored
-  library), not excluded. Bare `lake lint` lints only the default
-  `GebLean` target, so the refresh names `Geb` explicitly. `geb-mathlib`
+- The vendored library is linted by the refresh workflow, not excluded.
+  `lake lint` (the `batteries/runLinter` driver) names modules, not a
+  lib, so the refresh lints the vendored modules computed from the
+  vendored `.lean` files on disk (`lake lint -- <modules>`); the list
+  stays generic as the namespace grows. Bare `lake lint` lints only the
+  default `GebLean` target. `geb-mathlib`
   is the
   curated repository and runs at least as strict a linter set (it adds
   `linter.flexible` and `linter.style.header` over `geb-lean`'s), so
@@ -253,9 +257,10 @@ separation, not directory separation, that keeps the builds distinct.
 - Ordinary push CI (`lake build` / `lake test` on the default `GebLean`
   targets) builds only the vendored modules `geb-lean` imports,
   transitively through the smoke-test import and any consumer. The
-  refresh workflow additionally builds and lints the whole vendored
-  library (`lake build Geb`, `lake lint Geb`) so a vendored module that
-  nothing yet imports cannot rot undetected and the patch stays complete.
+  refresh workflow additionally builds (`lake build Geb`) and lints (via
+  `lake lint --` over the disk-computed module list) the whole vendored
+  library, so a vendored module that nothing yet imports cannot rot
+  undetected and the patch stays complete.
 
 ### The back-port patch and notes
 
@@ -289,9 +294,10 @@ below, fall into three categories:
 - The vendored `Geb` index imports `GebMeta`, which is not vendored; the
   `import GebMeta` line is removed so the namespace builds without it.
 - v4.32-only linter configuration absent in `v4.29.0-rc6`: the
-  `set_option linter.checkUnivs false in` lines and the
-  `@[nolint checkUnivs]` attributes are removed, because the
-  `linter.checkUnivs` option does not exist in `v4.29.0-rc6`.
+  `set_option linter.checkUnivs false in` lines are removed (the
+  `linter.checkUnivs` option does not exist in `v4.29.0-rc6`), while the
+  `@[nolint checkUnivs]` attributes are retained — they remain the
+  suppression the linter still needs on the affected structures.
 - The pre-versus-post-`HasForget` `ConcreteCategory` redesign in
   `Slice.Functor`: the `ConcreteCategory.hom` accessor is dropped (in
   `v4.29.0-rc6` an `Over` base map, a morphism in `Type`, is already a
@@ -355,7 +361,8 @@ dependency revisions and would not run a copy-and-patch refresh):
   canonical `upstream` repository and re-introduces the personal-account
   clone there.
 - A step running the refresh script, then `lake build Geb`, `lake test`
-  (the smoke test), and `lake lint Geb` over the whole vendored library,
+  (the smoke test), and `lake lint --` over the disk-computed vendored
+  module list,
   so a build, test, or lint failure all reach the issue path below.
 - On success, `peter-evans/create-pull-request` (pinned to a commit SHA
   with a tag comment, per the action-pinning policy) opens a pull
@@ -392,11 +399,15 @@ accepted, visible failure mode. It is replaced by the first genuine
 ported import once `geb-lean` exploration consumes curated content
 directly.
 
-`geb-lean`'s `scripts/check-axioms.sh` accepts `propext`, `Quot.sound`,
-and `Classical.choice`; the vendored `Slice.Functor` module uses `Over`
-and so depends on `Classical.choice`, which the axiom check tolerates,
-and curated content carries no `sorry`. The vendored built set
-therefore passes the axiom check that runs in CI.
+`scripts/check-axioms.sh` cannot scan the vendored files: it appends
+`#print axioms`, which the vendored files' `module` keyword rejects
+("cannot use `#print axioms` in a `module`"). It is therefore not run on
+`vendor/`. Vendored axiom hygiene rests instead on two standing
+guarantees: the build under `-DwarningAsError=true` rejects any `sorry`
+(so `sorryAx` cannot enter), and vendored content imports only mathlib —
+where `Classical.choice` is the sole non-standard axiom and is accepted
+project-wide (`Slice.Functor` depends on it through `Over`) — backed by
+`geb-mathlib`'s own upstream curation.
 
 ### Licensing and provenance
 

@@ -42,8 +42,17 @@ Actions (`peter-evans/create-pull-request`, `gh`), `markdownlint-cli2`,
 - Toolchain is `leanprover/lean4:v4.29.0-rc6`; do not bump it.
 - `geb-lean` keeps package-level `moreLeanArgs = ["-DwarningAsError=true"]`;
   the vendored library inherits it (no relaxation).
-- The vendored library is linted by `lake lint Geb` (bare `lake lint`
-  covers only the default `GebLean` target), not excluded.
+- The vendored library is linted, not excluded. `lake lint` names
+  modules, not a lib, so the refresh lints the vendored modules computed
+  from the `.lean` files on disk — generic, no hardcoded paths (see
+  Task 5 for the exact command). Bare `lake lint` covers only the default
+  `GebLean` target.
+- `scripts/check-axioms.sh` is NOT run on `vendor/`: the vendored files'
+  `module` keyword rejects the `#print axioms` the script appends.
+  Vendored axiom hygiene rests instead on the build under
+  `-DwarningAsError=true` (which rejects `sorry`) and on vendored content
+  importing only mathlib (where `Classical.choice` is accepted) plus
+  upstream curation.
 - No automated code rewriting: adaptation is the hand-authored patch
   `scripts/geb-mathlib-backport.patch`; failures stop the refresh and file
   an issue.
@@ -70,9 +79,9 @@ Actions (`peter-evans/create-pull-request`, `gh`), `markdownlint-cli2`,
   (`globs = ["Geb.*"]`) — no `geb-mathlib` subdirectory is named. Ordinary
   `lake build` / `lake test` (default `GebLean` targets) compile only the
   vendored modules `geb-lean` imports, on demand. The refresh workflow
-  additionally runs `lake build Geb` and `lake lint Geb` over the whole
-  vendored library. The back-port patch must keep every globbed module
-  compiling.
+  additionally runs `lake build Geb` and lints the vendored modules
+  (computed from disk) over the whole vendored library. The back-port
+  patch must keep every globbed module compiling.
 
 ---
 
@@ -198,10 +207,11 @@ the two occurrences of the line
 set_option linter.checkUnivs false in
 ```
 
-and the two `@[nolint checkUnivs]` attribute lines (each sits just above
-its structure; a `/-- … -/` docstring intervenes between the
-`set_option … in` line and the `@[nolint checkUnivs]` attribute). Add a
-one-line change notice under each modified file's licence header:
+but KEEP the two `@[nolint checkUnivs]` attribute lines (each just above
+its structure): the `linter.checkUnivs` *option* is gone in v4.29, but
+the universe linter still fires, and `@[nolint checkUnivs]` is the
+v4.29-compatible suppression. So strip only the `set_option … in` lines.
+Add a one-line change notice under each modified file's licence header:
 
 ```lean
 -- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
@@ -240,21 +250,26 @@ In `vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean`:
    -- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
    ```
 
-- [ ] **Step 7: Build, lint, and axiom-check the whole vendored library**
+- [ ] **Step 7: Build and lint the whole vendored library**
 
 ```bash
 lake build Geb
-lake lint Geb
-bash scripts/check-axioms.sh vendor/geb-mathlib/Geb/ vendor/geb-mathlib/Geb.lean
+# Lint every vendored module — list computed from disk, no hardcoded
+# paths (lake lint names modules, not a lib). `--` separates lake's args.
+VMODS=$(cd vendor/geb-mathlib && find . -name '*.lean' -printf '%P\n' \
+  | sed 's|\.lean$||; s|/|.|g' | tr '\n' ' ')
+lake lint -- $VMODS
 ```
 
-Expected: `lake build Geb` (the whole vendored library) succeeds;
-`lake lint Geb` is clean (bare `lake lint` would lint only `GebLean`, so
-name `Geb` explicitly); `check-axioms.sh` reports only `propext`,
-`Quot.sound`, `Classical.choice` (all accepted). If `lake lint Geb` flags
-a vendored module, that is the build-and-issue path in miniature: add the
-minimal suppression to the relevant file, fold it into the patch in
-Step 8, and record it as a new category in Task 4's notes.
+Expected: `lake build Geb` (the whole vendored library) succeeds, and
+`lake lint -- $VMODS` is clean. Do NOT run `scripts/check-axioms.sh` on
+`vendor/`: the vendored files' `module` keyword rejects the
+`#print axioms` it appends (axiom hygiene comes from the build under
+`-DwarningAsError=true`, which rejects `sorry`, plus mathlib-only imports
+where `Classical.choice` is accepted). If `lake lint` flags a vendored
+module, that is the build-and-issue path in miniature: add the minimal
+suppression (e.g. a `@[nolint <name>]` attribute), fold it into the patch
+in Step 8, and record it as a category in Task 4's notes.
 
 - [ ] **Step 8: Generate the back-port patch as a real `git diff`**
 
@@ -280,6 +295,7 @@ PATCHABS="$(pwd)/scripts/geb-mathlib-backport.patch"
 # Verify: the patch re-applies to a fresh pristine copy and reproduces the
 # adapted sources exactly.
 rm -rf "$WORK/verify" && mkdir -p "$WORK/verify/vendor/geb-mathlib"
+git -C "$WORK/verify" init -q   # own git repo so `git apply` lands here, not in $WORK
 cp "$TMP/pristine/Geb.lean" "$WORK/verify/vendor/geb-mathlib/Geb.lean"
 cp -R "$TMP/pristine/Geb" "$WORK/verify/vendor/geb-mathlib/Geb"
 ( cd "$WORK/verify" && git apply -p1 "$PATCHABS" )
@@ -482,8 +498,10 @@ genuinely new (decide the adaptation, add a category here).
 - Upstream cause: `geb-mathlib` suppresses the `linter.checkUnivs`
   universe linter on its `Slice` structures.
 - v4.29 symptom: `Unknown option 'linter.checkUnivs'`.
-- Adaptation: delete the `set_option linter.checkUnivs false in` lines and
-  the `@[nolint checkUnivs]` attributes.
+- Adaptation: delete the `set_option linter.checkUnivs false in` lines;
+  keep the `@[nolint checkUnivs]` attributes (the universe linter still
+  fires on the structures, and `nolint` is the v4.29-compatible
+  suppression).
 
 ### 3. `ConcreteCategory` redesign (mathlib pull request 34741)
 
@@ -504,6 +522,23 @@ no patch hunk can supply it and `sorry`/`admit` are banned. Such a module
 is dropped from the vendored copy via the refresh script's exclusion list
 until either `geb-lean` is forward-migrated to `v4.32.0-rc1` or the
 consuming exploration is deferred.
+
+## Tooling notes
+
+- Linting: `lake lint Geb` (a lib name) is not a valid invocation —
+  `lake lint` names modules. The refresh lints the vendored modules
+  computed from the `.lean` files on disk: `lake lint -- $VMODS` where
+  `VMODS=$(cd vendor/geb-mathlib && find . -name '*.lean' -printf '%P\n'
+  | sed 's|\.lean$||; s|/|.|g')`. This stays generic as the namespace
+  grows.
+- Axiom check: `scripts/check-axioms.sh` cannot scan the vendored files
+  (it appends `#print axioms`, which the `module` keyword rejects), so it
+  is not run on `vendor/`. Vendored axiom hygiene rests on the build
+  under `-DwarningAsError=true` (rejects `sorry`) plus mathlib-only
+  imports (where `Classical.choice` is accepted) and upstream curation.
+- Category 2 above retains the `@[nolint checkUnivs]` attributes: only
+  the `set_option linter.checkUnivs false in` lines are stripped; the
+  `nolint` attributes remain the suppression the universe linter needs.
 ```
 
 - [ ] **Step 2: Add a table of contents and verify markdown cleanliness**
@@ -582,12 +617,14 @@ jobs:
       - name: Refresh and re-apply the back-port patch
         id: refresh
         run: bash scripts/refresh-geb-mathlib.sh
-      - name: Build, test, lint, and axiom-check the whole vendored lib
+      - name: Build, test, and lint the whole vendored lib
         run: |
           lake build Geb
           lake test
-          lake lint Geb
-          bash scripts/check-axioms.sh vendor/geb-mathlib/Geb/ vendor/geb-mathlib/Geb.lean
+          # Lint every vendored module (list computed from disk, generic).
+          VMODS=$(cd vendor/geb-mathlib && find . -name '*.lean' -printf '%P\n' \
+            | sed 's|\.lean$||; s|/|.|g' | tr '\n' ' ')
+          lake lint -- $VMODS
       - name: Open or update the refresh pull request
         if: success()
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1  # v8.1.1
@@ -696,8 +733,8 @@ TOCs unchanged or updates them in place.
 - [ ] Run the full pre-push checklist: `bash scripts/pre-push.sh`. Expected:
   `lake test`, `lake lint`, `doctoc --check`, `markdownlint-cli2`, and
   `scripts/check-axioms.sh` all pass.
-- [ ] Confirm `lake build Geb` and `lake lint Geb` (the whole vendored
-  library) are green.
+- [ ] Confirm `lake build Geb` is green and the vendored modules lint
+  clean via `lake lint -- $VMODS` (module list computed from disk).
 - [ ] Confirm `git grep -n "ConcreteCategory.hom" vendor/geb-mathlib` and
   `git grep -n "import GebMeta" vendor/geb-mathlib` are both empty (the
   patch removed every occurrence).
