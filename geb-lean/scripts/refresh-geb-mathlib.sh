@@ -9,6 +9,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"   # geb-lean package root
 VENDOR="$ROOT/vendor/geb-mathlib"
 PATCH="$ROOT/scripts/geb-mathlib-backport.patch"
 
+# Fail immediately if the back-port patch is missing.
+[ -f "$PATCH" ] || { echo "error: back-port patch not found: $PATCH" >&2; exit 1; }
+
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 git clone --quiet "$REPO_URL" "$TMP/gm"
