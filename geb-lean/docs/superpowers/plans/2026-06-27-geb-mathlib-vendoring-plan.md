@@ -405,6 +405,7 @@ SRC_REV="${1:-main}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"   # geb-lean package root
 VENDOR="$ROOT/vendor/geb-mathlib"
 PATCH="$ROOT/scripts/geb-mathlib-backport.patch"
+[ -f "$PATCH" ] || { echo "error: back-port patch not found: $PATCH" >&2; exit 1; }
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -429,8 +430,12 @@ cat > "$VENDOR/PROVENANCE.md" <<EOF
   except where the back-port patch changes them.
 EOF
 
-# Apply the back-port patch; a rejection is a hard, reportable failure.
-( cd "$ROOT" && git apply -p1 "$PATCH" )
+# Apply the back-port patch. `git apply` resolves patch paths from the
+# repo root, not the CWD subdir, so run from the git root with
+# --directory; a rejection is a hard, reportable failure (set -e).
+GIT_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel)"
+REL="$(realpath --relative-to="$GIT_ROOT" "$ROOT")"
+( cd "$GIT_ROOT" && git apply -p1 --directory="$REL" "$PATCH" )
 echo "Refreshed vendor/geb-mathlib to $SRC_SHA and applied back-port patch."
 ```
 
