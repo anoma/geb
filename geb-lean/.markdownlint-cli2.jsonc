@@ -42,6 +42,8 @@
   "ignores": [
     ".lake/**",
     "node_modules/**",
+    "vendor/**",
+    "geb-lean/vendor/**",
     ".session/**",
     ".claude/memory/**",
     ".claude/docs/**",

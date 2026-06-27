@@ -4,13 +4,12 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Contents
 
-- [geb-mathlib back-port notes](#geb-mathlib-back-port-notes)
-  - [Categories](#categories)
-    - [1. `GebMeta` not vendored](#1-gebmeta-not-vendored)
-    - [2. `linter.checkUnivs` configuration absent in v4.29](#2-lintercheckunivs-configuration-absent-in-v429)
-    - [3. `ConcreteCategory` redesign (mathlib pull request 34741)](#3-concretecategory-redesign-mathlib-pull-request-34741)
-  - [The hard wall](#the-hard-wall)
-  - [Tooling notes](#tooling-notes)
+- [Categories](#categories)
+  - [1. `GebMeta` not vendored](#1-gebmeta-not-vendored)
+  - [2. `linter.checkUnivs` configuration absent in v4.29](#2-lintercheckunivs-configuration-absent-in-v429)
+  - [3. `ConcreteCategory` redesign (mathlib pull request 34741)](#3-concretecategory-redesign-mathlib-pull-request-34741)
+- [The hard wall](#the-hard-wall)
+- [Tooling notes](#tooling-notes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
