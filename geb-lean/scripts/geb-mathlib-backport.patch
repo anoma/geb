@@ -1,0 +1,121 @@
+diff --git a/vendor/geb-mathlib/Geb.lean b/vendor/geb-mathlib/Geb.lean
+index 5d37c79..9b07ec4 100644
+--- a/vendor/geb-mathlib/Geb.lean
++++ b/vendor/geb-mathlib/Geb.lean
+@@ -3,12 +3,12 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: The geb-mathlib contributors
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module -- shake: keep-all, shake: keep-downstream
+ 
+ public import Geb.Mathlib
+ public import Geb.Cslib
+ public import Geb.Internal
+-import GebMeta
+ 
+ /-!
+ # Geb root module
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
+index 10d1d42..6af7e49 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: The geb-mathlib contributors
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.Data.PFunctor.Univariate.Basic
+@@ -61,7 +62,6 @@ public section
+ 
+ universe uA uB uD uC uX
+ 
+-set_option linter.checkUnivs false in
+ /-- A polynomial functor with a constraint leg `s` assigning each
+ position (an element of `PFunctor.Idx`) a `dom`-index. -/
+ @[nolint checkUnivs]
+@@ -70,7 +70,6 @@ structure SliceDomPFunctor (dom : Type uD) : Type (max (uA + 1) (uB + 1) uD)
+   /-- The constraint leg: each position is assigned a `dom`-index. -/
+   s : toPFunctor.Idx → dom
+ 
+-set_option linter.checkUnivs false in
+ /-- A `SliceDomPFunctor` with a tag leg `t` assigning each shape a
+ `cod`-index. -/
+ @[nolint checkUnivs]
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
+index 60a6fba..95791f5 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: The geb-mathlib contributors
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Slice.Basic
+@@ -32,7 +33,7 @@ packaging is kept in a separate module from the choice-free core.
+ ## Implementation notes
+ 
+ `domFunctor` reuses the core `obj`/`map`; `Over` structure maps are
+-read through `ConcreteCategory.hom`, the slice-morphism hypothesis is
++read as functions, the slice-morphism hypothesis is
+ `SliceDomPFunctor.over_hom_comp` (the function-level form of `Over.w`),
+ results promoted with `↾`, and the functor laws discharged by `ext`
+ plus the core `map_id`/`map_comp`. `functor` is the `Functor.toOver`
+@@ -60,21 +61,19 @@ open CategoryTheory
+ namespace SliceDomPFunctor
+ 
+ /-- The function-level form of `Over.w`: a slice morphism `g : Y ⟶ Z`
+-commutes with the base maps, `Z.hom ∘ g.left = Y.hom`, read through
+-`ConcreteCategory.hom`. -/
++commutes with the base maps, `Z.hom ∘ g.left = Y.hom`, read as functions. -/
+ theorem over_hom_comp {dom : Type uD} {Y Z : Over dom} (g : Y ⟶ Z) :
+-    ConcreteCategory.hom Z.hom ∘ ConcreteCategory.hom g.left =
+-      ConcreteCategory.hom Y.hom := by
++    Z.hom ∘ g.left = Y.hom := by
+   funext z
+-  rw [Function.comp_apply, ← ConcreteCategory.comp_apply, Over.w g]
++  exact congrFun (Over.w g) z
+ 
+ /-- The functor `Over dom ⥤ Type` restricting the `PFunctor`
+ interpretation to `s`-compatible assignments; the core maps packaged
+ over `Over dom`. -/
+ @[expose] def domFunctor {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) :
+     CategoryTheory.Functor (Over dom) (Type (max uA uB uD)) where
+-  obj Y := F.obj (ConcreteCategory.hom Y.hom)
+-  map {Y Z} h := ↾(F.map (ConcreteCategory.hom h.left) (over_hom_comp h))
++  obj Y := F.obj (Y.hom)
++  map {Y Z} h := ↾(F.map (h.left) (over_hom_comp h))
+   map_id Y := by
+     ext z
+     exact congrFun (F.map_id _) z
+@@ -96,7 +95,7 @@ private theorem tagTriangle {dom : Type uD} {cod : Type (max uA uB uD)}
+     F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z => F.t z.1.1) =
+       (↾fun z => F.t z.1.1) := by
+   ext z
+-  exact congrArg F.t (F.toSliceDomPFunctor.map_fst (ConcreteCategory.hom g.left)
++  exact congrArg F.t (F.toSliceDomPFunctor.map_fst (g.left)
+     (SliceDomPFunctor.over_hom_comp g) z)
+ 
+ /-- The slice polynomial functor `Over dom ⥤ Over cod`: the
+@@ -119,7 +118,7 @@ theorem functor_comp_forget {dom : Type uD} {cod : Type (max uA uB uD)}
+ categorical object map carries no data beyond the constructive core. -/
+ theorem functor_obj {dom : Type uD} {cod : Type (max uA uB uD)}
+     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) (Y : Over dom) :
+-    F.functor.obj Y = Over.mk (↾ F.obj (ConcreteCategory.hom Y.hom)) :=
++    F.functor.obj Y = Over.mk (↾ F.obj (Y.hom)) :=
+   rfl
+ 
+ /-- `functor.map`'s underlying function is the choice-free `map`. An `Over`
+@@ -128,7 +127,7 @@ morphism map up to its `Prop`-valued commuting condition. -/
+ theorem functor_map {dom : Type uD} {cod : Type (max uA uB uD)}
+     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) {Y Z : Over dom} (g : Y ⟶ Z) :
+     (F.functor.map g).left =
+-      ↾ F.map (ConcreteCategory.hom g.left) (SliceDomPFunctor.over_hom_comp g) :=
++      ↾ F.map (g.left) (SliceDomPFunctor.over_hom_comp g) :=
+   rfl
+ 
+ end SlicePFunctor

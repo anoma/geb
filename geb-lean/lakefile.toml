@@ -38,3 +38,12 @@ roots = ["GebLeanTests"]
 
 [lean_lib.leanOptions]
 linter.hashCommand = false
+
+# Vendored geb-mathlib source. `globs = ["Geb.*"]` covers the whole
+# vendored namespace, naming no geb-mathlib subdirectory, so the wiring
+# tracks geb-mathlib's growth. The package's hard warningAsError and
+# leanOptions are inherited (no per-lib override).
+[[lean_lib]]
+name = "Geb"
+srcDir = "vendor/geb-mathlib"
+globs = ["Geb.*"]
