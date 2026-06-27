@@ -7,6 +7,7 @@
 - [Searchable](#searchable)
 - [Lean language](#lean-language)
 - [CSLib](#cslib)
+- [geb-mathlib](#geb-mathlib)
 - [General mathematics](#general-mathematics)
 - [General category theory](#general-category-theory)
 - [Opposite categories](#opposite-categories)
@@ -103,6 +104,12 @@ so that `CLAUDE.md` itself can stay short.
 - Reuse discipline: prefer CSLib typeclasses and abstract
   structures (e.g. `LTS`, `HasFresh`) over reaching into concrete
   instances, so internal CSLib changes do not break dependent code.
+
+## geb-mathlib
+
+- Curated source is vendored under `vendor/geb-mathlib/` (namespace
+  `Geb`), refreshed via `scripts/refresh-geb-mathlib.sh`; see
+  `docs/geb-mathlib-backport-notes.md`.
 
 ## General mathematics
 
