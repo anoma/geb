@@ -18,3 +18,4 @@ geb-idris/.claude
 .vscode
 build/
 /docs/common-lisp/html/
+.superpowers/
