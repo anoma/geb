@@ -55,10 +55,14 @@ fi
 step "Step 5: markdownlint-cli2"
 markdownlint-cli2 --config .markdownlint-cli2.jsonc --no-globs '**/*.md'
 
-# Step 6: axiom check. A non-allowlisted axiom dependency fails the
-# push.
-step "Step 6: scripts/check-axioms.sh"
-bash scripts/check-axioms.sh GebLean/ GebLeanTests/
+# Step 6: axiom hygiene. Building GebLeanAxiomChecks runs the
+# GebLeanMeta.detectNonstandardAxiom env_linter over GebLean,
+# GebLeanTests, and the vendored Geb tree; a non-standard axiom fails
+# the build. The smoke test guards the linter's own behaviour.
+step "Step 6a: lake build GebLeanAxiomChecks"
+lake build GebLeanAxiomChecks
+step "Step 6b: scripts/tests/test-axiom-linter.sh"
+bash scripts/tests/test-axiom-linter.sh
 
 # Step 7: user-driven gates (reminders, not mechanical checks).
 step "Step 7: user-driven gates (reminders)"

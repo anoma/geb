@@ -8,8 +8,8 @@
 # Runs the subset of checks whose results can change as a consequence
 # of Lean edits. For commits that touch only Markdown, scripts, or
 # other non-Lean files, this script is not required; the full
-# `scripts/pre-push.sh` superset (markdownlint, doctoc,
-# check-axioms.sh, user-driven gates) is still mandatory before push.
+# `scripts/pre-push.sh` superset (markdownlint, doctoc, axiom-gate
+# build, smoke test, user-driven gates) is still mandatory before push.
 #
 # See .claude/rules/ci-and-workflow.md § Pre-commit checklist.
 
@@ -30,4 +30,11 @@ lake test
 step "Step 2: lake lint"
 lake lint
 
-printf '\npre-commit: Lean triad passed.\n'
+# Step 3: axiom-hygiene gates. Building GebLeanAxiomChecks runs the
+# GebLeanMeta.detectNonstandardAxiom env_linter over GebLean,
+# GebLeanTests, and the vendored Geb tree; a non-standard axiom fails
+# the build.
+step "Step 3: lake build GebLeanAxiomChecks"
+lake build GebLeanAxiomChecks
+
+printf '\npre-commit: Lean checks passed.\n'
