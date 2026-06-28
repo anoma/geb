@@ -17,7 +17,7 @@ index 5d37c79..9b07ec4 100644
  /-!
  # Geb root module
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
-index 10d1d42..6af7e49 100644
+index 131b203..c2eb712 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
@@ -28,16 +28,16 @@ index 10d1d42..6af7e49 100644
  module
  
  public import Mathlib.Data.PFunctor.Univariate.Basic
-@@ -61,7 +62,6 @@ public section
+@@ -64,7 +65,6 @@ public section
  
  universe uA uB uD uC uX
  
 -set_option linter.checkUnivs false in
  /-- A polynomial functor with a constraint leg `s` assigning each
- position (an element of `PFunctor.Idx`) a `dom`-index. -/
+ direction (an element of `PFunctor.Idx`) a `dom`-index. -/
  @[nolint checkUnivs]
-@@ -70,7 +70,6 @@ structure SliceDomPFunctor (dom : Type uD) : Type (max (uA + 1) (uB + 1) uD)
-   /-- The constraint leg: each position is assigned a `dom`-index. -/
+@@ -73,7 +73,6 @@ structure SliceDomPFunctor (dom : Type uD) : Type (max (uA + 1) (uB + 1) uD)
+   /-- The constraint leg: each direction is assigned a `dom`-index. -/
    s : toPFunctor.Idx → dom
  
 -set_option linter.checkUnivs false in
@@ -119,3 +119,57 @@ index 60a6fba..95791f5 100644
    rfl
  
  end SlicePFunctor
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
+index 38d7d5b..b8132aa 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: The geb-mathlib contributors
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Slice.Basic
+@@ -114,7 +115,6 @@ open CategoryTheory
+ 
+ universe uI uJ uA uB uZ u v vI vJ
+ 
+-set_option linter.checkUnivs false in
+ /-- Operations of a presheaf-domain polynomial functor over `I`: a
+ `SliceDomPFunctor` on `I`'s objects, with the contravariant `I`-action
+ `restr` making each arity a presheaf on `I`. -/
+@@ -211,8 +211,7 @@ the functor-category hom, to stay choice-free). -/
+     intro i i' f b
+     rw [comp_map F α x.1, comp_map F α x.1]
+     refine (congrArg (fun w => α.app ⟨i'⟩ w) (x.2 f b)).trans ?_
+-    simp only [← ConcreteCategory.comp_apply]
+-    rw [α.naturality f.op]⟩
++    exact FunctorToTypes.naturality _ _ α f.op _⟩
+ 
+ /-- Functoriality in the input presheaf: the identity transformation acts as
+ the identity. -/
+@@ -241,7 +240,6 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
+ 
+ end PresheafDomPFunctorData
+ 
+-set_option linter.checkUnivs false in
+ /-- A presheaf-domain polynomial functor: operations together with a
+ proof they are functorial. Its action is a functor `(Iᵒᵖ ⥤ Type) ⥤ Type`
+ (packaged in `Presheaf.Functor`). -/
+@@ -254,7 +252,6 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
+ 
+ attribute [ext] PresheafDomPFunctorData PresheafDomPFunctor
+ 
+-set_option linter.checkUnivs false in
+ /-- Operations of a presheaf polynomial functor `(Iᵒᵖ ⥤ Type) → (Jᵒᵖ ⥤ Type)`:
+ the dom operations plus the tag leg `t` (via `SlicePFunctor`), the `J`-action
+ `tagRestr` on shapes, and the arity reindexing `reindex`. -/
+@@ -347,7 +344,6 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
+ 
+ end PresheafPFunctorData
+ 
+-set_option linter.checkUnivs false in
+ /-- A presheaf polynomial functor: operations together with a proof they are
+ functorial. Its action is a functor `(Iᵒᵖ ⥤ Type) ⥤ (Jᵒᵖ ⥤ Type)`. -/
+ @[nolint checkUnivs]

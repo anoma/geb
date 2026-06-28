@@ -8,6 +8,8 @@
   - [1. `GebMeta` not vendored](#1-gebmeta-not-vendored)
   - [2. `linter.checkUnivs` configuration absent in v4.29](#2-lintercheckunivs-configuration-absent-in-v429)
   - [3. `ConcreteCategory` redesign (mathlib pull request 34741)](#3-concretecategory-redesign-mathlib-pull-request-34741)
+- [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
+  - [The no-op condition](#the-no-op-condition)
 - [The hard wall](#the-hard-wall)
 - [Tooling notes](#tooling-notes)
 
@@ -32,23 +34,78 @@ genuinely new (decide the adaptation, add a category here).
 ### 2. `linter.checkUnivs` configuration absent in v4.29
 
 - Upstream cause: `geb-mathlib` suppresses the `linter.checkUnivs`
-  universe linter on its `Slice` structures.
+  universe linter on its `Slice` and `Presheaf` structures.
 - v4.29 symptom: `Unknown option 'linter.checkUnivs'`.
 - Adaptation: delete the `set_option linter.checkUnivs false in` lines;
   keep the `@[nolint checkUnivs]` attributes (the universe linter still
   fires on the structures, and `nolint` is the v4.29-compatible
-  suppression).
+  suppression). The deletions span `Slice/Basic.lean` (two lines) and
+  `Presheaf/Basic.lean` (four lines).
 
 ### 3. `ConcreteCategory` redesign (mathlib pull request 34741)
 
 - Upstream cause: the post-`HasForget` `ConcreteCategory` adds the
   `ConcreteCategory.hom` accessor and `ConcreteCategory.comp_apply`; in
-  v4.29 an `Over` base map is already a function.
+  v4.29 an `Over` base map and an `Iᵒᵖ ⥤ Type` presheaf map are already
+  functions.
 - v4.29 symptom: `Unknown identifier 'ConcreteCategory.hom'` /
   `'ConcreteCategory.comp_apply'`.
-- Adaptation: drop the `ConcreteCategory.hom` wrapper (and its two
-  docstring mentions); rewrite the `over_hom_comp` proof to
-  `exact congrFun (Over.w g) z`.
+- Adaptation in `Slice/Functor.lean`: drop the `ConcreteCategory.hom`
+  wrapper (and its two docstring mentions); rewrite the `over_hom_comp`
+  proof to `exact congrFun (Over.w g) z`.
+- Adaptation in `Presheaf/Basic.lean`: the input-presheaf `map`
+  naturality proof closes with
+  `simp only [← ConcreteCategory.comp_apply]; rw [α.naturality f.op]`.
+  Replace both tactics with `exact FunctorToTypes.naturality _ _ α f.op _`,
+  the `Type`-valued naturality lemma whose statement is the goal
+  (`α.app Y (Z.map f x) = Z'.map f (α.app X x)`).
+
+## Updating the patch for a new upstream
+
+The vendored tree is a pure function of two committed inputs: the
+upstream `geb-mathlib` commit and this patch.
+`scripts/refresh-geb-mathlib.sh` recomputes it by re-cloning upstream
+and re-applying the patch with `git apply`. A patch hunk's context
+lines are tied to the upstream revision it was generated against; when
+upstream moves, the context drifts and `git apply` rejects the patch
+even though the adaptation itself is still valid. (The rejection that
+prompted this procedure was a docstring reword upstream that displaced
+the category-2 hunk's context.)
+
+To update the patch to a new upstream revision, ahead of the automated
+refresh:
+
+1. Clone upstream at the target revision and overlay it on a scratch
+   copy of `vendor/geb-mathlib`, exactly as the refresh script does
+   (wipe `Geb.lean` and `Geb/`, copy the fresh source in).
+2. Re-apply each adaptation category above to the fresh source.
+   `patch -F<n>` (or `git apply --3way`) re-anchors a hunk whose
+   context drifted but whose removed lines are unchanged. A category
+   whose removed lines themselves changed, or a newly-ingested module
+   carrying the same v4.29 incompatibility, needs the category extended
+   by hand.
+3. Build and check the result with the same commands CI runs:
+   `lake build Geb`, `lake test`, `lake lint -- $VMODS`, and
+   `lake build GebLeanAxiomChecks`. The `Geb` library's
+   `globs = ["Geb.*"]` compiles every vendored module whether or not it
+   is imported, so a newly-ingested module that hits the hard wall
+   surfaces here rather than silently.
+4. Regenerate the patch as the diff between the pristine fresh source
+   and the adapted tree (for example
+   `git diff --no-index <pristine> <adapted>`), preserving the
+   `a/vendor/geb-mathlib/...` path prefixes the refresh script expects.
+
+### The no-op condition
+
+A patch update is correct exactly when re-running the refresh against
+the same upstream revision is a no-op: the regenerated vendored source
+is byte-identical to what the update produced. After the patch and the
+regenerated vendored tree are committed together,
+`scripts/refresh-geb-mathlib.sh <rev>` followed by
+`git diff -- vendor/geb-mathlib` must leave every `.lean` file and
+`LICENSE` unchanged. `PROVENANCE.md` is excluded from the check: it
+records the upstream and patch commit SHAs, which change when the patch
+is committed.
 
 ## The hard wall
 
