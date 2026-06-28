@@ -21,6 +21,15 @@ its foundations, and the project-wide ban on `noncomputable` (enforced
 by `lake build` under `-DwarningAsError`) is the independent guarantee
 that `Classical.choice` reaches no computational content.
 
+## Main definitions
+
+* `permittedAxioms`: the fixed `NameSet` of axioms accepted
+  project-wide: `propext`, `Quot.sound`, and `Classical.choice`.
+* `offendingAxioms`: filters an array of axiom names, returning those
+  not in `permittedAxioms`.
+* `detectNonstandardAxiom`: the `@[env_linter disabled]` that calls
+  `collectAxioms` on each declaration and reports offending axioms.
+
 ## References
 
 - `Lean/Util/CollectAxioms.lean` (core Lean) — `collectAxioms`.
@@ -29,6 +38,10 @@ that `Classical.choice` reaches no computational content.
 - Adapted from `geb-mathlib`'s `GebMeta.lean` (transcription); the
   per-module `Classical.choice` allowlist is dropped, since `geb-lean`
   permits it project-wide.
+
+## Tags
+
+axioms, linter, metaprogramming, collectAxioms
 -/
 
 public meta section

@@ -228,10 +228,15 @@ edited (forward-only style rule; document-only-the-persistent rule).
 - `module`/legacy import interop. Verified: the legacy file
   `GebLeanTests/Vendor/GebMathlibSmoke.lean` already imports a vendored
   `module`-system file and builds.
-- Coverage by name-prefix is complete only if every audited declaration
-  lives under the expected prefix. This holds by construction:
-  `getDeclsInPackage` selects by defining-module prefix, independent of
-  any umbrella import list, so no module can be orphaned from the gate.
+- Coverage holds because each gate audits the declarations present in
+  its package umbrella's import closure, which the project's
+  one-index-file-per-directory convention (and
+  `scripts/refresh-geb-mathlib.sh` for the vendored index) keeps
+  complete. A module compiled by globs but omitted from its umbrella
+  would escape the gate; umbrella completeness is the invariant that
+  matters. (Verified: zero orphans — every `GebLean` module is in
+  the umbrella's import closure, and the vendored `Geb.lean` is a
+  complete index.)
 
 ## References
 
