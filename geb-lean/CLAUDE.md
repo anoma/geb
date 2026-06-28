@@ -220,6 +220,10 @@ to `main` brings spec, plan, and code together.
   level (the parent monorepo runs CI for `geb-lean/`).
 - Linters: `markdownlint-cli2`, `lake lint`,
   `scripts/check-axioms.sh`.
+- `geb-mathlib` vendoring: curated source lives under
+  `vendor/geb-mathlib/`, refreshed via
+  `scripts/refresh-geb-mathlib.sh`; see
+  `docs/geb-mathlib-backport-notes.md`.
 - Skills: `superpowers:*`, `lean4:*`, `claude-md-management:*`,
   `code-review:*`, `pr-review-toolkit:*`, `commit-commands:*`,
   `security-review`; plus `dispatching-parallel-agents`,

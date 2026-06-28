@@ -522,6 +522,19 @@ a `Mathlib/` versus `Internal/` split: `geb-mathlib` plays the
 curated role, so a sub-tree boundary inside `geb-lean` would
 duplicate that distinction without adding information.
 
+`geb-lean` currently vendors curated `geb-mathlib` source under
+`vendor/geb-mathlib/` (namespace `Geb`), serving as a toolchain
+bridge rather than a namespace split: the vendored copy allows
+`geb-lean` to build against `geb-mathlib` content while
+`geb-mathlib` tracks a newer Lean toolchain. The copy is refreshed
+by `scripts/refresh-geb-mathlib.sh` and kept current automatically
+by the parent-level `geb-mathlib-refresh.yml` workflow. This
+supersedes the "replacing the local copy with an import" migration
+path described above for as long as `geb-lean` lags `geb-mathlib`'s
+toolchain; the import-based path resumes when the toolchain versions
+converge. See the design spec at
+`docs/superpowers/specs/2026-06-27-geb-mathlib-vendoring-design.md`.
+
 ## No per-file copyright or author headers
 
 `.lean`, `.md`, and other text files in this repository do not
