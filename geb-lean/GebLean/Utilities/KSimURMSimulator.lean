@@ -320,10 +320,6 @@ def baseFamily {a : ℕ} (P : URMProgram a) :
       | some i => KMor1.proj i
       | none   => KMor1.zero)
 
--- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
--- Fin.lastCases_castSucc / Fin.reverseInduction.go; project
--- policy accepts this exception per .claude/rules/lean-coding.md
--- § Accepted exceptions).
 /-- Every base-family component is at level 0 (each is
 `KMor1.zero` or `KMor1.proj _`). -/
 theorem baseFamily_level {a : ℕ} (P : URMProgram a)
@@ -432,9 +428,6 @@ def stepFamily {a : ℕ} (P : URMProgram a) :
         (fun k => branches_j P j k)
         (v_j_prev P j))
 
--- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
--- Fin.lastCases_castSucc; see .claude/rules/lean-coding.md
--- § Accepted exceptions).
 /-- Every step-family component is at level ≤ 1. Each branch
 and the default are at level ≤ 1 by inspection; the dispatcher's
 `KMor1.pcDispatch_level` gives the result. -/
@@ -611,9 +604,6 @@ private lemma step_ctx_eval_simrec {a : ℕ} (P : URMProgram a)
             ⟨slot - (a + 1), by omega⟩) = _
   rw [dif_neg (by omega)]
 
--- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
--- Fin.lastCases_castSucc; see .claude/rules/lean-coding.md
--- § Accepted exceptions).
 /-- The conjunctive vector invariant: at every time `y`, the
 simrec state vector at each component matches the URM state's
 corresponding field. The PC component is at index
@@ -951,9 +941,6 @@ private theorem simulate_step_match {a : ℕ}
               from by apply Fin.ext; simp [Fin.castSucc]]
         exact ih_regs j
 
--- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
--- Fin.lastCases_castSucc through simulate_step_match; see
--- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- The K^sim simulator's output at time `y` and input `v`
 equals the value of `P.outputReg` after `y` URM steps from
 `URMState.init P v`. Holds for every `URMProgram a`; no
@@ -966,10 +953,6 @@ theorem simulate_interp {a : ℕ} (P : URMProgram a)
     Fin.cons_succ]
   exact (simulate_step_match P v y).2 P.outputReg
 
--- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
--- Fin.lastCases_castSucc through baseFamily_level /
--- stepFamily_level; see .claude/rules/lean-coding.md
--- § Accepted exceptions).
 /-- The K^sim simulator is at level ≤ 2. By `KMor1.level`'s
 `.simrec` clause, the level is `max sup_h sup_g + 1` where
 `sup_h ≤ 0` (each base-family component is level 0 per

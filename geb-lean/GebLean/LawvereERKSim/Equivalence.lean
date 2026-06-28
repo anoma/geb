@@ -84,10 +84,6 @@ namespace GebLean
 
 open CategoryTheory
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erToKFunctor_comp_kInterpFunctor` and
--- `kToERFunctor_comp_erInterpFunctor`; see
--- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Strict functor equality for the ER → K → ER round-trip:
 `erToKFunctor ⋙ kToERFunctor = 𝟭 LawvereERCat`. Proof uses
 faithfulness of `erInterpFunctor` plus `Functor.hcongr_hom`
@@ -121,10 +117,6 @@ theorem erToKFunctor_comp_kToERFunctor :
         erToKFunctor_comp_kInterpFunctor e)
   rw [h1, h2]
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erToKFunctor_comp_kInterpFunctor` and
--- `kToERFunctor_comp_erInterpFunctor`; see
--- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Strict functor equality for the K → ER → K round-trip:
 `kToERFunctor ⋙ erToKFunctor = 𝟭 (LawvereKSimDCat 2)`.
 Symmetric to `erToKFunctor_comp_kToERFunctor`, using
@@ -155,9 +147,6 @@ theorem kToERFunctor_comp_erToKFunctor :
         kToERFunctor_comp_erInterpFunctor f)
   rw [h1, h2]
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erToKFunctor_comp_kToERFunctor`; see
--- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Natural isomorphism witnessing the ER → K → ER round-trip
 collapse: `erToKFunctor ⋙ kToERFunctor ≅ 𝟭 LawvereERCat`.
 Defined as `eqToIso` of the strict functor equality
@@ -167,9 +156,6 @@ def erToKKToErIso :
     erToKFunctor ⋙ kToERFunctor ≅ 𝟭 LawvereERCat :=
   eqToIso erToKFunctor_comp_kToERFunctor
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `kToERFunctor_comp_erToKFunctor`; see
--- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Natural isomorphism witnessing the K → ER → K round-trip
 collapse: `kToERFunctor ⋙ erToKFunctor ≅ 𝟭 (LawvereKSimDCat 2)`.
 Defined as `eqToIso` of the strict functor equality
@@ -179,9 +165,6 @@ def kToErErToKIso :
     kToERFunctor ⋙ erToKFunctor ≅ 𝟭 (LawvereKSimDCat 2) :=
   eqToIso kToERFunctor_comp_erToKFunctor
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erToKKToErIso` and `kToErErToKIso`; see
--- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- The packaged categorical equivalence
 `LawvereERCat ≌ LawvereKSimDCat 2` (Tourlakis 2018 Corollary
 0.1.0.44 at `n = 2`). Built via `Equivalence.mk'` (the raw
@@ -205,9 +188,6 @@ def erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2 :=
     kToErErToKIso
     (by intro X; simp [erToKKToErIso, kToErErToKIso])
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erKSimEquiv`; see .claude/rules/lean-coding.md
--- § Accepted exceptions).
 /-- Explicit `IsEquivalence` instance for `erToKFunctor`.
 Mathlib's global instance
 `Equivalence.isEquivalence_functor` supplies
@@ -220,9 +200,6 @@ instance erToKFunctorIsEquivalence :
     erToKFunctor.IsEquivalence :=
   erKSimEquiv.isEquivalence_functor
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erKSimEquiv`; see .claude/rules/lean-coding.md
--- § Accepted exceptions).
 /-- Explicit `IsEquivalence` instance for `kToERFunctor`.
 Symmetric to the `erToKFunctor` instance, projecting via
 `Equivalence.isEquivalence_inverse` (which supplies

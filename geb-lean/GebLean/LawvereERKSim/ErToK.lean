@@ -57,9 +57,6 @@ def erToK : {a : ℕ} → ERMor1 a → KMor1 a := fun {a} e =>
     (Fin.cons (α := fun _ => KMor1 a) (boundExprK e)
       (fun i : Fin a => KMor1.proj i))
 
--- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
--- Fin.lastCases_castSucc through `KSimURMSimulator.simulate_level`;
--- see .claude/rules/lean-coding.md § Accepted exceptions).
 /-- `erToK e` has structural level at most 2. The outer `comp`
 splits into the simulator head (level ≤ 2 by `simulate_level`)
 and the `Fin (a + 1)`-indexed family: slot 0 is `boundExprK e`
@@ -85,9 +82,6 @@ theorem erToK_level {a : ℕ} (e : ERMor1 a) :
     change (KMor1.proj i).level ≤ 2
     exact Nat.zero_le _
 
--- AXIOM_ALLOW: Classical.choice (transitively via mathlib's
--- Fin.lastCases_castSucc through `KSimURMSimulator.simulate_interp`;
--- see .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Interp-faithfulness of `erToK`: at every context `v`,
 `(erToK e).interp v = e.interp v`. Threads `KMor1.interp_comp`,
 `KSimURMSimulator.simulate_interp`, and

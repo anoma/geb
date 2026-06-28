@@ -215,11 +215,6 @@ private theorem boundExprKParams_mu_ge_two_or_arity_zero :
       simp only [boundExprKParams]
       omega
 
--- AXIOM_ALLOW: Classical.choice
--- (bsum and bprod cases route through `Fin.cons`/`Fin.tail` simp
--- normalisation which transitively pulls in `Fin.lastCases_castSucc`;
--- accepted exception per `.claude/rules/lean-coding.md` § Accepted
--- exceptions, spec §11.)
 /-- Joint runtime+value bound: for every ER morphism `e`, both
 `compileER_runtime e v` (the URM steps `compileER` runs for) and
 `e.interp v` (the ER value) are dominated by
