@@ -65,8 +65,6 @@ bound is uniform-by-construction (each slot is level ≤ 2 by
 def erToKN {n m : ℕ} (e : ERMorN n m) : KMorN n m :=
   fun j => erToK (e j)
 
--- AXIOM_ALLOW: Classical.choice (transitively via `erToK_interp`;
--- see .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Componentwise correctness of `erToKN`: each component of the
 erToKN-translated family agrees with the corresponding ER
 component on every context. -/
@@ -75,16 +73,12 @@ theorem erToKN_interp {n m : ℕ} (e : ERMorN n m)
     (erToKN e j).interp v = (e j).interp v :=
   erToK_interp (e j) v
 
--- AXIOM_ALLOW: Classical.choice (transitively via `erToK_level`;
--- see .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Per-slot level bound for `erToKN`: every output component of
 the translated family has structural level at most 2. -/
 theorem erToKN_level {n m : ℕ} (e : ERMorN n m)
     (j : Fin m) : (erToKN e j).level ≤ 2 :=
   erToK_level (e j)
 
--- AXIOM_ALLOW: Classical.choice (transitively via `erToK_interp`;
--- see .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Compatibility of `erToKN` with ER ext-eq: extensionally-equal
 ER families produce extensionally-equal K^sim families. Used by
 `erToKFunctor.map` to discharge the `Quotient.lift`
@@ -98,9 +92,6 @@ theorem erToKN_compat_extEq {n m : ℕ}
   rw [erToKN_interp, erToKN_interp]
   exact he v j
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erToKN_compat_extEq`; see .claude/rules/lean-coding.md
--- § Accepted exceptions).
 /-- Morphism component of the forward functor.  Lifts an
 `ERMorNQuo n m` (an equivalence class of `ERMorN n m`
 families under ext-equality) to a `KSimMor 2 n m` whose
@@ -126,8 +117,6 @@ def erToKFunctor_map {n m : ℕ}
       exact erToKN_compat_extEq
         (fun v' j' => congr_fun (h v') j') v j)
 
--- AXIOM_ALLOW: Classical.choice (transitively via `erToK_interp`;
--- see .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Functor law: `erToKFunctor_map` preserves identities.
 The `𝟙 n` morphism in `LawvereERCat` has representative
 `ERMorN.id n`; its erToKN-translation componentwise equals
@@ -149,8 +138,6 @@ theorem erToKFunctor_map_id (n : LawvereERCat) :
   rw [erToKN_interp]
   rfl
 
--- AXIOM_ALLOW: Classical.choice (transitively via `erToK_interp`;
--- see .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Functor law: `erToKFunctor_map` preserves composition.
 On raw representatives, `ERMorN.comp e f` slotwise equals
 `ERMor1.comp (f j) e`; `erToK` is interp-faithful, and
@@ -199,9 +186,6 @@ def erToKFunctor : CategoryTheory.Functor
   map_id    := erToKFunctor_map_id
   map_comp  := erToKFunctor_map_comp
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erToKN_interp` → `erToK_interp`; see
--- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Morphism-level interpretation preservation: the
 K^sim-quotient interpretation of `erToKFunctor_map e` agrees
 with the ER-quotient interpretation of `e`.  Mirror:
@@ -231,9 +215,6 @@ theorem erToKFunctor_map_interp {n m : ℕ}
   change (erToKN rec j).interp ctx = (rec j).interp ctx
   exact erToKN_interp rec ctx j
 
--- AXIOM_ALLOW: Classical.choice (transitively via
--- `erToKFunctor_map_interp`; see
--- .claude/rules/lean-coding.md § Accepted exceptions).
 /-- Functor-level interpretation preservation: composing
 `erToKFunctor` with `kInterpFunctor` equals `erInterpFunctor`
 as functors `LawvereERCat ⥤ Type`.  Mirror:

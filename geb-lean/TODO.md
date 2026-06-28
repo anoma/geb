@@ -27,9 +27,9 @@ lands in `docs/index.md`.
   0.1.0.44 at `n = 2`), built via `Equivalence.mk'` plus two
   explicit `Functor.IsEquivalence` instances. T1-T4 merged
   on `main`; T5 on `feat/t5-equivalence` pending PR. Axiom
-  envelope is `[propext, Quot.sound]` after AXIOM_ALLOW
-  suppression of the standing `Fin.lastCases_castSucc`
-  exception. A post-T2 follow-up branch (task #654) tracks
+  envelope is `[propext, Quot.sound, Classical.choice]`
+  (`Fin.lastCases_castSucc` contributes `Classical.choice`,
+  accepted project-wide). A post-T2 follow-up branch (task #654) tracks
   deferred cleanups (naming sweeps, structural extraction,
   private-promotion re-evaluation).
 - **Scope**: Continue Phase 4g.2 (the
@@ -59,7 +59,7 @@ lands in `docs/index.md`.
   `Equivalence.mk'`, two `Functor.IsEquivalence` instances).
   T1-T4 are merged on `main`; T5 is on `feat/t5-equivalence`
   pending PR. The whole sub-project's axiom envelope is
-  `[propext, Quot.sound]` after AXIOM_ALLOW suppression.
+  `[propext, Quot.sound, Classical.choice]`.
 - **Scope (natEq / elegant pairing arithmetic
   pipeline)**: Prove `natEq` transitivity and
   `elegantPair` injectivity so that `treeEqG_ββ` becomes

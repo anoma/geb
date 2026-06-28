@@ -67,11 +67,14 @@ consuming exploration is deferred.
   `VMODS=$(cd vendor/geb-mathlib && find . -name '*.lean' -printf '%P\n'
   | sed 's|\.lean$||; s|/|.|g')`. This stays generic as the namespace
   grows.
-- Axiom check: `scripts/check-axioms.sh` cannot scan the vendored files
-  (it appends `#print axioms`, which the `module` keyword rejects), so it
-  is not run on `vendor/`. Vendored axiom hygiene rests on the build
-  under `-DwarningAsError=true` (rejects `sorry`) plus mathlib-only
-  imports (where `Classical.choice` is accepted) and upstream curation.
+- Axiom check: the `GebLeanMeta.detectNonstandardAxiom` env_linter
+  scans the vendored `Geb.*` tree via the
+  `GebLeanAxiomChecks/Vendored.lean` gate
+  (`#lint only detectNonstandardAxiom in Geb`), so a patch-introduced
+  non-standard axiom fails `lake build GebLeanAxiomChecks`. This
+  complements the build under `-DwarningAsError=true` (which rejects
+  `sorry`). `propext`, `Quot.sound`, and `Classical.choice` are
+  accepted; everything else is fatal.
 - Category 2 above retains the `@[nolint checkUnivs]` attributes: only
   the `set_option linter.checkUnivs false in` lines are stripped; the
   `nolint` attributes remain the suppression the universe linter needs.

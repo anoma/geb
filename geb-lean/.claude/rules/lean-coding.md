@@ -187,14 +187,16 @@ upstream licences' requirements.
 - Before any commit that touches a `.lean` file, run
   `bash scripts/pre-commit.sh`. The script runs `lake test`
   (which subsumes `lake build` against current lakefile targets)
-  followed by `lake lint`. Catching `lake lint` regressions at
+  followed by `lake lint`, then `lake build GebLeanAxiomChecks`.
+  Catching `lake lint` regressions at
   commit time rather than push time keeps the linter from
   silently accumulating debt between pushes.
 - `scripts/pre-push.sh` is the full superset (`pre-commit.sh`'s
   Lean triad, plus `doctoc --check`, `markdownlint-cli2`,
-  `scripts/check-axioms.sh`, and user-driven-gate reminders) and
-  is mandatory before every push, regardless of which file types
-  changed.
+  `lake build GebLeanAxiomChecks`,
+  `scripts/tests/test-axiom-linter.sh`, and user-driven-gate
+  reminders) and is mandatory before every push, regardless of
+  which file types changed.
 - In a fresh worktree, run `lake exe cache get` before the first
   `lake build` to pull mathlib's precompiled artifacts. Without
   this, lake falls back to building mathlib from source (hours of
@@ -231,20 +233,18 @@ Prefer the constructive `Quotient` / `Quot` API
 (`mk` / `lift` / `ind` / `sound`); `Quotient.out` / `Quot.out`
 are `noncomputable` and therefore banned anyway.
 
-#### Axiom audit and the `AXIOM_ALLOW` mechanism
+#### Axiom audit
 
-`scripts/check-axioms.sh` accepts `propext`, `Quot.sound`, and
-`Classical.choice`; it rejects `sorryAx` and any other
-non-standard axiom. Because `Classical.choice` is accepted
-project-wide, it no longer needs per-declaration annotation. The
-`-- AXIOM_ALLOW: <axiom> (rationale)` mechanism (a comment
-immediately above a declaration or inside its `/-- … -/`
-docstring, which suppresses that axiom from the failure output)
-remains available should the project ever need to allow a
-*different* non-standard axiom on an individual basis. Any
-`-- AXIOM_ALLOW: Classical.choice` comments predating this policy
-(e.g. in `KSimURMSimulator.lean`) are now redundant and may be
-removed when those files are next touched.
+`GebLeanMeta.detectNonstandardAxiom` (an `@[env_linter]` built on
+`Lean.collectAxioms`) accepts `propext`, `Quot.sound`, and
+`Classical.choice`; it rejects `sorryAx` and every other non-standard
+axiom. It is invoked over `GebLean`, `GebLeanTests`, and the vendored
+`Geb` tree by the `GebLeanAxiomChecks` library's
+`#lint only detectNonstandardAxiom in <Pkg>` gates, so a forbidden
+axiom fails `lake build GebLeanAxiomChecks`. The permitted set is
+fixed in `GebLeanMeta.lean`; permitting any further non-standard axiom
+means editing that set there (there is no per-declaration comment
+escape hatch).
 
 ### Proof guidelines
 

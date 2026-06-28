@@ -98,9 +98,10 @@ so that `CLAUDE.md` itself can stay short.
   bans `Classical`, `noncomputable`, and `axiom` applies to any
   *transitive* axiom dependency too: a GebLean term that depends
   on a CSLib (or mathlib) lemma using `Classical.choice` will
-  surface that axiom under `#print axioms`. For results that must
-  remain constructive, run `#print axioms` and refactor if a
-  non-pure axiom appears.
+  surface that axiom under `#print axioms`. For ad-hoc checks, run
+  `#print axioms` and refactor if a non-pure axiom appears; the
+  `GebLeanMeta.detectNonstandardAxiom` env_linter (via
+  `lake build GebLeanAxiomChecks`) is the systematic gate.
 - Reuse discipline: prefer CSLib typeclasses and abstract
   structures (e.g. `LTS`, `HasFresh`) over reaching into concrete
   instances, so internal CSLib changes do not break dependent code.
