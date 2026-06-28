@@ -52,3 +52,16 @@ globs = ["Geb.*"]
 # the GebLean/GebLeanTests/Geb namespaces; not audited by the gates.
 [[lean_lib]]
 name = "GebLeanMeta"
+
+# Axiom-hygiene gates: building this library runs the env_linter over
+# GebLean, GebLeanTests, and the vendored Geb tree. Separate from
+# GebLeanTests to avoid an import cycle for the GebLeanTests self-check.
+# weak.linter.hashCommand is used (rather than linter.hashCommand) so
+# the option applies only when Batteries.Tactic.Lint defines it; Unit.lean
+# only imports Batteries.Tactic.Lint.Basic and would otherwise error.
+[[lean_lib]]
+name = "GebLeanAxiomChecks"
+roots = ["GebLeanAxiomChecks"]
+
+[lean_lib.leanOptions]
+weak.linter.hashCommand = false
