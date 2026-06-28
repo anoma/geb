@@ -26,11 +26,6 @@
 // 2026-05-09 is linted normally. The geb-lean/ mirror
 // pair for each legacy pattern handles the parent-CWD CI
 // invocation case.
-//
-// .remember/ is deliberately NOT listed: the directory
-// hosts the remember tool's session-state output. The
-// project chooses to clean each file as it appears
-// rather than blanket-ignore the directory.
 {
   "config": {
     "default": true,
@@ -44,6 +39,7 @@
     "node_modules/**",
     "vendor/**",
     "geb-lean/vendor/**",
+    ".remember/**",
     ".session/**",
     ".claude/memory/**",
     ".claude/docs/**",
