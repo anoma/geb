@@ -50,6 +50,9 @@ Run by `scripts/pre-commit.sh` before any commit that touches a
    redundant against current lakefile targets — see § Pre-push
    checklist below).
 2. `lake lint` quiet.
+3. `lake build GebLeanAxiomChecks` succeeds (runs the
+   `GebLeanMeta.detectNonstandardAxiom` env_linter over `GebLean`,
+   `GebLeanTests`, and the vendored `Geb` tree).
 
 The script is scoped to `.lean`-touching commits: for commits
 that touch only Markdown, scripts, or other non-Lean files it is
@@ -70,9 +73,13 @@ Run by `scripts/pre-push.sh`:
 4. `doctoc --check '**/*.md'` quiet (skipped if `doctoc` is not
    installed).
 5. `markdownlint-cli2 '**/*.md'` quiet.
-6. `bash scripts/check-axioms.sh GebLean/ GebLeanTests/` quiet.
-   A non-allowlisted axiom dependency fails the push; CI repeats
-   the check via the `axiom_check` job in
+6. `lake build GebLeanAxiomChecks` succeeds, then
+   `bash scripts/tests/test-axiom-linter.sh` passes. The
+   `GebLeanAxiomChecks` library runs the
+   `GebLeanMeta.detectNonstandardAxiom` env_linter over `GebLean`,
+   `GebLeanTests`, and the vendored `Geb` tree via `#lint only`
+   gates; a non-standard axiom dependency fails the build. CI
+   repeats the build and smoke test in
    `geb/.github/workflows/lean_action_ci.yml`.
 7. User-driven gate reminders surfaced as prompts: `lean4:golf`
    and `lean4:review` ran on changed Lean code; line-by-line

@@ -33,12 +33,14 @@ active topic branches.
   create a separate branch for it rather than bundling it with
   unrelated work.
 - **Pre-commit Lean triad.** Before any commit that touches a
-  `.lean` file, run `bash scripts/pre-commit.sh` (`lake test` and
-  `lake lint`; `lake build` is currently subsumed by `lake test`'s
+  `.lean` file, run `bash scripts/pre-commit.sh` (`lake test`,
+  `lake lint`, and `lake build GebLeanAxiomChecks`; `lake build` is
+  otherwise subsumed by `lake test`'s
   dependency graph per `scripts/pre-push.sh`'s rationale). This
   catches lint regressions at commit time rather than push time.
   `scripts/pre-push.sh` remains the full superset (markdownlint,
-  doctoc, axiom check, user-driven gates) and is mandatory before
+  doctoc, axiom-gate build, smoke test, user-driven gates) and is
+  mandatory before
   every push. See `.claude/rules/ci-and-workflow.md` § Pre-commit
   checklist.
 - **Generic user references in committed text.** "the user" /
@@ -182,12 +184,14 @@ revision.
   vetting (including `Classical.choice`) is the job of the
   public-facing `geb-mathlib` port, where the line-by-line rebuild
   makes that discipline tractable from the start.
-- `scripts/check-axioms.sh` (vendored from `lean4-skills`) is part
-  of the pre-push checklist and runs in CI. It rejects `sorryAx`
-  and any non-standard axiom; `propext`, `Quot.sound`, and
-  `Classical.choice` are accepted. The lighter pre-commit
-  checklist (`scripts/pre-commit.sh`) does not run the axiom
-  check; see Rules above.
+- Axiom hygiene is enforced by `GebLeanMeta.detectNonstandardAxiom`,
+  an `@[env_linter]` built on `Lean.collectAxioms`. It rejects
+  `sorryAx` and any non-standard axiom; `propext`, `Quot.sound`, and
+  `Classical.choice` are accepted. The `GebLeanAxiomChecks` library
+  invokes it over `GebLean`, `GebLeanTests`, and the vendored `Geb`
+  tree via `#lint only` gates; building that library
+  (`lake build GebLeanAxiomChecks`) is part of the pre-commit and
+  pre-push checklists and runs in CI.
 
 ## `sorry`, `admit`, and underscores
 
@@ -219,7 +223,8 @@ to `main` brings spec, plan, and code together.
 - CI: `lean_action_ci.yml` and `markdown-lint.yml` at the parent
   level (the parent monorepo runs CI for `geb-lean/`).
 - Linters: `markdownlint-cli2`, `lake lint`,
-  `scripts/check-axioms.sh`.
+  `GebLeanMeta.detectNonstandardAxiom` (via
+  `lake build GebLeanAxiomChecks`).
 - `geb-mathlib` vendoring: curated source lives under
   `vendor/geb-mathlib/`, refreshed via
   `scripts/refresh-geb-mathlib.sh`; see
