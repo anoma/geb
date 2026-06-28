@@ -64,6 +64,13 @@ lake build GebLeanAxiomChecks
 step "Step 6b: scripts/tests/test-axiom-linter.sh"
 bash scripts/tests/test-axiom-linter.sh
 
+# Step 6c: vendored lint-coverage invariant. The refresh workflow lints
+# the vendored tree via `lake lint -- Geb`; this guards that no vendored
+# module is orphaned from the `Geb` umbrella (which would silently escape
+# the linter) and that the workflow keeps the root-module invocation.
+step "Step 6c: scripts/tests/test-lint-driver.sh"
+bash scripts/tests/test-lint-driver.sh
+
 # Step 7: user-driven gates (reminders, not mechanical checks).
 step "Step 7: user-driven gates (reminders)"
 cat <<'EOF'

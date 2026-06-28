@@ -81,7 +81,15 @@ Run by `scripts/pre-push.sh`:
    gates; a non-standard axiom dependency fails the build. CI
    repeats the build and smoke test in
    `geb/.github/workflows/lean_action_ci.yml`.
-7. User-driven gate reminders surfaced as prompts: `lean4:golf`
+7. `bash scripts/tests/test-lint-driver.sh` passes. The
+   `geb-mathlib` refresh workflow lints the vendored tree with
+   `lake lint -- Geb` (one flat environment); the guard checks
+   that the workflow keeps the root-module invocation and that
+   no vendored `Geb.*` module is orphaned from the `Geb`
+   umbrella (an orphan would silently escape the linter). CI
+   runs the same guard in
+   `geb/.github/workflows/geb-mathlib-refresh.yml`.
+8. User-driven gate reminders surfaced as prompts: `lean4:golf`
    and `lean4:review` ran on changed Lean code; line-by-line
    user diff review of every change about to be pushed; the
    push target is `origin`, not `upstream`. Upstream receives

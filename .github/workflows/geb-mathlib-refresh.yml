@@ -33,14 +33,20 @@ jobs:
       - name: Refresh and re-apply the back-port patch
         id: refresh
         run: bash scripts/refresh-geb-mathlib.sh
+      - name: Guard the vendored lint-coverage invariant
+        run: bash scripts/tests/test-lint-driver.sh
       - name: Build, test, and lint the whole vendored lib
         run: |
           lake build Geb
           lake test
-          # Lint every vendored module (list computed from disk, generic).
-          VMODS=$(cd vendor/geb-mathlib && find . -name '*.lean' -printf '%P\n' \
-            | sed 's|\.lean$||; s|/|.|g' | tr '\n' ' ')
-          lake lint -- $VMODS
+          # Lint the single root module. runLinter loads one flat
+          # environment whose declaration set (getDeclsInPackage) covers
+          # every module the `Geb` umbrella transitively imports.
+          # Enumerating each module instead loads a separate environment
+          # per module, scaling peak memory with module count and
+          # exhausting the runner. The guard step above checks no
+          # vendored module is orphaned from the umbrella.
+          lake lint -- Geb
       - name: Open or update the refresh pull request
         if: success()
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1  # v8.1.1
