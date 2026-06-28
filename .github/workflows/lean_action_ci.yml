@@ -35,14 +35,7 @@ jobs:
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: geb-lean
-      - name: Run axiom check
-        run: |
-          bash scripts/check-axioms.sh \
-            GebLean/ GebLeanTests/ \
-            | tee axiom-check-report.txt
-      - name: Upload axiom-check report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: axiom-check-report
-          path: geb-lean/axiom-check-report.txt
-          if-no-files-found: error
+      - name: Build axiom-hygiene gates
+        run: lake build GebLeanAxiomChecks
+      - name: Axiom-linter smoke test
+        run: bash scripts/tests/test-axiom-linter.sh
