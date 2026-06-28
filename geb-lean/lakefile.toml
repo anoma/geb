@@ -47,3 +47,8 @@ linter.hashCommand = false
 name = "Geb"
 srcDir = "vendor/geb-mathlib"
 globs = ["Geb.*"]
+
+# Axiom-hygiene linter (metaprogramming). Module-system library, outside
+# the GebLean/GebLeanTests/Geb namespaces; not audited by the gates.
+[[lean_lib]]
+name = "GebLeanMeta"
