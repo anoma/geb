@@ -27,33 +27,47 @@ categorical packaging is in the sibling `Slice.Functor` module.
 
 * `SliceDomPFunctor`, `SlicePFunctor` — the structures.
 * `SliceDomPFunctor.Compatible` — the direction-compatibility predicate.
-* `SliceDomPFunctor.obj` / `map` — the domain-restricted functor's
+* `SliceDomPFunctor.ofCurried` / `sCurried` — the curried constructor and
+  the constraint leg in dependently-curried form.
+* `SliceDomPFunctor.DirectionOver` / `Direction` — the constraint-leg
+  condition on a direction of shape `a`, and the fibre of `sCurried a`
+  over `i`.
+* `SliceDomPFunctor.Obj` / `map` — the domain-restricted functor's
   object and morphism maps; `map_id` / `map_comp` its functoriality.
 * `SlicePFunctor.obj` / `map` — the slice functor `Type/dom → Type/cod`:
   `obj` is the output object's structure map into `cod`, `map` the
   underlying function; `map_w` that it lies over `cod`, `map_id` /
   `map_comp` its functoriality.
 * `SlicePFunctor.ShapeOver` / `Shape` — the tag-leg condition and the
-  fibre of `t` over `j`, the object-map of the shape presheaf `T1`.
+  fibre of `t` over `j`.
+
+## Main statements
+
+* `SliceDomPFunctor.compatible_iff` — `Compatible` stated pointwise.
+* `SliceDomPFunctor.map_fst` — `map` fixes the shape component.
+* `SliceDomPFunctor.map_id` / `map_comp` — functoriality of the
+  domain-restricted action.
+* `SlicePFunctor.map_w` — the slice morphism lies over `cod`.
+* `SlicePFunctor.map_id` / `map_comp` — functoriality of the slice functor.
 
 ## Implementation notes
 
-`SliceDomPFunctor.obj` is a subtype of `PFunctor.Obj`; `map` is
+`SliceDomPFunctor.Obj` is a subtype of `PFunctor.Obj`; `map` is
 `PFunctor.map` restricted; functoriality reuses
-`LawfulFunctor (PFunctor.Obj _)`. The `SlicePFunctor` interpretation
-reuses these — its carrier is `SliceDomPFunctor.obj` and its `map` the
+`PFunctor.id_map` / `PFunctor.map_map`. The `SlicePFunctor` interpretation
+reuses these — its carrier is `SliceDomPFunctor.Obj` and its `map` the
 `SliceDomPFunctor` map — adding only the `t`-tag (`obj`) and the
 tag-compatibility (`map_w`); `map_id` / `map_comp` delegate to the
-domain-side ones. Both namespaces' `obj`, `map`,
+domain-side ones. `SliceDomPFunctor.Obj` and `SlicePFunctor.obj`, both
+namespaces' `map`,
 `SliceDomPFunctor.ofCurried` / `sCurried` / `DirectionOver` / `Direction`,
 and `SlicePFunctor.ShapeOver` / `Shape` are `@[expose]` so the
 wrapper and tests can unfold them across the module boundary.
 
 ## References
 
-* N. Gambino and M. Hyland, *Wellfounded trees and dependent
-  polynomial functors*, TYPES 2003.
-* J. Kock, *Polynomial functors and polynomial monads*.
+* [GambinoHyland2004]
+* [GambinoKock2013]
 
 ## Tags
 
@@ -63,10 +77,10 @@ container, PFunctor
 
 public section
 
-universe uA uB uD uC uX
+universe uA uB uD uC uX uX' uY uZ
 
 /-- A polynomial functor with a constraint leg `s` assigning each
-direction (an element of `PFunctor.Idx`) a `dom`-index. -/
+`(shape, direction)` pair (an element of `PFunctor.Idx`) a `dom`-index. -/
 @[nolint checkUnivs]
 structure SliceDomPFunctor (dom : Type uD) : Type (max (uA + 1) (uB + 1) uD)
     extends PFunctor.{uA, uB} where
@@ -117,22 +131,23 @@ image under `sCurried a` is `i`. Point-free as `(· = i) ∘ sCurried a`. -/
   (· = i) ∘ F.sCurried a
 
 /-- The directions of shape `a` lying over the base point `i`: the fibre
-of `sCurried a` over `i`, the object-map of shape `a`'s arity presheaf. -/
+of `sCurried a` over `i`. -/
 @[expose] def Direction {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
     (a : F.A) (i : dom) : Type uB :=
   Subtype (F.DirectionOver a i)
 
 /-- Value of the domain-restricted functor on `(X, p)`: the
 compatibility subtype of the `PFunctor` interpretation. -/
-@[expose] def obj {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X : Type uX}
+@[expose] def Obj {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X : Type uX}
     (p : X → dom) : Type (max uA uB uX) :=
   { x : F.toPFunctor.Obj X // F.Compatible p x.1 x.2 }
 
 /-- Action on a slice morphism `f` (with `p' ∘ f = p`): `PFunctor.map f`
 restricted to the compatibility subtype. -/
-@[expose] def map {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X X' : Type uX}
+@[expose] def map {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
+    {X : Type uX} {X' : Type uX'}
     {p : X → dom} {p' : X' → dom} (f : X → X') (hf : p' ∘ f = p) :
-    F.obj p → F.obj p' :=
+    F.Obj p → F.Obj p' :=
   fun x => ⟨F.toPFunctor.map f x.1, by
     obtain ⟨⟨a, v⟩, hx⟩ := x
     change p' ∘ (f ∘ v) = F.s ∘ Sigma.mk a
@@ -140,26 +155,24 @@ restricted to the compatibility subtype. -/
     exact hx⟩
 
 /-- `map` fixes the shape component. -/
-theorem map_fst {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X X' : Type uX}
+theorem map_fst {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
+    {X : Type uX} {X' : Type uX'}
     {p : X → dom} {p' : X' → dom} (f : X → X') (hf : p' ∘ f = p)
-    (x : F.obj p) : (F.map f hf x).1.1 = x.1.1 := by
-  obtain ⟨⟨a, v⟩, hx⟩ := x
-  rfl
+    (x : F.Obj p) : (F.map f hf x).1.1 = x.1.1 := rfl
 
 /-- Functoriality: identity. -/
 theorem map_id {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X : Type uX}
-    (p : X → dom) : F.map id (by simp) = (id : F.obj p → F.obj p) := by
-  funext x
-  exact Subtype.ext (F.toPFunctor.id_map x.1)
+    (p : X → dom) : F.map id (by simp) = (id : F.Obj p → F.Obj p) :=
+  funext fun x => Subtype.ext (F.toPFunctor.id_map x.1)
 
 /-- Functoriality: composition. -/
-theorem map_comp {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X Y Z : Type uX}
+theorem map_comp {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
+    {X : Type uX} {Y : Type uY} {Z : Type uZ}
     {p : X → dom} {q : Y → dom} {r : Z → dom} (f : X → Y) (g : Y → Z)
     (hf : q ∘ f = p) (hg : r ∘ g = q) :
     F.map (g ∘ f) (by rw [← hf, ← hg, Function.comp_assoc]) =
-      F.map g hg ∘ F.map f hf := by
-  funext x
-  exact Subtype.ext (F.toPFunctor.map_map f g x.1).symm
+      F.map g hg ∘ F.map f hf :=
+  funext fun x => Subtype.ext (F.toPFunctor.map_map f g x.1).symm
 
 end SliceDomPFunctor
 
@@ -167,34 +180,34 @@ namespace SlicePFunctor
 
 /-- The slice functor's value on `(X, p)`, as an object of `Type/cod`: its
 structure map into `cod`, the tag leg applied to each shape. The carrier is
-the `SliceDomPFunctor` value `F.toSliceDomPFunctor.obj p`. -/
+the `SliceDomPFunctor` value `F.toSliceDomPFunctor.Obj p`. -/
 @[expose] def obj {dom : Type uD} {cod : Type uC} (F : SlicePFunctor.{uA, uB, uD, uC} dom cod)
-    {X : Type uX} (p : X → dom) : F.toSliceDomPFunctor.obj p → cod :=
+    {X : Type uX} (p : X → dom) : F.toSliceDomPFunctor.Obj p → cod :=
   fun z => F.t z.1.1
 
 /-- The slice functor's action on a morphism: the `SliceDomPFunctor` morphism
 map underlying it. -/
 @[expose] def map {dom : Type uD} {cod : Type uC} (F : SlicePFunctor.{uA, uB, uD, uC} dom cod)
-    {X X' : Type uX} {p : X → dom} {p' : X' → dom} (f : X → X') (hf : p' ∘ f = p) :
-    F.toSliceDomPFunctor.obj p → F.toSliceDomPFunctor.obj p' :=
+    {X : Type uX} {X' : Type uX'} {p : X → dom} {p' : X' → dom} (f : X → X') (hf : p' ∘ f = p) :
+    F.toSliceDomPFunctor.Obj p → F.toSliceDomPFunctor.Obj p' :=
   F.toSliceDomPFunctor.map f hf
 
 /-- `map` lies over `cod`: it commutes with the `obj` structure maps. -/
 theorem map_w {dom : Type uD} {cod : Type uC} (F : SlicePFunctor.{uA, uB, uD, uC} dom cod)
-    {X X' : Type uX} {p : X → dom} {p' : X' → dom} (f : X → X') (hf : p' ∘ f = p) :
-    F.obj p' ∘ F.map f hf = F.obj p := by
-  funext z
-  exact congrArg F.t (F.toSliceDomPFunctor.map_fst f hf z)
+    {X : Type uX} {X' : Type uX'} {p : X → dom} {p' : X' → dom} (f : X → X') (hf : p' ∘ f = p) :
+    F.obj p' ∘ F.map f hf = F.obj p :=
+  funext fun z => congrArg F.t (F.toSliceDomPFunctor.map_fst f hf z)
 
 /-- Functoriality: identity. -/
 theorem map_id {dom : Type uD} {cod : Type uC} (F : SlicePFunctor.{uA, uB, uD, uC} dom cod)
     {X : Type uX} (p : X → dom) :
-    F.map id (by simp) = (id : F.toSliceDomPFunctor.obj p → F.toSliceDomPFunctor.obj p) :=
+    F.map id (by simp) = (id : F.toSliceDomPFunctor.Obj p → F.toSliceDomPFunctor.Obj p) :=
   F.toSliceDomPFunctor.map_id p
 
 /-- Functoriality: composition. -/
 theorem map_comp {dom : Type uD} {cod : Type uC} (F : SlicePFunctor.{uA, uB, uD, uC} dom cod)
-    {X Y Z : Type uX} {p : X → dom} {q : Y → dom} {r : Z → dom} (f : X → Y) (g : Y → Z)
+    {X : Type uX} {Y : Type uY} {Z : Type uZ}
+    {p : X → dom} {q : Y → dom} {r : Z → dom} (f : X → Y) (g : Y → Z)
     (hf : q ∘ f = p) (hg : r ∘ g = q) :
     F.map (g ∘ f) (by rw [← hf, ← hg, Function.comp_assoc]) = F.map g hg ∘ F.map f hf :=
   F.toSliceDomPFunctor.map_comp f g hf hg
@@ -205,8 +218,7 @@ Point-free as `(· = j) ∘ t`. -/
     (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) (j : cod) : F.A → Prop :=
   (· = j) ∘ F.t
 
-/-- The shapes lying over `j`: the fibre of `t` over `j`, the object-map
-of the shape presheaf `T1`. -/
+/-- The shapes lying over `j`: the fibre of `t` over `j`. -/
 @[expose] def Shape {dom : Type uD} {cod : Type uC}
     (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) (j : cod) : Type uA :=
   Subtype (F.ShapeOver j)
