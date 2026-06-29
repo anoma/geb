@@ -26,7 +26,7 @@ packaging is kept in a separate module from the choice-free core.
 
 * `SlicePFunctor.functor_obj` / `functor_map` — the categorical
   functor's object and morphism maps are definitionally the
-  constructive-core `SlicePFunctor.obj` / `map`.
+  core `SlicePFunctor.obj` / `map`.
 * `SlicePFunctor.functor_comp_forget` — the wrapper forgets back to
   `domFunctor`.
 
@@ -35,17 +35,20 @@ packaging is kept in a separate module from the choice-free core.
 `domFunctor` reuses the core `obj`/`map`; `Over` structure maps are
 read as functions, the slice-morphism hypothesis is
 `SliceDomPFunctor.over_hom_comp` (the function-level form of `Over.w`),
-results promoted with `↾`, and the functor laws discharged by `ext`
-plus the core `map_id`/`map_comp`. `functor` is the `Functor.toOver`
-lift along the tag `t`; it is `@[expose]` so `functor_obj` /
-`functor_map` can state the definitional equalities as exported `rfl`
-theorems.
+results promoted with `↾`, the identity law discharged by `ext` and the
+core `map_id`, and the composition law by `ext` and `rfl`. `functor` is
+the `Functor.toOver` lift along the tag `t`; it is `@[expose]` so
+`functor_obj` / `functor_map` can state the definitional equalities as
+exported `rfl` theorems. `cod` is pinned to `domFunctor`'s codomain
+universe `max uA uB uD` because `Functor.toOver` requires its over-base
+object to inhabit the codomain category of the lifted functor, so the
+core's `cod`-universe polymorphism cannot survive into the categorical
+layer.
 
 ## References
 
-* N. Gambino and M. Hyland, *Wellfounded trees and dependent
-  polynomial functors*, TYPES 2003.
-* J. Kock, *Polynomial functors and polynomial monads*.
+* [GambinoHyland2004]
+* [GambinoKock2013]
 
 ## Tags
 
@@ -72,14 +75,12 @@ interpretation to `s`-compatible assignments; the core maps packaged
 over `Over dom`. -/
 @[expose] def domFunctor {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) :
     CategoryTheory.Functor (Over dom) (Type (max uA uB uD)) where
-  obj Y := F.obj (Y.hom)
+  obj Y := F.Obj (Y.hom)
   map {Y Z} h := ↾(F.map (h.left) (over_hom_comp h))
   map_id Y := by
     ext z
     exact congrFun (F.map_id _) z
-  map_comp f g := by
-    ext z
-    rfl
+  map_comp _ _ := rfl
 
 end SliceDomPFunctor
 
@@ -89,7 +90,7 @@ namespace SlicePFunctor
 post-composing with the `t`-tag is preserved. This is the
 `Functor.toOver` triangle obligation for `functor`, shared with
 `functor_comp_forget`. -/
-private theorem tagTriangle {dom : Type uD} {cod : Type (max uA uB uD)}
+private theorem tag_triangle {dom : Type uD} {cod : Type (max uA uB uD)}
     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod)
     {Y Z : Over dom} (g : Y ⟶ Z) :
     F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z => F.t z.1.1) =
@@ -105,23 +106,23 @@ private theorem tagTriangle {dom : Type uD} {cod : Type (max uA uB uD)}
     CategoryTheory.Functor (Over dom) (Over cod) :=
   Functor.toOver F.toSliceDomPFunctor.domFunctor cod
     (fun _ => ↾(fun z => F.t z.1.1))
-    (by intro Y Z g; exact F.tagTriangle g)
+    (by intro Y Z g; exact F.tag_triangle g)
 
 /-- The wrapper forgets back to `domFunctor`. -/
 theorem functor_comp_forget {dom : Type uD} {cod : Type (max uA uB uD)}
     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) :
     F.functor ⋙ Over.forget cod = F.toSliceDomPFunctor.domFunctor := by
   rw [functor]
-  exact Functor.toOver_comp_forget _ _ _ fun g => F.tagTriangle g
+  exact Functor.toOver_comp_forget _ _ _ fun g => F.tag_triangle g
 
-/-- `functor.obj` is the choice-free `obj`, packaged with `Over.mk`. The
-categorical object map carries no data beyond the constructive core. -/
+/-- `functor.obj` is the core `obj`, packaged with `Over.mk`. The
+categorical object map carries no data beyond the core. -/
 theorem functor_obj {dom : Type uD} {cod : Type (max uA uB uD)}
     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) (Y : Over dom) :
     F.functor.obj Y = Over.mk (↾ F.obj (Y.hom)) :=
   rfl
 
-/-- `functor.map`'s underlying function is the choice-free `map`. An `Over`
+/-- `functor.map`'s underlying function is the core `map`. An `Over`
 morphism's only data is its `left` component, so this fixes the categorical
 morphism map up to its `Prop`-valued commuting condition. -/
 theorem functor_map {dom : Type uD} {cod : Type (max uA uB uD)}
