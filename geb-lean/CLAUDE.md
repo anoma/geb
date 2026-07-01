@@ -75,6 +75,8 @@ active topic branches.
   each definition as transcription or novel. In `.lean` files,
   citations live in the module docstring's `## References`
   section or inside the declaration's `/-- ... -/` docstring.
+  The `theoremsearch` MCP (`theorem_search`) locates published
+  statements and their identifiers.
 - **Document only the persistent.** Comments and committed text
   describe what is enduring about the code as it is — its purpose,
   its contracts, non-obvious external constraints. They do not
@@ -96,6 +98,7 @@ active topic branches.
 | Executing-plan | `superpowers:executing-plans` (or `superpowers:subagent-driven-development`) | phase-relevant Lean skills |
 | Lean code work | `lean4` umbrella (sub-skills below) | `lean-lsp`, `serena` MCPs |
 | Mathlib search | `lean-lsp` (`leansearch`, `loogle`, `local_search`, `hammer_premise`) | — |
+| Literature search | `theoremsearch` MCP (`theorem_search`) | `docs/lean-resources.md` § Searchable |
 | Pre-commit | `superpowers:verification-before-completion` | `scripts/pre-commit.sh` (`.lean`-touching commits) |
 | Receiving review | `superpowers:receiving-code-review` | — |
 

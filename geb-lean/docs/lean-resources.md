@@ -49,6 +49,22 @@ so that `CLAUDE.md` itself can stay short.
   machine, Turing machine, automaton, λ-calculus variant,
   programming-language semantics, etc.), search CSLib first, just
   as mathlib is searched for general mathematical concepts.
+- [TheoremSearch](https://www.theoremsearch.com/) indexes informal
+  published mathematics (arXiv, the Stacks Project, ProofWiki, the
+  CRing Project, the HoTT book, the Open Logic Project, and the
+  Napkin) by semantic similarity. It is available in-session as the
+  `theoremsearch` MCP, whose single tool `theorem_search` takes a
+  natural-language `query` and returns, per hit, the arXiv
+  identifier, authors, year, `theorem_type`, the LaTeX statement
+  `body`, a plain-language `slogan`, and a similarity score;
+  optional filters include `sources`, `authors`, `types`,
+  `year_range`, `citation_range`, and `n_results`. Use it during
+  brainstorming and spec phases to locate a published statement and
+  its searchable identifier, as the "Cite the literature when
+  transcribing" rule requires. It indexes the informal literature,
+  not mathlib; for formal statements use Loogle and the `lean_*`
+  tools above. The endpoint is a hosted HTTP MCP server requiring
+  no credentials.
 
 ## Lean language
 
