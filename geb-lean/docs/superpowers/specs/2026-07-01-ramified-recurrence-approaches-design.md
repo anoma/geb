@@ -187,9 +187,11 @@ Unramified recurrence (Leivant III section 2.1, eq. (1)) is the
 same schema over an arbitrary free algebra. A signature lists
 constructors with arities; the free algebra is the inductive type
 they generate; recurrence supplies one clause per constructor, in
-which the step sees the parameters, the immediate subterms, and the
-recursive values on those subterms (the paper's critical
-arguments - the last `r_i` arguments of `g_ci`):
+which the step sees the parameters, the subterms of the input being
+destructed, and the results of the recursive calls on those
+subterms. The paper's names for these pieces differ from the ones
+used here; the glossary after the equations fixes the
+correspondence exactly.
 
 ```lean
 /-- A constructor signature: constructor names with arities. -/
@@ -200,25 +202,40 @@ structure Sig where
 /-- The free algebra over a signature (illustrative; the
 implementation represents this as a polynomial-functor W-type). -/
 inductive FreeAlg (S : Sig) : Type
-  | mk (b : S.B) (args : Fin (S.ar b) → FreeAlg S) : FreeAlg S
+  | mk (b : S.B) (subterms : Fin (S.ar b) → FreeAlg S) : FreeAlg S
 
 /-- Unramified recurrence over `S` (Leivant III eq. (1)): one step
 function per constructor `b`, seeing the parameters `x : P`, the
-subterms, and the recursive values (the critical arguments). -/
+subterms of the recurrence argument, and the recursive results
+(the paper's critical arguments). -/
 def FreeAlg.recurse {S : Sig} {P C : Type}
     (g : (b : S.B) → P → (Fin (S.ar b) → FreeAlg S) →
       (Fin (S.ar b) → C) → C) :
     P → FreeAlg S → C
-  | x, .mk b args => g b x args fun i => FreeAlg.recurse g x (args i)
+  | x, .mk b subterms =>
+      g b x subterms fun i => FreeAlg.recurse g x (subterms i)
 ```
 
-Equationally, for each constructor `c_i` of arity `r_i`:
+Equationally, for each constructor `c_i` of arity `r_i`, exactly as
+the paper displays eq. (1):
 
 ```text
 f (x_vec, c_i (a_1 ... a_{r_i})) =
-  g_i (x_vec, a_1 ... a_{r_i},
-       f (x_vec, a_1), ..., f (x_vec, a_{r_i}))
+  g_ci (x_vec, a_vec, phi_1, ..., phi_{r_i})
+where phi_j = f (x_vec, a_j)
 ```
+
+Terminology glossary. The paper's naming (its section 2.1, the
+sentence after eq. (1)) is easy to misread, so the correspondence
+with the code above is fixed here piece by piece:
+
+| Symbol in eq. (1) | The paper's name | Name here | Role |
+| --- | --- | --- | --- |
+| `x_vec` | recurrence parameters | parameters (`x : P` in `recurse`) | Carried unchanged through every recursive call; they parameterize the single recursive definition and are never modified by it. |
+| `c_i (a_1 ... a_{r_i})` | recurrence argument ("the argument of `f` exhibited last in (1)") | recurrence argument | The whole constructor term the recursion consumes - the input being destructed, the last argument of `f`. In the ramified schema (eq. (4)) it is the argument of sort `Omega tau`. In `recurse` it is the matched value `.mk b subterms`. |
+| `a_1 ... a_{r_i}` | no dedicated name (written `a_vec`; the components of the recurrence argument) | subterms (`subterms` in `recurse`) | The immediate subterms of the recurrence argument. Note the paper's "recurrence argument" is the whole term `c_i (a_vec)`, not these components; the paper's terminology sentence assigns them no name of their own. |
+| `phi_1 ... phi_{r_i}`, where `phi_j = f (x_vec, a_j)` | critical arguments ("the last `r_i` arguments of `g_ci`") | recursive results (`results` in `natRecurse`) | The results of the recursive calls on the subterms, passed up to the current step - the values flowing back from one level deeper in the recursion. |
+| `g_ci` | recurrence functions | step functions | One per constructor `c_i`: the body of the definition at that constructor. |
 
 Over the unary naturals this is primitive recursion again - the two
 constructor clauses are the base and step equations:
@@ -242,7 +259,7 @@ def natRecurse (base : Nat) (step : Nat → Nat) :
   FreeAlg.recurse (P := Unit)
     (fun b => match b with
       | false => fun _ _ _ => base
-      | true => fun _ _ recs => step (recs ⟨0, by decide⟩))
+      | true => fun _ _ results => step (results ⟨0, by decide⟩))
     ()
 ```
 
@@ -252,9 +269,10 @@ naturals) and drops simultaneity (Leivant handles the simultaneous
 variant separately; his Lemma 2, section 2.6, reduces it to the
 plain form). The paper names fragments by which arguments the step
 may see (section 2.1): monotonic (the step does not see the
-subterms `a_i`), closed (no parameters `x_vec`), flat (no critical
-arguments, i.e. no recursive values). The system formalized here is the monotonic
-fragment, `RMRec-omega`.
+subterms `a_vec`), closed (no parameters `x_vec`), flat (no
+critical arguments, i.e. no recursive results - only case analysis
+on the recurrence argument). The system formalized here is the
+monotonic fragment, `RMRec-omega`.
 
 Ramified recurrence (Leivant III section 2.3, eq. (4)) is the same
 schema with a sorting layer and nothing else: every sort denotes a
@@ -417,7 +435,7 @@ DOI `10.4204/EPTCS.23.4` (full text read):
   higher-order ramification or the elementary class.
 - Adoption: its tier-vector presentation (no type grammar, per-
   constructor recursion cases with subterms at the high tier and
-  recursive values at the low tier, separate untiered conditional)
+  recursive results at the low tier, separate untiered conditional)
   avoids a type grammar entirely and is adopted for
   the two first-order structure-only systems (section 4.1).
 - Future work: formalizing its soundness theorem would require the
@@ -918,7 +936,7 @@ asserted that fullness; it is false): sort-uniform hom-sets are
 strictly smaller than elementary - at `[o] -> [o]` no monotonic
 recurrence applies to the input (its recurrence argument must sit
 at an Omega-sort), and flat recurrence, which is available at sort
-`o`, passes no recursive values and so yields case analysis and
+`o`, passes no recursive results and so yields case analysis and
 destructors only; doubling has no realizer there.
 
 Together the two statements are the denotational form of
