@@ -100,9 +100,10 @@ Definitions and results to transcribe, with locations:
 | Theorem 14: elementary characterization | section 6.1 | elementary time = `RMRec-omega` = `RlMR-omega` = `RlMR-omega_o` = represented in `1l(A)`. In-scope transcription is limited to the equivalence of (1)-(2) relative to `LawvereERCat`; items (3)-(5) enter only via the combinatory analogue or option C |
 | Multi-sorted generalization sketch | section 6.2 | several free algebras as sorts; `Omega^beta` per base sort |
 
-All of the above are transcription, except as annotated in the last
-three rows (the lambda-calculus rows are transcription only under
-option C of section 3.2). The categorical packaging in sections 4
+All of the above are transcription, except as annotated in the rows
+for the applicative calculi, Proposition 7, and Theorem 14 (the
+lambda-calculus content is transcription only under option C of
+section 3.2). The categorical packaging in sections 4
 and 5 of this document (syntactic categories, the `Omega`-shift
 functor, the collapse functor and its fullness, the
 hereditary-majorization model) is novel; see section 1.4.
@@ -212,7 +213,7 @@ Novel (no published precedent found; see sections 2.1-2.2):
 - The hereditary-majorization model as the soundness mechanism.
 - The mechanization itself: no formalization of ramified recurrence,
   the Grzegorczyk hierarchy, or a Kalmar-elementary characterization
-  exists in any proof assistant (section 2.2).
+  was found in any proof assistant (section 2.2).
 
 ## 2. Research summary
 
@@ -446,7 +447,7 @@ lambda-representation and normalization route (sections 4.2-5), which
 is out of scope. Recommendation: A/B unified; record C as a possible
 later addition with the external templates of section 2.3.
 
-Open sub-question (spike candidate, section 7.5): which combinator
+Open sub-question (spike candidate, section 7.3): which combinator
 basis suffices for the fullness proof - Leivant's explicit-definition
 schema is itself lambda-free, so a small fixed basis (projections,
 composition at arrow sorts, currying combinators) is expected to
@@ -640,7 +641,7 @@ def monadicFO  : Presentation      -- S := N, A := (unary succ, zero)
 def polyadicFO (B ar) : Presentation  -- S := N, A polyadic word alg
 def higherOrder (B ar) : Presentation -- S := RType, full summand sum
 
-/-- Omega shift. Postcomposition with Omega is NOT a signature
+/-- Omega shift. Postcomposition with Omega is not a signature
 morphism on the higher-order presentation: application at
 (arrow σ τ, σ) -> τ has no image, since Omega (arrow σ τ) is an
 object sort, not arrow (Omega σ) (Omega τ) (compare Leivant III
@@ -652,11 +653,17 @@ where it is a signature endomorphism outright. Functoriality on the
 higher-order syntactic category (in particular closure of the axiom
 set under the shift) is unverified; see open question 7.1. -/
 def omegaShift : SynCat Σ E ⥤ SynCat Σ E   -- by base substitution
-/-- Coercion Omega tau -> tau: Leivant III's auxiliary kappa-hat
+/-- Coercion at the Omega-sort: Leivant III's auxiliary kappa-hat
 (section 2.4(1)); the paper reserves kappa_tau for the composite
-Omega tau -> theta. Naturality with respect to omegaShift is a
-novel statement to prove. -/
-def kappaHat (τ) : (omegaShift.obj [τ] ⟶ ([τ] : SynCat Σ E))
+Omega tau -> theta. This is a morphism at the sort Omega tau, not
+at omegaShift.obj [tau]: the two agree exactly on the first-order
+sorts (tau[o := Omega o] = Omega tau iff tau = Omega^m o), so
+kappaHat supplies a copoint for omegaShift on the first-order
+systems only. On the higher-order system a copoint component at an
+arrow sort would need a raising term, and no term of type
+o -> Omega o exists, so no copoint of omegaShift is expected there;
+see open question 7.1. -/
+def kappaHat (τ) : (([RType.omega τ] : SynCat Σ E) ⟶ [τ])
 ```
 
 ### 4.5 Inter-system functors (deliverables for all three cells)
@@ -669,8 +676,10 @@ def kappaHat (τ) : (omegaShift.obj [τ] ⟶ ([τ] : SynCat Σ E))
 - `omegaShift` as an endofunctor: unconditional deliverable for the
   first-order systems (where the shift is a signature endomorphism);
   for the higher-order system contingent on the base-substitution
-  functoriality of section 4.4 (open question 7.1). `kappaHat`
-  naturality likewise.
+  functoriality of section 4.4 (open question 7.1).
+- `kappaHat` at every r-type; the copoint `omegaShift ⟹ Id` it
+  induces on the first-order systems (section 4.4). No copoint is
+  expected on the higher-order system.
 - Lemma 1 and Lemma 2 as equivalences/reductions between presentation
   variants (flat versus destructor-case; simultaneous versus plain).
 
@@ -713,7 +722,7 @@ sub by monotonic recurrence with a dstr-defined predecessor step;
 comp by level alignment - via omegaShift where available, otherwise
 via object-type-indexed families of realizers, the paper's own
 device ("for each object type theta there is a copy of exp",
-section 2.4(3)); bsum, bprod by NOVEL constructions in the style of
+section 2.4(3)); bsum, bprod by novel constructions in the style of
 sections 2.4(2) and 2.6 (the step needs the loop index, so ramified
 simultaneous recurrence, Lemma 2, or an equivalent device, plus tier
 alignment for the asymmetric ramified addition). Leivant III's own
@@ -858,13 +867,17 @@ E3 basis.
    auxiliary; its `kappa_tau` targets the output object type) -
    unlike elementary linear logic, whose exponential has no
    dereliction - yet characterizes the same class. Candidate
-   readings: copointed monoidal endofunctor; graded (co)monad with
-   grades = tiers (no publication makes this identification - a
-   precise statement either way is publishable novel content);
-   Cockett-Redmond-style polarity (two categories with coercion
-   functors). The formalization should state and prove whichever
-   structure the syntactic category actually carries; naturality of
-   `kappaHat` is the first test.
+   readings: copointed monoidal endofunctor (supported by `kappaHat`
+   on the first-order systems, where the shift's image sorts are
+   Omega-sorts; not expected on the higher-order system, whose
+   arrow sorts admit no raising term - section 4.4); graded
+   (co)monad with grades = tiers (no publication makes this
+   identification - a precise statement either way is publishable
+   novel content); Cockett-Redmond-style polarity (two categories
+   with coercion functors). The formalization should state and
+   prove whichever structure each syntactic category actually
+   carries; naturality of `kappaHat` on the first-order systems is
+   the first test.
 2. Rule menu: include extensionality and/or `uniq` in the default
    presentations, or keep both as axiom-set extensions? (Section 3.4;
    affects how close combinatory equality is to lambda equality, and
@@ -954,7 +967,7 @@ Mechanization:
 Hierarchy background:
 
 - G. Tourlakis, "Primitive recursive complexity topics", lecture
-  notes, 2018 (see `docs/research/2026-04-30-ksim-polynomial-bound-`
-  `references.md` for the verified quotations).
+  notes, 2018. The verified quotations are recorded in
+  `docs/research/2026-04-30-ksim-polynomial-bound-references.md`.
 - A. R. Meyer, D. M. Ritchie, "The complexity of loop programs",
   Proc. ACM National Meeting 1967, 465-469.
