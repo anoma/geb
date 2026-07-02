@@ -660,9 +660,12 @@ at omegaShift.obj [tau]: the two agree exactly on the first-order
 sorts (tau[o := Omega o] = Omega tau iff tau = Omega^m o), so
 kappaHat supplies a copoint for omegaShift on the first-order
 systems only. On the higher-order system a copoint component at an
-arrow sort would need a raising term, and no term of type
-o -> Omega o exists, so no copoint of omegaShift is expected there;
-see open question 7.1. -/
+arrow sort would need a raising term of type o -> Omega o (a
+coercion extensionally the identity; constant maps of that type
+exist, an identity-realizing one does not), so no copoint of
+omegaShift is expected there; see open question 7.1. For the
+S = N presentations the copoint components are the tier-indexed
+analogues of kappaHat. -/
 def kappaHat (τ) : (([RType.omega τ] : SynCat Σ E) ⟶ [τ])
 ```
 
