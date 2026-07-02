@@ -1,4 +1,4 @@
-# Ramified recurrence as equational Lawvere theories: approaches
+# Ramified recurrence as Lawvere theories: approaches
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -16,7 +16,7 @@
   - [3.1 Categorical and type-theoretic literature](#31-categorical-and-type-theoretic-literature)
   - [3.2 Mechanization prior art](#32-mechanization-prior-art)
   - [3.3 Lean and in-repository infrastructure](#33-lean-and-in-repository-infrastructure)
-- [4. The system: `RMRec-omega` as a multi-sorted equational theory](#4-the-system-rmrec-omega-as-a-multi-sorted-equational-theory)
+- [4. The system: `RMRec-omega` as a multi-sorted Lawvere theory](#4-the-system-rmrec-omega-as-a-multi-sorted-lawvere-theory)
   - [4.1 Presentation choices](#41-presentation-choices)
   - [4.2 Interfaces](#42-interfaces)
   - [4.3 Inter-system functors (deliverables for all three cells)](#43-inter-system-functors-deliverables-for-all-three-cells)
@@ -25,7 +25,7 @@
   - [5.2 Which algebra hosts the proof](#52-which-algebra-hosts-the-proof)
 - [6. The theorem and its proof-route map](#6-the-theorem-and-its-proof-route-map)
   - [6.1 Statement shape](#61-statement-shape)
-  - [6.2 Fullness: the machine route (all transcription)](#62-fullness-the-machine-route-all-transcription)
+  - [6.2 Definability: the machine route (all transcription)](#62-definability-the-machine-route-all-transcription)
   - [6.3 Soundness: the normalization route](#63-soundness-the-normalization-route)
   - [6.4 Landing elementary computation in the reference category](#64-landing-elementary-computation-in-the-reference-category)
 - [7. Candidate approaches for the syntax layer](#7-candidate-approaches-for-the-syntax-layer)
@@ -36,14 +36,16 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Status: brainstorming-phase approaches survey, revision 2. Revision 1
-went through adversarial review rounds 1-3 (the `review-1` through
-`review-3` files alongside this document) and user review; revision 2
-incorporates the user review's structural decisions, which supersede
-parts of revision 1, and receives a fresh adversarial-review cycle.
-This document records the research underlying a planned formalization
-and lays out the design with interfaces and trade-offs. It is not yet
-a converged design specification.
+Status: brainstorming-phase approaches survey, revision 3. Revision 1
+went through adversarial review rounds 1-3 and user review; revision 2
+(reviews 4-5) incorporated that review's structural decisions;
+revision 3 incorporates a further user decision - interpretative
+equality now, the equational presentation deferred (section 1.1) -
+and receives its own adversarial-review cycle. The `review-N` files
+sit alongside this document. This document records the research
+underlying a planned formalization and lays out the design with
+interfaces and trade-offs. It is not yet a converged design
+specification.
 
 ## 1. Scope and policy
 
@@ -55,11 +57,19 @@ a converged design specification.
   henceforth "Leivant III"): first-order monadic (linear space),
   first-order polyadic (polynomial time), higher-order types
   (Kalmar elementary).
-- Presentation style: multi-sorted Lawvere-theory syntactic categories
-  with equational (inductively derivable) equality, as in `Era.lean`'s
-  `Derivable`, not the interpretative setoids of `LawvereERQuot.lean`.
-- A single form of the calculus is formalized: the equational system
-  `RMRec-omega` (Leivant III sections 2.3-2.7). The applicative
+- Presentation style: multi-sorted Lawvere-theory syntactic
+  categories whose morphisms are terms modulo extensional equality of
+  their standard interpretation in Lean - the interpretative-setoid
+  style of `LawvereERQuot.lean` and `LawvereKSimQuot.lean`. The
+  equational (inductively derivable) presentation in the style of
+  `Era.lean`'s `Derivable` is deferred to a future workstream
+  (section 9): the reference `LawvereERCat` is itself interpretative,
+  an equational reworking of it would gate the in-scope proof, and
+  the standard interpretation built here is a prerequisite of the
+  future workstream's soundness proof in any case.
+- A single form of the calculus is formalized: `RMRec-omega`
+  (Leivant III sections 2.3-2.7), under the interpretative equality
+  above. The applicative
   calculi `RlMR-omega` and `RlMR-omega_o` and their equivalence with
   `RMRec-omega` (Proposition 7) are deferred as goals; both calculi
   return as proof apparatus for the soundness direction, whose
@@ -88,8 +98,8 @@ a converged design specification.
 ### 1.2 Transcription-only policy
 
 This workstream transcribes known mathematics. Novelty is permitted
-only at the level of packaging: the multi-sorted equational
-presentation, the syntactic-category construction, the statement of
+only at the level of packaging: the multi-sorted presentation, the
+syntactic-category construction, the statement of
 known results against the repository's categories, and naming. It is
 not permitted at the level of proof routes: where the literature
 proves a result by a machine simulation, the formalization
@@ -113,8 +123,8 @@ Consequences, superseding revision 1:
   counterpart; that direction is not needed.)
 - Revision 1's machine-free proposals for the two directions of the
   main theorem are withdrawn: the bounded-sum/bounded-product
-  realizers (fullness) and the hereditary-majorization model
-  (soundness) were novel proof routes. Fullness now follows the
+  realizers (completeness) and the hereditary-majorization model
+  (soundness) were novel proof routes. Definability now follows the
   literature's machine route (section 6.2); soundness follows the
   literature's normalization route (section 6.3).
 
@@ -147,9 +157,9 @@ annotations:
 | Simultaneous recurrence; Lemma 2 | section 2.6, eqs. (6), (7) | ramified simultaneous recurrence reduces to plain ramified recurrence; used by Lemma 6 |
 | Collapse `f-minus`, raising `G-plus-tau`; Lemmas 3, 4 | section 2.7 | erasing ramification; `(f-)+ = f`, `(F+)- = F`; the collapse defines what the main theorem characterizes |
 | Register machines over `A`; Lemma 5 | section 3.1 | states, registers holding `A`-elements, commands: constructor assignment, branch on main constructor, destructor; reducibilities to Turing machines |
-| Lemma 6: elementary-time machines are ramified-definable | section 3.2 | the completeness direction; simultaneous-recurrence simulation of machine steps, clocked by `2_q(sz)`; in scope as the fullness route (section 6.2) |
+| Lemma 6: elementary-time machines are ramified-definable | section 3.2 | the completeness direction; simultaneous-recurrence simulation of machine steps, clocked by `2_q(sz)`; in scope as the definability route (section 6.2) |
 | Applicative calculi `RlMR-omega`, `RlMR-omega_o` | section 4.1 | applied lambda calculi: constants `c_i`, `R-tau`, `F-tau` (or `dstr`, `case`); beta and eta reductions plus recurrence and flat reduction. In scope as soundness apparatus (section 6.3): both calculi, since the paper's route from (1) to (4) passes through `RlMR-omega` |
-| Proposition 7: equational and applicative agree | section 4.1 | four-way definability equivalence, items (1) `RMRec-omega`, (2) `RMRec-omega_o`, (3) `RlMR-omega`, (4) `RlMR-omega_o`. In scope as soundness apparatus: the composite (1) to (3) (eq. (9), p. 223), (3) to (4) (stated "similar" to Lemma 1; its transcription reconstructs the indicated argument). The remaining directions are deferred; Lemma 1's (1)-(2) equivalence is in scope on the fullness side |
+| Proposition 7: equational and applicative agree | section 4.1 | four-way definability equivalence, items (1) `RMRec-omega`, (2) `RMRec-omega_o`, (3) `RlMR-omega`, (4) `RlMR-omega_o`. In scope as soundness apparatus: the composite (1) to (3) (eq. (9), p. 223), (3) to (4) (stated "similar" to Lemma 1; its transcription reconstructs the indicated argument). The remaining directions are deferred; Lemma 1's (1)-(2) equivalence is in scope on the definability side |
 | Lambda-representation in `1l(A)`; Lemmas 8-10 and Proposition 11 | sections 4.2-4.3 | Berarducci-Boehm-style representation of `A` in the simply typed lambda calculus with `dstr`/`case`, with the term translation `E` to `E-bar`; soundness apparatus |
 | Lemma 12, Proposition 13: normalization bound | section 5 | terms of height `h`, redex rank `q` normalize in time `O((2_{q+1}(h))^2)`; hence represented functions are elementary-time computable; soundness apparatus |
 | Theorem 14: elementary characterization | section 6.1 | the in-scope theorem is the equivalence of items (1) and (2), stated against the repository's reference class; items (3)-(5) are deferred with the applicative calculi |
@@ -275,8 +285,9 @@ arXiv `1201.4567v2`, 2012 (extended abstract; full text read):
   named polynomial signature functor with `fold`) is adopted as the
   presentation of the algebra axis (section 4.1); it coincides with
   the repository's W-type plan. The two-sorted ramification and the
-  DAG cost model are not adopted (the Omega tower and equational
-  equality come from Leivant III).
+  DAG cost model are not adopted (the Omega tower comes from
+  Leivant III; equational equality belongs to the deferred
+  workstream, section 9).
 - Future work: ramified corecursion over the final coalgebras
   (M-types) of the same signature functors, with observed-size
   bounds; logspace stream characterizations.
@@ -340,17 +351,21 @@ zero-test URM (presentation adaptation only, section 1.2).
 
 Novel packaging (permitted; no novel proof routes):
 
-- The multi-sorted equational presentation of `RMRec-omega` and its
-  syntactic category.
-- The statement of Theorem 14 (1)-(2) as fullness of a collapse
-  functor into `LawvereERCat` (section 6.1).
+- The multi-sorted presentation of `RMRec-omega` and its syntactic
+  category (interpretative equality; the equational variant is the
+  deferred workstream of section 9).
+- The statement of Theorem 14 (1)-(2) as a tier-quantified
+  definability theorem plus a soundness functor into `LawvereERCat`,
+  optionally packaged as an equivalence out of a tier-colimit
+  collapse category (section 6.1).
 - The data-types-a-la-carte factoring of signatures and the W-type
   realization of syntax.
 - Optional, statement-level only: the Omega-shift functor and the
   analysis of its structure (section 9), inherited from revision 1.
 
 Withdrawn from revision 1 (novel proof routes): hereditary-
-majorization soundness; bounded-sum/product fullness realizers.
+majorization soundness; bounded-sum/product completeness
+realizers.
 
 ## 3. Research summary
 
@@ -427,9 +442,11 @@ and the modular metatheory framework of arXiv `2512.09280`
 In-repository assets, extended in revision 2 by the machine- and
 normalization-facing items:
 
-- `GebLean/Era.lean`: the equational-theory pattern to generalize
+- `GebLean/Era.lean`: the equational-theory pattern for the deferred
+  equational workstream (section 9)
   (`Tm`/`Eqn`/`Defs`/`Derivable`; clone laws `Tm.subst_id`,
-  `Tm.subst_subst` as one-line meta-theorems).
+  `Tm.subst_subst` as one-line meta-theorems). Its term-layer shape
+  informs the present design regardless of the equality choice.
 - `GebLean/LawvereER*.lean`: `ERMor1`, `LawvereERCat` (the reference
   class), tower bounds (`ERMor1.exists_lt_tower`, constructive
   `towerBound`).
@@ -480,22 +497,26 @@ normalization-facing items:
   `PLang/IndexedEAT.lean`; `polyEndoEquiv : WTypeEndo X ~ PolyEndo
   X`).
 
-## 4. The system: `RMRec-omega` as a multi-sorted equational theory
+## 4. The system: `RMRec-omega` as a multi-sorted Lawvere theory
 
 ### 4.1 Presentation choices
 
-Form of the calculus. `RMRec-omega` is formalized directly in
-Leivant's own equational style: function identifiers introduced by
-schemas (explicit definition; ramified monotonic recurrence), with
-program equality the inductively derivable equational consequence of
-the defining equations. There are no lambda binders and no
-combinator basis in the system itself; terms are applicative
-(variables, constructor constants, defined identifiers,
-application), and identifiers form an inductively generated
-signature, as `ERMor1` and `KMor1` already do for their theories.
-This resolves revision 1's section 3.2/3.5 alternatives in favor of
-the schematic style; the typed lambda calculus appears only inside
-the soundness apparatus (section 6.3).
+Form of the calculus. `RMRec-omega`'s syntax follows Leivant's own
+schematic style: function identifiers introduced by schemas
+(explicit definition; ramified monotonic recurrence). There are no
+lambda binders and no combinator basis in the system itself; terms
+are applicative (variables, constructor constants, defined
+identifiers, application), and identifiers form an inductively
+generated signature, as `ERMor1` and `KMor1` already do for their
+theories. Program equality is extensional equality of the standard
+interpretation: each identifier's interpretation is defined by
+structural recursion in Lean (as `ERMor1.interp` is), and two
+morphisms are equal when their interpretations agree on every
+environment. The inductively derivable equational form of the same
+theory (Leivant's defining equations as a `Derivable`-style axiom
+set) is the deferred workstream of section 9. The typed lambda
+calculus appears only inside the soundness apparatus
+(section 6.3).
 
 Algebra axis (adopted from Danner-Royer 2012, coinciding with the
 repository's W-type plan): a free algebra is presented by its
@@ -522,10 +543,11 @@ representation territory of section 2.3 and is not built here beyond
 its structure.
 
 Objects of each syntactic category are contexts (sort lists);
-morphisms are tuples of terms modulo derivable equality; composition
-is substitution. Optional rules (extensionality at arrow sorts;
-Goodstein-style uniqueness) are carried as axiom-set extensions,
-not `Derivable` constructors.
+morphisms are tuples of terms modulo the interpretative setoid;
+composition is substitution. The rule-menu questions of the
+equational presentation (extensionality at arrow sorts;
+Goodstein-style uniqueness) move to the deferred workstream
+(section 9).
 
 ### 4.2 Interfaces
 
@@ -560,7 +582,7 @@ ERMor1. -/
 inductive RIdent (base : SortedSig S) : List S → S → Type
 
 /-- Destructors and case (the flat-recurrence replacements of
-Lemma 1; needed by the fullness route). -/
+Lemma 1; needed by the definability route). -/
 def dstrCaseSig (F : PolyFunctorData) (isObj : S → Prop) :
     SortedSig S
 ```
@@ -579,30 +601,32 @@ subst_subst : (t.subst σ).subst τ = t.subst (fun i => (σ i).subst τ)
 eval : (M : SortedModel Σ) → Tm Σ Γ s → M.Env Γ → M.carrier s
 ```
 
-Equational theory and syntactic category (unchanged in substance
-from revision 1):
+Interpretation and syntactic category. The quotient relation is a
+parameter of the construction, instantiated in this workstream with
+the interpretative setoid; the deferred equational workstream
+(section 9) re-instantiates the same construction with a
+`Derivable`-style relation.
 
 ```lean
-structure Eqn (Σ : SortedSig S) (Γ : Ctx S) (s : S) where
-  lhs rhs : Tm Σ Γ s
+/-- The standard model: object sorts interpret as the algebra's
+carrier (the PolyFix of the signature functor; for 1 + X, N), arrow
+sorts as function spaces. -/
+def standardModel (P : Presentation) : SortedModel P.sig
 
-def AxiomSet (Σ : SortedSig S) :=
-  ∀ (Γ : Ctx S) (s : S), Eqn Σ Γ s → Prop
+/-- Extensional equality of standard interpretations - the
+erMorNSetoid pattern, sorted. -/
+def interpSetoid (Γ : Ctx S) (s : S) : Setoid (Tm Σ Γ s)
 
-inductive Derivable (E : AxiomSet Σ) :
-    ∀ {Γ s}, Eqn Σ Γ s → Prop
-  | ax | refl | euclid | subst   -- as in Era.lean, sorted
-
-def SynCat (Σ : SortedSig S) (E : AxiomSet Σ) : Type := Ctx S
-instance : Category (SynCat Σ E)          -- comp = subst
-instance : CartesianMonoidalCategory (SynCat Σ E)  -- concatenation
+def SynCat (Σ : SortedSig S) (r : QuotRel Σ) : Type := Ctx S
+instance : Category (SynCat Σ r)          -- comp = subst
+instance : CartesianMonoidalCategory (SynCat Σ r)  -- concatenation
 ```
 
 Assembly plan: hom-setoids first (`SetoidCat` shapes), quotient
-last, so pre-quotient statements remain stateable. The construction
-subsumes in principle the boilerplate of `LawvereERQuot.lean` and
-`LawvereKSimQuot.lean` (retrofit out of scope; the quotient relation
-is a parameter).
+last, so pre-quotient statements remain stateable. Instantiated at
+the interpretative setoid, the construction directly generalizes the
+boilerplate that `LawvereERQuot.lean` and `LawvereKSimQuot.lean`
+each hand-roll (retrofit of those files remains out of scope).
 
 Ramified structure (revision 1's section 4.4 carries over):
 `RType`; presentations `monadicFO`, `polyadicFO`, `higherOrder`;
@@ -626,7 +650,7 @@ identity-realizing one does not).
 - `kappaHat` at every r-type; the first-order copoint.
 - Lemma 1 and Lemma 2 as reductions between presentation variants
   (flat versus destructor-case; simultaneous versus plain) - both
-  are also ingredients of the fullness route.
+  are also ingredients of the definability route.
 
 ## 5. Reference target and algebra choice for the equivalence
 
@@ -636,7 +660,7 @@ The two are equivalent (`erKSimEquiv`), so the choice is of proof
 economy, not content; whichever is proven, the other follows by
 composing with the equivalence.
 
-- Fullness direction (reference contained in `RMRec-omega`): the
+- Definability direction (reference contained in `RMRec-omega`): the
   machine route starts from "the reference function is elementary-
   time URM-computable". For ER this is exactly `compileER` +
   `boundExprK_dominates`, already formalized; for K^sim_2 one first
@@ -695,23 +719,48 @@ while preserving the canonical-instances plan.
 category on contexts of object sorts Omega^m o. -/
 def SynCatFO (P : Presentation) : Type
 
-/-- Collapse: soundness packaged as a functor (well-definedness =
-soundness of Derivable for the standard interpretation; that the
-image is ER-definable is the substance, section 6.3). natSig is the
+/-- Soundness packaged as a functor. With interpretative hom-sets
+it is well-defined and faithful by construction; the substance is
+that every denotation is ER-definable (section 6.3). natSig is the
 1 + X signature functor of the unary naturals (section 5.2). -/
 def collapseFunctor : SynCatFO (higherOrder natSig) ⥤ LawvereERCat
 
-/-- Fullness = the completeness direction (section 6.2). -/
-theorem collapseFunctor_full : collapseFunctor.Full
+/-- Definability (the completeness direction, section 6.2),
+quantified over input tiers as in Leivant's f-minus collapse
+(section 2.7 of the paper): tierCtx k n is the context of n copies
+of Omega^k o. -/
+theorem ramified_definability {n m} (f : (n : LawvereERCat) ⟶ m) :
+    ∃ k (g : tierCtx k n ⟶ tierCtx 0 m),
+      collapseDenotation g = f
 ```
 
-Together these are the denotational form of Leivant III Theorem 14,
-items (1)-(2), relative to `LawvereERCat` as the reference
-definition of elementary. No equivalence of categories is claimed:
-the equational category has finer hom-sets, and faithfulness is
-neither expected nor needed.
+The tier quantification is essential, and corrects revision 2,
+which asserted fullness of `collapseFunctor` on `SynCatFO`: that
+statement is false, because tier-uniform hom-sets are strictly
+smaller than elementary - a morphism `[o] -> [o]` admits no
+recursion on its input at all (the recurrence argument must sit at
+an Omega-sort strictly above the output), so, e.g., doubling has no
+realizer at uniform tier. Leivant's own formulation carries the
+same existential ("f is defined in `RMRec-omega` if f = g-minus for
+some ramified g", section 2.7).
 
-### 6.2 Fullness: the machine route (all transcription)
+Together the two statements are the denotational form of
+Leivant III Theorem 14, items (1)-(2), relative to `LawvereERCat`
+as the reference definition of elementary.
+
+Optional packaging (statement-level, permitted by section 1.2): a
+collapse category with objects `N` and `hom(n, m)` the colimit over
+`k` of `Hom(tierCtx k n, tierCtx 0 m)`, transition maps given by
+precomposition with `kappaHat`, and composition aligning tiers via
+`omegaShift`; the two statements then assemble into an explicit
+equivalence with `LawvereERCat` in the `erKSimEquiv` pattern
+(explicit functors both ways, avoiding the choice-based
+fully-faithful-essentially-surjective construction, per the
+no-`noncomputable` rule). Whether to build this packaging or stop
+at the two statements is a plan decision; the theorem content is
+the same either way.
+
+### 6.2 Definability: the machine route (all transcription)
 
 Chain, for an arbitrary ER morphism `e`:
 
@@ -806,7 +855,7 @@ Beckmann-Weiermann investigation.
 
 ## 7. Candidate approaches for the syntax layer
 
-Unchanged from revision 1 in substance; the equational and
+Unchanged from revision 1 in substance; the interpretation and
 categorical layers above are representation-independent.
 
 - Approach A: sorted-Era native inductives. Proven pattern, best
@@ -839,8 +888,9 @@ convergence target. If a default must be chosen without spikes: B.
 In dependency order (phase boundaries fixed by the plan, not here):
 
 1. Core layers: sorted signatures (with `constructorSig` from
-   polynomial signature functors), term layer with clone laws,
-   `Derivable`, generic syntactic category with finite products.
+   polynomial signature functors), term layer with clone laws, the
+   standard interpretation with its extensional setoid, generic
+   syntactic category with finite products.
 2. Monadic first-order system (`1 + X`, DLMZ tier presentation):
    category, `omegaShift`, `kappaHat`, ramified `+`/`x` examples.
 3. Polyadic first-order system (`1 + 2 X`): same; algebra-map and
@@ -850,21 +900,32 @@ In dependency order (phase boundaries fixed by the plan, not here):
    (coercions, `+`, `x`, `e`, `2_m`, `sz`) - these are both
    validation and Lemma 6 ingredients. Tree instance `1 + X^2` as a
    structure.
-5. Fullness data (section 6.2): Lemma 2 and Lemma 1 transcriptions;
-   Lemma 6 transcription against `ZeroTestURM`; bound-format
-   arithmetic; deliverable: for every ER morphism, a ramified
-   realizer with matching denotation (the pre-functor surjectivity
-   family).
+5. Definability data (section 6.2): Lemma 2 and Lemma 1
+   transcriptions; Lemma 6 transcription against `ZeroTestURM`;
+   bound-format arithmetic; deliverable: for every ER morphism, a
+   tier and a ramified realizer with matching denotation (the
+   `ramified_definability` family).
 6. Soundness route (section 6.3): Beckmann-Weiermann bridge
    investigation gate; then either the `T*` reuse or the
    `RlMR-omega`/`RlMR-omega_o`/`1l(A)`/Lemma 12 transcription; the
    landing normalizer (section 6.4); `collapseFunctor`.
-7. Assembly: `collapseFunctor_full` from phase 5's family and
-   phase 6's functor; Theorem 14 (1)-(2); K^sim_2 corollary via
-   `erKSimEquiv`.
+7. Assembly: `ramified_definability` from phase 5's family,
+   `collapseFunctor` from phase 6; optionally the collapse-category
+   equivalence (section 6.1); Theorem 14 (1)-(2); K^sim_2 corollary
+   via `erKSimEquiv`.
 
 ## 9. Deferred and future work
 
+- The equational presentation (its own future workstream): re-
+  instantiate the section-4.2 syntactic-category construction with a
+  `Derivable`-style relation over Leivant's defining equations
+  (Era-pattern rules: `ax`, `refl`, `euclid`, congruence `subst`;
+  rule-menu decisions - extensionality at arrow sorts,
+  Goodstein-style uniqueness - and categoricity questions live
+  there), prove its soundness against the standard interpretation
+  built in this workstream, and restate the in-scope equivalence
+  equationally. The interpretation layer of this workstream is a
+  prerequisite of that soundness proof.
 - First-order complexity characterizations: linear space (monadic;
   no reference category exists yet - section 2.4) and polynomial
   time (polyadic; reference theory to be chosen; note Heraud-Nowak
@@ -899,15 +960,17 @@ In dependency order (phase boundaries fixed by the plan, not here):
 2. Landing choice for the soundness normalizer (section 6.4): K^sim
    simulator pattern versus ER-side bounded recursion on codes.
 3. Functoriality of the base-substitution Omega shift on the
-   higher-order system (axiom-set closure under the shift).
+   higher-order system (interpretation compatibility; under the
+   deferred equational presentation, additionally axiom-set closure
+   under the shift).
 4. Sorted-context indexing for the DTC realizations (contexts as
    index components versus parameters).
 5. Whether `Presentation` carries object-sort structure as data or
    as a typeclass; interaction with theory-inclusion functors.
 6. Obtain Otto's thesis and check overlap before the design spec
    claims novelty for the packaging (section 2.5).
-7. Rule menu defaults (extensionality; `uniq`) for the shipped
-   presentations.
+7. Whether to build the collapse-category packaging of section 6.1
+   or stop at the two theorem statements.
 
 ## References
 
