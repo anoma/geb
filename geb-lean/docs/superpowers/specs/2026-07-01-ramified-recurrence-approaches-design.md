@@ -184,7 +184,7 @@ Ordinary (non-simultaneous) primitive recursion is the case
 `k = 0`.
 
 Unramified recurrence (Leivant III section 2.1, eq. (1)) is the
-same idea over an arbitrary free algebra. A signature lists
+same schema over an arbitrary free algebra. A signature lists
 constructors with arities; the free algebra is the inductive type
 they generate; recurrence supplies one clause per constructor, in
 which the step sees the parameters, the immediate subterms, and the
@@ -215,8 +215,9 @@ def FreeAlg.recurse {S : Sig} {P C : Type}
 Equationally, for each constructor `c_i` of arity `r_i`:
 
 ```text
-f (x_vec, c_i (a_1 ... a_r)) =
-  g_i (x_vec, a_1 ... a_r, f (x_vec, a_1), ..., f (x_vec, a_r))
+f (x_vec, c_i (a_1 ... a_{r_i})) =
+  g_i (x_vec, a_1 ... a_{r_i},
+       f (x_vec, a_1), ..., f (x_vec, a_{r_i}))
 ```
 
 Over the unary naturals this is primitive recursion again - the two
@@ -258,9 +259,13 @@ fragment, `RMRec-omega`.
 Ramified recurrence (Leivant III section 2.3, eq. (4)) is the same
 schema with a sorting layer and nothing else: every sort denotes a
 copy of the same algebra, the equations are unchanged, and the only
-change is a typing constraint - the recurrence argument must carry
-a sort strictly above the output's. First-order illustration over
-the unary naturals, with tiers as natural numbers:
+change is a typing constraint on the recurrence argument's sort.
+Leivant's schema fixes it at exactly one sort above the output
+(`Omega tau` against `tau`, eq. (4)); the strictly-above form
+`i < j` in the illustration below is the composite of that schema
+with the downward coercions of section 2.4(1), which lower any
+higher sort to `Omega tau`. First-order illustration over the unary
+naturals, with tiers as natural numbers:
 
 ```lean
 /-- First-order ramified (tiered) recurrence, illustrated over the
@@ -299,7 +304,7 @@ annotations:
 
 | Item | Location | Content and scope |
 | --- | --- | --- |
-| Free algebra; word algebra (monadic/polyadic); tree algebra | section 2.1 | constructors `c_1 ... c_k`, arity `r_i`; word algebra: all arities at most 1 (subdivided: monadic = one unary constructor, polyadic = several); tree algebra: at least one constructor of arity at least 2. The monadic/polyadic distinction subdivides word algebras only |
+| Free algebra; word algebra (monadic/polyadic); tree algebra | section 2.1 | constructors `c_1 ... c_k`, arity `r_i`; the paper's standing convention: the algebra is infinite, so it has a constructor of arity 0 and one of positive arity. Word algebra: all arities at most 1 (subdivided: monadic = one unary constructor, polyadic = several); tree algebra: at least one constructor of arity at least 2. The monadic/polyadic distinction subdivides word algebras only |
 | Recurrence over `A`; monotonic, closed, flat variants | section 2.1, eq. (1) | the unramified schema; `case` and destructor functions `dstr_j` by flat recurrence |
 | Ramified types (r-types) | section 2.3 | types from base `o` by binary `->` and unary `Omega`; object types are `o` and `Omega tau` |
 | `RRec-omega(A)`, ramified recurrence for type `tau` | section 2.3, eq. (4) | constructors `c_i` at every object type; recurrence argument of type `Omega tau`, output type `tau` |
