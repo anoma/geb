@@ -148,8 +148,8 @@ annotations:
 | Collapse `f-minus`, raising `G-plus-tau`; Lemmas 3, 4 | section 2.7 | erasing ramification; `(f-)+ = f`, `(F+)- = F`; the collapse defines what the main theorem characterizes |
 | Register machines over `A`; Lemma 5 | section 3.1 | states, registers holding `A`-elements, commands: constructor assignment, branch on main constructor, destructor; reducibilities to Turing machines |
 | Lemma 6: elementary-time machines are ramified-definable | section 3.2 | the completeness direction; simultaneous-recurrence simulation of machine steps, clocked by `2_q(sz)`; in scope as the fullness route (section 6.2) |
-| Applicative calculi `RlMR-omega`, `RlMR-omega_o` | section 4.1 | applied lambda calculi: constants `c_i`, `R-tau`, `F-tau` (or `dstr`, `case`); beta and eta reductions plus recurrence and flat reduction. In scope as soundness apparatus (section 6.3): both calculi, since the paper's route from (2) to (4) passes through `RlMR-omega` |
-| Proposition 7: equational and applicative agree | section 4.1 | four-way definability equivalence. In scope as soundness apparatus: the composite (2) to (1) (Lemma 1), (1) to (3) (eq. (9), p. 223), (3) to (4) (stated "similar" to Lemma 1; its transcription reconstructs the indicated argument). The remaining directions are deferred |
+| Applicative calculi `RlMR-omega`, `RlMR-omega_o` | section 4.1 | applied lambda calculi: constants `c_i`, `R-tau`, `F-tau` (or `dstr`, `case`); beta and eta reductions plus recurrence and flat reduction. In scope as soundness apparatus (section 6.3): both calculi, since the paper's route from (1) to (4) passes through `RlMR-omega` |
+| Proposition 7: equational and applicative agree | section 4.1 | four-way definability equivalence, items (1) `RMRec-omega`, (2) `RMRec-omega_o`, (3) `RlMR-omega`, (4) `RlMR-omega_o`. In scope as soundness apparatus: the composite (1) to (3) (eq. (9), p. 223), (3) to (4) (stated "similar" to Lemma 1; its transcription reconstructs the indicated argument). The remaining directions are deferred; Lemma 1's (1)-(2) equivalence is in scope on the fullness side |
 | Lambda-representation in `1l(A)`; Lemmas 8-10 and Proposition 11 | sections 4.2-4.3 | Berarducci-Boehm-style representation of `A` in the simply typed lambda calculus with `dstr`/`case`, with the term translation `E` to `E-bar`; soundness apparatus |
 | Lemma 12, Proposition 13: normalization bound | section 5 | terms of height `h`, redex rank `q` normalize in time `O((2_{q+1}(h))^2)`; hence represented functions are elementary-time computable; soundness apparatus |
 | Theorem 14: elementary characterization | section 6.1 | the in-scope theorem is the equivalence of items (1) and (2), stated against the repository's reference class; items (3)-(5) are deferred with the applicative calculi |
@@ -745,14 +745,14 @@ one.
 
 The literature route (Leivant III sections 4-5), all transcription:
 
-1. From `RMRec-omega` to `RlMR-omega_o`, as the paper's composite
-   through Proposition 7 (p. 223): (2) to (1) by Lemma 1; (1) to
-   (3) by the translation of eq. (9), which lands in the full
-   calculus `RlMR-omega` (recurrence with parameters becomes closed
-   `R-tau` operators); (3) to (4), which the paper states is
-   "similar" to Lemma 1 - its transcription reconstructs that
-   indicated argument at the applicative level. Both applicative
-   calculi therefore enter as proof-internal apparatus.
+1. From `RMRec-omega` (Proposition 7's item (1)) to `RlMR-omega_o`
+   (item (4)), as the paper's composite through Proposition 7
+   (p. 223): (1) to (3) by the translation of eq. (9), which lands
+   in the full calculus `RlMR-omega` (recurrence with parameters
+   becomes closed `R-tau` operators); (3) to (4), which the paper
+   states is "similar" to Lemma 1 - its transcription reconstructs
+   that indicated argument at the applicative level. Both
+   applicative calculi therefore enter as proof-internal apparatus.
 2. Lemmas 8-10 and Proposition 11: closed `RlMR-omega_o` terms are
    represented in `1l(A)` (simply typed lambda calculus with
    `dstr`/`case` constants) via the Berarducci-Boehm representation
