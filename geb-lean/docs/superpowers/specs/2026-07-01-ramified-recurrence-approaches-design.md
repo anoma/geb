@@ -354,10 +354,10 @@ Novel packaging (permitted; no novel proof routes):
 - The multi-sorted presentation of `RMRec-omega` and its syntactic
   category (interpretative equality; the equational variant is the
   deferred workstream of section 9).
-- The statement of Theorem 14 (1)-(2) as a tier-quantified
-  definability theorem plus a soundness functor into `LawvereERCat`,
-  optionally packaged as an equivalence out of a tier-colimit
-  collapse category (section 6.1).
+- The statement of Theorem 14 (1)-(2) as an object-sort-quantified
+  definability theorem plus a soundness functor into `LawvereERCat`;
+  a categorical packaging of the pair is an open question
+  (section 6.1).
 - The data-types-a-la-carte factoring of signatures and the W-type
   realization of syntax.
 - Optional, statement-level only: the Omega-shift functor and the
@@ -613,9 +613,12 @@ carrier (the PolyFix of the signature functor; for 1 + X, N), arrow
 sorts as function spaces. -/
 def standardModel (P : Presentation) : SortedModel P.sig
 
-/-- Extensional equality of standard interpretations - the
-erMorNSetoid pattern, sorted. -/
-def interpSetoid (Γ : Ctx S) (s : S) : Setoid (Tm Σ Γ s)
+/-- Extensional equality of eval at standardModel P - the
+erMorNSetoid pattern, sorted. The model dependence is structural:
+erMorNSetoid needs no such parameter only because ERMorN.interp is
+globally fixed. -/
+def interpSetoid (P : Presentation) (Γ : Ctx S) (s : S) :
+    Setoid (Tm P.sig Γ s)
 
 def SynCat (Σ : SortedSig S) (r : QuotRel Σ) : Type := Ctx S
 instance : Category (SynCat Σ r)          -- comp = subst
@@ -716,7 +719,11 @@ while preserving the canonical-instances plan.
 
 ```lean
 /-- SynCatFO: the full subcategory of the higher-order syntactic
-category on contexts of object sorts Omega^m o. -/
+category on contexts of object sorts - o and Omega tau for
+arbitrary r-types tau. Every object sort's universe is a copy of
+the base carrier (Leivant III section 2.7: "the universe of sort
+theta is a copy A^theta of A"), so morphisms between object-sort
+contexts denote numeric functions. -/
 def SynCatFO (P : Presentation) : Type
 
 /-- Soundness packaged as a functor. With interpretative hom-sets
@@ -726,39 +733,43 @@ that every denotation is ER-definable (section 6.3). natSig is the
 def collapseFunctor : SynCatFO (higherOrder natSig) ⥤ LawvereERCat
 
 /-- Definability (the completeness direction, section 6.2),
-quantified over input tiers as in Leivant's f-minus collapse
-(section 2.7 of the paper): tierCtx k n is the context of n copies
-of Omega^k o. -/
+quantified over object-sort input contexts, rendering Leivant's
+f-minus definability (section 2.7 of the paper: a function over A
+is defined in RMRec-omega when it is the collapse f-minus of some
+ramified f). oCtx m is the context of m copies of o. -/
 theorem ramified_definability {n m} (f : (n : LawvereERCat) ⟶ m) :
-    ∃ k (g : tierCtx k n ⟶ tierCtx 0 m),
+    ∃ (Γ : ObjCtx n) (g : Γ ⟶ oCtx m),
       collapseDenotation g = f
 ```
 
-The tier quantification is essential, and corrects revision 2,
-which asserted fullness of `collapseFunctor` on `SynCatFO`: that
-statement is false, because tier-uniform hom-sets are strictly
-smaller than elementary - a morphism `[o] -> [o]` admits no
-recursion on its input at all (the recurrence argument must sit at
-an Omega-sort strictly above the output), so, e.g., doubling has no
-realizer at uniform tier. Leivant's own formulation carries the
-same existential ("f is defined in `RMRec-omega` if f = g-minus for
-some ramified g", section 2.7).
+The quantification over object-sort contexts is required by the
+source. It must range beyond the tower sorts `Omega^k o`: Lemma 6's
+own realizer (eq. (8), p. 221) takes its input at the object sort
+`Omega(eta -> eta)`, the coercions of section 2.4(1) run downward
+only, and tower-sorted inputs drive object-type recurrence alone
+(the first-order fragment), so, e.g., exponentiation has no
+realizer over any tower-sort context. It must also be an
+existential and not fullness of `collapseFunctor` (revision 2
+asserted that fullness; it is false): sort-uniform hom-sets are
+strictly smaller than elementary - at `[o] -> [o]` no monotonic
+recurrence applies to the input (its recurrence argument must sit
+at an Omega-sort), and flat recurrence, which is available at sort
+`o`, passes no recursive values and so yields case analysis and
+destructors only; doubling has no realizer there.
 
 Together the two statements are the denotational form of
 Leivant III Theorem 14, items (1)-(2), relative to `LawvereERCat`
-as the reference definition of elementary.
+as the reference definition of elementary. The K^sim_2 corollary
+transfers at the level of these statements across `erKSimEquiv`.
 
-Optional packaging (statement-level, permitted by section 1.2): a
-collapse category with objects `N` and `hom(n, m)` the colimit over
-`k` of `Hom(tierCtx k n, tierCtx 0 m)`, transition maps given by
-precomposition with `kappaHat`, and composition aligning tiers via
-`omegaShift`; the two statements then assemble into an explicit
-equivalence with `LawvereERCat` in the `erKSimEquiv` pattern
-(explicit functors both ways, avoiding the choice-based
-fully-faithful-essentially-surjective construction, per the
-no-`noncomputable` rule). Whether to build this packaging or stop
-at the two statements is a plan decision; the theorem content is
-the same either way.
+A categorical packaging - a single category collecting ramified
+morphisms across object-sort contexts, coercion-mediated, equivalent
+to `LawvereERCat` - is an investigation item (open question 7), not
+an assertion: over general object sorts the coercion diagram is not
+directed as a tower-indexed colimit would require, composition on
+classes carries a well-definedness obligation, and any
+`omegaShift`-based alignment depends on open question 3. The
+theorem content is the two statements above either way.
 
 ### 6.2 Definability: the machine route (all transcription)
 
@@ -902,17 +913,17 @@ In dependency order (phase boundaries fixed by the plan, not here):
    structure.
 5. Definability data (section 6.2): Lemma 2 and Lemma 1
    transcriptions; Lemma 6 transcription against `ZeroTestURM`;
-   bound-format arithmetic; deliverable: for every ER morphism, a
-   tier and a ramified realizer with matching denotation (the
-   `ramified_definability` family).
+   bound-format arithmetic; deliverable: for every ER morphism, an
+   object-sort context and a ramified realizer with matching
+   denotation (the `ramified_definability` family).
 6. Soundness route (section 6.3): Beckmann-Weiermann bridge
    investigation gate; then either the `T*` reuse or the
    `RlMR-omega`/`RlMR-omega_o`/`1l(A)`/Lemma 12 transcription; the
    landing normalizer (section 6.4); `collapseFunctor`.
 7. Assembly: `ramified_definability` from phase 5's family,
-   `collapseFunctor` from phase 6; optionally the collapse-category
-   equivalence (section 6.1); Theorem 14 (1)-(2); K^sim_2 corollary
-   via `erKSimEquiv`.
+   `collapseFunctor` from phase 6; the categorical packaging only if
+   open question 7 resolves it; Theorem 14 (1)-(2); K^sim_2
+   corollary via `erKSimEquiv`.
 
 ## 9. Deferred and future work
 
@@ -969,8 +980,11 @@ In dependency order (phase boundaries fixed by the plan, not here):
    as a typeclass; interaction with theory-inclusion functors.
 6. Obtain Otto's thesis and check overlap before the design spec
    claims novelty for the packaging (section 2.5).
-7. Whether to build the collapse-category packaging of section 6.1
-   or stop at the two theorem statements.
+7. Whether a categorical packaging of section 6.1's two statements
+   exists on transcription-compatible terms: the coercion diagram
+   over object-sort contexts is not directed, composition on classes
+   needs well-definedness, and `omegaShift`-based alignment depends
+   on question 3. If none does, the two statements stand alone.
 
 ## References
 
