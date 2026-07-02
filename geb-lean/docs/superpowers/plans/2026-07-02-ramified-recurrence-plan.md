@@ -41,7 +41,7 @@
 - [Phase 6 — soundness (branch `feat/ramified-p6-soundness`; sub-plan)](#phase-6--soundness-branch-featramified-p6-soundness-sub-plan)
   - [Task 6.0: write and converge the Phase 6 sub-plan](#task-60-write-and-converge-the-phase-6-sub-plan)
 - [Phase 7 — assembly (branch `feat/ramified-p7-assembly`)](#phase-7--assembly-branch-featramified-p7-assembly)
-  - [Task 7.1: `SynCatFO`, `collapseFunctor`, and the two statements](#task-71-syncatfo-collapsefunctor-and-the-two-statements)
+  - [Task 7.1: the two statements](#task-71-the-two-statements)
   - [Task 7.2: the K-sim-2 corollary](#task-72-the-k-sim-2-corollary)
   - [Task 7.3: documentation](#task-73-documentation)
 - [Self-review checklist (run before adversarial review)](#self-review-checklist-run-before-adversarial-review)
@@ -159,16 +159,25 @@ Every task's requirements implicitly include this section.
   `isTerminal*` witnesses are `noncomputable`.
 - Avoid bash process substitution (`<(...)`); write intermediate
   output to files under `/tmp`.
+- Exemption: commits on Task G3's throwaway spike branch are exempt
+  from the pre-commit triad (the branch is never pushed or merged
+  and is abandoned once the decision note is written). A spike state
+  stopped at a demonstrated blocker is checkpointed with the failing
+  fragment commented out and the blocker recorded inline, so the
+  checkpoint compiles nothing false and remains inspectable.
 
 ## How to work this plan
 
 - **Phase order.** Phase 0 gates G1-G4 close before any Phase 1
-  commit (G5 is non-blocking). Phases 1-2-3-4 are sequential except
-  that Phase 3 and Phase 4 both depend only on Phase 2 and may be
-  developed in either order or in parallel branches. The Phase 5
-  sub-plan is written after Phase 2 lands (it consumes the example
-  ladder); the Phase 6 sub-plan is written after gates G1/G2/G4 have
-  closed and Phase 2 has landed. Phase 7 consumes Phases 5 and 6.
+  commit (G5 is non-blocking); G3 is the gate whose outcome Phase 1
+  consumes, and G1/G2/G4 are front-loaded with it so the route
+  record is complete before implementation begins. Phases 1-2-3-4
+  are sequential except that Phase 3 and Phase 4 both depend only on
+  Phase 2 and may be developed in either order or in parallel
+  branches. The Phase 5 sub-plan is written after Phases 2 and 3
+  land (it consumes the example ladder and `natFreeAlgEquiv`); the
+  Phase 6 sub-plan is written after gates G1/G2/G4 have closed and
+  Phase 2 has landed. Phase 7 consumes Phases 5 and 6.
 - **Sub-plans.** Phases 5 and 6 each get a sub-plan at
   `docs/superpowers/plans/<date>-ramified-p<N>-<slug>-subplan.md`,
   adversarially reviewed to convergence and then user-reviewed before
@@ -223,14 +232,14 @@ s7, s8). Adversarial review of this plan reviews these decisions.
    spec's gates exist to enforce.
 5. **Naming and file structure:** fixed in the next section. The
    spec's s4.2 sketch names are kept where present (`SortedSig`,
-   `Tm`, `standardModel`, `interpSetoid`, `SynCat`, `RType`,
-   `higherOrder`, `SynCatFO`, `collapseFunctor`,
+   `Tm`, `standardModel`, `interpSetoid`, `QuotRel`, `SynCat`,
+   `RType`, `higherOrder`, `SynCatFO`, `collapseFunctor`,
    `ramified_definability`); the free-algebra signature data is named
    `AlgSig` (the spec's illustrative `Sig`), avoiding a parallel
    meaning for "signature" against `SortedSig`.
 6. **Object-sort structure (spec open question 5), default:**
    `Presentation` carries the sort type `S`, the operation signature,
-   and the object-sort predicate `isObj : S -> Prop` as plain data
+   and the object-sort predicate `IsObj : S -> Prop` as plain data
    (a structure, not a typeclass). The G3 spikes may overturn this;
    the decision note records the outcome.
 7. **Sorted-context indexing (spec open question 4):** answered
@@ -250,11 +259,11 @@ s7, s8). Adversarial review of this plan reviews these decisions.
 | `GebLean/Ramified/HigherOrder.lean` | `appSig`, `RIdent`, `higherOrder`, identifier semantics | 2 |
 | `GebLean/Ramified/OmegaShift.lean` | `omegaShift` (sort level), `kappaHat` | 2 |
 | `GebLean/Ramified/Examples.lean` | s2.4 ladder: coercions, `+`, `x`, `e`, `2_m`, `sz` | 2 |
-| `GebLean/Ramified/Algebras.lean` | `natAlgSig`, `binWordAlgSig`, `treeAlgSig`, instantiations, algebra-map functoriality | 3 |
+| `GebLean/Ramified/Algebras.lean` | `binWordAlgSig`, `treeAlgSig`, `natFreeAlgEquiv`, instantiations, algebra-map functoriality | 3 |
 | `GebLean/Ramified/FirstOrder.lean` | restricted signature, sub-theories, inclusion, first-order examples | 4 |
 | `GebLean/Ramified/Definability/*.lean` | Lemma 2, Lemma 1, bound arithmetic, Lemma 6, definability family | 5 |
-| `GebLean/Ramified/Soundness/*.lean` | route per gates; `collapseFunctor` substance | 6 |
-| `GebLean/Ramified/Characterization.lean` | `SynCatFO`, `collapseFunctor`, s6.1 statements, K^sim_2 corollary | 7 |
+| `GebLean/Ramified/Soundness/*.lean` | route per gates; `Collapse.lean`: `SynCatFO`, `collapseDenotation`, `collapseFunctor`, faithfulness | 6 |
+| `GebLean/Ramified/Characterization.lean` | s6.1 statement pair (`ramified_definability`), K^sim_2 corollary | 7 |
 | `GebLean/Ramified.lean` | directory index (import block + module docstring) | 1, extended each phase |
 | `GebLeanTests/Ramified/*.lean` | per-phase test modules | each |
 | `docs/superpowers/notes/2026-07-02-ramified-gates-decisions.md` | gate record (G1-G5) and plan-fixed decisions | 0 |
@@ -270,11 +279,11 @@ copied from spec s4.2 it is marked as such.
 | Phase | Branch | Depends on | Detail |
 | --- | --- | --- | --- |
 | 0 gates | `docs/ramified-recurrence-approaches` (notes); `spike/ramified-syntax` (throwaway) | — | full, here |
-| 1 core layers | `feat/ramified-p1-core` | G3 | full, here |
+| 1 core layers | `feat/ramified-p1-core` | G1-G4 closed (G3 decisive) | full, here |
 | 2 higher-order over `1 + X` | `feat/ramified-p2-rtype` | 1 | full, here |
 | 3 algebra genericity | `feat/ramified-p3-generic` | 2 | full, here |
 | 4 first-order sub-theories | `feat/ramified-p4-firstorder` | 2 | full, here |
-| 5 definability | `feat/ramified-p5-definability` | 2; G1-G4 closed (branch stacked after 4) | boundaries here; sub-plan |
+| 5 definability | `feat/ramified-p5-definability` | 2, 3 (branch stacked after 4) | boundaries here; sub-plan |
 | 6 soundness | `feat/ramified-p6-soundness` | 2; G1, G2, G4 | boundaries here; sub-plan |
 | 7 assembly | `feat/ramified-p7-assembly` | 5, 6 | full, here |
 
@@ -352,9 +361,10 @@ record and close the gate.
   clause, Lean constructor, verbatim-match / deviation / missing.
 
 - [ ] **Step 2: audit the measures.** Compare `GodelTTerm.lh` (:22),
-  `.d` (:42), `.G` (:61), `.bracketLevel*` (:95-:131) and
-  `GodelTType.level` (`GebLean/LawvereGodelT.lean:47`) against the
-  source's Definitions 7-10, same table format.
+  `.d` (:42), `.G` (:61), and `.bracketLevel*` (:95-:131) — all in
+  `GebLean/LawvereGodelTLemma16.lean` — and `GodelTType.level`
+  (`GebLean/LawvereGodelT.lean:47`) against the source's
+  Definitions 7-10, same table format.
 
 - [ ] **Step 3: audit the Lemma 16 realization.** The repository
   realizes Lemma 16 as a family, not one theorem: the
@@ -407,9 +417,12 @@ is first; partial completion is itself evidence.
 - [ ] **Step 1: create the spike branch.**
 
 ```bash
-jj new -m "spike(ramified): syntax-layer spike A vs B (throwaway)" <tip>
+jj new -m "chore(ramified): spike syntax layer, A versus B (throwaway)" <tip>
 jj bookmark create spike/ramified-syntax -r @
 ```
+
+(`<tip>` is the revision carrying the approved spec and plan, per
+the branch rule in "How to work this plan".)
 
 - [ ] **Step 2: spike A (native inductives).** One file,
   `SpikeA.lean`: sorted signature as a plain structure; `Tm` as a
@@ -448,8 +461,8 @@ jj bookmark create spike/ramified-syntax -r @
 
 - [ ] **Step 5: write the G3 note section, abandon the spike branch.**
   The note preserves the decisive code fragments (interface shapes,
-  the friction points) as fenced blocks, so the abandoned branch is
-  not load-bearing. Then:
+  the friction points) as fenced blocks, so no downstream artifact
+  depends on the abandoned branch. Then:
 
 ```bash
 jj abandon -r 'docs/ramified-recurrence-approaches..spike/ramified-syntax'
@@ -608,11 +621,11 @@ def SortedSig.sum (F G : SortedSig S) : SortedSig S
 (shapes = operations, positions = arities), one copy per object
 sort: for each object sort `s` and constructor `b`, an operation of
 arity `List.replicate (A.ar b) s` and result `s`. -/
-def constructorSig (A : AlgSig) (isObj : S → Prop) : SortedSig S
+def constructorSig (A : AlgSig) (IsObj : S → Prop) : SortedSig S
 ```
 
 - [ ] **Step 1: write failing tests.** Over `S := Nat` with
-  `isObj := fun _ => True`: `constructorSig` of the `1 + X` shape has,
+  `IsObj := fun _ => True`: `constructorSig` of the `1 + X` shape has,
   at sort 0, a 0-ary and a 1-ary operation (`#guard` on `arity`
   lengths and `result`); `sum` of two one-op signatures exposes both
   ops. Run `lake test`, confirm failure.
@@ -635,16 +648,33 @@ def constructorSig (A : AlgSig) (isObj : S → Prop) : SortedSig S
 
 ```lean
 -- Ctx S := List S
+-- (sig : SortedSig S throughout; Σ is not a legal Lean binder)
 -- Tm    : SortedSig S → Ctx S → S → Type
--- Tm.var   : (i : Fin Γ.length) → Tm Σ Γ (Γ.get i)
--- Tm.op    : (o : Σ.Op) → (args : ∀ i, Tm Σ Γ ((Σ.arity o).get i)) →
---            Tm Σ Γ (Σ.result o)
--- Tm.subst : Tm Σ Γ s → (∀ i, Tm Σ Δ (Γ.get i)) → Tm Σ Δ s
+-- Tm.var   : (i : Fin Γ.length) → Tm sig Γ (Γ.get i)
+-- Tm.op    : (o : sig.Op) →
+--            (args : ∀ i, Tm sig Γ ((sig.arity o).get i)) →
+--            Tm sig Γ (sig.result o)
+-- Tm.subst : Tm sig Γ s → (∀ i, Tm sig Δ (Γ.get i)) → Tm sig Δ s
 -- Tm.subst_id    : t.subst Tm.var = t
 -- Tm.subst_subst : (t.subst σ).subst τ
 --                    = t.subst (fun i => (σ i).subst τ)
 -- Tm.weaken : (f : Fin Γ.length → Fin Δ.length)
---             (h : ∀ i, Δ.get (f i) = Γ.get i) → Tm Σ Γ s → Tm Σ Δ s
+--             (h : ∀ i, Δ.get (f i) = Γ.get i) →
+--             Tm sig Γ s → Tm sig Δ s
+
+/-- A quotient relation for the syntactic category: a per-hom setoid
+family on terms together with the congruence laws composition needs
+(substitution respects the relation in both positions). The relation
+is a parameter of the syntactic-category construction (spec s4.2);
+Task 1.4 supplies the interpretative instantiation and spec s9's
+deferred workstream a Derivable-style one. -/
+structure QuotRel (sig : SortedSig S) where
+  rel : (Γ : Ctx S) → (s : S) → Setoid (Tm sig Γ s)
+  subst_congr :
+    ∀ {Γ Δ s} (t t' : Tm sig Γ s)
+      (σ σ' : ∀ i, Tm sig Δ (Γ.get i)),
+      (rel Γ s) t t' → (∀ i, (rel Δ _) (σ i) (σ' i)) →
+      (rel Δ s) (t.subst σ) (t'.subst σ')
 ```
 
 - [ ] **Step 1: write failing tests.** Small concrete signature
@@ -655,8 +685,8 @@ def constructorSig (A : AlgSig) (isObj : S → Prop) : SortedSig S
   concrete term. Run `lake test`, confirm failure.
 
 - [ ] **Step 2: implement** per the G3 realization. The clone laws
-  are the load-bearing content (composition of the syntactic
-  category); prove them at full generality, not just on examples.
+  are the content the syntactic category's composition depends on;
+  prove them at full generality, not just on examples.
   Docstrings: novel packaging; the clone-law shape cites the
   repository precedent (`Era.Tm.subst_id`/`subst_subst`,
   `GebLean/Era.lean`) as the pattern source.
@@ -676,12 +706,13 @@ def constructorSig (A : AlgSig) (isObj : S → Prop) : SortedSig S
 ```lean
 /-- A model of a sorted signature: carriers per sort, an operation
 interpretation per op; environments over contexts. -/
-structure SortedModel (Σ : SortedSig S) where
+structure SortedModel (sig : SortedSig S) where
   carrier : S → Type
-  interpOp : (o : Σ.Op) →
-    (∀ i, carrier ((Σ.arity o).get i)) → carrier (Σ.result o)
+  interpOp : (o : sig.Op) →
+    (∀ i, carrier ((sig.arity o).get i)) → carrier (sig.result o)
 -- SortedModel.Env : Ctx S → Type   (per-position carriers)
--- Tm.eval : (M : SortedModel Σ) → Tm Σ Γ s → M.Env Γ → M.carrier s
+-- Tm.eval : (M : SortedModel sig) → Tm sig Γ s → M.Env Γ →
+--           M.carrier s
 -- Tm.eval_subst :
 --   (t.subst σ).eval M ρ = t.eval M (fun i => (σ i).eval M ρ)
 
@@ -692,7 +723,7 @@ system is Phase 2's `RIdent.interp`). -/
 structure Presentation where
   S : Type
   sig : SortedSig S
-  isObj : S → Prop
+  IsObj : S → Prop
   alg : AlgSig
   std : SortedModel sig
 
@@ -706,6 +737,12 @@ abbrev standardModel (P : Presentation) : SortedModel P.sig := P.std
 erMorNSetoid pattern (GebLean/LawvereERQuot.lean:23), sorted. -/
 def interpSetoid (P : Presentation) (Γ : Ctx P.S) (s : P.S) :
     Setoid (Tm P.sig Γ s)
+
+/-- The interpretative quotient relation: the interpSetoid family
+bundled with its substitution-congruence laws (discharged by
+eval_subst) — the in-scope instantiation of the relation-parametric
+syntactic category (Task 1.5). -/
+def interpQuotRel (P : Presentation) : QuotRel P.sig
 ```
 
 - [ ] **Step 1: write failing tests.** Evaluate the Task 1.3 concrete
@@ -732,22 +769,28 @@ def interpSetoid (P : Presentation) (Γ : Ctx P.S) (s : P.S) :
 **Interfaces (produces; from spec s4.2):**
 
 ```lean
--- SynCat (P : Presentation) : Type       -- := Ctx P.S
--- instance : Category (SynCat P)         -- Hom = tuples of terms
---                                        --   modulo interpSetoid;
---                                        --   comp = subst
--- instance : CartesianMonoidalCategory (SynCat P)
+-- SynCat (P : Presentation) (r : QuotRel P.sig) : Type
+--                                        -- := Ctx P.S
+-- instance : Category (SynCat P r)       -- Hom = tuples of terms
+--                                        --   modulo r; comp = subst
+-- instance : CartesianMonoidalCategory (SynCat P r)
 --                                        -- context concatenation
+-- The quotient relation is a parameter of the construction
+-- (spec s4.2 prose); the in-scope instantiation is
+-- interpQuotRel P (Task 1.4), and the deferred equational
+-- workstream (spec s9) re-instantiates the same construction with
+-- a Derivable-style relation.
 ```
 
 Assembly plan (spec s4.2): hom-setoids first, quotient last —
 morphism data is a tuple of terms `∀ i, Tm P.sig Γ ((Δ).get i)` with
-the pointwise `interpSetoid`; the category laws hold up to the setoid
-by `Tm.subst_subst`/`subst_id` + `eval_subst`; the `Category`
-instance is on the `Quotient`. Use the seeds:
+the pointwise `r`; the category laws hold up to the relation by
+`Tm.subst_subst`/`subst_id` plus `QuotRel`'s congruence laws
+(discharged for the in-scope instantiation by `eval_subst`); the
+`Category` instance is on the `Quotient`. Use the seeds:
 `GebLean/Utilities/SetoidCat.lean` (`SetoidBundle`, `SetoidHom`,
 `quotientFunctor` at :137) and `GebLean/Utilities/Category.lean`
-(`CategoryData`, `CategoryOfData` at :222) where they shorten the
+(`CategoryData` :199, `CategoryOfData` :222) where they shorten the
 assembly; hand-roll where they do not fit (the spec notes the
 construction generalizes what `LawvereERQuot.lean` and
 `LawvereKSimQuot.lean` hand-roll; retrofit of those files is out of
@@ -794,20 +837,24 @@ inductive RType : Type
   | arrow : RType → RType → RType
   | omega : RType → RType
 
-/-- Object sorts: `o` and every `Omega tau` (paper section 2.3). -/
-def RType.isObj : RType → Prop
+/-- Object sorts: `o` and every `Omega tau` (paper section 2.3;
+UpperCamelCase per the mathlib naming rule for Prop-valued
+definitions). -/
+def RType.IsObj : RType → Prop
 /-- Tower sorts `Omega^m o` (paper section 2.4(3)). -/
 def RType.tower : Nat → RType
--- with: (RType.tower m).isObj; DecidableEq RType;
+-- with: (RType.tower m).IsObj; DecidableEq RType;
+-- DecidablePred RType.IsObj;
 -- RType.interp (carrier : Type) : RType → Type
 --   (object sorts ↦ carrier, arrows ↦ function spaces;
 --    paper section 2.7: every object sort denotes a copy of the
 --    carrier — Omega adds typing license only)
 ```
 
-- [ ] **Step 1: failing tests** (`#guard` on `isObj` decisions for
-  `o`, `Ω o`, `Ω (o → o)`, `o → o`; `RType.tower 2 = Ω (Ω o)` by
-  `rfl`; `RType.interp Nat (Ω (o → o)) = Nat` by `rfl`).
+- [ ] **Step 1: failing tests** (`#guard` on `IsObj` decisions
+  (via `decide`) for `o`, `Ω o`, `Ω (o → o)`, `o → o`;
+  `RType.tower 2 = Ω (Ω o)` by `rfl`;
+  `RType.interp Nat (Ω (o → o)) = Nat` by `rfl`).
 
 - [ ] **Step 2: implement** with the glossary's `Omega`-license
   wording in the docstrings (verbatim discipline: `Omega tau` is the
@@ -875,7 +922,8 @@ argument sits at `Ω τ`, the recursive results and output at `τ`.
   section 2.1.
 
 - [ ] **Step 3: the syntactic category of the system.**
-  `abbrev RMRecCat (A : AlgSig) := SynCat (higherOrder A)` with the
+  `abbrev RMRecCat (A : AlgSig) :=`
+  `SynCat (higherOrder A) (interpQuotRel (higherOrder A))` with the
   Phase 1 instances applying; smoke `example`s of composition.
 
 - [ ] **Step 4: verify, pre-commit triad, commit** (message
@@ -1073,7 +1121,8 @@ def RIdent.FirstOrder : RIdent A Γ τ → Prop
 target, now the committed artifact) and its polyadic sibling. -/
 def firstOrderPresentation (A : AlgSig) : Presentation
 def foInclusion (A : AlgSig) :
-    SynCat (firstOrderPresentation A) ⥤ RMRecCat A
+    SynCat (firstOrderPresentation A)
+      (interpQuotRel (firstOrderPresentation A)) ⥤ RMRecCat A
 ```
 
 - [ ] **Step 1: failing tests.** Ramified `+` and `x` at first order
@@ -1171,12 +1220,18 @@ the ramified sorts). Transcription of Lemma 2; cite section 2.6.
 
 **Files:** `GebLean/Ramified/Definability/Flat.lean` (+ test)
 
-**Deliverable:** `dstrCaseSig` (spec s4.2 sketch) realized as derived
-identifiers; the two-way definability reduction between the
-flat-recurrence presentation and the destructor/case presentation
-(paper section 2.5, Lemma 1), as interpretation-preserving
-translations. This is the `RMRec-omega_o` to `RMRec-omega` leg the
-definability chain ends with (spec s6.2 step 3).
+**Deliverable:** `dstrCaseSig` produced as a `SortedSig` summand per
+the spec s4.2 sketch (`dstrCaseSig (A : AlgSig) (IsObj : S → Prop) :
+SortedSig S`), forming the destructor/case presentation variant; and
+the two-way definability reduction of paper section 2.5, Lemma 1,
+as interpretation-preserving translations between the two variants
+(spec s4.3 lists Lemma 1 as a reduction between presentation
+variants): one direction realizes the `dstrCaseSig` operations as
+derived identifiers by flat recurrence inside the flat-recurrence
+presentation; the other realizes each flat recurrence over the
+destructor/case operations. This is the `RMRec-omega_o` to
+`RMRec-omega` leg the definability chain ends with (spec s6.2
+step 3).
 
 ### Task 5.3: clock-format arithmetic
 
@@ -1221,7 +1276,7 @@ Task 5.2 (step 3):
 
 ```lean
 /-- Object-sort contexts of length n (spec s6.1): sort lists whose
-every entry satisfies RType.isObj — arbitrary object sorts, beyond
+every entry satisfies RType.IsObj — arbitrary object sorts, beyond
 the tower sorts (Lemma 6's realizer takes input at Ω(η → η)). -/
 def ObjCtx (n : ℕ) : Type
 def oCtx (m : ℕ) : ObjCtx m     -- m copies of o
@@ -1298,14 +1353,44 @@ the sub-plan.
   or ER-side (bounded recursion on Godel codes; `EraComplete` and
   `GebLean/Utilities/Tupling.lean` precedents), per the G4 record.
 
-**Deliverable either route (consumed by Phase 7):** for every
-morphism of `SynCatFO (higherOrder natAlgSig)`, an `ERMorN` whose
-interpretation equals the morphism's collapse denotation — the
-substance making `collapseFunctor` total. Well-definedness and
-faithfulness are then by construction with interpretative hom-sets
-on both sides (spec s6.1): equality is interpretation equality in
-`interpSetoid` and `erMorNSetoid` (`GebLean/LawvereERQuot.lean:23`)
-alike.
+**Final boundary item, both routes (T3 / after L5):** the collapse
+packaging in `GebLean/Ramified/Soundness/Collapse.lean`
+(`collapseFunctor` is a Phase 6 deliverable per spec s8 item 6;
+Phase 7 consumes it):
+
+```lean
+/-- SynCatFO: the full subcategory of the higher-order syntactic
+category on contexts of object sorts — o and Omega tau for arbitrary
+r-types tau (spec s6.1; paper section 2.7: every object sort's
+universe is a copy of the carrier, so morphisms denote numeric
+functions through natFreeAlgEquiv). Realized via mathlib
+ObjectProperty.FullSubcategory or the repository's established
+idiom. -/
+def SynCatFO (P : Presentation) (r : QuotRel P.sig) : Type
+
+-- collapseDenotation: the standard-model interpretation of a
+-- morphism between object-sort contexts, read through
+-- natFreeAlgEquiv into (Fin n → ℕ) → (Fin m → ℕ). The exact
+-- argument bookkeeping (the ObjCtx coercion of Task 5.5) is fixed
+-- by the Phase 5 sub-plan; this phase's sub-plan states the
+-- signature against it.
+
+/-- Soundness packaged as a functor. With interpretative hom-sets it
+is well-defined and faithful by construction; the substance — every
+denotation is ER-definable — is this phase's route T or L. -/
+def collapseFunctor :
+    SynCatFO (higherOrder natAlgSig) (interpQuotRel _) ⥤ LawvereERCat
+
+instance : collapseFunctor.Faithful
+```
+
+The substance making `collapseFunctor` total: for every tuple of
+terms between object-sort contexts of `RMRecCat natAlgSig`, an
+`ERMorN` whose interpretation equals the tuple's collapse
+denotation. Well-definedness and faithfulness are then by
+construction with interpretative hom-sets on both sides (spec s6.1):
+equality is interpretation equality in `interpSetoid` and
+`erMorNSetoid` (`GebLean/LawvereERQuot.lean:23`) alike.
 
 ---
 
@@ -1313,7 +1398,7 @@ alike.
 
 Spec s6.1 and s8 item 7.
 
-### Task 7.1: `SynCatFO`, `collapseFunctor`, and the two statements
+### Task 7.1: the two statements
 
 **Files:**
 
@@ -1321,24 +1406,18 @@ Spec s6.1 and s8 item 7.
 - Create: `GebLeanTests/Ramified/Characterization.lean` (+ index
   imports)
 
-**Interfaces (produces; spec s6.1 verbatim modulo the name mapping
-`higherOrder natSig` -> `higherOrder natAlgSig` and the `ObjCtx`
-arity bookkeeping the Phase 5 sub-plan fixed):**
+**Interfaces:**
+
+- Consumes (Phase 6, `Soundness/Collapse.lean`): `SynCatFO`,
+  `collapseDenotation`, `collapseFunctor`,
+  `instance : collapseFunctor.Faithful`. Consumes (Phase 5,
+  `Definability/Top.lean`): `ObjCtx`, `oCtx`,
+  `erMor_ramified_definable`.
+- Produces (spec s6.1 verbatim modulo the name mapping
+  `higherOrder natSig` -> `higherOrder natAlgSig` and the `ObjCtx`
+  arity bookkeeping the Phase 5 sub-plan fixed):
 
 ```lean
-/-- SynCatFO: the full subcategory of the higher-order syntactic
-category on contexts of object sorts — o and Omega tau for arbitrary
-r-types tau (spec s6.1; paper section 2.7: every object sort's
-universe is a copy of the carrier, so morphisms denote numeric
-functions through natFreeAlgEquiv). -/
-def SynCatFO (P : Presentation) : Type
-
-/-- Soundness packaged as a functor. With interpretative hom-sets it
-is well-defined and faithful by construction; the substance is that
-every denotation is ER-definable (Phase 6). -/
-def collapseFunctor :
-    SynCatFO (higherOrder natAlgSig) ⥤ LawvereERCat
-
 /-- Definability, quantified over object-sort input contexts
 (spec s6.1: the quantification must range beyond tower sorts, and it
 is an existential, not fullness — sort-uniform hom-sets are strictly
@@ -1352,17 +1431,18 @@ theorem ramified_definability {n m}
 - [ ] **Step 1: failing tests.** `collapseFunctor` on the Phase 2
   doubling morphism yields an ER morphism interpreting as doubling
   (`#guard` at small values through the quotient); faithfulness
-  `example` on a pair of distinct-denotation morphisms.
+  `example` on a pair of distinct-denotation morphisms exercising
+  the Phase 6 instance.
 
-- [ ] **Step 2: implement** `SynCatFO` (full subcategory on the
-  object-sort-context predicate — mathlib
-  `ObjectProperty.FullSubcategory` or the repository's established
-  idiom), `collapseDenotation`, `collapseFunctor` from the Phase 6
-  deliverable, `ramified_definability` from the Phase 5 family.
-  Docstrings: the pair is the denotational form of Theorem 14
-  items (1)-(2) relative to `LawvereERCat` (paper section 6.1;
-  spec s6.1); the categorical packaging is spec open question 7 and
-  is **not** asserted (no equivalence-of-categories claim).
+- [ ] **Step 2: implement** `ramified_definability` from the Phase 5
+  family (`erMor_ramified_definable`, multi-output assembled
+  componentwise per the Phase 5 sub-plan) and the Phase 6 collapse
+  artifacts. The module docstring states the pair — `collapseFunctor`
+  well-defined and faithful; `ramified_definability` — as the
+  denotational form of Theorem 14 items (1)-(2) relative to
+  `LawvereERCat` (paper section 6.1; spec s6.1); the categorical
+  packaging is spec open question 7 and is **not** asserted (no
+  equivalence-of-categories claim).
 
 - [ ] **Step 3: verify, pre-commit triad, commit** (message
   `feat(ramified): assemble the elementary characterization`).
@@ -1413,9 +1493,10 @@ theorem ramified_definability {n m}
   not asserted anywhere.
 - No placeholder text (TBD/TODO/"add appropriate..."); every code
   step shows content or names the sub-plan that will.
-- Names used across phases agree (`AlgSig`, `higherOrder`,
-  `RMRecCat`, `natAlgSig`, `natFreeAlgEquiv`, `kappaHat`,
-  `ramTwoPow`, `ObjCtx`, `collapseDenotation`).
+- Names used across phases agree (`AlgSig`, `QuotRel`,
+  `interpQuotRel`, `higherOrder`, `RMRecCat`, `natAlgSig`,
+  `natFreeAlgEquiv`, `kappaHat`, `ramTwoPow`, `ObjCtx`, `SynCatFO`,
+  `collapseDenotation`).
 - Repository signatures quoted match the survey of the current pin
   (file:line given at each).
 - Glossary vocabulary used throughout; no "critical arguments"
