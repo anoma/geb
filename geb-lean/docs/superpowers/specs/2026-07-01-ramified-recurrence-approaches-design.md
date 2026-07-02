@@ -227,15 +227,20 @@ where phi_j = f (x_vec, a_j)
 
 Terminology glossary. The correspondence between the paper's
 naming (its section 2.1, the sentence after eq. (1)) and the code
-above, fixed piece by piece:
+above, fixed piece by piece. The first five rows are eq. (1)'s
+pieces; the last two define the types of the ramified schema
+(eq. (4), the paper's section 2.3), which the second row mentions
+and the ramified paragraph below uses:
 
 | Symbol in eq. (1) | The paper's name | Name here | Role |
 | --- | --- | --- | --- |
 | `x_vec` | recurrence parameters | parameters (`x : P` in `recurse`) | Carried unchanged through every recursive call; they parameterize the single recursive definition and are never modified by it. |
-| `c_i (a_1 ... a_{r_i})` | recurrence argument ("the argument of `f` exhibited last in (1)") | recurrence argument | The whole constructor term the recursion consumes - the input being destructed, the last argument of `f`. In the ramified schema (eq. (4)) it is the argument of sort `Omega tau`. In `recurse` it is the matched value `.mk b subterms`. |
+| `c_i (a_1 ... a_{r_i})` | recurrence argument ("the argument of `f` exhibited last in (1)") | recurrence argument | The whole constructor term the recursion consumes - the input being destructed, the last argument of `f`. In the ramified schema (eq. (4)) it is the argument of sort `Omega tau` (last two rows). In `recurse` it is the matched value `.mk b subterms`. |
 | `a_1 ... a_{r_i}` | no dedicated name (written `a_vec`; the components of the recurrence argument) | subterms (`subterms` in `recurse`) | The immediate subterms of the recurrence argument. Note the paper's "recurrence argument" is the whole term `c_i (a_vec)`, not these components; the paper's terminology sentence assigns them no name of their own. |
 | `phi_1 ... phi_{r_i}`, where `phi_j = f (x_vec, a_j)` | critical arguments ("the last `r_i` arguments of `g_ci`") | recursive results (`results` in `natRecurse`) | The results of the recursive calls on the subterms, passed up to the current step - the values flowing back from one level deeper in the recursion. |
 | `g_ci` | recurrence functions | step functions | One per constructor `c_i`: the body of the definition at that constructor. |
+| `tau` (also `sigma`; eq. (4)) | r-type ("ramified type") | r-type / sort | A variable ranging over the ramified types (the paper's section 2.3): the grammar generated from the single base type `o` by the binary arrow `sigma -> tau` and the unary constructor `Omega`. The object types are `o` and every `Omega tau`; all other r-types are functional. In this document's higher-order system the sorts are exactly the r-types (`RType`, section 4.1); the first-order tiers `m : N` are the tower `Omega^m o`. |
+| `Omega tau` (eq. (4)) | Omega-type | Omega-sort | `Omega` is a unary type constructor with no semantic content of its own: `Omega tau` is the type of base-algebra elements permitted to serve as the recurrence argument of a recurrence whose output type is `tau` (paraphrasing the paper's p. 214). Semantically every object type - `o` and each `Omega tau` alike - denotes a copy of the algebra's carrier (the paper's section 2.7), so an element of `Omega (o -> o)` is a number, not a function; what `Omega` adds is purely the typing license to drive recurrence at `tau`, e.g. iteration of an `o -> o` function requires its count at `Omega (o -> o)` (the paper's p. 214 iterate example and section 2.4(3) exponentiation). |
 
 Over the unary naturals this is primitive recursion again - the two
 constructor clauses are the base and step equations:
