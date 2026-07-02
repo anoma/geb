@@ -61,8 +61,9 @@ a converged design specification.
 - A single form of the calculus is formalized: the equational system
   `RMRec-omega` (Leivant III sections 2.3-2.7). The applicative
   calculi `RlMR-omega` and `RlMR-omega_o` and their equivalence with
-  `RMRec-omega` (Proposition 7) are deferred as goals; parts return
-  as proof apparatus for the soundness direction (section 6.3).
+  `RMRec-omega` (Proposition 7) are deferred as goals; both calculi
+  return as proof apparatus for the soundness direction, whose
+  literature route runs through them (section 6.3).
 - Pluggability along both axes via data types a la carte: the free
   algebra `A` and the type discipline are parameters; data structures
   are defined through the repository's dependent polynomial functors,
@@ -97,13 +98,19 @@ unpublished argument.
 
 Consequences, superseding revision 1:
 
-- Machine models are in scope. The repository's zero-test URM
-  (`GebLean/Utilities/ZeroTestURM.lean`, instructions `assign`,
-  `inc`, `dec`, `jumpZ`, `stop`) corresponds command-for-command to
-  Leivant III's register machines over the unary algebra
-  (constructor assignment, destructor, branch on main constructor;
-  section 3.1 of the paper), so Leivant's machine lemmas are
-  transcribed against it.
+- Machine models are in scope. Each instruction of the repository's
+  zero-test URM (`GebLean/Utilities/ZeroTestURM.lean`: `assign`,
+  `inc`, `dec`, `jumpZ`, `stop`) is a single command or a
+  constant-length command block of Leivant III's register machines
+  over the unary algebra (section 3.1 of the paper): `inc`/`dec`
+  are in-place constructor assignment and destructor, `assign i c`
+  is a zero assignment followed by `c` increments, `jumpZ` is the
+  two-way branch, `stop` is the end-state convention, and PC values
+  are states. URM computations are therefore Leivant-machine
+  computations with constant time overhead, which is the direction
+  the Lemma 6 transcription uses. (Leivant's cross-register
+  assignment and destructor commands have no single-instruction URM
+  counterpart; that direction is not needed.)
 - Revision 1's machine-free proposals for the two directions of the
   main theorem are withdrawn: the bounded-sum/bounded-product
   realizers (fullness) and the hereditary-majorization model
@@ -141,9 +148,9 @@ annotations:
 | Collapse `f-minus`, raising `G-plus-tau`; Lemmas 3, 4 | section 2.7 | erasing ramification; `(f-)+ = f`, `(F+)- = F`; the collapse defines what the main theorem characterizes |
 | Register machines over `A`; Lemma 5 | section 3.1 | states, registers holding `A`-elements, commands: constructor assignment, branch on main constructor, destructor; reducibilities to Turing machines |
 | Lemma 6: elementary-time machines are ramified-definable | section 3.2 | the completeness direction; simultaneous-recurrence simulation of machine steps, clocked by `2_q(sz)`; in scope as the fullness route (section 6.2) |
-| Applicative calculi `RlMR-omega`, `RlMR-omega_o` | section 4.1 | applied lambda calculi: constants `c_i`, `R-tau`, `F-tau` (or `dstr`, `case`); beta and eta reductions plus recurrence and flat reduction. In scope only as soundness apparatus (section 6.3): the fragment `RlMR-omega_o` and the direction (2) implies (4) of Proposition 7 |
-| Proposition 7: equational and applicative agree | section 4.1 | four-way definability equivalence; only the (2) implies (4) direction is in scope (soundness apparatus); the full equivalence is deferred |
-| Lambda-representation in `1l(A)`; Propositions 11 | sections 4.2-4.3 | Berarducci-Boehm-style representation of `A` in the simply typed lambda calculus with `dstr`/`case`; soundness apparatus |
+| Applicative calculi `RlMR-omega`, `RlMR-omega_o` | section 4.1 | applied lambda calculi: constants `c_i`, `R-tau`, `F-tau` (or `dstr`, `case`); beta and eta reductions plus recurrence and flat reduction. In scope as soundness apparatus (section 6.3): both calculi, since the paper's route from (2) to (4) passes through `RlMR-omega` |
+| Proposition 7: equational and applicative agree | section 4.1 | four-way definability equivalence. In scope as soundness apparatus: the composite (2) to (1) (Lemma 1), (1) to (3) (eq. (9), p. 223), (3) to (4) (stated "similar" to Lemma 1; its transcription reconstructs the indicated argument). The remaining directions are deferred |
+| Lambda-representation in `1l(A)`; Lemmas 8-10 and Proposition 11 | sections 4.2-4.3 | Berarducci-Boehm-style representation of `A` in the simply typed lambda calculus with `dstr`/`case`, with the term translation `E` to `E-bar`; soundness apparatus |
 | Lemma 12, Proposition 13: normalization bound | section 5 | terms of height `h`, redex rank `q` normalize in time `O((2_{q+1}(h))^2)`; hence represented functions are elementary-time computable; soundness apparatus |
 | Theorem 14: elementary characterization | section 6.1 | the in-scope theorem is the equivalence of items (1) and (2), stated against the repository's reference class; items (3)-(5) are deferred with the applicative calculi |
 | Multi-sorted generalization sketch | section 6.2 | several free algebras as sorts; recorded for future work |
@@ -178,7 +185,7 @@ Polyadic (polynomial time):
   term size (full binary tree from a binary word), so polytime
   soundness at first order over tree algebras holds only under
   DAG/graph representation of values. The polyadic cell is stated
-  over binary words with string sizes, where the issue does not
+  over binary words with string sizes, where this does not
   arise.
 
 Monadic (linear space, Grzegorczyk `E^2`):
@@ -194,9 +201,10 @@ Monadic (linear space, Grzegorczyk `E^2`):
   algebras", Handbook of Computability Theory, North-Holland, 1999,
   pp. 589-681, DOI `10.1016/S0049-237X(99)80033-0` (Definition 3.100,
   Theorem 3.101). Also Danner and Royer 2012 (section 2.3):
-  "the RS1-minus[nat]-computable functions = E^2, the second
-  Grzegorczyk class (aka, the linear-space computable functions)"
-  (p. 7 there, following Bellantoni's thesis and Leivant I).
+  "the RS1-[nat]-computable (nat x ... x nat -> nat)-functions =
+  E_2, the second Grzegorczyk class (aka, the linear-space
+  computable functions)" (p. 7 there, following Bellantoni's thesis
+  and Leivant I).
 - Complexity grounding: R. W. Ritchie, "Classes of predictably
   computable functions", Transactions of the AMS 106 (1963) 139-173.
   Full text verified: Theorem 5 with corollary (p. 153), `E^2 = F'`
@@ -237,7 +245,7 @@ DOI `10.4204/EPTCS.23.4` (full text read):
 - Adoption: its tier-vector presentation (no type grammar, per-
   constructor recursion cases with subterms at the high tier and
   recursive values at the low tier, separate untiered conditional)
-  is the cleanest first-order formulation found and is adopted for
+  avoids a type grammar entirely and is adopted for
   the two first-order structure-only systems (section 4.1).
 - Future work: formalizing its soundness theorem would require the
   term-graph cost model first.
@@ -245,20 +253,24 @@ DOI `10.4204/EPTCS.23.4` (full text read):
 Danner and Royer, "Ramified Structural Recursion and Corecursion",
 arXiv `1201.4567v2`, 2012 (extended abstract; full text read):
 
-- Two-sorted (normal/safe) lambda calculi `S1-minus`/`RS1-minus`
-  over inductive data `data tau = mu t. sigma` with an explicit
-  polynomial signature functor `F_tau`, constructor, destructor, and
-  recursor `fold_tau : (F sigma -> sigma) -> tau -> sigma`
-  satisfying the initial-algebra equation; worked examples are
-  exactly `1 + X` (nat) and `1 + X^2` (tree). Cost model: cons-cell
-  DAGs with sharing and memoized folds. Ramification is two-sorted
-  with a definable coercion `up_tau` (the analogue of Leivant's
-  `kappa-hat`) and a `lower` typing rule adapting Bellantoni-Cook's
-  raising. Characterizations: FP over data and codata under the DAG
-  model; `RS1-minus[nat] = E^2`; stream restrictions match the
-  Ramyaa-Leivant logspace results. Not equational: semantics is
-  operational plus set-theoretic; there is no inductively derivable
-  program equality.
+- An unramified base calculus `S-minus` for structural recursion
+  and its two-sorted (normal/safe) ramification `RS1-minus` (the
+  2022 paper renames the base `S1-minus`), over inductive data
+  `data tau = mu t. sigma` with an explicit polynomial signature
+  functor `F_tau`, constructor, destructor, and recursor
+  `fold_tau : (F sigma -> sigma) -> tau -> sigma` satisfying the
+  initial-algebra equation; worked examples are exactly `1 + X`
+  (nat) and `1 + X^2` (tree). Cost model: cons-cell DAGs with
+  sharing and memoized folds. The ramification has a definable
+  coercion `up_tau` (in this document's terms, the analogue of
+  Leivant's `kappa-hat`) and a `lower` typing rule adapting
+  Bellantoni-Cook's raising. Characterizations: FP over data and
+  codata under the DAG model; "the RS1-[nat]-computable
+  (nat x ... x nat -> nat)-functions = E_2, the second Grzegorczyk
+  class (aka, the linear-space computable functions)" (p. 7);
+  stream restrictions match the Ramyaa-Leivant logspace results.
+  Not equational: semantics is operational plus set-theoretic;
+  there is no inductively derivable program equality.
 - Adoption: the data-system layer (datatype = initial algebra of a
   named polynomial signature functor with `fold`) is adopted as the
   presentation of the algebra axis (section 4.1); it coincides with
@@ -276,22 +288,26 @@ text read):
 - The completeness counterpart over general free algebras: with
   DAG-shared tree data, `RS1-minus` is sound (Theorem 10) but
   apparently cannot combine safe results of sibling recursive calls
-  (tree height; conjectured incompleteness, p. 4, p. 28); adding
+  (tree height; incompleteness of `RS1-minus` is conjectured,
+  pp. 15, 28); adding
   compressed-size functions `cs_delta` (computed by
   Downey-Sethi-Tarjan DAG compression) restores completeness
   (`RS1.1-minus`, Theorems 22, 23, 25), via serialization into
-  hereditarily sequential representations and a clocked CEK-machine
-  self-interpreter (a machine simulation, in the Jones
-  self-interpreter tradition). Scholium 35 notes the same
+  hereditarily sequential representations and a CEK-machine
+  interpreter of the base calculus, iterated a bounded number of
+  steps (in this document's terms, a clocked self-interpreter; a
+  machine simulation, with Jones's influence credited there,
+  p. 4). Scholium 35 notes the same
   architecture scales to Kalmar-elementary `E^3` and higher
   Grzegorczyk levels by swapping the closed class of size-bound
   terms. It cites Leivant I and Dal Lago-Martini-Zorzi, not
   Leivant III.
 - Cross-check value: independently confirms that completeness
   arguments in this family are machine simulations (CEK there,
-  register machines in Leivant III), and that additive ("poly-heap")
-  bounds compose better than polymax bounds under pairing
-  (Scholium 32) - relevant if bound bookkeeping ever needs choosing.
+  register machines in Leivant III), and that additive bounds (the
+  2012 paper's "poly-heap" style) compose better than polymax
+  bounds under pairing (Scholium 32) - relevant if bound
+  bookkeeping ever needs choosing.
 - Future work: completeness over general algebras with sharing;
   strong inductive types containing function spaces; sharing-based
   versus sharing-free cost models (Pola comparison).
@@ -401,7 +417,12 @@ mathlib (`ModelTheory` is single-sorted; `Term.subst` lacks identity
 and composition laws); CSLib provides Cutland-style URMs and
 locally nameless lambda calculi but no complexity classes.
 `CartesianMonoidalCategory.ofChosenFiniteProducts` supports
-computable chosen products.
+computable chosen products. For intrinsically-typed de Bruijn
+lambda terms (needed by the soundness apparatus, section 6.3) the
+templates identified in revision 1 remain the starting points: the
+PLFA Lean port (`rami3l/plfl`, DeBruijn and Substitution chapters)
+and the modular metatheory framework of arXiv `2512.09280`
+(availability unverified).
 
 In-repository assets, extended in revision 2 by the machine- and
 normalization-facing items:
@@ -450,7 +471,8 @@ normalization-facing items:
   `vendor/geb-mathlib/` (`SlicePFunctor`, `PresheafPFunctor`;
   functor-level only - no W-types, coproducts, or composition;
   W-types under active development upstream) and in-repository
-  `GebLean/Polynomial.lean`/`PolyAlg.lean`/`PolyUMorph.lean`
+  `GebLean/Polynomial.lean`/`PolyAlg.lean`/`PolyUMorph.lean`/
+  `PolyAlgUMorph.lean`
   (`PolyFix` initial algebras with initiality, Lambek, catamorphism
   uniqueness; indexed coproducts `polyBetweenCoprod` with
   `algCoprodDesc`; syntax-as-W-type prior art in
@@ -645,8 +667,9 @@ for the unary naturals. Two options for the one in-scope proof:
 
 - Over `1 + X` (unary naturals, higher-order types). The collapse
   functions are numeric; the reference (`LawvereERCat`) is numeric;
-  Leivant's register machines over the unary algebra are the
-  zero-test URM already in the repository. No coding layer at all.
+  zero-test URM programs embed into Leivant's register machines
+  over the unary algebra with constant overhead (section 1.2). No
+  coding layer at all.
 - Over `1 + X^2` (binary trees, higher-order types). Faithful to the
   user review's canonical tree instance, but every leg acquires a
   tree-to-numbers coding layer (Leivant's Lemma 5 concerns exactly
@@ -704,7 +727,7 @@ Chain, for an arbitrary ER morphism `e`:
    Ingredients, each a transcription: coercions (2.4(1)), `+`/`x`
    (2.4(2)), `2_m` (2.4(4)), `sz` (2.4(6)), simultaneous recurrence
    (Lemma 2), `case`/`dstr`. The tower bound of step 1 must be
-   massaged into Leivant's `c * 2_q` clock format - arithmetic over
+   converted to Leivant's `c * 2_q` clock format - arithmetic over
    formalized bounds, not new mathematics.
 3. Lemma 1, transcribed: `RMRec-omega_o` definability yields
    `RMRec-omega` definability.
@@ -712,30 +735,39 @@ Chain, for an arbitrary ER morphism `e`:
 The adaptation of Lemma 6 from Leivant's machine format
 (begin/end states, three command kinds) to the zero-test URM's
 (PC-indexed instruction list) is a presentation adaptation of the
-kind section 1.2 permits; the instruction sets correspond one-for-
-one over the unary algebra.
+kind section 1.2 permits: either the constant-overhead embedding of
+URM programs into Leivant machines (section 1.2) followed by the
+verbatim transcription, or the transcription of Lemma 6's proof
+shape directly against the URM step relation; the plan phase picks
+one.
 
 ### 6.3 Soundness: the normalization route
 
 The literature route (Leivant III sections 4-5), all transcription:
 
-1. Proposition 7, direction (2) implies (4): an `RMRec-omega`
-   function is defined by a term of the applicative calculus
-   `RlMR-omega_o`. This is where the typed lambda apparatus enters
-   as proof-internal material.
-2. Proposition 11: closed `RlMR-omega_o` terms are represented in
-   `1l(A)` (simply typed lambda calculus with `dstr`/`case`
-   constants) via the Berarducci-Boehm representation.
+1. From `RMRec-omega` to `RlMR-omega_o`, as the paper's composite
+   through Proposition 7 (p. 223): (2) to (1) by Lemma 1; (1) to
+   (3) by the translation of eq. (9), which lands in the full
+   calculus `RlMR-omega` (recurrence with parameters becomes closed
+   `R-tau` operators); (3) to (4), which the paper states is
+   "similar" to Lemma 1 - its transcription reconstructs that
+   indicated argument at the applicative level. Both applicative
+   calculi therefore enter as proof-internal apparatus.
+2. Lemmas 8-10 and Proposition 11: closed `RlMR-omega_o` terms are
+   represented in `1l(A)` (simply typed lambda calculus with
+   `dstr`/`case` constants) via the Berarducci-Boehm representation
+   and the section 4.2 term translation `E` to `E-bar`.
 3. Lemma 12: a term of height `h` and redex rank `q` normalizes in
-   time `O((2_{q+1}(h))^2)`; Proposition 13: represented functions
-   are computable in elementary time.
+   time `O((2_{q+1}(h))^2)`; Proposition 13 (whose proof also uses
+   Lemma 4 to reduce to target type `o`): represented functions are
+   computable in elementary time.
 4. Landing (section 6.4): elementary-time computation is
    reference-definable.
 
-Steps 1-3 require formalizing typed lambda terms with binders (the
-intrinsically-typed de Bruijn templates of section 3.2's survey are
-the starting points) and the normalization-bound argument; this is
-the workstream's dominant cost.
+Steps 1-3 require formalizing typed lambda terms with binders
+(intrinsically-typed de Bruijn representations; templates in
+section 3.3) and the normalization-bound argument; this is the
+workstream's dominant cost.
 
 Candidate reuse to be investigated before the plan phase: the
 repository's Beckmann-Weiermann `T*` formalization (section 3.3)
@@ -768,7 +800,7 @@ reference-definable. Options, using existing assets:
 For section 6.2 nothing new is needed (the chain lands directly in
 `RMRec-omega`). For section 6.3 the landing means implementing a
 normalizer on term codes with a verified elementary clock - the
-heaviest single deliverable of the workstream whichever landing is
+largest single deliverable of the workstream whichever landing is
 chosen; the plan phase decides between the two after the
 Beckmann-Weiermann investigation.
 
@@ -814,19 +846,22 @@ In dependency order (phase boundaries fixed by the plan, not here):
 3. Polyadic first-order system (`1 + 2 X`): same; algebra-map and
    theory-inclusion functors.
 4. Higher-order system over `1 + X` (r-type sorts, schema-generated
-   identifiers): category; the section 2.4 example ladder
+   identifiers): category; the paper's section 2.4 example ladder
    (coercions, `+`, `x`, `e`, `2_m`, `sz`) - these are both
    validation and Lemma 6 ingredients. Tree instance `1 + X^2` as a
    structure.
-5. Fullness route (section 6.2): Lemma 2 and Lemma 1 transcriptions;
+5. Fullness data (section 6.2): Lemma 2 and Lemma 1 transcriptions;
    Lemma 6 transcription against `ZeroTestURM`; bound-format
-   arithmetic; `collapseFunctor_full`.
+   arithmetic; deliverable: for every ER morphism, a ramified
+   realizer with matching denotation (the pre-functor surjectivity
+   family).
 6. Soundness route (section 6.3): Beckmann-Weiermann bridge
    investigation gate; then either the `T*` reuse or the
-   `RlMR-omega_o`/`1l(A)`/Lemma 12 transcription; the landing
-   normalizer (section 6.4); `collapseFunctor`.
-7. Assembly: Theorem 14 (1)-(2) as fullness + collapse; K^sim_2
-   corollary via `erKSimEquiv`.
+   `RlMR-omega`/`RlMR-omega_o`/`1l(A)`/Lemma 12 transcription; the
+   landing normalizer (section 6.4); `collapseFunctor`.
+7. Assembly: `collapseFunctor_full` from phase 5's family and
+   phase 6's functor; Theorem 14 (1)-(2); K^sim_2 corollary via
+   `erKSimEquiv`.
 
 ## 9. Deferred and future work
 
