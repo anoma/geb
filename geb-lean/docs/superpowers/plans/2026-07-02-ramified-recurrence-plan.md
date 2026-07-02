@@ -176,8 +176,11 @@ Every task's requirements implicitly include this section.
   Phase 2 and may be developed in either order or in parallel
   branches. The Phase 5 sub-plan is written after Phases 2 and 3
   land (it consumes the example ladder and `natFreeAlgEquiv`); the
-  Phase 6 sub-plan is written after gates G1/G2/G4 have closed and
-  Phase 2 has landed. Phase 7 consumes Phases 5 and 6.
+  Phase 6 sub-plan is written after gates G1/G2/G4 have closed,
+  Phases 2 and 3 have landed, and the Phase 5 sub-plan has converged
+  (Phase 6's `Collapse.lean` consumes `natFreeAlgEquiv` and states
+  `collapseDenotation` against the `ObjCtx` bookkeeping the Phase 5
+  sub-plan fixes). Phase 7 consumes Phases 5 and 6.
 - **Sub-plans.** Phases 5 and 6 each get a sub-plan at
   `docs/superpowers/plans/<date>-ramified-p<N>-<slug>-subplan.md`,
   adversarially reviewed to convergence and then user-reviewed before
@@ -231,12 +234,12 @@ s7, s8). Adversarial review of this plan reviews these decisions.
    detail now would violate the no-speculation discipline the
    spec's gates exist to enforce.
 5. **Naming and file structure:** fixed in the next section. The
-   spec's s4.2 sketch names are kept where present (`SortedSig`,
-   `Tm`, `standardModel`, `interpSetoid`, `QuotRel`, `SynCat`,
-   `RType`, `higherOrder`, `SynCatFO`, `collapseFunctor`,
-   `ramified_definability`); the free-algebra signature data is named
-   `AlgSig` (the spec's illustrative `Sig`), avoiding a parallel
-   meaning for "signature" against `SortedSig`.
+   spec's sketch names are kept where present (from s4.2:
+   `SortedSig`, `Tm`, `standardModel`, `interpSetoid`, `QuotRel`,
+   `SynCat`, `RType`, `higherOrder`; from s6.1: `SynCatFO`,
+   `collapseFunctor`, `ramified_definability`); the free-algebra
+   signature data is named `AlgSig` (the spec's illustrative `Sig`),
+   avoiding a parallel meaning for "signature" against `SortedSig`.
 6. **Object-sort structure (spec open question 5), default:**
    `Presentation` carries the sort type `S`, the operation signature,
    and the object-sort predicate `IsObj : S -> Prop` as plain data
@@ -252,8 +255,8 @@ s7, s8). Adversarial review of this plan reviews these decisions.
 | --- | --- | --- |
 | `GebLean/Ramified/AlgSig.lean` | `AlgSig`, `FreeAlg`, `natAlgSig` | 1 |
 | `GebLean/Ramified/SortedSig.lean` | `SortedSig`, `sum`, `constructorSig` | 1 |
-| `GebLean/Ramified/Term.lean` | `Tm`, `var`, `op`, `subst`, clone laws, `eval` | 1 |
-| `GebLean/Ramified/Interp.lean` | `SortedModel`, `Presentation`, `standardModel`, `interpSetoid` | 1 |
+| `GebLean/Ramified/Term.lean` | `Tm`, `var`, `op`, `subst`, clone laws, `QuotRel` | 1 |
+| `GebLean/Ramified/Interp.lean` | `SortedModel`, `Tm.eval`, `Presentation`, `standardModel`, `interpSetoid`, `interpQuotRel` | 1 |
 | `GebLean/Ramified/SynCat.lean` | `SynCat`, `Category`, `CartesianMonoidalCategory` | 1 |
 | `GebLean/Ramified/RType.lean` | `RType`, object sorts, tower sorts | 2 |
 | `GebLean/Ramified/HigherOrder.lean` | `appSig`, `RIdent`, `higherOrder`, identifier semantics | 2 |
@@ -284,7 +287,7 @@ copied from spec s4.2 it is marked as such.
 | 3 algebra genericity | `feat/ramified-p3-generic` | 2 | full, here |
 | 4 first-order sub-theories | `feat/ramified-p4-firstorder` | 2 | full, here |
 | 5 definability | `feat/ramified-p5-definability` | 2, 3 (branch stacked after 4) | boundaries here; sub-plan |
-| 6 soundness | `feat/ramified-p6-soundness` | 2; G1, G2, G4 | boundaries here; sub-plan |
+| 6 soundness | `feat/ramified-p6-soundness` | 2, 3; G1, G2, G4; Phase 5 sub-plan converged (branch stacked after 5) | boundaries here; sub-plan |
 | 7 assembly | `feat/ramified-p7-assembly` | 5, 6 | full, here |
 
 ---
@@ -837,9 +840,7 @@ inductive RType : Type
   | arrow : RType → RType → RType
   | omega : RType → RType
 
-/-- Object sorts: `o` and every `Omega tau` (paper section 2.3;
-UpperCamelCase per the mathlib naming rule for Prop-valued
-definitions). -/
+/-- Object sorts: `o` and every `Omega tau` (paper section 2.3). -/
 def RType.IsObj : RType → Prop
 /-- Tower sorts `Omega^m o` (paper section 2.4(3)). -/
 def RType.tower : Nat → RType
@@ -1155,9 +1156,10 @@ interfaces are fixed here; step detail goes to the sub-plan.
 - Create:
   `docs/superpowers/plans/<date>-ramified-p5-definability-subplan.md`
 
-- [ ] **Step 1: write the sub-plan** after Phase 2 lands (its branch
-  stacks after Phase 4 in the review queue, but its content depends
-  on Phase 2 only), elaborating Tasks 5.1-5.5 below into stepwise
+- [ ] **Step 1: write the sub-plan** after Phases 2 and 3 land (its
+  branch stacks after Phase 4 in the review queue, but its content
+  depends on Phases 2 and 3 only — the example ladder and
+  `natFreeAlgEquiv`), elaborating Tasks 5.1-5.5 below into stepwise
   detail with the then-current artifact signatures. The sub-plan
   must preserve the task boundaries, deliverable statements, and the
   Lemma 6 adaptation decision (plan decision 1) unchanged.
@@ -1306,9 +1308,11 @@ the sub-plan.
 - Create:
   `docs/superpowers/plans/<date>-ramified-p6-soundness-subplan.md`
 
-- [ ] **Step 1: write the sub-plan** after gates G1/G2/G4 have closed
-  and Phase 2 has landed, selecting route T or route L below per the
-  gate record, elaborating its boundary items into stepwise detail.
+- [ ] **Step 1: write the sub-plan** after gates G1/G2/G4 have
+  closed, Phases 2 and 3 have landed, and the Phase 5 sub-plan has
+  converged (the dependency rationale is in "How to work this
+  plan"), selecting route T or route L below per the gate record,
+  elaborating its boundary items into stepwise detail.
   The route-selection rule and the boundary items are binding; the
   sub-plan may split items further but not merge or drop them.
 
@@ -1362,8 +1366,9 @@ Phase 7 consumes it):
 /-- SynCatFO: the full subcategory of the higher-order syntactic
 category on contexts of object sorts — o and Omega tau for arbitrary
 r-types tau (spec s6.1; paper section 2.7: every object sort's
-universe is a copy of the carrier, so morphisms denote numeric
-functions through natFreeAlgEquiv). Realized via mathlib
+universe is a copy of the carrier, so morphisms denote functions on
+the carrier — numeric, through natFreeAlgEquiv, at the natAlgSig
+instantiation). Realized via mathlib
 ObjectProperty.FullSubcategory or the repository's established
 idiom. -/
 def SynCatFO (P : Presentation) (r : QuotRel P.sig) : Type
@@ -1429,10 +1434,12 @@ theorem ramified_definability {n m}
 ```
 
 - [ ] **Step 1: failing tests.** `collapseFunctor` on the Phase 2
-  doubling morphism yields an ER morphism interpreting as doubling
-  (`#guard` at small values through the quotient); faithfulness
-  `example` on a pair of distinct-denotation morphisms exercising
-  the Phase 6 instance.
+  doubling morphism yields an ER morphism whose interpretation
+  equals doubling — stated as an `example` proved from the
+  interpretation lemmas, not `#guard` (the image is a clocked
+  route-T/L composite; kernel reduction on it is the pitfalls
+  section's first item); faithfulness `example` on a pair of
+  distinct-denotation morphisms exercising the Phase 6 instance.
 
 - [ ] **Step 2: implement** `ramified_definability` from the Phase 5
   family (`erMor_ramified_definable`, multi-output assembled
