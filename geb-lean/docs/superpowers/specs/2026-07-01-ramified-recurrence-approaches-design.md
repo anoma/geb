@@ -1,5 +1,43 @@
 # Ramified recurrence as equational Lawvere theories: approaches
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [1. Sources and transcription targets](#1-sources-and-transcription-targets)
+  - [1.1 Leivant III (the primary source)](#11-leivant-iii-the-primary-source)
+  - [1.2 First-order cell provenance](#12-first-order-cell-provenance)
+  - [1.3 A caution on the simultaneous-recursion hierarchy](#13-a-caution-on-the-simultaneous-recursion-hierarchy)
+  - [1.4 Transcription versus novel](#14-transcription-versus-novel)
+- [2. Research summary](#2-research-summary)
+  - [2.1 Categorical and type-theoretic literature](#21-categorical-and-type-theoretic-literature)
+  - [2.2 Mechanization prior art](#22-mechanization-prior-art)
+  - [2.3 Lean infrastructure verdicts](#23-lean-infrastructure-verdicts)
+- [3. Design axes](#3-design-axes)
+  - [3.1 Term representation](#31-term-representation)
+  - [3.2 Higher-order syntax style](#32-higher-order-syntax-style)
+  - [3.3 Objects of the syntactic category](#33-objects-of-the-syntactic-category)
+  - [3.4 Equational rule menu](#34-equational-rule-menu)
+  - [3.5 Recurrence: operator family versus schema symbols](#35-recurrence-operator-family-versus-schema-symbols)
+  - [3.6 Sort universes per system](#36-sort-universes-per-system)
+- [4. Layered architecture and interfaces](#4-layered-architecture-and-interfaces)
+  - [4.1 Signatures](#41-signatures)
+  - [4.2 Term layer (representation-independent API)](#42-term-layer-representation-independent-api)
+  - [4.3 Equational theory and syntactic category](#43-equational-theory-and-syntactic-category)
+  - [4.4 Ramified structure](#44-ramified-structure)
+  - [4.5 Inter-system functors (deliverables for all three cells)](#45-inter-system-functors-deliverables-for-all-three-cells)
+  - [4.6 Characterization interfaces (higher-order cell)](#46-characterization-interfaces-higher-order-cell)
+- [5. Candidate approaches](#5-candidate-approaches)
+  - [5.1 Approach A: sorted-Era native inductives](#51-approach-a-sorted-era-native-inductives)
+  - [5.2 Approach B: DTC on the in-repository PolyFix stack](#52-approach-b-dtc-on-the-in-repository-polyfix-stack)
+  - [5.3 Approach C: DTC on the vendored slice/presheaf functors](#53-approach-c-dtc-on-the-vendored-slicepresheaf-functors)
+  - [5.4 Comparison and migration](#54-comparison-and-migration)
+- [6. Theorem targets and phasing](#6-theorem-targets-and-phasing)
+- [7. Open questions](#7-open-questions)
+- [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 Status: brainstorming-phase approaches survey. This document records
 the research underlying a planned formalization and lays out candidate
 approaches with interfaces and trade-offs. It is not a converged design
@@ -57,14 +95,16 @@ Definitions and results to transcribe, with locations:
 | Lemma 1: flat recurrence versus destructors and case | section 2.5 | `RRec-omega_o` generates the same functions |
 | Simultaneous recurrence; Lemma 2 | section 2.6, eqs. (6), (7) | ramified simultaneous recurrence reduces to plain ramified recurrence |
 | Collapse `f-minus`, raising `G-plus-tau`; Lemmas 3, 4 | section 2.7 | erasing ramification; `(f-)+ = f`, `(F+)- = F`; definability of unramified functions |
-| Applicative calculi `RlMR-omega`, `RlMR-omega_o` | section 4.1 | constants `c_i`, `R-tau`, `F-tau` (or `dstr`, `case`); recurrence reduction and flat reduction rules |
-| Proposition 7: equational and applicative agree | section 4.1 | four-way definability equivalence |
-| Theorem 14: elementary characterization | section 6.1 | elementary time = `RMRec-omega` = `RlMR-omega` = `RlMR-omega_o` = represented in `1l(A)` |
+| Applicative calculi `RlMR-omega`, `RlMR-omega_o` | section 4.1 | applied lambda calculi: constants `c_i`, `R-tau`, `F-tau` (or `dstr`, `case`); beta and eta reductions plus recurrence reduction and flat reduction. Transcription only under option C (section 3.2); options A/B formalize a combinatory analogue, a novel adaptation |
+| Proposition 7: equational and applicative agree | section 4.1 | four-way definability equivalence. Same caveat: items (3)-(4) quantify over lambda terms; under options A/B only a combinatory analogue is stateable |
+| Theorem 14: elementary characterization | section 6.1 | elementary time = `RMRec-omega` = `RlMR-omega` = `RlMR-omega_o` = represented in `1l(A)`. In-scope transcription is limited to the equivalence of (1)-(2) relative to `LawvereERCat`; items (3)-(5) enter only via the combinatory analogue or option C |
 | Multi-sorted generalization sketch | section 6.2 | several free algebras as sorts; `Omega^beta` per base sort |
 
-All of the above are transcription. The categorical packaging in
-sections 4 and 5 of this document (syntactic categories, the
-`Omega`-shift endofunctor, the collapse functor and its fullness, the
+All of the above are transcription, except as annotated in the last
+three rows (the lambda-calculus rows are transcription only under
+option C of section 3.2). The categorical packaging in sections 4
+and 5 of this document (syntactic categories, the `Omega`-shift
+functor, the collapse functor and its fullness, the
 hereditary-majorization model) is novel; see section 1.4.
 
 Register machines over `A` (Leivant III section 3) and the
@@ -157,10 +197,18 @@ Novel (no published precedent found; see sections 2.1-2.2):
 
 - The multi-sorted Lawvere-theory packaging of the three systems as
   syntactic categories with equational equality.
-- The `Omega`-shift endofunctor on those categories and the analysis
-  of its structure (section 7.1).
+- The `Omega`-shift functor on those categories (by base
+  substitution; section 4.4) and the analysis of its structure
+  (section 7.1).
+- The combinatory analogue of the applicative calculi under options
+  A/B (section 3.2).
 - The collapse functor to `LawvereERCat` and the statement of the
   elementary characterization as fullness of that functor.
+- The bounded-sum and bounded-product realizers in the fullness
+  proof (section 4.6): Leivant III contains no such constructions
+  (its completeness route is the excluded machine simulation,
+  Lemma 6), so these are novel, built in the style of its sections
+  2.4(2) and 2.6.
 - The hereditary-majorization model as the soundness mechanism.
 - The mechanization itself: no formalization of ramified recurrence,
   the Grzegorczyk hierarchy, or a Kalmar-elementary characterization
@@ -259,10 +307,11 @@ Modal and linear accounts of the safe/normal (tier) discipline:
 
 ### 2.2 Mechanization prior art
 
-- No formalization of Leivant ramified/tiered recurrence exists in any
-  proof assistant. Likewise none of the Grzegorczyk hierarchy or of a
-  Kalmar-elementary characterization. The present workstream would be
-  first of its kind on both counts.
+- No formalization of Leivant ramified/tiered recurrence was found in
+  any proof assistant, nor of the Grzegorczyk hierarchy or of a
+  Kalmar-elementary characterization. Subject to the limits of the
+  search, the present workstream would be first of its kind on both
+  counts.
 - S. Heraud and D. Nowak, "A formalization of polytime functions",
   ITP 2011, LNCS 6898, arXiv `1102.5495`, Coq
   (github `davidnowak/bellantonicook`). Deep embedding of Cobham's `C`
@@ -271,8 +320,8 @@ Modal and linear accounts of the safe/normal (tier) discipline:
   (an arity checker returning a normal/safe arity pair), which
   intrinsically sorted hom-sets would replace; (ii) the soundness
   direction rests on the polymax bound (safe arguments contribute only
-  additively via their maximum) - the first-order shadow of the
-  hereditary-majorization invariant of section 5.6; (iii) the
+  additively via their maximum) - the first-order instance of the
+  hereditary-majorization invariant of section 4.6; (iii) the
   completeness direction needs a syntactic "padding fuel" argument
   that appears as a family of morphisms, not an equation.
 - Feree, Hym, Mayero, Moyen, Nowak, "Formal proof of polynomial-time
@@ -591,11 +640,23 @@ def monadicFO  : Presentation      -- S := N, A := (unary succ, zero)
 def polyadicFO (B ar) : Presentation  -- S := N, A polyadic word alg
 def higherOrder (B ar) : Presentation -- S := RType, full summand sum
 
-/-- Omega shift: on sorts, then on terms, then on the category. -/
-def omegaShift : SynCat Σ E ⥤ SynCat Σ E
-/-- Coercions kappa (derived morphisms; Leivant III section 2.4(1))
-and their naturality (novel statement). -/
-def kappa (τ) : (omegaShift.obj [τ] ⟶ ([τ] : SynCat Σ E))
+/-- Omega shift. Postcomposition with Omega is NOT a signature
+morphism on the higher-order presentation: application at
+(arrow σ τ, σ) -> τ has no image, since Omega (arrow σ τ) is an
+object sort, not arrow (Omega σ) (Omega τ) (compare Leivant III
+p. 214 on iterates). The candidate that does respect the signature
+is base substitution, tau -> tau[o := Omega o]: it commutes with
+arrow, Omega, the constructor copies, application, and the R-tau
+family. On first-order sorts it is the tier successor m -> m + 1,
+where it is a signature endomorphism outright. Functoriality on the
+higher-order syntactic category (in particular closure of the axiom
+set under the shift) is unverified; see open question 7.1. -/
+def omegaShift : SynCat Σ E ⥤ SynCat Σ E   -- by base substitution
+/-- Coercion Omega tau -> tau: Leivant III's auxiliary kappa-hat
+(section 2.4(1)); the paper reserves kappa_tau for the composite
+Omega tau -> theta. Naturality with respect to omegaShift is a
+novel statement to prove. -/
+def kappaHat (τ) : (omegaShift.obj [τ] ⟶ ([τ] : SynCat Σ E))
 ```
 
 ### 4.5 Inter-system functors (deliverables for all three cells)
@@ -605,7 +666,11 @@ def kappa (τ) : (omegaShift.obj [τ] ⟶ ([τ] : SynCat Σ E))
 - Algebra-map functoriality: a morphism of constructor signatures
   (e.g. monadic into polyadic) induces a functor of syntactic
   categories.
-- `omegaShift` as an endofunctor per system; `kappa` naturality.
+- `omegaShift` as an endofunctor: unconditional deliverable for the
+  first-order systems (where the shift is a signature endomorphism);
+  for the higher-order system contingent on the base-substitution
+  functoriality of section 4.4 (open question 7.1). `kappaHat`
+  naturality likewise.
 - Lemma 1 and Lemma 2 as equivalences/reductions between presentation
   variants (flat versus destructor-case; simultaneous versus plain).
 
@@ -613,7 +678,7 @@ def kappa (τ) : (omegaShift.obj [τ] ⟶ ([τ] : SynCat Σ E))
 
 Soundness carrier (hereditary majorization over ER; novel, but with
 the mechanism of `LawvereKSimMajorization` one type level up, and the
-polymax bound of Heraud-Nowak as its first-order shadow):
+polymax bound of Heraud-Nowak as its first-order instance):
 
 ```lean
 /-- Interpretation of each r-type as: a ground denotation together
@@ -625,7 +690,7 @@ def MajCarrier : RType → Type
 --   only through admissibility of R).
 /-- The majorization model: a SortedModel of the higher-order
 presentation with carriers MajCarrier; the recurrence operations
-must be shown to preserve majorization (the mathematical core). -/
+must be shown to preserve majorization. -/
 def majModel : SortedModel (higherOrder B ar).sig
 ```
 
@@ -644,9 +709,16 @@ def collapseFunctor : SynCatFO (higherOrder B ar) ⥤ LawvereERCat
 
 /-- Fullness = the elementary characterization (in-scope theorem).
 Proof by structural induction on ERMor1: zero, succ, proj immediate;
-sub via dstrCase; comp via omegaShift and kappa (level alignment);
-bsum, bprod via ramified recurrence with parameters (transcribing
-Leivant III section 2.4 constructions). Machine-free. -/
+sub by monotonic recurrence with a dstr-defined predecessor step;
+comp by level alignment - via omegaShift where available, otherwise
+via object-type-indexed families of realizers, the paper's own
+device ("for each object type theta there is a copy of exp",
+section 2.4(3)); bsum, bprod by NOVEL constructions in the style of
+sections 2.4(2) and 2.6 (the step needs the loop index, so ramified
+simultaneous recurrence, Lemma 2, or an equivalent device, plus tier
+alignment for the asymmetric ramified addition). Leivant III's own
+completeness route is the excluded machine simulation (Lemma 6), so
+no construction here is a transcription. Machine-free. -/
 theorem collapseFunctor_full : collapseFunctor.Full
 ```
 
@@ -701,11 +773,12 @@ for the PRA generality) and terms as their W-types, once fixpoints and
 coproducts for these exist (under active development upstream in
 geb-mathlib; absent from the vendored snapshot).
 
-- For: the cleanest categorical story (Gambino-Hyland polynomials,
-  Weber PRAs) and the strongest alignment with the geb-mathlib
-  upstreaming program; presheaf polynomials are the natural home if
-  the syntax is ever indexed over a nontrivial category (e.g. sorts
-  with coercion morphisms rather than a discrete sort set).
+- For: the most direct correspondence with the cited constructions
+  (Gambino-Hyland polynomials, Weber PRAs) and the strongest
+  alignment with the geb-mathlib upstreaming program; presheaf
+  polynomials are the applicable representation if the syntax is
+  ever indexed over a nontrivial category (e.g. sorts with coercion
+  morphisms rather than a discrete sort set).
 - Against: not startable today - requires W-types, coproducts, and
   composition for the vendored functors first; otherwise inherits B's
   ergonomics costs.
@@ -722,8 +795,9 @@ geb-mathlib; absent from the vendored snapshot).
 | geb-mathlib program alignment | none | indirect | direct |
 | Dependency risk | none | low (in-repo, stable) | high (WIP upstream) |
 
-Migration paths: the representation-independent API of section 4.2 is
-the hinge. A-to-B (or -C) migration replaces the realization of one
+Migration paths: the representation-independent API of section 4.2
+mediates all of them. A-to-B (or -C) migration replaces the
+realization of one
 interface; B-to-C is a change of polynomial-functor representation,
 mediated by a `polyEndoEquiv`-style equivalence. The equational and
 categorical layers (sections 4.3-4.6) are unaffected in either case.
@@ -746,7 +820,7 @@ implementation plan, not here):
    4.1-4.3), with the clone laws and the generic syntactic-category
    construction, plus finite products.
 2. Monadic first-order system: presentation, syntactic category,
-   `omegaShift`, `kappa`, ramified addition/multiplication examples
+   `omegaShift`, `kappaHat`, ramified addition/multiplication examples
    (transcriptions validating the encoding).
 3. Polyadic first-order system: same, over a polyadic word algebra;
    algebra-map and theory-inclusion functors; Lemma 1 and Lemma 2
@@ -757,7 +831,9 @@ implementation plan, not here):
 5. Fullness data: ER-basis definability (zero, succ, proj, sub, comp,
    bsum, bprod as ramified terms with denotation proofs) - stateable
    before the collapse functor exists, as an existence-of-realizer
-   family.
+   family. The bsum/bprod realizers are novel constructions (section
+   4.6) and carry the main risk of this deliverable; section 7.3
+   schedules them for a spike.
 6. Soundness: the hereditary-majorization model, `collapseFunctor`,
    and `collapseFunctor_full` (assembling 5 into fullness).
 
@@ -773,23 +849,32 @@ E3 basis.
 
 ## 7. Open questions
 
-1. Categorical structure of `Omega`. Leivant's system has derivable
-   coercions `kappa_tau : Omega tau -> tau` (unlike elementary linear
-   logic, whose exponential has no dereliction), yet characterizes the
-   same class. Candidate readings: copointed monoidal endofunctor;
-   graded (co)monad with grades = tiers (no publication makes this
-   identification - a precise statement either way is publishable
-   novel content); Cockett-Redmond-style polarity (two categories with
-   coercion functors). The formalization should state and prove
-   whichever structure the syntactic category actually carries;
-   naturality of `kappa` is the first test.
+1. Existence and structure of the `Omega` shift on the higher-order
+   system. Existence first: the base-substitution definition of
+   section 4.4 must be shown functorial (signature endomorphism plus
+   axiom-set closure under the shift); for the first-order systems
+   existence is unproblematic. Structure second: Leivant's system has
+   derivable coercions `kappaHat_tau : Omega tau -> tau` (the paper's
+   auxiliary; its `kappa_tau` targets the output object type) -
+   unlike elementary linear logic, whose exponential has no
+   dereliction - yet characterizes the same class. Candidate
+   readings: copointed monoidal endofunctor; graded (co)monad with
+   grades = tiers (no publication makes this identification - a
+   precise statement either way is publishable novel content);
+   Cockett-Redmond-style polarity (two categories with coercion
+   functors). The formalization should state and prove whichever
+   structure the syntactic category actually carries; naturality of
+   `kappaHat` is the first test.
 2. Rule menu: include extensionality and/or `uniq` in the default
    presentations, or keep both as axiom-set extensions? (Section 3.4;
    affects how close combinatory equality is to lambda equality, and
    whether categoricity results are available.)
 3. Combinator basis sufficiency for the fullness constructions
-   (section 3.2); to be settled by a spike on ramified addition and
-   exponentiation.
+   (section 3.2), and the bsum/bprod realizers themselves (novel;
+   section 4.6): both to be settled by a spike, on ramified addition
+   and exponentiation for the former and on a bounded sum via
+   simultaneous recurrence for the latter. The fullness proof
+   depends on both.
 4. Sorted-context indexing for the DTC realizations: contexts as
    index components versus contexts as parameters (affects the shape
    of the signature functors and of `PolyFixRel` usage).
