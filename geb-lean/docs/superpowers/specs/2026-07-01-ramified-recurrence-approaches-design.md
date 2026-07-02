@@ -8,6 +8,7 @@
   - [1.2 Transcription-only policy](#12-transcription-only-policy)
 - [2. Sources and transcription targets](#2-sources-and-transcription-targets)
   - [2.1 Leivant III (the primary source)](#21-leivant-iii-the-primary-source)
+    - [Orientation: recursion versus recurrence](#orientation-recursion-versus-recurrence)
   - [2.2 First-order cell provenance](#22-first-order-cell-provenance)
   - [2.3 Further sources (added 2026-07-02)](#23-further-sources-added-2026-07-02)
   - [2.4 A caution on the simultaneous-recursion hierarchy](#24-a-caution-on-the-simultaneous-recursion-hierarchy)
@@ -136,12 +137,169 @@ Daniel Leivant, "Ramified recurrence and computational complexity III:
 Higher type recurrence and elementary complexity", Annals of Pure and
 Applied Logic 96 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`.
 
+#### Orientation: recursion versus recurrence
+
+"Recurrence" is Leivant's name for the elimination schema of a free
+algebra: definition of a function by one clause per constructor,
+with recursive calls on the immediate subterms. Over the unary
+naturals it is primitive recursion; over a general free algebra it
+is the same schema with that algebra's constructor clauses. This
+orientation fixes the schema concretely before the survey table.
+The Lean code below is illustrative and verified to compile; in the
+implementation the corresponding inductives are realized as W-types
+of polynomial functors (mathlib's `PFunctor` or the repository's
+slice polynomial and presheaf parametric-right-adjoint functors),
+per sections 4 and 7.
+
+Recursion as already formalized: the repository's K^sim theory
+carries simultaneous primitive recursion as the term former
+`KMor1.simrec` (`GebLean/LawvereKSim.lean:50`):
+
+```lean
+  /-- Simultaneous primitive recursion at output index
+  `i`, with system size `k+1`, base-case family `h`,
+  and step-function family `g`.  Produces a morphism
+  of arity `a+1` (one slot for the recursion variable
+  followed by `a` slots for the parameter list). -/
+  | simrec {a k : ℕ}
+      (i : Fin (k+1))
+      (h : Fin (k+1) → KMor1 a)
+      (g : Fin (k+1) → KMor1 (a + 1 + (k + 1))) :
+      KMor1 (a + 1)
+```
+
+Its semantics (`KMor1.simrecVec`,
+`GebLean/LawvereKSimInterp.lean:66`) is the classical system of
+equations, for `j = 1, ..., k + 1`:
+
+```text
+f_j (0,     x_1 ... x_a) = h_j (x_1 ... x_a)
+f_j (n + 1, x_1 ... x_a) = g_j (n, x_1 ... x_a,
+                                f_1 (n, x_1 ... x_a),
+                                ...,
+                                f_{k+1} (n, x_1 ... x_a))
+```
+
+Ordinary (non-simultaneous) primitive recursion is the case
+`k = 0`.
+
+Unramified recurrence (Leivant III section 2.1, eq. (1)) is the
+same idea over an arbitrary free algebra. A signature lists
+constructors with arities; the free algebra is the inductive type
+they generate; recurrence supplies one clause per constructor, in
+which the step sees the parameters, the immediate subterms, and the
+recursive values on those subterms (the paper's critical
+arguments - the last `r_i` arguments of `g_ci`):
+
+```lean
+/-- A constructor signature: constructor names with arities. -/
+structure Sig where
+  B : Type
+  ar : B → Nat
+
+/-- The free algebra over a signature (illustrative; the
+implementation represents this as a polynomial-functor W-type). -/
+inductive FreeAlg (S : Sig) : Type
+  | mk (b : S.B) (args : Fin (S.ar b) → FreeAlg S) : FreeAlg S
+
+/-- Unramified recurrence over `S` (Leivant III eq. (1)): one step
+function per constructor `b`, seeing the parameters `x : P`, the
+subterms, and the recursive values (the critical arguments). -/
+def FreeAlg.recurse {S : Sig} {P C : Type}
+    (g : (b : S.B) → P → (Fin (S.ar b) → FreeAlg S) →
+      (Fin (S.ar b) → C) → C) :
+    P → FreeAlg S → C
+  | x, .mk b args => g b x args fun i => FreeAlg.recurse g x (args i)
+```
+
+Equationally, for each constructor `c_i` of arity `r_i`:
+
+```text
+f (x_vec, c_i (a_1 ... a_r)) =
+  g_i (x_vec, a_1 ... a_r, f (x_vec, a_1), ..., f (x_vec, a_r))
+```
+
+Over the unary naturals this is primitive recursion again - the two
+constructor clauses are the base and step equations:
+
+```lean
+/-- The monadic word algebra of signature functor `1 + X`: one
+0-ary constructor (`false`, zero) and one unary constructor
+(`true`, successor). -/
+def natSig : Sig := ⟨Bool, fun b => cond b 1 0⟩
+
+def natZero : FreeAlg natSig := .mk false Fin.elim0
+
+def natSucc (n : FreeAlg natSig) : FreeAlg natSig :=
+  .mk true fun _ => n
+
+/-- Recurrence over `natSig` is primitive recursion: the two
+constructor clauses of eq. (1) are the base and step equations
+(shown without parameters: `P := Unit`). -/
+def natRecurse (base : Nat) (step : Nat → Nat) :
+    FreeAlg natSig → Nat :=
+  FreeAlg.recurse (P := Unit)
+    (fun b => match b with
+      | false => fun _ _ _ => base
+      | true => fun _ _ recs => step (recs ⟨0, by decide⟩))
+    ()
+```
+
+So recurrence relates to the recursion of K^sim as follows: it
+generalizes the algebra (any signature in place of the unary
+naturals) and drops simultaneity (Leivant handles the simultaneous
+variant separately; his Lemma 2, section 2.6, reduces it to the
+plain form). The paper names fragments by which arguments the step
+may see (section 2.1): monotonic (the step does not see the
+subterms `a_i`), closed (no parameters `x_vec`), flat (no critical
+arguments, i.e. no recursive values). The system formalized here is the monotonic
+fragment, `RMRec-omega`.
+
+Ramified recurrence (Leivant III section 2.3, eq. (4)) is the same
+schema with a sorting layer and nothing else: every sort denotes a
+copy of the same algebra, the equations are unchanged, and the only
+change is a typing constraint - the recurrence argument must carry
+a sort strictly above the output's. First-order illustration over
+the unary naturals, with tiers as natural numbers:
+
+```lean
+/-- First-order ramified (tiered) recurrence, illustrated over the
+unary naturals with tier annotations: `TieredFn j i` names a unary
+function whose input carries tier `j` and output tier `i`. The
+`prec` former demands `i < j`. Monotonic, without parameters or
+simultaneity, for brevity. -/
+inductive TieredFn : Nat → Nat → Type
+  | ident {i} : TieredFn i i
+  | zeroConst {j i} : TieredFn j i
+  | succ {i} : TieredFn i i
+  | comp {k j i} : TieredFn j i → TieredFn k j → TieredFn k i
+  | prec {j i} (base : Nat) (step : TieredFn i i) : i < j →
+      TieredFn j i
+
+/-- Tier erasure: every tiered function denotes a plain function on
+the carrier; tiers restrict definability, not semantics. -/
+def TieredFn.interp {j i : Nat} : TieredFn j i → Nat → Nat
+  | .ident => fun n => n
+  | .zeroConst => fun _ => 0
+  | .succ => fun n => n + 1
+  | .comp f g => fun n => f.interp (g.interp n)
+  | .prec base step _ =>
+      fun n => Nat.rec base (fun _ v => step.interp v) n
+```
+
+In the higher-order system the tiers `i < j` become r-types: the
+recurrence argument carries `Omega tau` and the output `tau`
+(eq. (4): `f : sigma_vec, Omega tau -> tau`, with each step
+`g_ci : sigma_vec, (Omega tau)^{r_i}, tau^{r_i} -> tau`), so the
+"one sort above" relation is generated by the type constructor
+`Omega` rather than by the successor on tier numbers.
+
 Definitions and results to transcribe, with locations and scope
 annotations:
 
 | Item | Location | Content and scope |
 | --- | --- | --- |
-| Free algebra, word algebra, monadic/polyadic | section 2.1 | constructors `c_1 ... c_k`, arity `r_i`; word algebra: all arities at most 1; monadic: one unary constructor; polyadic: several |
+| Free algebra; word algebra (monadic/polyadic); tree algebra | section 2.1 | constructors `c_1 ... c_k`, arity `r_i`; word algebra: all arities at most 1 (subdivided: monadic = one unary constructor, polyadic = several); tree algebra: at least one constructor of arity at least 2. The monadic/polyadic distinction subdivides word algebras only |
 | Recurrence over `A`; monotonic, closed, flat variants | section 2.1, eq. (1) | the unramified schema; `case` and destructor functions `dstr_j` by flat recurrence |
 | Ramified types (r-types) | section 2.3 | types from base `o` by binary `->` and unary `Omega`; object types are `o` and `Omega tau` |
 | `RRec-omega(A)`, ramified recurrence for type `tau` | section 2.3, eq. (4) | constructors `c_i` at every object type; recurrence argument of type `Omega tau`, output type `tau` |
