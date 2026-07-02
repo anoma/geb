@@ -20,7 +20,7 @@
 - [4. The system: `RMRec-omega` as a multi-sorted Lawvere theory](#4-the-system-rmrec-omega-as-a-multi-sorted-lawvere-theory)
   - [4.1 Presentation choices](#41-presentation-choices)
   - [4.2 Interfaces](#42-interfaces)
-  - [4.3 Inter-system functors (deliverables for all three cells)](#43-inter-system-functors-deliverables-for-all-three-cells)
+  - [4.3 Inter-system functors](#43-inter-system-functors)
 - [5. Reference target and algebra choice for the equivalence](#5-reference-target-and-algebra-choice-for-the-equivalence)
   - [5.1 `LawvereERCat` versus `LawvereKSimDCat 2`](#51-lawvereercat-versus-lawvereksimdcat-2)
   - [5.2 Which algebra hosts the proof](#52-which-algebra-hosts-the-proof)
@@ -81,9 +81,12 @@ specification.
   with syntax as W-types where practicable. Canonical algebra
   instances: unary naturals (signature functor `1 + X`, monadic),
   binary words (`1 + 2X`, polyadic), unlabeled binary trees
-  (`1 + X^2`, tree algebra). All three systems are built as
-  structures; see section 5.2 for which algebra hosts the one
-  in-scope proof.
+  (`1 + X^2`, tree algebra). One system is built - the higher-order
+  presentation, generic in the signature functor - and instantiated
+  at all three; the first-order systems are realized, where needed,
+  as restricted sub-theories of that presentation rather than as
+  separate implementations (section 4.1). See section 5.2 for which
+  algebra hosts the one in-scope proof.
 - One theorem is in scope: the equivalence of the higher-order-typed
   system's first-order collapse with the repository's existing
   elementary-recursive reference class - `LawvereERCat`, or
@@ -91,8 +94,8 @@ specification.
   (`GebLean/LawvereERKSim/Equivalence.lean`). Section 5.1 compares
   the two landing points. The complexity characterizations of the
   two first-order cells (linear space, polynomial time) are
-  deferred; those cells receive structures and inter-system
-  functors only.
+  deferred; those cells receive sub-theory definitions and
+  inclusion functors only.
 - Transcription-only policy (section 1.2): machine models are used
   wherever the literature's proofs use them.
 
@@ -441,8 +444,10 @@ DOI `10.4204/EPTCS.23.4` (full text read):
 - Adoption: its tier-vector presentation (no type grammar, per-
   constructor recursion cases with subterms at the high tier and
   recursive results at the low tier, separate untiered conditional)
-  avoids a type grammar entirely and is adopted for
-  the two first-order structure-only systems (section 4.1).
+  is adopted as notation only - in prose, docstrings, and the
+  orientation's illustration - not as an implementation
+  (section 4.1); a standalone tier-sorted instantiation is deferred
+  to the first-order characterization workstreams (section 9).
 - Future work: formalizing its soundness theorem would require the
   term-graph cost model first.
 
@@ -710,23 +715,35 @@ polynomial signature functor; the datatype is its initial algebra;
 the constructor summand of the theory's signature is derived from
 the same functor, one copy per object sort. Canonical instances:
 
-| System | Signature functor | Datatype | Sorts |
-| --- | --- | --- | --- |
-| Monadic first-order | `1 + X` | unary naturals | tiers `m : N` (read `Omega^m o`) |
-| Polyadic first-order | `1 + 2 X` | binary words | tiers `m : N` |
-| Higher-order | any (canonical tree instance `1 + X^2`) | free algebra of the functor | `RType` (`o`, `arrow`, `omega`) |
+| Instance | Signature functor | Datatype |
+| --- | --- | --- |
+| Monadic word algebra | `1 + X` | unary naturals |
+| Polyadic word algebra | `1 + 2 X` | binary words |
+| Tree algebra | `1 + X^2` | unlabeled binary trees |
 
-For the first-order systems the DLMZ tier-vector presentation is
-adopted (section 2.3): no type grammar, operations carry tier
-vectors `(i_1, ..., i_n) -> i`, recursion requires the recurrence
-tier strictly above the result tier, and the conditional is a
-separate untiered scheme. For the higher-order system the sorts are
-Leivant III's r-types. Note the class boundary: the elementary class
-arises from the higher-order type discipline over any non-trivial
-free algebra (Theorem 14), not from the choice of a tree algebra;
-first-order recurrence over tree algebras is the polytime-with-DAG-
-representation territory of section 2.3 and is not built here beyond
-its structure.
+One presentation is implemented: the higher-order system, with
+sorts Leivant III's r-types (`RType`), generic in the signature
+functor and instantiated at the three canonical algebras. The
+first-order systems are not separate implementations. Where a
+first-order system is needed as an object of study, it is a
+restricted sub-theory of the r-type instantiation: the same term
+and category layers, with identifier formation restricted to
+first-order arities over the tower sorts `Omega^m o` and recurrence
+at object sorts. The distinction matters: the full subcategory of
+the higher-order syntactic category on tower-sort contexts is not
+the first-order system - its hom-sets are all of the collapse
+(section 6.1) - so the restriction is on the signature, not on the
+objects. The DLMZ tier-vector notation of section 2.3 (`i < j` in
+place of `Omega tau` against `tau`) is used for these sub-theories
+in prose and docstrings, and a standalone tier-sorted (`S = N`)
+instantiation of the same generic core is deferred to the
+first-order characterization workstreams (section 9), which can
+weigh its citation fit then. Note the class boundary: the
+elementary class arises from the higher-order type discipline over
+any non-trivial free algebra (Theorem 14), not from the choice of a
+tree algebra; first-order recurrence over tree algebras is the
+polytime-with-DAG-representation territory of section 2.3 and is
+not treated here.
 
 Objects of each syntactic category are contexts (sort lists);
 morphisms are tuples of terms modulo the interpretative setoid;
@@ -818,7 +835,9 @@ boilerplate that `LawvereERQuot.lean` and `LawvereKSimQuot.lean`
 each hand-roll (retrofit of those files remains out of scope).
 
 Ramified structure (revision 1's section 4.4 carries over):
-`RType`; presentations `monadicFO`, `polyadicFO`, `higherOrder`;
+`RType`; the presentation `higherOrder (F)`, generic in the
+signature functor, with the first-order sub-theories as restricted
+signatures inside it (section 4.1);
 the Omega shift by base substitution `tau[o := Omega o]`
 (postcomposition with Omega is not a signature morphism at arrow
 sorts; on first-order sorts the shift is the tier successor);
@@ -827,16 +846,21 @@ a copoint for the shift on the first-order systems only (no raising
 coercion exists; constant maps of type `o -> Omega o` exist, an
 identity-realizing one does not).
 
-### 4.3 Inter-system functors (deliverables for all three cells)
+### 4.3 Inter-system functors
 
-- Theory-inclusion functors: first-order into higher-order (tier
-  `m` to `Omega^m o`).
+- Sub-theory inclusions: each first-order sub-theory includes into
+  its host r-type instantiation by construction (same sorts, larger
+  signature); no sort translation is involved. The tier-to-r-type
+  functor (`m` to `Omega^m o`) is deferred with the standalone
+  tier-sorted instantiation (section 9).
 - Algebra-map functoriality: a morphism of signature functors (e.g.
   `1 + X` into `1 + 2 X`) induces a functor of syntactic categories.
-- `omegaShift` as an endofunctor: unconditional for the first-order
-  systems; for the higher-order system contingent on
-  base-substitution functoriality (open question, section 10).
-- `kappaHat` at every r-type; the first-order copoint.
+- `omegaShift` as an endofunctor: on the tower sorts the shift is a
+  signature endomorphism; for the full higher-order system it is
+  contingent on base-substitution functoriality (open question,
+  section 10).
+- `kappaHat` at every r-type; the copoint on the tower-sort
+  fragment.
 - Lemma 1 and Lemma 2 as reductions between presentation variants
   (flat versus destructor-case; simultaneous versus plain) - both
   are also ingredients of the definability route.
@@ -892,12 +916,13 @@ for the unary naturals. Two options for the one in-scope proof:
   in the repository or CSLib. Partial coding assets exist
   (`LawvereNatBT*`, `erToNatBTV2Functor`).
 
-Recommendation: build all three systems as structures, including the
-tree instance `1 + X^2`; host the in-scope equivalence proof over
-`1 + X`; record "the tree-algebra higher-order system also
-characterizes elementary" as a future corollary via Lemma 5 plus the
-`LawvereNatBT` coding layer. This keeps the proof free of coding
-while preserving the canonical-instances plan.
+Recommendation: instantiate the generic higher-order presentation
+at all three signature functors (near-free by genericity); host the
+in-scope equivalence proof over `1 + X`; record "the tree-algebra
+higher-order system also characterizes elementary" as a future
+corollary via Lemma 5 plus the `LawvereNatBT` coding layer. This
+keeps the proof free of coding while preserving the
+canonical-instances plan.
 
 ## 6. The theorem and its proof-route map
 
@@ -1082,9 +1107,10 @@ categorical layers above are representation-independent.
 | Dependency risk | none | low (in-repo, stable) | high (WIP upstream) |
 
 Recommendation: fix the section-4.2 interface first; spike the
-monadic first-order system through the syntactic-category
-construction in both A and B; decide on that evidence, with C the
-convergence target. If a default must be chosen without spikes: B.
+monadic first-order sub-theory (the smallest restricted signature
+over `1 + X`) through the syntactic-category construction in both A
+and B; decide on that evidence, with C the convergence target. If a
+default must be chosen without spikes: B.
 
 ## 8. Deliverables and phasing
 
@@ -1094,15 +1120,17 @@ In dependency order (phase boundaries fixed by the plan, not here):
    polynomial signature functors), term layer with clone laws, the
    standard interpretation with its extensional setoid, generic
    syntactic category with finite products.
-2. Monadic first-order system (`1 + X`, DLMZ tier presentation):
-   category, `omegaShift`, `kappaHat`, ramified `+`/`x` examples.
-3. Polyadic first-order system (`1 + 2 X`): same; algebra-map and
-   theory-inclusion functors.
-4. Higher-order system over `1 + X` (r-type sorts, schema-generated
-   identifiers): category; the paper's section 2.4 example ladder
-   (coercions, `+`, `x`, `e`, `2_m`, `sz`) - these are both
-   validation and Lemma 6 ingredients. Tree instance `1 + X^2` as a
-   structure.
+2. Higher-order system over `1 + X` (r-type sorts, schema-generated
+   identifiers): category, `omegaShift`, `kappaHat`; the paper's
+   section 2.4 example ladder (coercions, `+`, `x`, `e`, `2_m`,
+   `sz`) - both validation and Lemma 6 ingredients.
+3. Algebra genericity: the presentation as a function of the
+   signature functor; instantiations at `1 + 2 X` and `1 + X^2`;
+   algebra-map functoriality.
+4. First-order sub-theories: the restricted signature over the
+   tower sorts, with its near-trivial inclusion; the monadic
+   sub-theory doubles as the section-7 spike vehicle and hosts the
+   ramified `+`/`x` examples at first order.
 5. Definability data (section 6.2): Lemma 2 and Lemma 1
    transcriptions; Lemma 6 transcription against `ZeroTestURM`;
    bound-format arithmetic; deliverable: for every ER morphism, an
@@ -1132,8 +1160,13 @@ In dependency order (phase boundaries fixed by the plan, not here):
 - First-order complexity characterizations: linear space (monadic;
   no reference category exists yet - section 2.4) and polynomial
   time (polyadic; reference theory to be chosen; note Heraud-Nowak
-  as mechanization precedent). Over tree algebras at first order,
-  any future result must first build a DAG/graph cost model
+  as mechanization precedent). Those workstreams also decide
+  whether to build the standalone tier-sorted (`S = N`)
+  instantiation of the generic core - the DLMZ presentation, with
+  its tier-to-r-type inclusion functor - for citation fit, or to
+  keep working with the sub-theories of section 4.1. Over tree
+  algebras at first order, any future result must first build a
+  DAG/graph cost model
   (Dal Lago-Martini-Zorzi; Danner-Royer 2022's compressed-size
   device for completeness).
 - The applicative calculi `RlMR-omega`/`RlMR-omega_o` as goals
