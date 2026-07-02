@@ -225,9 +225,9 @@ f (x_vec, c_i (a_1 ... a_{r_i})) =
 where phi_j = f (x_vec, a_j)
 ```
 
-Terminology glossary. The paper's naming (its section 2.1, the
-sentence after eq. (1)) is easy to misread, so the correspondence
-with the code above is fixed here piece by piece:
+Terminology glossary. The correspondence between the paper's
+naming (its section 2.1, the sentence after eq. (1)) and the code
+above, fixed piece by piece:
 
 | Symbol in eq. (1) | The paper's name | Name here | Role |
 | --- | --- | --- | --- |
@@ -270,9 +270,9 @@ variant separately; his Lemma 2, section 2.6, reduces it to the
 plain form). The paper names fragments by which arguments the step
 may see (section 2.1): monotonic (the step does not see the
 subterms `a_vec`), closed (no parameters `x_vec`), flat (no
-critical arguments, i.e. no recursive results - only case analysis
-on the recurrence argument). The system formalized here is the
-monotonic fragment, `RMRec-omega`.
+critical arguments, i.e. no recursive results - it yields case
+analysis and the destructors, p. 212). The system formalized here
+is the monotonic fragment, `RMRec-omega`.
 
 Ramified recurrence (Leivant III section 2.3, eq. (4)) is the same
 schema with a sorting layer and nothing else: every sort denotes a
