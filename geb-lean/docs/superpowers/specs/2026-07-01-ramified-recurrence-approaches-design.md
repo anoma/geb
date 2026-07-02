@@ -148,11 +148,13 @@ with recursive calls on the immediate subterms. Over the unary
 naturals it is primitive recursion; over a general free algebra it
 is the same schema with that algebra's constructor clauses. This
 orientation fixes the schema concretely before the survey table.
-The Lean code below is illustrative and verified to compile; in the
-implementation the corresponding inductives are realized as W-types
-of polynomial functors (mathlib's `PFunctor` or the repository's
-slice polynomial and presheaf parametric-right-adjoint functors),
-per sections 4 and 7.
+The Lean code below is illustrative and verified to compile. The
+signature, free-algebra, and recurrence code corresponds to
+implementation inductives realized as W-types of polynomial
+functors (mathlib's `PFunctor` or the repository's slice polynomial
+and presheaf parametric-right-adjoint functors), per sections 4 and
+7; the tier illustration further below is notation only (sections
+2.3 and 4.1).
 
 Recursion as already formalized: the repository's K^sim theory
 carries simultaneous primitive recursion as the term former
@@ -358,8 +360,8 @@ annotations:
 
 The two first-order cells of Table 1 are established in companion
 sources, not in Leivant III itself. No complexity proof for these
-cells is in scope; the provenance is recorded for the structures'
-docstrings and for future workstreams.
+cells is in scope; the provenance is recorded for the sub-theory
+definitions' docstrings and for future workstreams.
 
 Polyadic (polynomial time):
 
@@ -665,7 +667,10 @@ normalization-facing items:
   480-484, with the majorization apparatus `dominates_app`,
   `majorizes_redIter_*`). The area doc
   (`docs/areas/lawvere-er-ksim.md`) records it as an adjacent
-  development; no connection to `LawvereERCat` is proven yet.
+  development; no connection to `LawvereERCat` is proven yet. The
+  formalization is untested, and little is proven about it, so its
+  fidelity to the source is unestablished; it is treated as
+  unverified until the audit of section 6.3.
 - Tree-coding assets for the tree algebra: `GebLean/LawvereNatBT*`
   and `GebLean/LawvereTreeERArith.lean`, including
   `erToNatBTV2Functor` (equivalence of `LawvereERCat` with the
@@ -729,12 +734,21 @@ first-order system is needed as an object of study, it is a
 restricted sub-theory of the r-type instantiation: the same term
 and category layers, with identifier formation restricted to
 first-order arities over the tower sorts `Omega^m o` and recurrence
-at object sorts. The distinction matters: the full subcategory of
+at object sorts of the form `Omega^m o`. The full subcategory of
 the higher-order syntactic category on tower-sort contexts is not
-the first-order system - its hom-sets are all of the collapse
-(section 6.1) - so the restriction is on the signature, not on the
-objects. The DLMZ tier-vector notation of section 2.3 (`i < j` in
-place of `Omega tau` against `tau`) is used for these sub-theories
+the first-order system: fullness admits every higher-order-formed
+morphism with tower-sorted endpoints (a recurrence at a tower sort
+takes parameters of arbitrary r-types, eq. (4), and closed
+higher-order terms occur internally), and the source defines
+first-order by restricting the schema - "recurrence restricted to
+object types of the form `Omega^m o`" (section 2.4(3), p. 216) -
+not by restricting the endpoints; no conservativity statement in
+the paper identifies the two. (Those hom-sets are in any case
+strictly smaller than the collapse: exponentiation has no realizer
+over any tower-sort context, section 6.1.) The restriction is
+therefore on the signature, not on the objects. The DLMZ
+tier-vector notation of section 2.3 (`i < j` in place of
+`Omega tau` against `tau`) is used for these sub-theories
 in prose and docstrings, and a standalone tier-sorted (`S = N`)
 instantiation of the same generic core is deferred to the
 first-order characterization workstreams (section 9), which can
@@ -842,9 +856,10 @@ the Omega shift by base substitution `tau[o := Omega o]`
 (postcomposition with Omega is not a signature morphism at arrow
 sorts; on first-order sorts the shift is the tier successor);
 `kappaHat (τ) : [RType.omega τ] ⟶ [τ]` at the Omega-sort, supplying
-a copoint for the shift on the first-order systems only (no raising
-coercion exists; constant maps of type `o -> Omega o` exist, an
-identity-realizing one does not).
+copoint components at the Omega-sorts (no raising coercion exists;
+constant maps of type `o -> Omega o` exist, an identity-realizing
+one does not); their assembly into a copoint depends on open
+question 3.
 
 ### 4.3 Inter-system functors
 
@@ -855,12 +870,16 @@ identity-realizing one does not).
   tier-sorted instantiation (section 9).
 - Algebra-map functoriality: a morphism of signature functors (e.g.
   `1 + X` into `1 + 2 X`) induces a functor of syntactic categories.
-- `omegaShift` as an endofunctor: on the tower sorts the shift is a
-  signature endomorphism; for the full higher-order system it is
-  contingent on base-substitution functoriality (open question,
-  section 10).
-- `kappaHat` at every r-type; the copoint on the tower-sort
-  fragment.
+- `omegaShift`: the sort shift maps the constructor summand
+  (present at every object sort) and eq. (4) monotonic recurrences
+  to schema instances, but not the flat-recurrence and destructor
+  summand, whose scrutinee is pinned at sort `o` (eq. (5) and the
+  p. 215 note; destructors are `o -> o`, section 2.5) - the shifted
+  destructor at `[Omega o]` has no evident realizer. Endofunctor
+  status, for the sub-theories as for the full system, is open
+  question 3.
+- `kappaHat` at every r-type; whether its components assemble into
+  a copoint of a shift endofunctor depends on open question 3.
 - Lemma 1 and Lemma 2 as reductions between presentation variants
   (flat versus destructor-case; simultaneous versus plain) - both
   are also ingredients of the definability route.
@@ -917,10 +936,11 @@ for the unary naturals. Two options for the one in-scope proof:
   (`LawvereNatBT*`, `erToNatBTV2Functor`).
 
 Recommendation: instantiate the generic higher-order presentation
-at all three signature functors (near-free by genericity); host the
+at all three signature functors (a small step, since the
+presentation is generic in the functor); host the
 in-scope equivalence proof over `1 + X`; record "the tree-algebra
 higher-order system also characterizes elementary" as a future
-corollary via Lemma 5 plus the `LawvereNatBT` coding layer. This
+corollary, with the coding-based route sketched in section 9. This
 keeps the proof free of coding while preserving the
 canonical-instances plan.
 
@@ -1054,9 +1074,16 @@ published elementary characterization. If the literature supports a
 translation from `RMRec-omega` (or from `1l(A)`-represented
 functions) into `T*` - to be checked in Beckmann-Weiermann 2000 and
 its citation neighborhood - the soundness route could reuse that
-asset in place of a new normalization development. Under the
-transcription-only policy this substitution is admissible only if
-the bridge itself is literature; otherwise route 1-3 stands.
+asset in place of a new normalization development. Two
+preconditions gate the reuse. First, under the transcription-only
+policy the substitution is admissible only if the bridge itself is
+literature. Second, the `LawvereGodelT*` formalization is untested
+and little is proven about it, so before any reliance it must be
+audited clause by clause against Beckmann-Weiermann 2000 (their
+Definition 4 reduction relation, the Definitions 7-10 measures, and
+the Lemma 16 statement and proof structure); until that audit it is
+treated as not established to represent its source. Failing either
+precondition, route 1-3 stands.
 
 ### 6.4 Landing elementary computation in the reference category
 
@@ -1109,8 +1136,10 @@ categorical layers above are representation-independent.
 Recommendation: fix the section-4.2 interface first; spike the
 monadic first-order sub-theory (the smallest restricted signature
 over `1 + X`) through the syntactic-category construction in both A
-and B; decide on that evidence, with C the convergence target. If a
-default must be chosen without spikes: B.
+and B - the spikes are throwaway prototypes of the phase-4
+artifact, run before phase 1 commits to a representation; decide on
+that evidence, with C the convergence target. If a default must be
+chosen without spikes: B.
 
 ## 8. Deliverables and phasing
 
@@ -1121,14 +1150,15 @@ In dependency order (phase boundaries fixed by the plan, not here):
    standard interpretation with its extensional setoid, generic
    syntactic category with finite products.
 2. Higher-order system over `1 + X` (r-type sorts, schema-generated
-   identifiers): category, `omegaShift`, `kappaHat`; the paper's
+   identifiers): category; `omegaShift` at the sort level
+   (endofunctor status per open question 3); `kappaHat`; the paper's
    section 2.4 example ladder (coercions, `+`, `x`, `e`, `2_m`,
    `sz`) - both validation and Lemma 6 ingredients.
 3. Algebra genericity: the presentation as a function of the
    signature functor; instantiations at `1 + 2 X` and `1 + X^2`;
    algebra-map functoriality.
 4. First-order sub-theories: the restricted signature over the
-   tower sorts, with its near-trivial inclusion; the monadic
+   tower sorts, with its inclusion into the host theory; the monadic
    sub-theory doubles as the section-7 spike vehicle and hosts the
    ramified `+`/`x` examples at first order.
 5. Definability data (section 6.2): Lemma 2 and Lemma 1
@@ -1172,14 +1202,31 @@ In dependency order (phase boundaries fixed by the plan, not here):
 - The applicative calculi `RlMR-omega`/`RlMR-omega_o` as goals
   (Proposition 7 in full; Theorem 14 items (3)-(5)).
 - The tree-algebra corollary: higher-order over `1 + X^2`
-  characterizes elementary, via Lemma 5 and the `LawvereNatBT`
-  coding layer.
+  characterizes elementary over trees, with the reference class
+  defined by coding - a tree function is elementary when its coded
+  conjugate lies in `LawvereERCat` (Lemma 5 supplies the
+  machine-model robustness of that definition; the exponential
+  factor it records for tree algebras is absorbed by elementary).
+  No new register-machine family is planned for it: the soundness
+  route of section 6.3 is algebra-generic, and for the definability
+  direction the conjugate's `ZeroTestURM` program (from
+  `compileER`, built once in this workstream) can be simulated
+  inside `RMRec-omega` over `1 + X^2` with register contents held
+  in the unary sub-algebra generated by a 0-ary and a
+  positive-arity constructor - the alpha/beta devices that
+  section 2.4(5) and Lemma 6's own proof already use - composed
+  with per-algebra ramified-definable encoding and decoding
+  (`LawvereNatBT` supplying the numeric side). The paper does not
+  spell out that assembly (in particular the ramified definability
+  of the encoding and decoding); the future workstream designs it
+  and marks it under the section 1.2 policy.
 - Ramified corecursion over the final coalgebras (M-types) of the
   same signature functors (Danner-Royer 2012; Ramyaa-Leivant
   logspace streams).
-- The Omega-shift structure analysis (copoint on first-order
-  systems; graded-(co)monad question; polarity alternative) -
-  statement-level novelty, optional, inherited from revision 1.
+- The Omega-shift structure analysis (the copoint question of
+  open question 3; the graded-(co)monad question; the polarity
+  alternative) - statement-level novelty, optional, inherited from
+  revision 1.
 - Retrofit of `LawvereERQuot`/`LawvereKSimQuot` onto the generic
   syntactic-category construction; relation of the higher-order
   theory to `Era.lean`'s single-sorted basis; multi-sorted data
@@ -1190,15 +1237,22 @@ In dependency order (phase boundaries fixed by the plan, not here):
 1. Soundness-route gate (first investigation of the plan phase):
    does the literature provide a bridge from `RMRec-omega` or
    `1l(A)` to Beckmann-Weiermann `T*` (section 6.3)? Check
-   Beckmann-Weiermann 2000 and its citation neighborhood. The answer
-   selects between reusing `LawvereGodelT*` and transcribing
-   Leivant III sections 4-5.
+   Beckmann-Weiermann 2000 and its citation neighborhood. Reuse of
+   `LawvereGodelT*` requires both an affirmative answer and the
+   section-6.3 audit of that formalization against the source;
+   failing either, the Leivant III sections 4-5 transcription
+   stands.
 2. Landing choice for the soundness normalizer (section 6.4): K^sim
    simulator pattern versus ER-side bounded recursion on codes.
-3. Functoriality of the base-substitution Omega shift on the
-   higher-order system (interpretation compatibility; under the
-   deferred equational presentation, additionally axiom-set closure
-   under the shift).
+3. The Omega shift as an endofunctor. For the full higher-order
+   system: base-substitution functoriality (interpretation
+   compatibility). For the first-order sub-theories: the
+   flat-recurrence and destructor summand blocks the sort shift
+   from being a signature endomorphism (scrutinee pinned at `o`;
+   the shifted destructor at `[Omega o]` has no evident realizer),
+   so no fragment's endofunctor is currently established; the
+   copoint statements of sections 4.2 and 4.3 are conditioned on
+   this question.
 4. Sorted-context indexing for the DTC realizations (contexts as
    index components versus parameters).
 5. Whether `Presentation` carries object-sort structure as data or
