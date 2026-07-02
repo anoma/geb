@@ -736,7 +736,8 @@ def collapseFunctor : SynCatFO (higherOrder natSig) ⥤ LawvereERCat
 quantified over object-sort input contexts, rendering Leivant's
 f-minus definability (section 2.7 of the paper: a function over A
 is defined in RMRec-omega when it is the collapse f-minus of some
-ramified f). oCtx m is the context of m copies of o. -/
+ramified f). ObjCtx n is the type of object-sort contexts of
+length n; oCtx m is the context of m copies of o. -/
 theorem ramified_definability {n m} (f : (n : LawvereERCat) ⟶ m) :
     ∃ (Γ : ObjCtx n) (g : Γ ⟶ oCtx m),
       collapseDenotation g = f
@@ -791,6 +792,11 @@ Chain, for an arbitrary ER morphism `e`:
    formalized bounds, not new mathematics.
 3. Lemma 1, transcribed: `RMRec-omega_o` definability yields
    `RMRec-omega` definability.
+
+Arity remark: Lemma 6's statement covers p-ary functions, but its
+proof is displayed for a unary input (single loading clause, unary
+eq. (8)); the transcription assembles the n-input, m-output case
+componentwise, with the clock bound taken over all inputs.
 
 The adaptation of Lemma 6 from Leivant's machine format
 (begin/end states, three command kinds) to the zero-test URM's
