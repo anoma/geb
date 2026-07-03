@@ -107,16 +107,20 @@ eliminator `PolyFix.ind` (decision 8; the free-monad layer of
 `GebLean/PolyAlg.lean` is consumed, not rebuilt), following the precedent
 `FreeAlg.recurse`. Novel packaging. -/
 def Tm.eval {sig : SortedSig S} {Γ : Ctx S} (M : SortedModel sig)
-    (ρ : M.Env Γ) : {s : S} → Tm sig Γ s → M.carrier s
-  | _, PolyFix.mk _ (Sum.inl a) _ => a.2 ▸ ρ a.1
-  | _, PolyFix.mk _ (Sum.inr o) children =>
-    o.2 ▸ M.interpOp o.val (fun i => Tm.eval M ρ (children i))
+    (ρ : M.Env Γ) {s : S} (t : Tm sig Γ s) : M.carrier s :=
+  PolyFix.ind (P := polyTranslate (varOver Γ) sig.polyEndo)
+    (motive := fun {s} _ => M.carrier s)
+    (fun i children ih =>
+      match i, children, ih with
+      | Sum.inl a, _, _ => cast (congrArg M.carrier a.2) (ρ a.1)
+      | Sum.inr o, _, ih =>
+        cast (congrArg M.carrier o.2) (M.interpOp o.val ih)) t
 
 /-- Evaluation commutes with transport of its input term along a sort equality.
 A fact local to `Tm.eval`, proved by transport elimination. -/
 theorem Tm.eval_transport {sig : SortedSig S} {Γ : Ctx S} (M : SortedModel sig)
     (ρ : M.Env Γ) {x y : S} (h : x = y) (t : Tm sig Γ x) :
-    (h ▸ t).eval M ρ = h ▸ t.eval M ρ := by
+    (Tm.reind h t).eval M ρ = cast (congrArg M.carrier h) (t.eval M ρ) := by
   subst h; rfl
 
 /-- Evaluation of a substituted term equals evaluation of the term under the
@@ -133,11 +137,8 @@ theorem Tm.eval_subst {sig : SortedSig S} {Γ Δ : Ctx S} {s : S}
     cases i with
     | inl a => exact Tm.eval_transport M ρ a.2 (σ a.1)
     | inr o =>
-      change o.2 ▸ M.interpOp o.val (fun i => Tm.eval M ρ (Tm.subst (children i) σ)) =
-          o.2 ▸ M.interpOp o.val
-            (fun i => Tm.eval M (fun i => Tm.eval M ρ (σ i)) (children i))
-      congr 1
-      exact congrArg (M.interpOp o.val) (funext fun i => ih i)
+      exact congrArg (cast (congrArg M.carrier o.2))
+        (congrArg (M.interpOp o.val) (funext fun i => ih i))
 
 /-- A presentation: a sort type, a multi-sorted signature, an object-sort
 predicate as plain data (plan decision 6), the base algebra whose carrier the

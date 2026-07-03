@@ -127,7 +127,6 @@ import GebLean.PshSpanBicategory
 import GebLean.PshRelEdgeExp
 import GebLean.PshRelEdgeFunctionalize
 import GebLean.PshRelEdgeLimits
-import GebLean.Ramified
 import GebLean.PshRelEdgeIdentPreservation
 import GebLean.PshRelEdgeInclusion
 import GebLean.PshRelEdgeSeparation
@@ -137,6 +136,7 @@ import GebLean.PshRelEdgeReflectiveChain
 import GebLean.PshRelEdgeSOClassifier
 import GebLean.PshRelSpanDiagram
 import GebLean.PshTypeExpr
+import GebLean.Ramified
 import GebLean.RelDouble
 import GebLean.RelInterpComposition
 import GebLean.RelSpanDiagram

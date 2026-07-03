@@ -31,6 +31,7 @@ than rebuilding it. The clone-law statements follow the repository precedent
 * `Tm.var` — a variable term (the free monad's unit at a position).
 * `Tm.op` — an operation applied to argument terms (a `PolyFix` node).
 * `Tm.subst` — simultaneous substitution (the free monad's bind).
+* `Tm.reind` — reindexing of a term along an equality of its sort.
 * `Tm.weaken` — substitution along a sort-preserving variable renaming.
 * `QuotRel` — a quotient relation for the syntactic category: a per-hom setoid
   family closed under substitution in both positions.
@@ -43,6 +44,8 @@ than rebuilding it. The clone-law statements follow the repository precedent
   law).
 * `Tm.var_subst` — substituting a variable by a tuple selects that tuple entry
   (the free monad's left-unit law).
+* `Tm.subst_reind` — substitution commutes with reindexing.
+* `QuotRel.rel_reind` — a quotient relation is preserved by reindexing.
 
 ## Implementation notes
 
@@ -163,6 +166,32 @@ theorem Tm.var_subst {sig : SortedSig S} {Γ Δ : Ctx S}
     (i : Fin Γ.length) (σ : ∀ j : Fin Γ.length, Tm sig Δ (Γ.get j)) :
     (Tm.var i).subst σ = σ i := rfl
 
+/-- Reindex a term along an equality of its sort. -/
+def Tm.reind {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
+    (t : Tm sig Γ a) : Tm sig Γ b := h ▸ t
+
+/-- Reindexing along `rfl` is the identity. -/
+@[simp] theorem Tm.reind_rfl {sig : SortedSig S} {Γ : Ctx S} {a : S}
+    (t : Tm sig Γ a) : Tm.reind rfl t = t := rfl
+
+/-- Reindexing then reindexing back along the reverse equality is the
+identity. -/
+theorem Tm.reind_symm {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
+    (t : Tm sig Γ a) : Tm.reind h.symm (Tm.reind h t) = t := by
+  subst h; rfl
+
+/-- Reindexing back then forward along an equality is the identity. -/
+theorem Tm.reind_symm' {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
+    (t : Tm sig Γ b) : Tm.reind h (Tm.reind h.symm t) = t := by
+  subst h; rfl
+
+/-- Substitution commutes with reindexing of its input term. -/
+theorem Tm.subst_reind {sig : SortedSig S} {Γ Δ : Ctx S} {a b : S}
+    (h : a = b) (t : Tm sig Γ a)
+    (σ : ∀ j : Fin Γ.length, Tm sig Δ (Γ.get j)) :
+    (Tm.reind h t).subst σ = Tm.reind h (t.subst σ) := by
+  subst h; rfl
+
 /-- Weakening along a sort-preserving variable renaming `f`: substitution at
 the variable tuple that sends position `i` to the variable `f i`, transported
 along the sort equality `h`. A special case of `Tm.subst` (variable-to-variable
@@ -170,7 +199,7 @@ substitution). Novel packaging. -/
 def Tm.weaken {sig : SortedSig S} {Γ Δ : Ctx S} {s : S}
     (f : Fin Γ.length → Fin Δ.length) (h : ∀ i, Δ.get (f i) = Γ.get i)
     (t : Tm sig Γ s) : Tm sig Δ s :=
-  t.subst (fun i => h i ▸ Tm.var (f i))
+  t.subst (fun i => Tm.reind (h i) (Tm.var (f i)))
 
 /-- A quotient relation for the syntactic category: a per-hom setoid family on
 terms together with the congruence law composition needs (substitution
@@ -187,5 +216,11 @@ structure QuotRel (sig : SortedSig S) where
       (σ σ' : ∀ i, Tm sig Δ (Γ.get i)),
       (rel Γ s) t t' → (∀ i, (rel Δ _) (σ i) (σ' i)) →
       (rel Δ s) (t.subst σ) (t'.subst σ')
+
+/-- A quotient relation is preserved by reindexing along a sort equality. -/
+theorem QuotRel.rel_reind {sig : SortedSig S} (r : QuotRel sig) {T : Ctx S}
+    {a b : S} (h : a = b) {x y : Tm sig T a} (hxy : (r.rel T a) x y) :
+    (r.rel T b) (Tm.reind h x) (Tm.reind h y) := by
+  subst h; exact hxy
 
 end GebLean.Ramified

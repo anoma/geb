@@ -13,19 +13,16 @@ namespace GebLeanTests.Ramified.AlgSig
 
 open GebLean.Ramified
 
-/-- The `1 + X` word signature: `false` is the 0-ary constructor,
-`true` the unary constructor. -/
-def wordSig : AlgSig := ⟨Bool, fun b => cond b 1 0⟩
-
 /-- The base element (the 0-ary constructor with no subterms). -/
-def zero : FreeAlg wordSig := FreeAlg.mk false Fin.elim0
+def zero : FreeAlg natAlgSig := FreeAlg.mk false Fin.elim0
 
 /-- The unary constructor applied to one subterm. -/
-def succ (t : FreeAlg wordSig) : FreeAlg wordSig := FreeAlg.mk true (fun _ => t)
+def succ (t : FreeAlg natAlgSig) : FreeAlg natAlgSig :=
+  FreeAlg.mk true (fun _ => t)
 
 /-- The length recurrence: `0` at the base, one more than the recursive
 result at the unary step. -/
-def length : FreeAlg wordSig → Nat :=
+def length : FreeAlg natAlgSig → Nat :=
   FreeAlg.recurse (P := Unit) (C := Nat)
     (fun b => match b with
       | true => fun _ _ (recResults : Fin 1 → Nat) => recResults 0 + 1

@@ -32,6 +32,8 @@ generalizes the hand-rolled quotient categories `GebLean.LawvereERCat`
 
 * `HomTuple` — raw morphism data: a codomain-indexed tuple of domain terms.
 * `homSetoid` — the pointwise closure of a `QuotRel` on morphism tuples.
+* `Hom` — morphisms of the syntactic category: morphism tuples modulo
+  `homSetoid`.
 * `SynCat` — the syntactic category's carrier (a type synonym for `Ctx`).
 * `SynCat.instCategory` — the `Category` instance: `Hom` is the tuple quotient,
   identity the variable tuple, composition substitution.
@@ -89,32 +91,6 @@ open CategoryTheory CategoryTheory.Limits
 
 variable {S : Type}
 
-/-- Reindex a term along an equality of its sort. -/
-def Tm.reind {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
-    (t : Tm sig Γ a) : Tm sig Γ b := h ▸ t
-
-/-- Reindexing along `rfl` is the identity. -/
-@[simp] theorem Tm.reind_rfl {sig : SortedSig S} {Γ : Ctx S} {a : S}
-    (t : Tm sig Γ a) : Tm.reind rfl t = t := rfl
-
-/-- Reindexing then reindexing back along the reverse equality is the
-identity. -/
-theorem Tm.reind_symm {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
-    (t : Tm sig Γ a) : Tm.reind h.symm (Tm.reind h t) = t := by
-  subst h; rfl
-
-/-- Reindexing back then forward along an equality is the identity. -/
-theorem Tm.reind_symm' {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
-    (t : Tm sig Γ b) : Tm.reind h (Tm.reind h.symm t) = t := by
-  subst h; rfl
-
-/-- Substitution commutes with reindexing of its input term. -/
-theorem Tm.subst_reind {sig : SortedSig S} {Γ Δ : Ctx S} {a b : S}
-    (h : a = b) (t : Tm sig Γ a)
-    (σ : ∀ j : Fin Γ.length, Tm sig Δ (Γ.get j)) :
-    (Tm.reind h t).subst σ = Tm.reind h (t.subst σ) := by
-  subst h; rfl
-
 /-- Reindexing at a propositionally equal codomain position. -/
 theorem Tm.reind_index {sig : SortedSig S} {Γ Δ : Ctx S}
     (g : ∀ j : Fin Δ.length, Tm sig Γ (Δ.get j)) {j j' : Fin Δ.length}
@@ -140,14 +116,12 @@ def HomTuple.comp {P : Presentation} {Γ Δ E : Ctx P.S}
   fun i => (g i).subst f
 
 /-- The pointwise closure of a `QuotRel` on morphism tuples: two tuples are
-related when they are related position by position. Novel packaging. -/
+related when they are related position by position. The dependent-function
+setoid `piSetoid` of the per-position setoids `r.rel Γ (Δ.get i)`. Novel
+packaging. -/
 def homSetoid (P : Presentation) (r : QuotRel P.sig) (Γ Δ : Ctx P.S) :
-    Setoid (HomTuple P Γ Δ) where
-  r f g := ∀ i, (r.rel Γ (Δ.get i)) (f i) (g i)
-  iseqv :=
-    { refl := fun f i => (r.rel Γ (Δ.get i)).iseqv.refl (f i)
-      symm := fun h i => (r.rel Γ (Δ.get i)).iseqv.symm (h i)
-      trans := fun h₁ h₂ i => (r.rel Γ (Δ.get i)).iseqv.trans (h₁ i) (h₂ i) }
+    Setoid (HomTuple P Γ Δ) :=
+  @piSetoid _ _ (fun i => r.rel Γ (Δ.get i))
 
 /-- Morphisms of the syntactic category: morphism tuples modulo `homSetoid`.
 Novel packaging. -/
@@ -214,12 +188,20 @@ instance SynCat.instCategory (P : Presentation) (r : QuotRel P.sig) :
   assoc f g h := Hom.assoc f g h
 
 /-- Left index injection into a concatenated context: the position `i` of `Γ`,
-viewed as a position of `Γ ++ Δ`. Novel packaging. -/
+viewed as a position of `Γ ++ Δ`. The counterpart of `Fin.castAdd` for the
+length of a list append; defined directly, on the underlying value with a
+`List.length_append` bound, rather than through `Fin.castAdd` composed with the
+`List.length_append` length cast, to avoid the intervening cast-transport
+layers. Novel packaging. -/
 def finAppL (Γ Δ : Ctx S) (i : Fin Γ.length) : Fin (Γ ++ Δ).length :=
   ⟨i.val, by rw [List.length_append]; omega⟩
 
 /-- Right index injection into a concatenated context: the position `j` of `Δ`,
-viewed as the position `Γ.length + j` of `Γ ++ Δ`. Novel packaging. -/
+viewed as the position `Γ.length + j` of `Γ ++ Δ`. The counterpart of
+`Fin.natAdd` for the length of a list append; defined directly, on the
+underlying value with a `List.length_append` bound, rather than through
+`Fin.natAdd` composed with the `List.length_append` length cast, to avoid the
+intervening cast-transport layers. Novel packaging. -/
 def finAppR (Γ Δ : Ctx S) (j : Fin Δ.length) : Fin (Γ ++ Δ).length :=
   ⟨Γ.length + j.val, by rw [List.length_append]; omega⟩
 
@@ -304,14 +286,11 @@ theorem snd_join {P : Presentation} {T Γ Δ : Ctx P.S}
   simp only [HomTuple.comp, sndTuple, Tm.subst_reind, Tm.var_subst,
     joinTuple_finAppR, Tm.reind_symm']
 
-/-- A quotient relation is preserved by reindexing along a sort equality. -/
-theorem QuotRel.rel_reind {P : Presentation} (r : QuotRel P.sig) {T : Ctx P.S}
-    {a b : P.S} (h : a = b) {x y : Tm P.sig T a} (hxy : (r.rel T a) x y) :
-    (r.rel T b) (Tm.reind h x) (Tm.reind h y) := by
-  subst h; exact hxy
-
 /-- Every position of a concatenated context is a left- or right-injected
-position. -/
+position. The counterpart of `Fin.addCases` for the length of a list append;
+proved directly against `finAppL`/`finAppR`, rather than through `Fin.addCases`
+composed with the `List.length_append` length cast, to avoid the intervening
+cast-transport layers. -/
 theorem finApp_cases {Γ Δ : Ctx S} {motive : Fin (Γ ++ Δ).length → Prop}
     (hl : ∀ i, motive (finAppL Γ Δ i)) (hr : ∀ j, motive (finAppR Γ Δ j))
     (k : Fin (Γ ++ Δ).length) : motive k := by
