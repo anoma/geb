@@ -430,8 +430,11 @@ theorem chooseIdent_interp_ge (m : Nat) (τ : RType) ... :
 
 - [ ] **Step 1: failing tests.** `#guard`-ladder checks at `τ = o`:
   `ramCase` selects by constructor on `0` and `succ 0`;
-  `ramDstr` at `0, 1, 3` gives `0, 0, 2`; `chooseIdent 3 o` at
-  selectors `0, 1, 2` returns the matching entry (small numerals;
+  `ramDstr` at `0, 1, 3` gives `0, 0, 2`; `chooseIdent 3 o` (four
+  entries) at selectors `0, 2, 3` returns the matching entry, and
+  the fall-through cases return the last entry: `chooseIdent 2 o`
+  at selector `5` and `chooseIdent 3 o` at selector `7` (small
+  numerals;
   read through `freeAlgToNat`).
 - [ ] **Step 2: implement.** `chooseIdent` recursion: base
   `chooseIdent 0` returns its sole entry (an explicit definition),
@@ -441,10 +444,9 @@ theorem chooseIdent_interp_ge (m : Nat) (τ : RType) ... :
   the composite is an explicit definition (`RIdent.defn`) whose
   holes reference `ramCase τ`, `ramDstr`, and `chooseIdent m τ`.
   The fall-through for selectors beyond the entry count is a
-  consequence of the recursion (the base returns its sole entry
-  regardless of the selector value, so deep selectors exhaust into
-  the last entry); prove `chooseIdent_interp_ge` alongside
-  `chooseIdent_interp`.
+  consequence of the recursion (selectors larger than the entry
+  count reach the base, which returns its sole entry — the last);
+  prove `chooseIdent_interp_ge` alongside `chooseIdent_interp`.
   Citations: Lemma 2 proof, section 2.6; case/dstr, section 2.5.
 - [ ] **Step 3: verify, pre-commit triad, commit** (message
   `feat(ramified): add case, destructor, and selector identifiers`).
@@ -517,7 +519,11 @@ theorem simulProj_interp ...
   is an explicit definition whose body is the curried-hole
   combinator form (the `ramExpStep` pattern, Examples.lean:516) of
   an auxiliary identifier with the selector appended to the context;
-  that auxiliary's body is `chooseIdent m τ` applied to the selector
+  that auxiliary's body is `chooseIdent (m - 1) τ` — well-formed
+  under `hm : 0 < m`, carrying exactly the family's `m` entries
+  `y₀ ... y_{m-1}`; the projections use selector numerals `j < m`,
+  so the fall-through is unreachable from `simulProj` — applied to
+  the selector
   variable and, for each j, the j-th step identifier applied to the
   parameters and the recursive-result variables (as `o → τ` values).
   Docstring: transcription of Lemma 2 with the standing-decision-5
@@ -809,7 +815,7 @@ def cLift (A : AlgSig) (τ : RType) (i : A.B) :
 
 /-- kappa-hat at every r-type (paper s2.4(1)): the ramified
 monotonic recurrence with steps cLift. Agrees with kappaHatIdent at
-object sorts (kappaHatFull_isObj). -/
+object sorts (kappaHatFull_eq_kappaHatIdent). -/
 def kappaHatFull (A : AlgSig) (τ : RType) :
     RIdent A [RType.omega τ] τ
 theorem kappaHatFull_eq_kappaHatIdent ...
@@ -939,7 +945,8 @@ tested register (jumpZ), the constant numeral `c` via numeralTm
 (assign — the zero-test URM's assign writes a constant,
 ZeroTestURM.lean:90), or the identity (stop) — all explicit
 definitions from constructor, destructor, and case functions, as
-the Lemma 6 proof requires. The pc case-split carries a final
+the Lemma 6 proof requires. Each component's case-split — the pc
+component and every register component alike — carries a final
 identity arm: `URMState.step` is the identity at every
 `pc ≥ instrs.size` (the implicit halt state; `jumpZ` targets are
 arbitrary naturals, so runs reach such values), and `chooseIdent`'s
