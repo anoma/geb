@@ -3,6 +3,7 @@ import GebLeanTests.Ramified.SortedSig
 import GebLeanTests.Ramified.Term
 import GebLeanTests.Ramified.Interp
 import GebLeanTests.Ramified.SynCat
+import GebLeanTests.Ramified.RType
 
 /-!
 # Ramified-recurrence test index
