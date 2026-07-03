@@ -1,4 +1,5 @@
 import GebLeanTests.Ramified.Definability.Simultaneous
+import GebLeanTests.Ramified.Definability.Flat
 
 /-!
 # Ramified-recurrence definability test index

@@ -1,4 +1,5 @@
 import GebLean.Ramified.Definability.Simultaneous
+import GebLean.Ramified.Definability.Flat
 
 /-!
 # Ramified recurrence: definability
@@ -9,7 +10,9 @@ the reduction of simultaneous recurrence to plain recurrence (Lemma 2, section
 2.6) and its supporting constructions. The first module supplies the case
 function, the destructor, and the selector `choose` over the `1 + X` word
 algebra `natAlgSig` — the building blocks of Lemma 2's selector argument
-(`Simultaneous`).
+(`Simultaneous`). The second packages the destructor/case operations as a
+signature summand generic in the algebra and realizes them by flat recurrence
+over `natAlgSig`, the containment direction of Lemma 1 (`Flat`).
 
 ## References
 
