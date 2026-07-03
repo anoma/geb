@@ -26,6 +26,17 @@ is claimed (spec open question 3).
 * `kappaHatTuple` — the morphism tuple applying `kappaHatIdent` to the
   sole variable of the context `[Ω τ]`.
 * `kappaHat` — kappa-hat as a morphism `[Ω τ] ⟶ [τ]` of `RMRecCat`.
+* `RType.objTarget`, `RType.domains` — the object target `θ` and domain
+  list `σ-vec` of the decomposition `τ = σ-vec → θ`.
+* `cLift`, `cLiftArrow`, `cLiftAux` — the pointwise constructor lift
+  `c_i^τ` at every r-type, and its arrow-sort construction.
+* `kappaHatFull` — kappa-hat at every r-type, the ramified monotonic
+  recurrence with steps `cLift`.
+* `canonIdent` — the canonical functional `C^τ = λ x-vec. α^θ`.
+* `applyCanon`, `kappaIdent` — the coercion `κ_τ : Ω τ → θ`, kappa-hat
+  fed the canonical functionals.
+* `deltaAux`, `deltaIdent` — the downward coercion `δ_θ : θ → o`.
+* `defnApp`, `appPrefixVars`, `appArgs` — term-level application helpers.
 
 ## Main statements
 
@@ -33,6 +44,12 @@ is claimed (spec open question 3).
   identity on the carrier copy.
 * `kappaHat_interp` — the standard-model denotation of the underlying
   morphism tuple of `kappaHat` is the identity on the carrier copy.
+* `RType.objTarget_isObj`, `RType.objTarget_of_isObj`,
+  `RType.curried_domains` — the object target is an object sort, is the
+  identity at object sorts, and witnesses the curried decomposition.
+* `kappaHatFull_eq_kappaHatIdent` — the full kappa-hat agrees with the
+  object-sort instance at object sorts.
+* `kappaHatFull_interp` — the recurrence semantics of the full kappa-hat.
 
 ## Implementation notes
 
@@ -232,5 +249,363 @@ theorem kappaHat_interp (A : AlgSig) (τ : RType) (hτ : τ.IsObj)
     (kappaHatTuple A τ hτ 0).eval (standardModel (higherOrder A)) ρ
       = cast (RType.interp_isObj (FreeAlg A) hτ).symm (ρ 0) :=
   kappaHatIdent_interp A τ hτ ρ
+
+/-- The final object sort of an r-type (Leivant III section 2.4, p. 213: "every
+r-type `τ` is of the form `σ-vec → θ`"): `o` and every `Omega τ` are their own
+target, and an arrow's target is its codomain's. Realized by the dependent
+eliminator `PolyFix.ind` (decision 8), mirroring `RType.omegaShift`. Novel
+packaging. -/
+def RType.objTarget (t : RType) : RType :=
+  PolyFix.ind (P := rTypeSig.polyEndo) (motive := fun {_} _ => RType)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => RType.o
+      | RTypeShape.arrow, _, ih =>
+        ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow))
+      | RTypeShape.omega, childx, _ =>
+        RType.omega (childx (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega)))) t
+
+/-- The final object sort of an r-type is always an object sort (Leivant III
+section 2.3: `o` and every `Omega τ`). Proved by structural induction via
+`PolyFix.ind` (decision 8). -/
+theorem RType.objTarget_isObj (τ : RType) : (RType.objTarget τ).IsObj :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => (RType.objTarget t).IsObj)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => Or.inl rfl
+      | RTypeShape.arrow, _, ih => ih ⟨1, by decide⟩
+      | RTypeShape.omega, _, _ => Or.inr rfl) τ
+
+/-- The domain sorts of an r-type `τ = σ-vec → θ` (Leivant III section 2.4,
+p. 213): the list `σ-vec`, empty at an object sort and `σ` prepended to the
+codomain's domains at an arrow `σ → ρ`. Together with `RType.objTarget` it
+witnesses `τ = RType.curried τ.domains τ.objTarget` (`RType.curried_domains`).
+Realized by the dependent eliminator `PolyFix.ind` (decision 8). Novel
+packaging. -/
+def RType.domains (t : RType) : List RType :=
+  PolyFix.ind (P := rTypeSig.polyEndo) (motive := fun {_} _ => List RType)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => []
+      | RTypeShape.arrow, childx, ih =>
+        childx (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow))
+          :: ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow))
+      | RTypeShape.omega, _, _ => []) t
+
+/-- Reconstruction of an `arrow`-shaped free-algebra node as the derived
+constructor `RType.arrow` on its two children. A fact local to the recursions on
+r-type structure. -/
+theorem RType.mk_arrow_eq (childx : Fin (rTypeSig.ar RTypeShape.arrow) → RType) :
+    (FreeAlg.mk (A := rTypeSig) RTypeShape.arrow childx)
+      = RType.arrow (childx ⟨0, by decide⟩) (childx ⟨1, by decide⟩) := by
+  refine congrArg (FreeAlg.mk (A := rTypeSig) RTypeShape.arrow) (funext fun k => ?_)
+  refine Fin.cases ?_ (fun j => ?_) k
+  · rfl
+  · exact Fin.cases rfl (fun j' => j'.elim0) j
+
+/-- Reconstruction of an `omega`-shaped free-algebra node as the derived
+constructor `RType.omega` on its child. A fact local to the recursions on r-type
+structure. -/
+theorem RType.mk_omega_eq (childx : Fin (rTypeSig.ar RTypeShape.omega) → RType) :
+    (FreeAlg.mk (A := rTypeSig) RTypeShape.omega childx)
+      = RType.omega (childx ⟨0, by decide⟩) := by
+  refine congrArg (FreeAlg.mk (A := rTypeSig) RTypeShape.omega) (funext fun k => ?_)
+  exact Fin.cases rfl (fun j => j.elim0) k
+
+/-- Reconstruction of an `o`-shaped free-algebra node as the base type `o`. A
+fact local to the recursions on r-type structure. -/
+theorem RType.mk_o_eq (childx : Fin (rTypeSig.ar RTypeShape.o) → RType) :
+    (FreeAlg.mk (A := rTypeSig) RTypeShape.o childx) = RType.o :=
+  congrArg (FreeAlg.mk (A := rTypeSig) RTypeShape.o) (funext fun k => k.elim0)
+
+/-- Every r-type factors as its domains curried over its object target
+(Leivant III section 2.4, p. 213): `τ = σ-vec → θ` with `σ-vec = τ.domains` and
+`θ = τ.objTarget`. Proved by structural induction via `PolyFix.ind`
+(decision 8). -/
+theorem RType.curried_domains (t : RType) :
+    t = RType.curried (RType.domains t) (RType.objTarget t) :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => t = RType.curried (RType.domains t) (RType.objTarget t))
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, childx, _ => RType.mk_o_eq childx
+      | RTypeShape.arrow, childx, ih =>
+        (RType.mk_arrow_eq childx).trans (by rw [ih ⟨1, by decide⟩]; rfl)
+      | RTypeShape.omega, childx, _ => RType.mk_omega_eq childx) t
+
+/-- The sort at any position of a replicated context is the replicated sort. A
+fact local to the pointwise constructor lift `cLift`. -/
+theorem get_replicate {α : Type} (n : Nat) (a : α)
+    (j : Fin (List.replicate n a).length) : (List.replicate n a).get j = a := by
+  simp [List.get_eq_getElem, List.getElem_replicate]
+
+/-- Application of a function term to an argument term over an explicit
+definition's base signature: the application former of `appSig` at `(a, b)`
+applied to `c : a → b` and `x : a`, yielding a value at `b`. The term-level
+counterpart of `stdAppInterp`, used to build the pointwise constructor lift at
+arrow sorts. Novel packaging. -/
+def defnApp {A : AlgSig} {n : Nat} {holeIdx : Fin n → List RType × RType}
+    {Γ : Ctx RType} (a b : RType)
+    (c : Tm (defnSig A n holeIdx) Γ (RType.arrow a b))
+    (x : Tm (defnSig A n holeIdx) Γ a) :
+    Tm (defnSig A n holeIdx) Γ b :=
+  Tm.op (sig := defnSig A n holeIdx) (Sum.inl (Sum.inl (Sum.inr (a, b))))
+    (Fin.cons c (Fin.cons x finZeroElim))
+
+/-- The application chain applying a combinator term at the curried sort
+`RType.curried (pre ++ post) ρ_` to the variables of `pre` in turn, leaving a
+value at `RType.curried post ρ_`. Realized by structural recursion on `pre`
+through the application former `defnApp`. Novel packaging: the term-level
+partial-application idiom of the pointwise constructor lift. -/
+def appPrefixVars {A : AlgSig} {n : Nat} {holeIdx : Fin n → List RType × RType}
+    {Γ : Ctx RType} (ρ_ : RType) :
+    (pre : List RType) → (post : List RType) →
+    Tm (defnSig A n holeIdx) Γ (RType.curried (pre ++ post) ρ_) →
+    ((k : Fin pre.length) → Tm (defnSig A n holeIdx) Γ (pre.get k)) →
+    Tm (defnSig A n holeIdx) Γ (RType.curried post ρ_)
+  | [], _post, c, _vars => c
+  | a :: pre', post, c, vars =>
+      appPrefixVars ρ_ pre' post
+        (defnApp a (RType.curried (pre' ++ post) ρ_) c (vars ⟨0, Nat.succ_pos _⟩))
+        (fun k => vars k.succ)
+
+/-- The pointwise constructor lift at an arrow sort (Leivant III section 2.4(1),
+p. 216): `c_i^{σ → ρ}(u-vec)(x) = c_i^ρ(u₁ x … u_r x)`, given the lift `c_i^ρ`
+at the codomain (`ihρ`). Built as two nested explicit definitions: an inner
+identifier `gArrow` over the context `replicate r (σ → ρ) ++ [σ]` whose body
+applies `c_i^ρ` to the pointwise applications `u_j x`, and an outer definition
+whose body is the curried combinator of `gArrow` partially applied to the `r`
+recurrence-result variables (`appPrefixVars`), leaving a value at `σ → ρ`. Novel
+packaging: the `ramExpStep` curried-hole idiom generalized to arbitrary arity
+and codomain. -/
+def cLiftArrow (A : AlgSig) (σ ρ : RType) (i : A.B)
+    (ihρ : RIdent A (List.replicate (A.ar i) ρ) ρ) :
+    RIdent A (List.replicate (A.ar i) (RType.arrow σ ρ)) (RType.arrow σ ρ) :=
+  let holeIdxG : Fin 1 → List RType × RType := fun _ => (List.replicate (A.ar i) ρ, ρ)
+  let bodyG : Tm (defnSig A 1 holeIdxG)
+      (List.replicate (A.ar i) (RType.arrow σ ρ) ++ [σ]) ρ :=
+    Tm.op (sig := defnSig A 1 holeIdxG) (Sum.inl (Sum.inr ⟨0, by decide⟩))
+      (fun j =>
+        let jr : Fin (List.replicate (A.ar i) (RType.arrow σ ρ)).length :=
+          ⟨j.val, by
+            have h : j.val < (List.replicate (A.ar i) ρ).length := j.isLt
+            rw [List.length_replicate] at h
+            rw [List.length_replicate]
+            exact h⟩
+        Tm.reind (get_replicate (A.ar i) ρ j).symm
+          (defnApp σ ρ
+            (Tm.reind
+              ((get_finAppL _ [σ] jr).trans (get_replicate (A.ar i) (RType.arrow σ ρ) jr))
+              (Tm.var (finAppL _ [σ] jr)))
+            (Tm.reind
+              (get_finAppR (List.replicate (A.ar i) (RType.arrow σ ρ)) [σ]
+                ⟨0, Nat.zero_lt_one⟩)
+              (Tm.var (finAppR _ [σ] ⟨0, Nat.zero_lt_one⟩)))))
+  let gArrow : RIdent A (List.replicate (A.ar i) (RType.arrow σ ρ) ++ [σ]) ρ :=
+    RIdent.defn ⟨1, holeIdxG, bodyG⟩ (fun _ => ihρ)
+  let holeIdxO : Fin 1 → List RType × RType :=
+    fun _ => (List.replicate (A.ar i) (RType.arrow σ ρ) ++ [σ], ρ)
+  let combinator : Tm (defnSig A 1 holeIdxO)
+      (List.replicate (A.ar i) (RType.arrow σ ρ))
+      (RType.curried (List.replicate (A.ar i) (RType.arrow σ ρ) ++ [σ]) ρ) :=
+    Tm.op (sig := defnSig A 1 holeIdxO) (Sum.inr ⟨0, by decide⟩) finZeroElim
+  let outerBody : Tm (defnSig A 1 holeIdxO)
+      (List.replicate (A.ar i) (RType.arrow σ ρ)) (RType.arrow σ ρ) :=
+    appPrefixVars ρ (List.replicate (A.ar i) (RType.arrow σ ρ)) [σ] combinator
+      (fun k => Tm.var k)
+  RIdent.defn ⟨1, holeIdxO, outerBody⟩ (fun _ => gArrow)
+
+/-- The pointwise constructor lift over the curried decomposition `σ-vec → θ` of
+an r-type (Leivant III section 2.4(1)): `kappaHatStep` at the object target `θ`
+when `σ-vec` is empty, and `cLiftArrow` peeling one domain otherwise. Realized by
+structural recursion on the domain list. Novel packaging. -/
+def cLiftAux (A : AlgSig) :
+    (D : List RType) → (θ : RType) → θ.IsObj → (i : A.B) →
+    RIdent A (List.replicate (A.ar i) (RType.curried D θ)) (RType.curried D θ)
+  | [], θ, hθ, i => kappaHatStep A θ hθ i
+  | σ :: D', θ, hθ, i => cLiftArrow A σ (RType.curried D' θ) i (cLiftAux A D' θ hθ i)
+
+/-- The pointwise constructor lift `c_i^τ` at an arbitrary r-type (Leivant III
+section 2.4(1), p. 216): at an object sort it is the constructor operation
+itself (the committed `kappaHatStep`), and at an arrow `σ-vec → θ` it is the
+pointwise lift `c_i^τ(u-vec)(x-vec) = c_i^θ(u₁(x-vec) … u_r(x-vec))`, built by
+`cLiftArrow` over the curried decomposition `τ = RType.curried τ.domains
+τ.objTarget`. The step function of the full kappa-hat recurrence `kappaHatFull`.
+Novel packaging. -/
+def cLift (A : AlgSig) (τ : RType) (i : A.B) :
+    RIdent A (List.replicate (A.ar i) τ) τ :=
+  if h : τ.IsObj then kappaHatStep A τ h i
+  else
+    cast (congrArg (fun s => RIdent A (List.replicate (A.ar i) s) s)
+        (RType.curried_domains τ).symm)
+      (cLiftAux A (RType.domains τ) (RType.objTarget τ) (RType.objTarget_isObj τ) i)
+
+/-- Leivant III section 2.4(1)'s auxiliary coercion kappa-hat at every r-type
+`τ`, `kappa-hat_τ : Ω τ → τ`, as a schema identifier: the ramified monotonic
+recurrence whose step functions are the pointwise constructor lifts `cLift`.
+Agrees with the object-sort instance `kappaHatIdent` at object sorts
+(`kappaHatFull_eq_kappaHatIdent`); its recurrence semantics is
+`kappaHatFull_interp`. Novel packaging. -/
+def kappaHatFull (A : AlgSig) (τ : RType) : RIdent A [RType.omega τ] τ :=
+  RIdent.mrec [] τ (fun i => cLift A τ i)
+
+/-- At an object sort, the full kappa-hat coincides with the committed
+object-sort instance `kappaHatIdent` (Leivant III section 2.4(1)): the pointwise
+constructor lift is the constructor operation itself there. Proved from
+`cLift`'s object-sort branch by proof irrelevance on the object-sort
+hypothesis. -/
+theorem kappaHatFull_eq_kappaHatIdent (A : AlgSig) (τ : RType) (hτ : τ.IsObj) :
+    kappaHatFull A τ = kappaHatIdent A τ hτ :=
+  congrArg (RIdent.mrec [] τ) (funext fun i => by
+    show cLift A τ i = kappaHatStep A τ hτ i
+    rw [cLift, dif_pos hτ])
+
+/-- The recurrence semantics of the full kappa-hat (Leivant III section 2.4(1)):
+its denotation on an environment is the free-algebra recurrence over the
+pointwise constructor lifts `cLift`, run on the recurrence argument. Holds by
+definitional unfolding of the ramified monotonic recurrence. -/
+theorem kappaHatFull_interp (A : AlgSig) (τ : RType)
+    (ρ : ∀ i : Fin ([RType.omega τ] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.omega τ] : Ctx RType).get i)) :
+    (kappaHatFull A τ).interp ρ
+      = FreeAlg.recurse (A := A) (P := Unit)
+          (fun i _ _sub phi => (cLift A τ i).interp
+            (childEnv [] τ (A.ar i) (envHead [] (RType.omega τ) ρ) phi))
+          () (envLast [] (RType.omega τ) ρ) :=
+  rfl
+
+/-- The canonical functional `C^τ = λ x-vec. α^θ` (Leivant III section 2.4, p.
+215): the constant functional at an r-type `τ = σ-vec → θ` returning the 0-ary
+constructor `α^θ = c_{b₀}^θ` of the algebra at the object target `θ`. The 0-ary
+constructor is carried as the label `b₀` with its nullary-arity witness `h₀ :
+A.ar b₀ = 0` (the paper's standing convention on algebras). Built as an explicit
+definition: the curried combinator of an inner identifier over the domain
+context `τ.domains` whose body is `α^θ`. Novel packaging. -/
+def canonIdent (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (τ : RType) :
+    RIdent A [] τ :=
+  let holeIdxC : Fin 1 → List RType × RType :=
+    fun _ => (RType.domains τ, RType.objTarget τ)
+  let gBody : Tm (defnSig A 0 finZeroElim) (RType.domains τ) (RType.objTarget τ) :=
+    Tm.op (sig := defnSig A 0 finZeroElim)
+      (Sum.inl (Sum.inl (Sum.inl (⟨RType.objTarget τ, RType.objTarget_isObj τ⟩, b₀))))
+      (fun k => Fin.elim0 (Fin.cast
+        (by change (List.replicate (A.ar b₀) (RType.objTarget τ)).length = 0
+            rw [List.length_replicate]; exact h₀) k))
+  let g : RIdent A (RType.domains τ) (RType.objTarget τ) :=
+    RIdent.defn ⟨0, finZeroElim, gBody⟩ finZeroElim
+  let cBody : Tm (defnSig A 1 holeIdxC) []
+      (RType.curried (RType.domains τ) (RType.objTarget τ)) :=
+    Tm.op (sig := defnSig A 1 holeIdxC) (Sum.inr ⟨0, by decide⟩) finZeroElim
+  cast (congrArg (RIdent A []) (RType.curried_domains τ).symm)
+    (RIdent.defn (Γ := []) ⟨1, holeIdxC, cBody⟩ (fun _ => g))
+
+/-- The application chain applying a combinator term at the curried sort
+`RType.curried D θ` to a full argument tuple, yielding a value at the object
+target `θ`. Realized by structural recursion on `D` through the application
+former `defnApp`. Novel packaging: the term-level saturation idiom for the
+coercion `kappaIdent`. -/
+def appArgs {A : AlgSig} {n : Nat} {holeIdx : Fin n → List RType × RType}
+    {Γ : Ctx RType} (θ : RType) :
+    (D : List RType) →
+    Tm (defnSig A n holeIdx) Γ (RType.curried D θ) →
+    ((k : Fin D.length) → Tm (defnSig A n holeIdx) Γ (D.get k)) →
+    Tm (defnSig A n holeIdx) Γ θ
+  | [], c, _args => c
+  | a :: D', c, args =>
+      appArgs θ D'
+        (defnApp a (RType.curried D' θ) c (args ⟨0, Nat.succ_pos _⟩))
+        (fun k => args k.succ)
+
+/-- Application of a `τ`-valued function to the canonical functionals of `τ`'s
+domains (Leivant III section 2.4(1)): `λ f. f(C^{σ₁} … C^{σ_k})`, at context
+`[τ]` and result the object target `θ`. The saturating half of the coercion
+`kappaIdent`: an explicit definition whose holes are the canonical functionals
+`canonIdent` at each domain sort, its body applying the input variable (read at
+the curried decomposition of `τ`) to their combinator forms via `appArgs`. Novel
+packaging. -/
+def applyCanon (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (τ : RType) :
+    RIdent A [τ] (RType.objTarget τ) :=
+  let holeIdx : Fin (RType.domains τ).length → List RType × RType :=
+    fun j => ([], (RType.domains τ).get j)
+  let body : Tm (defnSig A (RType.domains τ).length holeIdx) [τ] (RType.objTarget τ) :=
+    appArgs (RType.objTarget τ) (RType.domains τ)
+      (Tm.reind (RType.curried_domains τ) (Tm.var 0))
+      (fun j => Tm.op (sig := defnSig A (RType.domains τ).length holeIdx)
+        (Sum.inr j) finZeroElim)
+  RIdent.defn ⟨(RType.domains τ).length, holeIdx, body⟩
+    (fun j => canonIdent A b₀ h₀ ((RType.domains τ).get j))
+
+/-- Leivant III section 2.4(1)'s coercion `κ_τ : Ω τ → θ` (with `θ = τ.objTarget`):
+the full kappa-hat `kappaHatFull` postcomposed with `applyCanon`, i.e.
+`κ_τ(u) = (kappa-hat_τ u)(C^{σ₁} … C^{σ_k})`, lowering the arrow structure of `τ`
+by feeding the canonical functionals. Extensionally the identity on the carrier.
+Novel packaging. -/
+def kappaIdent (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (τ : RType) :
+    RIdent A [RType.omega τ] (RType.objTarget τ) :=
+  let holeIdx : Fin 2 → List RType × RType :=
+    fun j => match j with
+      | ⟨0, _⟩ => ([RType.omega τ], τ)
+      | ⟨1, _⟩ => ([τ], RType.objTarget τ)
+  let body : Tm (defnSig A 2 holeIdx) [RType.omega τ] (RType.objTarget τ) :=
+    Tm.op (sig := defnSig A 2 holeIdx) (Sum.inl (Sum.inr ⟨1, by decide⟩))
+      (Fin.cons
+        (Tm.op (sig := defnSig A 2 holeIdx) (Sum.inl (Sum.inr ⟨0, by decide⟩))
+          (Fin.cons (Tm.var 0) finZeroElim))
+        finZeroElim)
+  RIdent.defn ⟨2, holeIdx, body⟩
+    (fun j => match j with
+      | ⟨0, _⟩ => kappaHatFull A τ
+      | ⟨1, _⟩ => applyCanon A b₀ h₀ τ)
+
+/-- An object sort is its own object target (Leivant III section 2.3): for
+`θ.IsObj`, `RType.objTarget θ = θ`. -/
+theorem RType.objTarget_of_isObj {θ : RType} (hθ : θ.IsObj) :
+    RType.objTarget θ = θ := by
+  rcases θ with ⟨_, i, childx⟩
+  rcases hθ with h | h <;>
+    (simp only [RType.shape, PolyFix.index] at h; subst h)
+  · exact (RType.mk_o_eq childx).symm
+  · exact (RType.mk_omega_eq childx).symm
+
+/-- The downward coercion at every r-type, targeting the base sort: `RIdent A
+[θ.objTarget] o`, composing the coercion `kappaIdent` downward through the
+structure of `θ` (Leivant III section 2.4(1)). At `o` it is the identity, at an
+arrow it is the coercion of the codomain, and at `Ω σ` it composes the coercion
+at `σ.objTarget` after `kappaIdent` at `σ`. Realized by structural recursion via
+`PolyFix.ind` (decision 8). Novel packaging. -/
+def deltaAux (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (τ : RType) :
+    RIdent A [RType.objTarget τ] RType.o :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => RIdent A [RType.objTarget t] RType.o)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => RIdent.defn ⟨0, finZeroElim, Tm.var 0⟩ finZeroElim
+      | RTypeShape.arrow, _, ih => ih ⟨1, by decide⟩
+      | RTypeShape.omega, childx, ih =>
+        let σ := childx (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega))
+        let holeIdxD : Fin 2 → List RType × RType :=
+          fun j => match j with
+            | ⟨0, _⟩ => ([RType.objTarget σ], RType.o)
+            | ⟨1, _⟩ => ([RType.omega σ], RType.objTarget σ)
+        let bodyD : Tm (defnSig A 2 holeIdxD) [RType.omega σ] RType.o :=
+          Tm.op (sig := defnSig A 2 holeIdxD) (Sum.inl (Sum.inr ⟨0, by decide⟩))
+            (Fin.cons
+              (Tm.op (sig := defnSig A 2 holeIdxD) (Sum.inl (Sum.inr ⟨1, by decide⟩))
+                (Fin.cons (Tm.var 0) finZeroElim))
+              finZeroElim)
+        RIdent.defn ⟨2, holeIdxD, bodyD⟩
+          (fun j => match j with
+            | ⟨0, _⟩ => ih ⟨0, by decide⟩
+            | ⟨1, _⟩ => kappaIdent A b₀ h₀ σ)) τ
+
+/-- Leivant III section 2.4(1)'s coercion `δ_θ : θ → o` at an object sort `θ`:
+the composite of the coercions `kappaIdent` down to the base sort, extensionally
+the identity on the carrier. Generalizes the tower-sort `ramDeltaIdent`. Realized
+as `deltaAux` transported along `θ.objTarget = θ`. Novel packaging. -/
+def deltaIdent (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (θ : RType)
+    (hθ : θ.IsObj) : RIdent A [θ] RType.o :=
+  cast (congrArg (fun s => RIdent A [s] RType.o) (RType.objTarget_of_isObj hθ))
+    (deltaAux A b₀ h₀ θ)
 
 end GebLean.Ramified

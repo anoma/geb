@@ -66,4 +66,43 @@ def kappaHatO : srcCtx ⟶ tgtCtx := kappaHat A RType.o (by decide)
 example : 𝟙 srcCtx ≫ kappaHatO = kappaHatO := Category.id_comp _
 example : kappaHatO ≫ 𝟙 tgtCtx = kappaHatO := Category.comp_id _
 
+-- The full kappa-hat agrees with the object-sort instance at an object sort.
+example (ρ : ∀ i : Fin ([RType.omega RType.o] : Ctx RType).length,
+    RType.interp (FreeAlg A) (([RType.omega RType.o] : Ctx RType).get i)) :
+    (kappaHatFull A RType.o).interp ρ
+      = (kappaHatIdent A RType.o (by decide)).interp ρ := by
+  rw [kappaHatFull_eq_kappaHatIdent]
+
+-- kappa-hat at `o` reconstructs the carrier: identity on `0, 3`.
+#guard freeAlgToNat ((kappaHatFull A RType.o).interp (envOmegaO 0)) = 0
+#guard freeAlgToNat ((kappaHatFull A RType.o).interp (envOmegaO 3)) = 3
+
+/-- The arrow sort `o → o`. -/
+abbrev arrOO : RType := RType.arrow RType.o RType.o
+
+/-- A one-element environment at the recurrence-argument sort `Ω (o → o)`. -/
+def envArrOO (n : Nat) :
+    ∀ i : Fin ([RType.omega arrOO] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.omega arrOO] : Ctx RType).get i) :=
+  Fin.cons (natToFreeAlg n) finZeroElim
+
+-- At the arrow sort `o → o`, the full kappa-hat denotes the pointwise-lifted
+-- reconstruction: on the numeral `2` it is the `2`-fold `cLift` composite, whose
+-- value on any input reconstructs `2`.
+#guard freeAlgToNat (((kappaHatFull A arrOO).interp (envArrOO 2)) (natToFreeAlg 5)) = 2
+#guard freeAlgToNat (((kappaHatFull A arrOO).interp (envArrOO 3)) (natToFreeAlg 0)) = 3
+
+/-- A one-element environment at the object sort `Ω (o → o)`. -/
+def deltaArrEnv (n : Nat) :
+    ∀ i : Fin ([RType.omega arrOO] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.omega arrOO] : Ctx RType).get i) :=
+  Fin.cons (natToFreeAlg n) finZeroElim
+
+-- The downward coercion `δ` at the object sort `Ω (o → o)` reads the identity on
+-- the carrier: `δ (n) = n`.
+#guard freeAlgToNat ((deltaIdent A false rfl (RType.omega arrOO) (by decide)).interp
+  (deltaArrEnv 0)) = 0
+#guard freeAlgToNat ((deltaIdent A false rfl (RType.omega arrOO) (by decide)).interp
+  (deltaArrEnv 3)) = 3
+
 end GebLeanTests.Ramified.OmegaShiftTest
