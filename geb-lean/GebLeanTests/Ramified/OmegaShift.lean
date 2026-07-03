@@ -14,7 +14,7 @@ The `kappaHat` morphism is exercised against the `Category` instance of
 `GebLean.Ramified.RMRecCat`.
 
 The interpretations land in the base carrier `FreeAlg natAlgSig`; the checks
-convert to `Nat` via `GebLeanTests.Ramified.HigherOrderTest.faToNat` so that
+convert to `Nat` via `GebLean.Ramified.freeAlgToNat` so that
 `#guard` decides `Nat` equalities.
 -/
 
@@ -34,23 +34,23 @@ example : RType.omegaShift (RType.arrow (RType.omega RType.o) RType.o)
 def envOmegaO (n : Nat) :
     ∀ i : Fin [RType.omega RType.o].length,
       RType.interp (FreeAlg A) ([RType.omega RType.o].get i) :=
-  Fin.cons (natToFA n) finZeroElim
+  Fin.cons (natToFreeAlg n) finZeroElim
 
 /-- A one-element environment at the recurrence-argument sort `Ω (Ω o)`. -/
 def envOmegaOmegaO (n : Nat) :
     ∀ i : Fin [RType.omega (RType.omega RType.o)].length,
       RType.interp (FreeAlg A) ([RType.omega (RType.omega RType.o)].get i) :=
-  Fin.cons (natToFA n) finZeroElim
+  Fin.cons (natToFreeAlg n) finZeroElim
 
 -- kappa-hat at `o` denotes the identity on the carrier copy.
-#guard faToNat ((kappaHatIdent A RType.o (by decide)).interp (envOmegaO 0)) = 0
-#guard faToNat ((kappaHatIdent A RType.o (by decide)).interp (envOmegaO 2)) = 2
-#guard faToNat ((kappaHatIdent A RType.o (by decide)).interp (envOmegaO 5)) = 5
+#guard freeAlgToNat ((kappaHatIdent A RType.o (by decide)).interp (envOmegaO 0)) = 0
+#guard freeAlgToNat ((kappaHatIdent A RType.o (by decide)).interp (envOmegaO 2)) = 2
+#guard freeAlgToNat ((kappaHatIdent A RType.o (by decide)).interp (envOmegaO 5)) = 5
 
 -- kappa-hat at the object sort `Ω o` denotes the identity on the carrier copy.
-#guard faToNat
+#guard freeAlgToNat
   ((kappaHatIdent A (RType.omega RType.o) (by decide)).interp (envOmegaOmegaO 0)) = 0
-#guard faToNat
+#guard freeAlgToNat
   ((kappaHatIdent A (RType.omega RType.o) (by decide)).interp (envOmegaOmegaO 3)) = 3
 
 /-- The source context `[Ω o]` of `kappaHat` at `o`. -/

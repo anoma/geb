@@ -14,7 +14,9 @@ import GebLean.Ramified.Examples
 Directory index for the ramified-recurrence development, formalizing
 Leivant's higher-type ramified recurrence (Leivant III, DOI
 `10.1016/S0168-0072(98)00040-2`). Phase 1 supplies the core layers:
-free-algebra signatures and their recurrence (`AlgSig`),
+free-algebra signatures and their recurrence, together with the numeric
+reading `natToFreeAlg`/`freeAlgToNat` of the standard carrier
+`FreeAlg natAlgSig` (`AlgSig`),
 multi-sorted signatures with the constructor summand (`SortedSig`), the
 sorted term layer with its clone laws (`Term`), sorted models with the
 interpretative setoid (`Interp`), and the generic syntactic category with
@@ -26,9 +28,7 @@ sort-level Omega shift with the auxiliary coercion kappa-hat
 `1 + X` word algebra — the downward coercions `kappa` and `delta`,
 addition, multiplication, the second-order exponential `ramExp`, the
 `2_m` ladder `ramTwoPow` (aligned with `GebLean.tower`), and the size
-function, each with its interpretation lemma — are in `Examples`,
-together with the numeric reading `natToFreeAlg`/`freeAlgToNat` those
-lemmas are stated against.
+function, each with its interpretation lemma — are in `Examples`.
 
 ## References
 

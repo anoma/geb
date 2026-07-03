@@ -10,14 +10,13 @@ multiplication, the exponentiation `e` by second-order recurrence, the `2_m`
 ladder of towers of twos, and the size function, each a schema identifier of the
 higher-order system (or, for the ladder, a carrier-level composite of one) with
 an interpretation lemma reading its denotation on the standard carrier as the
-intended arithmetic operation. A numeric reading of the standard carrier
-`FreeAlg natAlgSig` (`natToFreeAlg`, `freeAlgToNat`, with their round trips)
-states those interpretation lemmas as identities of natural numbers.
+intended arithmetic operation. The numeric reading of the standard carrier
+`FreeAlg natAlgSig` (`natToFreeAlg`, `freeAlgToNat`;
+`GebLean/Ramified/AlgSig.lean`) states those interpretation lemmas as
+identities of natural numbers.
 
 ## Main definitions
 
-* `natToFreeAlg`, `freeAlgToNat` — the numeric reading of the standard carrier
-  `FreeAlg natAlgSig`, a copy of the naturals.
 * `objToNat` — the numeric reading at an object sort, through the carrier-copy
   equality (needed at the tower sorts `Omega^m o`).
 * `ramKappa` — the single `Omega`-lowering coercion `Omega^{m+1} o -> Omega^m o`.
@@ -35,8 +34,6 @@ states those interpretation lemmas as identities of natural numbers.
 
 ## Main statements
 
-* `freeAlgToNat_natToFreeAlg` — the numeric reading is a left inverse; Phase 3
-  supplies the right inverse when it packages the equivalence.
 * `ramKappa_interp`, `ramDeltaIdent_interp` — the coercions denote the identity
   on the carrier.
 * `ramAdd_interp` — addition denotes `+`.
@@ -90,30 +87,6 @@ exponentiation, size, elementary complexity, tower
 namespace GebLean.Ramified
 
 open CategoryTheory
-
-/-- A natural number as an element of the standard carrier `FreeAlg natAlgSig`:
-`0` is the nullary constructor and `n + 1` the unary constructor applied to `n`.
-The `ofNat` direction of the equivalence `FreeAlg natAlgSig ≃ ℕ` that Phase 3
-packages. -/
-def natToFreeAlg : Nat → FreeAlg natAlgSig
-  | 0 => FreeAlg.mk false finZeroElim
-  | n + 1 => FreeAlg.mk true (fun _ => natToFreeAlg n)
-
-/-- An element of the standard carrier `FreeAlg natAlgSig` as the natural number
-counting its unary constructors. The `toNat` direction of the equivalence
-`FreeAlg natAlgSig ≃ ℕ` that Phase 3 packages. Realized by the free-algebra
-recurrence `FreeAlg.recurse`. -/
-def freeAlgToNat (t : FreeAlg natAlgSig) : Nat :=
-  FreeAlg.recurse (A := natAlgSig) (P := Unit)
-    (fun b _ _sub rec => match b with
-      | false => 0
-      | true => rec ⟨0, Nat.zero_lt_one⟩ + 1) () t
-
-@[simp] theorem freeAlgToNat_natToFreeAlg (n : Nat) :
-    freeAlgToNat (natToFreeAlg n) = n := by
-  induction n with
-  | zero => rfl
-  | succ n ih => exact congrArg (· + 1) ih
 
 /-- The numeric reading of an object-sort carrier value, through the carrier-copy
 equality of the object sort (Leivant III section 2.7): for `s` an object sort,

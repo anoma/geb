@@ -13,8 +13,8 @@ subterm, and its interpretation is checked. The `Category` instance of
 `GebLean.Ramified.RMRecCat` is exercised on a concrete morphism.
 
 The identifier interpretations land in the base carrier `FreeAlg natAlgSig`;
-the checks convert to `Nat` via `faToNat` so that `#guard` decides `Nat`
-equalities.
+the checks convert to `Nat` via `freeAlgToNat` (`GebLean/Ramified/AlgSig.lean`)
+so that `#guard` decides `Nat` equalities.
 -/
 
 namespace GebLeanTests.Ramified.HigherOrderTest
@@ -27,24 +27,6 @@ abbrev A : AlgSig := natAlgSig
 
 /-- The base object sort `o` as an object-sort witness. -/
 def oObj : { s : RType // RType.IsObj s } := ⟨RType.o, Or.inl rfl⟩
-
-/-- The base carrier element `0` (the nullary constructor). -/
-def faZero : FreeAlg A := FreeAlg.mk false finZeroElim
-
-/-- The base carrier successor. -/
-def faSucc (n : FreeAlg A) : FreeAlg A := FreeAlg.mk true (fun _ => n)
-
-/-- A natural number as a base carrier element. -/
-def natToFA : Nat → FreeAlg A
-  | 0 => faZero
-  | n + 1 => faSucc (natToFA n)
-
-/-- A base carrier element as a natural number (its `succ`-depth). -/
-def faToNat (t : FreeAlg A) : Nat :=
-  FreeAlg.recurse (A := A) (P := Unit)
-    (fun b _ _sub rec => match b with
-      | false => 0
-      | true => rec ⟨0, Nat.zero_lt_one⟩ + 1) () t
 
 /-- The zero term over a definition signature. -/
 def tmZero {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType} :
@@ -84,21 +66,21 @@ def pred : RIdent A [RType.o] RType.o :=
 def envDouble (n : Nat) :
     ∀ i : Fin [RType.omega RType.o].length,
       RType.interp (FreeAlg A) ([RType.omega RType.o].get i) :=
-  Fin.cons (natToFA n) finZeroElim
+  Fin.cons (natToFreeAlg n) finZeroElim
 
 /-- A one-element environment at the predecessor recurrence-argument sort `o`. -/
 def envPred (n : Nat) :
     ∀ i : Fin [RType.o].length, RType.interp (FreeAlg A) ([RType.o].get i) :=
-  Fin.cons (natToFA n) finZeroElim
+  Fin.cons (natToFreeAlg n) finZeroElim
 
 -- Doubling at small inputs: `double 0 = 0`, `double 1 = 2`, `double 3 = 6`.
-#guard faToNat (doubling.interp (envDouble 0)) = 0
-#guard faToNat (doubling.interp (envDouble 1)) = 2
-#guard faToNat (doubling.interp (envDouble 3)) = 6
+#guard freeAlgToNat (doubling.interp (envDouble 0)) = 0
+#guard freeAlgToNat (doubling.interp (envDouble 1)) = 2
+#guard freeAlgToNat (doubling.interp (envDouble 3)) = 6
 
 -- Predecessor: `pred 0 = 0`, `pred 2 = 1`.
-#guard faToNat (pred.interp (envPred 0)) = 0
-#guard faToNat (pred.interp (envPred 2)) = 1
+#guard freeAlgToNat (pred.interp (envPred 0)) = 0
+#guard freeAlgToNat (pred.interp (envPred 2)) = 1
 
 /-- A context of the higher-order syntactic category. -/
 abbrev ctxO : RMRecCat A := [RType.o]
@@ -138,6 +120,6 @@ example (n : Nat) :
     (RIdent.interp_eq_appChain_curryInterp doubling (envDouble n)).symm
 
 -- The doubling constant applied via the application former: `2 * 3 = 6`.
-#guard faToNat ((doublingConstApp).eval (standardModel (higherOrder A)) (envDouble 3)) = 6
+#guard freeAlgToNat ((doublingConstApp).eval (standardModel (higherOrder A)) (envDouble 3)) = 6
 
 end GebLeanTests.Ramified.HigherOrderTest

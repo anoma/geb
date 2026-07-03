@@ -29,6 +29,14 @@ The underlying conventions transcribe Leivant III section 2.1.
   eq. (1)), realized as a paramorphism.
 * `natAlgSig` — the `1 + X` word signature: one 0-ary and one unary
   constructor.
+* `natToFreeAlg`, `freeAlgToNat` — the numeric reading of the standard
+  carrier `FreeAlg natAlgSig`, a copy of the naturals.
+
+## Main statements
+
+* `freeAlgToNat_natToFreeAlg` — the numeric reading is a left inverse of
+  the encoding; Phase 3 packages the full equivalence
+  `FreeAlg natAlgSig ≃ ℕ`.
 
 ## References
 
@@ -102,5 +110,29 @@ def FreeAlg.recurse {A : AlgSig} {P C : Type}
 (`false`) and one unary constructor (`true`). Used from Phase 2 onward;
 the other canonical instances arrive in Phase 3. -/
 def natAlgSig : AlgSig := ⟨Bool, fun b => cond b 1 0⟩
+
+/-- A natural number as an element of the standard carrier `FreeAlg natAlgSig`:
+`0` is the nullary constructor and `n + 1` the unary constructor applied to `n`.
+The `ofNat` direction of the equivalence `FreeAlg natAlgSig ≃ ℕ` that Phase 3
+packages. -/
+def natToFreeAlg : Nat → FreeAlg natAlgSig
+  | 0 => FreeAlg.mk false finZeroElim
+  | n + 1 => FreeAlg.mk true (fun _ => natToFreeAlg n)
+
+/-- An element of the standard carrier `FreeAlg natAlgSig` as the natural number
+counting its unary constructors. The `toNat` direction of the equivalence
+`FreeAlg natAlgSig ≃ ℕ` that Phase 3 packages. Realized by the free-algebra
+recurrence `FreeAlg.recurse`. -/
+def freeAlgToNat (t : FreeAlg natAlgSig) : Nat :=
+  FreeAlg.recurse (A := natAlgSig) (P := Unit)
+    (fun b _ _sub rec => match b with
+      | false => 0
+      | true => rec ⟨0, Nat.zero_lt_one⟩ + 1) () t
+
+@[simp] theorem freeAlgToNat_natToFreeAlg (n : Nat) :
+    freeAlgToNat (natToFreeAlg n) = n := by
+  induction n with
+  | zero => rfl
+  | succ n ih => exact congrArg (· + 1) ih
 
 end GebLean.Ramified
