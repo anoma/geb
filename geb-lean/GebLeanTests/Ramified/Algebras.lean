@@ -11,6 +11,11 @@ ramified monotonic recurrences `binLength`/`treeSize` interpret to the intended
 destructor and measure at small inputs; and the numeric equivalence
 `natFreeAlgEquiv` round trips `0` and `3`. The higher-order presentation is
 exercised through the `Category` instance of `RMRecCat` at each new signature.
+The signature morphism `natToBinHom : AlgSigHom natAlgSig binWordAlgSig` (zero
+to the empty word, successor to the `false` letter) is exercised through the
+carrier transport `freeAlgMap`, the image-point naturality
+`recurse_freeAlgMap`, and the clause-wise transported doubling recurrence
+`binDouble` evaluated at transported values.
 
 The interpretations land in the respective base carriers; the checks convert to
 `Nat` via the letter count `binCount` and the node count `treeCount` so that
@@ -96,6 +101,52 @@ def treeFrecEnv (t : FreeAlg treeAlgSig) :
 #guard natFreeAlgEquiv (natFreeAlgEquiv.symm 0) = 0
 #guard natFreeAlgEquiv (natFreeAlgEquiv.symm 3) = 3
 #guard freeAlgToNat (natFreeAlgEquiv.symm (natFreeAlgEquiv (natToFreeAlg 3))) = 3
+
+/-- The `1 + X → 1 + 2X` signature morphism: zero to the empty word, successor
+to the `false` letter. Not label-surjective — `some true` lies outside its
+image. -/
+def natToBinHom : AlgSigHom natAlgSig binWordAlgSig where
+  onB b := match b with | false => none | true => some false
+  ar_eq b := by cases b <;> rfl
+
+-- The induced carrier transport sends the numeral `3` to a three-letter word.
+#guard binCount (freeAlgMap natToBinHom (natToFreeAlg 0)) = 0
+#guard binCount (freeAlgMap natToBinHom (natToFreeAlg 3)) = 3
+
+-- Image-point naturality at a concrete recurrence: the letter count of a
+-- transported word is the numeric reading of its source. `recurse_freeAlgMap`
+-- reduces the left side to a pulled-back recurrence over `natAlgSig`, whose
+-- steps a case split identifies with those of `freeAlgToNat`.
+example (t : FreeAlg natAlgSig) :
+    binCount (freeAlgMap natToBinHom t) = freeAlgToNat t := by
+  unfold binCount freeAlgToNat
+  rw [recurse_freeAlgMap]
+  refine congrArg (fun g => FreeAlg.recurse g () t) ?_
+  funext b q sub rec
+  cases b <;> rfl
+
+/-- The doubling step at a letter over `binWordAlgSig`: two `false` letters
+onto the recursive result — the clause-wise transport along `natToBinHom` of
+the `natAlgSig` doubling step `succ ∘ succ`. -/
+def binDoubleStep : RIdent binWordAlgSig [RType.o] RType.o :=
+  RIdent.defn ⟨0, finZeroElim, binTmCons0 (binTmCons0 (Tm.var 0))⟩ finZeroElim
+
+/-- The clause-wise transported doubling recurrence over `binWordAlgSig`: the
+empty word at the nullary label and `binDoubleStep` at the image label
+`some false`, with the non-image label `some true` completed by a copy of the
+image-letter clause. At transported values the completion never fires
+(`recurse_freeAlgMap`). -/
+def binDouble : RIdent binWordAlgSig [RType.omega RType.o] RType.o :=
+  RIdent.mrec [] RType.o
+    (fun i => match i with | none => binLengthZero | some _ => binDoubleStep)
+
+-- The transported doubling identifier interprets correctly at transported
+-- values: at the transported numerals `0` and `3` it yields words of `0` and
+-- `6` letters.
+#guard binCount
+  (binDouble.interp (binMrecEnv (freeAlgMap natToBinHom (natToFreeAlg 0)))) = 0
+#guard binCount
+  (binDouble.interp (binMrecEnv (freeAlgMap natToBinHom (natToFreeAlg 3)))) = 6
 
 /-- A context of the higher-order syntactic category over `binWordAlgSig`. -/
 abbrev binCtxO : RMRecCat binWordAlgSig := [RType.o]

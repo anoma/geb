@@ -33,8 +33,10 @@ function, each with its interpretation lemma — are in `Examples`. Phase 3
 instantiates the three canonical free-algebra signatures — the monadic
 word algebra `natAlgSig`, the polyadic binary-word algebra
 `binWordAlgSig`, and the binary-tree algebra `treeAlgSig` — with a smoke
-recurrence at each and the numeric equivalence
-`natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ` (`Algebras`).
+recurrence at each, the numeric equivalence
+`natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ`, and the signature morphisms
+`AlgSigHom` with their carrier transport `freeAlgMap` and image-point
+naturality (`Algebras`).
 
 ## References
 

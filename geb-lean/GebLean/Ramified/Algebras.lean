@@ -1,7 +1,7 @@
 import GebLean.Ramified.HigherOrder
 
 /-!
-# The canonical free-algebra instances
+# The canonical free-algebra instances and signature morphisms
 
 The three canonical free-algebra signatures of Leivant's higher-type ramified
 recurrence and a smoke instantiation of the Phase 2 higher-order infrastructure
@@ -15,7 +15,12 @@ higher-order presentation `higherOrder` and the schema identifiers `RIdent`
 apply uniformly at an arbitrary base algebra. The numeric reading of the
 `natAlgSig` carrier (`natToFreeAlg`/`freeAlgToNat`;
 `GebLean/Ramified/AlgSig.lean`) is packaged as a computable equivalence
-`natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ`.
+`natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ`. A morphism of free-algebra
+signatures (`AlgSigHom`, e.g. `1 + X` into `1 + 2X`) induces a structural
+transport of carriers (`freeAlgMap`) with image-point naturality for
+recurrences (`recurse_freeAlgMap`); the interpretative-quotient syntactic
+categories do not inherit a functor from a non-surjective signature morphism
+(see the implementation notes).
 
 ## Main definitions
 
@@ -35,11 +40,21 @@ apply uniformly at an arbitrary base algebra. The numeric reading of the
   `treeAlgSig`.
 * `natFreeAlgEquiv` — the numeric reading packaged as a computable equivalence
   `FreeAlg natAlgSig ≃ ℕ`.
+* `AlgSigHom` — a morphism of free-algebra signatures: a label map preserving
+  arities.
+* `freeAlgMap` — the carrier transport induced by a signature morphism.
+* `AlgSigHom.pullSteps` — the pullback of recurrence step functions along a
+  signature morphism.
+* `interpMapObj` — the transport of standard-carrier values at object sorts.
 
 ## Main statements
 
 * `natToFreeAlg_freeAlgToNat` — the numeric reading is a right inverse of the
   encoding, the round trip `natToFreeAlg (freeAlgToNat t) = t`.
+* `freeAlgMap_mk` — the carrier transport is an algebra homomorphism.
+* `recurse_freeAlgMap` — image-point naturality: a recurrence over the target
+  signature, run at a transported value, computes as the pulled-back recurrence
+  over the source.
 
 ## Implementation notes
 
@@ -56,6 +71,30 @@ round trips are proved by structural recursion, `natToFreeAlg_freeAlgToNat` via
 the dependent eliminator `PolyFix.ind` (decision 8) with the `⟨0, _⟩`
 arity-normalization of the unary constructor's single child.
 
+A signature morphism `h : AlgSigHom A B` does not induce a functor
+`RMRecCat A ⥤ RMRecCat B` of the interpretative-quotient syntactic categories
+unless `onB` is surjective, so the spec's section 4.3 statement of algebra-map
+functoriality is superseded on this point. The morphisms of `RMRecCat` are
+classes of terms under equality of denotation over every environment, and
+environments over `FreeAlg B` range over values outside the image of
+`freeAlgMap h` whenever `onB` misses a label — as `some true` is missed by the
+`1 + X` into `1 + 2X` morphism. A recurrence identifier transports clause-wise
+at the image labels only and must be completed by default clauses at the
+others, while an explicit definition transports structurally, which pins its
+behaviour off the image; the quotient identifies denotationally equal
+`A`-identifiers of the two kinds, and the completed transport of the
+recurrence and the structural transport of the definition differ at the
+non-image values. Distinct such pairs constrain the same default clause
+incompatibly, so no choice of defaults descends to the quotient. The transport
+is functorial at the level of the unquotiented term clones (raw `HomTuple`s),
+which is material for the deferred equational workstream (the spec's section
+9). What is provided here is the fragment that does hold: the label-and-arity
+morphism `AlgSigHom`, the carrier transport `freeAlgMap` (an algebra
+homomorphism, `freeAlgMap_mk`), its object-sort extension `interpMapObj`, and
+the image-point naturality `recurse_freeAlgMap` — every recurrence over `B`,
+run at a transported value, computes as the pulled-back recurrence over `A`,
+so transported recurrences interpret correctly at transported values.
+
 ## References
 
 D. Leivant, "Ramified recurrence and computational complexity III: Higher type
@@ -66,12 +105,15 @@ algebra has a single unary constructor, a polyadic one several — are section
 2.1; the recurrence over a free algebra is section 2.1, eq. (1). The three
 canonical signatures are the transcription targets of the spec's section 4.1
 table. The equivalence `natFreeAlgEquiv` is novel packaging of the numeric
-reading.
+reading. The signature morphisms and the induced transport realize the
+algebra-map item of the spec's section 4.3, restricted per the implementation
+notes; `AlgSigHom`, `freeAlgMap`, `AlgSigHom.pullSteps`, `interpMapObj`, and
+`recurse_freeAlgMap` are novel packaging.
 
 ## Tags
 
 ramified recurrence, free algebra, word algebra, tree algebra, monadic,
-polyadic, signature, recurrence, equivalence
+polyadic, signature, signature morphism, transport, recurrence, equivalence
 -/
 
 namespace GebLean.Ramified
@@ -257,5 +299,73 @@ def natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ where
   invFun := natToFreeAlg
   left_inv := natToFreeAlg_freeAlgToNat
   right_inv := freeAlgToNat_natToFreeAlg
+
+/-- A morphism of free-algebra signatures (the spec's section 4.3): a
+constructor-label map preserving arities, e.g. `1 + X` into `1 + 2X` (zero to
+the empty word, successor to one chosen letter). Novel packaging of the
+standard signature-morphism notion over `AlgSig`. -/
+structure AlgSigHom (A B : AlgSig) where
+  /-- The constructor-label map. -/
+  onB : A.B → B.B
+  /-- The label map preserves arities. -/
+  ar_eq : ∀ b, B.ar (onB b) = A.ar b
+
+/-- The carrier transport induced by a signature morphism: relabel each node by
+`onB`, reindexing the subterms along `ar_eq`. An algebra homomorphism
+(`freeAlgMap_mk`), realized by the recurrence `FreeAlg.recurse`. Novel
+packaging (the spec's section 4.3). -/
+def freeAlgMap {A B : AlgSig} (h : AlgSigHom A B) : FreeAlg A → FreeAlg B :=
+  FreeAlg.recurse (A := A) (P := Unit)
+    (fun b _ _sub rec => FreeAlg.mk (h.onB b) fun i => rec (Fin.cast (h.ar_eq b) i)) ()
+
+/-- The carrier transport is an algebra homomorphism: it sends a constructor
+node to the `onB`-relabelled node on the transported subterms, reindexed along
+`ar_eq`. -/
+@[simp] theorem freeAlgMap_mk {A B : AlgSig} (h : AlgSigHom A B) (b : A.B)
+    (subterms : Fin (A.ar b) → FreeAlg A) :
+    freeAlgMap h (FreeAlg.mk b subterms) =
+      FreeAlg.mk (h.onB b) fun i => freeAlgMap h (subterms (Fin.cast (h.ar_eq b) i)) :=
+  rfl
+
+/-- The pullback of recurrence step functions along a signature morphism: the
+step at label `b` is the given `B`-step at `onB b`, reading the transported
+subterms and the recursive results reindexed along `ar_eq`. The `A`-recurrence
+that `recurse_freeAlgMap` identifies with a `B`-recurrence at transported
+values. Novel packaging. -/
+def AlgSigHom.pullSteps {A B : AlgSig} {P C : Type} (h : AlgSigHom A B)
+    (g : (b : B.B) → P → (Fin (B.ar b) → FreeAlg B) → (Fin (B.ar b) → C) → C)
+    (b : A.B) (p : P) (subterms : Fin (A.ar b) → FreeAlg A)
+    (rec : Fin (A.ar b) → C) : C :=
+  g (h.onB b) p (fun i => freeAlgMap h (subterms (Fin.cast (h.ar_eq b) i)))
+    (fun i => rec (Fin.cast (h.ar_eq b) i))
+
+/-- Image-point naturality of the carrier transport: a recurrence over `B`, run
+at a transported value `freeAlgMap h t`, computes as the recurrence over `A`
+with the pulled-back step functions (`AlgSigHom.pullSteps`), run at `t`. The
+statement is quantified over transported values only; at values of `FreeAlg B`
+outside the image of `freeAlgMap h` the two sides are unrelated, and it is
+there that the interpretative quotient obstructs an induced functor (see the
+implementation notes). Novel packaging (the spec's section 4.3). -/
+theorem recurse_freeAlgMap {A B : AlgSig} {P C : Type} (h : AlgSigHom A B)
+    (g : (b : B.B) → P → (Fin (B.ar b) → FreeAlg B) → (Fin (B.ar b) → C) → C)
+    (p : P) (t : FreeAlg A) :
+    FreeAlg.recurse g p (freeAlgMap h t) = FreeAlg.recurse (h.pullSteps g) p t := by
+  refine PolyFix.ind (P := A.polyEndo)
+    (motive := fun {_} t => ∀ q : P,
+      FreeAlg.recurse g q (freeAlgMap h t) = FreeAlg.recurse (h.pullSteps g) q t)
+    (fun {x} b children ihc q => ?_) t p
+  exact congrArg
+    (g (h.onB b) q fun i => freeAlgMap h (children (Fin.cast (h.ar_eq b) i)))
+    (funext fun i => ihc (Fin.cast (h.ar_eq b) i) q)
+
+/-- The transport of standard-carrier values at an object sort: read the value
+as a base-carrier element (`RType.interp_isObj`), transport by `freeAlgMap`,
+and read back. The object sorts are the fragment of the r-types on which the
+transport of denotations is defined; a transport at an arrow sort would need an
+inverse transport for the domain. Novel packaging (the spec's section 4.3). -/
+def interpMapObj {A B : AlgSig} (h : AlgSigHom A B) {s : RType} (hs : s.IsObj) :
+    RType.interp (FreeAlg A) s → RType.interp (FreeAlg B) s := fun x =>
+  cast (RType.interp_isObj (FreeAlg B) hs).symm
+    (freeAlgMap h (cast (RType.interp_isObj (FreeAlg A) hs) x))
 
 end GebLean.Ramified
