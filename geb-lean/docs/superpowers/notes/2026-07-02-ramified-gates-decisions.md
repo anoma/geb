@@ -9,6 +9,7 @@
   - [Framing (spec s1.2)](#framing-spec-s12)
   - [Searched space](#searched-space)
   - [Consequence](#consequence)
+- [G2: LawvereGodelT* audit](#g2-lawveregodelt-audit)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -168,3 +169,15 @@ sole precondition, a published bridge, does not hold. Spec s6.3 steps
 representation of Lemmas 8-10 and Proposition 11; the normalization-time
 bound of Lemma 12 and Proposition 13) stand as the soundness route. The
 `LawvereGodelT*` formalization is not consumed by this workstream.
+
+## G2: LawvereGodelT* audit
+
+Verdict: `no-reuse`.
+
+G2's precondition, G1 verdict `bridge-exists`, does not hold (G1 closed
+`no-bridge`; see above). The clause-by-clause audit of the
+`LawvereGodelT*` formalization (`GebLean/LawvereGodelTReduces.lean`,
+`GebLean/LawvereGodelTLemma16.lean`, `GebLean/LawvereGodelT.lean`)
+against Beckmann-Weiermann 2000 Definitions 4 and 7-10 and Lemma 16 is
+therefore not performed, per spec s6.3 (failing either precondition, the
+Leivant route stands). Gate closed.
