@@ -2,17 +2,19 @@ import GebLean
 import GebLean.Ramified.Definability.Simultaneous
 
 /-!
-# Tests for case, destructor, and the selector
+# Tests for case, destructor, selector, and the simultaneous family
 
-Executable checks over the `1 + X` word algebra `natAlgSig` for the definability
-building blocks of `GebLean.Ramified.Definability.Simultaneous`: the case
-function `ramCase` selects a parameter by the argument's top constructor, the
-destructor `ramDstr` is the predecessor, and the selector `chooseIdent` reads off
-the entry indexed by the selector numeral and falls through to the last entry on
-out-of-range values. The value checks read out via `freeAlgToNat` so that
-`#guard` decides `Nat` equalities; the interpretation lemmas over all inputs are
-exercised through `example`s. The identifier-morphism helper `identHom` (Task
-5.1a) is checked here on `ramAdd` at the environment `(2, 3)`.
+Executable checks over the `1 + X` word algebra `natAlgSig` for
+`GebLean.Ramified.Definability.Simultaneous`: the case function `ramCase`
+selects a parameter by the argument's top constructor, the destructor `ramDstr`
+is the predecessor, the selector `chooseIdent` reads off the entry indexed by
+the selector numeral and falls through to the last entry on out-of-range
+values, and the simultaneous family (`simulProj`, `simulSol`) computes the
+alternating pair `f₁(n+1) = f₂(n)`, `f₂(n+1) = succ (f₁(n))` with base
+`(0, 0)`. The value checks read out via `freeAlgToNat` so that `#guard` decides
+`Nat` equalities; the interpretation lemmas over all inputs are exercised
+through `example`s. The identifier-morphism helper `identHom` is checked here
+on `ramAdd` at the environment `(2, 3)`.
 -/
 
 namespace GebLeanTests.Ramified.Definability.SimultaneousTest
@@ -93,5 +95,67 @@ example (m : Nat) (τ : RType) (z : FreeAlg natAlgSig)
     (hj : m ≤ j) (hz : z = natToFreeAlg j) :
     (chooseIdent m τ).interp (chooseEnv m τ z y) = y (Fin.last m) :=
   chooseIdent_interp_ge m τ z y j hj hz
+
+-- The simultaneous family (Lemma 2): the alternating pair
+-- `f₁(n+1) = f₂(n)`, `f₂(n+1) = succ (f₁(n))`, base `(0, 0)`, whose closed
+-- forms are `f₁(n) = n / 2` and `f₂(n) = (n + 1) / 2`.
+
+/-- The step clauses of the alternating pair as `SimulSteps 2 [] RType.o`: at
+the nullary constructor both components return `0`; at the unary constructor
+component `0` applies the recursive-result function to the selector numeral `1`
+(reading `f₂` at the previous count) and component `1` wraps the value at
+selector numeral `0` (reading `f₁`) in a successor. -/
+def altSteps : SimulSteps 2 [] RType.o := fun j i =>
+  match j, i with
+  | _, false => RIdent.defn ⟨0, finZeroElim, tmZero⟩ finZeroElim
+  | ⟨0, _⟩, true =>
+    RIdent.defn ⟨0, finZeroElim,
+      Tm.op (sig := defnSig natAlgSig 0 finZeroElim)
+        (Sum.inl (Sum.inl (Sum.inr (RType.o, RType.o))))
+        (Fin.cons (Tm.var ⟨0, by decide⟩)
+          (Fin.cons (tmSucc tmZero) finZeroElim))⟩ finZeroElim
+  | ⟨_ + 1, _⟩, true =>
+    RIdent.defn ⟨0, finZeroElim,
+      tmSucc (Tm.op (sig := defnSig natAlgSig 0 finZeroElim)
+        (Sum.inl (Sum.inl (Sum.inr (RType.o, RType.o))))
+        (Fin.cons (Tm.var ⟨0, by decide⟩)
+          (Fin.cons tmZero finZeroElim)))⟩ finZeroElim
+
+-- The reference solution matches the closed forms at counts `0, 1, 2, 3`.
+#guard freeAlgToNat (simulSol [] RType.o altSteps finZeroElim 0 0) = 0
+#guard freeAlgToNat (simulSol [] RType.o altSteps finZeroElim 0 1) = 0
+#guard freeAlgToNat (simulSol [] RType.o altSteps finZeroElim 1 0) = 0
+#guard freeAlgToNat (simulSol [] RType.o altSteps finZeroElim 1 1) = 1
+#guard freeAlgToNat (simulSol [] RType.o altSteps finZeroElim 2 0) = 1
+#guard freeAlgToNat (simulSol [] RType.o altSteps finZeroElim 2 1) = 1
+#guard freeAlgToNat (simulSol [] RType.o altSteps finZeroElim 3 0) = 1
+#guard freeAlgToNat (simulSol [] RType.o altSteps finZeroElim 3 1) = 2
+
+-- The projected components of the function-valued recurrence match the closed
+-- forms at counts `0, 1, 2, 3`.
+#guard freeAlgToNat ((simulProj (Nat.succ_pos 1) [] RType.o altSteps 0).interp
+  (simulEnv [] RType.o finZeroElim (natToFreeAlg 0))) = 0
+#guard freeAlgToNat ((simulProj (Nat.succ_pos 1) [] RType.o altSteps 1).interp
+  (simulEnv [] RType.o finZeroElim (natToFreeAlg 0))) = 0
+#guard freeAlgToNat ((simulProj (Nat.succ_pos 1) [] RType.o altSteps 0).interp
+  (simulEnv [] RType.o finZeroElim (natToFreeAlg 1))) = 0
+#guard freeAlgToNat ((simulProj (Nat.succ_pos 1) [] RType.o altSteps 1).interp
+  (simulEnv [] RType.o finZeroElim (natToFreeAlg 1))) = 1
+#guard freeAlgToNat ((simulProj (Nat.succ_pos 1) [] RType.o altSteps 0).interp
+  (simulEnv [] RType.o finZeroElim (natToFreeAlg 2))) = 1
+#guard freeAlgToNat ((simulProj (Nat.succ_pos 1) [] RType.o altSteps 1).interp
+  (simulEnv [] RType.o finZeroElim (natToFreeAlg 2))) = 1
+#guard freeAlgToNat ((simulProj (Nat.succ_pos 1) [] RType.o altSteps 0).interp
+  (simulEnv [] RType.o finZeroElim (natToFreeAlg 3))) = 1
+#guard freeAlgToNat ((simulProj (Nat.succ_pos 1) [] RType.o altSteps 1).interp
+  (simulEnv [] RType.o finZeroElim (natToFreeAlg 3))) = 2
+
+-- The projected components denote the reference solution over all counts and
+-- components.
+example (n : Nat) (j : Fin 2) :
+    (simulProj (Nat.succ_pos 1) [] RType.o altSteps j).interp
+        (simulEnv [] RType.o finZeroElim (natToFreeAlg n))
+      = simulSol [] RType.o altSteps finZeroElim n j :=
+  simulProj_interp (Nat.succ_pos 1) [] RType.o altSteps finZeroElim n j
 
 end GebLeanTests.Ramified.Definability.SimultaneousTest
