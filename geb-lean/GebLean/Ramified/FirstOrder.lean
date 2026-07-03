@@ -43,7 +43,7 @@ the shared `RType` sort object.
 * `RIdent.FirstOrder` — first-order identifier formation over `A`.
 * `firstOrderSig`, `firstOrderModel`, `firstOrderPresentation` — the first-order
   sub-theory presentation over `A`.
-* `foOpToHost`, `foTm` — the operation and term translations into the host
+* `foOp`, `foTm` — the operation and term translations into the host
   higher-order signature.
 * `foInclusion` — the inclusion functor of the sub-theory's syntactic category
   into `RMRecCat A`.
@@ -70,11 +70,11 @@ identifiers. The identifier summands of `firstOrderPresentation` range over the
 subtype `{f : RIdent A Γ τ // f.FirstOrder}`, in both the saturated
 (`foIdentSig`) and constant (`foIdentConstSig`) forms.
 
-`foOpToHost` translates each restricted operation to the identical host
+`foOp` translates each restricted operation to the identical host
 operation (dropping the `FirstOrder` proof); it preserves arity and result
 definitionally, so `foTm` rebuilds a restricted term as a host term with no
 transport beyond the reindexing already present at each node. `foTm_eval` is a
-`PolyFix.ind` induction whose operation case reduces to `foInterpOp`, the
+`PolyFix.ind` induction whose operation case reduces to `foOp_eval`, the
 node-by-node agreement of the two standard models on translated operations. The
 functor's `map` lifts `foTm` through the interpretative quotient; its identity
 and composition laws are discharged by `Quotient.sound` from `foTm_eval` and
