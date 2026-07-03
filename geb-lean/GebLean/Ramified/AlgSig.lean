@@ -39,23 +39,6 @@ Higher type recurrence and elementary complexity", Annals of Pure and
 Applied Logic 96 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`,
 section 2.1.
 
-Categorical/doctrinal treatment of tiered (ramified) recurrence via
-height-graded multi-sorted equational theories, with complexity classes
-as images of initial doctrine-categories: J. R. Otto, "Complexity
-Doctrines", PhD thesis, McGill University, 1995, DOI `10.82308/7828`
-(section 1.1 sketch theories; Chapter 4 the Kalmar-elementary doctrines
-`R`/`C`/`C'` with the enough-maps / not-too-many-maps pair). The present
-development differs in: (i) it formalizes Leivant's higher-type system
-`RMRec-omega` (Leivant III, APAL 96 (1999) 209-229, DOI
-`10.1016/S0168-0072(98)00040-2`), which postdates Otto and which Otto
-does not treat, his positive characterizations being first-order and his
-higher-type LCC-comprehension attempt a negative result; (ii) it uses a
-multi-sorted Lawvere theory with a syntactic category under
-interpretative equality and a soundness functor into `LawvereERCat`,
-rather than set-valued sketch models and images in
-`set^2`/`set^V`/`set^3`; (iii) it realizes syntax as W-types of
-polynomial endofunctors, a device with no counterpart in Otto.
-
 ## Tags
 
 ramified recurrence, free algebra, signature, polynomial functor,
