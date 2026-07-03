@@ -149,10 +149,10 @@ def ramDeltaIdent : (m : Nat) → RIdent natAlgSig [RType.tower m] RType.o
   | 0 => RIdent.defn ⟨0, finZeroElim, Tm.var 0⟩ finZeroElim
   | m + 1 =>
     RIdent.defn ⟨2, deltaHoleIdx m,
-      Tm.op (sig := defnSig natAlgSig 2 (deltaHoleIdx m)) (Sum.inr ⟨0, by decide⟩)
+      Tm.op (sig := defnSig natAlgSig 2 (deltaHoleIdx m)) (Sum.inl (Sum.inr ⟨0, by decide⟩))
         (Fin.cons
           (Tm.op (sig := defnSig natAlgSig 2 (deltaHoleIdx m))
-            (Sum.inr ⟨1, by decide⟩)
+            (Sum.inl (Sum.inr ⟨1, by decide⟩))
             (Fin.cons (Tm.var 0) finZeroElim))
           finZeroElim)⟩
       (fun j => match j with
@@ -197,13 +197,13 @@ def oObj : { s : RType // RType.IsObj s } := ⟨RType.o, Or.inl rfl⟩
 /-- The nullary-constructor term over a definition signature. -/
 def tmZero {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType} :
     Tm (defnSig natAlgSig n h) Γ RType.o :=
-  Tm.op (sig := defnSig natAlgSig n h) (Sum.inl (Sum.inl (oObj, false))) finZeroElim
+  Tm.op (sig := defnSig natAlgSig n h) (Sum.inl (Sum.inl (Sum.inl (oObj, false)))) finZeroElim
 
 /-- The unary-constructor term over a definition signature. -/
 def tmSucc {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType}
     (t : Tm (defnSig natAlgSig n h) Γ RType.o) :
     Tm (defnSig natAlgSig n h) Γ RType.o :=
-  Tm.op (sig := defnSig natAlgSig n h) (Sum.inl (Sum.inl (oObj, true)))
+  Tm.op (sig := defnSig natAlgSig n h) (Sum.inl (Sum.inl (Sum.inl (oObj, true))))
     (Fin.cons t finZeroElim)
 
 /-- Addition's step at the nullary constructor: return the parameter. -/
@@ -307,7 +307,7 @@ def mulZeroStep : RIdent natAlgSig [RType.omega RType.o] RType.o :=
 recursive result, invoking `ramAdd` through a hole. -/
 def mulSuccStep : RIdent natAlgSig [RType.omega RType.o, RType.o] RType.o :=
   RIdent.defn ⟨1, mulHoleIdx,
-    Tm.op (sig := defnSig natAlgSig 1 mulHoleIdx) (Sum.inr ⟨0, by decide⟩)
+    Tm.op (sig := defnSig natAlgSig 1 mulHoleIdx) (Sum.inl (Sum.inr ⟨0, by decide⟩))
       (Fin.cons (Tm.var 1) (Fin.cons (Tm.var 0) finZeroElim))⟩
     (fun _ => ramAdd)
 

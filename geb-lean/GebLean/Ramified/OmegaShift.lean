@@ -106,7 +106,7 @@ exists by the object-sort hypothesis `hτ`. -/
 def kappaHatStep (A : AlgSig) (τ : RType) (hτ : τ.IsObj) (i : A.B) :
     RIdent A (List.replicate (A.ar i) τ) τ :=
   RIdent.defn ⟨0, finZeroElim,
-    Tm.op (sig := defnSig A 0 finZeroElim) (Sum.inl (Sum.inl (⟨τ, hτ⟩, i)))
+    Tm.op (sig := defnSig A 0 finZeroElim) (Sum.inl (Sum.inl (Sum.inl (⟨τ, hτ⟩, i))))
       (fun k => Tm.var k)⟩ finZeroElim
 
 /-- Leivant III section 2.4(1)'s auxiliary coercion kappa-hat,

@@ -49,12 +49,12 @@ def faToNat (t : FreeAlg A) : Nat :=
 /-- The zero term over a definition signature. -/
 def tmZero {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType} :
     Tm (defnSig A n h) Γ RType.o :=
-  Tm.op (sig := defnSig A n h) (Sum.inl (Sum.inl (oObj, false))) finZeroElim
+  Tm.op (sig := defnSig A n h) (Sum.inl (Sum.inl (Sum.inl (oObj, false)))) finZeroElim
 
 /-- The successor of a base term over a definition signature. -/
 def tmSucc {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType}
     (t : Tm (defnSig A n h) Γ RType.o) : Tm (defnSig A n h) Γ RType.o :=
-  Tm.op (sig := defnSig A n h) (Sum.inl (Sum.inl (oObj, true))) (Fin.cons t finZeroElim)
+  Tm.op (sig := defnSig A n h) (Sum.inl (Sum.inl (Sum.inl (oObj, true)))) (Fin.cons t finZeroElim)
 
 /-- The explicit definition returning `0` (context `[]`). -/
 def idZero : RIdent A [] RType.o :=
