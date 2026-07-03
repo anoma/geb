@@ -1,4 +1,5 @@
 import GebLeanTests.Ramified.AlgSig
+import GebLeanTests.Ramified.SortedSig
 
 /-!
 # Ramified-recurrence test index
