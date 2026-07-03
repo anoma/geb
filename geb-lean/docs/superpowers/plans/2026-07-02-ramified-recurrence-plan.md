@@ -1118,6 +1118,17 @@ def algMapFunctor (h : AlgSigHom A B) :
 - [ ] **Step 3: verify, pre-commit triad, commit** (message
   `feat(ramified): add algebra-map functoriality`); phase review.
 
+**Executed scope.** The `algMapFunctor` interface above is superseded: the
+induced functor `RMRecCat A ⥤ RMRecCat B` is not well-defined on the
+interpretative quotient for a non-surjective signature morphism, including
+this task's own `1 + X` into `1 + 2X` example. The delivered scope is
+`AlgSigHom`, `freeAlgMap`, `AlgSigHom.pullSteps`, `interpMapObj` (object
+sorts), and the image-point naturality lemma `recurse_freeAlgMap`, with the
+obstruction recorded in `GebLean/Ramified/Algebras.lean`'s implementation
+notes. Term-clone-level functoriality (over the unquotiented `HomTuple`s) is
+expected of the deferred equational workstream (spec s9). The spec-side
+pointer to s4.3 is added at Task 7.3 per that task's reconcile step.
+
 ---
 
 ## Phase 4 — first-order sub-theories (branch `feat/ramified-p4-firstorder`)
