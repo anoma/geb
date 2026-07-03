@@ -131,12 +131,17 @@ the interpretation lemmas instead.
    sits at `Ω(o → τ)` rather than the paper's `Ω τ` — a presentation
    adaptation of the spec s1.2 kind, recorded in the docstring, and
    absorbed by eq. (8)'s assembly (the `2_q` family exists at every
-   object sort, so the clock is simply targeted at `Ω(o → τ)`).
+   object sort, so the clock is simply targeted at `Ω(o → τ)`). The
+   same monotonic reading drops eq. (6)'s subterm arguments from the
+   clause data: `RIdent.mrec`'s steps read the parameters and the
+   recursive results, not the subterms, and Lemma 6's clauses do not
+   use them; this omission is part of the recorded adaptation.
 6. **objToNat stays in `Examples.lean`.** The conditional move
    ("beside `interp_isObj` if `Definability/*` should not import the
-   ladder") does not fire: Task 5.4 consumes `ramExp`/`ramMul` and
-   the coercion instances from `Examples.lean`, so `Definability/*`
-   imports the ladder regardless.
+   ladder") does not fire: `Definability/*` imports `Examples.lean`
+   regardless — for `objToNat` itself, the coercion instances
+   (`ramKappa`/`ramDeltaIdent` at the tower sorts), and the
+   construction patterns Task 5.4a's generalizations follow.
 7. **No `DecidablePred RIdent.FirstOrder` task.** Phase 5's
    statements do not certify first-order membership; if an isolated
    certificate is needed it is written manually (`ramAdd_fo` style,
@@ -363,12 +368,12 @@ theorem identHom_eval ...       -- eval reads off RIdent.interp
 
 - [ ] **Step 1: failing tests.** In the existing SynCat test module:
   `Hom.eval` of the identity hom on a one-sort context is the
-  identity (`example ... := rfl` on a small environment);
-  `identHom ramAdd` evaluated at the environment `(2, 3)` reads `5`
-  through `freeAlgToNat` (an `example` from `ramAdd_interp_env`,
-  import permitting — otherwise place the `identHom` checks in the
-  new `GebLeanTests/Ramified/Definability/Simultaneous.lean`).
-  `lake test`, confirm failure.
+  identity (`example ... := rfl` on a small environment); the
+  `identHom` value check (`identHom ramAdd` at the environment
+  `(2, 3)` reads `5` through `freeAlgToNat`, an `example` from
+  `ramAdd_interp_env`) is placed in Task 5.1b's new test module
+  unconditionally, keeping this task's tests free of an
+  Examples-import decision. `lake test`, confirm failure.
 - [ ] **Step 2: implement** (`Quotient.lift` with the setoid law as
   the well-definedness proof; `identHom` generalizes
   `kappaHatTuple`'s `Fin.cons (Tm.op ... Tm.var) finZeroElim`
@@ -405,17 +410,22 @@ dstr(0) = 0 (the j > r_i clause returns the argument), dstr(succ a)
 = a. Flat recurrence reading the subterm. -/
 def ramDstr : RIdent natAlgSig [RType.o] RType.o
 
-/-- choose_m : o, τ^m → τ (Lemma 2's selector, p. 218):
-choose(z, y₁ ... y_m) = y_j if z is the numeral b_j (b_j := j - 1,
-distinct elements of the carrier). Built by induction on m from
-`ramCase` and `ramDstr` compositions, per the proof of Lemma 2. -/
+/-- choose over m + 1 entries : o, τ^(m+1) → τ (Lemma 2's selector,
+p. 218): choose(z, y₀ ... y_m) = y_j if z is the numeral j; every
+selector value ≥ m falls through to the last entry y_m
+(chooseIdent_interp_ge; the machine simulation's implicit-halt arm
+relies on the fall-through). Indexed at m + 1 so the family is
+total. Built by induction on m from `ramCase` and `ramDstr`
+compositions, per the proof of Lemma 2. -/
 def chooseIdent (m : Nat) (τ : RType) :
-    RIdent natAlgSig (RType.o :: List.replicate m τ) τ
+    RIdent natAlgSig (RType.o :: List.replicate (m + 1) τ) τ
 
 theorem ramCase_interp ...   -- clause selection on carrier values
 theorem ramDstr_interp ...   -- pred on counts
 theorem chooseIdent_interp (m : Nat) (τ : RType) ... :
-    -- on selector numeral j < m, denotation = the (j+1)-th entry
+    -- on selector numeral j ≤ m, denotation = the entry y_j
+theorem chooseIdent_interp_ge (m : Nat) (τ : RType) ... :
+    -- on selector numeral j ≥ m, denotation = the last entry y_m
 ```
 
 - [ ] **Step 1: failing tests.** `#guard`-ladder checks at `τ = o`:
@@ -423,14 +433,18 @@ theorem chooseIdent_interp (m : Nat) (τ : RType) ... :
   `ramDstr` at `0, 1, 3` gives `0, 0, 2`; `chooseIdent 3 o` at
   selectors `0, 1, 2` returns the matching entry (small numerals;
   read through `freeAlgToNat`).
-- [ ] **Step 2: implement.** `chooseIdent` recursion:
-  `choose_0(z) = z`-free base (m = 0 is unused; start the family at
-  `m = 1` with `choose_1(z, y₁) = y₁` as an explicit definition) and
-  `choose_{m+1}(z, y₁ ... y_{m+1}) =
-  case^τ(y₁, choose_m(dstr z, y₂ ...), z)` — argument order per the
-  committed `frec` convention (recurrence argument last); the
-  composite is an explicit definition (`RIdent.defn`) whose holes
-  reference `ramCase τ`, `ramDstr`, and `chooseIdent m τ`.
+- [ ] **Step 2: implement.** `chooseIdent` recursion: base
+  `chooseIdent 0` returns its sole entry (an explicit definition),
+  and `chooseIdent (m + 1)` at entries `y₀ ... y_{m+1}` is
+  `case^τ(y₀, chooseIdent m (dstr z) (y₁ ...), z)` — argument order
+  per the committed `frec` convention (recurrence argument last);
+  the composite is an explicit definition (`RIdent.defn`) whose
+  holes reference `ramCase τ`, `ramDstr`, and `chooseIdent m τ`.
+  The fall-through for selectors beyond the entry count is a
+  consequence of the recursion (the base returns its sole entry
+  regardless of the selector value, so deep selectors exhaust into
+  the last entry); prove `chooseIdent_interp_ge` alongside
+  `chooseIdent_interp`.
   Citations: Lemma 2 proof, section 2.6; case/dstr, section 2.5.
 - [ ] **Step 3: verify, pre-commit triad, commit** (message
   `feat(ramified): add case, destructor, and selector identifiers`).
@@ -495,10 +509,10 @@ theorem simulProj_interp ...
 ```
 
 - [ ] **Step 1: failing tests.** A two-component family at `τ = o`
-  computing (`⌊n/2⌋`-ish pair) — concretely the standard
-  even/odd-step pair: `f₁(n+1) = f₂(n)`, `f₂(n+1) = succ (f₁(n))`,
-  base `(0, 0)`; `#guard` its components at counts `0, 1, 2, 3`
-  through `freeAlgToNat` against the closed forms.
+  — the alternating pair `f₁(n+1) = f₂(n)`,
+  `f₂(n+1) = succ (f₁(n))`, base `(0, 0)`; `#guard` its components
+  at counts `0, 1, 2, 3` through `freeAlgToNat` against the closed
+  forms.
 - [ ] **Step 2: implement.** The `mrec` step at constructor `true`
   is an explicit definition whose body is the curried-hole
   combinator form (the `ramExpStep` pattern, Examples.lean:516) of
@@ -548,7 +562,11 @@ def dstrCaseSig (A : AlgSig) (IsObj : RType → Prop) :
 /-- Standard semantics: dstr_j reads the j-th subterm (the argument
 itself when j exceeds the arity, paper section 4.1's reduction
 rules); case^θ selects the branch of the main constructor. -/
-def dstrCaseModel ...
+def dstrCaseModel (op : (dstrCaseSig natAlgSig RType.IsObj).Op)
+    (args : ∀ i, RType.interp (FreeAlg natAlgSig)
+      (((dstrCaseSig natAlgSig RType.IsObj).arity op).get i)) :
+    RType.interp (FreeAlg natAlgSig)
+      ((dstrCaseSig natAlgSig RType.IsObj).result op)
 
 /-- Direction (a) of Lemma 1 (the containment RRec_o ⊆ RRec): each
 dstrCaseSig operation realized as a derived identifier by flat
@@ -626,7 +644,12 @@ identifiers, terms, and hom-tuples into `higherOrder natAlgSig`,
 realizing dstr/case occurrences by `dstrCaseToFlat`. Follows the
 foOp/foTm case-split template (FirstOrder.lean:218,:236). -/
 def ocIdent {Γ τ} : RIdentO natAlgSig Γ τ → RIdent natAlgSig Γ τ
-def ocTm ... ; def ocHomMap ...
+def ocTm {Γ : Ctx RType} {s : RType} :
+    Tm (higherOrderO natAlgSig).sig Γ s →
+    Tm (higherOrder natAlgSig).sig Γ s
+def ocHomMap (Γ Δ : Ctx RType) :
+    HomTuple (higherOrderO natAlgSig) Γ Δ →
+    HomTuple (higherOrder natAlgSig) Γ Δ
 theorem ocIdent_interp ...   -- interpretation preserved
 theorem ocTm_eval ...
 def ocInclusion : RMRecCatO natAlgSig ⥤ RMRecCat natAlgSig
@@ -639,7 +662,7 @@ def ocInclusion : RMRecCatO natAlgSig ⥤ RMRecCat natAlgSig
   `PolyFix.ind`; term translation op-by-op with the dstr/case ops
   routed through `dstrCaseToFlat`).
 - [ ] **Step 3: verify, pre-commit triad, commit** (message
-  `feat(ramified): translate the destructor-case variant into the flat system`).
+  `feat(ramified): translate the destructor-case variant into flat`).
 
 ### Task 5.2d: translation of flat recurrence into the O-variant
 
@@ -671,10 +694,17 @@ theorem flatToOc_interp ...
 
 ## Task 5.3: clock-format arithmetic
 
-Master-plan deliverable (unchanged): the bound conversion of spec
-s6.2 step 2's clock — from `tower μ (Fin.maxOfNat _ v + offset)`
+Master-plan deliverable, as amended by standing decision 2: the
+bound conversion of spec s6.2 step 2's clock — from
+`tower μ (Fin.maxOfNat _ v + offset)`
 (`boundExprKParams_dominates`) to Leivant's `c * 2_q (sz input)`
-format — pure ℕ inequalities. `Tower.lean` already carries
+format — "pure ℕ inequalities relating `tower` to the `2_m` ladder
+(via `ramTwoPow_interp` from Phase 2) and `sz`, monotonicity, and
+the componentwise max-over-inputs handling the arity remark needs"
+(master plan Task 5.3). Amendment: the object-language link to the
+`2_m` ladder is carried by `twoPowIdent_interp` (Task 5.4a, standing
+decision 2); `ramTwoPow_interp` remains the ℕ-side tower alignment
+this task's lemmas compose with. `Tower.lean` already carries
 `tower_comp`, `tower_mono_right`, `tower_mono_left`,
 `self_le_tower`, and `le_two_pow_self`; this task adds only what is
 missing.
@@ -732,10 +762,17 @@ decision 1): machine state tracked by functions `stt` and `[φ]`
 defined by ramified simultaneous recurrence (Task 5.1) over
 `URMState.step`, clocked by the ramified `2_q` composed with `sz`
 (Task 5.3, Phase 2 ladder); the realizer takes its input at the
-object sort `Ω(η → η)` per eq. (8) (p. 221). The n-input case is
-assembled with the clock bound taken over all inputs (spec s6.2
-arity remark). Docstrings record the s1.2 embedding argument as
-fidelity justification for the URM adaptation.
+object sort `Ω(η → η)` per eq. (8) (p. 221). The n-input, m-output
+case is assembled componentwise with the clock bound taken over all
+inputs (spec s6.2 arity remark). Docstrings record the s1.2
+embedding argument as fidelity justification for the URM adaptation.
+
+Deliverable location note: `URMProgram` is single-output, so this
+task's statement (`urm_ramified_definable`) is unary-output; the
+m-output componentwise assembly of the deliverable sentence is
+realized at Task 5.5 (`erMorN_ramified_definable`), under the master
+plan's Task 5.5 delegation of "the exact multi-output form (m
+outputs componentwise)" to this sub-plan.
 
 Sort bookkeeping fixed by this sub-plan (standing decisions 2-5):
 the count sort of the simultaneous family is `ω := Ω(o → o)`
@@ -775,7 +812,8 @@ monotonic recurrence with steps cLift. Agrees with kappaHatIdent at
 object sorts (kappaHatFull_isObj). -/
 def kappaHatFull (A : AlgSig) (τ : RType) :
     RIdent A [RType.omega τ] τ
-theorem kappaHatFull_isObj ...   -- extensional agreement at IsObj
+theorem kappaHatFull_eq_kappaHatIdent ...
+--   extensional agreement at IsObj sorts
 theorem kappaHatFull_interp ...  -- the recurrence semantics
 
 /-- The canonical functional C^τ = λ x-vec. α^θ (paper s2.4 intro,
@@ -811,9 +849,12 @@ every IsObj sort). -/
 def numeralTm {Γ : Ctx RType} (s : RType) (hs : s.IsObj) (n : Nat) :
     Tm (higherOrder natAlgSig).sig Γ s
 
-/-- The exp copy at object sort θ (paper s2.4(3) "more generally"):
-e^θ : Ω(θ → θ) → (θ → θ), the ramExp construction with o replaced
-by θ. -/
+/-- The exp copy at object sort θ: e^θ : Ω(θ → θ) → (θ → θ), the
+ramExp construction with o replaced by θ — the implied
+generalization of the displayed e : Ω(o → o) → (o → o) (paper
+s2.4(3)); the s2.4(3) "more generally" clause asserts the resulting
+exp copy of type Ω(θ → θ) → θ, delivered here as the value of e^θ
+at the 0 numeral (the twoPowIdent step). -/
 def expAtIdent (θ : RType) (hθ : θ.IsObj) :
     RIdent natAlgSig [RType.omega (RType.arrow θ θ)]
       (RType.arrow θ θ)
@@ -894,29 +935,55 @@ simultaneous family has 1 + numRegs components at τ = o (component
 the successor constructor case-splits on the counter value (nested
 chooseIdent over the instruction list) and applies, per
 instruction, the constructor (inc), ramDstr (dec), ramCase on the
-tested register (jumpZ), the copied value (assign), or the
-identity (stop) — all explicit definitions from constructor,
-destructor, and case functions, as the Lemma 6 proof requires. -/
+tested register (jumpZ), the constant numeral `c` via numeralTm
+(assign — the zero-test URM's assign writes a constant,
+ZeroTestURM.lean:90), or the identity (stop) — all explicit
+definitions from constructor, destructor, and case functions, as
+the Lemma 6 proof requires. The pc case-split carries a final
+identity arm: `URMState.step` is the identity at every
+`pc ≥ instrs.size` (the implicit halt state; `jumpZ` targets are
+arbitrary naturals, so runs reach such values), and `chooseIdent`'s
+fall-through routes every out-of-range selector to its last
+entry. -/
 def urmSteps {a : ℕ} (p : URMProgram a) :
     SimulSteps (1 + p.numRegs) (List.replicate a RType.o) RType.o
 
 /-- The machine-tracking family: sttIdent p = simulProj ... 0;
 regIdent p r = simulProj ... (r+1); parameters the a inputs at o,
 count at ω = Ω(o → o). -/
-def sttIdent ... ; def regIdent ...
+def sttIdent {a : ℕ} (p : URMProgram a) :
+    RIdent natAlgSig
+      (List.replicate a RType.o
+        ++ [RType.omega (RType.arrow RType.o RType.o)]) RType.o
+def regIdent {a : ℕ} (p : URMProgram a) (r : Fin p.numRegs) :
+    RIdent natAlgSig
+      (List.replicate a RType.o
+        ++ [RType.omega (RType.arrow RType.o RType.o)]) RType.o
 
 /-- Correctness against the step relation, by induction on the
 count (the Lemma 6 invariant): at count numeral t and input
 parameters v, the components denote the pc and registers of
 URMState.runFor p (URMState.init p v) t. -/
 theorem urm_simul_interp {a : ℕ} (p : URMProgram a)
-    (v : Fin a → ℕ) (t : ℕ) : ...
+    (v : Fin a → ℕ) (t : ℕ) :
+    freeAlgToNat ((sttIdent p).interp (urmEnv p v t))
+        = (URMState.runFor p (URMState.init p v) t).pc ∧
+      ∀ r : Fin p.numRegs,
+        freeAlgToNat ((regIdent p r).interp (urmEnv p v t))
+          = (URMState.runFor p (URMState.init p v) t).regs r
+-- urmEnv p v t: the environment loading the input numerals at the
+-- o positions and the count numeral t at the Ω(o → o) position
+-- (transported along the carrier-copy equalities).
 ```
 
 - [ ] **Step 1: failing tests.** A two-instruction program (inc
   then stop): `#guard` the register component at counts `0, 1, 2`
   equals `runFor`'s register (small values); the pc component
-  freezes at the stop instruction.
+  freezes at the stop instruction. An implicit-halt fixture: the
+  one-instruction program `[inc 0]` — after one step the pc leaves
+  the instruction range and the state must freeze (`#guard` the
+  register component at counts `1, 2, 3` all equal `1`); this
+  exercises the identity arm and the `chooseIdent` fall-through.
 - [ ] **Step 2: implement `urmSteps`** (the instruction case-split
   is data-driven over `p.instrs`; each arm is a composition of
   Task 5.1b/5.2a identifiers; the base clause loads
@@ -1049,9 +1116,10 @@ def ramifiedDenotation {n m : ℕ} {Γ : ObjCtx n} {Δ : ObjCtx m}
     (Fin n → ℕ) → (Fin m → ℕ)
 
 /-- The definability family (spec s6.1's completeness input; the
-denotational content of Leivant III Theorem 14 item (1) at the
-1 + X instantiation): every ER morphism has an object-sort context
-and realizer with matching denotation. Chain: compileER +
+denotational content of Leivant III Theorem 14's (1) ⇒ (2)
+direction at the 1 + X instantiation): every ER morphism has an
+object-sort context and realizer with matching denotation. Chain:
+compileER +
 boundExprKParams_dominates + tower_clock_format feed
 urm_ramified_definable; the realizer is machineRealizer over
 machineCtx. -/
@@ -1093,7 +1161,7 @@ theorem erMorN_ramified_definable {a m : ℕ}
   `urm_ramified_definable` at `p := compileER e` yields the
   realizer; `Γ := machineCtx` entries with `machineCtx_isObj`.
   Module docstring carries the G4 Otto precedent paragraph and the
-  Theorem 14 item (1) citation (section 6.1 of the paper via
+  Theorem 14 (1) ⇒ (2) citation (section 6.1 of the paper via
   sections 2.7/3.2; DOI `10.1016/S0168-0072(98)00040-2`), and
   notes that Phase 7 re-states the family as
   `ramified_definability` against `collapseDenotation`.
@@ -1110,10 +1178,14 @@ theorem erMorN_ramified_definable {a m : ℕ}
 ## Self-review checklist (run before adversarial review)
 
 - Task boundaries, deliverable statements, and plan decision 1
-  match the master plan's Phase 5 section verbatim in content; the
-  only structural additions are sub-task splits (5.1a-c, 5.2a-d,
-  5.4a-c) and the modify-file additions the collected Task 5.0
-  inputs direct.
+  match the master plan's Phase 5 section, with two recorded
+  amendments: the Task 5.3 ladder-link supersession (standing
+  decision 2, noted in the Task 5.3 preamble) and the relocation of
+  the m-output componentwise assembly to Task 5.5 under the
+  master's own Task 5.5 delegation (noted in the Task 5.4
+  preamble). The structural additions are sub-task splits (5.1a-c,
+  5.2a-d, 5.4a-c) and the modify-file additions the collected
+  Task 5.0 inputs direct.
 - All seven collected Task 5.0 inputs are addressed: full kappa-hat
   (5.4a; standing decision 3), the in-system clock (5.4a/c;
   decision 2), sz typing (5.4a; decision 4), `natFreeAlgEquiv` simp
