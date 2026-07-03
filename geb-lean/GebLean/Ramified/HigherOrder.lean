@@ -109,13 +109,6 @@ def appSig : SortedSig RType where
   arity op := [RType.arrow op.1 op.2, op.1]
   result op := op.2
 
-/-- The denotation of an object sort is a copy of the carrier (Leivant III
-section 2.7): for any `s` with `s.IsObj`, `RType.interp C s = C`. -/
-theorem RType.interp_isObj (C : Type) {s : RType} (h : s.IsObj) :
-    RType.interp C s = C := by
-  rcases s with ⟨_, i, children⟩
-  rcases h with h | h <;> (simp only [RType.shape, PolyFix.index] at h; subst h; rfl)
-
 /-- The interpretation of a constructor operation over the standard carriers:
 the free-algebra constructor `FreeAlg.mk` at the label, on the arguments read as
 base-carrier elements (every object sort denotes a copy of `FreeAlg A`). Novel

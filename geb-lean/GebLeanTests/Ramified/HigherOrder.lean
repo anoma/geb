@@ -25,9 +25,6 @@ open GebLean.Ramified CategoryTheory
 unary one. -/
 abbrev A : AlgSig := natAlgSig
 
-/-- The base object sort `o` as an object-sort witness. -/
-def oObj : { s : RType // RType.IsObj s } := ⟨RType.o, Or.inl rfl⟩
-
 /-- The zero term over a definition signature. -/
 def tmZero {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType} :
     Tm (defnSig A n h) Γ RType.o :=

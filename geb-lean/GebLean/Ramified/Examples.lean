@@ -178,9 +178,6 @@ theorem ramDeltaIdent_interp :
   | 0, _ρ => congrArg freeAlgToNat (eq_of_heq (cast_heq _ _).symm)
   | m + 1, _ρ => (ramDeltaIdent_interp m _).trans (kappaHatIdent_objToNat m _)
 
-/-- The base object sort `o` as an object-sort witness. -/
-def oObj : { s : RType // RType.IsObj s } := ⟨RType.o, Or.inl rfl⟩
-
 /-- The nullary-constructor term over a definition signature. -/
 def tmZero {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType} :
     Tm (defnSig natAlgSig n h) Γ RType.o :=

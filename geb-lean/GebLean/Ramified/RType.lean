@@ -31,12 +31,14 @@ whose shapes are a nullary `o`, a binary `arrow`, and a unary `omega`.
 * `RType.IsObj` — the object-sort predicate (`o` and every `Omega tau`).
 * `RType.tower` — the tower sorts `Omega^m o`.
 * `RType.interp` — the denotation of an r-type over a carrier.
+* `oObj` — the base object sort `o` as an object-sort witness.
 
 ## Main statements
 
 * `RType.arrow_eq_arrow`, `RType.omega_eq_omega` — injectivity of the
   derived constructors.
 * `RType.tower_isObj` — every tower sort is an object sort.
+* `RType.interp_isObj` — every object sort denotes a copy of the carrier.
 
 ## Implementation notes
 
@@ -214,5 +216,15 @@ def RType.interp (carrier : Type) (t : RType) : Type :=
         ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)) →
           ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow))
       | RTypeShape.omega, _, _ => carrier) t
+
+/-- The denotation of an object sort is a copy of the carrier (Leivant III
+section 2.7): for any `s` with `s.IsObj`, `RType.interp C s = C`. -/
+theorem RType.interp_isObj (C : Type) {s : RType} (h : s.IsObj) :
+    RType.interp C s = C := by
+  rcases s with ⟨_, i, children⟩
+  rcases h with h | h <;> (simp only [RType.shape, PolyFix.index] at h; subst h; rfl)
+
+/-- The base object sort `o` as an object-sort witness. -/
+def oObj : { s : RType // RType.IsObj s } := ⟨RType.o, Or.inl rfl⟩
 
 end GebLean.Ramified
