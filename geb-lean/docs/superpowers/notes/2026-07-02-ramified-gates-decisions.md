@@ -10,6 +10,7 @@
   - [Searched space](#searched-space)
   - [Consequence](#consequence)
 - [G2: LawvereGodelT* audit](#g2-lawveregodelt-audit)
+- [G3: landing choice](#g3-landing-choice)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -181,3 +182,24 @@ G2's precondition, G1 verdict `bridge-exists`, does not hold (G1 closed
 against Beckmann-Weiermann 2000 Definitions 4 and 7-10 and Lemma 16 is
 therefore not performed, per spec s6.3 (failing either precondition, the
 Leivant route stands). Gate closed.
+
+## G3: landing choice
+
+Decision rule inputs: G1 verdict `no-bridge` and G2 verdict `no-reuse`
+(see the G1 and G2 sections above). Per the plan-fixed rule (spec open
+question 2), G2 is not `reuse`, so the "Otherwise (Leivant route)" arm
+applies.
+
+Landing: the spec s6.4 normalizer on term codes lands with a verified
+elementary clock, by default in `K^sim`. The normalization step
+function on term codes is implemented as a K-morphism, clocked with a
+K-expressible bound, and transferred across `erKSimEquiv`; precedent is
+the executed-once pattern of `erToKFunctor` with
+`KSimURMSimulator.simulate`
+(`GebLean/Utilities/KSimURMSimulator.lean:544`).
+
+Caveat: the ER landing (bounded recursion on Godel codes, the
+`EraComplete` precedent) is chosen instead only if the Phase 6 sub-plan
+analysis shows the step function's natural presentation is ER-side
+arithmetic rather than a state-transition step; the reason for whichever
+landing is chosen is recorded at sub-plan time.
