@@ -235,17 +235,6 @@ def addEnv (a b : FreeAlg natAlgSig) :
         (([RType.o, RType.omega RType.o] : Ctx RType).get i) :=
   Fin.cons a (Fin.cons b finZeroElim)
 
-/-- The free-algebra recurrence computes on a constructor node. -/
-theorem freeAlgToNat_mk_false
-    (sub : Fin (natAlgSig.ar false) → FreeAlg natAlgSig) :
-    freeAlgToNat (FreeAlg.mk false sub) = 0 := rfl
-
-/-- The free-algebra recurrence computes on a constructor node. -/
-theorem freeAlgToNat_mk_true
-    (sub : Fin (natAlgSig.ar true) → FreeAlg natAlgSig) :
-    freeAlgToNat (FreeAlg.mk true sub)
-      = freeAlgToNat (sub ⟨0, by decide⟩) + 1 := rfl
-
 /-- Addition's recurrence read numerically: on a parameter environment `pe` and
 a recurrence argument `s`, the denotation counts to `pe 0` plus the count of
 `s`. Proved by structural induction on `s` via `PolyFix.ind` (decision 8);
