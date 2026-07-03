@@ -4,12 +4,16 @@ import GebLean.Ramified.HigherOrder
 # The sort-level Omega shift and the auxiliary coercion kappa-hat
 
 The Omega shift on ramified types — the base substitution `τ[o := Ω o]` —
-and the auxiliary coercion kappa-hat of Leivant III section 2.4(1),
-`kappa-hat_τ : Ω τ → τ`, defined by ramified recurrence and extensionally
-the identity on the carrier. The shift is sort-level only, and kappa-hat is
-constructed at the object sorts; neither an endofunctor of the syntactic
-category over the shift nor the assembly of the kappa-hat components into
-its copoint is claimed (spec open question 3).
+and the object-sort instances of the auxiliary coercion kappa-hat of
+Leivant III section 2.4(1), `kappa-hat_τ : Ω τ → τ`. The paper defines
+kappa-hat at every r-type `τ = σ-vec → θ`, by ramified recurrence whose
+step functions are the pointwise constructor lifts `c_i^τ` (explicit
+definitions); at an object sort the lift is the constructor operation
+itself and the instance is extensionally the identity on the carrier.
+This module constructs those object-sort instances. The shift is
+sort-level only; neither an endofunctor of the syntactic category over
+the shift nor the assembly of the kappa-hat components into its copoint
+is claimed (spec open question 3).
 
 ## Main definitions
 
@@ -36,19 +40,24 @@ The shift is a substitution at the base type, not postcomposition with
 `Omega`: postcomposition fails to respect arrow sorts, whereas the base
 substitution commutes with `arrow` and `omega`.
 
-`kappaHat` carries an object-sort hypothesis `hτ : τ.IsObj`; that
-hypothesis is the transcription-faithful domain of the paper's kappa-hat.
-Under the standard semantics (Leivant III section 2.7), every object sort
-denotes a copy of the algebra's carrier, so at an object sort `τ` both
-`Ω τ` and `τ` denote the same carrier and the paper's "extensionally the
-identity" characterization of the section 2.4(1) coercions is
-type-correct; moreover the constructor operations that the defining
-recurrence's step functions apply exist exactly at the object sorts
-(`constructorSig` at `RType.IsObj`). At an arrow sort `σ → ρ`, the sort
-`Ω (σ → ρ)` denotes the carrier while `σ → ρ` denotes a function space, so
-no identity-realizing coercion can exist there — in particular no raising
-coercion exists in the system (constant maps of type `o → Ω o` exist; an
-identity-realizing one does not).
+`kappaHat` carries an object-sort hypothesis `hτ : τ.IsObj`: the
+constructions here are the object-sort instances of the paper's
+kappa-hat, whose domain is all r-types. At an object sort `τ` the
+pointwise constructor lift `c_i^τ` of section 2.4(1) is the constructor
+operation itself (`constructorSig` at `RType.IsObj`), the recurrence
+reconstructs its argument, and the instance is extensionally the
+identity on the carrier — type-correct under the standard semantics
+(Leivant III section 2.7): every object sort denotes a copy of the
+algebra's carrier, so `Ω τ` and `τ` denote the same carrier. At an
+arrow sort `σ → ρ`, the sort `Ω (σ → ρ)` denotes the carrier while
+`σ → ρ` denotes a function space; the paper's kappa-hat there is not an
+identity but the recurrence through the lifts `c_i^{σ → ρ}`, which are
+explicit definitions over previously defined identifiers. The paper's
+"extensionally the identity" characterization describes the coercions
+`kappa_τ : Ω τ → θ` and `delta_θ : θ → o`, functions between object
+types, not kappa-hat at arrow sorts. No identity-realizing raising
+coercion exists in the system (constant maps of type `o → Ω o` exist;
+an identity-realizing one does not).
 
 `kappaHat`'s type is stated through the syntactic category's hom-type
 `Hom (higherOrder A) (interpQuotRel (higherOrder A))`, definitionally the
@@ -62,12 +71,14 @@ keyed.
 D. Leivant, "Ramified recurrence and computational complexity III:
 Higher type recurrence and elementary complexity", Annals of Pure and
 Applied Logic 96 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`.
-The coercions `kappa`, kappa-hat, and `delta`, each defined by ramified
-recurrence and extensionally the identity, are section 2.4(1); every
-object sort denotes a copy of the base carrier in section 2.7. The Omega
-shift as a base substitution and the object-sort domain of kappa-hat are
-novel packaging on this development's realization (decision 8:
-`PolyFix.ind` recursion in place of Lean-native inductives).
+The auxiliary coercion kappa-hat, defined at every r-type by ramified
+recurrence through the pointwise constructor lifts `c_i^τ`, and the
+coercions `kappa` and `delta` between object types, each extensionally
+the identity, are section 2.4(1); every object sort denotes a copy of
+the base carrier in section 2.7. The Omega shift as a base substitution
+and the restriction to the object-sort instances of kappa-hat are novel
+packaging on this development's realization (decision 8: `PolyFix.ind`
+recursion in place of Lean-native inductives).
 
 ## Tags
 
@@ -99,10 +110,11 @@ def RType.omegaShift (t : RType) : RType :=
 
 /-- The step function of kappa-hat's defining recurrence at the
 constructor label `i` (Leivant III section 2.4(1)): an explicit definition
-applying the constructor at the object sort `τ` to the recursive results.
-The section 2.4(1) coercion recurrences reconstruct their recurrence
-argument constructor by constructor; the constructor operation at `τ`
-exists by the object-sort hypothesis `hτ`. -/
+applying the constructor at the object sort `τ` to the recursive results —
+the pointwise constructor lift `c_i^τ` of section 2.4(1), which at an
+object sort is the constructor operation itself. The kappa-hat recurrence
+reconstructs its recurrence argument constructor by constructor; the
+constructor operation at `τ` exists by the object-sort hypothesis `hτ`. -/
 def kappaHatStep (A : AlgSig) (τ : RType) (hτ : τ.IsObj) (i : A.B) :
     RIdent A (List.replicate (A.ar i) τ) τ :=
   RIdent.defn ⟨0, finZeroElim,
@@ -110,17 +122,19 @@ def kappaHatStep (A : AlgSig) (τ : RType) (hτ : τ.IsObj) (i : A.B) :
       (fun k => Tm.var k)⟩ finZeroElim
 
 /-- Leivant III section 2.4(1)'s auxiliary coercion kappa-hat,
-`kappa-hat_τ : Ω τ → τ`, as a schema identifier: the ramified monotonic
-recurrence whose recurrence argument sits at `Ω τ` and whose step function
-at each constructor applies that constructor at `τ` to the recursive
-results, reconstructing the argument; extensionally the identity on the
-carrier (`kappaHatIdent_interp`). The object-sort hypothesis `hτ` is the
-transcription-faithful domain: every object sort denotes a copy of the
-algebra's carrier (section 2.7), so `Ω τ` and `τ` denote the same carrier,
-and the constructor operations the step functions apply exist exactly at
-the object sorts; at an arrow sort, `Ω (σ → ρ)` denotes the carrier while
-`σ → ρ` denotes a function space, so no identity-realizing coercion
-exists. -/
+`kappa-hat_τ : Ω τ → τ`, at an object sort `τ`, as a schema identifier:
+the ramified monotonic recurrence whose recurrence argument sits at `Ω τ`
+and whose step function at each constructor applies that constructor at
+`τ` to the recursive results, reconstructing the argument; extensionally
+the identity on the carrier (`kappaHatIdent_interp`). The paper defines
+kappa-hat at every r-type through the pointwise constructor lifts
+`c_i^τ`; the object-sort hypothesis `hτ` selects the instances at which
+the lift is the constructor operation itself (every object sort denotes
+a copy of the algebra's carrier — section 2.7 — so `Ω τ` and `τ` denote
+the same carrier, and the constructor operations exist exactly at the
+object sorts). At an arrow sort, `Ω (σ → ρ)` denotes the carrier while
+`σ → ρ` denotes a function space, so kappa-hat there is not an identity
+and no identity-realizing coercion exists. -/
 def kappaHatIdent (A : AlgSig) (τ : RType) (hτ : τ.IsObj) :
     RIdent A [RType.omega τ] τ :=
   RIdent.mrec [] τ (fun i => kappaHatStep A τ hτ i)
@@ -136,13 +150,15 @@ def kappaHatTuple (A : AlgSig) (τ : RType) (hτ : τ.IsObj) :
       (fun k => Tm.var k))
     finZeroElim
 
-/-- Leivant III section 2.4(1)'s auxiliary coercion kappa-hat as a
-morphism `[Ω τ] ⟶ [τ]` of the syntactic category `RMRecCat A` at the
-singleton contexts: the class of `kappaHatTuple`. Defined by ramified
-recurrence (`kappaHatIdent`) and extensionally the identity on the carrier
-(`kappaHat_interp`); see `kappaHatIdent` for the object-sort domain.
-Whether the kappa-hat components assemble into a copoint of a shift
-endofunctor is spec open question 3, deliberately not claimed here. -/
+/-- Leivant III section 2.4(1)'s auxiliary coercion kappa-hat, at an
+object sort `τ`, as a morphism `[Ω τ] ⟶ [τ]` of the syntactic category
+`RMRecCat A` at the singleton contexts: the class of `kappaHatTuple`.
+Defined by ramified recurrence (`kappaHatIdent`) and extensionally the
+identity on the carrier (`kappaHat_interp`); see `kappaHatIdent` for the
+relation of the object-sort instances to the paper's kappa-hat, defined
+at every r-type. Whether the kappa-hat components assemble into a copoint
+of a shift endofunctor is spec open question 3, deliberately not claimed
+here. -/
 def kappaHat (A : AlgSig) (τ : RType) (hτ : τ.IsObj) :
     Hom (higherOrder A) (interpQuotRel (higherOrder A)) [RType.omega τ] [τ] :=
   Quotient.mk _ (kappaHatTuple A τ hτ)
