@@ -7,6 +7,7 @@ import GebLean.Ramified.RType
 import GebLean.Ramified.HigherOrder
 import GebLean.Ramified.OmegaShift
 import GebLean.Ramified.Examples
+import GebLean.Ramified.Algebras
 
 /-!
 # Ramified recurrence
@@ -28,7 +29,12 @@ sort-level Omega shift with the auxiliary coercion kappa-hat
 `1 + X` word algebra — the downward coercions `kappa` and `delta`,
 addition, multiplication, the second-order exponential `ramExp`, the
 `2_m` ladder `ramTwoPow` (aligned with `GebLean.tower`), and the size
-function, each with its interpretation lemma — are in `Examples`.
+function, each with its interpretation lemma — are in `Examples`. Phase 3
+instantiates the three canonical free-algebra signatures — the monadic
+word algebra `natAlgSig`, the polyadic binary-word algebra
+`binWordAlgSig`, and the binary-tree algebra `treeAlgSig` — with a smoke
+recurrence at each and the numeric equivalence
+`natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ` (`Algebras`).
 
 ## References
 

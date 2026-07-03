@@ -7,6 +7,7 @@ import GebLeanTests.Ramified.RType
 import GebLeanTests.Ramified.HigherOrder
 import GebLeanTests.Ramified.OmegaShift
 import GebLeanTests.Ramified.Examples
+import GebLeanTests.Ramified.Algebras
 
 /-!
 # Ramified-recurrence test index
