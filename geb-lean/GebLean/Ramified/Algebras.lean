@@ -153,7 +153,7 @@ def binLengthSteps : (i : binWordAlgSig.B) →
   | some _ => binLengthSucc
 
 /-- The word length over `binWordAlgSig`, a ramified monotonic recurrence
-(Leivant III section 2.1, eq. (4)) on the recurrence argument at `Ω o`:
+(Leivant III section 2.3, eq. (4)) on the recurrence argument at `Ω o`:
 `length ε = 0` and `length (b · w) = length w + 1`. The length is encoded in the
 same carrier as a unary chain of `false` letters, so its count under
 concatenation is additive. -/
@@ -173,7 +173,7 @@ def binTailClauses : (i : binWordAlgSig.B) →
   | some _ => binTailKeep
 
 /-- The first-letter destructor over `binWordAlgSig`, a flat recurrence (Leivant
-III section 2.1, eq. (5)) on the recurrence argument at `o`: `tail ε = ε` and
+III section 2.3, eq. (5)) on the recurrence argument at `o`: `tail ε = ε` and
 `tail (b · w) = w`. A case analysis reading the immediate subterm, with no
 recursive results. -/
 def binTail : RIdent binWordAlgSig [RType.o] RType.o :=
@@ -196,7 +196,7 @@ def treeSizeSteps : (i : treeAlgSig.B) →
   | true => treeSizeNode
 
 /-- The tree size over `treeAlgSig`, a ramified monotonic recurrence (Leivant
-III section 2.1, eq. (4)) on the recurrence argument at `Ω o`, mrec-shaped
+III section 2.3, eq. (4)) on the recurrence argument at `Ω o`, mrec-shaped
 exactly like the `natAlgSig` size function `ramSize`
 (`GebLean/Ramified/Examples.lean`): the step rebuilds the recurrence argument
 constructor by constructor from the recursive results, so `treeSize` is
@@ -216,7 +216,7 @@ def treeLeftClauses : (i : treeAlgSig.B) →
   | true => treeLeftKeep
 
 /-- The left-child destructor over `treeAlgSig`, a flat recurrence (Leivant III
-section 2.1, eq. (5)) on the recurrence argument at `o`: `leftChild (leaf) =
+section 2.3, eq. (5)) on the recurrence argument at `o`: `leftChild (leaf) =
 leaf` and `leftChild (node l r) = l`. A case analysis reading a subterm, with no
 recursive results. -/
 def treeLeftChild : RIdent treeAlgSig [RType.o] RType.o :=
