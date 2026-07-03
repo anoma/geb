@@ -90,9 +90,11 @@ cslib pinned `v4.29.0-rc6`), Lake, mathlib category theory
 in-repository polynomial-functor stack
 (`PolyFunctorBetweenCat`/`PolyEndo`, `GebLean/Polynomial.lean:956`,
 `GebLean/PolyAlg.lean:55`; `PolyFix` with initiality,
-`GebLean/PolyAlg.lean:176,:533`; coproducts,
-`GebLean/PolyUMorph.lean:422`), `jj` VCS, `markdownlint-cli2`,
-`doctoc`, `theoremsearch` / `arxiv` MCPs (gate investigations only).
+`GebLean/PolyAlg.lean:176,:533`; the free monad `PolyFreeM` with
+`polyFreeMBind` and its laws, `GebLean/PolyAlg.lean:3344,:3980,
+:3993-:4021`; coproducts, `GebLean/PolyUMorph.lean:422`), `jj` VCS,
+`markdownlint-cli2`, `doctoc`, `theoremsearch` / `arxiv` MCPs (gate
+investigations only).
 
 ## Global constraints
 
@@ -556,11 +558,12 @@ def natAlgSig : AlgSig
   it fails (missing declarations).
 
 - [ ] **Step 2: implement** `AlgSig`, `AlgSig.polyEndo`, `FreeAlg`
-  as `PolyFix`, and `FreeAlg.recurse` via `polyFixFold`, with
-  docstrings citing Leivant III section 2.1 eq. (1)
-  (DOI `10.1016/S0168-0072(98)00040-2`) and using the binding
-  vocabulary. `GebLean/Ramified.lean` starts as the directory index
-  importing `AlgSig`.
+  as `PolyFix`, and `FreeAlg.recurse` as the paramorphism of the
+  interface block (`polyFixFold` at the product carrier, or
+  `PolyFix.ind`), with docstrings citing Leivant III section 2.1
+  eq. (1) (DOI `10.1016/S0168-0072(98)00040-2`) and using the
+  binding vocabulary. `GebLean/Ramified.lean` starts as the
+  directory index importing `AlgSig`.
 
 - [ ] **Step 3: verify.** `lake test` passes; the new `#guard`s run.
 
