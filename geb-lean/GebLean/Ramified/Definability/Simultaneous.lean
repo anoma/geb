@@ -770,21 +770,26 @@ whose step at constructor `i` builds, as the value at selector `u`,
 `choose(u, step₁ᵢ …, step_mᵢ)`. In the glossary vocabulary, eq. (7) reduces
 the simultaneous family (eq. (6)) to the plain recurrence
 
-`f-hat (parameters, cᵢ (subterms), u) = choose (u, g-hat₁ᵢ, …, g-hat_mᵢ)`,
+`f-hat (u, parameters, cᵢ (subterms)) = choose (u, g-hat₁ᵢ, …, g-hat_mᵢ)`,
 
 where `g-hat_jᵢ` is the `j`-th component's step function applied to the
 parameters and the recursive calls of `f-hat` at instantiated selector values
-`b₁ … b_m`, and each component is recovered as `f_j = f-hat (b_j)` (footnote 6,
-p. 218, accompanies the display; its exact wording was not verifiable at
-execution time and the citation is by locator). Presentation adaptation (spec
+`b₁ … b_m`, and each component is recovered as `f_j = f-hat (b_j)` (the
+closing step of the Lemma 2 proof, p. 218). Footnote 6 (p. 218) states the
+same-type requirement — the simultaneously defined functions carry one common
+type, since the recurrence argument applies jointly to them — which grounds
+`SimulSteps`' single result sort `τ` across all components and the joint
+count argument. Presentation adaptation (spec
 s1.2 kind), recorded per the sub-plan's standing decision 5: a step of
 `RIdent.mrec` sees only its own identifier's recursive results at its own
 parameters, so eq. (7)'s selector-instantiated recursive calls `f-hat (…, b_j)`
 are inexpressible directly; the recurrence is instead realized function-valued
 — the recursive results carry the whole selector-to-value function at
 `o → τ`, the count argument sits at `Ω (o → τ)` rather than the paper's
-`Ω τ`, and the step functions extract components by applying the
-function-valued recursive results to selector numerals. The same monotonic
+`Ω τ`, the selector position is appended last in the auxiliary context
+(the paper's eq. (7) takes it first), and the step functions extract
+components by applying the function-valued recursive results to selector
+numerals. The same monotonic
 reading drops eq. (6)'s subterm arguments from the clause data
 (`SimulSteps`). -/
 def simulIdent {m : Nat} (hm : 0 < m) (params : List RType) (τ : RType)
