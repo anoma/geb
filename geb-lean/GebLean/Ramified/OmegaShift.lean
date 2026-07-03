@@ -608,4 +608,155 @@ def deltaIdent (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (θ : RType)
   cast (congrArg (fun s => RIdent A [s] RType.o) (RType.objTarget_of_isObj hθ))
     (deltaAux A b₀ h₀ θ)
 
+/-- The denotation of an explicit definition unfolds to the evaluation of its
+body against the model whose holes are read by the denotations of the referenced
+identifiers. A definitional reduction of `RIdent.interp` at a `defn` node. -/
+theorem RIdent.interp_defn {A : AlgSig} {Γ : List RType} {τ : RType}
+    (d : DefnShape A Γ τ)
+    (children : (j : Fin d.numHoles) → RIdent A (d.holeIdx j).1 (d.holeIdx j).2)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) :
+    (RIdent.defn d children).interp ρ
+      = d.body.eval (defnModel A d.numHoles d.holeIdx (fun j => (children j).interp)) ρ :=
+  rfl
+
+/-- Evaluation of an operation term applies the model's interpretation of the
+operation to the recursively evaluated arguments. A definitional reduction of
+`Tm.eval` at an operation node. -/
+theorem Tm.eval_op {S : Type} {sig : SortedSig S} {Γ : Ctx S} (M : SortedModel sig)
+    (ρ : M.Env Γ) (o : sig.Op)
+    (args : ∀ i : Fin (sig.arity o).length, Tm sig Γ ((sig.arity o).get i)) :
+    (Tm.op o args).eval M ρ = M.interpOp o (fun i => (args i).eval M ρ) :=
+  rfl
+
+/-- Evaluation of a variable term reads the environment at its position. A
+definitional reduction of `Tm.eval` at a variable node. -/
+theorem Tm.eval_var {S : Type} {sig : SortedSig S} {Γ : Ctx S} (M : SortedModel sig)
+    (ρ : M.Env Γ) (i : Fin Γ.length) : (Tm.var i).eval M ρ = ρ i :=
+  rfl
+
+/-- The curried arrow sort of a concatenated context splits as the currying of
+the prefix over the currying of the suffix: `curried (pre ++ post) ρ =
+curried pre (curried post ρ)`. The `List.foldr_append` law transported to
+`RType.curried`. -/
+theorem RType.curried_append (pre post : List RType) (ρ_ : RType) :
+    RType.curried (pre ++ post) ρ_ = RType.curried pre (RType.curried post ρ_) := by
+  simp only [RType.curried, List.foldr_append]
+
+/-- Casting a function value along a codomain-sort equality of an arrow sort and
+applying it equals applying it and casting the result. A cast-commutation fact
+local to the pointwise constructor lift. -/
+theorem cast_arrow_apply {A : AlgSig} {a b b' : RType} (h : b = b')
+    (f : RType.interp (FreeAlg A) (RType.arrow a b))
+    (x : RType.interp (FreeAlg A) a) :
+    (cast (congrArg (RType.interp (FreeAlg A)) (congrArg (RType.arrow a) h)) f) x
+      = cast (congrArg (RType.interp (FreeAlg A)) h) (f x) := by
+  subst h; rfl
+
+/-- Evaluation of an application term against a definition model reads the
+function-position value as a function and applies it to the argument-position
+value. A definitional reduction local to the pointwise constructor lift. -/
+theorem defnApp_eval {A : AlgSig} {n : Nat} {holeIdx : Fin n → List RType × RType}
+    {Γ : Ctx RType}
+    (ih : ∀ j : Fin n, (∀ i : Fin (holeIdx j).1.length,
+        RType.interp (FreeAlg A) ((holeIdx j).1.get i)) →
+        RType.interp (FreeAlg A) (holeIdx j).2)
+    (a b : RType) (c : Tm (defnSig A n holeIdx) Γ (RType.arrow a b))
+    (x : Tm (defnSig A n holeIdx) Γ a)
+    (ρ : (defnModel A n holeIdx ih).Env Γ) :
+    (defnApp a b c x).eval (defnModel A n holeIdx ih) ρ
+      = (c.eval (defnModel A n holeIdx ih) ρ) (x.eval (defnModel A n holeIdx ih) ρ) :=
+  rfl
+
+/-- Evaluation of the prefix-application chain: applying a combinator at the
+curried sort `curried (pre ++ post) ρ` to the prefix variables denotes the
+partial application chain `appChain` of the combinator's value over the prefix,
+transported along `RType.curried_append`. Proved by structural recursion on
+`pre` through `defnApp_eval` and the cast-commutation `cast_arrow_apply`. -/
+theorem appPrefixVars_eval {A : AlgSig} {n : Nat} {holeIdx : Fin n → List RType × RType}
+    {Γ : Ctx RType}
+    (ih : ∀ j : Fin n, (∀ i : Fin (holeIdx j).1.length,
+        RType.interp (FreeAlg A) ((holeIdx j).1.get i)) →
+        RType.interp (FreeAlg A) (holeIdx j).2)
+    (ρ_ : RType) (ρ : (defnModel A n holeIdx ih).Env Γ) :
+    (pre post : List RType) →
+    (c : Tm (defnSig A n holeIdx) Γ (RType.curried (pre ++ post) ρ_)) →
+    (vars : (k : Fin pre.length) → Tm (defnSig A n holeIdx) Γ (pre.get k)) →
+    (appPrefixVars ρ_ pre post c vars).eval (defnModel A n holeIdx ih) ρ
+      = appChain A pre (RType.curried post ρ_)
+          (cast (congrArg (RType.interp (FreeAlg A)) (RType.curried_append pre post ρ_))
+            (c.eval (defnModel A n holeIdx ih) ρ))
+          (fun k => (vars k).eval (defnModel A n holeIdx ih) ρ)
+  | [], _post, c, _vars => (eq_of_heq (cast_heq _ _)).symm
+  | a :: pre', post, c, vars => by
+    have hIH := appPrefixVars_eval ih ρ_ ρ pre' post
+      (defnApp a (RType.curried (pre' ++ post) ρ_) c (vars ⟨0, Nat.succ_pos _⟩))
+      (fun k => vars k.succ)
+    refine hIH.trans ?_
+    refine congrArg (fun X => appChain A pre' (RType.curried post ρ_) X
+      (fun k => (vars k.succ).eval (defnModel A n holeIdx ih) ρ)) ?_
+    rw [defnApp_eval]
+    exact (cast_arrow_apply (RType.curried_append pre' post ρ_)
+      (c.eval (defnModel A n holeIdx ih) ρ)
+      ((vars ⟨0, Nat.succ_pos _⟩).eval (defnModel A n holeIdx ih) ρ)).symm
+
+/-- The recurrence-context environment reads its parameter values at the
+left-injected positions. A fact local to the pointwise constructor lift. -/
+theorem childEnv_finAppL {C : RType → Type} {params : List RType} {σ : RType}
+    {n : Nat} (xvec : ∀ i : Fin params.length, C (params.get i))
+    (rest : Fin n → C σ) (i : Fin params.length) :
+    childEnv params σ n xvec rest (finAppL params (List.replicate n σ) i)
+      = cast (congrArg C (get_finAppL params (List.replicate n σ) i).symm) (xvec i) := by
+  unfold childEnv
+  have h : (finAppL params (List.replicate n σ) i).val < params.length := i.isLt
+  rw [dif_pos h]
+  exact eq_of_heq ((cast_heq _ _).trans (cast_heq _ _).symm)
+
+/-- The recurrence-context environment reads its recursive-result values at the
+right-injected positions. A fact local to the pointwise constructor lift. -/
+theorem childEnv_finAppR {C : RType → Type} {params : List RType} {σ : RType}
+    {n : Nat} (xvec : ∀ i : Fin params.length, C (params.get i))
+    (rest : Fin n → C σ) (j : Fin (List.replicate n σ).length) (hj : j.val < n) :
+    childEnv params σ n xvec rest (finAppR params (List.replicate n σ) j)
+      = cast (congrArg C (get_finAppR params (List.replicate n σ) j).symm)
+          (cast (congrArg C (get_replicate n σ j).symm) (rest ⟨j.val, hj⟩)) := by
+  unfold childEnv
+  have h : ¬ (finAppR params (List.replicate n σ) j).val < params.length := by
+    simp only [finAppR]; omega
+  rw [dif_neg h]
+  refine eq_of_heq (HEq.trans (cast_heq _ _) ?_)
+  refine HEq.trans ?_ (HEq.symm (HEq.trans (cast_heq _ _) (cast_heq _ _)))
+  exact heq_of_eq (congrArg rest (Fin.ext (by simp only [finAppR]; omega)))
+
+/-- A full application chain over `Γ ++ [σ]` splits as the prefix chain over `Γ`
+applied to the final argument, with the combinator transported along
+`RType.curried_append`. Proved by structural recursion on `Γ` through the
+cast-commutation `cast_arrow_apply`. -/
+theorem appChain_snoc (A : AlgSig) (σ ρ : RType) :
+    (Γ : List RType) →
+    (c : RType.interp (FreeAlg A) (RType.curried (Γ ++ [σ]) ρ)) →
+    (E : ∀ k : Fin (Γ ++ [σ]).length, RType.interp (FreeAlg A) ((Γ ++ [σ]).get k)) →
+    appChain A (Γ ++ [σ]) ρ c E
+      = (appChain A Γ (RType.arrow σ ρ)
+          (cast (congrArg (RType.interp (FreeAlg A)) (RType.curried_append Γ [σ] ρ)) c)
+          (fun i => cast (congrArg (RType.interp (FreeAlg A)) (get_finAppL Γ [σ] i))
+            (E (finAppL Γ [σ] i))))
+        (cast (congrArg (RType.interp (FreeAlg A)) (get_finAppR Γ [σ] ⟨0, Nat.zero_lt_one⟩))
+          (E (finAppR Γ [σ] ⟨0, Nat.zero_lt_one⟩)))
+  | [], c, E => by
+    change c (E ⟨0, Nat.zero_lt_one⟩) = _
+    refine congr ?_ ?_
+    · exact (eq_of_heq (cast_heq _ _)).symm
+    · exact (eq_of_heq (cast_heq _ _)).symm
+  | b :: Γ', c, E => by
+    change appChain A (Γ' ++ [σ]) ρ (c (E ⟨0, Nat.succ_pos _⟩)) (fun i => E i.succ) = _
+    rw [appChain_snoc A σ ρ Γ' (c (E ⟨0, Nat.succ_pos _⟩)) (fun i => E i.succ)]
+    refine congr (congr (congrArg _ ?_) ?_) ?_
+    · refine (cast_arrow_apply (RType.curried_append Γ' [σ] ρ) c
+        (E ⟨0, Nat.succ_pos _⟩)).symm.trans ?_
+      refine congrArg (cast _ c) ?_
+      exact (eq_of_heq (cast_heq _ _)).symm
+    · funext i
+      exact eq_of_heq ((cast_heq _ _).trans (cast_heq _ _).symm)
+    · exact eq_of_heq ((cast_heq _ _).trans (cast_heq _ _).symm)
+
 end GebLean.Ramified

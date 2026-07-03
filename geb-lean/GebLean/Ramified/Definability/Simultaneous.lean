@@ -459,12 +459,6 @@ theorem envLast_snocEnv {C : RType → Type} (Γ : List RType) (σ : RType)
   eq_of_heq ((cast_heq _ _).trans
     (snocEnv_heq_right Γ σ ρ x (finAppR Γ [σ] ⟨0, Nat.one_pos⟩) (Nat.le_add_right _ _)))
 
-/-- The curried sort of an appended context iterates the currying: the right
-fold of `RType.arrow` splits along the append (`List.foldr_append`). -/
-theorem RType.curried_append (Γ Δ : List RType) (τ : RType) :
-    RType.curried (Γ ++ Δ) τ = RType.curried Γ (RType.curried Δ τ) :=
-  List.foldr_append
-
 /-- Application commutes with a codomain-only transport of a function at an
 arrow sort: casting along `RType.arrow γ X = RType.arrow γ Y` and applying
 equals applying and casting along `X = Y`. -/
