@@ -11,6 +11,10 @@
   - [Consequence](#consequence)
 - [G2: LawvereGodelT* audit](#g2-lawveregodelt-audit)
 - [G3: landing choice](#g3-landing-choice)
+- [G4: Otto 1995](#g4-otto-1995)
+  - [Acquisition](#acquisition)
+  - [Overlap with spec s2.5 novelty claims](#overlap-with-spec-s25-novelty-claims)
+  - [Docstring precedent for Phases 1-2](#docstring-precedent-for-phases-1-2)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -203,3 +207,95 @@ Caveat: the ER landing (bounded recursion on Godel codes, the
 analysis shows the step function's natural presentation is ER-side
 arithmetic rather than a state-transition step; the reason for whichever
 landing is chosen is recorded at sub-plan time.
+
+## G4: Otto 1995
+
+Non-blocking gate (spec open question 6): obtain J. R. Otto,
+"Complexity Doctrines", and, if obtained, record its overlap with the
+multi-sorted packaging that spec s2.5 marks novel, fixing the precedent
+line for Phase 1-2 docstrings.
+
+Outcome: `obtained`; overlap `partial`.
+
+### Acquisition
+
+James R. Otto, Jr., "Complexity Doctrines", PhD thesis, Department of
+Mathematics and Statistics, McGill University, Montreal, June 13, 1995
+(supervisor M. Barr; ISBN 0-612-08143-5). Open access, no paywall or
+user assistance required. Located and retrieved 2026-07-02 via web
+search to McGill's institutional repository (the legacy eScholarship
+record `escholarship.mcgill.ca/concern/theses/8623j0800` redirects to
+the current Scholaris item
+`mcgill.scholaris.ca/items/23ac9a69-d406-4181-9e12-dda3e7c5c137`), DOI
+10.82308/7828. The item serves a 137-page OCR-layered scan produced
+from the National Library of Canada microform. ProQuest, WorldCat, and
+Internet Archive were not queried; the repository copy superseded them.
+No standalone published article by Otto restating the thesis was found.
+
+### Overlap with spec s2.5 novelty claims
+
+Structure of the thesis (from its table of contents and per-chapter
+introductions): a doctrine is "the models of a theory of theories";
+complexity classes are recovered as images, in the functor categories
+`set^2`, `set^V` (`V` the poset `→ ←`), or `set^3`, of categories
+initial in a complexity doctrine. Chapter 1 (linear time) works over
+the symmetric-monoidal (SM) doctrine and introduces height-graded
+sketch theories; Chapter 2 (P space) and Chapter 4 (Kalmar elementary)
+work over the finite-product (FP) doctrine extended by V- and
+3-comprehensions; Chapter 3 extends the locally-cartesian-closed (LCC)
+doctrine. All positive characterizations are first-order. The machine
+model throughout is the constant-tape multi-tape Turing machine.
+
+Two cross-cutting differences bear on every claim below. First, Otto's
+tiered systems are first-order: he characterizes linear time, linear
+space, P time, P space, and Kalmar elementary, descending (Chapter 4
+introduction, thesis p. 101; general introduction pp. xi-xii) from
+Bellantoni-Cook, Bellantoni, Cobham, Ritchie, and the Leivant-Marion
+poly-time/poly-space line ([Lei94] = Leivant, "Ramified recurrence and
+computational complexity I: Word algebras and poly-time", Feasible
+Mathematics II, Birkhauser 1994; [LM92], [LM95]). Leivant's higher-type
+system (Leivant III, APAL 96 (1999) 209-229, DOI
+10.1016/S0168-0072(98)00040-2), the object this workstream formalizes,
+postdates the 1995 thesis and is neither cited nor treated. Second,
+Otto's one higher-type experiment is a negative result: using Church
+numerals he shows (Abstract, thesis p. ix; introduction pp. xi-xii;
+Chapter 3) that LCC comprehensions "do not provide enough control over
+higher order types to characterize complexity classes". Otto therefore
+does not anticipate the workstream's central object, a positive
+higher-type (`RMRec-omega`) characterization of elementary complexity;
+he characterizes the same class (Kalmar elementary) by a first-order
+route.
+
+| s2.5 novelty claim | Otto 1995 | Pointer |
+| --- | --- | --- |
+| Multi-sorted presentation of `RMRec-omega` and its syntactic category (interpretative equality) | Partial precedent for the general device, not the object | Height-graded multi-sorted equational theory: sketch theory with `height : sorts -> N`, unary operators strictly decreasing height, finitely many per sort; models are set-valued sketches; almost-equational specification via sketches and orthogonality; initial models (§1.1.1, thesis pp. 3-4; §1.A "Sketches as Presheaves" p. 34; §1.B "Initial Models" p. 35). Differs: Otto's operators are unary with no constants and the grading is a well-founded height on sorts; for the higher doctrines tiers are separate FP-category copies glued by a comprehension 2-functor, not sorts within one theory; the workstream uses general finite-product arities and a syntactic category (`SynCat`) under interpretative equality, not set-valued sketch models. |
+| Theorem 14 (1)-(2) as an object-sort-quantified definability theorem plus a soundness functor into `LawvereERCat` | Methodological precedent; the specific statement not touched | Complexity classes as images of initial doctrine-categories; the Kalmar-elementary case (the class this workstream targets) is a completeness/soundness pair: doctrines `R`, `C`, `C'` (§4.2, thesis pp. 107-112), "Enough Maps" (definability: the image is big enough to include E space, §4.3 p. 113), "Not Too Many Maps" (soundness: the image in `set^3` of an initial category in `C'` is within E space, §4.4 p. 114). Differs: Otto's target is the functor category `set^3` and an E-space multi-tape-Turing-machine model, not a Lawvere theory of ER functions; there is no object-sort-quantified definability statement in Leivant's Theorem-14 form and no soundness functor into a Lawvere theory, only a containment of images. |
+| Data-types-a-la-carte factoring of signatures and the W-type realization of syntax | Not touched | Otto's syntax is sketch-theoretic and 2-categorical (sketches; comprehensions as 2-functors; LCC sketches, §3.1.2). No coproduct-of-signature-functors factoring (Swierstra, "Data types a la carte", JFP 18 (2008) 423-436, DOI 10.1017/S0956796808006758) and no initial-algebra/W-type realization of terms. No citation required. |
+| Omega-shift functor and analysis of its structure (optional, statement-level) | Structural precedent in the comprehension apparatus | Comprehensions are 2-functors from `end(n)°` on a finite poset (`M_3 = end(3)°`) into the 2-category of FP categories, with tier-raising 1-cell generators `T_i`, tier-lowering `G_i`, and unit/counit 2-cells `G_i -> id -> T_i` (§4.1.1, thesis p. 103; §1.3, §2.1.5), descending from Lawvere's comprehension-as-adjoint ([Law70], "Equality in hyperdoctrines and comprehension schema as an adjoint functor", Applications of Categorical Algebra, AMS 1970) and Pavlovic fibrations. Differs: Otto's shift is a modality/comodality pair internal to one ambient FP/SM/LCC category indexed by a finite poset (closer to a graded (co)monad or a Lawvere comprehension) and is load-bearing for his whole construction; the workstream's Omega-shift is a statement-level functor on the `RMRec-omega` syntactic category, inherited optional from spec revision 1. |
+
+### Docstring precedent for Phases 1-2
+
+The precedent line below is placed in the `## References` section of
+the Phase 1 presentation / syntactic-category module and the Phase 2
+definability-statement module (the two carrying the s2.5-novel
+packaging).
+
+Categorical/doctrinal treatment of tiered (ramified) recurrence via
+height-graded multi-sorted equational theories, with complexity classes
+as images of initial doctrine-categories: J. R. Otto, "Complexity
+Doctrines", PhD thesis, McGill University, 1995, DOI 10.82308/7828
+(§1.1 sketch theories; Chapter 4 the Kalmar-elementary doctrines
+`R`/`C`/`C'` with the enough-maps / not-too-many-maps pair). The present
+development differs in: (i) it formalizes Leivant's higher-type system
+`RMRec-omega` (Leivant III, APAL 96 (1999) 209-229, DOI
+10.1016/S0168-0072(98)00040-2), which postdates Otto and which Otto does
+not treat, his positive characterizations being first-order and his
+higher-type LCC-comprehension attempt a negative result; (ii) it uses a
+multi-sorted Lawvere theory with a syntactic category under
+interpretative equality and a soundness functor into `LawvereERCat`,
+rather than set-valued sketch models and images in `set^2`/`set^V`/
+`set^3`; (iii) it realizes syntax as W-types of polynomial endofunctors,
+a device with no counterpart in Otto.
+
+The data-types-a-la-carte / W-type packaging (s2.5 claim 3) carries no
+Otto precedent and is cited to its own source at point of use.
