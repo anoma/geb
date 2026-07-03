@@ -127,6 +127,7 @@ import GebLean.PshSpanBicategory
 import GebLean.PshRelEdgeExp
 import GebLean.PshRelEdgeFunctionalize
 import GebLean.PshRelEdgeLimits
+import GebLean.Ramified
 import GebLean.PshRelEdgeIdentPreservation
 import GebLean.PshRelEdgeInclusion
 import GebLean.PshRelEdgeSeparation
