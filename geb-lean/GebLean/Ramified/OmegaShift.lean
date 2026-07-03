@@ -759,4 +759,102 @@ theorem appChain_snoc (A : AlgSig) (σ ρ : RType) :
       exact eq_of_heq ((cast_heq _ _).trans (cast_heq _ _).symm)
     · exact eq_of_heq ((cast_heq _ _).trans (cast_heq _ _).symm)
 
+/-- The environment over `Γ ++ [σ]` extending an environment over `Γ` by one
+value at the end. Defined by recursion on `Γ` (through `Fin.cons`) so that the
+cons step is definitional, avoiding position-arithmetic transports. Novel
+packaging. -/
+def snocEnv {C : RType → Type} : (Γ : List RType) → (σ : RType) →
+    (∀ v : Fin Γ.length, C (Γ.get v)) → C σ →
+    ∀ k : Fin (Γ ++ [σ]).length, C ((Γ ++ [σ]).get k)
+  | [], _σ, _ρ, x => Fin.cons x finZeroElim
+  | _γ :: Γ', σ, ρ, x => Fin.cons (ρ 0) (snocEnv Γ' σ (fun v => ρ v.succ) x)
+
+/-- The extended environment reads the appended value at every position at or
+beyond `Γ.length`, heterogeneously (the append transport erased). -/
+theorem snocEnv_heq_right {C : RType → Type} : (Γ : List RType) → (σ : RType) →
+    (ρ : ∀ v : Fin Γ.length, C (Γ.get v)) → (x : C σ) →
+    (k : Fin (Γ ++ [σ]).length) → Γ.length ≤ k.val →
+    snocEnv Γ σ ρ x k ≍ x
+  | [], _σ, _ρ, _x, k, _hk => by
+    induction k using Fin.cases with
+    | zero => exact HEq.rfl
+    | succ k' => exact k'.elim0
+  | _γ :: Γ', σ, ρ, x, k, hk => by
+    induction k using Fin.cases with
+    | zero => exact absurd hk (by simp)
+    | succ k' =>
+      refine (heq_of_eq (Fin.cons_succ _ _ k')).trans ?_
+      exact snocEnv_heq_right Γ' σ (fun v => ρ v.succ) x k' (by simpa using hk)
+
+/-- The extended environment reads the source environment at every position
+below `Γ.length`, heterogeneously (the append transport erased). -/
+theorem snocEnv_heq_left {C : RType → Type} : (Γ : List RType) → (σ : RType) →
+    (ρ : ∀ v : Fin Γ.length, C (Γ.get v)) → (x : C σ) → (i : Fin Γ.length) →
+    (k : Fin (Γ ++ [σ]).length) → k.val = i.val →
+    snocEnv Γ σ ρ x k ≍ ρ i
+  | [], _σ, _ρ, _x, i, _k, _hk => i.elim0
+  | _γ :: Γ', σ, ρ, x, i, k, hk => by
+    induction k using Fin.cases with
+    | zero =>
+      obtain ⟨iv, hiv⟩ := i
+      obtain rfl : iv = 0 := by simpa using hk.symm
+      exact HEq.rfl
+    | succ k' =>
+      obtain ⟨iv, hiv⟩ := i
+      cases iv with
+      | zero => exact absurd hk (by simp)
+      | succ iv' =>
+        refine (heq_of_eq (Fin.cons_succ _ _ k')).trans ?_
+        exact snocEnv_heq_left Γ' σ (fun v => ρ v.succ) x
+          ⟨iv', by have h := hiv; simp only [List.length_cons] at h; omega⟩ k'
+          (by simpa using hk)
+
+/-- Currying at an append transports to the currying of the extended
+environment: the transport of `curryInterp` along `RType.curried_append`
+curries the source context and consumes the appended sort as the final
+argument, read through `snocEnv`. -/
+theorem cast_curryInterp_snoc (A : AlgSig) : (Γ : List RType) → (σ τ : RType) →
+    (g : (∀ k : Fin (Γ ++ [σ]).length,
+        RType.interp (FreeAlg A) ((Γ ++ [σ]).get k)) → RType.interp (FreeAlg A) τ) →
+    cast (congrArg (RType.interp (FreeAlg A)) (RType.curried_append Γ [σ] τ))
+        (curryInterp A (Γ ++ [σ]) τ g)
+      = curryInterp A Γ (RType.arrow σ τ) (fun ρ x => g (snocEnv Γ σ ρ x))
+  | [], σ, τ, g =>
+    eq_of_heq ((cast_heq _ _).trans (heq_of_eq (funext (fun _x => rfl))))
+  | γ :: Γ', σ, τ, g => by
+    funext a
+    refine (cast_arrow_apply (A := A)
+      (RType.curried_append Γ' [σ] τ)
+      (curryInterp A ((γ :: Γ') ++ [σ]) τ g) a).trans ?_
+    exact cast_curryInterp_snoc A Γ' σ τ (fun ρ' => g (Fin.cons a ρ'))
+
+theorem cLiftArrow_interp (A : AlgSig) (σ ρ : RType) (i : A.B)
+    (ihρ : RIdent A (List.replicate (A.ar i) ρ) ρ)
+    (phi : ∀ j : Fin (List.replicate (A.ar i) (RType.arrow σ ρ)).length,
+      RType.interp (FreeAlg A) ((List.replicate (A.ar i) (RType.arrow σ ρ)).get j))
+    (x : RType.interp (FreeAlg A) σ) :
+    (cLiftArrow A σ ρ i ihρ).interp phi x
+      = ihρ.interp (fun j =>
+          cast (congrArg (RType.interp (FreeAlg A)) (get_replicate (A.ar i) ρ j).symm)
+            ((cast (congrArg (RType.interp (FreeAlg A))
+                (get_replicate (A.ar i) (RType.arrow σ ρ)
+                  (Fin.cast (by rw [List.length_replicate, List.length_replicate]) j)))
+              (phi (Fin.cast (by rw [List.length_replicate, List.length_replicate]) j))) x)) := by
+  refine (congrArg (fun f => f x)
+    (appPrefixVars_eval _ ρ phi _ [σ] _ (fun k => Tm.var k))).trans ?_
+  refine (congrFun (congrArg (fun z => appChain A (List.replicate (A.ar i) (RType.arrow σ ρ))
+      (RType.arrow σ ρ) z phi)
+      (cast_curryInterp_snoc A (List.replicate (A.ar i) (RType.arrow σ ρ)) σ ρ _)) x).trans ?_
+  refine (congrFun (appChain_curryInterp A (List.replicate (A.ar i) (RType.arrow σ ρ))
+      (RType.arrow σ ρ) _ phi) x).trans ?_
+  refine congrArg ihρ.interp (funext fun j => ?_)
+  change Tm.eval _ _ (Tm.reind _ (defnApp _ _ _ _)) = _
+  erw [Tm.eval_transport, defnApp_eval, Tm.eval_transport, Tm.eval_transport,
+    Tm.eval_var, Tm.eval_var]
+  refine congrArg (cast _) (congr ?_ ?_)
+  · exact eq_of_heq ((cast_heq _ _).trans
+      ((snocEnv_heq_left _ σ phi x _ _ rfl).trans (cast_heq _ _).symm))
+  · exact eq_of_heq ((cast_heq _ _).trans
+      (snocEnv_heq_right _ σ phi x _ (Nat.le_add_right _ _)))
+
 end GebLean.Ramified

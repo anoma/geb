@@ -392,56 +392,6 @@ theorem chooseIdent_interp_ge : (m : Nat) → (τ : RType) → (z : FreeAlg natA
         ((ramCase_interp τ (y 0) _ true _).trans
           (chooseIdent_interp_ge m τ _ (fun k => y k.succ) j' (by omega) rfl))
 
-/-- The environment over `Γ ++ [σ]` extending an environment over `Γ` by one
-value at the end. Defined by recursion on `Γ` (through `Fin.cons`) so that the
-cons step is definitional, avoiding position-arithmetic transports. Novel
-packaging. -/
-def snocEnv {C : RType → Type} : (Γ : List RType) → (σ : RType) →
-    (∀ v : Fin Γ.length, C (Γ.get v)) → C σ →
-    ∀ k : Fin (Γ ++ [σ]).length, C ((Γ ++ [σ]).get k)
-  | [], _σ, _ρ, x => Fin.cons x finZeroElim
-  | _γ :: Γ', σ, ρ, x => Fin.cons (ρ 0) (snocEnv Γ' σ (fun v => ρ v.succ) x)
-
-/-- The extended environment reads the appended value at every position at or
-beyond `Γ.length`, heterogeneously (the append transport erased). -/
-theorem snocEnv_heq_right {C : RType → Type} : (Γ : List RType) → (σ : RType) →
-    (ρ : ∀ v : Fin Γ.length, C (Γ.get v)) → (x : C σ) →
-    (k : Fin (Γ ++ [σ]).length) → Γ.length ≤ k.val →
-    snocEnv Γ σ ρ x k ≍ x
-  | [], _σ, _ρ, _x, k, _hk => by
-    induction k using Fin.cases with
-    | zero => exact HEq.rfl
-    | succ k' => exact k'.elim0
-  | _γ :: Γ', σ, ρ, x, k, hk => by
-    induction k using Fin.cases with
-    | zero => exact absurd hk (by simp)
-    | succ k' =>
-      refine (heq_of_eq (Fin.cons_succ _ _ k')).trans ?_
-      exact snocEnv_heq_right Γ' σ (fun v => ρ v.succ) x k' (by simpa using hk)
-
-/-- The extended environment reads the source environment at every position
-below `Γ.length`, heterogeneously (the append transport erased). -/
-theorem snocEnv_heq_left {C : RType → Type} : (Γ : List RType) → (σ : RType) →
-    (ρ : ∀ v : Fin Γ.length, C (Γ.get v)) → (x : C σ) → (i : Fin Γ.length) →
-    (k : Fin (Γ ++ [σ]).length) → k.val = i.val →
-    snocEnv Γ σ ρ x k ≍ ρ i
-  | [], _σ, _ρ, _x, i, _k, _hk => i.elim0
-  | _γ :: Γ', σ, ρ, x, i, k, hk => by
-    induction k using Fin.cases with
-    | zero =>
-      obtain ⟨iv, hiv⟩ := i
-      obtain rfl : iv = 0 := by simpa using hk.symm
-      exact HEq.rfl
-    | succ k' =>
-      obtain ⟨iv, hiv⟩ := i
-      cases iv with
-      | zero => exact absurd hk (by simp)
-      | succ iv' =>
-        refine (heq_of_eq (Fin.cons_succ _ _ k')).trans ?_
-        exact snocEnv_heq_left Γ' σ (fun v => ρ v.succ) x
-          ⟨iv', by have h := hiv; simp only [List.length_cons] at h; omega⟩ k'
-          (by simpa using hk)
-
 /-- Reading the recurrence parameters off an extended environment recovers the
 source environment. -/
 theorem envHead_snocEnv {C : RType → Type} (Γ : List RType) (σ : RType)
@@ -458,15 +408,6 @@ theorem envLast_snocEnv {C : RType → Type} (Γ : List RType) (σ : RType)
     envLast Γ σ (snocEnv Γ σ ρ x) = x :=
   eq_of_heq ((cast_heq _ _).trans
     (snocEnv_heq_right Γ σ ρ x (finAppR Γ [σ] ⟨0, Nat.one_pos⟩) (Nat.le_add_right _ _)))
-
-/-- Application commutes with a codomain-only transport of a function at an
-arrow sort: casting along `RType.arrow γ X = RType.arrow γ Y` and applying
-equals applying and casting along `X = Y`. -/
-theorem interp_arrow_cast_apply {C : Type} {γ X Y : RType} (e : X = Y)
-    (f : RType.interp C (RType.arrow γ X)) (a : RType.interp C γ) :
-    cast (congrArg (RType.interp C) (congrArg (RType.arrow γ) e)) f a
-      = cast (congrArg (RType.interp C) e) (f a) := by
-  subst e; rfl
 
 /-- Clause data for an `m`-fold ramified simultaneous (monotonic) recurrence at
 result sort `τ` with parameters `params` (Leivant III section 2.6, eq. (6),
@@ -644,25 +585,6 @@ theorem appChainVarsTm_eval {n : Nat} {hI : Fin n → List RType × RType}
         (ρ (pos v.succ)))) ?_
     exact congrArg (t.eval (defnModel natAlgSig n hI ih) ρ)
       (Tm.eval_transport (defnModel natAlgSig n hI ih) ρ (hpos 0) (Tm.var (pos 0)))
-
-/-- Currying at an append transports to the currying of the extended
-environment: the transport of `curryInterp` along `RType.curried_append`
-curries the source context and consumes the appended sort as the final
-argument, read through `snocEnv`. -/
-theorem cast_curryInterp_snoc (A : AlgSig) : (Γ : List RType) → (σ τ : RType) →
-    (g : (∀ k : Fin (Γ ++ [σ]).length,
-        RType.interp (FreeAlg A) ((Γ ++ [σ]).get k)) → RType.interp (FreeAlg A) τ) →
-    cast (congrArg (RType.interp (FreeAlg A)) (RType.curried_append Γ [σ] τ))
-        (curryInterp A (Γ ++ [σ]) τ g)
-      = curryInterp A Γ (RType.arrow σ τ) (fun ρ x => g (snocEnv Γ σ ρ x))
-  | [], σ, τ, g =>
-    eq_of_heq ((cast_heq _ _).trans (heq_of_eq (funext (fun _x => rfl))))
-  | γ :: Γ', σ, τ, g => by
-    funext a
-    refine (interp_arrow_cast_apply (C := FreeAlg A)
-      (RType.curried_append Γ' [σ] τ)
-      (curryInterp A ((γ :: Γ') ++ [σ]) τ g) a).trans ?_
-    exact cast_curryInterp_snoc A Γ' σ τ (fun ρ' => g (Fin.cons a ρ'))
 
 /-- The context and result sort of the identifier a simultaneous `mrec` step
 references: the simultaneous auxiliary at the step context extended by the
