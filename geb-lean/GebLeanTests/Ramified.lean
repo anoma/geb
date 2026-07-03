@@ -4,6 +4,7 @@ import GebLeanTests.Ramified.Term
 import GebLeanTests.Ramified.Interp
 import GebLeanTests.Ramified.SynCat
 import GebLeanTests.Ramified.RType
+import GebLeanTests.Ramified.HigherOrder
 
 /-!
 # Ramified-recurrence test index

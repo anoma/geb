@@ -4,6 +4,7 @@ import GebLean.Ramified.Term
 import GebLean.Ramified.Interp
 import GebLean.Ramified.SynCat
 import GebLean.Ramified.RType
+import GebLean.Ramified.HigherOrder
 
 /-!
 # Ramified recurrence
@@ -16,7 +17,8 @@ multi-sorted signatures with the constructor summand (`SortedSig`), the
 sorted term layer with its clone laws (`Term`), sorted models with the
 interpretative setoid (`Interp`), and the generic syntactic category with
 products (`SynCat`). Phase 2 opens the higher-order system with the
-ramified types and their object sorts (`RType`).
+ramified types and their object sorts (`RType`) and the higher-order
+presentation with schema-generated identifiers (`HigherOrder`).
 
 ## References
 
