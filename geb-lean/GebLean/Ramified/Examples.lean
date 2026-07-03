@@ -411,64 +411,81 @@ theorem ramMul_interp (x y : Nat) :
       = x * y := by
   rw [ramMul_interp_carrier, freeAlgToNat_natToFreeAlg, freeAlgToNat_natToFreeAlg]
 
-/-- The size clause at the nullary constructor: return `0`. -/
-def sizeZeroClause : RIdent natAlgSig [] RType.o :=
+/-- The size function's step at the nullary constructor: return zero. -/
+def sizeZeroStep : RIdent natAlgSig [] RType.o :=
   RIdent.defn ⟨0, finZeroElim, tmZero⟩ finZeroElim
 
-/-- The size clause at the unary constructor: the successor of the subterm. Over
-`1 + X` this reconstructs the recurrence argument, so the size function is the
-identity. -/
-def sizeSuccClause : RIdent natAlgSig [RType.o] RType.o :=
+/-- The size function's step at the unary constructor: the successor of the
+recursive result. Over `1 + X` the recursive result equals the count of the
+subterm, so the size function is the identity. -/
+def sizeSuccStep : RIdent natAlgSig [RType.o] RType.o :=
   RIdent.defn ⟨0, finZeroElim, tmSucc (Tm.var 0)⟩ finZeroElim
 
-/-- The size clauses: `0` at the nullary constructor, the successor of the
-subterm at the unary constructor. -/
-def sizeClauses : (i : Bool) →
+/-- The size function's step functions: zero at the nullary constructor, the
+successor of the recursive result at the unary constructor. -/
+def sizeSteps : (i : Bool) →
     RIdent natAlgSig ([] ++ List.replicate (natAlgSig.ar i) RType.o) RType.o
-  | false => sizeZeroClause
-  | true => sizeSuccClause
+  | false => sizeZeroStep
+  | true => sizeSuccStep
 
-/-- Leivant III section 2.4(6)'s size function `sz`, as a flat recurrence on `o`.
-Over the `1 + X` word algebra the clauses reconstruct the recurrence argument,
-so `ramSize` is extensionally the identity on `o`. -/
-def ramSize : RIdent natAlgSig [RType.o] RType.o :=
-  RIdent.frec [] RType.o sizeClauses
+/-- Leivant III section 2.4(6)'s size function `sz` (DOI
+`10.1016/S0168-0072(98)00040-2`), as a ramified monotonic recurrence (eq. (4))
+with recurrence argument at `Ω o` and recursive result at `o`: `sz (0) = 0` and
+`sz (n + 1) = sz (n) + 1`. Over the `1 + X` word algebra the recursive result
+rebuilds the recurrence argument at each step, so `ramSize` is extensionally
+the identity on `o` (`ramSize_interp`). The primary text's exact typing for
+`sz` was not verifiable at execution time; the `mrec` shape adopted here
+follows the paper's general recurrence schema eq. (4) and the spec's
+transcription row for `sz`. -/
+def ramSize : RIdent natAlgSig [RType.omega RType.o] RType.o :=
+  RIdent.mrec [] RType.o sizeSteps
 
-/-- The environment at the size function's context `[o]`. -/
+/-- The environment at the size function's context `[Ω o]`. -/
 def sizeEnv (t : FreeAlg natAlgSig) :
-    ∀ i : Fin ([RType.o] : Ctx RType).length,
-      RType.interp (FreeAlg natAlgSig) (([RType.o] : Ctx RType).get i) :=
+    ∀ i : Fin ([RType.omega RType.o] : Ctx RType).length,
+      RType.interp (FreeAlg natAlgSig) (([RType.omega RType.o] : Ctx RType).get i) :=
   Fin.cons t finZeroElim
 
-/-- The size function's flat recurrence read numerically: it preserves the
-count. Proved by cases on the top constructor via `PolyFix.ind`; the clauses
-rebuild the node, so no recursive call is consulted. -/
+/-- The size function's recurrence read numerically: it preserves the count.
+Proved by structural induction on `s` via `PolyFix.ind`; the successor step
+reads the recursive result, which the induction hypothesis identifies with the
+count of the immediate subterm. -/
 theorem freeAlgToNat_ramSize_recurse
     (pe : ∀ i : Fin ([] : Ctx RType).length,
       RType.interp (FreeAlg natAlgSig) (([] : Ctx RType).get i))
     (s : FreeAlg natAlgSig) :
     freeAlgToNat (FreeAlg.recurse (A := natAlgSig) (P := Unit)
-        (fun i _ sub _phi =>
-          (sizeClauses i).interp
-            (childEnv [] RType.o (natAlgSig.ar i) pe (fun j => sub j))) () s)
+        (fun i _ _sub phi =>
+          (sizeSteps i).interp
+            (childEnv [] RType.o (natAlgSig.ar i) pe phi)) () s)
       = freeAlgToNat s := by
   refine PolyFix.ind (P := natAlgSig.polyEndo)
     (motive := fun {_} s =>
       freeAlgToNat (FreeAlg.recurse (A := natAlgSig) (P := Unit)
-          (fun i _ sub _phi =>
-            (sizeClauses i).interp
-              (childEnv [] RType.o (natAlgSig.ar i) pe (fun j => sub j))) () s)
+          (fun i _ _sub phi =>
+            (sizeSteps i).interp
+              (childEnv [] RType.o (natAlgSig.ar i) pe phi)) () s)
         = freeAlgToNat s)
-    (fun b _children _ihc => ?_) s
-  cases b <;> rfl
+    (fun b children ihc => ?_) s
+  cases b with
+  | false => rfl
+  | true =>
+    have h := ihc ⟨0, by decide⟩
+    change freeAlgToNat (FreeAlg.recurse (A := natAlgSig) (P := Unit)
+        (fun i _ _sub phi =>
+          (sizeSteps i).interp
+            (childEnv [] RType.o (natAlgSig.ar i) pe phi)) ()
+        (children ⟨0, by decide⟩)) + 1
+      = freeAlgToNat (children ⟨0, by decide⟩) + 1
+    rw [h]
 
 /-- Leivant III section 2.4(6): the size function denotes the identity on `o`
 over the `1 + X` word algebra. `freeAlgToNat` of the denotation is the count of
-the recurrence argument. -/
+the recurrence argument, entering at `Ω o`. -/
 theorem ramSize_interp (t : FreeAlg natAlgSig) :
     freeAlgToNat (ramSize.interp (sizeEnv t)) = freeAlgToNat t :=
-  freeAlgToNat_ramSize_recurse (envHead [] RType.o (sizeEnv t))
-    (envLast [] RType.o (sizeEnv t))
+  freeAlgToNat_ramSize_recurse (envHead [] (RType.omega RType.o) (sizeEnv t))
+    (envLast [] (RType.omega RType.o) (sizeEnv t))
 
 /-- The first-order function sort `o → o`, at which the exponentiation
 identifier `ramExp` and the clauses of its second-order recurrence take their

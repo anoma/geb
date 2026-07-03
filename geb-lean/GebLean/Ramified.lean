@@ -24,8 +24,11 @@ presentation with schema-generated identifiers (`HigherOrder`), and the
 sort-level Omega shift with the auxiliary coercion kappa-hat
 (`OmegaShift`). The worked examples of Leivant III section 2.4 over the
 `1 + X` word algebra — the downward coercions `kappa` and `delta`,
-addition, multiplication, and the size function, each with its
-interpretation lemma — are in `Examples`.
+addition, multiplication, the second-order exponential `ramExp`, the
+`2_m` ladder `ramTwoPow` (aligned with `GebLean.tower`), and the size
+function, each with its interpretation lemma — are in `Examples`,
+together with the numeric reading `natToFreeAlg`/`freeAlgToNat` those
+lemmas are stated against.
 
 ## References
 
