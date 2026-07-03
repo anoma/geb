@@ -108,12 +108,36 @@ variable. -/
 abbrev succMor : (ctxO : RMRecCat A) ⟶ ctxO :=
   Quotient.mk _
     (Fin.cons
-      (Tm.op (sig := (higherOrder A).sig) (Sum.inl (Sum.inl (oObj, true)))
+      (Tm.op (sig := (higherOrder A).sig) (Sum.inl (Sum.inl (Sum.inl (oObj, true))))
         (Fin.cons (Tm.var (sig := (higherOrder A).sig) 0) finZeroElim))
       finZeroElim : HomTuple (higherOrder A) ctxO ctxO)
 
 -- The Phase 1 `Category` instance fires on the `RMRecCat` abbreviation.
 example : 𝟙 ctxO ≫ succMor = succMor := Category.id_comp _
 example : succMor ≫ 𝟙 ctxO = succMor := Category.comp_id _
+
+/-- The application of the doubling identifier's constant to the sole variable:
+a term over `(higherOrder A).sig` that partially saturates the constant (a value
+at the curried sort `Ω o → o`) by the application former, at the doubling
+recurrence-argument context `[Ω o]`. -/
+def doublingConstApp :
+    Tm (higherOrder A).sig [RType.omega RType.o] RType.o :=
+  Tm.op (sig := (higherOrder A).sig)
+    (Sum.inl (Sum.inl (Sum.inr (RType.omega RType.o, RType.o))))
+    (Fin.cons
+      (Tm.op (sig := (higherOrder A).sig)
+        (Sum.inr ⟨[RType.omega RType.o], RType.o, doubling⟩) finZeroElim)
+      (Fin.cons (Tm.var 0) finZeroElim))
+
+-- Coherence at a concrete instance: the doubling constant applied via the
+-- application former denotes the same value as the saturated doubling operation.
+example (n : Nat) :
+    (doublingConstApp).eval (standardModel (higherOrder A)) (envDouble n)
+      = doubling.interp (envDouble n) := by
+  simpa [doublingConstApp, doubling] using
+    (RIdent.interp_eq_appChain_curryInterp doubling (envDouble n)).symm
+
+-- The doubling constant applied via the application former: `2 * 3 = 6`.
+#guard faToNat ((doublingConstApp).eval (standardModel (higherOrder A)) (envDouble 3)) = 6
 
 end GebLeanTests.Ramified.HigherOrderTest

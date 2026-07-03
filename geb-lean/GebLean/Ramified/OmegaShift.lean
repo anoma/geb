@@ -132,7 +132,7 @@ def kappaHatTuple (A : AlgSig) (τ : RType) (hτ : τ.IsObj) :
     HomTuple (higherOrder A) [RType.omega τ] [τ] :=
   Fin.cons
     (Tm.op (sig := (higherOrder A).sig)
-      (Sum.inr ⟨[RType.omega τ], τ, kappaHatIdent A τ hτ⟩)
+      (Sum.inl (Sum.inr ⟨[RType.omega τ], τ, kappaHatIdent A τ hτ⟩))
       (fun k => Tm.var k))
     finZeroElim
 

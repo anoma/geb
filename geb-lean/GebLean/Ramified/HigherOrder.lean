@@ -39,9 +39,25 @@ data-types-a-la-carte assembly reuses `SortedSig.sum`
   eq. (5)).
 * `RIdent.interp` — the denotation of an identifier as a function on the
   standard carriers.
-* `identSig` — the identifier summand: operations are the identifiers.
+* `RType.curried` — the curried arrow sort `σ₁ → ⋯ → σₙ → τ` of a context and
+  result sort.
+* `curryInterp` — the currying of an identifier's denotation into the iterated
+  function space at its curried sort.
+* `appChain` — the iterated application of a value at a curried sort to an
+  argument environment.
+* `identSig` — the saturated identifier summand: operations are the identifiers,
+  each of its context as arity and result sort as result.
+* `identConstSig` — the identifier-constant summand: one nullary operation per
+  identifier, of its curried arrow sort as result.
 * `higherOrder` — the higher-order presentation over `A`.
 * `RMRecCat` — the syntactic category of the higher-order system.
+
+## Main statements
+
+* `appChain_curryInterp` — the application chain inverts the currying.
+* `RIdent.interp_eq_appChain_curryInterp` — coherence: the saturated
+  identifier's denotation equals the application chain of its constant's
+  denotation.
 
 ## Implementation notes
 
@@ -339,33 +355,118 @@ def RIdent.interp {A : AlgSig} {Γ : List RType} {τ : RType} (f : RIdent A Γ �
         RType.interp (FreeAlg A) x.2)
     (fun {x} shape _children ih => RIdent.interpStep A x.1 x.2 shape ih) f
 
-/-- The identifier summand of the higher-order presentation: operations are the
-schema-generated identifiers, of context as arity and result sort as result.
-Novel packaging. -/
+/-- The curried arrow sort of a context and result sort: `σ₁ → ⋯ → σₙ → τ` for
+`Γ = [σ₁, …, σₙ]`, the right fold of `RType.arrow` over `Γ` with base `τ`. The
+sort at which an identifier of context `Γ` and result `τ` sits as a value
+(Leivant III section 2.3, the higher-order system: identifiers are terms at
+higher types). Novel packaging. -/
+def RType.curried (Γ : List RType) (τ : RType) : RType := Γ.foldr RType.arrow τ
+
+@[simp] theorem RType.curried_nil (τ : RType) : RType.curried [] τ = τ := rfl
+
+@[simp] theorem RType.curried_cons (σ : RType) (Γ : List RType) (τ : RType) :
+    RType.curried (σ :: Γ) τ = RType.arrow σ (RType.curried Γ τ) := rfl
+
+/-- The currying of a function on environments into the iterated function space
+at the curried sort: from a map `Env Γ → interp τ` to a value at
+`interp (RType.curried Γ τ)`, consuming the context sorts one at a time. The
+denotation of an identifier's constant is `curryInterp` of the identifier's
+denotation. Novel packaging. -/
+def curryInterp (A : AlgSig) : (Γ : List RType) → (τ : RType) →
+    ((∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) →
+      RType.interp (FreeAlg A) τ) →
+    RType.interp (FreeAlg A) (RType.curried Γ τ)
+  | [], _τ, g => g finZeroElim
+  | σ :: Γ', τ, g => fun x : RType.interp (FreeAlg A) σ =>
+      curryInterp A Γ' τ (fun ρ' => g (Fin.cons x ρ'))
+
+/-- The application chain: iterated application of a value at a curried sort
+`RType.curried Γ τ` to an argument environment `Env Γ`, yielding a value at `τ`.
+The application former's action on an identifier's constant, recovering the
+saturated identifier's denotation. Novel packaging. -/
+def appChain (A : AlgSig) : (Γ : List RType) → (τ : RType) →
+    RType.interp (FreeAlg A) (RType.curried Γ τ) →
+    (∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) →
+    RType.interp (FreeAlg A) τ
+  | [], _τ, c, _ρ => c
+  | σ :: Γ', τ, c, ρ =>
+      appChain A Γ' τ ((c : RType.interp (FreeAlg A) σ →
+        RType.interp (FreeAlg A) (RType.curried Γ' τ)) (ρ 0)) (fun i => ρ i.succ)
+
+/-- The application chain inverts the currying: applying `curryInterp A Γ τ g`
+to an environment `ρ` recovers `g ρ`. Proved by induction on `Γ`; the step folds
+the leading argument back into the environment via `Fin.cons_self_tail`. -/
+theorem appChain_curryInterp (A : AlgSig) : (Γ : List RType) → (τ : RType) →
+    (g : (∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) →
+      RType.interp (FreeAlg A) τ) →
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) →
+    appChain A Γ τ (curryInterp A Γ τ g) ρ = g ρ
+  | [], _τ, g, _ρ => congrArg g (funext (fun i => i.elim0))
+  | σ :: Γ', τ, g, ρ => by
+    change appChain A Γ' τ (curryInterp A Γ' τ (fun ρ' => g (Fin.cons (ρ 0) ρ')))
+        (fun i => ρ i.succ) = g ρ
+    rw [appChain_curryInterp A Γ' τ (fun ρ' => g (Fin.cons (ρ 0) ρ')) (fun i => ρ i.succ)]
+    exact congrArg g (Fin.cons_self_tail ρ)
+
+/-- Coherence of the two identifier surfacings (Leivant III section 2.3, the
+higher-order system): the saturated identifier's denotation equals the
+application chain of its constant's denotation. The constant of `f` denotes
+`curryInterp A Γ τ f.interp`; applying it along the argument environment via
+`appChain` recovers `f.interp`. Novel packaging. -/
+theorem RIdent.interp_eq_appChain_curryInterp {A : AlgSig} {Γ : List RType}
+    {τ : RType} (f : RIdent A Γ τ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) :
+    f.interp ρ = appChain A Γ τ (curryInterp A Γ τ f.interp) ρ :=
+  (appChain_curryInterp A Γ τ f.interp ρ).symm
+
+/-- The saturated identifier summand of the higher-order presentation:
+operations are the schema-generated identifiers, of context as arity and result
+sort as result. Each identifier also has a nullary constant form in
+`identConstSig`, a value at its curried arrow sort; the two surfacings agree by
+`RIdent.interp_eq_appChain_curryInterp`. Novel packaging. -/
 def identSig (A : AlgSig) : SortedSig RType where
   Op := Σ Γ : List RType, Σ τ : RType, RIdent A Γ τ
   arity op := op.1
   result op := op.2.1
 
+/-- The identifier-constant summand of the higher-order presentation (Leivant
+III section 2.3, the higher-order system, DOI `10.1016/S0168-0072(98)00040-2`):
+one nullary operation per identifier `f : RIdent A Γ τ`, with result the curried
+arrow sort `RType.curried Γ τ`. This is the transcription-faithful reading of
+the paper's identifiers as combinators — an identifier is a term at the higher
+type `σ₁ → ⋯ → σₙ → τ`, and the application former is what fills arrow-sorted
+recurrence clauses by partial application. Novel packaging. -/
+def identConstSig (A : AlgSig) : SortedSig RType where
+  Op := Σ Γ : List RType, Σ τ : RType, RIdent A Γ τ
+  arity _op := []
+  result op := RType.curried op.1 op.2.1
+
 /-- The standard model of the higher-order presentation over `A`: the standard
-carriers, with constructors and application read as usual and each identifier
-read by its own denotation. Novel packaging. -/
+carriers, with constructors and application read as usual, each saturated
+identifier read by its own denotation, and each identifier constant read by the
+currying of that denotation. Novel packaging. -/
 def higherOrderModel (A : AlgSig) :
-    SortedModel (((constructorSig A RType.IsObj).sum appSig).sum (identSig A)) where
+    SortedModel
+      ((((constructorSig A RType.IsObj).sum appSig).sum (identSig A)).sum
+        (identConstSig A)) where
   carrier := RType.interp (FreeAlg A)
   interpOp op args :=
     match op with
-    | Sum.inl (Sum.inl cop) => stdConstructorInterp A cop args
-    | Sum.inl (Sum.inr aop) => stdAppInterp A aop args
-    | Sum.inr iop => iop.2.2.interp args
+    | Sum.inl (Sum.inl (Sum.inl cop)) => stdConstructorInterp A cop args
+    | Sum.inl (Sum.inl (Sum.inr aop)) => stdAppInterp A aop args
+    | Sum.inl (Sum.inr iop) => iop.2.2.interp args
+    | Sum.inr icop => curryInterp A icop.1 icop.2.1 icop.2.2.interp
 
 /-- The higher-order presentation over `A` (Leivant III section 2.3): the
-constructor summand at every object sort, application, and the schema-generated
-identifiers, summed by `SortedSig.sum`, with the standard model interpreting
+constructor summand at every object sort, application, the schema-generated
+identifiers as saturated operations, and their nullary constants at the curried
+arrow sorts, summed by `SortedSig.sum`, with the standard model interpreting
 each operation over the standard carriers. Novel packaging. -/
 def higherOrder (A : AlgSig) : Presentation where
   S := RType
-  sig := ((constructorSig A RType.IsObj).sum appSig).sum (identSig A)
+  sig :=
+    ((((constructorSig A RType.IsObj).sum appSig).sum (identSig A)).sum
+      (identConstSig A))
   IsObj := RType.IsObj
   alg := A
   std := higherOrderModel A
