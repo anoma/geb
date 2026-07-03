@@ -20,8 +20,9 @@ Lawvere theory of a signature — the clone of its terms, quotiented by a
 congruence — through this development's polynomial-endofunctor term layer
 (decision 8). The category is the term clone: composition is the free monad's
 bind (`Tm.subst`), the category laws are the clone laws `Tm.subst_id`,
-`Tm.subst_subst`, and the left-unit law `Tm.var_subst`, and well-definedness on
-the quotient is the `QuotRel`'s substitution congruence. The construction
+`Tm.subst_subst`, and the left-unit law `Tm.var_subst`
+(`GebLean/Ramified/Term.lean`), and well-definedness on the quotient is the
+`QuotRel`'s substitution congruence. The construction
 generalizes the hand-rolled quotient categories `GebLean.LawvereERCat`
 (`GebLean/LawvereERQuot.lean`) and `GebLean.LawvereKSimCat`
 (`GebLean/LawvereKSimQuot.lean`) from a fixed interpretation to an arbitrary
@@ -36,11 +37,6 @@ generalizes the hand-rolled quotient categories `GebLean.LawvereERCat`
   identity the variable tuple, composition substitution.
 * `SynCat.instCartesianMonoidalCategory` — chosen finite products by context
   concatenation.
-
-## Main statements
-
-* `Tm.var_subst` — substituting a variable by a tuple selects that tuple entry
-  (the free monad's left-unit law).
 
 ## Implementation notes
 
@@ -92,12 +88,6 @@ namespace GebLean.Ramified
 open CategoryTheory CategoryTheory.Limits
 
 variable {S : Type}
-
-/-- Substituting a variable term by a tuple selects that tuple's entry at the
-variable's position (the free monad's left-unit law `polyFreeM_pure_bind`). -/
-theorem Tm.var_subst {sig : SortedSig S} {Γ Δ : Ctx S}
-    (i : Fin Γ.length) (σ : ∀ j : Fin Γ.length, Tm sig Δ (Γ.get j)) :
-    (Tm.var i).subst σ = σ i := rfl
 
 /-- Reindex a term along an equality of its sort. -/
 def Tm.reind {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)

@@ -4,7 +4,7 @@ import GebLean.Ramified.Term
 /-!
 # Tests for the sorted term layer with clone laws
 
-Executable checks that, over a one-binary-operation signature on `S := Unit`,
+Proof-level checks that, over a one-binary-operation signature on `S := Unit`,
 `GebLean.Ramified.Tm.subst` performs the swap substitution on a two-variable
 term, and that `GebLean.Ramified.Tm.subst_id` and
 `GebLean.Ramified.Tm.subst_subst` instantiate on that concrete term.

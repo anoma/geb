@@ -41,6 +41,8 @@ than rebuilding it. The clone-law statements follow the repository precedent
   free monad's right-unit law).
 * `Tm.subst_subst` — substitution composes (the free monad's associativity
   law).
+* `Tm.var_subst` — substituting a variable by a tuple selects that tuple entry
+  (the free monad's left-unit law).
 
 ## Implementation notes
 
@@ -154,6 +156,12 @@ theorem Tm.subst_subst {sig : SortedSig S} {Γ Δ E : Ctx S} {s : S}
   congr 1
   funext y a
   exact (polyFreeMBind_transport (varOver Δ) (varOver E) sig.polyEndo a.2 (σ a.1) _).symm
+
+/-- Substituting a variable term by a tuple selects that tuple's entry at the
+variable's position (the free monad's left-unit law `polyFreeM_pure_bind`). -/
+theorem Tm.var_subst {sig : SortedSig S} {Γ Δ : Ctx S}
+    (i : Fin Γ.length) (σ : ∀ j : Fin Γ.length, Tm sig Δ (Γ.get j)) :
+    (Tm.var i).subst σ = σ i := rfl
 
 /-- Weakening along a sort-preserving variable renaming `f`: substitution at
 the variable tuple that sends position `i` to the variable `f i`, transported

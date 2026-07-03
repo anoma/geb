@@ -24,7 +24,8 @@ def cSig : SortedSig Nat := constructorSig natAlgSig (fun _ => True)
 #guard cSig.result (⟨0, True.intro⟩, false) = 0
 #guard cSig.result (⟨0, True.intro⟩, true) = 0
 
-/-- A one-operation signature: a nullary operation at sort `0`. -/
+/-- A one-operation signature: a unary operation with argument sort `0` and
+result sort `0`. -/
 def sigA : SortedSig Nat := { Op := Unit, arity := fun _ => [0], result := fun _ => 0 }
 
 /-- A one-operation signature: a binary operation at sort `2`. -/
