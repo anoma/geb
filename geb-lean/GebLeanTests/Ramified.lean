@@ -9,6 +9,7 @@ import GebLeanTests.Ramified.OmegaShift
 import GebLeanTests.Ramified.Examples
 import GebLeanTests.Ramified.Algebras
 import GebLeanTests.Ramified.FirstOrder
+import GebLeanTests.Ramified.Definability
 
 /-!
 # Ramified-recurrence test index

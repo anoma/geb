@@ -9,6 +9,7 @@ import GebLean.Ramified.OmegaShift
 import GebLean.Ramified.Examples
 import GebLean.Ramified.Algebras
 import GebLean.Ramified.FirstOrder
+import GebLean.Ramified.Definability
 
 /-!
 # Ramified recurrence
@@ -41,7 +42,10 @@ naturality (`Algebras`). Phase 4 carves out the first-order sub-theories: the
 tower-sort predicate `RType.IsTower`, the first-order identifier predicate
 `RIdent.FirstOrder`, the sub-theory presentation `firstOrderPresentation` (its
 identifier summands restricted to the `FirstOrder` subtype), and the inclusion
-functor `foInclusion` into the host `RMRecCat` (`FirstOrder`).
+functor `foInclusion` into the host `RMRecCat` (`FirstOrder`). Phase 5 opens the
+definability development (`Definability`): the case function `ramCase`, the destructor
+`ramDstr`, and the selector `chooseIdent`, the building blocks of Leivant III's Lemma 2
+reduction of simultaneous recurrence to plain recurrence.
 
 ## References
 
