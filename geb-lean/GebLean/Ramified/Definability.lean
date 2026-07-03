@@ -1,5 +1,6 @@
 import GebLean.Ramified.Definability.Simultaneous
 import GebLean.Ramified.Definability.Flat
+import GebLean.Ramified.Definability.Bounds
 
 /-!
 # Ramified recurrence: definability
@@ -14,7 +15,11 @@ algebra `natAlgSig` — the building blocks of Lemma 2's selector argument
 signature summand generic in the algebra, realizes them by flat recurrence
 over `natAlgSig` — the containment direction of Lemma 1 — and assembles the
 O-variant presentation `RMRec_o^omega` of section 2.5, in which flat
-recurrence is replaced by the destructor and case operations (`Flat`).
+recurrence is replaced by the destructor and case operations (`Flat`). The
+third module carries the pure natural-number inequalities converting the
+elementary-recurrence runtime tower bound into Leivant's clock format
+`c · 2_q(sz)` (Lemma 6 hypothesis shape, section 3.2), including the
+componentwise max-over-inputs handling of the arity remark (`Bounds`).
 
 ## References
 
