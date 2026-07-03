@@ -67,9 +67,9 @@ that resolves the spec's front-loaded route questions before
 implementation begins. The syntax representation is fixed by user
 decision (decision 8): every recursive type in the development is a
 W-type (`PolyFix`) of a `PolyEndo` on the in-repository polynomial
-stack — no Lean-native recursive inductive types — with substitution
-and its laws obtained from free-monad structure. Phases 0-4 carry
-full step detail here.
+stack — no Lean-native recursive inductive types — with term-layer
+substitution and its laws obtained from the repository's existing
+free-monad structure. Phases 0-4 carry full step detail here.
 Phases 5 and 6 have their boundaries, deliverables, and consumed
 interfaces fixed here and their step detail supplied by mandatory
 sub-plans (adversarially reviewed, then user-reviewed), because
@@ -261,12 +261,12 @@ s7, s8). Adversarial review of this plan reviews these decisions.
    requires variables to occupy the monad's unit positions, which is
    exactly the contexts-as-parameters form; `Tm.subst` is then bind
    along a map of variable families.
-8. **Representation (spec s7; user decision 2026-07-02):** every
-   recursive type in this development is a W-type (`PolyFix`) of a
-   `PolyEndo`; Lean-native recursive inductive types are not used
-   anywhere in it. This is the spec's approach B chosen under its
-   own no-spike default ("If a default must be chosen without
-   spikes: B"), strengthened from "syntax as W-types where
+8. **Representation (spec s7, s1.1; user decision 2026-07-02):**
+   every recursive type in this development is a W-type (`PolyFix`)
+   of a `PolyEndo`; Lean-native recursive inductive types are not
+   used anywhere in it. This is the spec's approach B chosen under
+   s7's own no-spike default ("If a default must be chosen without
+   spikes: B"), strengthened from s1.1's "syntax as W-types where
    practicable" to unconditional. Grounds: `PolyEndo` supplies
    limits, colimits, hom-objects, initial algebras, terminal
    coalgebras, and universal properties on algebras, coalgebras, and
@@ -274,10 +274,18 @@ s7, s8). Adversarial review of this plan reviews these decisions.
    free-monad structure (bind) rather than per-system proofs; and
    multi-sorted signatures are subsumed by taking the sort type as
    the domain and codomain of the slice polynomial endofunctor.
-   Native inductive types offer none of this. Approach C (the
-   vendored slice/presheaf functors) remains the convergence target;
-   the migration is a stack swap under the same construction. The
-   ergonomics cost the spec's s7 table assigns to B (custom
+   Native inductive types offer none of this. The free-monad
+   structure already exists in the repository (`PolyFreeM`,
+   `polyFreeMBind`, and its monad laws,
+   `GebLean/PolyAlg.lean:3344,:3980,:3993-:4021`; the adjunction
+   monad `polyFreeMonad` :9615) and is consumed, not rebuilt (the
+   reuse rule). For binder calculi (Phase 6 route L), whose contexts
+   index the syntax so variables do not occupy the monad's unit
+   positions, substitution is instead defined by the corresponding
+   indexed folds. Approach C (the vendored slice/presheaf functors)
+   remains the convergence target; the migration replaces the
+   underlying polynomial-functor stack under the same construction.
+   The ergonomics cost the spec's s7 table assigns to B (custom
    recursors: `PolyFix.ind`, `polyFixFold` in place of native
    `induction`) is accepted and absorbed by Phase 1, with no native
    fallback.
@@ -288,7 +296,7 @@ s7, s8). Adversarial review of this plan reviews these decisions.
 | --- | --- | --- |
 | `GebLean/Ramified/AlgSig.lean` | `AlgSig`, `AlgSig.polyEndo`, `FreeAlg`, `natAlgSig` | 1 |
 | `GebLean/Ramified/SortedSig.lean` | `SortedSig`, `sum`, `constructorSig` | 1 |
-| `GebLean/Ramified/Term.lean` | `SortedSig.polyEndo`, `constPolyEndo`, `varFam`, `Tm`, `var`, `op`, `subst`, clone laws, `QuotRel` | 1 |
+| `GebLean/Ramified/Term.lean` | `SortedSig.polyEndo`, `varOver`, `Tm` (= `PolyFreeM`), `var`, `op`, `subst` (= `polyFreeMBind`), clone laws, `QuotRel` | 1 |
 | `GebLean/Ramified/Interp.lean` | `SortedModel`, `Tm.eval`, `Presentation`, `standardModel`, `interpSetoid`, `interpQuotRel` | 1 |
 | `GebLean/Ramified/SynCat.lean` | `SynCat`, `Category`, `CartesianMonoidalCategory` | 1 |
 | `GebLean/Ramified/RType.lean` | `RType`, object sorts, tower sorts | 2 |
@@ -524,9 +532,11 @@ initial algebra, `PolyFix` (GebLean/PolyAlg.lean:176, initiality at
 /-- Leivant III section 2.1, eq. (1)'s recurrence over a free
 algebra: one step function per constructor, seeing the parameters,
 the subterms of the recurrence argument, and the recursive results.
-Realized by the catamorphism `polyFixFold`
-(GebLean/PolyAlg.lean:359) with the paper's parameter/subterm
-threading. -/
+A paramorphism (the step sees the subterms), realized either as
+`polyFixFold` (GebLean/PolyAlg.lean:359) at the product carrier
+`FreeAlg A × (P → C)` — pairing the reconstructed subterm with the
+step result — or directly by the dependent eliminator `PolyFix.ind`
+(:206); the parameters thread through the function carrier. -/
 -- FreeAlg.recurse {P C : Type}
 --   (g : (b : A.B) → P → (Fin (A.ar b) → FreeAlg A) →
 --        (Fin (A.ar b) → C) → C) : P → FreeAlg A → C
@@ -610,7 +620,8 @@ def constructorSig (A : AlgSig) (IsObj : S → Prop) : SortedSig S
 - Create: `GebLean/Ramified/Term.lean`
 - Create: `GebLeanTests/Ramified/Term.lean` (+ index imports)
 
-**Interfaces (produces; from spec s4.2, representation-independent):**
+**Interfaces (produces; the spec s4.2 contract, realized on the
+`PolyEndo` stack per decision 8):**
 
 ```lean
 -- Ctx S := List S
@@ -624,38 +635,34 @@ operations with result s and directions their arity positions,
 mapped to the argument sorts. -/
 -- SortedSig.polyEndo (sig : SortedSig S) : PolyEndo S
 
-/-- The constant endofunctor at an S-indexed family (shapes = the
-family, no directions); the variables summand of the term functor
-below. -/
--- constPolyEndo (V : S → Type) : PolyEndo S
+/-- The variable family of a context, as an object of Over S:
+the positions of Γ, fibered by their sorts. -/
+-- varOver (Γ : Ctx S) : Over S
+--   -- left = Fin Γ.length, hom = Γ.get
 
-/-- The variable family of a context: at sort s, the positions of Γ
-carrying s. -/
--- varFam (Γ : Ctx S) : S → Type
---   -- := fun s => {i : Fin Γ.length // Γ.get i = s}
-
--- Terms are the free monad of sig.polyEndo at the context's
--- variable family, realized as the PolyFix of the coproduct
--- (polyBetweenCoprod, GebLean/PolyUMorph.lean:422) of the
--- signature summand and the variables summand (decision 7:
--- contexts as parameters):
+-- Terms are the repository's existing free monad of sig.polyEndo
+-- at the context's variable family (decision 7: contexts as
+-- parameters). The free-monad layer is consumed, not rebuilt
+-- (reuse rule): PolyFreeM (GebLean/PolyAlg.lean:3344, the PolyFix
+-- of polyTranslate :3293), polyFreeMPure (:3950), polyFreeMBind
+-- (:3980), and the monad laws polyFreeM_pure_bind (:3993),
+-- polyFreeM_bind_pure (:4001), polyFreeM_bind_assoc (:4021).
 -- Tm (sig : SortedSig S) (Γ : Ctx S) : S → Type
---   -- := PolyFix (polyBetweenCoprod _ ![sig.polyEndo,
---   --                                   constPolyEndo (varFam Γ)])
+--   -- := PolyFreeM (varOver Γ) sig.polyEndo
 -- Tm.var   : (i : Fin Γ.length) → Tm sig Γ (Γ.get i)
---   -- from the variables summand
+--   -- := polyFreeMPure at the position's fiber element
 -- Tm.op    : (o : sig.Op) →
 --            (args : ∀ i, Tm sig Γ ((sig.arity o).get i)) →
 --            Tm sig Γ (sig.result o)
---   -- from the signature summand
+--   -- the PolyFix node constructor at the operation's shape
 -- Tm.subst : Tm sig Γ s → (∀ i, Tm sig Δ (Γ.get i)) → Tm sig Δ s
---   -- the free-monad bind along the variable-family map,
---   -- defined by polyFixFold (GebLean/PolyAlg.lean:359)
+--   -- := polyFreeMBind along the tuple, read as a map of
+--   --    variable families into terms
 -- Tm.subst_id    : t.subst Tm.var = t
+--   -- from polyFreeM_bind_pure
 -- Tm.subst_subst : (t.subst σ).subst τ
 --                    = t.subst (fun i => (σ i).subst τ)
---   -- the free-monad laws, proven once via initiality
---   -- (polyFixAlg_isInitial :533, polyFixFoldHom_unique :517)
+--   -- from polyFreeM_bind_assoc
 -- Tm.weaken : (f : Fin Γ.length → Fin Δ.length)
 --             (h : ∀ i, Δ.get (f i) = Γ.get i) →
 --             Tm sig Γ s → Tm sig Δ s
@@ -684,13 +691,14 @@ structure QuotRel (sig : SortedSig S) where
   concrete term. Run `lake test`, confirm failure.
 
 - [ ] **Step 2: implement** on the `PolyEndo` stack per the block
-  above: `SortedSig.polyEndo`, `constPolyEndo`, `varFam`, `Tm` as
-  the `PolyFix` of the coproduct, `subst` as bind by `polyFixFold`,
-  and the clone laws once, generically, from initiality — these are
-  the free-monad laws, and they are the content the syntactic
-  category's composition depends on; prove them at full generality,
-  not just on examples. Docstrings: novel packaging; the clone-law
-  statements cite the repository precedent
+  above: `SortedSig.polyEndo` and `varOver`, then `Tm` as
+  `PolyFreeM`, `var` as `polyFreeMPure`, `subst` as
+  `polyFreeMBind`, and the clone laws as instances of the existing
+  monad laws (`polyFreeM_bind_pure`, `polyFreeM_bind_assoc`) — the
+  free-monad layer is consumed, not rebuilt. The clone laws are the
+  content the syntactic category's composition depends on; state
+  them at full generality in the `Tm` vocabulary. Docstrings: novel
+  packaging; the clone-law statements cite the repository precedent
   (`Era.Tm.subst_id`/`subst_subst`, `GebLean/Era.lean`) as the
   pattern source.
 
@@ -891,9 +899,14 @@ recurrences (eq. (5)) over previously defined identifiers; the
 signature and its defining semantics are generated together, as
 `ERMor1` does for its theory (GebLean/LawvereER.lean:36). Realized
 (decision 8) as the `PolyFix` of an indexed signature endofunctor
-over the index type `List RType × RType`, whose shapes are the
-three schema formers below and whose directions are the referenced
-sub-identifiers and defining terms. -/
+over the index type `List RType × RType`: the shapes carry each
+schema former's non-recursive data — for `defn`, the defining term
+as a skeleton over the base signature with holes for identifier
+occurrences; for `mrec`/`frec`, the sorts and clause skeletons —
+and the directions, the children in the fixed point, are exactly
+the previously defined identifiers those holes and clauses
+reference (a `Tm` value cannot occupy a direction: children of the
+fixed point are identifiers). -/
 def RIdent (A : AlgSig) : List RType → RType → Type
 -- shapes (each a summand of the identifier signature functor):
 --   defn  : a term over already-formed identifiers, abstracted
