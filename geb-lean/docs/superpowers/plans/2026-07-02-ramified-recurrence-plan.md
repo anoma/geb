@@ -12,9 +12,8 @@
 - [Phase 0 — gates](#phase-0--gates)
   - [Task G1: soundness-route investigation (spec open question 1)](#task-g1-soundness-route-investigation-spec-open-question-1)
   - [Task G2: `LawvereGodelT*` audit (conditional on G1 `bridge-exists`)](#task-g2-lawveregodelt-audit-conditional-on-g1-bridge-exists)
-  - [Task G3: syntax-layer spikes, approach A versus B (spec s7)](#task-g3-syntax-layer-spikes-approach-a-versus-b-spec-s7)
-  - [Task G4: soundness-landing choice (spec open question 2)](#task-g4-soundness-landing-choice-spec-open-question-2)
-  - [Task G5 (non-blocking): Otto thesis acquisition (spec open question 6)](#task-g5-non-blocking-otto-thesis-acquisition-spec-open-question-6)
+  - [Task G3: soundness-landing choice (spec open question 2)](#task-g3-soundness-landing-choice-spec-open-question-2)
+  - [Task G4 (non-blocking): Otto thesis acquisition (spec open question 6)](#task-g4-non-blocking-otto-thesis-acquisition-spec-open-question-6)
 - [Phase 1 — core layers (branch `feat/ramified-p1-core`)](#phase-1--core-layers-branch-featramified-p1-core)
   - [Task 1.1: `AlgSig` and the free algebra](#task-11-algsig-and-the-free-algebra)
   - [Task 1.2: sorted signatures](#task-12-sorted-signatures)
@@ -64,8 +63,13 @@ object-sort contexts), with the K^sim_2 corollary via `erKSimEquiv`.
 
 **Architecture:** A master plan in seven implementation phases
 following the spec's section 8, preceded by a gate phase (Phase 0)
-that resolves the spec's front-loaded open questions before any
-representation commitment. Phases 0-4 carry full step detail here.
+that resolves the spec's front-loaded route questions before
+implementation begins. The syntax representation is fixed by user
+decision (decision 8): every recursive type in the development is a
+W-type (`PolyFix`) of a `PolyEndo` on the in-repository polynomial
+stack — no Lean-native recursive inductive types — with substitution
+and its laws obtained from free-monad structure. Phases 0-4 carry
+full step detail here.
 Phases 5 and 6 have their boundaries, deliverables, and consumed
 interfaces fixed here and their step detail supplied by mandatory
 sub-plans (adversarially reviewed, then user-reviewed), because
@@ -82,9 +86,13 @@ DOI `10.1016/S0168-0072(98)00040-2`).
 
 **Tech Stack:** Lean 4 (`leanprover/lean4:v4.29.0-rc6`; mathlib and
 cslib pinned `v4.29.0-rc6`), Lake, mathlib category theory
-(`CartesianMonoidalCategory.ofChosenFiniteProducts`), `jj` VCS,
-`markdownlint-cli2`, `doctoc`, `theoremsearch` / `arxiv` MCPs (gate
-investigations only).
+(`CartesianMonoidalCategory.ofChosenFiniteProducts`), the
+in-repository polynomial-functor stack
+(`PolyFunctorBetweenCat`/`PolyEndo`, `GebLean/Polynomial.lean:956`,
+`GebLean/PolyAlg.lean:55`; `PolyFix` with initiality,
+`GebLean/PolyAlg.lean:176,:533`; coproducts,
+`GebLean/PolyUMorph.lean:422`), `jj` VCS, `markdownlint-cli2`,
+`doctoc`, `theoremsearch` / `arxiv` MCPs (gate investigations only).
 
 ## Global constraints
 
@@ -119,8 +127,12 @@ Every task's requirements implicitly include this section.
   carries its literature reference with a searchable identifier
   (DOI / arXiv id) in the Lean docstring (module docstring
   `## References` section or declaration docstring), naming the
-  paper's section/lemma/equation. Each new declaration is marked
-  transcription or novel packaging per spec s2.5.
+  paper's section/lemma/equation. Transcribed declarations phrase
+  the source naturally — "Leivant III section 2.3's definition of
+  the ramified types ..." — so the citation itself marks the
+  transcription; bare trailing labels such as "Transcription." are
+  not used. Declarations that are novel packaging are marked as
+  such explicitly (spec s2.5).
 - Binding vocabulary (spec s2.1 glossary; use in all Lean docstrings
   and plan/sub-plan prose): **parameters** (the paper's recurrence
   parameters `x_vec`), **recurrence argument** (the whole constructor
@@ -132,6 +144,10 @@ Every task's requirements implicitly include this section.
   argument of a recurrence whose recursive results carry type `tau`;
   semantically every object sort denotes a copy of the algebra's
   carrier (paper section 2.7).
+- No Lean-native recursive inductive types anywhere in this
+  development: every recursive type is a W-type (`PolyFix`) of a
+  `PolyEndo`, per decision 8. Non-recursive structures and records
+  are permitted.
 - New Lean source lives under `GebLean/Ramified/` in root namespace
   `GebLean`, sub-namespace `GebLean.Ramified`, with the directory
   index file `GebLean/Ramified.lean` (import block + module
@@ -159,26 +175,19 @@ Every task's requirements implicitly include this section.
   `isTerminal*` witnesses are `noncomputable`.
 - Avoid bash process substitution (`<(...)`); write intermediate
   output to files under `/tmp`.
-- Exemption: commits on Task G3's throwaway spike branch are exempt
-  from the pre-commit triad (the branch is never pushed or merged
-  and is abandoned once the decision note is written). A spike state
-  stopped at a demonstrated blocker is checkpointed with the failing
-  fragment commented out and the blocker recorded inline, so the
-  checkpoint compiles nothing false and remains inspectable.
 
 ## How to work this plan
 
-- **Phase order.** Phase 0 gates G1-G4 close before any Phase 1
-  commit (G5 is non-blocking); G3 is the gate whose outcome Phase 1
-  consumes, and G1/G2/G4 are front-loaded with it so the route
-  record is complete before implementation begins. Phases 1-2-3-4
-  are sequential except that Phase 3 and Phase 4 both depend only on
-  Phase 2 and may be developed in either order or in parallel
-  branches. The Phase 5 sub-plan is written after Phases 2 and 3
-  land (it consumes the example ladder and `natFreeAlgEquiv`); the
-  Phase 6 sub-plan is written after gates G1/G2/G4 have closed,
-  Phases 2 and 3 have landed, and the Phase 5 sub-plan has converged
-  (Phase 6's `Collapse.lean` consumes `natFreeAlgEquiv` and states
+- **Phase order.** Phase 0 gates G1-G3 close before any Phase 1
+  commit (G4 is non-blocking), so the route record is complete
+  before implementation begins. Phases 1-2-3-4 are sequential except
+  that Phase 3 and Phase 4 both depend only on Phase 2 and may be
+  developed in either order or in parallel branches. The Phase 5
+  sub-plan is written after Phases 2 and 3 land (it consumes the
+  example ladder and `natFreeAlgEquiv`); the Phase 6 sub-plan is
+  written after gates G1/G2/G3 have closed, Phases 2 and 3 have
+  landed, and the Phase 5 sub-plan has converged (Phase 6's
+  `Collapse.lean` consumes `natFreeAlgEquiv` and states
   `collapseDenotation` against the `ObjCtx` bookkeeping the Phase 5
   sub-plan fixes). Phase 7 consumes Phases 5 and 6.
 - **Sub-plans.** Phases 5 and 6 each get a sub-plan at
@@ -221,7 +230,7 @@ s7, s8). Adversarial review of this plan reviews these decisions.
 2. **Statement target (spec s5.1):** both s6.1 statements are stated
    against `LawvereERCat`. The definability chain starts ER-side
    (`compileER` + `boundExprKParams_dominates`), which requires no
-   K^sim hop. The soundness landing follows gate G4, defaulting to
+   K^sim hop. The soundness landing follows gate G3, defaulting to
    the K^sim simulator pattern with transfer across `erKSimEquiv`
    (spec s5.1 recommendation).
 3. **Host algebra (spec s5.2):** the in-scope proof is hosted over
@@ -240,22 +249,46 @@ s7, s8). Adversarial review of this plan reviews these decisions.
    `collapseFunctor`, `ramified_definability`); the free-algebra
    signature data is named `AlgSig` (the spec's illustrative `Sig`),
    avoiding a parallel meaning for "signature" against `SortedSig`.
-6. **Object-sort structure (spec open question 5), default:**
-   `Presentation` carries the sort type `S`, the operation signature,
-   and the object-sort predicate `IsObj : S -> Prop` as plain data
-   (a structure, not a typeclass). The G3 spikes may overturn this;
-   the decision note records the outcome.
-7. **Sorted-context indexing (spec open question 4):** answered
-   empirically by the G3 spikes per realization; the decision note
-   records the choice the winning spike made.
+6. **Object-sort structure (spec open question 5):** `Presentation`
+   carries the sort type `S`, the operation signature, and the
+   object-sort predicate `IsObj : S -> Prop` as plain data (a
+   structure, not a typeclass).
+7. **Sorted-context indexing (spec open question 4):** contexts are
+   parameters, not index components: the sort type `S` is the domain
+   and codomain of the slice polynomial endofunctor, and a context
+   `Γ` enters as the `S`-indexed variable family the free monad is
+   taken over. Rationale: decision 8's free-monad substitution
+   requires variables to occupy the monad's unit positions, which is
+   exactly the contexts-as-parameters form; `Tm.subst` is then bind
+   along a map of variable families.
+8. **Representation (spec s7; user decision 2026-07-02):** every
+   recursive type in this development is a W-type (`PolyFix`) of a
+   `PolyEndo`; Lean-native recursive inductive types are not used
+   anywhere in it. This is the spec's approach B chosen under its
+   own no-spike default ("If a default must be chosen without
+   spikes: B"), strengthened from "syntax as W-types where
+   practicable" to unconditional. Grounds: `PolyEndo` supplies
+   limits, colimits, hom-objects, initial algebras, terminal
+   coalgebras, and universal properties on algebras, coalgebras, and
+   the functors themselves; substitution and its laws come from
+   free-monad structure (bind) rather than per-system proofs; and
+   multi-sorted signatures are subsumed by taking the sort type as
+   the domain and codomain of the slice polynomial endofunctor.
+   Native inductive types offer none of this. Approach C (the
+   vendored slice/presheaf functors) remains the convergence target;
+   the migration is a stack swap under the same construction. The
+   ergonomics cost the spec's s7 table assigns to B (custom
+   recursors: `PolyFix.ind`, `polyFixFold` in place of native
+   `induction`) is accepted and absorbed by Phase 1, with no native
+   fallback.
 
 ## File structure
 
 | File | Contents | Phase |
 | --- | --- | --- |
-| `GebLean/Ramified/AlgSig.lean` | `AlgSig`, `FreeAlg`, `natAlgSig` | 1 |
+| `GebLean/Ramified/AlgSig.lean` | `AlgSig`, `AlgSig.polyEndo`, `FreeAlg`, `natAlgSig` | 1 |
 | `GebLean/Ramified/SortedSig.lean` | `SortedSig`, `sum`, `constructorSig` | 1 |
-| `GebLean/Ramified/Term.lean` | `Tm`, `var`, `op`, `subst`, clone laws, `QuotRel` | 1 |
+| `GebLean/Ramified/Term.lean` | `SortedSig.polyEndo`, `constPolyEndo`, `varFam`, `Tm`, `var`, `op`, `subst`, clone laws, `QuotRel` | 1 |
 | `GebLean/Ramified/Interp.lean` | `SortedModel`, `Tm.eval`, `Presentation`, `standardModel`, `interpSetoid`, `interpQuotRel` | 1 |
 | `GebLean/Ramified/SynCat.lean` | `SynCat`, `Category`, `CartesianMonoidalCategory` | 1 |
 | `GebLean/Ramified/RType.lean` | `RType`, object sorts, tower sorts | 2 |
@@ -269,7 +302,7 @@ s7, s8). Adversarial review of this plan reviews these decisions.
 | `GebLean/Ramified/Characterization.lean` | s6.1 statement pair (`ramified_definability`), K^sim_2 corollary | 7 |
 | `GebLean/Ramified.lean` | directory index (import block + module docstring) | 1, extended each phase |
 | `GebLeanTests/Ramified/*.lean` | per-phase test modules | each |
-| `docs/superpowers/notes/2026-07-02-ramified-gates-decisions.md` | gate record (G1-G5) and plan-fixed decisions | 0 |
+| `docs/superpowers/notes/2026-07-02-ramified-gates-decisions.md` | gate record (G1-G4) and plan-fixed decisions | 0 |
 | `docs/areas/ramified-recurrence.md` | area doc | 7 |
 
 Interface code blocks below are binding for names, arities, and
@@ -281,13 +314,13 @@ copied from spec s4.2 it is marked as such.
 
 | Phase | Branch | Depends on | Detail |
 | --- | --- | --- | --- |
-| 0 gates | `docs/ramified-recurrence-approaches` (notes); `spike/ramified-syntax` (throwaway) | — | full, here |
-| 1 core layers | `feat/ramified-p1-core` | G1-G4 closed (G3 decisive) | full, here |
+| 0 gates | `docs/ramified-recurrence-approaches` (notes) | — | full, here |
+| 1 core layers | `feat/ramified-p1-core` | G1-G3 closed | full, here |
 | 2 higher-order over `1 + X` | `feat/ramified-p2-rtype` | 1 | full, here |
 | 3 algebra genericity | `feat/ramified-p3-generic` | 2 | full, here |
 | 4 first-order sub-theories | `feat/ramified-p4-firstorder` | 2 | full, here |
 | 5 definability | `feat/ramified-p5-definability` | 2, 3 (branch stacked after 4) | boundaries here; sub-plan |
-| 6 soundness | `feat/ramified-p6-soundness` | 2, 3; G1, G2, G4; Phase 5 sub-plan converged (branch stacked after 5) | boundaries here; sub-plan |
+| 6 soundness | `feat/ramified-p6-soundness` | 2, 3; G1, G2, G3; Phase 5 sub-plan converged (branch stacked after 5) | boundaries here; sub-plan |
 | 7 assembly | `feat/ramified-p7-assembly` | 5, 6 | full, here |
 
 ---
@@ -297,7 +330,7 @@ copied from spec s4.2 it is marked as such.
 All gate outcomes are recorded in
 `docs/superpowers/notes/2026-07-02-ramified-gates-decisions.md`, one
 section per gate, committed as each gate closes (markdownlint-clean,
-doctoc'd). The note also restates the seven plan-fixed decisions
+doctoc'd). The note also restates the eight plan-fixed decisions
 above so downstream sub-plans cite one document.
 
 ### Task G1: soundness-route investigation (spec open question 1)
@@ -390,99 +423,14 @@ record and close the gate.
   route stands). Lint and commit as in G1 Step 4, message
   `docs(ramified): record G2 LawvereGodelT* audit`.
 
-### Task G3: syntax-layer spikes, approach A versus B (spec s7)
+### Task G3: soundness-landing choice (spec open question 2)
 
 **Files:**
 
-- Throwaway branch `spike/ramified-syntax` off the current tip; spike
-  files under `GebLean/Ramified/SpikeA.lean`, `SpikeB.lean` (never
-  merged; branch abandoned after the note is written)
-- Modify: the decision note (section "G3: representation decision")
+- Modify: the decision note (section "G3: landing choice")
 
-**Deliverable:** representation decision A (sorted-Era native
-inductives) or B (DTC on the in-repository `PolyFix` stack), with
-evidence; C (vendored slice/presheaf functors) is recorded as the
-convergence target, not a candidate (not startable: no W-types or
-coproducts upstream yet, spec s7).
-
-**Spike target (identical for both):** the monadic first-order
-sub-theory over `1 + X` — the smallest restricted signature — carried
-through the syntactic-category construction: sorted signature with
-tower sorts as `Nat`; terms with `subst` and both clone laws;
-standard interpretation; `interpSetoid`; `SynCat` with a `Category`
-instance and chosen finite products; one schema-generated identifier
-(ramified addition, `+ : o, Omega o -> o`, paper s2.4(2)) with its
-interpretation evaluated on two inputs via `example : ... := rfl`.
-Everything computable (no `noncomputable`). Timebox: each spike stops
-at two working days' effort or at a demonstrated blocker, whichever
-is first; partial completion is itself evidence.
-
-- [ ] **Step 1: create the spike branch.**
-
-```bash
-jj new -m "chore(ramified): spike syntax layer, A versus B (throwaway)" <tip>
-jj bookmark create spike/ramified-syntax -r @
-```
-
-(`<tip>` is the revision carrying the approved spec and plan, per
-the branch rule in "How to work this plan".)
-
-- [ ] **Step 2: spike A (native inductives).** One file,
-  `SpikeA.lean`: sorted signature as a plain structure; `Tm` as a
-  native indexed inductive over contexts `List Nat`; `subst` by
-  structural recursion; clone laws by `induction t <;> simp`-style
-  proofs; interpretation into `Nat`-carriers; setoid; category via
-  `GebLean/Utilities/Category.lean` `CategoryData`/`CategoryOfData`
-  or a direct instance; products by context concatenation
-  (`CartesianMonoidalCategory.ofChosenFiniteProducts`); the ramified
-  addition identifier and its `rfl` evaluations. Record per-joint
-  friction inline as comments.
-
-- [ ] **Step 3: spike B (`PolyFix` DTC).** One file, `SpikeB.lean`:
-  the same target with the term type realized through the
-  in-repository polynomial stack —
-  `PolyFunctorBetweenCat`/`PolyEndo` (`GebLean/Polynomial.lean:956`,
-  `GebLean/PolyAlg.lean:55`), signature summands via
-  `polyBetweenCoprod` (`GebLean/PolyUMorph.lean:422`) with
-  `algCoprodDesc` (`GebLean/PolyAlgUMorph.lean:418`), terms as
-  `PolyFix` (`GebLean/PolyAlg.lean:176`) with `polyFixFold` (:359)
-  and initiality (`polyFixAlg_isInitial` :533) for the recursion
-  principles. Same acceptance content as spike A.
-
-- [ ] **Step 4: score and decide.** Fill the spec s7 comparison for
-  the observed evidence: lines of code, wall-clock build time of each
-  spike file, clone-law proof effort, custom-recursor friction
-  (B: working through `PolyFix.ind`/`polyFixFold` where A uses
-  native `induction`), sorted-context indexing choice each spike was
-  forced into (spec open question 4), and where each realization
-  put the object-sort structure (spec open question 5, plan default:
-  data). Decision rule: the spike that reaches the full target with
-  less friction wins; if both reach it and the evidence is
-  equivocal, choose B (spec s7 default), recording that C remains
-  the convergence target and that B's construction-level
-  composability is the tiebreak the spec assigns it.
-
-- [ ] **Step 5: write the G3 note section, abandon the spike branch.**
-  The note preserves the decisive code fragments (interface shapes,
-  the friction points) as fenced blocks, so no downstream artifact
-  depends on the abandoned branch. Then:
-
-```bash
-jj abandon -r 'docs/ramified-recurrence-approaches..spike/ramified-syntax'
-jj bookmark delete spike/ramified-syntax
-```
-
-  Lint and commit the note on the docs branch, message
-  `docs(ramified): record G3 syntax-representation decision`.
-
-### Task G4: soundness-landing choice (spec open question 2)
-
-**Files:**
-
-- Modify: the decision note (section "G4: landing choice")
-
-**Deliverable:** landing decision for the spec s6.4 normalizer, taken
-after G1/G2 close. This is a recorded decision, not code.
+**Deliverable:** landing decision for the spec s6.4 normalizer,
+taken after G1/G2 close. This is a recorded decision, not code.
 
 - [ ] **Step 1: apply the decision rule.** Inputs: G1/G2 verdicts.
   Rule fixed here:
@@ -503,14 +451,14 @@ after G1/G2 close. This is a recorded decision, not code.
     ER-side arithmetic rather than a state-transition step; record
     the reason either way.
 
-- [ ] **Step 2: write the G4 section, lint, commit** (message
-  `docs(ramified): record G4 landing choice`).
+- [ ] **Step 2: write the G3 section, lint, commit** (message
+  `docs(ramified): record G3 landing choice`).
 
-### Task G5 (non-blocking): Otto thesis acquisition (spec open question 6)
+### Task G4 (non-blocking): Otto thesis acquisition (spec open question 6)
 
 **Files:**
 
-- Modify: the decision note (section "G5: Otto 1995")
+- Modify: the decision note (section "G4: Otto 1995")
 
 - [ ] **Step 1: attempt acquisition.** J. R. Otto, "Complexity
   doctrines", PhD thesis, McGill University, 1995 (ProQuest /
@@ -524,7 +472,7 @@ after G1/G2 close. This is a recorded decision, not code.
   docstrings. If not obtained: docstrings claim novelty
   conservatively ("no overlapping formalization known to this
   project; Otto 1995 not yet examined"). Lint, commit (message
-  `docs(ramified): record G5 Otto acquisition attempt`).
+  `docs(ramified): record G4 Otto acquisition attempt`).
 
 ---
 
@@ -533,9 +481,11 @@ after G1/G2 close. This is a recorded decision, not code.
 Deliverables of spec s8 item 1. All definitions in this phase are
 novel packaging (spec s2.5); docstrings mark them so and cite
 Leivant III section 2.1 for the free-algebra conventions. The
-realization idiom (native inductive versus `PolyFix`) follows the G3
-decision note; the interfaces below are the representation-
-independent contract (spec s4.2) both realizations satisfy.
+realization is the `PolyEndo` stack throughout (decision 8): the
+record types below are finitary presentation data; every recursive
+type they generate is a `PolyFix`, and the term layer's
+substitution is free-monad structure. The interfaces below are the
+contract (spec s4.2) that realization satisfies.
 
 ### Task 1.1: `AlgSig` and the free algebra
 
@@ -557,17 +507,29 @@ structure AlgSig where
   B : Type
   ar : B → Nat
 
-/-- The free algebra over `S` (realization per the G3 note: native
-inductive, or `PolyFix` of the corresponding `PolyEndo`). -/
--- FreeAlg (S : AlgSig) : Type
--- FreeAlg.mk (b : S.B) (subterms : Fin (S.ar b) → FreeAlg S) : FreeAlg S
+/-- The polynomial signature endofunctor of a free-algebra
+signature: constructor labels as shapes, arity positions as
+directions, over the one-sort domain (decision 8: the algebra axis
+is presented by its polynomial signature functor, spec s4.1). -/
+-- AlgSig.polyEndo (A : AlgSig) : PolyEndo PUnit
 
-/-- Unramified recurrence (Leivant III section 2.1, eq. (1)): one
-step function per constructor, seeing the parameters, the subterms
-of the recurrence argument, and the recursive results. -/
+/-- The free algebra over `A`: the W-type of `A.polyEndo` — its
+initial algebra, `PolyFix` (GebLean/PolyAlg.lean:176, initiality at
+:533). -/
+-- FreeAlg (A : AlgSig) : Type   -- := PolyFix A.polyEndo _
+-- FreeAlg.mk (b : A.B) (subterms : Fin (A.ar b) → FreeAlg A) :
+--   FreeAlg A                    -- derived from the PolyFix
+--                                -- constructor
+
+/-- Leivant III section 2.1, eq. (1)'s recurrence over a free
+algebra: one step function per constructor, seeing the parameters,
+the subterms of the recurrence argument, and the recursive results.
+Realized by the catamorphism `polyFixFold`
+(GebLean/PolyAlg.lean:359) with the paper's parameter/subterm
+threading. -/
 -- FreeAlg.recurse {P C : Type}
---   (g : (b : S.B) → P → (Fin (S.ar b) → FreeAlg S) →
---        (Fin (S.ar b) → C) → C) : P → FreeAlg S → C
+--   (g : (b : A.B) → P → (Fin (A.ar b) → FreeAlg A) →
+--        (Fin (A.ar b) → C) → C) : P → FreeAlg A → C
 
 /-- The 1 + X signature (monadic word algebra): one 0-ary and one
 unary constructor. Used from Phase 2 onward; the other canonical
@@ -583,11 +545,12 @@ def natAlgSig : AlgSig
   import so `lake test` sees the module; run `lake test` and confirm
   it fails (missing declarations).
 
-- [ ] **Step 2: implement** `AlgSig`, `FreeAlg`, `FreeAlg.recurse`
-  per the G3 realization, with docstrings citing Leivant III
-  section 2.1 eq. (1) (DOI `10.1016/S0168-0072(98)00040-2`) and using
-  the binding vocabulary. `GebLean/Ramified.lean` starts as the
-  directory index importing `AlgSig`.
+- [ ] **Step 2: implement** `AlgSig`, `AlgSig.polyEndo`, `FreeAlg`
+  as `PolyFix`, and `FreeAlg.recurse` via `polyFixFold`, with
+  docstrings citing Leivant III section 2.1 eq. (1)
+  (DOI `10.1016/S0168-0072(98)00040-2`) and using the binding
+  vocabulary. `GebLean/Ramified.lean` starts as the directory index
+  importing `AlgSig`.
 
 - [ ] **Step 3: verify.** `lake test` passes; the new `#guard`s run.
 
@@ -652,18 +615,51 @@ def constructorSig (A : AlgSig) (IsObj : S → Prop) : SortedSig S
 ```lean
 -- Ctx S := List S
 -- (sig : SortedSig S throughout; Σ is not a legal Lean binder)
--- Tm    : SortedSig S → Ctx S → S → Type
+
+/-- The indexed polynomial signature endofunctor of a sorted
+signature over the sort type S (decision 8: multi-sorted signatures
+are subsumed by taking the sort type as the domain and codomain of
+the slice polynomial endofunctor): at output sort s, shapes are the
+operations with result s and directions their arity positions,
+mapped to the argument sorts. -/
+-- SortedSig.polyEndo (sig : SortedSig S) : PolyEndo S
+
+/-- The constant endofunctor at an S-indexed family (shapes = the
+family, no directions); the variables summand of the term functor
+below. -/
+-- constPolyEndo (V : S → Type) : PolyEndo S
+
+/-- The variable family of a context: at sort s, the positions of Γ
+carrying s. -/
+-- varFam (Γ : Ctx S) : S → Type
+--   -- := fun s => {i : Fin Γ.length // Γ.get i = s}
+
+-- Terms are the free monad of sig.polyEndo at the context's
+-- variable family, realized as the PolyFix of the coproduct
+-- (polyBetweenCoprod, GebLean/PolyUMorph.lean:422) of the
+-- signature summand and the variables summand (decision 7:
+-- contexts as parameters):
+-- Tm (sig : SortedSig S) (Γ : Ctx S) : S → Type
+--   -- := PolyFix (polyBetweenCoprod _ ![sig.polyEndo,
+--   --                                   constPolyEndo (varFam Γ)])
 -- Tm.var   : (i : Fin Γ.length) → Tm sig Γ (Γ.get i)
+--   -- from the variables summand
 -- Tm.op    : (o : sig.Op) →
 --            (args : ∀ i, Tm sig Γ ((sig.arity o).get i)) →
 --            Tm sig Γ (sig.result o)
+--   -- from the signature summand
 -- Tm.subst : Tm sig Γ s → (∀ i, Tm sig Δ (Γ.get i)) → Tm sig Δ s
+--   -- the free-monad bind along the variable-family map,
+--   -- defined by polyFixFold (GebLean/PolyAlg.lean:359)
 -- Tm.subst_id    : t.subst Tm.var = t
 -- Tm.subst_subst : (t.subst σ).subst τ
 --                    = t.subst (fun i => (σ i).subst τ)
+--   -- the free-monad laws, proven once via initiality
+--   -- (polyFixAlg_isInitial :533, polyFixFoldHom_unique :517)
 -- Tm.weaken : (f : Fin Γ.length → Fin Δ.length)
 --             (h : ∀ i, Δ.get (f i) = Γ.get i) →
 --             Tm sig Γ s → Tm sig Δ s
+--   -- subst at a variable tuple
 
 /-- A quotient relation for the syntactic category: a per-hom setoid
 family on terms together with the congruence laws composition needs
@@ -687,12 +683,16 @@ structure QuotRel (sig : SortedSig S) where
   `example` instance each of `subst_id` and `subst_subst` on the
   concrete term. Run `lake test`, confirm failure.
 
-- [ ] **Step 2: implement** per the G3 realization. The clone laws
-  are the content the syntactic category's composition depends on;
-  prove them at full generality, not just on examples.
-  Docstrings: novel packaging; the clone-law shape cites the
-  repository precedent (`Era.Tm.subst_id`/`subst_subst`,
-  `GebLean/Era.lean`) as the pattern source.
+- [ ] **Step 2: implement** on the `PolyEndo` stack per the block
+  above: `SortedSig.polyEndo`, `constPolyEndo`, `varFam`, `Tm` as
+  the `PolyFix` of the coproduct, `subst` as bind by `polyFixFold`,
+  and the clone laws once, generically, from initiality — these are
+  the free-monad laws, and they are the content the syntactic
+  category's composition depends on; prove them at full generality,
+  not just on examples. Docstrings: novel packaging; the clone-law
+  statements cite the repository precedent
+  (`Era.Tm.subst_id`/`subst_subst`, `GebLean/Era.lean`) as the
+  pattern source.
 
 - [ ] **Step 3: verify, pre-commit triad, commit** (message
   `feat(ramified): add sorted term layer with clone laws`).
@@ -833,18 +833,24 @@ Transcription tasks cite the paper at point of use as annotated.
 **Interfaces (produces):**
 
 ```lean
-/-- Ramified types (Leivant III section 2.3): from the base type `o`
-by the binary arrow and the unary `Omega`. Transcription. -/
-inductive RType : Type
-  | o : RType
-  | arrow : RType → RType → RType
-  | omega : RType → RType
+/-- Leivant III section 2.3's definition of the ramified types
+(r-types), generated from a base type `o`, a binary `arrow`, and a
+unary `Omega`. Realized (decision 8) as the W-type of the r-type
+signature endofunctor — `PolyFix` of the `PolyEndo PUnit` with a
+nullary shape (`o`), a binary shape (`arrow`), and a unary shape
+(`omega`). -/
+def RType : Type            -- := PolyFix rTypePolyEndo _
+-- with derived constructors (from the PolyFix constructor):
+-- RType.o : RType
+-- RType.arrow : RType → RType → RType
+-- RType.omega : RType → RType
 
 /-- Object sorts: `o` and every `Omega tau` (paper section 2.3). -/
 def RType.IsObj : RType → Prop
 /-- Tower sorts `Omega^m o` (paper section 2.4(3)). -/
 def RType.tower : Nat → RType
--- with: (RType.tower m).IsObj; DecidableEq RType;
+-- with: (RType.tower m).IsObj; DecidableEq RType (constructed by
+-- structural recursion via PolyFix.ind — no deriving);
 -- DecidablePred RType.IsObj;
 -- RType.interp (carrier : Type) : RType → Type
 --   (object sorts ↦ carrier, arrows ↦ function spaces;
@@ -883,9 +889,13 @@ def appSig : SortedSig RType   -- one op per (σ, τ):
 definitions and ramified monotonic recurrences (eq. (4)) and flat
 recurrences (eq. (5)) over previously defined identifiers; the
 signature and its defining semantics are generated together, as
-`ERMor1` does for its theory (GebLean/LawvereER.lean:36). -/
-inductive RIdent (A : AlgSig) : List RType → RType → Type
--- constructors (transcription targets):
+`ERMor1` does for its theory (GebLean/LawvereER.lean:36). Realized
+(decision 8) as the `PolyFix` of an indexed signature endofunctor
+over the index type `List RType × RType`, whose shapes are the
+three schema formers below and whose directions are the referenced
+sub-identifiers and defining terms. -/
+def RIdent (A : AlgSig) : List RType → RType → Type
+-- shapes (each a summand of the identifier signature functor):
 --   defn  : a term over already-formed identifiers, abstracted
 --   mrec  : eq. (4) — parameters Γ (arbitrary r-types), recurrence
 --           argument at Ω τ, output τ; one step function per
@@ -958,12 +968,13 @@ def kappaHat (A : AlgSig) (τ : RType) :
   `Ω o → o` by `rfl`; `kappaHat` interpretation identity on two
   values (`example ... := rfl` on small inputs).
 
-- [ ] **Step 2: implement.** `kappaHat` is defined by ramified
-  recurrence (transcription, paper section 2.4(1)); its docstring
-  records that no raising coercion exists (constant maps
-  `o → Ω o` exist, an identity-realizing one does not — spec s4.2)
-  and that endofunctor/copoint assembly is spec open question 3,
-  deliberately not claimed here.
+- [ ] **Step 2: implement.** `kappaHat` is Leivant III
+  section 2.4(1)'s auxiliary coercion `kappa-hat`, defined by
+  ramified recurrence; its docstring says so, records that no
+  raising coercion exists (constant maps `o → Ω o` exist, an
+  identity-realizing one does not — spec s4.2), and notes that
+  endofunctor/copoint assembly is spec open question 3, deliberately
+  not claimed here.
 
 - [ ] **Step 3: verify, pre-commit triad, commit** (message
   `feat(ramified): add sort-level omega shift and kappaHat`).
@@ -1118,8 +1129,8 @@ the form Omega^m o", paper section 2.4(3), p. 216). Realized as a
 predicate on RIdent (the sub-theory keeps the host's term and
 category layers). -/
 def RIdent.FirstOrder : RIdent A Γ τ → Prop
-/-- The monadic first-order sub-theory over 1 + X (the G3 spike's
-target, now the committed artifact) and its polyadic sibling. -/
+/-- The first-order sub-theory presentation over `A` (monadic at
+1 + X, polyadic at 1 + 2X). -/
 def firstOrderPresentation (A : AlgSig) : Presentation
 def foInclusion (A : AlgSig) :
     SynCat (firstOrderPresentation A)
@@ -1216,7 +1227,8 @@ def tower : ℕ → ℕ → ℕ    -- tower 0 x = x; tower (k+1) x = 2 ^ tower k
 simultaneous defining equations — with an interpretation lemma
 matching the classical simultaneous system (the shape of
 `KMor1.simrecVec`, `GebLean/LawvereKSimInterp.lean:66`, restated over
-the ramified sorts). Transcription of Lemma 2; cite section 2.6.
+the ramified sorts). The docstrings cite this as Leivant III
+Lemma 2 (section 2.6, eqs. (6)-(7)).
 
 ### Task 5.2: Lemma 1 — flat recurrence versus destructors and case
 
@@ -1298,7 +1310,7 @@ theorem erMor_ramified_definable {a : ℕ} (e : ERMor1 a) :
 ## Phase 6 — soundness (branch `feat/ramified-p6-soundness`; sub-plan)
 
 Spec s6.3 and s8 item 6 — the workstream's dominant cost. Content
-branches on gates G1/G2/G4; boundaries fixed here, step detail in
+branches on gates G1/G2/G3; boundaries fixed here, step detail in
 the sub-plan.
 
 ### Task 6.0: write and converge the Phase 6 sub-plan
@@ -1308,7 +1320,7 @@ the sub-plan.
 - Create:
   `docs/superpowers/plans/<date>-ramified-p6-soundness-subplan.md`
 
-- [ ] **Step 1: write the sub-plan** after gates G1/G2/G4 have
+- [ ] **Step 1: write the sub-plan** after gates G1/G2/G3 have
   closed, Phases 2 and 3 have landed, and the Phase 5 sub-plan has
   converged (the dependency rationale is in "How to work this
   plan"), selecting route T or route L below per the gate record,
@@ -1327,17 +1339,21 @@ the sub-plan.
 - T2: consume the audited Lemma-16 family
   (`GebLean/LawvereGodelTLemma16.lean`) for the elementary bound,
   adding whatever assembly theorem the G2 audit recorded as missing.
-- T3: the landing per G4; `collapseFunctor` substance (below).
+- T3: the landing per G3; `collapseFunctor` substance (below).
 
 **Route L (otherwise; spec s6.3 steps 1-3, all transcription):**
 
 - L1: the applicative calculi `RlMR-omega` and `RlMR-omega_o` as
   proof-internal apparatus (paper section 4.1): intrinsically-typed
-  de Bruijn terms with beta/eta plus recurrence and flat reductions;
-  templates: the PLFA Lean port (`rami3l/plfl`, DeBruijn and
-  Substitution chapters) and the modular metatheory framework of
-  arXiv `2512.09280` (availability to be verified by the sub-plan;
-  spec s3.3).
+  de Bruijn terms with beta/eta plus recurrence and flat reductions.
+  Per decision 8 these term calculi are likewise `PolyFix` of
+  indexed signature endofunctors (index = context and type; binders
+  shift the context index); the sub-plan fixes the indexed
+  functors. Conceptual templates only: the PLFA Lean port
+  (`rami3l/plfl`, DeBruijn and Substitution chapters — its native
+  inductives require adaptation to the `PolyEndo` stack) and the
+  modular metatheory framework of arXiv `2512.09280` (availability
+  to be verified by the sub-plan; spec s3.3).
 - L2: Proposition 7 composite (1) to (3) via the eq. (9) translation
   (p. 223; recurrence with parameters becomes closed `R-tau`
   operators), then (3) to (4) reconstructing the "similar to
@@ -1349,13 +1365,13 @@ the sub-plan.
   time `O((2_{q+1}(h))^2)`) and Proposition 13 (represented
   functions elementary-time computable; uses Lemma 4 to reduce to
   target type `o`) — paper section 5.
-- L5: the landing normalizer per G4 (spec s6.4): a normalizer on
+- L5: the landing normalizer per G3 (spec s6.4): a normalizer on
   term codes with a verified elementary clock, realized K^sim-side
   (default; `KSimURMSimulator` pattern,
   `GebLean/Utilities/KSimURMSimulator.lean:544,:948,:961`, transfer
   across `erKSimEquiv`, `GebLean/LawvereERKSim/Equivalence.lean:183`)
   or ER-side (bounded recursion on Godel codes; `EraComplete` and
-  `GebLean/Utilities/Tupling.lean` precedents), per the G4 record.
+  `GebLean/Utilities/Tupling.lean` precedents), per the G3 record.
 
 **Final boundary item, both routes (T3 / after L5):** the collapse
 packaging in `GebLean/Ramified/Soundness/Collapse.lean`
@@ -1494,10 +1510,12 @@ theorem ramified_definability {n m}
 ## Self-review checklist (run before adversarial review)
 
 - Every spec s8 item maps to a phase; every spec s6.1/s6.2/s6.3/s6.4
-  obligation maps to a task; the three front-loaded gates cover spec
-  open questions 1, 2, and the s7 spikes; open questions 4-6 have
-  assigned owners (G3/G3/G5); open questions 3 and 7 are explicitly
-  not asserted anywhere.
+  obligation maps to a task; the front-loaded gates cover spec open
+  questions 1 (G1/G2) and 2 (G3); open questions 4 and 5 are fixed
+  by decisions 7 and 6; open question 6 is assigned to G4; the s7
+  representation choice is fixed by decision 8 (user decision under
+  the spec's no-spike default); open questions 3 and 7 are
+  explicitly not asserted anywhere.
 - No placeholder text (TBD/TODO/"add appropriate..."); every code
   step shows content or names the sub-plan that will.
 - Names used across phases agree (`AlgSig`, `QuotRel`,
@@ -1523,7 +1541,7 @@ theorem ramified_definability {n m}
 - N. Danner, J. S. Royer, "Ramified structural recursion and
   corecursion", 2012. arXiv `1201.4567` (data-system layer adoption).
 - J. R. Otto, "Complexity doctrines", PhD thesis, McGill University,
-  1995 (gate G5).
+  1995 (gate G4).
 - Spec:
   `docs/superpowers/specs/2026-07-01-ramified-recurrence-approaches-design.md`
   (full reference list in its References section).
