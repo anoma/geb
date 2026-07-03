@@ -73,4 +73,32 @@ example (t : FreeAlg natAlgSig) :
   have h := ramDeltaIdent_interp 3 (Fin.cons t finZeroElim)
   simpa [objToNat] using h
 
+/-- A one-element environment at the exponentiation recurrence-argument sort
+`Omega (o -> o)`. -/
+def expEnv (n : Nat) :
+    ∀ i : Fin ([RType.omega ramFun] : Ctx RType).length,
+      RType.interp (FreeAlg natAlgSig) (([RType.omega ramFun] : Ctx RType).get i) :=
+  Fin.cons (natToFreeAlg n) finZeroElim
+
+-- Exponentiation iterates the successor: `e (1) (3) = 3 + 2^1 = 5`,
+-- `e (2) (0) = 2^2 = 4`.
+#guard freeAlgToNat ((ramExp.interp (expEnv 1)) (natToFreeAlg 3)) = 5
+#guard freeAlgToNat ((ramExp.interp (expEnv 2)) (natToFreeAlg 0)) = 4
+
+-- The `2_m` ladder aligns with the tower: `2_2 (1) = 2^(2^1) = 4`.
+#guard freeAlgToNat (ramTwoPow 2 (natToFreeAlg 1)) = 4
+
+-- Exponentiation iterates the successor, over all inputs.
+example (n x : Nat) :
+    freeAlgToNat ((ramExp.interp (expEnv n)) (natToFreeAlg x)) = x + 2 ^ n := by
+  unfold expEnv
+  rw [ramExp_interp, freeAlgToNat_natToFreeAlg]
+  exact congrArg (fun k => x + 2 ^ k)
+    ((congrArg freeAlgToNat (Fin.cons_zero _ _)).trans (freeAlgToNat_natToFreeAlg n))
+
+-- The `2_m` ladder denotes the tower of twos, over all inputs.
+example (m : Nat) (x : FreeAlg natAlgSig) :
+    freeAlgToNat (ramTwoPow m x) = GebLean.tower m (freeAlgToNat x) :=
+  ramTwoPow_interp m x
+
 end GebLeanTests.Ramified.ExamplesTest
