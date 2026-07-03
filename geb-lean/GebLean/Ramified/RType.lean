@@ -30,6 +30,8 @@ whose shapes are a nullary `o`, a binary `arrow`, and a unary `omega`.
 * `RType.shape` — the top constructor shape of an r-type.
 * `RType.IsObj` — the object-sort predicate (`o` and every `Omega tau`).
 * `RType.tower` — the tower sorts `Omega^m o`.
+* `RType.IsTower` — the tower-sort predicate (a chain of `Omega`s ending in
+  `o`), with a `DecidablePred` instance.
 * `RType.interp` — the denotation of an r-type over a carrier.
 * `oObj` — the base object sort `o` as an object-sort witness.
 
@@ -38,6 +40,7 @@ whose shapes are a nullary `o`, a binary `arrow`, and a unary `omega`.
 * `RType.arrow_eq_arrow`, `RType.omega_eq_omega` — injectivity of the
   derived constructors.
 * `RType.tower_isObj` — every tower sort is an object sort.
+* `RType.tower_isTower` — every tower sort satisfies `RType.IsTower`.
 * `RType.interp_isObj` — every object sort denotes a copy of the carrier.
 
 ## Implementation notes
@@ -226,5 +229,37 @@ theorem RType.interp_isObj (C : Type) {s : RType} (h : s.IsObj) :
 
 /-- The base object sort `o` as an object-sort witness. -/
 def oObj : { s : RType // RType.IsObj s } := ⟨RType.o, Or.inl rfl⟩
+
+/-- The tower-sort predicate (Leivant III section 2.4(3)): `t` is a tower sort
+`Omega^m o`, equivalently a chain of `Omega`s terminating in the base type `o`.
+Unlike `RType.IsObj`, which inspects only the top shape, `IsTower` recurses the
+whole spine: `o` qualifies, an `arrow` does not, and `Omega tau` qualifies
+exactly when `tau` does. Realized by the dependent eliminator `PolyFix.ind`
+(decision 8), following `RType.interp`'s pattern. Novel packaging. -/
+def RType.IsTower (t : RType) : Prop :=
+  PolyFix.ind (P := rTypeSig.polyEndo) (motive := fun {_} _ => Prop)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => True
+      | RTypeShape.arrow, _, _ => False
+      | RTypeShape.omega, _, ih =>
+        ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega))) t
+
+instance : DecidablePred RType.IsTower := fun t =>
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => Decidable (RType.IsTower t))
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => isTrue True.intro
+      | RTypeShape.arrow, _, _ => isFalse (fun h => h)
+      | RTypeShape.omega, _, ih =>
+        ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega))) t
+
+/-- Every tower sort `Omega^m o` satisfies `RType.IsTower` (Leivant III section
+2.4(3)): `o` at `m = 0`, and `Omega` of a tower sort at `m + 1`. -/
+theorem RType.tower_isTower (m : Nat) : (RType.tower m).IsTower := by
+  induction m with
+  | zero => exact True.intro
+  | succ n ih => exact ih
 
 end GebLean.Ramified

@@ -8,6 +8,7 @@ import GebLean.Ramified.HigherOrder
 import GebLean.Ramified.OmegaShift
 import GebLean.Ramified.Examples
 import GebLean.Ramified.Algebras
+import GebLean.Ramified.FirstOrder
 
 /-!
 # Ramified recurrence
@@ -36,7 +37,11 @@ word algebra `natAlgSig`, the polyadic binary-word algebra
 recurrence at each, the numeric equivalence
 `natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ`, and the signature morphisms
 `AlgSigHom` with their carrier transport `freeAlgMap` and image-point
-naturality (`Algebras`).
+naturality (`Algebras`). Phase 4 carves out the first-order sub-theories: the
+tower-sort predicate `RType.IsTower`, the first-order identifier predicate
+`RIdent.FirstOrder`, the sub-theory presentation `firstOrderPresentation` (its
+identifier summands restricted to the `FirstOrder` subtype), and the inclusion
+functor `foInclusion` into the host `RMRecCat` (`FirstOrder`).
 
 ## References
 
