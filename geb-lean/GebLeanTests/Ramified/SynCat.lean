@@ -73,4 +73,21 @@ example :
     SynProd.lift sumMor projMor ≫ SynProd.snd pres r oneCtx oneCtx = projMor :=
   SynProd.lift_snd sumMor projMor
 
+/-- A concrete two-variable environment in the `Nat` model, assigning `2` and `3`
+to the two positions. -/
+abbrev twoEnv : (standardModel pres).Env twoCtx :=
+  Fin.cons 2 (Fin.cons 3 finZeroElim)
+
+-- Evaluating the identity morphism at an environment returns the environment.
+example (ρ : (standardModel pres).Env oneCtx) : Hom.eval (𝟙 oneCtx) ρ = ρ := rfl
+
+-- `Hom.eval_mk` reduces the sum term at `(2, 3)` to their sum.
+example : Hom.eval sumMor twoEnv 0 = 5 := rfl
+
+-- `Hom.eval` respects composition (`Hom.eval_comp`).
+example :
+    Hom.eval (𝟙 twoCtx ≫ sumMor) twoEnv
+      = Hom.eval sumMor (Hom.eval (𝟙 twoCtx) twoEnv) :=
+  Hom.eval_comp (𝟙 twoCtx) sumMor twoEnv
+
 end GebLeanTests.Ramified.SynCat

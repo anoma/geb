@@ -39,6 +39,17 @@ generalizes the hand-rolled quotient categories `GebLean.LawvereERCat`
   identity the variable tuple, composition substitution.
 * `SynCat.instCartesianMonoidalCategory` — chosen finite products by context
   concatenation.
+* `HomTuple.eval` — componentwise `Tm.eval` of a morphism tuple at an
+  environment.
+* `Hom.eval` — evaluation of a hom class at the standard model, the lift of
+  `HomTuple.eval` along `interpQuotRel`.
+
+## Main statements
+
+* `Hom.eval_mk` — evaluation of a class is componentwise evaluation of its
+  representative.
+* `Hom.eval_comp` — evaluation respects composition (the semantic clone law
+  `Tm.eval_subst` componentwise).
 
 ## Implementation notes
 
@@ -165,6 +176,42 @@ theorem Hom.assoc {P : Presentation} {r : QuotRel P.sig} {Γ Δ E W : Ctx P.S}
   | _ h' =>
     exact congrArg (Quotient.mk _)
       (funext fun i => (Tm.subst_subst (h' i) g' f').symm)
+
+/-- Evaluate a hom-tuple at an environment of the model `M`: componentwise
+`Tm.eval`, giving a value at each codomain position. Novel packaging. -/
+def HomTuple.eval {P : Presentation} {Γ Δ : Ctx P.S} (f : HomTuple P Γ Δ)
+    (M : SortedModel P.sig) (ρ : M.Env Γ) : M.Env Δ :=
+  fun i => (f i).eval M ρ
+
+/-- Evaluate a hom (a `homSetoid`-class over `interpQuotRel P`) at the standard
+model over an environment: componentwise `Tm.eval` of any representative. The
+lift is well-defined because `interpQuotRel P` relates two tuples exactly when
+their `Tm.eval` at the standard model agree on every environment. Novel
+packaging. -/
+def Hom.eval {P : Presentation} {Γ Δ : Ctx P.S}
+    (f : Hom P (interpQuotRel P) Γ Δ) (ρ : (standardModel P).Env Γ) :
+    (standardModel P).Env Δ :=
+  Quotient.liftOn f (fun f' => HomTuple.eval f' (standardModel P) ρ)
+    (fun _ _ h => funext (fun i => h i ρ))
+
+/-- Evaluation of a hom class is componentwise evaluation of its representative
+tuple. -/
+@[simp] theorem Hom.eval_mk {P : Presentation} {Γ Δ : Ctx P.S}
+    (f : HomTuple P Γ Δ) (ρ : (standardModel P).Env Γ) :
+    Hom.eval (Quotient.mk _ f) ρ = HomTuple.eval f (standardModel P) ρ :=
+  rfl
+
+/-- Evaluation respects composition (`≫`, i.e. `Hom.comp`): evaluating a
+composite at an environment evaluates the second hom at the value of the first.
+The semantic clone law `Tm.eval_subst` componentwise. -/
+theorem Hom.eval_comp {P : Presentation} {Γ Δ E : Ctx P.S}
+    (f : Hom P (interpQuotRel P) Γ Δ) (g : Hom P (interpQuotRel P) Δ E)
+    (ρ : (standardModel P).Env Γ) :
+    (f.comp g).eval ρ = g.eval (f.eval ρ) := by
+  induction f using Quotient.ind with
+  | _ f' =>
+  induction g using Quotient.ind with
+  | _ g' => exact funext (fun i => Tm.eval_subst (standardModel P) (g' i) f' ρ)
 
 /-- The carrier of the syntactic category of a presentation `P` under a quotient
 relation `r`: a type synonym for `Ctx P.S` carrying the category and product

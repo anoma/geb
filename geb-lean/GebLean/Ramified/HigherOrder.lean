@@ -54,6 +54,8 @@ data-types-a-la-carte assembly reuses `SortedSig.sum`
   identifier, of its curried arrow sort as result.
 * `higherOrder` — the higher-order presentation over `A`.
 * `RMRecCat` — the syntactic category of the higher-order system.
+* `identHom` — the morphism `Γ ⟶ [τ]` of `RMRecCat A` applying an identifier to
+  the context's variables.
 
 ## Main statements
 
@@ -61,6 +63,8 @@ data-types-a-la-carte assembly reuses `SortedSig.sum`
 * `RIdent.interp_eq_appChain_curryInterp` — coherence: the saturated
   identifier's denotation equals the application chain of its constant's
   denotation.
+* `identHom_eval` — the standard-model evaluation of `identHom f` reads off
+  `RIdent.interp`.
 
 ## Implementation notes
 
@@ -497,5 +501,26 @@ standard model. The Phase 1 `Category` and `CartesianMonoidalCategory` instances
 of `SynCat` apply. Novel packaging. -/
 abbrev RMRecCat (A : AlgSig) :=
   SynCat (higherOrder A) (interpQuotRel (higherOrder A))
+
+/-- The morphism `Γ ⟶ [τ]` of `RMRecCat A` applying an identifier `f` to the
+context's variables: the class of the tuple whose sole component is the
+identifier operation `Sum.inl (Sum.inr ⟨Γ, τ, f⟩)` of `(higherOrder A).sig`
+applied to the domain variables. The hoisting to an arbitrary identifier of the
+tuple pattern instantiated at `Ω τ` by `kappaHatTuple`. Novel packaging. -/
+def identHom {A : AlgSig} {Γ : List RType} {τ : RType} (f : RIdent A Γ τ) :
+    Hom (higherOrder A) (interpQuotRel (higherOrder A)) Γ [τ] :=
+  Quotient.mk _ (Fin.cons
+    (Tm.op (sig := (higherOrder A).sig)
+      (Sum.inl (Sum.inr ⟨Γ, τ, f⟩))
+      (fun k => Tm.var k))
+    finZeroElim)
+
+/-- The standard-model evaluation of `identHom f` reads off `RIdent.interp`: the
+sole entry of the evaluated environment is `f.interp` at the argument
+environment. -/
+theorem identHom_eval {A : AlgSig} {Γ : List RType} {τ : RType}
+    (f : RIdent A Γ τ) (ρ : (standardModel (higherOrder A)).Env Γ) :
+    (identHom f).eval ρ 0 = f.interp ρ :=
+  rfl
 
 end GebLean.Ramified
