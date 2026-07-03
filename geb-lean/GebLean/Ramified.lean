@@ -6,6 +6,7 @@ import GebLean.Ramified.SynCat
 import GebLean.Ramified.RType
 import GebLean.Ramified.HigherOrder
 import GebLean.Ramified.OmegaShift
+import GebLean.Ramified.Examples
 
 /-!
 # Ramified recurrence
@@ -21,7 +22,10 @@ products (`SynCat`). Phase 2 opens the higher-order system with the
 ramified types and their object sorts (`RType`), the higher-order
 presentation with schema-generated identifiers (`HigherOrder`), and the
 sort-level Omega shift with the auxiliary coercion kappa-hat
-(`OmegaShift`).
+(`OmegaShift`). The worked examples of Leivant III section 2.4 over the
+`1 + X` word algebra — the downward coercions `kappa` and `delta`,
+addition, multiplication, and the size function, each with its
+interpretation lemma — are in `Examples`.
 
 ## References
 
