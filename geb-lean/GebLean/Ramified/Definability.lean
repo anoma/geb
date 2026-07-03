@@ -11,8 +11,10 @@ the reduction of simultaneous recurrence to plain recurrence (Lemma 2, section
 function, the destructor, and the selector `choose` over the `1 + X` word
 algebra `natAlgSig` — the building blocks of Lemma 2's selector argument
 (`Simultaneous`). The second packages the destructor/case operations as a
-signature summand generic in the algebra and realizes them by flat recurrence
-over `natAlgSig`, the containment direction of Lemma 1 (`Flat`).
+signature summand generic in the algebra, realizes them by flat recurrence
+over `natAlgSig` — the containment direction of Lemma 1 — and assembles the
+O-variant presentation `RMRec_o^omega` of section 2.5, in which flat
+recurrence is replaced by the destructor and case operations (`Flat`).
 
 ## References
 

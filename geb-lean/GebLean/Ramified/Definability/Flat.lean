@@ -18,6 +18,14 @@ recurrence (`ramDstr` and `ramCase` of
 `GebLean/Ramified/Definability/Simultaneous.lean`), with `dstrCaseToFlat_interp`
 proving the two agree.
 
+The module also assembles the O-variant presentation itself: the object-sorted
+systems `RRec_o^omega` / `RMRec_o^omega` of section 2.5, in which flat
+recurrence is replaced by the destructor and case functions. `RIdentO` mirrors
+the identifier layer of `GebLean/Ramified/HigherOrder.lean` with the flat
+recurrence former removed and `dstrCaseSig` added to the term signature;
+`higherOrderO` is the resulting presentation over `natAlgSig` and `RMRecCatO`
+its syntactic category.
+
 ## Main definitions
 
 * `AlgSig.numCtors`, `AlgSig.maxArity` — the constructor count and the largest
@@ -27,6 +35,15 @@ proving the two agree.
 * `dstrCaseModel` — the standard semantics over `natAlgSig` (section 4.1).
 * `dstrCaseToFlat` — the realization of each operation as a derived identifier
   of `higherOrder natAlgSig` (Lemma 1, containment direction).
+* `defnSigO`, `DefnShapeO`, `IdentShapeO`, `RIdentO` — the O-variant identifier
+  layer: explicit definitions over a body signature carrying the
+  destructor/case operations, and ramified monotonic recurrences; no flat
+  recurrence.
+* `RIdentO.defn`, `RIdentO.mrec` — the derived schema formers.
+* `RIdentO.interp` — the denotation of an O-variant identifier on the standard
+  carriers.
+* `higherOrderO` — the O-variant presentation over `natAlgSig`.
+* `RMRecCatO` — the syntactic category of the O-variant system.
 
 ## Main statements
 
@@ -54,6 +71,22 @@ the argument environment is read at the literal context.
 operations transcribe Leivant III section 2.5, their semantics section 4.1, and
 their flat definability the containment direction of Lemma 1.
 
+The O-variant layer mirrors `GebLean/Ramified/HigherOrder.lean`'s identifier
+layer declaration for declaration, with two deltas: the flat-recurrence former
+is removed and `dstrCaseSig` is added to the term signature. The mirror is
+deliberate: parameterizing `HigherOrder.lean`'s identifier layer over an extra
+operations summand would rewrite that module and every consumer of the
+higher-order system, while the mirror is confined to this module. `MrecShape`
+carries no flat-recurrence dependence and is reused as is. `dstrCaseSig` sits at the same injection
+position — after the application summand — in both `defnSigO` and
+`higherOrderO`'s signature, so the two signatures' injections stay parallel
+(as `defnSig`'s do with `higherOrder`'s). The signature layer (`defnSigO`
+through `identConstSigO`) is generic in `A` with the `Fintype A.B` instance
+threaded through; the model layer (`defnModelO` through `RMRecCatO`) is
+`natAlgSig`-scoped, following `dstrCaseModel`'s scoping — a generic
+interpretation of the case operation would require an enumeration of `A.B` to
+order the branches, which `Fintype` does not provide constructively.
+
 ## References
 
 D. Leivant, "Ramified recurrence and computational complexity III: Higher type
@@ -64,15 +97,20 @@ destructors of type `o → o`; the case operation `case^θ : o, θ^k → θ` wit
 the number of constructors); their reduction rules — a destructor returns the
 `j`-th subterm, or the argument itself when `j` reaches the arity — are section
 4.1; the containment `RRec_o ⊆ RRec` (the case and destructor functions are
-definable by flat recurrence) is the trivial direction of Lemma 1.
+definable by flat recurrence) is the trivial direction of Lemma 1. The
+object-sorted systems `RRec_o^omega` / `RMRec_o^omega` — flat recurrence
+replaced by the destructor and case functions — are defined in section 2.5;
+`higherOrderO` transcribes their term signature.
 
 ## Tags
 
 ramified recurrence, destructor, case, flat recurrence, definability, object
-sort
+sort, presentation, syntactic category
 -/
 
 namespace GebLean.Ramified
+
+open CategoryTheory
 
 /-- The standard `Fintype` structure on the constructor labels of the `1 + X`
 word algebra `natAlgSig`, its labels being `Bool`. Supplies the finite counts
@@ -256,5 +294,216 @@ theorem dstrCaseToFlat_interp (op : (dstrCaseSig natAlgSig RType.IsObj).Op)
     rw [hj]
     exact dstrAgree args
   | Sum.inr θ, args => exact dstrCaseFlatCase_interp θ.val args
+
+/-- The base signature of an O-variant explicit definition's body (Leivant III
+section 2.5, the object-sorted systems: flat recurrence is replaced by the
+destructor and case functions): the constructor summand, application, the
+destructor/case operations, the saturated holes for previously defined
+identifiers, and their curried-combinator forms. `defnSig`'s summands
+(`GebLean/Ramified/HigherOrder.lean`) with `dstrCaseSig` inserted after the
+application summand; the same injection position is used in `higherOrderO`.
+Novel packaging. -/
+def defnSigO (A : AlgSig) [Fintype A.B] (n : Nat)
+    (holeIdx : Fin n → List RType × RType) : SortedSig RType :=
+  ((((constructorSig A RType.IsObj).sum appSig).sum (dstrCaseSig A RType.IsObj)).sum
+    (holeSig n holeIdx)).sum (holeConstSig n holeIdx)
+
+/-- The non-recursive data of an O-variant explicit definition (Leivant III
+sections 2.3 and 2.5): a defining term over the base signature extended by the
+destructor/case operations and by hole operations, one hole per occurrence of
+a previously defined identifier. The directions of the fixed point are the
+identifiers those holes reference. Novel packaging. -/
+structure DefnShapeO (A : AlgSig) [Fintype A.B] (Γ : List RType) (τ : RType) where
+  /-- The number of identifier holes in the body. -/
+  numHoles : Nat
+  /-- The context and result sort each hole's referenced identifier carries. -/
+  holeIdx : Fin numHoles → List RType × RType
+  /-- The defining term over the base signature with destructors, case
+  operations, and holes, in context `Γ` at sort `τ`. -/
+  body : Tm (defnSigO A numHoles holeIdx) Γ τ
+
+/-- The shape type of the O-variant identifier signature endofunctor at index
+`(Γ, τ)`: the disjoint union of the two schema formers' non-recursive data —
+explicit definition and ramified monotonic recurrence. Flat recurrence is
+absent (Leivant III section 2.5: the destructor and case functions replace
+it); the recurrence data `MrecShape` is reused from
+`GebLean/Ramified/HigherOrder.lean`. Novel packaging. -/
+def IdentShapeO (A : AlgSig) [Fintype A.B] (Γ : List RType) (τ : RType) : Type :=
+  DefnShapeO A Γ τ ⊕ MrecShape A Γ τ
+
+/-- The direction type at an O-variant shape: the holes of a `defn`, and the
+constructor labels of a `mrec` (one step function per label). Novel
+packaging. -/
+def IdentDirO (A : AlgSig) [Fintype A.B] (Γ : List RType) (τ : RType) :
+    IdentShapeO A Γ τ → Type
+  | Sum.inl d => Fin d.numHoles
+  | Sum.inr _ => A.B
+
+/-- The target index of an O-variant direction: the context and result sort of
+the referenced identifier. A `defn` hole targets its stored index; a `mrec`
+step function targets `(params ++ replicate (A.ar i) τ, τ)` (parameters and
+recursive results at `τ`). Novel packaging. -/
+def identTargetO (A : AlgSig) [Fintype A.B] (Γ : List RType) (τ : RType) :
+    (s : IdentShapeO A Γ τ) → IdentDirO A Γ τ s → List RType × RType
+  | Sum.inl d, j => d.holeIdx j
+  | Sum.inr m, i => (m.params ++ List.replicate (A.ar i) τ, τ)
+
+/-- The O-variant identifier signature endofunctor over the index type
+`List RType × RType` (context, result sort): shapes are the schema formers'
+data, directions are the referenced identifiers. Novel packaging. -/
+def identEndoO (A : AlgSig) [Fintype A.B] : PolyEndo (List RType × RType) :=
+  fun idx => ccrObjMk fun s : IdentShapeO A idx.1 idx.2 =>
+    Over.mk fun d : IdentDirO A idx.1 idx.2 s => identTargetO A idx.1 idx.2 s d
+
+/-- The schema-generated identifiers of the O-variant over a base algebra `A`,
+indexed by context and result sort (Leivant III section 2.5, the object-sorted
+systems `RRec_o^omega` / `RMRec_o^omega`): explicit definitions — over a body
+signature carrying the destructor and case operations — and ramified monotonic
+recurrences (eq. (4)) over previously defined identifiers; flat recurrence is
+absent. Realized as the `PolyFix` W-type of the indexed signature endofunctor
+`identEndoO A`, mirroring `RIdent`. Novel packaging. -/
+def RIdentO (A : AlgSig) [Fintype A.B] (Γ : List RType) (τ : RType) : Type :=
+  PolyFix (identEndoO A) (Γ, τ)
+
+/-- An O-variant explicit definition (Leivant III sections 2.3 and 2.5): the
+defining term `d` together with the referenced identifiers filling its holes.
+Novel packaging. -/
+def RIdentO.defn {A : AlgSig} [Fintype A.B] {Γ : List RType} {τ : RType}
+    (d : DefnShapeO A Γ τ)
+    (children : (j : Fin d.numHoles) → RIdentO A (d.holeIdx j).1 (d.holeIdx j).2) :
+    RIdentO A Γ τ :=
+  PolyFix.mk (Γ, τ) (Sum.inl d) children
+
+/-- An O-variant ramified monotonic recurrence (Leivant III section 2.3,
+eq. (4), retained by the object-sorted systems of section 2.5): with
+parameters `x_vec` of sorts `params` and recurrence argument at `Ω τ`, and one
+step function per constructor of `A`,
+`f (x_vec, c_i (a_vec)) = g_ci (x_vec, phi_vec)`, where `phi_j = f (x_vec, a_j)`
+are the recursive results. Novel packaging. -/
+def RIdentO.mrec {A : AlgSig} [Fintype A.B] (params : List RType) (τ : RType)
+    (steps : (i : A.B) → RIdentO A (params ++ List.replicate (A.ar i) τ) τ) :
+    RIdentO A (params ++ [RType.omega τ]) τ :=
+  PolyFix.mk (params ++ [RType.omega τ], τ) (Sum.inr ⟨params, rfl⟩)
+    (fun i => steps i)
+
+/-- The model interpreting an O-variant explicit definition's body over
+`natAlgSig`: the standard carriers, with constructors and application read as
+usual, the destructor and case operations by their standard semantics
+`dstrCaseModel` (Leivant III section 4.1), each saturated hole by the recursive
+result of the referenced identifier, and each curried hole by the currying
+(`curryInterp`) of that recursive result. Scoped to `natAlgSig` because
+`dstrCaseModel` is. Novel packaging. -/
+def defnModelO (n : Nat) (holeIdx : Fin n → List RType × RType)
+    (ih : ∀ j : Fin n,
+      (∀ i : Fin (holeIdx j).1.length,
+        RType.interp (FreeAlg natAlgSig) ((holeIdx j).1.get i)) →
+        RType.interp (FreeAlg natAlgSig) (holeIdx j).2) :
+    SortedModel (defnSigO natAlgSig n holeIdx) where
+  carrier := RType.interp (FreeAlg natAlgSig)
+  interpOp op args :=
+    match op with
+    | Sum.inl (Sum.inl (Sum.inl (Sum.inl cop))) => stdConstructorInterp natAlgSig cop args
+    | Sum.inl (Sum.inl (Sum.inl (Sum.inr aop))) => stdAppInterp natAlgSig aop args
+    | Sum.inl (Sum.inl (Sum.inr dop)) => dstrCaseModel dop args
+    | Sum.inl (Sum.inr j) => ih j args
+    | Sum.inr j => curryInterp natAlgSig (holeIdx j).1 (holeIdx j).2 (ih j)
+
+/-- The recursion step of `RIdentO.interp` at one identifier node: a `defn`
+folds its body against `defnModelO`; a `mrec` recurses on the recurrence
+argument with the monotonic step (parameters and recursive results). Novel
+packaging. -/
+def RIdentO.interpStep (Γ : List RType) (τ : RType)
+    (shape : IdentShapeO natAlgSig Γ τ)
+    (ih : ∀ d : IdentDirO natAlgSig Γ τ shape,
+      (∀ i : Fin (identTargetO natAlgSig Γ τ shape d).1.length,
+        RType.interp (FreeAlg natAlgSig)
+          ((identTargetO natAlgSig Γ τ shape d).1.get i)) →
+        RType.interp (FreeAlg natAlgSig) (identTargetO natAlgSig Γ τ shape d).2) :
+    (∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) →
+      RType.interp (FreeAlg natAlgSig) τ := by
+  rcases shape with d | ⟨params, rfl⟩
+  · exact fun ρ => d.body.eval (defnModelO d.numHoles d.holeIdx ih) ρ
+  · exact fun ρ =>
+      FreeAlg.recurse (A := natAlgSig) (P := Unit)
+        (fun i _ _sub phi =>
+          ih i (childEnv params τ (natAlgSig.ar i)
+            (envHead params (RType.omega τ) ρ) phi))
+        () (envLast params (RType.omega τ) ρ)
+
+/-- The denotation of an O-variant identifier over the standard carriers
+`RType.interp (FreeAlg natAlgSig)`: a function from an environment at the
+identifier's context to a value at its result sort. Realized by structural
+recursion via `PolyFix.ind`, mirroring `RIdent.interp`
+(`GebLean/Ramified/HigherOrder.lean`). Novel packaging. -/
+def RIdentO.interp {Γ : List RType} {τ : RType} (f : RIdentO natAlgSig Γ τ) :
+    (∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) →
+      RType.interp (FreeAlg natAlgSig) τ :=
+  PolyFix.ind (P := identEndoO natAlgSig)
+    (motive := fun {x} _ =>
+      (∀ i : Fin x.1.length, RType.interp (FreeAlg natAlgSig) (x.1.get i)) →
+        RType.interp (FreeAlg natAlgSig) x.2)
+    (fun {x} shape _children ih => RIdentO.interpStep x.1 x.2 shape ih) f
+
+/-- The saturated identifier summand of the O-variant presentation: operations
+are the O-variant schema-generated identifiers, of context as arity and result
+sort as result. Mirrors `identSig`. Novel packaging. -/
+def identSigO (A : AlgSig) [Fintype A.B] : SortedSig RType where
+  Op := Σ Γ : List RType, Σ τ : RType, RIdentO A Γ τ
+  arity op := op.1
+  result op := op.2.1
+
+/-- The identifier-constant summand of the O-variant presentation: one nullary
+operation per O-variant identifier `f : RIdentO A Γ τ`, with result the
+curried arrow sort `RType.curried Γ τ` — the identifiers-as-combinators
+reading (Leivant III section 2.3, the higher-order system). Mirrors
+`identConstSig`. Novel packaging. -/
+def identConstSigO (A : AlgSig) [Fintype A.B] : SortedSig RType where
+  Op := Σ Γ : List RType, Σ τ : RType, RIdentO A Γ τ
+  arity _op := []
+  result op := RType.curried op.1 op.2.1
+
+/-- The standard model of the O-variant presentation over `natAlgSig`: the
+standard carriers, with constructors and application read as usual, the
+destructor and case operations by `dstrCaseModel` (Leivant III section 4.1),
+each saturated identifier by its own denotation, and each identifier constant
+by the currying of that denotation. Novel packaging. -/
+def higherOrderModelO :
+    SortedModel
+      (((((constructorSig natAlgSig RType.IsObj).sum appSig).sum
+        (dstrCaseSig natAlgSig RType.IsObj)).sum (identSigO natAlgSig)).sum
+        (identConstSigO natAlgSig)) where
+  carrier := RType.interp (FreeAlg natAlgSig)
+  interpOp op args :=
+    match op with
+    | Sum.inl (Sum.inl (Sum.inl (Sum.inl cop))) => stdConstructorInterp natAlgSig cop args
+    | Sum.inl (Sum.inl (Sum.inl (Sum.inr aop))) => stdAppInterp natAlgSig aop args
+    | Sum.inl (Sum.inl (Sum.inr dop)) => dstrCaseModel dop args
+    | Sum.inl (Sum.inr iop) => iop.2.2.interp args
+    | Sum.inr icop => curryInterp natAlgSig icop.1 icop.2.1 icop.2.2.interp
+
+/-- The O-variant presentation over `natAlgSig` (Leivant III section 2.5, the
+object-sorted systems `RRec_o^omega` / `RMRec_o^omega`, in which flat
+recurrence is replaced by the destructor and case functions): the constructor
+summand at every object sort, application, the destructor/case operations, the
+O-variant schema-generated identifiers as saturated operations, and their
+nullary constants at the curried arrow sorts, summed by `SortedSig.sum`, with
+the standard model interpreting each operation over the standard carriers.
+Mirrors `higherOrder` with the destructor/case summand added and flat
+recurrence removed from the identifier schema. Novel packaging. -/
+def higherOrderO : Presentation where
+  S := RType
+  sig :=
+    ((((constructorSig natAlgSig RType.IsObj).sum appSig).sum
+      (dstrCaseSig natAlgSig RType.IsObj)).sum (identSigO natAlgSig)).sum
+      (identConstSigO natAlgSig)
+  IsObj := RType.IsObj
+  alg := natAlgSig
+  std := higherOrderModelO
+
+/-- The syntactic category of the O-variant system over `natAlgSig`: the
+generic syntactic category of `higherOrderO` under interpretative equality at
+the standard model. The Phase 1 `Category` and `CartesianMonoidalCategory`
+instances of `SynCat` apply. Novel packaging. -/
+abbrev RMRecCatO := SynCat higherOrderO (interpQuotRel higherOrderO)
 
 end GebLean.Ramified
