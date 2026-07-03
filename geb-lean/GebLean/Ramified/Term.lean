@@ -50,7 +50,8 @@ in the term vocabulary, where a substitution is a tuple
 `∀ i, Tm sig Δ (Γ.get i)` indexed by context positions. The translation
 inserts a transport of the substitution tuple along the fiber equality. The
 associativity law therefore needs the fact that bind commutes with this
-transport, isolated once as `polyFreeMBind_transport`.
+transport, reusing the existing `GebLean.polyFreeMBind_transport`
+(`GebLean/PolyAlg.lean`).
 
 ## References
 
@@ -126,17 +127,6 @@ def Tm.subst {sig : SortedSig S} {Γ Δ : Ctx S} {s : S}
     Tm sig Δ s :=
   polyFreeMBind (varOver Γ) (varOver Δ) sig.polyEndo t (fun _ a => a.2 ▸ σ a.1)
 
-/-- Bind commutes with the transport of its input along a fiber equality: the
-bridging fact between the term layer's transported substitutions and the free
-monad's fiber-indexed bind. The associativity clone law reduces to it once the
-monad's associativity law has been applied. -/
-theorem polyFreeMBind_transport {A B : Over S} {P : PolyEndo S}
-    {x y : S} (h : x = y) (t : PolyFreeM A P x)
-    (f : ∀ z, { a : A.left // A.hom a = z } → PolyFreeM B P z) :
-    polyFreeMBind A B P (h ▸ t) f = h ▸ polyFreeMBind A B P t f := by
-  subst h
-  rfl
-
 /-- Substitution by the variable tuple is the identity (the right-unit clone
 law). An instance of the free monad's right-unit law `polyFreeM_bind_pure`,
 after identifying the transported variable tuple with the monad's unit;
@@ -152,9 +142,9 @@ theorem Tm.subst_id {sig : SortedSig S} {Γ : Ctx S} {s : S} (t : Tm sig Γ s) :
 
 /-- Substitution composes: substituting by `σ` then `τ` equals substituting by
 the pointwise composite (the associativity clone law). An instance of the free
-monad's associativity law `polyFreeM_bind_assoc`, using `polyFreeMBind_transport`
-to move the transport past the inner bind; follows the precedent
-`Era.Tm.subst_subst` (`GebLean/Era.lean`). -/
+monad's associativity law `polyFreeM_bind_assoc`, using
+`GebLean.polyFreeMBind_transport` to move the transport past the inner bind;
+follows the precedent `Era.Tm.subst_subst` (`GebLean/Era.lean`). -/
 theorem Tm.subst_subst {sig : SortedSig S} {Γ Δ E : Ctx S} {s : S}
     (t : Tm sig Γ s) (σ : ∀ i : Fin Γ.length, Tm sig Δ (Γ.get i))
     (τ : ∀ i : Fin Δ.length, Tm sig E (Δ.get i)) :
@@ -163,7 +153,7 @@ theorem Tm.subst_subst {sig : SortedSig S} {Γ Δ E : Ctx S} {s : S}
   rw [polyFreeM_bind_assoc]
   congr 1
   funext y a
-  exact polyFreeMBind_transport a.2 (σ a.1) _
+  exact (polyFreeMBind_transport (varOver Δ) (varOver E) sig.polyEndo a.2 (σ a.1) _).symm
 
 /-- Weakening along a sort-preserving variable renaming `f`: substitution at
 the variable tuple that sends position `i` to the variable `f i`, transported
