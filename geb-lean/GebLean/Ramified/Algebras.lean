@@ -177,7 +177,8 @@ def treeTmNode {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType}
     (Fin.cons l (Fin.cons r finZeroElim))
 
 /-- The word-length step at the empty word: the empty word (the numeral `0`,
-encoded in unary through the letter `false`). -/
+encoded in unary through the letter `false`). Shared with `binTailClauses`,
+whose nullary clause reuses this identifier. -/
 def binLengthZero : RIdent binWordAlgSig [] RType.o :=
   RIdent.defn ⟨0, finZeroElim, binTmEmpty⟩ finZeroElim
 
@@ -221,7 +222,8 @@ recursive results. -/
 def binTail : RIdent binWordAlgSig [RType.o] RType.o :=
   RIdent.frec [] RType.o binTailClauses
 
-/-- The tree-size step at a leaf: a leaf. -/
+/-- The tree-size step at a leaf: a leaf. Shared with `treeLeftClauses`, whose
+nullary clause reuses this identifier. -/
 def treeSizeLeaf : RIdent treeAlgSig [] RType.o :=
   RIdent.defn ⟨0, finZeroElim, treeTmLeaf⟩ finZeroElim
 
@@ -264,8 +266,9 @@ recursive results. -/
 def treeLeftChild : RIdent treeAlgSig [RType.o] RType.o :=
   RIdent.frec [] RType.o treeLeftClauses
 
-/-- The right inverse of the numeric reading of the standard `natAlgSig`
-carrier: `natToFreeAlg (freeAlgToNat t) = t`. Proved by the dependent eliminator
+/-- The numeric reading of the standard `natAlgSig` carrier is a right inverse
+of the encoding: `natToFreeAlg (freeAlgToNat t) = t`. Proved by the dependent
+eliminator
 `PolyFix.ind` (decision 8); the nullary case reduces the empty child function by
 `Fin 0` extensionality, the unary case rewrites the single child through the
 induction hypothesis at `⟨0, _⟩`. Together with `freeAlgToNat_natToFreeAlg`

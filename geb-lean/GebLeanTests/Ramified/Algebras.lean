@@ -14,8 +14,9 @@ exercised through the `Category` instance of `RMRecCat` at each new signature.
 The signature morphism `natToBinHom : AlgSigHom natAlgSig binWordAlgSig` (zero
 to the empty word, successor to the `false` letter) is exercised through the
 carrier transport `freeAlgMap`, the image-point naturality
-`recurse_freeAlgMap`, and the clause-wise transported doubling recurrence
-`binDouble` evaluated at transported values.
+`recurse_freeAlgMap`, the object-sort interpretation transport `interpMapObj`
+at `o`, and the clause-wise transported doubling recurrence `binDouble`
+evaluated at transported values.
 
 The interpretations land in the respective base carriers; the checks convert to
 `Nat` via the letter count `binCount` and the node count `treeCount` so that
@@ -147,6 +148,15 @@ def binDouble : RIdent binWordAlgSig [RType.omega RType.o] RType.o :=
   (binDouble.interp (binMrecEnv (freeAlgMap natToBinHom (natToFreeAlg 0)))) = 0
 #guard binCount
   (binDouble.interp (binMrecEnv (freeAlgMap natToBinHom (natToFreeAlg 3)))) = 6
+
+-- The object-sort interpretation transport `interpMapObj` at the base object
+-- sort `o` agrees with the carrier transport `freeAlgMap`: `RType.interp _
+-- RType.o` reduces to the carrier definitionally, so the two casts of
+-- `interpMapObj` are the identity here.
+example (t : FreeAlg natAlgSig) :
+    interpMapObj natToBinHom oObj.2 t = freeAlgMap natToBinHom t := rfl
+
+#guard binCount (interpMapObj natToBinHom oObj.2 (natToFreeAlg 3)) = 3
 
 /-- A context of the higher-order syntactic category over `binWordAlgSig`. -/
 abbrev binCtxO : RMRecCat binWordAlgSig := [RType.o]

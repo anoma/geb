@@ -35,8 +35,8 @@ The underlying conventions transcribe Leivant III section 2.1.
 ## Main statements
 
 * `freeAlgToNat_natToFreeAlg` — the numeric reading is a left inverse of
-  the encoding; Phase 3 packages the full equivalence
-  `FreeAlg natAlgSig ≃ ℕ`.
+  the encoding; the full equivalence `FreeAlg natAlgSig ≃ ℕ` is packaged as
+  `natFreeAlgEquiv` (`GebLean/Ramified/Algebras.lean`).
 
 ## References
 
@@ -113,16 +113,16 @@ def natAlgSig : AlgSig := ⟨Bool, fun b => cond b 1 0⟩
 
 /-- A natural number as an element of the standard carrier `FreeAlg natAlgSig`:
 `0` is the nullary constructor and `n + 1` the unary constructor applied to `n`.
-The `ofNat` direction of the equivalence `FreeAlg natAlgSig ≃ ℕ` that Phase 3
-packages. -/
+The `ofNat` direction of the equivalence `natFreeAlgEquiv : FreeAlg natAlgSig ≃
+ℕ` (`GebLean/Ramified/Algebras.lean`). -/
 def natToFreeAlg : Nat → FreeAlg natAlgSig
   | 0 => FreeAlg.mk false finZeroElim
   | n + 1 => FreeAlg.mk true (fun _ => natToFreeAlg n)
 
 /-- An element of the standard carrier `FreeAlg natAlgSig` as the natural number
 counting its unary constructors. The `toNat` direction of the equivalence
-`FreeAlg natAlgSig ≃ ℕ` that Phase 3 packages. Realized by the free-algebra
-recurrence `FreeAlg.recurse`. -/
+`natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ` (`GebLean/Ramified/Algebras.lean`).
+Realized by the free-algebra recurrence `FreeAlg.recurse`. -/
 def freeAlgToNat (t : FreeAlg natAlgSig) : Nat :=
   FreeAlg.recurse (A := natAlgSig) (P := Unit)
     (fun b _ _sub rec => match b with
