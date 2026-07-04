@@ -50,6 +50,12 @@ is claimed (spec open question 3).
 * `kappaHatFull_eq_kappaHatIdent` — the full kappa-hat agrees with the
   object-sort instance at object sorts.
 * `kappaHatFull_interp` — the recurrence semantics of the full kappa-hat.
+* `cLiftArrow_interp` — the denotation of the arrow-sort pointwise
+  constructor lift.
+* `kappaIdent_interp` — the coercion `κ_τ` denotes the identity on the
+  carrier copy.
+* `deltaAux_interp`, `deltaIdent_interp` — the downward coercion `δ_θ`
+  denotes the identity on the carrier copy.
 
 ## Implementation notes
 
@@ -1161,5 +1167,69 @@ theorem kappaIdent_interp (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (τ :
   erw [defnHole_eval]
   dsimp only
   exact kappaHatFull_appChain A τ _ _
+
+/-- The downward coercion `deltaAux` at every r-type denotes the identity on the
+carrier copy (Leivant III section 2.4(1)): its value on an environment is the
+recurrence argument, a carrier element, transported along the carrier-copy
+equality of the object target. Proved by structural induction via `PolyFix.ind`;
+the omega step composes the identity denotation of the coercion at the child with
+that of `kappaIdent`. -/
+theorem deltaAux_interp (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) :
+    (τ : RType) → (ρ : ∀ i : Fin ([RType.objTarget τ] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.objTarget τ] : Ctx RType).get i)) →
+    (deltaAux A b₀ h₀ τ).interp ρ
+      = cast (RType.interp_isObj (FreeAlg A) (RType.objTarget_isObj τ)) (ρ 0) :=
+  fun τ => PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => ∀ ρ, (deltaAux A b₀ h₀ t).interp ρ
+      = cast (RType.interp_isObj (FreeAlg A) (RType.objTarget_isObj t)) (ρ 0))
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, childx, _ => fun ρ => eq_of_heq (cast_heq _ _).symm
+      | RTypeShape.arrow, childx, ih => fun ρ => ih ⟨1, by decide⟩ ρ
+      | RTypeShape.omega, childx, ih => fun ρ => by
+        erw [RIdent.interp_defn]
+        dsimp only
+        erw [defnHole_eval]
+        dsimp only
+        refine (ih ⟨0, by decide⟩ _).trans ?_
+        erw [defnHole_eval]
+        dsimp only
+        rw [kappaIdent_interp]
+        exact eq_of_heq ((cast_heq _ _).trans ((cast_heq _ _).trans (cast_heq _ _).symm))) τ
+
+/-- An identifier over a singleton context transported along a sort equality of
+that context reads the transported environment. A cast-commutation fact local to
+the downward coercion. -/
+theorem RIdent.interp_single_cast {A : AlgSig} {s₀ s₁ : RType} (e : s₀ = s₁)
+    (g : RIdent A [s₀] RType.o)
+    (env : ∀ i : Fin ([s₁] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([s₁] : Ctx RType).get i))
+    (env' : ∀ i : Fin ([s₀] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([s₀] : Ctx RType).get i))
+    (henv : env 0 ≍ env' 0) :
+    (cast (congrArg (fun s => RIdent A [s] RType.o) e) g).interp env = g.interp env' := by
+  subst e
+  refine congrArg g.interp (funext fun i => ?_)
+  refine Fin.cases ?_ (fun j => j.elim0) i
+  exact eq_of_heq henv
+
+/-- Leivant III section 2.4(1)'s coercion `δ_θ : θ → o` at an object sort `θ`
+denotes the identity on the carrier copy: its value on an environment is the
+recurrence argument, a carrier element, read on the carrier copy of the object
+sort. Generalizes the tower-sort `ramDeltaIdent_interp` to an arbitrary object
+sort. -/
+theorem deltaIdent_interp (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (θ : RType)
+    (hθ : θ.IsObj)
+    (ρ : ∀ i : Fin ([θ] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([θ] : Ctx RType).get i)) :
+    (deltaIdent A b₀ h₀ θ hθ).interp ρ = cast (RType.interp_isObj (FreeAlg A) hθ) (ρ 0) := by
+  rw [deltaIdent,
+    RIdent.interp_single_cast (RType.objTarget_of_isObj hθ) (deltaAux A b₀ h₀ θ) ρ
+      (Fin.cons
+        (cast (congrArg (RType.interp (FreeAlg A)) (RType.objTarget_of_isObj hθ).symm) (ρ 0))
+        finZeroElim)
+      (cast_heq _ _).symm,
+    deltaAux_interp]
+  exact eq_of_heq ((cast_heq _ _).trans ((cast_heq _ _).trans (cast_heq _ _).symm))
 
 end GebLean.Ramified

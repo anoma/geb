@@ -105,4 +105,12 @@ def deltaArrEnv (n : Nat) :
 #guard freeAlgToNat ((deltaIdent A false rfl (RType.omega arrOO) (by decide)).interp
   (deltaArrEnv 3)) = 3
 
+-- The general identity theorem `deltaIdent_interp` at the arrow-Omega object sort
+-- `Ω (o → o)`: over a symbolic environment the coercion reads the carrier copy.
+example (ρ : ∀ i : Fin ([RType.omega arrOO] : Ctx RType).length,
+    RType.interp (FreeAlg A) (([RType.omega arrOO] : Ctx RType).get i)) :
+    (deltaIdent A false rfl (RType.omega arrOO) (by decide)).interp ρ
+      = cast (RType.interp_isObj (FreeAlg A) (by decide)) (ρ 0) :=
+  deltaIdent_interp A false rfl (RType.omega arrOO) (by decide) ρ
+
 end GebLeanTests.Ramified.OmegaShiftTest
