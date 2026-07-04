@@ -479,4 +479,37 @@ theorem urmStepClause_interp {a : ℕ} (p : URMProgram a) (j : Fin (1 + p.numReg
     | zero => exact urmPhiVar_eval (fun h => (urmStepChildren p j h).interp) pe φvec u
     | succ i' => exact i'.elim0
 
+/-- The parameter variable at input slot `i` of a base step clause denotes the
+input numeral `v i`: reading `urmParamVar i` at the base step environment
+recovers the loaded parameter. -/
+theorem urmParamVar_eval {a : ℕ}
+    (ih : ∀ j : Fin 0,
+      (∀ i : Fin ((finZeroElim : Fin 0 → List RType × RType) j).1.length,
+        RType.interp (FreeAlg natAlgSig) (((finZeroElim : Fin 0 → List RType × RType) j).1.get i)) →
+        RType.interp (FreeAlg natAlgSig) ((finZeroElim : Fin 0 → List RType × RType) j).2)
+    (v : Fin a → ℕ) (i : Fin a) (u : FreeAlg natAlgSig) :
+    (urmParamVar i).eval (defnModel natAlgSig 0 finZeroElim ih)
+        (simulStepEnv (List.replicate a RType.o) RType.o false (urmParamEnv v)
+          finZeroElim u)
+      = natToFreeAlg (v i) := by
+  refine eq_of_heq ?_
+  rw [urmParamVar]
+  refine (Tm.eval_reind_var_heq (defnModel natAlgSig 0 finZeroElim ih) _ _).trans ?_
+  rw [simulStepEnv]
+  refine (snocEnv_heq_left (List.replicate a RType.o
+      ++ List.replicate (natAlgSig.ar false) (RType.arrow RType.o RType.o)) RType.o
+      (childEnv (List.replicate a RType.o) (RType.arrow RType.o RType.o)
+        (natAlgSig.ar false) (urmParamEnv v) finZeroElim) u
+      (finAppL (List.replicate a RType.o)
+        (List.replicate (natAlgSig.ar false) (RType.arrow RType.o RType.o))
+        ⟨i.val, by
+          have h := i.isLt
+          have hl : (List.replicate a RType.o).length = a := by simp
+          omega⟩) _ rfl).trans ?_
+  refine (heq_of_eq (childEnv_finAppL (urmParamEnv v) finZeroElim ⟨i.val, by
+          have h := i.isLt
+          have hl : (List.replicate a RType.o).length = a := by simp
+          omega⟩)).trans ?_
+  exact (cast_heq _ _).trans (cast_heq _ _)
+
 end GebLean.Ramified
