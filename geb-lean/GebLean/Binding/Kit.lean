@@ -23,6 +23,8 @@ instantiates the leaf operations to variable-for-variable renaming.
   bound variables map to themselves, the old values weaken along the suffix
   embedding.
 * `varKit` — the renaming kit.
+* `leafVar` — recovery of a `Var` from a leaf of the diagonal variable family.
+* `traverse` — the generic binder-aware fold of a term against an environment.
 
 ## References
 
@@ -94,5 +96,31 @@ def varKit (S : BinderSig Ty) : Kit S Var where
   var := id
   toTm := Tm.var
   wk := Thinning.app
+
+/-- Recover the `Var` at index `p` from a leaf of the diagonal variable
+family: a leaf is a context-position pair `⟨Γ, i⟩` together with a proof that
+`(Γ, Γ.get i)` equals `p`, which transports the tautological variable
+`⟨i, rfl⟩` to `Var p.1 p.2`. -/
+def leafVar {p : Ctx Ty × Ty}
+    (a : {v : (varOver (Ty := Ty)).left // varOver.hom v = p}) : Var p.1 p.2 :=
+  cast (congrArg (fun q : Ctx Ty × Ty => Var q.1 q.2) a.2) ⟨a.1.2, rfl⟩
+
+/-- The generic binder-aware traversal: fold a term `t` against an environment
+`ρ`, realized by the dependent eliminator `PolyFix.ind` with an
+environment-abstracting motive so the environment and target context can grow
+under binders. A variable leaf reads the environment and embeds the result via
+`K.toTm`; an operation node rebuilds the operation, recursing into each
+argument under the binder-weakened environment `Env.underBinder K ρ`. -/
+def traverse {S : BinderSig Ty} {V : Ctx Ty → Ty → Type} (K : Kit S V)
+    {Γ Δ : Ctx Ty} {s : Ty} (ρ : Env V Γ Δ) (t : Tm S Γ s) : Tm S Δ s :=
+  PolyFix.ind (P := polyTranslate varOver S.polyEndo)
+    (motive := fun {x} _ => ∀ Δ', Env V x.1 Δ' → Tm S Δ' x.2)
+    (fun {x} i children ih =>
+      match i, children, ih with
+      | Sum.inl a, _, _ => fun _ ρ' => K.toTm (ρ' x.2 (leafVar a))
+      | Sum.inr p, _, ih => fun Δ' ρ' =>
+          p.2 ▸ Tm.op p.val
+            (fun j => ih ⟨j⟩ (Δ' ++ ((S.args p.val).get j).1)
+              (Env.underBinder K ρ'))) t Δ ρ
 
 end GebLean.Binding
