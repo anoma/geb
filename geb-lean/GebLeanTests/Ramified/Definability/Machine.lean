@@ -85,4 +85,25 @@ example (t : ℕ) :
           = (URMState.runFor progIncOnly (URMState.init progIncOnly finZeroElim) t).regs r :=
   urm_simul_interp progIncOnly finZeroElim t
 
+-- The eq. (8) realizer for `[inc 0, stop]`. With `c = q = 1` the clock
+-- `1 · 2_1(sz)` is at least `1`, past the machine's halt time, so the output
+-- register stabilizes at `1`. The realizer's denotation is read off through
+-- `urm_ramified_definable`; the clocked composite is never `#guard`-ed.
+theorem incStop_faithful : ∀ (v : Fin 0 → ℕ) (t : ℕ),
+    1 * GebLean.tower 1 (GebLean.Fin.maxOfNat 0 v) ≤ t →
+    (URMState.runFor progIncStop (URMState.init progIncStop v) t).regs progIncStop.outputReg
+      = 1 := by
+  intro v t ht
+  obtain rfl : v = finZeroElim := Subsingleton.elim _ _
+  have h1 : 1 ≤ t := le_trans (by decide) ht
+  obtain ⟨n, rfl⟩ : ∃ n, t = n + 1 := ⟨t - 1, by omega⟩
+  rw [URMState.runFor_succ, URMState.runFor_stop progIncStop _ n (by decide) (by decide)]
+  decide
+
+/-- The full eq. (8) realizer for `[inc 0, stop]` denotes the machine's output
+`1`, read through `freeAlgToNat` via `urm_ramified_definable`. -/
+example :
+    freeAlgToNat ((machineRealizer progIncStop 1 1).eval (machineEnv 1 finZeroElim) 0) = 1 :=
+  urm_ramified_definable progIncStop (fun _ => 1) 1 1 incStop_faithful finZeroElim
+
 end GebLeanTests.Ramified.Definability.MachineTest

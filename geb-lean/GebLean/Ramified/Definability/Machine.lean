@@ -34,6 +34,17 @@ the program counter and registers of `URMState.runFor p (URMState.init p v) t`.
   the register components `simulProj … (r + 1)`.
 * `urmEnv` — the environment loading the input numerals at the `o` positions
   and the step-count numeral at the `Ω (o → o)` position.
+* `machineCtx` — eq. (8)'s staggered input context: `a` copies of `Ω (θᵢ → θᵢ)`
+  with `θᵢ = Ω^{a-1-i}(clockSort q (Ω ω))`, letting the per-input sizes chain
+  through the addition copies. Every entry is an object sort (`machineCtx_isObj`)
+  and its length is `a` (`machineCtx_length`).
+* `sizeFold`, `machineClock` — the staggered size sum and the clock
+  `c × 2_q(sz(a))`, built from `szAtIdent`/`addAtIdent`, `twoPowIdent`,
+  `mulAtIdent`, and the numeral constant.
+* `machineEnv`, `machineIdent`, `machineRealizer` — the numeric input
+  environment, the realizer as an identifier (the output-register component fed
+  the parameter coercions `δ` and the clock), and the realizer as a morphism of
+  `RMRecCat natAlgSig`.
 
 ## Main statements
 
@@ -42,6 +53,16 @@ the program counter and registers of `URMState.runFor p (URMState.init p v) t`.
   and registers of `URMState.runFor p (URMState.init p v) t`, read out through
   `freeAlgToNat`. Proved by induction on `t` with an arm-by-arm match against
   `URMState.step`.
+* `urm_ramified_definable` — Lemma 6 with eq. (8) (paper section 3.2, p. 221):
+  for a machine computing `f` within time `c × tower q` of the maximum input
+  (in the `runFor`-stabilized form), the realizer's denotation is `f`. The clock
+  denotes `c * tower q (∑ᵢ (vᵢ + 1))` (`sizeFold_interp`, `machineClock_interp`);
+  `maxOfNat_le_sum_succ` and `clock_mono` bound the maximum input by it, and
+  `urm_simul_interp` at the clock count closes the read-off. The eq. (8) sort
+  reconciliation — the paper's "Let θ = Ωo" surface slips against the staggered
+  `machineCtx` and the count sort `ω = Ω(o → o)` — is a presentation adaptation
+  (spec section 1.2, standing decision 5); the s1.2 embedding argument is the
+  fidelity justification for transcribing against the zero-test URM.
 
 ## Implementation notes
 
@@ -1160,17 +1181,16 @@ theorem machineDom_get_ge {a : ℕ}
 
 /-- The realizer's argument vector for `regIdent`: the `a` parameter coercions at
 the base-sort positions and the clock at the count position. -/
-def machineArgs {a : ℕ} (c q : ℕ) :
+def machineArgs {a : ℕ} (c q : ℕ)
     (k : Fin (List.replicate a RType.o
-      ++ [RType.omega (RType.arrow RType.o RType.o)]).length) →
+      ++ [RType.omega (RType.arrow RType.o RType.o)]).length) :
       RIdent natAlgSig (machineCtx a q)
         ((List.replicate a RType.o
           ++ [RType.omega (RType.arrow RType.o RType.o)]).get k) :=
-  fun k =>
-    if h : k.val < a then
-      castResult (machineDom_get_lt k h).symm (deltaArg q ⟨k.val, h⟩)
-    else
-      castResult (machineDom_get_ge k h).symm (machineClock c q)
+  if h : k.val < a then
+    castResult (machineDom_get_lt k h).symm (deltaArg q ⟨k.val, h⟩)
+  else
+    castResult (machineDom_get_ge k h).symm (machineClock c q)
 
 /-- Leivant III eq. (8)'s realizer as an identifier: the output register
 component `regIdent p p.outputReg` fed the parameter coercions and the clock. -/
@@ -1186,5 +1206,83 @@ def machineRealizer {a : ℕ} (p : URMProgram a) (c q : ℕ) :
     Hom (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig))
       (machineCtx a q) [RType.o] :=
   identHom (machineIdent p c q)
+
+/-- The parameter coercion on the numeric environment reads the input numeral. -/
+theorem deltaArg_machineEnv {a : ℕ} (q : ℕ) (v : Fin a → ℕ) (i : Fin a) :
+    (deltaArg q i).interp (machineEnv q v) = natToFreeAlg (v i) := by
+  rw [deltaArg, applyIdent1_interp, deltaIdent_interp]
+  exact eq_of_heq ((cast_heq _ _).trans ((cast_heq _ _).trans
+    (heq_of_eq (congrArg (fun j => natToFreeAlg (v j)) (Fin.ext rfl)))))
+
+/-- Leivant III Lemma 6 with eq. (8) (paper section 3.2, DOI
+`10.1016/S0168-0072(98)00040-2`): the realizer defines `f`. If `p` computes `f`
+within time `c × tower q` of the maximum input (in the `runFor`-stabilized form),
+then the realizer's denotation, read through `freeAlgToNat`, is `f v` at every
+input `v`. The clock denotation is `c * tower q (∑ᵢ (vᵢ + 1))` by the ladder
+interpretation lemmas; `maxOfNat_le_sum_succ` and `clock_mono` bound the maximum
+input by it, and the machine invariant `urm_simul_interp` at the clock count
+closes the read-off.
+
+The `s1.2` embedding argument (the zero-test URM against Leivant's register
+machines) is the fidelity justification recorded in the module docstring. The
+eq. (8) sort reconciliation is a presentation adaptation: the paper\'s "Let
+θ = Ωo" display carries surface sort slips, reconciled here by the staggered
+`machineCtx` sorts and the count sort `ω = Ω(o → o)` (standing decision 5 and the
+Task 5.4 preamble). -/
+theorem urm_ramified_definable {a : ℕ} (p : URMProgram a)
+    (f : (Fin a → ℕ) → ℕ) (c q : ℕ)
+    (hf : ∀ (v : Fin a → ℕ) (t : ℕ),
+      c * GebLean.tower q (Fin.maxOfNat a v) ≤ t →
+      (URMState.runFor p (URMState.init p v) t).regs p.outputReg = f v) :
+    ∀ v, freeAlgToNat ((machineRealizer p c q).eval (machineEnv q v) 0) = f v := by
+  intro v
+  set t := freeAlgToNat ((machineClock c q).interp (machineEnv q v)) with ht
+  have hTval : t = c * GebLean.tower q (∑ i : Fin a, (v i + 1)) := by
+    rw [ht, machineClock_interp]
+    refine congrArg (fun s => c * GebLean.tower q s) ?_
+    rw [← Equiv.sum_comp (finCongr (machineCtx_length a q)) (fun i => v i + 1)]
+    refine Finset.sum_congr rfl (fun i _ => ?_)
+    refine congrArg (· + 1) ?_
+    exact (freeAlgToNat_machineEnv q v i).trans (congrArg v (Fin.ext rfl))
+  have hbound : c * GebLean.tower q (Fin.maxOfNat a v) ≤ t := by
+    rw [hTval]
+    exact Definability.clock_mono c q (Definability.maxOfNat_le_sum_succ a v)
+  have henv : (fun k => (machineArgs c q k).interp (machineEnv q v)) = urmEnv p v t := by
+    funext k
+    change (machineArgs c q k).interp (machineEnv q v)
+      = snocEnv (List.replicate a RType.o) (RType.omega (RType.arrow RType.o RType.o))
+          (urmParamEnv v) (natToFreeAlg t) k
+    refine finApp_cases
+      (motive := fun k => (machineArgs c q k).interp (machineEnv q v)
+        = snocEnv (List.replicate a RType.o) (RType.omega (RType.arrow RType.o RType.o))
+            (urmParamEnv v) (natToFreeAlg t) k)
+      (fun i => ?_) (fun j => ?_) k
+    · have hlt : (finAppL (List.replicate a RType.o)
+          [RType.omega (RType.arrow RType.o RType.o)] i).val < a := by
+        have h := i.isLt; simp only [List.length_replicate] at h; simpa [finAppL] using h
+      simp only [machineArgs]
+      rw [dif_pos hlt, castResult_interp, deltaArg_machineEnv q v ⟨_, hlt⟩]
+      refine eq_of_heq ((cast_heq _ _).trans ?_)
+      refine HEq.symm ((snocEnv_heq_left (List.replicate a RType.o)
+        (RType.omega (RType.arrow RType.o RType.o)) (urmParamEnv v) (natToFreeAlg t)
+        i _ rfl).trans ?_)
+      rw [urmParamEnv]
+      exact (cast_heq _ _).trans
+        (heq_of_eq (congrArg (fun j => natToFreeAlg (v j)) (Fin.ext rfl)))
+    · have hge : ¬ (finAppR (List.replicate a RType.o)
+          [RType.omega (RType.arrow RType.o RType.o)] j).val < a := by
+        simp only [finAppR, List.length_replicate]; omega
+      simp only [machineArgs]
+      rw [dif_neg hge, castResult_interp]
+      refine eq_of_heq ((cast_heq _ _).trans ?_)
+      refine HEq.symm ((snocEnv_heq_right (List.replicate a RType.o)
+        (RType.omega (RType.arrow RType.o RType.o)) (urmParamEnv v) (natToFreeAlg t)
+        _ (by simp only [finAppR]; omega)).trans ?_)
+      rw [ht]
+      exact heq_of_eq
+        (natToFreeAlg_freeAlgToNat ((machineClock c q).interp (machineEnv q v)))
+  rw [machineRealizer, identHom_eval, machineIdent, applyIdent_interp, henv,
+    (urm_simul_interp p v t).2 p.outputReg]
+  exact hf v t hbound
 
 end GebLean.Ramified
