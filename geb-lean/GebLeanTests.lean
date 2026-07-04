@@ -1,5 +1,6 @@
 import GebLeanTests.AcyclicCat
 import GebLeanTests.Basic
+import GebLeanTests.Binding
 import GebLeanTests.LawvereER
 import GebLeanTests.LawvereERArith
 import GebLeanTests.LawvereERBool
