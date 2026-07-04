@@ -116,10 +116,9 @@ inductive RlmrOp (A : AlgSig) where
   | app (σ τ : RType)
   /-- λ-abstraction binding a variable of sort `σ` in a body of sort `τ`. -/
   | lam (σ τ : RType)
-  /-- The constructor constant `c_bθ : θ^{A.ar b} → θ`. Leivant restricts `θ`
-  to object types; the extra non-object instances are unused junk the Prop 7
-  translation never emits, so `θ` is left unrestricted here. -/
-  | con (θ : RType) (b : A.B)
+  /-- The constructor constant `c_bθ : θ^{A.ar b} → θ` at an object type `θ`
+  (Leivant restricts the constructor constants to object sorts). -/
+  | con (θ : RType) (hθ : θ.IsObj) (b : A.B)
   /-- The recurrence combinator `R^τ : α_1, …, α_k, Ωτ → τ`. -/
   | recur (τ : RType)
   /-- The flat-recurrence combinator `F^τ : ξ_1, …, ξ_k, o → τ`. -/
@@ -135,18 +134,16 @@ inductive RlmrOOp (A : AlgSig) [Fintype A.B] where
   | app (σ τ : RType)
   /-- λ-abstraction binding a variable of sort `σ` in a body of sort `τ`. -/
   | lam (σ τ : RType)
-  /-- The constructor constant `c_bθ : θ^{A.ar b} → θ`. Leivant restricts `θ`
-  to object types; the extra non-object instances are unused junk the Prop 7
-  translation never emits, so `θ` is left unrestricted here. -/
-  | con (θ : RType) (b : A.B)
+  /-- The constructor constant `c_bθ : θ^{A.ar b} → θ` at an object type `θ`
+  (Leivant restricts the constructor constants to object sorts). -/
+  | con (θ : RType) (hθ : θ.IsObj) (b : A.B)
   /-- The recurrence combinator `R^τ : α_1, …, α_k, Ωτ → τ`. -/
   | recur (τ : RType)
   /-- The destructor `dstr_j : o → o`, `j` ranging over `Fin A.maxArity`. -/
   | dstr (j : Fin A.maxArity)
-  /-- The case combinator `case θ : o, θ^k → θ`. Leivant restricts `θ` to
-  object types; the extra non-object instances are unused junk the Prop 7
-  translation never emits, so `θ` is left unrestricted here. -/
-  | case (θ : RType)
+  /-- The case combinator `case θ : o, θ^k → θ` at an object type `θ`
+  (Leivant restricts the case operations to object sorts). -/
+  | case (θ : RType) (hθ : θ.IsObj)
 
 /-- The binding signature of the full applicative calculus `RλMR^ω(A)`
 (Leivant III section 4.1). Each constant is a nullary operation whose result is
@@ -159,13 +156,13 @@ def rlmrSig (A : AlgSig) [Fintype A.B] [LinearOrder A.B] : BinderSig RType where
   result := fun
     | .app _ τ => τ
     | .lam σ τ => RType.arrow σ τ
-    | .con θ b => RType.curried (List.replicate (A.ar b) θ) θ
+    | .con θ _ b => RType.curried (List.replicate (A.ar b) θ) θ
     | .recur τ => RType.curried (stepTypes A τ τ) (RType.arrow (RType.omega τ) τ)
     | .flat τ => RType.curried (stepTypes A RType.o τ) (RType.arrow RType.o τ)
   args := fun
     | .app σ τ => [([], RType.arrow σ τ), ([], σ)]
     | .lam σ τ => [([σ], τ)]
-    | .con _ _ => []
+    | .con _ _ _ => []
     | .recur _ => []
     | .flat _ => []
 
@@ -179,17 +176,17 @@ def rlmrOSig (A : AlgSig) [Fintype A.B] [LinearOrder A.B] : BinderSig RType wher
   result := fun
     | .app _ τ => τ
     | .lam σ τ => RType.arrow σ τ
-    | .con θ b => RType.curried (List.replicate (A.ar b) θ) θ
+    | .con θ _ b => RType.curried (List.replicate (A.ar b) θ) θ
     | .recur τ => RType.curried (stepTypes A τ τ) (RType.arrow (RType.omega τ) τ)
     | .dstr _ => RType.arrow RType.o RType.o
-    | .case θ => RType.arrow RType.o (RType.curried (List.replicate A.numCtors θ) θ)
+    | .case θ _ => RType.arrow RType.o (RType.curried (List.replicate A.numCtors θ) θ)
   args := fun
     | .app σ τ => [([], RType.arrow σ τ), ([], σ)]
     | .lam σ τ => [([σ], τ)]
-    | .con _ _ => []
+    | .con _ _ _ => []
     | .recur _ => []
     | .dstr _ => []
-    | .case _ => []
+    | .case _ _ => []
 
 /-- Application node `f x` of `rlmrOSig`: the operation `app σ τ`, whose two
 subterm arguments carry the empty binder context. Since `Γ ++ [] = Γ` is not
@@ -295,8 +292,8 @@ def ctorAt {A : AlgSig} [Fintype A.B] [LinearOrder A.B] (idx : Fin A.numCtors) :
 /-- One-step reduction of the object-sorted applicative calculus `RλMR_o^ω(A)`
 (Leivant III section 4.1, p. 222). A `Prop`-valued inductively-defined relation:
 its inhabitants are reduction proofs, not computational data, so decision 8's
-requirement that recursive data be a `PolyFix` W-type does not apply (as for the
-kit's `Var` and `Thinning`). The six rules are β and η for the `lam`/`app`
+requirement that recursive data be a `PolyFix` W-type does not apply. The six
+rules are β and η for the `lam`/`app`
 fragment, the recurrence contraction, the two destructor cases (`dstr` on a
 matching or non-matching argument position), and the case contraction; redexes
 and contracta are built from the term combinators `app'`, `lam'`,
@@ -326,7 +323,7 @@ inductive RlmrOStep {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
       RlmrOStep
         (app' (recCombinator Estep)
           (replicateSpine (A.ar i) (RType.omega τ)
-            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con (RType.omega τ) i)
+            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con (RType.omega τ) (Or.inr rfl) i)
               (fun j => j.elim0)) t))
         (replicateSpine (A.ar i) τ (Estep i)
           (fun j => app' (recCombinator Estep) (t j)))
@@ -336,7 +333,7 @@ inductive RlmrOStep {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
       RlmrOStep
         (app' (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.dstr j) (fun k => k.elim0))
           (replicateSpine (A.ar i) RType.o
-            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o i)
+            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o (Or.inl rfl) i)
               (fun k => k.elim0)) a))
         (a ⟨j.val, h⟩)
   /-- Destructor miss (`j ≥ r_i`): `dstr_j (c_i^o ā) ⇒ c_i^o ā`, identity on the
@@ -346,21 +343,21 @@ inductive RlmrOStep {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
       RlmrOStep
         (app' (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.dstr j) (fun k => k.elim0))
           (replicateSpine (A.ar i) RType.o
-            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o i)
+            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o (Or.inl rfl) i)
               (fun k => k.elim0)) a))
         (replicateSpine (A.ar i) RType.o
-          (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o i)
+          (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o (Or.inl rfl) i)
             (fun k => k.elim0)) a)
   /-- Case: `case^θ (c_i^o ā) b₁…b_k ⇒ b_i`, selecting the branch at the
   scrutinee constructor's enumeration position `idx`. -/
-  | case {θ : RType} (idx : Fin A.numCtors)
+  | case {θ : RType} (hθ : θ.IsObj) (idx : Fin A.numCtors)
       (a : Fin (A.ar (ctorAt idx)) → Binding.Tm (rlmrOSig A) Γ RType.o)
       (b : Fin A.numCtors → Binding.Tm (rlmrOSig A) Γ θ) :
       RlmrOStep
         (replicateSpine A.numCtors θ
-          (app' (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.case θ) (fun k => k.elim0))
+          (app' (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.case θ hθ) (fun k => k.elim0))
             (replicateSpine (A.ar (ctorAt idx)) RType.o
-              (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o (ctorAt idx))
+              (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o (Or.inl rfl) (ctorAt idx))
                 (fun k => k.elim0)) a))
           b)
         (b idx)

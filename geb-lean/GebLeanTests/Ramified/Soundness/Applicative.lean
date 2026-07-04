@@ -15,7 +15,8 @@ namespace GebLean.Ramified
 word algebra has arity `0`, so `con o false` has result `o` and no arguments,
 yielding a closed term of sort `o`. -/
 example : Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
-  Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o false) (fun j => j.elim0)
+  Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o (Or.inl rfl) false)
+    (fun j => j.elim0)
 
 /-- A `lam` node exercises the binder/argument positions: `lam o o` has result
 `o.arrow o` and a single body argument of sort `o` under one binder of sort
@@ -28,7 +29,8 @@ example : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow RType.o RType.o) :=
 /-- The zero-constructor of `natAlgSig` as a closed term of sort `o`, reused by
 the combinator smoke tests below. -/
 def zeroTm : Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
-  Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o false) (fun j => j.elim0)
+  Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o (Or.inl rfl) false)
+    (fun j => j.elim0)
 
 /-- The `app'`/`lam'`/`boundVar` combinators compose: the closed redex
 `(λx:o. x) 0` elaborates as a term of sort `o`. -/
@@ -40,14 +42,14 @@ example : Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
 closed term of sort `o`. -/
 example : Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
   appSpine [RType.o]
-    (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o true)
+    (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o (Or.inl rfl) true)
       (fun j => j.elim0))
     (fun i => Fin.cases zeroTm (fun k => k.elim0) i)
 
 /-- The zero-constructor of `natAlgSig` at the shifted object sort `Ω o`, a
 closed term of sort `Ω o`, used as the recursion argument's subterm below. -/
 def omegaZeroTm : Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega RType.o) :=
-  Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con (RType.omega RType.o) false)
+  Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con (RType.omega RType.o) (Or.inr rfl) false)
     (fun j => j.elim0)
 
 /-- A step-term family for the recurrence over `natAlgSig` at result sort `o`:
@@ -76,7 +78,7 @@ example :
       (app' (recCombinator estepNat)
         (replicateSpine (natAlgSig.ar true) (RType.omega RType.o)
           (Binding.Tm.op (S := rlmrOSig natAlgSig)
-            (RlmrOOp.con (RType.omega RType.o) true) (fun j => j.elim0)) recArgsNat))
+            (RlmrOOp.con (RType.omega RType.o) (Or.inr rfl) true) (fun j => j.elim0)) recArgsNat))
       (replicateSpine (natAlgSig.ar true) RType.o (estepNat true)
         (fun j => app' (recCombinator estepNat) (recArgsNat j))) :=
   RlmrOStep.recurrence true estepNat recArgsNat
