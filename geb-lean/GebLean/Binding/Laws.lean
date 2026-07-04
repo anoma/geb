@@ -229,4 +229,63 @@ theorem sub_ren {S : BinderSig Ty} {Γ Δ Θ : Ctx Ty} {s : Ty} (σ : Env (Tm S)
     ren ρ (sub σ t) = sub (fun s x => ren ρ (σ s x)) t :=
   traverse_sub_ren t σ ρ
 
+/-- Splitting a variable of `Γ ++ Ξ` by `Var.appendCases` into the suffix
+inclusion and the suffix embedding and rejoining recovers the variable. Read
+off `Thinning.appendId_app` at the identity thinning. -/
+theorem Var.appendCases_self {Ξ Γ : Ctx Ty} {s : Ty} (x : Var (Γ ++ Ξ) s) :
+    Var.appendCases (fun y => Var.appendRight Γ y) Γ
+        (fun v => Thinning.weakAppend.app v) x = x := by
+  have h := Thinning.appendId_app (Ξ := Ξ) (Thinning.id : Thinning Γ Γ) x
+  simp only [Thinning.appendId_id, Thinning.app_id] at h
+  exact h.symm
+
+/-- Weakening the identity environment under a binder binding `Ξ` is again the
+identity environment. This is the under-binder interaction lemma the operation
+case of `sub_id` needs. -/
+theorem underBinder_idEnv {S : BinderSig Ty} {Γ Ξ : Ctx Ty} :
+    Env.underBinder (subKit S) (idEnv (Γ := Γ))
+      = (idEnv : Env (Tm S) (Γ ++ Ξ) (Γ ++ Ξ)) := by
+  funext s x
+  simp only [Env.underBinder, subKit, idEnv, ren, traverse_var, varKit, renEnv]
+  rw [← Var.appendCases_natural Tm.var, Var.appendCases_self]
+
+/-- The right unit at the traversal level: the traversal at the substitution kit
+along the identity environment is the identity, stated over an arbitrary index
+so the induction on the term goes through. -/
+theorem traverse_idEnv {S : BinderSig Ty} :
+    ∀ {y : Ctx Ty × Ty} (t : PolyFix (polyTranslate varOver S.polyEndo) y),
+      traverse (subKit S) (idEnv (Γ := y.1)) t = t := by
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Tm S y.1 y.2)
+            = Tm.var (leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      simp only [traverse_var, subKit, idEnv, id]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : S.Op // S.result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', S.result o) (Sum.inr ⟨o, rfl⟩) children
+            : Tm S Γ' (S.result o))
+            = Tm.op o (fun j => children ⟨j⟩) from rfl]
+      rw [traverse_op]
+      congr 1
+      funext j
+      rw [underBinder_idEnv]
+      exact ih ⟨j⟩
+
+/-- The right unit (relative-monad unit) law: substituting by the identity
+environment is the identity. -/
+theorem sub_id {S : BinderSig Ty} {Γ : Ctx Ty} {s : Ty} (t : Tm S Γ s) :
+    sub idEnv t = t :=
+  traverse_idEnv t
+
 end GebLean.Binding
