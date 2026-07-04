@@ -958,6 +958,22 @@ theorem cLiftAux_recurse_appChain (A : AlgSig) (θ : RType) (hθ : θ.IsObj)
           (fun i => cLiftAux A D' θ hθ i) xvec (args 0) t))
       (cLiftAux_recurse_appChain A θ hθ xvec D' t (fun k => args k.succ))
 
+/-- Evaluation of a saturated-hole occurrence against a definition model reads
+the referenced identifier's denotation on the recursively evaluated argument
+tuple. A definitional reduction local to the coercion identifiers. -/
+theorem defnHole_eval {A : AlgSig} {n : Nat} {holeIdx : Fin n → List RType × RType}
+    {Γ : Ctx RType}
+    (ih : ∀ j : Fin n, (∀ i : Fin (holeIdx j).1.length,
+        RType.interp (FreeAlg A) ((holeIdx j).1.get i)) →
+        RType.interp (FreeAlg A) (holeIdx j).2)
+    (j : Fin n)
+    (args : ∀ i : Fin (holeIdx j).1.length, Tm (defnSig A n holeIdx) Γ ((holeIdx j).1.get i))
+    (ρ : (defnModel A n holeIdx ih).Env Γ) :
+    (Tm.op (sig := defnSig A n holeIdx) (Sum.inl (Sum.inr j)) args).eval
+        (defnModel A n holeIdx ih) ρ
+      = ih j (fun i => (args i).eval (defnModel A n holeIdx ih) ρ) :=
+  rfl
+
 /-- Evaluation of the full saturating application chain: applying a combinator at
 the curried sort `curried D θ` to a full argument tuple denotes `appChain` of the
 combinator's value over `D`. Proved by structural recursion on `D` through
@@ -1000,5 +1016,150 @@ theorem applyCanon_interp (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (τ :
             ((canonIdent A b₀ h₀ ((RType.domains τ).get j)).interp)) := by
   rw [applyCanon, RIdent.interp_defn, appArgs_eval, Tm.eval_transport]
   rfl
+
+/-- A monotonic recurrence identifier transported along a sort equality of its
+recurrence sort equals the recurrence over the transported step functions. A
+cast-commutation fact local to the full kappa-hat. -/
+theorem RIdent.mrec_cast {A : AlgSig} {s₀ s₁ : RType} (e : s₀ = s₁)
+    (steps : (i : A.B) → RIdent A (List.replicate (A.ar i) s₀) s₀) :
+    cast (congrArg (fun s => RIdent A [RType.omega s] s) e) (RIdent.mrec [] s₀ steps)
+      = RIdent.mrec [] s₁ (fun i =>
+          cast (congrArg (fun s => RIdent A (List.replicate (A.ar i) s) s) e) (steps i)) := by
+  subst e; rfl
+
+/-- The denotation of a monotonic recurrence transported along a sort equality of
+its recurrence sort reads its recurrence argument on the carrier copy and
+transports the recurrence value. A cast-commutation fact local to the full
+kappa-hat; the recurrence argument sits at an omega sort, whose denotation is the
+carrier regardless of the sort. -/
+theorem RIdent.interp_omega_cast {A : AlgSig} {s₀ s₁ : RType} (e : s₀ = s₁)
+    (g : RIdent A [RType.omega s₀] s₀)
+    (env : ∀ i : Fin ([RType.omega s₁] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.omega s₁] : Ctx RType).get i))
+    (env' : ∀ i : Fin ([RType.omega s₀] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.omega s₀] : Ctx RType).get i))
+    (henv : env 0 ≍ env' 0) :
+    (cast (congrArg (fun s => RIdent A [RType.omega s] s) e) g).interp env
+      = cast (congrArg (RType.interp (FreeAlg A)) e) (g.interp env') := by
+  subst e
+  refine congrArg g.interp (funext fun i => ?_)
+  refine Fin.cases ?_ (fun j => j.elim0) i
+  exact eq_of_heq henv
+
+/-- The recurrence semantics of a monotonic recurrence at the empty parameter
+context (Leivant III section 2.3, eq. (4)): its denotation is the free-algebra
+recurrence over the step functions, run on the recurrence argument. Holds by
+definitional unfolding. -/
+theorem RIdent.mrec_interp (A : AlgSig) (s : RType)
+    (steps : (i : A.B) → RIdent A (List.replicate (A.ar i) s) s)
+    (ρ : ∀ i : Fin ([RType.omega s] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.omega s] : Ctx RType).get i)) :
+    (RIdent.mrec [] s steps).interp ρ
+      = FreeAlg.recurse (A := A) (P := Unit)
+          (fun i _ _sub phi => (steps i).interp
+            (childEnv [] s (A.ar i) (envHead [] (RType.omega s) ρ) phi))
+          () (envLast [] (RType.omega s) ρ) :=
+  rfl
+
+/-- An object sort has an empty domain list (Leivant III section 2.3): for
+`θ.IsObj`, `RType.domains θ = []`. -/
+theorem RType.domains_of_isObj {θ : RType} (hθ : θ.IsObj) : RType.domains θ = [] := by
+  rcases θ with ⟨_, i, childx⟩
+  rcases hθ with h | h <;> (simp only [RType.shape, PolyFix.index] at h; subst h) <;> rfl
+
+/-- The pointwise constructor lift at an object sort agrees, up to the curried
+decomposition transport, with the lift over the empty domain list. A
+cast-commutation fact local to the full kappa-hat, via proof irrelevance on the
+object-sort hypothesis. -/
+theorem cLiftAux_heq_kappaHatStep (A : AlgSig) (D : List RType) (θ : RType)
+    (hθ : θ.IsObj) (i : A.B) (hd : D = []) :
+    cLiftAux A D θ hθ i ≍ kappaHatStep A θ hθ i := by
+  subst hd; exact HEq.rfl
+
+/-- A kappa-hat step is heterogeneously invariant under a sort equality of its
+object sort. A cast-commutation fact local to the full kappa-hat. -/
+theorem kappaHatStep_heq (A : AlgSig) (θ τ : RType) (hθ : θ.IsObj) (hτ : τ.IsObj)
+    (i : A.B) (ht : θ = τ) : kappaHatStep A θ hθ i ≍ kappaHatStep A τ hτ i := by
+  subst ht; rfl
+
+/-- The pointwise constructor lift at every r-type equals its lift over the
+curried decomposition, transported along the decomposition equality (Leivant III
+section 2.4(1)): at an arrow sort by definition, and at an object sort through the
+empty-domain agreement. Proved by cases on the object-sort hypothesis. -/
+theorem cLift_eq_cast_cLiftAux (A : AlgSig) (τ : RType) (i : A.B) :
+    cLift A τ i
+      = cast (congrArg (fun s => RIdent A (List.replicate (A.ar i) s) s)
+          (RType.curried_domains τ).symm)
+          (cLiftAux A (RType.domains τ) (RType.objTarget τ) (RType.objTarget_isObj τ) i) := by
+  rw [cLift]
+  by_cases h : τ.IsObj
+  · rw [dif_pos h]
+    refine eq_of_heq (HEq.trans ?_ (cast_heq _ _).symm)
+    exact (kappaHatStep_heq A (RType.objTarget τ) τ (RType.objTarget_isObj τ) h i
+        (RType.objTarget_of_isObj h)).symm.trans
+      (cLiftAux_heq_kappaHatStep A (RType.domains τ) (RType.objTarget τ) (RType.objTarget_isObj τ) i
+        (RType.domains_of_isObj h)).symm
+  · rw [dif_neg h]
+
+/-- The full kappa-hat equals the recurrence over the curried-decomposition lifts,
+transported along the decomposition equality of its recurrence sort (Leivant III
+section 2.4(1)). Proved from `cLift_eq_cast_cLiftAux` through `RIdent.mrec_cast`. -/
+theorem kappaHatFull_eq_cast_mrecAux (A : AlgSig) (τ : RType) :
+    kappaHatFull A τ
+      = cast (congrArg (fun s => RIdent A [RType.omega s] s) (RType.curried_domains τ).symm)
+          (RIdent.mrec [] (RType.curried (RType.domains τ) (RType.objTarget τ))
+            (cLiftAux A (RType.domains τ) (RType.objTarget τ) (RType.objTarget_isObj τ))) := by
+  rw [kappaHatFull, RIdent.mrec_cast (A := A) (RType.curried_domains τ).symm]
+  exact congrArg (RIdent.mrec [] τ) (funext fun i => cLift_eq_cast_cLiftAux A τ i)
+
+/-- The full kappa-hat, transported to its curried decomposition and applied to
+any argument tuple over its domains, reconstructs its recurrence argument on the
+carrier copy (Leivant III section 2.4(1)). Assembles the bridge to the
+curried-decomposition lifts with the master reconstruction lemma
+`cLiftAux_recurse_appChain`. -/
+theorem kappaHatFull_appChain (A : AlgSig) (τ : RType)
+    (σ' : ∀ i : Fin ([RType.omega τ] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.omega τ] : Ctx RType).get i))
+    (args : ∀ k : Fin (RType.domains τ).length,
+      RType.interp (FreeAlg A) ((RType.domains τ).get k)) :
+    appChain A (RType.domains τ) (RType.objTarget τ)
+        (cast (congrArg (RType.interp (FreeAlg A)) (RType.curried_domains τ))
+          ((kappaHatFull A τ).interp σ'))
+        args
+      = cast (RType.interp_isObj (FreeAlg A) (RType.objTarget_isObj τ)).symm (σ' 0) := by
+  have hcomb :
+      cast (congrArg (RType.interp (FreeAlg A)) (RType.curried_domains τ))
+          ((kappaHatFull A τ).interp σ')
+        = (RIdent.mrec [] (RType.curried (RType.domains τ) (RType.objTarget τ))
+            (cLiftAux A (RType.domains τ) (RType.objTarget τ) (RType.objTarget_isObj τ))).interp
+            (Fin.cons (σ' 0) finZeroElim) := by
+    rw [kappaHatFull_eq_cast_mrecAux,
+      RIdent.interp_omega_cast (RType.curried_domains τ).symm _ σ'
+        (Fin.cons (σ' 0) finZeroElim) HEq.rfl, cast_cast]
+    exact eq_of_heq (cast_heq _ _)
+  rw [hcomb, RIdent.mrec_interp]
+  refine (cLiftAux_recurse_appChain A (RType.objTarget τ) (RType.objTarget_isObj τ) _
+    (RType.domains τ) _ args).trans ?_
+  refine congrArg (cast (RType.interp_isObj (FreeAlg A) (RType.objTarget_isObj τ)).symm) ?_
+  unfold envLast
+  exact eq_of_heq (cast_heq _ _)
+
+/-- Leivant III section 2.4(1): the coercion `κ_τ : Ω τ → θ` (with
+`θ = τ.objTarget`) denotes the identity on the carrier copy. Its value on an
+environment is the recurrence argument, a carrier element, transported along the
+carrier-copy equality of the object target. -/
+theorem kappaIdent_interp (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (τ : RType)
+    (ρ : ∀ i : Fin ([RType.omega τ] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([RType.omega τ] : Ctx RType).get i)) :
+    (kappaIdent A b₀ h₀ τ).interp ρ
+      = cast (RType.interp_isObj (FreeAlg A) (RType.objTarget_isObj τ)).symm (ρ 0) := by
+  rw [kappaIdent, RIdent.interp_defn]
+  dsimp only
+  erw [defnHole_eval]
+  dsimp only
+  rw [applyCanon_interp]
+  erw [defnHole_eval]
+  dsimp only
+  exact kappaHatFull_appChain A τ _ _
 
 end GebLean.Ramified
