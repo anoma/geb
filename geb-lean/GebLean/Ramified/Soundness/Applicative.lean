@@ -7,16 +7,20 @@ import GebLean.Ramified.Definability.Flat
 /-!
 # The applicative calculi as binder signatures
 
-The two applicative λ-calculi `RλMR^ω(𝔸)` and `RλMR_o^ω(𝔸)` of Leivant III
-section 4.1 (p. 222), realized as binding signatures (`BinderSig`) over the
-ramified types, instances of the indexed binder-substitution kit
-(`GebLean/Binding/`). Both calculi type terms by r-types and build them from
+The object-sorted applicative λ-calculus `RλMR_o^ω(𝔸)` of Leivant III
+section 4.1 (p. 222), realized as a binding signature (`BinderSig`) over the
+ramified types, an instance of the indexed binder-substitution kit
+(`GebLean/Binding/`). The calculus types terms by r-types and builds them from
 typed variables by λ-abstraction (`lam`) and application (`app`) over a family
 of typed constants: the constructors `c_iθ : θ^{r_i} → θ`, the recurrence
-combinators `R^τ : α_1, …, α_k, Ωτ → τ`, and — for the full calculus — the
-flat-recurrence combinators `F^τ : ξ_1, …, ξ_k, o → τ`. The `_o` variant drops
-`F^τ` and adds the destructors `dstr_j : o → o` and the case combinators
-`case^θ : o, θ^k → θ`.
+combinators `R^τ : α_1, …, α_k, Ωτ → τ`, the destructors `dstr_j : o → o`, and
+the case combinators `case^θ : o, θ^k → θ`.
+
+The soundness arm `(1)⟹(4)` of Leivant III Proposition 7 (`prop7Translate`) is
+transcribed directly to this object-sorted calculus, inlining the paper's
+flat-operator realization (the `(3)⟹(4)` step, §4.1 Examples 1–2) into the
+flat-recurrence case, rather than routing through the full calculus `RλMR^ω`
+with its flat-recurrence combinators `F^τ : ξ_1, …, ξ_k, o → τ`.
 
 All constants are nullary operations of the signature: their full curried arrow
 type is the operation's result and their argument list is empty (the source
@@ -31,8 +35,7 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
   constructor labels, reused across all of Phase 6.1.
 * `stepTypes` — the list of step-function types `[c_i-arity fold]` common to the
   recurrence and flat-recurrence combinators.
-* `RlmrOp`, `RlmrOOp` — the operation types of the two calculi.
-* `rlmrSig` — the signature of `RλMR^ω`: `app`, `lam`, `con`, `recur`, `flat`.
+* `RlmrOOp` — the operation type of the object-sorted calculus.
 * `rlmrOSig` — the signature of `RλMR_o^ω`: `app`, `lam`, `con`, `recur`,
   `dstr`, `case`.
 * `app'`, `lam'`, `boundVar` — the application, abstraction, and bound-variable
@@ -63,19 +66,19 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
 
 ## Implementation notes
 
-`RlmrOp` and `RlmrOOp` are finite non-recursive enumerations (like the fields
-of `BinderSig` itself), not `PolyFix` W-types; decision 8's requirement that
-recursive types be W-types of a `PolyEndo` does not apply to this first-order
-label data.
+`RlmrOOp` is a finite non-recursive enumeration (like the fields of `BinderSig`
+itself), not a `PolyFix` W-type; decision 8's requirement that recursive types
+be W-types of a `PolyEndo` does not apply to this first-order label data.
 
 ## References
 
 D. Leivant, "Ramified recurrence and computational complexity III: Higher type
 recurrence and elementary complexity", Annals of Pure and Applied Logic 96
-(1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`. The two applicative
-λ-calculi `RλMR^ω` and `RλMR_o^ω`, their typed constants, and the destructor
-and case operations are section 4.1 (p. 222). The `BinderSig` realization is
-novel packaging.
+(1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`. The object-sorted
+applicative λ-calculus `RλMR_o^ω`, its typed constants, and the destructor and
+case operations are section 4.1 (p. 222); Proposition 7's soundness arm
+`(1)⟹(4)` and its flat-operator realization (§4.1 Examples 1–2) are the same
+section. The `BinderSig` realization is novel packaging.
 
 ## Tags
 
@@ -119,24 +122,6 @@ def stepTypes (A : AlgSig) [Fintype A.B] [LinearOrder A.B] (base result : RType)
     List RType :=
   (ctorList A).map (fun b => RType.curried (List.replicate (A.ar b) base) result)
 
-/-- The operations of the full applicative calculus `RλMR^ω(A)` (Leivant III
-section 4.1): application, λ-abstraction, and the typed constants — a
-constructor `con θ b` for each object type `θ` and constructor label `b`, a
-recurrence combinator `recur τ`, and a flat-recurrence combinator `flat τ`, one
-per r-type `τ`. A finite non-recursive label type. -/
-inductive RlmrOp (A : AlgSig) where
-  /-- Application at domain sort `σ` and codomain sort `τ`. -/
-  | app (σ τ : RType)
-  /-- λ-abstraction binding a variable of sort `σ` in a body of sort `τ`. -/
-  | lam (σ τ : RType)
-  /-- The constructor constant `c_bθ : θ^{A.ar b} → θ` at an object type `θ`
-  (Leivant restricts the constructor constants to object sorts). -/
-  | con (θ : RType) (hθ : θ.IsObj) (b : A.B)
-  /-- The recurrence combinator `R^τ : α_1, …, α_k, Ωτ → τ`. -/
-  | recur (τ : RType)
-  /-- The flat-recurrence combinator `F^τ : ξ_1, …, ξ_k, o → τ`. -/
-  | flat (τ : RType)
-
 /-- The operations of the object-sorted applicative calculus `RλMR_o^ω(A)`
 (Leivant III section 4.1): application, λ-abstraction, the constructor and
 recurrence constants, and — replacing the flat-recurrence combinator — the
@@ -157,27 +142,6 @@ inductive RlmrOOp (A : AlgSig) [Fintype A.B] where
   /-- The case combinator `case θ : o, θ^k → θ` at an object type `θ`
   (Leivant restricts the case operations to object sorts). -/
   | case (θ : RType) (hθ : θ.IsObj)
-
-/-- The binding signature of the full applicative calculus `RλMR^ω(A)`
-(Leivant III section 4.1). Each constant is a nullary operation whose result is
-its full curried arrow type; `app σ τ` has result `τ` with subterm arguments a
-function at `σ.arrow τ` and an argument at `σ`; `lam σ τ` has result
-`σ.arrow τ` with a single body argument at `τ` under one binder of sort `σ`.
-Novel packaging of section 4.1. -/
-def rlmrSig (A : AlgSig) [Fintype A.B] [LinearOrder A.B] : BinderSig RType where
-  Op := RlmrOp A
-  result := fun
-    | .app _ τ => τ
-    | .lam σ τ => RType.arrow σ τ
-    | .con θ _ b => RType.curried (List.replicate (A.ar b) θ) θ
-    | .recur τ => RType.curried (stepTypes A τ τ) (RType.arrow (RType.omega τ) τ)
-    | .flat τ => RType.curried (stepTypes A RType.o τ) (RType.arrow RType.o τ)
-  args := fun
-    | .app σ τ => [([], RType.arrow σ τ), ([], σ)]
-    | .lam σ τ => [([σ], τ)]
-    | .con _ _ _ => []
-    | .recur _ => []
-    | .flat _ => []
 
 /-- The binding signature of the object-sorted applicative calculus
 `RλMR_o^ω(A)` (Leivant III section 4.1). Shares `app`, `lam`, `con`, and
@@ -450,7 +414,9 @@ twin of the operation case of `Binding.traverse` and the applicative analogue of
 * `recur` is the curried closed recurrence `FreeAlg.recurse` reading its step
   functions positionally (`stepAtLabel`) and its recurrence argument last;
 * `dstr` is the destructor `dstrRead`;
-* `case` is the branch selector `caseSelect`, curried over its branches. -/
+* `case` is the branch selector `caseSelect`, curried over its branches; over
+  `natAlgSig` (`numCtors = 2`) the case denotation reads exactly two branches,
+  at enumeration positions `0` and `1`. -/
 def appEvalOp {Γ : Binding.Ctx RType} (o : RlmrOOp natAlgSig)
     (ih : ∀ j : Fin ((rlmrOSig natAlgSig).args o).length,
       (∀ i : Fin (Γ ++ (((rlmrOSig natAlgSig).args o).get j).1).length,
@@ -611,7 +577,8 @@ last. -/
     appEval (Binding.Tm.op (RlmrOOp.dstr j) args) ρ = dstrRead j.val := rfl
 
 /-- `appEval` on a case constant `case θ hθ` is the branch selector `caseSelect`,
-curried over its branches. -/
+curried over its branches; over `natAlgSig` (`numCtors = 2`) it reads exactly the
+two branches at enumeration positions `0` and `1`. -/
 @[simp] theorem appEval_case {Γ : Binding.Ctx RType} {θ : RType} (hθ : θ.IsObj)
     (args : ∀ j : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.case θ hθ)).length,
       Binding.Tm (rlmrOSig natAlgSig)
