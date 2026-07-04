@@ -288,4 +288,76 @@ theorem sub_id {S : BinderSig Ty} {Γ : Ctx Ty} {s : Ty} (t : Tm S Γ s) :
     sub idEnv t = t :=
   traverse_idEnv t
 
+/-- Weakening the composed environment `fun s x => sub τ (σ s x)` under a binder
+binding `Ξ` equals composing the under-binder weakenings by substitution. The
+old-variable branch reconciles the two weakened composites through the fusion
+laws `sub_ren` and `ren_sub`. This is the under-binder interaction lemma the
+operation case of `sub_sub` needs. -/
+theorem underBinder_sub {S : BinderSig Ty} {Γ Δ Θ Ξ : Ctx Ty}
+    (σ : Env (Tm S) Γ Δ) (τ : Env (Tm S) Δ Θ) :
+    Env.underBinder (subKit S) (Ξ := Ξ) (fun s x => sub τ (σ s x))
+      = fun s x =>
+          sub (Env.underBinder (subKit S) τ) (Env.underBinder (subKit S) σ s x) := by
+  funext s x
+  change Var.appendCases (fun y => Tm.var (Var.appendRight Θ y)) Γ
+        (fun v => ren Thinning.weakAppend (sub τ (σ s v))) x
+      = sub (Env.underBinder (subKit S) τ)
+          (Var.appendCases (fun y => Tm.var (Var.appendRight Δ y)) Γ
+            (fun v => ren Thinning.weakAppend (σ s v)) x)
+  rw [Var.appendCases_natural (sub (Env.underBinder (subKit S) τ))]
+  congr 1
+  · funext y
+    rw [sub_var]
+    simp only [Env.underBinder, subKit]
+    rw [Var.appendCases_appendRight]
+  · funext v
+    rw [sub_ren, ren_sub]
+    congr 1
+    funext s' x'
+    simp only [Env.underBinder, subKit]
+    rw [Var.appendCases_weakAppend]
+
+/-- The substitution associativity at the traversal level, stated over an
+arbitrary index and quantified over the environments so the induction on the
+term goes through. -/
+theorem traverse_sub_sub {S : BinderSig Ty} :
+    ∀ {y : Ctx Ty × Ty} (t : PolyFix (polyTranslate varOver S.polyEndo) y)
+      {Δ Θ : Ctx Ty} (σ : Env (Tm S) y.1 Δ) (τ : Env (Tm S) Δ Θ),
+      traverse (subKit S) τ (traverse (subKit S) σ t)
+        = traverse (subKit S) (fun s x => sub τ (σ s x)) t := by
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ Θ σ τ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Tm S y.1 y.2)
+            = Tm.var (leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      simp only [traverse_var, subKit, id]
+      rfl
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : S.Op // S.result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', S.result o) (Sum.inr ⟨o, rfl⟩) children
+            : Tm S Γ' (S.result o))
+            = Tm.op o (fun j => children ⟨j⟩) from rfl]
+      simp only [traverse_op, underBinder_sub]
+      congr 1
+      funext j
+      exact ih ⟨j⟩ (Env.underBinder (subKit S) σ) (Env.underBinder (subKit S) τ)
+
+/-- The associativity (relative-monad Kleisli-extension) law: substitution after
+substitution is a single substitution along the composed environment. -/
+theorem sub_sub {S : BinderSig Ty} {Γ Δ Θ : Ctx Ty} {s : Ty} (σ : Env (Tm S) Γ Δ)
+    (τ : Env (Tm S) Δ Θ) (t : Tm S Γ s) :
+    sub τ (sub σ t) = sub (fun s x => sub τ (σ s x)) t :=
+  traverse_sub_sub t σ τ
+
 end GebLean.Binding
