@@ -5,3 +5,4 @@ import GebLean.Binding.Kit
 import GebLean.Binding.Renaming
 import GebLean.Binding.Substitution
 import GebLean.Binding.Laws
+import GebLean.Binding.RelativeMonad
