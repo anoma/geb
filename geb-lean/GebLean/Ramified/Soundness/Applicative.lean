@@ -1027,6 +1027,40 @@ over an arbitrary index so the induction on the term goes through. -/
       rw [hfam]
       exact appEvalOp_renEnvSem o θ (fun j => appEval (children ⟨j⟩)) ρ
 
+/-- Heterogeneous congruence for `appEval`: evaluating heterogeneously equal terms
+gives heterogeneously equal denotations. -/
+theorem appEval_heq {Γ : Binding.Ctx RType} {s₁ s₂ : RType}
+    (t₁ : Binding.Tm (rlmrOSig natAlgSig) Γ s₁) (t₂ : Binding.Tm (rlmrOSig natAlgSig) Γ s₂)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (hs : s₁ = s₂) (h : t₁ ≍ t₂) : appEval t₁ ρ ≍ appEval t₂ ρ := by
+  subst hs
+  cases h
+  exact HEq.rfl
+
+/-- Positional read-out inverts the per-constructor step tuple: reading the
+recursor's step for label `i` off the `appEval`-denoted positional tuple built
+from `Estep` recovers `appEval (Estep i)`. Inverts `stepEnvOfFun` through
+`ctorList_get_ctorIdx`. The step-tuple inversion of the `mrec` agreement proof. -/
+theorem stepAtLabel_stepEnvOfFun {Γ : Binding.Ctx RType} {τ : RType}
+    (Estep : ∀ b : natAlgSig.B,
+      Binding.Tm (rlmrOSig natAlgSig) Γ (RType.curried (List.replicate (natAlgSig.ar b) τ) τ))
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (i : natAlgSig.B) :
+    stepAtLabel (fun idx => appEval (stepEnvOfFun Estep idx) ρ) i = appEval (Estep i) ρ := by
+  apply eq_of_heq
+  unfold stepAtLabel
+  refine (cast_heq _ _).trans ?_
+  refine appEval_heq _ _ ρ ?_ ?_
+  · simp only [stepTypes, List.get_eq_getElem, List.getElem_map]
+    exact congrArg (fun c => RType.curried (List.replicate (natAlgSig.ar c) τ) τ)
+      (ctorList_get_ctorIdx i)
+  · unfold stepEnvOfFun
+    simp only [id_eq, eq_mpr_eq_cast]
+    refine ((cast_heq _ _).trans (cast_heq _ _)).trans ?_
+    have hEstep : ∀ {b b' : natAlgSig.B}, b = b' → Estep b ≍ Estep b' := by
+      intro b b' h; cases h; exact HEq.rfl
+    exact hEstep (by rw [← List.get_eq_getElem]; exact ctorList_get_ctorIdx i)
+
 /-- The thinning embedding the suffix `Ξ` of an append-at-end context into the
 whole `Γ ++ Ξ`: drop every entry of the prefix `Γ`, then keep every entry of
 `Ξ` (the identity on the suffix). The suffix-inclusion counterpart of
