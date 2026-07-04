@@ -83,4 +83,26 @@ example :
         (fun j => app' (recCombinator estepNat) (recArgsNat j))) :=
   RlmrOStep.recurrence true estepNat recArgsNat
 
+/-- The standard-model evaluator computes the zero-constructor's denotation:
+`appEval` of the closed nullary constant `c_false^o` is the numeral `0` of the
+standard carrier, `natToFreeAlg 0`. Exercises `appEval_con`. -/
+example (ρ : ∀ i : Fin ([] : Binding.Ctx RType).length,
+    RType.interp (FreeAlg natAlgSig) (([] : Binding.Ctx RType).get i)) :
+    appEval (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o (Or.inl rfl) false)
+      (fun j => j.elim0)) ρ = natToFreeAlg 0 := by
+  simp only [appEval_con]
+  exact congrArg (FreeAlg.mk (A := natAlgSig) false) (funext (fun i => i.elim0))
+
+/-- The standard-model evaluator computes the identity function's denotation:
+`appEval` of the closed identity term `λx:o. x` is the identity on the standard
+carrier. Exercises `appEval_lam'` and `appEval_var` through the binder. -/
+example (ρ : ∀ i : Fin ([] : Binding.Ctx RType).length,
+    RType.interp (FreeAlg natAlgSig) (([] : Binding.Ctx RType).get i))
+    (v : RType.interp (FreeAlg natAlgSig) RType.o) :
+    appEval (lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))) ρ v = v := by
+  simp only [appEval_lam', appEval_var, envExtend, boundVar, childEnv,
+    Binding.Var.appendRight, List.length_nil]
+  rw [dif_neg (Nat.not_lt_zero _)]
+  exact cast_eq _ _
+
 end GebLean.Ramified

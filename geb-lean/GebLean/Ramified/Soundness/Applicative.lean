@@ -56,6 +56,10 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
 * `ctorList_length` — the constructor enumeration has length `A.numCtors`.
 * `ctorList_get_ctorIdx` — `ctorIdx` is a right inverse of the enumeration
   read-off.
+* `appEval_var`, `appEval_op`, `appEval_congr_ctx` — the fold's base and
+  operation cases and the context-transport coherence.
+* `appEval_app'`, `appEval_lam'`, `appEval_con`, `appEval_recur`, `appEval_dstr`,
+  `appEval_case` — the evaluation of `appEval` through the term combinators.
 
 ## Implementation notes
 
@@ -515,5 +519,114 @@ def appEval {Γ : Binding.Ctx RType} {s : RType}
       match i, children, ih with
       | Sum.inl a, _, _ => fun ρ => (leafVar a).2 ▸ ρ (leafVar a).1
       | Sum.inr p, _, ih => fun ρ => p.2 ▸ appEvalOp p.val (fun j => ih ⟨j⟩) ρ) t
+
+/-- `appEval` at a variable reads the environment at that variable's position,
+transported along the variable's sort proof. The base case of the fold. -/
+@[simp] theorem appEval_var {Γ : Binding.Ctx RType} {s : RType} (x : Binding.Var Γ s)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (Binding.Tm.var x) ρ = x.2 ▸ ρ x.1 := by
+  obtain ⟨i, hi⟩ := x
+  subst hi
+  rfl
+
+/-- `appEval` at an operation node dispatches through `appEvalOp` on the
+denotations of the node's subterms. The operation case of the fold, the
+`PolyFix.ind` β-reduction that all the combinator evaluation lemmas rest on
+(the analogue of `Binding.traverse_op`). -/
+theorem appEval_op {Γ : Binding.Ctx RType} (o : RlmrOOp natAlgSig)
+    (args : ∀ j : Fin ((rlmrOSig natAlgSig).args o).length,
+      Binding.Tm (rlmrOSig natAlgSig) (Γ ++ (((rlmrOSig natAlgSig).args o).get j).1)
+        (((rlmrOSig natAlgSig).args o).get j).2)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (Binding.Tm.op o args) ρ = appEvalOp o (fun j => appEval (args j)) ρ := rfl
+
+/-- Transport of `appEval` across an equality of contexts: evaluating the
+context-transported term at the transported environment agrees with evaluating
+the original. Discharges the `Γ ++ [] = Γ` mismatch of `app'`. -/
+theorem appEval_congr_ctx {Γ Δ : Binding.Ctx RType} {s : RType} (h : Γ = Δ)
+    (t : Binding.Tm (rlmrOSig natAlgSig) Γ s)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (h ▸ t) (envCastCtx h ρ) = appEval t ρ := by
+  subst h
+  rfl
+
+/-- `appEval` on an application node `app' f x` is the application of the
+function denotation to the argument denotation (the β-reduction of the
+applicative fragment). -/
+@[simp] theorem appEval_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (rlmrOSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (rlmrOSig natAlgSig) Γ σ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (app' f x) ρ = appEval f ρ (appEval x ρ) :=
+  congrArg₂ (fun (g : RType.interp (FreeAlg natAlgSig) (RType.arrow σ τ)) y => g y)
+    (appEval_congr_ctx (List.append_nil Γ).symm f ρ)
+    (appEval_congr_ctx (List.append_nil Γ).symm x ρ)
+
+/-- `appEval` on an abstraction node `lam' b` is the semantic function extending
+the environment by the bound value (the denotation of λ-abstraction). -/
+@[simp] theorem appEval_lam' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (b : Binding.Tm (rlmrOSig natAlgSig) (Γ ++ [σ]) τ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (lam' b) ρ = fun v => appEval b (envExtend ρ v) := rfl
+
+/-- `appEval` on a constructor constant `con θ hθ b` is the curried constructor
+`stdConstructorInterp` at the object sort `θ`. -/
+@[simp] theorem appEval_con {Γ : Binding.Ctx RType} {θ : RType} (hθ : θ.IsObj)
+    (b : natAlgSig.B)
+    (args : ∀ j : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.con θ hθ b)).length,
+      Binding.Tm (rlmrOSig natAlgSig)
+        (Γ ++ (((rlmrOSig natAlgSig).args (RlmrOOp.con θ hθ b)).get j).1)
+        (((rlmrOSig natAlgSig).args (RlmrOOp.con θ hθ b)).get j).2)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (Binding.Tm.op (RlmrOOp.con θ hθ b) args) ρ
+      = curryInterp natAlgSig (List.replicate (natAlgSig.ar b) θ) θ
+          (stdConstructorInterp natAlgSig (⟨θ, hθ⟩, b)) := rfl
+
+/-- `appEval` on a recurrence constant `recur τ` is the curried closed
+recurrence, reading its step functions positionally and its recurrence argument
+last. -/
+@[simp] theorem appEval_recur {Γ : Binding.Ctx RType} {τ : RType}
+    (args : ∀ j : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.recur τ)).length,
+      Binding.Tm (rlmrOSig natAlgSig)
+        (Γ ++ (((rlmrOSig natAlgSig).args (RlmrOOp.recur τ)).get j).1)
+        (((rlmrOSig natAlgSig).args (RlmrOOp.recur τ)).get j).2)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (Binding.Tm.op (RlmrOOp.recur τ) args) ρ
+      = curryInterp natAlgSig (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ)
+          (fun stepEnv z =>
+            FreeAlg.recurse (A := natAlgSig) (P := Unit)
+              (fun i _ _sub phi =>
+                appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+                  (stepAtLabel stepEnv i)
+                  (childEnv [] τ (natAlgSig.ar i) finZeroElim phi))
+              () z) := rfl
+
+/-- `appEval` on a destructor constant `dstr j` is the destructor `dstrRead`. -/
+@[simp] theorem appEval_dstr {Γ : Binding.Ctx RType} (j : Fin natAlgSig.maxArity)
+    (args : ∀ k : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.dstr j)).length,
+      Binding.Tm (rlmrOSig natAlgSig)
+        (Γ ++ (((rlmrOSig natAlgSig).args (RlmrOOp.dstr j)).get k).1)
+        (((rlmrOSig natAlgSig).args (RlmrOOp.dstr j)).get k).2)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (Binding.Tm.op (RlmrOOp.dstr j) args) ρ = dstrRead j.val := rfl
+
+/-- `appEval` on a case constant `case θ hθ` is the branch selector `caseSelect`,
+curried over its branches. -/
+@[simp] theorem appEval_case {Γ : Binding.Ctx RType} {θ : RType} (hθ : θ.IsObj)
+    (args : ∀ j : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.case θ hθ)).length,
+      Binding.Tm (rlmrOSig natAlgSig)
+        (Γ ++ (((rlmrOSig natAlgSig).args (RlmrOOp.case θ hθ)).get j).1)
+        (((rlmrOSig natAlgSig).args (RlmrOOp.case θ hθ)).get j).2)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (Binding.Tm.op (RlmrOOp.case θ hθ) args) ρ
+      = fun z => curryInterp natAlgSig (List.replicate natAlgSig.numCtors θ) θ
+          (fun branchEnv =>
+            caseSelect z
+              (cast (congrArg (RType.interp (FreeAlg natAlgSig))
+                (by rw [List.get_eq_getElem, List.getElem_replicate]))
+                (branchEnv ⟨0, (by decide : (0:Nat) < 2)⟩))
+              (cast (congrArg (RType.interp (FreeAlg natAlgSig))
+                (by rw [List.get_eq_getElem, List.getElem_replicate]))
+                (branchEnv ⟨1, (by decide : (1:Nat) < 2)⟩))) := rfl
 
 end GebLean.Ramified
