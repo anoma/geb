@@ -138,6 +138,96 @@ def urmJumpUpdate (iv l₁ l₂ : ℕ) : RIdent natAlgSig [RType.arrow RType.o R
           (Fin.cons (defnApp RType.o RType.o (Tm.var 0) (tmNat (iv + 1))) finZeroElim)))⟩
     (fun _ => ramCase RType.o)
 
+/-- The identity update denotes the component's own previous value: on a state
+function `φ`, `urmSelfUpdate jval` returns `φ` at the component's selector
+numeral `jval`. -/
+theorem urmSelfUpdate_interp (jval : ℕ)
+    (φ : RType.interp (FreeAlg natAlgSig) (RType.arrow RType.o RType.o)) :
+    (urmSelfUpdate jval).interp (Fin.cons φ finZeroElim) = φ (natToFreeAlg jval) := by
+  rw [urmSelfUpdate, RIdent.interp_defn]
+  simp only [defnApp_eval, tmNat_eval]
+  rfl
+
+/-- The constant update denotes the numeral `c`, ignoring the previous state. -/
+theorem urmConstUpdate_interp (c : ℕ)
+    (φ : RType.interp (FreeAlg natAlgSig) (RType.arrow RType.o RType.o)) :
+    (urmConstUpdate c).interp (Fin.cons φ finZeroElim) = natToFreeAlg c := by
+  rw [urmConstUpdate, RIdent.interp_defn]
+  exact tmNat_eval _ _ c
+
+/-- The successor update denotes one more than the component's previous value,
+read as a count: `freeAlgToNat` of the result is `freeAlgToNat (φ jval) + 1`. -/
+theorem urmSuccUpdate_interp (jval : ℕ)
+    (φ : RType.interp (FreeAlg natAlgSig) (RType.arrow RType.o RType.o)) :
+    freeAlgToNat ((urmSuccUpdate jval).interp (Fin.cons φ finZeroElim))
+      = freeAlgToNat (φ (natToFreeAlg jval)) + 1 := by
+  have h : (urmSuccUpdate jval).interp (Fin.cons φ finZeroElim)
+      = FreeAlg.mk (A := natAlgSig) true (fun _ => φ (natToFreeAlg jval)) := by
+    rw [urmSuccUpdate, RIdent.interp_defn]
+    refine congrArg (FreeAlg.mk (A := natAlgSig) true) (funext (fun v => ?_))
+    induction v using Fin.cases with
+    | zero =>
+      exact eq_of_heq ((cast_heq _ _).trans (heq_of_eq (congrArg φ (tmNat_eval _ _ jval))))
+    | succ v' => exact v'.elim0
+  rw [h]
+  rfl
+
+/-- The decrement update denotes one less than the component's previous value,
+read as a count, via the destructor `ramDstr`: `freeAlgToNat` of the result is
+`freeAlgToNat (φ jval) - 1`. -/
+theorem urmDecUpdate_interp (jval : ℕ)
+    (φ : RType.interp (FreeAlg natAlgSig) (RType.arrow RType.o RType.o)) :
+    freeAlgToNat ((urmDecUpdate jval).interp (Fin.cons φ finZeroElim))
+      = freeAlgToNat (φ (natToFreeAlg jval)) - 1 := by
+  have h : (urmDecUpdate jval).interp (Fin.cons φ finZeroElim)
+      = ramDstr.interp (dstrEnv (φ (natToFreeAlg jval))) := by
+    rw [urmDecUpdate, RIdent.interp_defn]
+    refine congrArg ramDstr.interp (funext (fun i => ?_))
+    induction i using Fin.cases with
+    | zero => exact congrArg φ (tmNat_eval _ _ jval)
+    | succ i' => exact i'.elim0
+  rw [h, ramDstr_interp]
+
+/-- The case function on a count argument branches on whether the count is zero:
+`ramCase` at `caseEnv y₀ y₁ z` denotes `y₀` when `freeAlgToNat z` is zero and
+`y₁` otherwise. -/
+theorem ramCase_interp_ite (y0 y1 : FreeAlg natAlgSig) (z : FreeAlg natAlgSig) :
+    (ramCase RType.o).interp (caseEnv RType.o y0 y1 z)
+      = if freeAlgToNat z = 0 then y0 else y1 := by
+  cases z with
+  | mk _ b subs =>
+    cases b with
+    | false =>
+      change (ramCase RType.o).interp (caseEnv RType.o y0 y1 (FreeAlg.mk false subs)) = _
+      rw [ramCase_interp]; rfl
+    | true =>
+      change (ramCase RType.o).interp (caseEnv RType.o y0 y1 (FreeAlg.mk true subs)) = _
+      rw [ramCase_interp]; rfl
+
+/-- The jump update denotes the zero target `l₁` when the tested register `iv`
+is zero and the nonzero target `l₂` otherwise, via the case function `ramCase`
+applied to `φ (iv + 1)`. -/
+theorem urmJumpUpdate_interp (iv l₁ l₂ : ℕ)
+    (φ : RType.interp (FreeAlg natAlgSig) (RType.arrow RType.o RType.o)) :
+    (urmJumpUpdate iv l₁ l₂).interp (Fin.cons φ finZeroElim)
+      = if freeAlgToNat (φ (natToFreeAlg (iv + 1))) = 0
+        then natToFreeAlg l₁ else natToFreeAlg l₂ := by
+  have h : (urmJumpUpdate iv l₁ l₂).interp (Fin.cons φ finZeroElim)
+      = (ramCase RType.o).interp
+          (caseEnv RType.o (natToFreeAlg l₁) (natToFreeAlg l₂) (φ (natToFreeAlg (iv + 1)))) := by
+    rw [urmJumpUpdate, RIdent.interp_defn]
+    refine congrArg (ramCase RType.o).interp (funext (fun i => ?_))
+    induction i using Fin.cases with
+    | zero => exact tmNat_eval _ _ l₁
+    | succ i' =>
+      induction i' using Fin.cases with
+      | zero => exact tmNat_eval _ _ l₂
+      | succ i'' =>
+        induction i'' using Fin.cases with
+        | zero => exact congrArg φ (tmNat_eval _ _ (iv + 1))
+        | succ i''' => exact i'''.elim0
+  rw [h, ramCase_interp_ite]
+
 /-- The update identifier for component `j` when executing `instr`: the program
 counter (`j.val = 0`) advances, branches, or halts; the register `j.val - 1`
 either receives the write, increments, decrements (when it is the instruction's
