@@ -2,6 +2,7 @@ import GebLean.Ramified.Definability.Simultaneous
 import GebLean.Ramified.Definability.Flat
 import GebLean.Ramified.Definability.Bounds
 import GebLean.Ramified.Definability.Ladder
+import GebLean.Ramified.Definability.Machine
 
 /-!
 # Ramified recurrence: definability
@@ -25,7 +26,13 @@ fourth module generalizes the section 2.4 numeric family — numerals, the
 exponentiation copy, the in-system `2_m` clock family, the size function, and
 addition and multiplication — from the base sort `o` to an arbitrary object sort
 `θ`, with interpretation lemmas aligned with `objToNat` and `GebLean.tower`
-(`Ladder`).
+(`Ladder`). The fifth module transcribes Lemma 6's machine-state simulation
+(section 3.2): the repository's zero-test URM
+(`GebLean/Utilities/ZeroTestURM.lean`) is tracked by the simultaneous family
+over `1 + p.numRegs` components (program counter and registers), with each
+successor step case-splitting on the program counter through a selector over
+the instruction list and routing the implicit-halt state through the selector's
+fall-through (`Machine`).
 
 ## References
 
