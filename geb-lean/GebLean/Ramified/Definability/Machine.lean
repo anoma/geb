@@ -391,4 +391,92 @@ def urmEnv {a : ℕ} (_p : URMProgram a) (v : Fin a → ℕ) (t : ℕ) :
           ++ [RType.omega (RType.arrow RType.o RType.o)] : Ctx RType).get k) :=
   simulEnv (List.replicate a RType.o) RType.o (urmParamEnv v) (natToFreeAlg t)
 
+/-- The recurrence-result variable of a successor step clause denotes the sole
+function-valued recursive result `φvec ⟨0, _⟩` of the step environment: reading
+`urmPhiVar` at `simulStepEnv … true pe φvec u` recovers the previous state as
+the selector-indexed function. -/
+theorem urmPhiVar_eval {a n : ℕ} {hI : Fin n → List RType × RType}
+    (ih : ∀ j : Fin n, (∀ i : Fin (hI j).1.length,
+        RType.interp (FreeAlg natAlgSig) ((hI j).1.get i)) →
+        RType.interp (FreeAlg natAlgSig) (hI j).2)
+    (pe : ∀ v : Fin (List.replicate a RType.o).length,
+      RType.interp (FreeAlg natAlgSig) ((List.replicate a RType.o).get v))
+    (φvec : Fin (natAlgSig.ar true) →
+      RType.interp (FreeAlg natAlgSig) (RType.arrow RType.o RType.o))
+    (u : FreeAlg natAlgSig) :
+    (urmPhiVar hI a).eval (defnModel natAlgSig n hI ih)
+        (simulStepEnv (List.replicate a RType.o) RType.o true pe φvec u)
+      = φvec ⟨0, by decide⟩ := by
+  refine eq_of_heq ?_
+  rw [urmPhiVar]
+  refine (Tm.eval_reind_var_heq (defnModel natAlgSig n hI ih) _ _).trans ?_
+  rw [simulStepEnv]
+  refine (snocEnv_heq_left (List.replicate a RType.o
+      ++ List.replicate (natAlgSig.ar true) (RType.arrow RType.o RType.o)) RType.o
+      (childEnv (List.replicate a RType.o) (RType.arrow RType.o RType.o)
+        (natAlgSig.ar true) pe φvec) u
+      (finAppR (List.replicate a RType.o)
+        (List.replicate (natAlgSig.ar true) (RType.arrow RType.o RType.o))
+        ⟨0, by decide⟩) _ rfl).trans ?_
+  refine (heq_of_eq (childEnv_finAppR pe φvec ⟨0, by decide⟩ (by decide))).trans ?_
+  exact (cast_heq _ _).trans (cast_heq _ _)
+
+/-- The successor step clause for component `j` reduces to the selector
+`chooseIdent p.instrs.size o` applied to the previous program counter `φ (0)`
+over the per-instruction entry updates, each fed the state function `φ`. The
+step's arg-vector reduction consumed by the machine-simulation invariant. -/
+theorem urmStepClause_interp {a : ℕ} (p : URMProgram a) (j : Fin (1 + p.numRegs))
+    (pe : ∀ v : Fin (List.replicate a RType.o).length,
+      RType.interp (FreeAlg natAlgSig) ((List.replicate a RType.o).get v))
+    (φvec : Fin (natAlgSig.ar true) →
+      RType.interp (FreeAlg natAlgSig) (RType.arrow RType.o RType.o))
+    (u : FreeAlg natAlgSig) :
+    (urmStepClause p j).interp
+        (simulStepEnv (List.replicate a RType.o) RType.o true pe φvec u)
+      = (chooseIdent p.instrs.size RType.o).interp
+          (chooseEnv p.instrs.size RType.o (φvec ⟨0, by decide⟩ (natToFreeAlg 0))
+            (fun k => (urmEntryIdent p j ⟨k.val, by
+                have h := k.isLt
+                have _hl : (List.replicate (p.instrs.size + 1) RType.o).length
+                  = p.instrs.size + 1 := by simp
+                omega⟩).interp
+              (Fin.cons (φvec ⟨0, by decide⟩) finZeroElim))) := by
+  let m0 := defnModel natAlgSig (p.instrs.size + 2) (urmStepHoleIdx p)
+    (fun h => (urmStepChildren p j h).interp)
+  let e0 := simulStepEnv (List.replicate a RType.o) RType.o true pe φvec u
+  refine congrArg (chooseIdent p.instrs.size RType.o).interp (funext (fun idx => ?_))
+  induction idx using Fin.cases with
+  | zero =>
+    change (urmPhiVar (urmStepHoleIdx p) a).eval m0 e0 ((tmNat 0).eval m0 e0)
+        = φvec ⟨0, by decide⟩ (natToFreeAlg 0)
+    rw [urmPhiVar_eval, tmNat_eval]
+  | succ k =>
+    change (Tm.reind (get_replicate (p.instrs.size + 1) RType.o k).symm
+          (Tm.op (sig := defnSig natAlgSig (p.instrs.size + 2) (urmStepHoleIdx p))
+            (Sum.inl (Sum.inr ⟨k.val + 1, by
+                have h := k.isLt
+                have _hl : (List.replicate (p.instrs.size + 1) RType.o).length
+                  = p.instrs.size + 1 := by simp
+                omega⟩))
+            (Fin.cons (urmPhiVar (urmStepHoleIdx p) a) finZeroElim))).eval m0 e0
+        = chooseEnv p.instrs.size RType.o (φvec ⟨0, by decide⟩ (natToFreeAlg 0))
+            (fun k => (urmEntryIdent p j ⟨k.val, by
+                have h := k.isLt
+                have _hl : (List.replicate (p.instrs.size + 1) RType.o).length
+                  = p.instrs.size + 1 := by simp
+                omega⟩).interp
+              (Fin.cons (φvec ⟨0, by decide⟩) finZeroElim)) k.succ
+    refine (Tm.eval_transport m0 e0 (get_replicate (p.instrs.size + 1) RType.o k).symm _).trans ?_
+    refine eq_of_heq ((cast_heq _ _).trans ?_)
+    refine HEq.trans (heq_of_eq (congrArg
+      (urmEntryIdent p j ⟨k.val, by
+                have h := k.isLt
+                have _hl : (List.replicate (p.instrs.size + 1) RType.o).length
+                  = p.instrs.size + 1 := by simp
+                omega⟩).interp (funext (fun i => ?_))))
+      ((cast_heq _ _).symm)
+    induction i using Fin.cases with
+    | zero => exact urmPhiVar_eval (fun h => (urmStepChildren p j h).interp) pe φvec u
+    | succ i' => exact i'.elim0
+
 end GebLean.Ramified
