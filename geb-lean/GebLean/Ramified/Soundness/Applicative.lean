@@ -43,10 +43,19 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
   per-constructor-to-positional step-tuple conversion it uses.
 * `ctorAt` — the constructor label at an enumeration position.
 * `RlmrOStep` — one-step reduction of `RλMR_o^ω(A)` (Leivant III section 4.1).
+* `ctorIdx`, `stepAtLabel` — the label-to-position lookup on `ctorList natAlgSig`
+  and the positional read-out of a recursor's step function it enables.
+* `envCastCtx`, `envExtend` — the environment transport across `Γ ++ [] = Γ` and
+  the environment extension by one bound value.
+* `appEvalOp`, `appEval` — the standard-model denotation of an operation node and
+  the standard-model evaluator of an object-sorted applicative term over
+  `natAlgSig` (Leivant III section 4.1, the standard semantics of section 2.7).
 
 ## Main statements
 
 * `ctorList_length` — the constructor enumeration has length `A.numCtors`.
+* `ctorList_get_ctorIdx` — `ctorIdx` is a right inverse of the enumeration
+  read-off.
 
 ## Implementation notes
 
@@ -361,5 +370,150 @@ inductive RlmrOStep {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
                 (fun k => k.elim0)) a))
           b)
         (b idx)
+
+/-- The enumeration position of a constructor label of `natAlgSig` in
+`ctorList natAlgSig`: the first index at which the label occurs. Inverts
+`ctorAt` on the standard signature, letting the standard-model recursor recover
+the step function that the positional step tuple stores for a given label
+(`stepAtLabel`). -/
+def ctorIdx (b : natAlgSig.B) : Fin (ctorList natAlgSig).length :=
+  ⟨(ctorList natAlgSig).idxOf b,
+    List.idxOf_lt_length_of_mem (by
+      rw [ctorList]; exact (Finset.mem_sort _).mpr (Finset.mem_univ b))⟩
+
+/-- `ctorIdx` is a right inverse of the enumeration read-off: the label at
+position `ctorIdx b` of `ctorList natAlgSig` is `b`. -/
+theorem ctorList_get_ctorIdx (b : natAlgSig.B) :
+    (ctorList natAlgSig).get (ctorIdx b) = b := by
+  simp only [List.get_eq_getElem, ctorIdx]
+  exact List.getElem_idxOf _
+
+/-- The step function of a recurrence over `natAlgSig` at result sort `τ` for a
+constructor label `b`, read out of the positional step environment `stepEnv`
+that the applicative recursor stores over `stepTypes natAlgSig τ τ`: the entry
+at `b`'s enumeration position `ctorIdx b`, transported from the position's sort
+to `b`'s step type `τ^{ar b} → τ`. The label-to-position lookup inverts
+`stepEnvOfFun`, so the recursor's contraction reaches the step term that the
+reduction rule `RlmrOStep.recurrence` selects. -/
+def stepAtLabel {τ : RType}
+    (stepEnv : ∀ idx : Fin (stepTypes natAlgSig τ τ).length,
+      RType.interp (FreeAlg natAlgSig) ((stepTypes natAlgSig τ τ).get idx))
+    (b : natAlgSig.B) :
+    RType.interp (FreeAlg natAlgSig)
+      (RType.curried (List.replicate (natAlgSig.ar b) τ) τ) := by
+  have hlen : (stepTypes natAlgSig τ τ).length = (ctorList natAlgSig).length := by
+    rw [stepTypes, List.length_map]
+  have hb : (ctorIdx b).val < (stepTypes natAlgSig τ τ).length := by
+    rw [hlen]; exact (ctorIdx b).isLt
+  refine cast (congrArg (RType.interp (FreeAlg natAlgSig)) ?_)
+    (stepEnv ⟨(ctorIdx b).val, hb⟩)
+  simp only [stepTypes, List.get_eq_getElem, List.getElem_map]
+  exact congrArg (fun c => RType.curried (List.replicate (natAlgSig.ar c) τ) τ)
+    (ctorList_get_ctorIdx b)
+
+/-- Transport of a semantic environment along an equality of contexts. Realizes
+the definitional coincidence `Γ ++ [] = Γ` (not definitional, since `List.append`
+recurses on its first argument) at the level of environments, the semantic
+counterpart of the `List.append_nil` transport in `app'`. -/
+def envCastCtx {Γ Δ : Binding.Ctx RType} (h : Γ = Δ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i) := h ▸ ρ
+
+/-- Extension of a semantic environment by one value at the end of the context,
+the semantic counterpart of the append-at-end binder of `lam'`: from an
+environment `ρ` for `Γ` and a value `v` at sort `σ`, the environment for
+`Γ ++ [σ]` sending the freshly bound last position to `v` and the old positions
+to `ρ`. Reuses `childEnv` at the singleton suffix `[σ] = List.replicate 1 σ`. -/
+def envExtend {Γ : Binding.Ctx RType} {σ : RType}
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (v : RType.interp (FreeAlg natAlgSig) σ) :
+    ∀ i : Fin (Γ ++ [σ]).length, RType.interp (FreeAlg natAlgSig) ((Γ ++ [σ]).get i) :=
+  childEnv Γ σ 1 ρ (fun _ => v)
+
+/-- The standard-model denotation of an operation node of the object-sorted
+applicative calculus over `natAlgSig`: given the denotations `ih` of the node's
+subterms (each a function of an environment for the ambient context extended by
+that subterm's bound sorts), the value of the node as a function of an
+environment for the ambient context. The per-operation dispatch, the semantic
+twin of the operation case of `Binding.traverse` and the applicative analogue of
+`RIdentO.interpStep`:
+
+* `app` applies the function denotation to the argument denotation, transporting
+  the environment across `Γ ++ [] = Γ` (`envCastCtx`);
+* `lam` produces the semantic function, extending the environment by the bound
+  value (`envExtend`);
+* `con` is the curried constructor `stdConstructorInterp` at the object sort;
+* `recur` is the curried closed recurrence `FreeAlg.recurse` reading its step
+  functions positionally (`stepAtLabel`) and its recurrence argument last;
+* `dstr` is the destructor `dstrRead`;
+* `case` is the branch selector `caseSelect`, curried over its branches. -/
+def appEvalOp {Γ : Binding.Ctx RType} (o : RlmrOOp natAlgSig)
+    (ih : ∀ j : Fin ((rlmrOSig natAlgSig).args o).length,
+      (∀ i : Fin (Γ ++ (((rlmrOSig natAlgSig).args o).get j).1).length,
+        RType.interp (FreeAlg natAlgSig)
+          ((Γ ++ (((rlmrOSig natAlgSig).args o).get j).1).get i)) →
+        RType.interp (FreeAlg natAlgSig) (((rlmrOSig natAlgSig).args o).get j).2) :
+    (∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) →
+      RType.interp (FreeAlg natAlgSig) ((rlmrOSig natAlgSig).result o) := by
+  cases o with
+  | app σ τ =>
+    have h0 : (0 : Nat) < ((rlmrOSig natAlgSig).args (RlmrOOp.app σ τ)).length :=
+      Nat.zero_lt_two
+    have h1 : (1 : Nat) < ((rlmrOSig natAlgSig).args (RlmrOOp.app σ τ)).length :=
+      Nat.one_lt_two
+    exact fun ρ =>
+      (ih ⟨0, h0⟩ (envCastCtx (List.append_nil Γ).symm ρ))
+        (ih ⟨1, h1⟩ (envCastCtx (List.append_nil Γ).symm ρ))
+  | lam σ τ =>
+    have h0 : (0 : Nat) < ((rlmrOSig natAlgSig).args (RlmrOOp.lam σ τ)).length :=
+      Nat.zero_lt_one
+    exact fun ρ v => ih ⟨0, h0⟩ (envExtend ρ v)
+  | con θ hθ b =>
+    exact fun _ρ =>
+      curryInterp natAlgSig (List.replicate (natAlgSig.ar b) θ) θ
+        (stdConstructorInterp natAlgSig (⟨θ, hθ⟩, b))
+  | recur τ =>
+    exact fun _ρ =>
+      curryInterp natAlgSig (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ)
+        (fun stepEnv z =>
+          FreeAlg.recurse (A := natAlgSig) (P := Unit)
+            (fun i _ _sub phi =>
+              appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+                (stepAtLabel stepEnv i)
+                (childEnv [] τ (natAlgSig.ar i) finZeroElim phi))
+            () z)
+  | dstr j => exact fun _ρ => dstrRead j.val
+  | case θ hθ =>
+    exact fun _ρ z =>
+      curryInterp natAlgSig (List.replicate natAlgSig.numCtors θ) θ
+        (fun branchEnv =>
+          caseSelect z
+            (cast (congrArg (RType.interp (FreeAlg natAlgSig))
+              (by rw [List.get_eq_getElem, List.getElem_replicate]))
+              (branchEnv ⟨0, (by decide : (0:Nat) < 2)⟩))
+            (cast (congrArg (RType.interp (FreeAlg natAlgSig))
+              (by rw [List.get_eq_getElem, List.getElem_replicate]))
+              (branchEnv ⟨1, (by decide : (1:Nat) < 2)⟩)))
+
+/-- The standard-model denotation of an object-sorted applicative term: a
+function from a semantic environment at its context to a value at its sort, over
+the standard carrier `FreeAlg natAlgSig`. Env-passing fold via `PolyFix.ind`
+(decision 8), the semantic twin of `Binding.traverse` (`GebLean/Binding/Kit.lean`)
+and the applicative analogue of `RIdentO.interp` (Leivant III section 4.1). A
+variable leaf reads the environment at that variable's position; an operation
+node dispatches through `appEvalOp` on the denotations of its subterms under the
+binder-extended environment. -/
+def appEval {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (rlmrOSig natAlgSig) Γ s) :
+    (∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) →
+      RType.interp (FreeAlg natAlgSig) s :=
+  PolyFix.ind (P := polyTranslate (Binding.varOver (Ty := RType)) (rlmrOSig natAlgSig).polyEndo)
+    (motive := fun {x} _ =>
+      (∀ i : Fin x.1.length, RType.interp (FreeAlg natAlgSig) (x.1.get i)) →
+        RType.interp (FreeAlg natAlgSig) x.2)
+    (fun {_x} i children ih =>
+      match i, children, ih with
+      | Sum.inl a, _, _ => fun ρ => (leafVar a).2 ▸ ρ (leafVar a).1
+      | Sum.inr p, _, ih => fun ρ => p.2 ▸ appEvalOp p.val (fun j => ih ⟨j⟩) ρ) t
 
 end GebLean.Ramified
