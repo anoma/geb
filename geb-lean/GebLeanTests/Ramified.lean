@@ -1,0 +1,19 @@
+import GebLeanTests.Ramified.AlgSig
+import GebLeanTests.Ramified.SortedSig
+import GebLeanTests.Ramified.Term
+import GebLeanTests.Ramified.Interp
+import GebLeanTests.Ramified.SynCat
+import GebLeanTests.Ramified.RType
+import GebLeanTests.Ramified.HigherOrder
+import GebLeanTests.Ramified.OmegaShift
+import GebLeanTests.Ramified.Examples
+import GebLeanTests.Ramified.Algebras
+import GebLeanTests.Ramified.FirstOrder
+import GebLeanTests.Ramified.Definability
+
+/-!
+# Ramified-recurrence test index
+
+Directory index for the ramified-recurrence test modules under
+`GebLeanTests/Ramified/`.
+-/

@@ -2,6 +2,7 @@ import GebLean.AcyclicCat
 import GebLean.AcyclicPresentation
 import GebLean.AcyclicQuiver
 import GebLean.BarResolution
+import GebLean.Binding
 import GebLean.CatJudgmentAdjunction
 import GebLean.CatValuedFunctor
 import GebLean.CategoryJudgments
@@ -136,6 +137,7 @@ import GebLean.PshRelEdgeReflectiveChain
 import GebLean.PshRelEdgeSOClassifier
 import GebLean.PshRelSpanDiagram
 import GebLean.PshTypeExpr
+import GebLean.Ramified
 import GebLean.RelDouble
 import GebLean.RelInterpComposition
 import GebLean.RelSpanDiagram
