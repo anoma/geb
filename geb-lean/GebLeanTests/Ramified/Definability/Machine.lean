@@ -74,4 +74,15 @@ def progIncOnly : URMProgram 0 where
     (urmParamEnv finZeroElim) 3 ⟨1, by decide⟩)
   = (URMState.runFor progIncOnly (URMState.init progIncOnly finZeroElim) 3).regs ⟨0, by decide⟩
 
+-- The simulation invariant `urm_simul_interp` holds at every step count `t`: the
+-- program-counter and register components track `URMState.runFor` symbolically,
+-- not only at the numeral counts the `#guard` fixtures decide.
+example (t : ℕ) :
+    freeAlgToNat ((sttIdent progIncOnly).interp (urmEnv progIncOnly finZeroElim t))
+        = (URMState.runFor progIncOnly (URMState.init progIncOnly finZeroElim) t).pc
+      ∧ ∀ r : Fin progIncOnly.numRegs,
+        freeAlgToNat ((regIdent progIncOnly r).interp (urmEnv progIncOnly finZeroElim t))
+          = (URMState.runFor progIncOnly (URMState.init progIncOnly finZeroElim) t).regs r :=
+  urm_simul_interp progIncOnly finZeroElim t
+
 end GebLeanTests.Ramified.Definability.MachineTest

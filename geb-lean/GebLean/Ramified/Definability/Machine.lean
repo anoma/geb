@@ -1,3 +1,4 @@
+import GebLean.Ramified.Algebras
 import GebLean.Ramified.Definability.Simultaneous
 import GebLean.Utilities.ZeroTestURM
 
@@ -511,5 +512,174 @@ theorem urmParamVar_eval {a : ℕ}
           have hl : (List.replicate a RType.o).length = a := by simp
           omega⟩)).trans ?_
   exact (cast_heq _ _).trans (cast_heq _ _)
+
+/-- The componentwise reference solution of the URM simultaneous family after
+`t` steps reads out to the program counter (component `0`) and registers
+(component `r + 1`) of `URMState.runFor p (URMState.init p v) t`. Proved by
+induction on `t`: the base clause loads `URMState.init` and the successor clause
+executes `URMState.step` at the previous program counter. -/
+theorem urm_simulSol_eq {a : ℕ} (p : URMProgram a) (v : Fin a → ℕ) :
+    ∀ (t : ℕ) (j : Fin (1 + p.numRegs)),
+      freeAlgToNat (simulSol (List.replicate a RType.o) RType.o (urmSteps p)
+          (urmParamEnv v) t j)
+        = if h : j.val = 0 then (URMState.runFor p (URMState.init p v) t).pc
+          else (URMState.runFor p (URMState.init p v) t).regs
+            ⟨j.val - 1, by omega⟩ := by
+  intro t
+  induction t with
+  | zero =>
+    intro j
+    by_cases hj : j.val = 0
+    · rw [dif_pos hj, URMState.runFor_zero]
+      change freeAlgToNat ((urmBaseClause p j).interp _) = _
+      rw [urmBaseClause, RIdent.interp_defn, dif_pos hj]
+      exact congrArg freeAlgToNat (tmNat_eval _ _ 0)
+    · rw [dif_neg hj, URMState.runFor_zero]
+      change freeAlgToNat ((urmBaseClause p j).interp _) = _
+      rw [urmBaseClause, RIdent.interp_defn, dif_neg hj]
+      have key : ∀ (ih : ∀ j : Fin 0,
+            (∀ i : Fin ((finZeroElim : Fin 0 → List RType × RType) j).1.length,
+              RType.interp (FreeAlg natAlgSig)
+                (((finZeroElim : Fin 0 → List RType × RType) j).1.get i)) →
+              RType.interp (FreeAlg natAlgSig) ((finZeroElim : Fin 0 → List RType × RType) j).2)
+          (u : FreeAlg natAlgSig) (fo : Option (Fin a)),
+          freeAlgToNat ((match fo with | some i => urmParamVar i | none => tmZero).eval
+              (defnModel natAlgSig 0 finZeroElim ih)
+              (simulStepEnv (List.replicate a RType.o) RType.o false (urmParamEnv v)
+                finZeroElim u))
+            = (match fo with | some i => v i | none => 0) := by
+        intro ih u fo
+        cases fo with
+        | some i =>
+          exact (congrArg freeAlgToNat (urmParamVar_eval ih v i u)).trans
+            (freeAlgToNat_natToFreeAlg (v i))
+        | none =>
+          exact (congrArg freeAlgToNat (tmNat_eval _ _ 0)).trans (freeAlgToNat_natToFreeAlg 0)
+      exact key _ _ _
+  | succ n ih =>
+    intro j
+    have hstep : URMState.runFor p (URMState.init p v) (n + 1)
+        = URMState.step p (URMState.runFor p (URMState.init p v) n) :=
+      (URMState.runFor_add p (URMState.init p v) n 1).trans rfl
+    have hcomp : ∀ m : Fin (1 + p.numRegs),
+        freeAlgToNat (simulSolFun j.pos (List.replicate a RType.o) RType.o (urmSteps p)
+            (urmParamEnv v) n (natToFreeAlg m.val))
+          = if h : m.val = 0 then (URMState.runFor p (URMState.init p v) n).pc
+            else (URMState.runFor p (URMState.init p v) n).regs ⟨m.val - 1, by omega⟩ := by
+      intro m
+      rw [simulSolFun_numeral]
+      exact ih m
+    have hzval : freeAlgToNat (simulSolFun j.pos (List.replicate a RType.o) RType.o (urmSteps p)
+          (urmParamEnv v) n (natToFreeAlg 0))
+        = (URMState.runFor p (URMState.init p v) n).pc := by
+      have h0 := hcomp ⟨0, j.pos⟩
+      simpa using h0
+    change freeAlgToNat ((urmStepClause p j).interp (simulStepEnv (List.replicate a RType.o)
+      RType.o true (urmParamEnv v) (fun _v => simulSolFun j.pos (List.replicate a RType.o)
+        RType.o (urmSteps p) (urmParamEnv v) n) (natToFreeAlg j.val))) = _
+    rw [urmStepClause_interp, hstep]
+    have hz : (fun _v : Fin (natAlgSig.ar true) => simulSolFun j.pos (List.replicate a RType.o)
+          RType.o (urmSteps p) (urmParamEnv v) n) ⟨0, by decide⟩ (natToFreeAlg 0)
+        = natToFreeAlg (URMState.runFor p (URMState.init p v) n).pc :=
+      (natToFreeAlg_freeAlgToNat _).symm.trans (congrArg natToFreeAlg hzval)
+    by_cases hpc : (URMState.runFor p (URMState.init p v) n).pc < p.instrs.size
+    · rw [chooseIdent_interp p.instrs.size RType.o _ _
+        ⟨(URMState.runFor p (URMState.init p v) n).pc, by omega⟩ hz]
+      rw [urmEntryIdent, dif_pos hpc]
+      cases hi : p.instrs[(URMState.runFor p (URMState.init p v) n).pc]'hpc with
+      | assign i c =>
+        simp only [URMState.step, dif_pos hpc, hi]
+        rw [urmInstrUpdate]
+        by_cases hj0 : j.val = 0
+        · rw [if_pos hj0, dif_pos hj0, urmSuccUpdate_interp, hcomp j, dif_pos hj0]
+        · rw [if_neg hj0, dif_neg hj0]
+          by_cases hjt : j.val = i.val + 1
+          · rw [if_pos hjt, urmConstUpdate_interp, freeAlgToNat_natToFreeAlg,
+              Function.update_apply,
+              if_pos (show (⟨j.val - 1, by omega⟩ : Fin p.numRegs) = i from
+                Fin.ext (show j.val - 1 = i.val by omega))]
+          · rw [if_neg hjt, urmSelfUpdate_interp, hcomp j, dif_neg hj0,
+              Function.update_apply,
+              if_neg (fun he => hjt (by have h2 : j.val - 1 = i.val := Fin.ext_iff.mp he; omega))]
+      | inc i =>
+        simp only [URMState.step, dif_pos hpc, hi]
+        rw [urmInstrUpdate]
+        by_cases hj0 : j.val = 0
+        · rw [if_pos hj0, dif_pos hj0, urmSuccUpdate_interp, hcomp j, dif_pos hj0]
+        · rw [if_neg hj0, dif_neg hj0]
+          by_cases hjt : j.val = i.val + 1
+          · rw [if_pos hjt, urmSuccUpdate_interp, hcomp j, dif_neg hj0,
+              Function.update_apply,
+              if_pos (show (⟨j.val - 1, by omega⟩ : Fin p.numRegs) = i from
+                Fin.ext (show j.val - 1 = i.val by omega))]
+            congr 2
+            exact Fin.ext (show j.val - 1 = i.val by omega)
+          · rw [if_neg hjt, urmSelfUpdate_interp, hcomp j, dif_neg hj0,
+              Function.update_apply,
+              if_neg (fun he => hjt (by have h2 : j.val - 1 = i.val := Fin.ext_iff.mp he; omega))]
+      | dec i =>
+        simp only [URMState.step, dif_pos hpc, hi]
+        rw [urmInstrUpdate]
+        by_cases hj0 : j.val = 0
+        · rw [if_pos hj0, dif_pos hj0, urmSuccUpdate_interp, hcomp j, dif_pos hj0]
+        · rw [if_neg hj0, dif_neg hj0]
+          by_cases hjt : j.val = i.val + 1
+          · rw [if_pos hjt, urmDecUpdate_interp, hcomp j, dif_neg hj0,
+              Function.update_apply,
+              if_pos (show (⟨j.val - 1, by omega⟩ : Fin p.numRegs) = i from
+                Fin.ext (show j.val - 1 = i.val by omega))]
+            congr 2
+            exact Fin.ext (show j.val - 1 = i.val by omega)
+          · rw [if_neg hjt, urmSelfUpdate_interp, hcomp j, dif_neg hj0,
+              Function.update_apply,
+              if_neg (fun he => hjt (by have h2 : j.val - 1 = i.val := Fin.ext_iff.mp he; omega))]
+      | jumpZ i l₁ l₂ =>
+        simp only [URMState.step, dif_pos hpc, hi]
+        rw [urmInstrUpdate]
+        by_cases hj0 : j.val = 0
+        · rw [if_pos hj0, dif_pos hj0, urmJumpUpdate_interp,
+            hcomp ⟨i.val + 1, by have := i.isLt; omega⟩, dif_neg (Nat.succ_ne_zero i.val)]
+          have hii : (⟨i.val + 1 - 1, by omega⟩ : Fin p.numRegs) = i :=
+            Fin.ext (show i.val + 1 - 1 = i.val by omega)
+          rw [hii]
+          by_cases hz0 : (URMState.runFor p (URMState.init p v) n).regs i = 0
+          · rw [if_pos hz0, if_pos hz0, freeAlgToNat_natToFreeAlg]
+          · rw [if_neg hz0, if_neg hz0, freeAlgToNat_natToFreeAlg]
+        · rw [if_neg hj0, dif_neg hj0, urmSelfUpdate_interp, hcomp j, dif_neg hj0]
+      | stop =>
+        simp only [URMState.step, dif_pos hpc, hi]
+        rw [urmInstrUpdate]
+        by_cases hj0 : j.val = 0
+        · rw [if_pos hj0, dif_pos hj0, urmSelfUpdate_interp, hcomp j, dif_pos hj0]
+        · rw [if_neg hj0, dif_neg hj0, urmSelfUpdate_interp, hcomp j, dif_neg hj0]
+    · rw [chooseIdent_interp_ge p.instrs.size RType.o _ _
+        (URMState.runFor p (URMState.init p v) n).pc (by omega) hz]
+      rw [show (Fin.last p.instrs.size) = ⟨p.instrs.size, by omega⟩ from rfl,
+        urmEntryIdent, dif_neg (Nat.lt_irrefl p.instrs.size)]
+      have hid : URMState.step p (URMState.runFor p (URMState.init p v) n)
+          = URMState.runFor p (URMState.init p v) n := by
+        simp only [URMState.step, dif_neg hpc]
+      rw [urmSelfUpdate_interp, hcomp j, hid]
+
+/-- Leivant III Lemma 6 (section 3.2, DOI `10.1016/S0168-0072(98)00040-2`): the
+ramified simultaneous recurrence simulates the zero-test URM. After `t` steps
+the program-counter component `sttIdent` reads out to the program counter and
+each register component `regIdent r` to register `r` of
+`URMState.runFor p (URMState.init p v) t`. -/
+theorem urm_simul_interp {a : ℕ} (p : URMProgram a) (v : Fin a → ℕ) (t : ℕ) :
+    freeAlgToNat ((sttIdent p).interp (urmEnv p v t))
+        = (URMState.runFor p (URMState.init p v) t).pc ∧
+      ∀ r : Fin p.numRegs,
+        freeAlgToNat ((regIdent p r).interp (urmEnv p v t))
+          = (URMState.runFor p (URMState.init p v) t).regs r := by
+  refine ⟨?_, ?_⟩
+  · rw [sttIdent, urmEnv, simulProj_interp]
+    have h := urm_simulSol_eq p v t ⟨0, urm_component_pos p⟩
+    rwa [dif_pos rfl] at h
+  · intro r
+    rw [regIdent, urmEnv, simulProj_interp]
+    have h := urm_simulSol_eq p v t ⟨r.val + 1, by have := r.isLt; omega⟩
+    rw [dif_neg (Nat.succ_ne_zero r.val)] at h
+    exact h.trans (congrArg (URMState.runFor p (URMState.init p v) t).regs (Fin.ext rfl))
 
 end GebLean.Ramified
