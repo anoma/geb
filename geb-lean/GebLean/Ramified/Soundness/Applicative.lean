@@ -683,4 +683,142 @@ def prop7MrecStep {τ : RType} (params : List RType)
         (lamSpine (List.replicate (natAlgSig.ar b) τ) (ih b))))
     (Binding.Tm.var (boundVar (Γ := params) (σ := RType.omega τ)))
 
+/-- An `arrow`-shape free-algebra node is the `RType.arrow` of its two children.
+A fact local to `caseAtType`, discharging the node-reconstruction transport of
+its arrow case (`RType.interp` avoids the transport by returning a `Type`; a
+term-valued recursion cannot). -/
+theorem arrow_node_eq (x : PUnit)
+    (childx : Fin (rTypeSig.ar RTypeShape.arrow) → RType) :
+    (PolyFix.mk x RTypeShape.arrow childx : RType)
+      = RType.arrow (childx ⟨0, by decide⟩) (childx ⟨1, by decide⟩) := by
+  rw [RType.arrow, FreeAlg.mk]
+  have hx : x = PUnit.unit := Subsingleton.elim x PUnit.unit
+  subst hx
+  congr 1
+  funext e
+  match e with
+  | ⟨0, _⟩ => rfl
+  | ⟨1, _⟩ => rfl
+
+/-- Case analysis at an arbitrary result sort `τ`, η-expanding through arrows
+down to the object-sorted `case` combinator (Leivant III §4.1 Examples 1–2, the
+push of `case` under λ that realizes flat recurrence at higher type). At an
+object sort (`o` or `Ωσ`) it is the `case` operation applied to the recurrence
+argument `z` and the branches; at `arrow σ ρ` it is
+`λ(w : σ). case^ρ z (b₀ w) … (b_{k-1} w)`, weakening `z` and the branches under
+the fresh binder and recursing on the codomain. Recursion on `τ` via
+`PolyFix.ind`, generalized over the ambient context so the arrow case may grow
+it. -/
+def caseAtType : (τ : RType) → (Γ : Binding.Ctx RType) →
+    Binding.Tm (rlmrOSig natAlgSig) Γ RType.o →
+    (Fin natAlgSig.numCtors → Binding.Tm (rlmrOSig natAlgSig) Γ τ) →
+    Binding.Tm (rlmrOSig natAlgSig) Γ τ :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => (Γ : Binding.Ctx RType) →
+      Binding.Tm (rlmrOSig natAlgSig) Γ RType.o →
+      (Fin natAlgSig.numCtors → Binding.Tm (rlmrOSig natAlgSig) Γ t) →
+      Binding.Tm (rlmrOSig natAlgSig) Γ t)
+    (fun {x} i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, childx, _ih => fun _Γ z bs =>
+        replicateSpine natAlgSig.numCtors (PolyFix.mk x RTypeShape.o childx)
+          (app' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+            (RlmrOOp.case (PolyFix.mk x RTypeShape.o childx) (Or.inl rfl))
+            (fun k => k.elim0)) z) bs
+      | RTypeShape.omega, childx, _ih => fun _Γ z bs =>
+        replicateSpine natAlgSig.numCtors (PolyFix.mk x RTypeShape.omega childx)
+          (app' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+            (RlmrOOp.case (PolyFix.mk x RTypeShape.omega childx) (Or.inr rfl))
+            (fun k => k.elim0)) z) bs
+      | RTypeShape.arrow, childx, ih => fun Γ z bs =>
+        let d0 : Fin (rTypeSig.ar RTypeShape.arrow) := ⟨0, by decide⟩
+        let d1 : Fin (rTypeSig.ar RTypeShape.arrow) := ⟨1, by decide⟩
+        let σ : RType := childx d0
+        (arrow_node_eq x childx).symm ▸
+          lam' (ih d1 (Γ ++ [σ])
+            (Binding.ren Binding.Thinning.weakAppend z)
+            (fun k => app'
+              (Binding.ren Binding.Thinning.weakAppend ((arrow_node_eq x childx) ▸ bs k))
+              (Binding.Tm.var boundVar))))
+
+/-- One branch of the flat-recurrence realization (Leivant III §4.1 Example 2):
+the translated clause `clause` for constructor `i`, moved into the recurrence
+context `params ++ [o]` by substitution. The parameter variables embed
+unchanged (`Binding.Thinning.weakAppend`); each of the `ar i` subterm variables
+is replaced by `dstr_j` applied to the recurrence argument `z`, reading the
+`j`-th immediate subterm of the scrutinee. -/
+def frecBranch {τ : RType} (params : List RType) (i : natAlgSig.B)
+    (clause : Binding.Tm (rlmrOSig natAlgSig)
+      (params ++ List.replicate (natAlgSig.ar i) RType.o) τ)
+    (z : Binding.Tm (rlmrOSig natAlgSig) (params ++ [RType.o]) RType.o) :
+    Binding.Tm (rlmrOSig natAlgSig) (params ++ [RType.o]) τ :=
+  Binding.sub
+    (Binding.extendEnv
+      (fun _s v => Binding.Tm.var (Binding.Thinning.weakAppend.app v))
+      (fun t w =>
+        have hlen : (List.replicate (natAlgSig.ar i) RType.o).length = natAlgSig.ar i :=
+          List.length_replicate
+        have hval : w.1.val < natAlgSig.ar i :=
+          Nat.lt_of_lt_of_le w.1.isLt (le_of_eq hlen)
+        have hlt : w.1.val < natAlgSig.maxArity :=
+          Nat.lt_of_lt_of_le hval (Finset.le_sup (f := natAlgSig.ar) (Finset.mem_univ i))
+        have hot : RType.o = t := by
+          have hrep : (List.replicate (natAlgSig.ar i) RType.o).get w.1 = RType.o := by
+            rw [List.get_eq_getElem, List.getElem_replicate]
+          exact hrep ▸ w.2
+        hot ▸ app' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.dstr ⟨w.1.val, hlt⟩) (fun k => k.elim0)) z))
+    clause
+
+/-- The direct Proposition 7 translation of a flat-recurrence identifier
+(Leivant III §4.1 Examples 1–2, the inlined `(3)⟹(4)` step of the soundness arm
+`(1)⟹(4)`): case analysis at the result sort `τ` on the recurrence argument (the
+sole suffix variable of `params ++ [o]`), the branch at enumeration position
+`idx` being the translated clause for the constructor `ctorAt idx` with its
+subterm variables read off the recurrence argument by destructors (`frecBranch`).
+Flat recurrence reads the subterms of the recurrence argument, not recursive
+results, so it is realized by `case`/`dstr` rather than the recurrence
+combinator. -/
+def prop7FrecStep {τ : RType} (params : List RType)
+    (ih : (i : natAlgSig.B) →
+      Binding.Tm (rlmrOSig natAlgSig)
+        (params ++ List.replicate (natAlgSig.ar i) RType.o) τ) :
+    Binding.Tm (rlmrOSig natAlgSig) (params ++ [RType.o]) τ :=
+  caseAtType τ (params ++ [RType.o])
+    (Binding.Tm.var (boundVar (Γ := params) (σ := RType.o)))
+    (fun idx =>
+      frecBranch params (ctorAt idx) (ih (ctorAt idx))
+        (Binding.Tm.var (boundVar (Γ := params) (σ := RType.o))))
+
+/-- The translation step of `prop7Translate` at one identifier node, the
+applicative-term twin of `RIdent.interpStep` (`GebLean/Ramified/HigherOrder.lean`):
+a `defn` folds its body into an applicative term (`prop7DefnStep`); a `mrec`
+builds the recurrence combinator applied to the recurrence argument
+(`prop7MrecStep`); a `frec` builds the `case`/`dstr` realization
+(`prop7FrecStep`). The translated child identifiers are supplied by `ih`. -/
+def prop7TranslateStep (Γ : List RType) (τ : RType)
+    (shape : IdentShape natAlgSig Γ τ)
+    (ih : ∀ dir : IdentDir natAlgSig Γ τ shape,
+      Binding.Tm (rlmrOSig natAlgSig) (identTarget natAlgSig Γ τ shape dir).1
+        (identTarget natAlgSig Γ τ shape dir).2) :
+    Binding.Tm (rlmrOSig natAlgSig) Γ τ := by
+  rcases shape with d | ⟨params, rfl⟩ | ⟨params, rfl⟩
+  · exact prop7DefnStep d ih
+  · exact prop7MrecStep params ih
+  · exact prop7FrecStep params ih
+
+/-- The direct Proposition 7 translation (Leivant III §4.1, the soundness arm
+`(1)⟹(4)`): every ramified identifier over `natAlgSig` is defined by a term of
+the object-sorted applicative calculus `RλMR_o^ω`, in open form at the
+identifier's own context and result sort. Realized by structural recursion via
+`PolyFix.ind` (decision 8), mirroring `RIdent.interp` and dispatching each node
+through `prop7TranslateStep`. The paper routes `(1)⟹(3)⟹(4)`; the `(3)⟹(4)`
+flat-operator step (§4.1 Examples 1–2) is inlined into the flat-recurrence case
+of `prop7TranslateStep`. Novel packaging. -/
+def prop7Translate {Γ : List RType} {τ : RType} (d : RIdent natAlgSig Γ τ) :
+    Binding.Tm (rlmrOSig natAlgSig) Γ τ :=
+  PolyFix.ind (P := identEndo natAlgSig)
+    (motive := fun {x} _ => Binding.Tm (rlmrOSig natAlgSig) x.1 x.2)
+    (fun {x} shape _children ih => prop7TranslateStep x.1 x.2 shape ih) d
+
 end GebLean.Ramified

@@ -1,4 +1,5 @@
 import GebLean.Ramified.Soundness.Applicative
+import GebLean.Ramified.Examples
 
 /-!
 # Tests for the applicative binder signatures
@@ -104,5 +105,30 @@ example (ρ : ∀ i : Fin ([] : Binding.Ctx RType).length,
     Binding.Var.appendRight, List.length_nil]
   rw [dif_neg (Nat.not_lt_zero _)]
   exact cast_eq _ _
+
+/-- The Proposition 7 translation elaborates on the monotone-recurrence
+identifier `ramAdd` (Leivant III §2.4(2)'s addition): the ramified addition
+`o, Ω o → o` translates to an applicative term at the same context and sort.
+Exercises the `mrec` case of `prop7Translate` and, through addition's step
+functions, the explicit-definition case. -/
+example : Binding.Tm (rlmrOSig natAlgSig) [RType.o, RType.omega RType.o] RType.o :=
+  prop7Translate ramAdd
+
+/-- The Proposition 7 translation elaborates on the flat-recurrence identifier
+`ramDstr` (the predecessor): the ramified destructor `o → o` translates to an
+applicative term. Exercises the `frec` case of `prop7Translate` at the object
+result sort `o` (the `case`/`dstr` realization without η-expansion). -/
+example : Binding.Tm (rlmrOSig natAlgSig) [RType.o] RType.o :=
+  prop7Translate ramDstr
+
+/-- The Proposition 7 translation elaborates on a flat-recurrence identifier at a
+higher, arrow-typed result sort: `ramCase (o → o) : (o → o), (o → o), o → (o → o)`
+translates to an applicative term. Exercises the `frec` case together with the
+η-expansion of `caseAtType` through the arrow codomain. -/
+example :
+    Binding.Tm (rlmrOSig natAlgSig)
+      ([RType.arrow RType.o RType.o, RType.arrow RType.o RType.o] ++ [RType.o])
+      (RType.arrow RType.o RType.o) :=
+  prop7Translate (ramCase (RType.arrow RType.o RType.o))
 
 end GebLean.Ramified
