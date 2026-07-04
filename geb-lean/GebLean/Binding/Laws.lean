@@ -104,4 +104,46 @@ theorem underBinder_ren {S : BinderSig Ty} {Γ Δ Θ Ξ : Ctx Ty}
   symm
   exact Var.appendCases_fuse _ _ Γ (fun v => ρ.app v) x
 
+/-- The ren-sub fusion at the traversal level, stated over an arbitrary index
+and quantified over the thinning and environment so the induction on the term
+goes through. -/
+theorem traverse_ren_sub {S : BinderSig Ty} :
+    ∀ {y : Ctx Ty × Ty} (t : PolyFix (polyTranslate varOver S.polyEndo) y)
+      {Δ Θ : Ctx Ty} (ρ : Thinning y.1 Δ) (σ : Env (Tm S) Δ Θ),
+      traverse (subKit S) σ (traverse (varKit S) (renEnv ρ) t)
+        = traverse (subKit S) (fun s x => σ s (ρ.app x)) t := by
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ Θ ρ σ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Tm S y.1 y.2)
+            = Tm.var (leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      simp only [traverse_var, renEnv, varKit, subKit, id]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : S.Op // S.result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', S.result o) (Sum.inr ⟨o, rfl⟩) children
+            : Tm S Γ' (S.result o))
+            = Tm.op o (fun j => children ⟨j⟩) from rfl]
+      simp only [traverse_op, underBinder_renEnv, underBinder_ren]
+      congr 1
+      funext j
+      exact ih ⟨j⟩ (Thinning.appendId ρ _) (Env.underBinder (subKit S) σ)
+
+/-- The ren-sub fusion law: substituting after renaming is a single
+substitution along the environment precomposed with the renaming's action. -/
+theorem ren_sub {S : BinderSig Ty} {Γ Δ Θ : Ctx Ty} {s : Ty} (ρ : Thinning Γ Δ)
+    (σ : Env (Tm S) Δ Θ) (t : Tm S Γ s) :
+    sub σ (ren ρ t) = sub (fun s x => σ s (ρ.app x)) t :=
+  traverse_ren_sub t ρ σ
+
 end GebLean.Binding
