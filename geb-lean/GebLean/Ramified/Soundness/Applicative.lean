@@ -251,6 +251,24 @@ def recCombinator {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
     (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.recur τ) (fun j => j.elim0))
     (stepEnvOfFun Estep)
 
+/-- Iterated λ-abstraction of a context suffix into curried arrows: from a body
+in the append-at-end extension `Γ ++ Δ` at sort `τ`, the term in `Γ` at the
+curried sort `RType.curried Δ τ` binding the suffix `Δ` from the outside in.
+Recursion on `Δ`: peel the head sort via `lam'`, reassociating the append
+`Γ ++ (σ :: Δ') = (Γ ++ [σ]) ++ Δ'` (`List.append_assoc`) so the tail
+abstraction sees the freshly bound variable at the end of its context. The
+combinator dual to `appSpine`, used to turn a child identifier's open body into
+a combinator value or a recurrence step function. -/
+def lamSpine {A : AlgSig} [Fintype A.B] [LinearOrder A.B] {Γ : Binding.Ctx RType} :
+    (Δ : List RType) → {τ : RType} →
+    Binding.Tm (rlmrOSig A) (Γ ++ Δ) τ → Binding.Tm (rlmrOSig A) Γ (RType.curried Δ τ)
+  | [], _τ, body =>
+    cast (congrArg (fun c => Binding.Tm (rlmrOSig A) c _) (List.append_nil Γ)) body
+  | σ :: Δ', _τ, body =>
+    lam' (lamSpine Δ'
+      (cast (congrArg (fun c => Binding.Tm (rlmrOSig A) c _)
+        (List.append_assoc Γ [σ] Δ').symm) body))
+
 /-- The constructor enumeration `ctorList A` has length `A.numCtors`: the sorted
 enumeration of `Finset.univ` has cardinality `Fintype.card A.B`. -/
 theorem ctorList_length {A : AlgSig} [Fintype A.B] [LinearOrder A.B] :
@@ -595,5 +613,54 @@ two branches at enumeration positions `0` and `1`. -/
               (cast (congrArg (RType.interp (FreeAlg natAlgSig))
                 (by rw [List.get_eq_getElem, List.getElem_replicate]))
                 (branchEnv ⟨1, (by decide : (1:Nat) < 2)⟩))) := rfl
+
+/-- The thinning embedding the suffix `Ξ` of an append-at-end context into the
+whole `Γ ++ Ξ`: drop every entry of the prefix `Γ`, then keep every entry of
+`Ξ` (the identity on the suffix). The suffix-inclusion counterpart of
+`Binding.Thinning.weakAppend` (which embeds the prefix), needed to weaken a
+child identifier's open body — living in its own context `Ξ` — into the ambient
+extension `Γ ++ Ξ` before abstracting it with `lamSpine`. -/
+def suffixThinning : (Γ : Binding.Ctx RType) → {Ξ : Binding.Ctx RType} →
+    Binding.Thinning Ξ (Γ ++ Ξ)
+  | [], _ => Binding.Thinning.id
+  | a :: Γ', _ => Binding.Thinning.drop a (suffixThinning Γ')
+
+/-- The applicative-term model of an explicit definition's body (the direct
+Proposition 7 translation, Leivant III §4.1): the body signature
+`defnSig natAlgSig` interpreted into `RλMR_o^ω` terms in the ambient context `Γ`.
+Mirrors `defnModel` (`GebLean/Ramified/HigherOrder.lean`) but valued in
+applicative terms rather than standard-model values — the constructor operation
+becomes a `con`-headed application (`appSpine`), application becomes `app'`, a
+saturated hole substitutes the translated child `ih j` along the argument terms
+(`Binding.sub`), and a curried hole abstracts the translated child into a
+combinator value, weakening it into `Γ`'s context (`suffixThinning`) and binding
+its own context with `lamSpine`. -/
+def defnModelTerm {Γ : Binding.Ctx RType} (n : Nat)
+    (holeIdx : Fin n → List RType × RType)
+    (ih : ∀ j : Fin n, Binding.Tm (rlmrOSig natAlgSig) (holeIdx j).1 (holeIdx j).2) :
+    SortedModel (defnSig natAlgSig n holeIdx) where
+  carrier := fun σ => Binding.Tm (rlmrOSig natAlgSig) Γ σ
+  interpOp op args :=
+    match op with
+    | Sum.inl (Sum.inl (Sum.inl cop)) =>
+      appSpine (List.replicate (natAlgSig.ar cop.2) cop.1.val)
+        (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con cop.1.val cop.1.2 cop.2) (fun k => k.elim0)) args
+    | Sum.inl (Sum.inl (Sum.inr _aop)) =>
+      app' (args ⟨0, Nat.zero_lt_two⟩) (args ⟨1, Nat.one_lt_two⟩)
+    | Sum.inl (Sum.inr j) => Binding.sub (fun _s x => x.2 ▸ args x.1) (ih j)
+    | Sum.inr j => lamSpine (holeIdx j).1 (Binding.ren (suffixThinning Γ) (ih j))
+
+/-- The direct Proposition 7 translation of an explicit-definition identifier
+(Leivant III §4.1, the soundness arm `(1)⟹(4)`): fold the defining body against
+the applicative-term model `defnModelTerm`, over the identity environment
+sending each context position to its own variable. The translated child
+identifiers `ih` fill the body's holes. -/
+def prop7DefnStep {Γ : Binding.Ctx RType} {τ : RType} (d : DefnShape natAlgSig Γ τ)
+    (ih : ∀ j : Fin d.numHoles,
+      Binding.Tm (rlmrOSig natAlgSig) (d.holeIdx j).1 (d.holeIdx j).2) :
+    Binding.Tm (rlmrOSig natAlgSig) Γ τ :=
+  d.body.eval (defnModelTerm (Γ := Γ) d.numHoles d.holeIdx ih)
+    (fun i => Binding.Tm.var ⟨i, rfl⟩)
 
 end GebLean.Ramified
