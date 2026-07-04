@@ -35,6 +35,18 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
 * `rlmrSig` — the signature of `RλMR^ω`: `app`, `lam`, `con`, `recur`, `flat`.
 * `rlmrOSig` — the signature of `RλMR_o^ω`: `app`, `lam`, `con`, `recur`,
   `dstr`, `case`.
+* `app'`, `lam'`, `boundVar` — the application, abstraction, and bound-variable
+  combinators of `rlmrOSig`.
+* `appSpine`, `replicateSpine` — iterated application of a curried head to a
+  dependent, respectively homogeneous, argument tuple.
+* `stepEnvOfFun`, `recCombinator` — the recurrence combinator `R^τ E⃗` and the
+  per-constructor-to-positional step-tuple conversion it uses.
+* `ctorAt` — the constructor label at an enumeration position.
+* `RlmrOStep` — one-step reduction of `RλMR_o^ω(A)` (Leivant III section 4.1).
+
+## Main statements
+
+* `ctorList_length` — the constructor enumeration has length `A.numCtors`.
 
 ## Implementation notes
 
@@ -219,5 +231,138 @@ def appSpine {A : AlgSig} [Fintype A.B] [LinearOrder A.B] {Γ : Binding.Ctx RTyp
   | [], head, _ => head
   | _ :: Ts', head, args =>
       appSpine Ts' (app' head (args ⟨0, Nat.succ_pos _⟩)) (fun i => args i.succ)
+
+/-- Application of a head at a homogeneous curried sort `base^n → result` to a
+tuple of `n` arguments all of sort `base`: `appSpine` specialized to
+`Ts = List.replicate n base`, with the per-index sort reduced to `base` via
+`List.getElem_replicate`. The uniform interface (`Fin n → Tm Γ base`) hides the
+`List.replicate`-position transport from callers building constructor and
+recurrence redexes. -/
+def replicateSpine {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} {result : RType} (n : Nat) (base : RType)
+    (head : Binding.Tm (rlmrOSig A) Γ (RType.curried (List.replicate n base) result))
+    (args : Fin n → Binding.Tm (rlmrOSig A) Γ base) :
+    Binding.Tm (rlmrOSig A) Γ result :=
+  appSpine (List.replicate n base) head (fun idx => by
+    rw [List.get_eq_getElem, List.getElem_replicate]
+    exact args (idx.cast List.length_replicate))
+
+/-- The positional step-term tuple of the recurrence combinator, assembled from a
+per-constructor family `Estep`: the argument tuple `appSpine` consumes for the
+head `R^τ`, whose `idx`-th sort is `(stepTypes A τ τ).get idx =
+α_{ctorList.get idx}`. Reduces that sort via `List.getElem_map`, so the caller
+supplies one step term per constructor label rather than per enumeration
+position. -/
+def stepEnvOfFun {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} {τ : RType}
+    (Estep : ∀ b : A.B,
+      Binding.Tm (rlmrOSig A) Γ (RType.curried (List.replicate (A.ar b) τ) τ)) :
+    ∀ idx : Fin (stepTypes A τ τ).length,
+      Binding.Tm (rlmrOSig A) Γ ((stepTypes A τ τ).get idx) :=
+  fun idx => by
+    unfold stepTypes
+    rw [List.get_eq_getElem, List.getElem_map]
+    exact Estep _
+
+/-- The recurrence combinator saturated with its step terms, `R^τ E⃗`: the head
+`recur τ` applied along `stepTypes A τ τ` to the positional step tuple built from
+`Estep`, leaving a function of sort `Ωτ → τ` awaiting the recurrence argument
+(Leivant III section 4.1). -/
+def recCombinator {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} {τ : RType}
+    (Estep : ∀ b : A.B,
+      Binding.Tm (rlmrOSig A) Γ (RType.curried (List.replicate (A.ar b) τ) τ)) :
+    Binding.Tm (rlmrOSig A) Γ (RType.arrow (RType.omega τ) τ) :=
+  appSpine (stepTypes A τ τ)
+    (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.recur τ) (fun j => j.elim0))
+    (stepEnvOfFun Estep)
+
+/-- The constructor enumeration `ctorList A` has length `A.numCtors`: the sorted
+enumeration of `Finset.univ` has cardinality `Fintype.card A.B`. -/
+theorem ctorList_length {A : AlgSig} [Fintype A.B] [LinearOrder A.B] :
+    (ctorList A).length = A.numCtors := by
+  unfold ctorList AlgSig.numCtors
+  rw [Finset.length_sort]
+  exact Finset.card_univ
+
+/-- The constructor label at enumeration position `idx : Fin A.numCtors`: the
+`idx`-th entry of `ctorList A`, indexing through `ctorList_length`. Names the
+scrutinee constructor of the case rule from a branch position, so its contractum
+selects the branch `b idx` without an `idxOf` search. -/
+def ctorAt {A : AlgSig} [Fintype A.B] [LinearOrder A.B] (idx : Fin A.numCtors) : A.B :=
+  (ctorList A).get (idx.cast ctorList_length.symm)
+
+/-- One-step reduction of the object-sorted applicative calculus `RλMR_o^ω(A)`
+(Leivant III section 4.1, p. 222). A `Prop`-valued inductively-defined relation:
+its inhabitants are reduction proofs, not computational data, so decision 8's
+requirement that recursive data be a `PolyFix` W-type does not apply (as for the
+kit's `Var` and `Thinning`). The six rules are β and η for the `lam`/`app`
+fragment, the recurrence contraction, the two destructor cases (`dstr` on a
+matching or non-matching argument position), and the case contraction; redexes
+and contracta are built from the term combinators `app'`, `lam'`,
+`replicateSpine`, and `recCombinator`. -/
+inductive RlmrOStep {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} :
+    {s : RType} → Binding.Tm (rlmrOSig A) Γ s → Binding.Tm (rlmrOSig A) Γ s → Prop where
+  /-- β: `(λx:σ. b) N ⇒ b[x := N]`, the substitution `instantiate₁`. -/
+  | beta {σ τ : RType} (b : Binding.Tm (rlmrOSig A) (Γ ++ [σ]) τ)
+      (N : Binding.Tm (rlmrOSig A) Γ σ) :
+      RlmrOStep (app' (lam' b) N) (Binding.instantiate₁ N b)
+  /-- η: `λx:σ. (M x) ⇒ M`. The body applies the pre-weakened `M` (renamed along
+  the suffix embedding into `Γ ++ [σ]`) to the freshly bound variable, so no
+  free-variable side condition is needed. -/
+  | eta {σ τ : RType} (M : Binding.Tm (rlmrOSig A) Γ (RType.arrow σ τ)) :
+      RlmrOStep
+        (lam' (app' (Binding.ren (Binding.Thinning.weakAppend (Ξ := [σ])) M)
+          (Binding.Tm.var boundVar))) M
+  /-- Recurrence: `R^τ E⃗ (c_i^{Ωτ} t₁…t_{r_i}) ⇒ E_i (R^τ E⃗ t₁)…(R^τ E⃗ t_{r_i})`.
+  The recurrence combinator `R^τ E⃗ = recCombinator Estep` is applied to the
+  constructor `c_i` at the shifted object type `Ωτ = RType.omega τ`; the
+  contractum applies the `i`-th step term `Estep i` to the recursive results. -/
+  | recurrence {τ : RType} (i : A.B)
+      (Estep : ∀ b : A.B,
+        Binding.Tm (rlmrOSig A) Γ (RType.curried (List.replicate (A.ar b) τ) τ))
+      (t : Fin (A.ar i) → Binding.Tm (rlmrOSig A) Γ (RType.omega τ)) :
+      RlmrOStep
+        (app' (recCombinator Estep)
+          (replicateSpine (A.ar i) (RType.omega τ)
+            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con (RType.omega τ) i)
+              (fun j => j.elim0)) t))
+        (replicateSpine (A.ar i) τ (Estep i)
+          (fun j => app' (recCombinator Estep) (t j)))
+  /-- Destructor hit (`j < r_i`): `dstr_j (c_i^o a₁…a_{r_i}) ⇒ a_j`. -/
+  | dstrHit {i : A.B} (j : Fin A.maxArity) (h : j.val < A.ar i)
+      (a : Fin (A.ar i) → Binding.Tm (rlmrOSig A) Γ RType.o) :
+      RlmrOStep
+        (app' (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.dstr j) (fun k => k.elim0))
+          (replicateSpine (A.ar i) RType.o
+            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o i)
+              (fun k => k.elim0)) a))
+        (a ⟨j.val, h⟩)
+  /-- Destructor miss (`j ≥ r_i`): `dstr_j (c_i^o ā) ⇒ c_i^o ā`, identity on the
+  scrutinee. -/
+  | dstrMiss {i : A.B} (j : Fin A.maxArity) (h : A.ar i ≤ j.val)
+      (a : Fin (A.ar i) → Binding.Tm (rlmrOSig A) Γ RType.o) :
+      RlmrOStep
+        (app' (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.dstr j) (fun k => k.elim0))
+          (replicateSpine (A.ar i) RType.o
+            (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o i)
+              (fun k => k.elim0)) a))
+        (replicateSpine (A.ar i) RType.o
+          (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o i)
+            (fun k => k.elim0)) a)
+  /-- Case: `case^θ (c_i^o ā) b₁…b_k ⇒ b_i`, selecting the branch at the
+  scrutinee constructor's enumeration position `idx`. -/
+  | case {θ : RType} (idx : Fin A.numCtors)
+      (a : Fin (A.ar (ctorAt idx)) → Binding.Tm (rlmrOSig A) Γ RType.o)
+      (b : Fin A.numCtors → Binding.Tm (rlmrOSig A) Γ θ) :
+      RlmrOStep
+        (replicateSpine A.numCtors θ
+          (app' (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.case θ) (fun k => k.elim0))
+            (replicateSpine (A.ar (ctorAt idx)) RType.o
+              (Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.con RType.o (ctorAt idx))
+                (fun k => k.elim0)) a))
+          b)
+        (b idx)
 
 end GebLean.Ramified

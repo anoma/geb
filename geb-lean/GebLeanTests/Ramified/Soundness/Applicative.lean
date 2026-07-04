@@ -44,4 +44,41 @@ example : Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
       (fun j => j.elim0))
     (fun i => Fin.cases zeroTm (fun k => k.elim0) i)
 
+/-- The zero-constructor of `natAlgSig` at the shifted object sort `Ω o`, a
+closed term of sort `Ω o`, used as the recursion argument's subterm below. -/
+def omegaZeroTm : Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega RType.o) :=
+  Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con (RType.omega RType.o) false)
+    (fun j => j.elim0)
+
+/-- A step-term family for the recurrence over `natAlgSig` at result sort `o`:
+the zero-constructor's step is `0`, the successor-constructor's step is the
+identity `λx:o. x`. -/
+def estepNat : ∀ b : natAlgSig.B,
+    Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.replicate (natAlgSig.ar b) RType.o) RType.o) :=
+  fun b => match b with
+    | false => zeroTm
+    | true => lam' (Binding.Tm.var boundVar)
+
+/-- The recursion-argument subterms for the arity-1 constructor `true`: the sole
+subterm is `omegaZeroTm`. -/
+def recArgsNat : Fin (natAlgSig.ar true) →
+    Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega RType.o) :=
+  fun _ => omegaZeroTm
+
+/-- A concrete recurrence step over `natAlgSig` at result sort `o`: the redex
+`R^o E⃗ (c_true^{Ω o} (Ω-zero))` reduces to `E_true (R^o E⃗ (Ω-zero))`, the
+successor step applied to the recursive result on the single subterm. Exercises
+`RlmrOStep.recurrence` with the arity-1 constructor, saturating the recurrence
+spine and the constructor spine. -/
+example :
+    RlmrOStep
+      (app' (recCombinator estepNat)
+        (replicateSpine (natAlgSig.ar true) (RType.omega RType.o)
+          (Binding.Tm.op (S := rlmrOSig natAlgSig)
+            (RlmrOOp.con (RType.omega RType.o) true) (fun j => j.elim0)) recArgsNat))
+      (replicateSpine (natAlgSig.ar true) RType.o (estepNat true)
+        (fun j => app' (recCombinator estepNat) (recArgsNat j))) :=
+  RlmrOStep.recurrence true estepNat recArgsNat
+
 end GebLean.Ramified
