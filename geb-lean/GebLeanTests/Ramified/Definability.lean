@@ -3,6 +3,7 @@ import GebLeanTests.Ramified.Definability.Flat
 import GebLeanTests.Ramified.Definability.Bounds
 import GebLeanTests.Ramified.Definability.Ladder
 import GebLeanTests.Ramified.Definability.Machine
+import GebLeanTests.Ramified.Definability.Top
 
 /-!
 # Ramified-recurrence definability test index

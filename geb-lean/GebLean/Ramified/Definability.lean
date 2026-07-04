@@ -3,6 +3,7 @@ import GebLean.Ramified.Definability.Flat
 import GebLean.Ramified.Definability.Bounds
 import GebLean.Ramified.Definability.Ladder
 import GebLean.Ramified.Definability.Machine
+import GebLean.Ramified.Definability.Top
 
 /-!
 # Ramified recurrence: definability
@@ -32,7 +33,11 @@ addition and multiplication — from the base sort `o` to an arbitrary object so
 over `1 + p.numRegs` components (program counter and registers), with each
 successor step case-splitting on the program counter through a selector over
 the instruction list and routing the implicit-halt state through the selector's
-fall-through (`Machine`).
+fall-through (`Machine`). The sixth module assembles the completeness direction
+of Leivant III Theorem 14 (1) ⇒ (2) (section 6.1): chaining the elementary-
+recurrence compiler and its runtime tower bound into Lemma 6, every ER morphism
+is exhibited as a ramified realizer between object-sort contexts, in both the
+single-output and `m`-output forms (`Top`).
 
 ## References
 
