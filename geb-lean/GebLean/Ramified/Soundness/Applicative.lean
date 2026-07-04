@@ -663,4 +663,24 @@ def prop7DefnStep {Γ : Binding.Ctx RType} {τ : RType} (d : DefnShape natAlgSig
   d.body.eval (defnModelTerm (Γ := Γ) d.numHoles d.holeIdx ih)
     (fun i => Binding.Tm.var ⟨i, rfl⟩)
 
+/-- The direct Proposition 7 translation of a ramified monotone-recurrence
+identifier (Leivant III §4.1, eq. (9), the soundness arm `(1)⟹(4)`): the
+recurrence combinator `R^τ E⃗` applied to the recurrence argument, in open form
+over the context `params ++ [Ωτ]`. Each step term `E_b` is the translated child
+`ih b` — living in `params ++ τ^{ar b}` with its `ar b` recursive-result
+variables free — λ-abstracted over that suffix (`lamSpine`) into a step function
+`params ⊢ τ^{ar b} → τ`, then weakened past the recurrence argument
+(`Binding.ren Thinning.weakAppend`). The recurrence argument is the sole suffix
+variable of `params ++ [Ωτ]` (`boundVar`). -/
+def prop7MrecStep {τ : RType} (params : List RType)
+    (ih : (i : natAlgSig.B) →
+      Binding.Tm (rlmrOSig natAlgSig)
+        (params ++ List.replicate (natAlgSig.ar i) τ) τ) :
+    Binding.Tm (rlmrOSig natAlgSig) (params ++ [RType.omega τ]) τ :=
+  app'
+    (recCombinator (fun b =>
+      Binding.ren Binding.Thinning.weakAppend
+        (lamSpine (List.replicate (natAlgSig.ar b) τ) (ih b))))
+    (Binding.Tm.var (boundVar (Γ := params) (σ := RType.omega τ)))
+
 end GebLean.Ramified
