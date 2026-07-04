@@ -1,6 +1,7 @@
 import GebLean.Ramified.Definability.Simultaneous
 import GebLean.Ramified.Definability.Flat
 import GebLean.Ramified.Definability.Bounds
+import GebLean.Ramified.Definability.Ladder
 
 /-!
 # Ramified recurrence: definability
@@ -19,7 +20,12 @@ recurrence is replaced by the destructor and case operations (`Flat`). The
 third module carries the pure natural-number inequalities converting the
 elementary-recurrence runtime tower bound into Leivant's clock format
 `c · 2_q(sz)` (Lemma 6 hypothesis shape, section 3.2), including the
-componentwise max-over-inputs handling of the arity remark (`Bounds`).
+componentwise max-over-inputs handling of the arity remark (`Bounds`). The
+fourth module generalizes the section 2.4 numeric family — numerals, the
+exponentiation copy, the in-system `2_m` clock family, the size function, and
+addition and multiplication — from the base sort `o` to an arbitrary object sort
+`θ`, with interpretation lemmas aligned with `objToNat` and `GebLean.tower`
+(`Ladder`).
 
 ## References
 
