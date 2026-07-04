@@ -3,6 +3,7 @@ import GebLean.Ramified.Definability.Simultaneous
 import GebLean.Ramified.Definability.Ladder
 import GebLean.Ramified.Definability.Bounds
 import GebLean.Utilities.ZeroTestURM
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Machine-state simulation of the zero-test URM by simultaneous recurrence
@@ -692,6 +693,55 @@ theorem urm_simul_interp {a : ℕ} (p : URMProgram a) (v : Fin a → ℕ) (t : �
     rw [dif_neg (Nat.succ_ne_zero r.val)] at h
     exact h.trans (congrArg (URMState.runFor p (URMState.init p v) t).regs (Fin.ext rfl))
 
+/-- The numeral `k` as a term at an object sort `s` over a definition signature:
+the `k`-fold successor of the nullary constructor at `s`. The object-sort
+generalization of `tmNat` (`GebLean/Ramified/Definability/Simultaneous.lean`)
+to an arbitrary object sort. -/
+def numObjTm {n : Nat} {h : Fin n → List RType × RType} {Γ : Ctx RType}
+    (s : RType) (hs : s.IsObj) : Nat → Tm (defnSig natAlgSig n h) Γ s
+  | 0 => tmZeroObj s hs
+  | k + 1 => tmSuccObj s hs (numObjTm s hs k)
+
+/-- A numeral term at an object sort evaluates to the carrier copy of the
+numeral. Proved by induction on the numeral through the constructor
+interpretation. -/
+theorem numObjTm_eval {n : Nat} {hI : Fin n → List RType × RType}
+    (ih : ∀ j : Fin n, (∀ i : Fin (hI j).1.length,
+        RType.interp (FreeAlg natAlgSig) ((hI j).1.get i)) →
+        RType.interp (FreeAlg natAlgSig) (hI j).2)
+    {Γ : Ctx RType} (s : RType) (hs : s.IsObj)
+    (ρ : (defnModel natAlgSig n hI ih).Env Γ) : (k : Nat) →
+    (numObjTm s hs k).eval (defnModel natAlgSig n hI ih) ρ
+      = cast (RType.interp_isObj (FreeAlg natAlgSig) hs).symm (natToFreeAlg k)
+  | 0 => by
+    refine congrArg (cast (RType.interp_isObj (FreeAlg natAlgSig) hs).symm) ?_
+    exact congrArg (FreeAlg.mk (A := natAlgSig) false) (funext fun i => i.elim0)
+  | k + 1 => by
+    refine congrArg (cast (RType.interp_isObj (FreeAlg natAlgSig) hs).symm) ?_
+    refine congrArg (FreeAlg.mk (A := natAlgSig) true) (funext fun i => ?_)
+    induction i using Fin.cases with
+    | zero =>
+      exact eq_of_heq
+        (HEq.trans (cast_heq _ _)
+          (HEq.trans (heq_of_eq (numObjTm_eval ih s hs ρ k)) (cast_heq _ _)))
+    | succ i' => exact i'.elim0
+
+/-- The constant identifier at an object sort `s` returning the numeral `k`,
+ignoring its environment: the explicit definition whose body is `numObjTm`. Its
+denotation is the carrier copy of the numeral (`constObjIdent_interp`). The
+constant multiple `c` of the eq. (8) clock is `constObjIdent (Ω ω) _ _ c`. -/
+def constObjIdent (s : RType) (hs : s.IsObj) (Γ : Ctx RType) (k : Nat) :
+    RIdent natAlgSig Γ s :=
+  RIdent.defn ⟨0, finZeroElim, numObjTm s hs k⟩ finZeroElim
+
+/-- The constant identifier denotes the carrier copy of its numeral. -/
+theorem constObjIdent_interp (s : RType) (hs : s.IsObj) (Γ : Ctx RType) (k : Nat)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    (constObjIdent s hs Γ k).interp ρ
+      = cast (RType.interp_isObj (FreeAlg natAlgSig) hs).symm (natToFreeAlg k) := by
+  rw [constObjIdent, RIdent.interp_defn]
+  exact numObjTm_eval _ s hs ρ k
+
 /-- The staggered input context of the eq. (8) assembly over a base object sort
 `β`: `stagCtx 0 β = []` and
 `stagCtx (n + 1) β = stagCtx n (Ω β) ++ [Ω (β → β)]`. Position `i` of
@@ -765,6 +815,27 @@ theorem projIdent_interp {A : AlgSig} (Γ : Ctx RType) (i : Fin Γ.length)
     (projIdent Γ i).interp ρ = ρ i :=
   rfl
 
+/-- The numeric reading of a value at an `Omega` sort is `freeAlgToNat`: the
+carrier-copy transport of `objToNat` at an `Omega` sort is the identity. -/
+theorem objToNat_omega (t : RType) (x : RType.interp (FreeAlg natAlgSig) (RType.omega t)) :
+    objToNat (Or.inr rfl : (RType.omega t).IsObj) x = freeAlgToNat x :=
+  congrArg freeAlgToNat (eq_of_heq (cast_heq _ _))
+
+/-- The projection identifier transported to a known sort: `projIdent Γ i` cast
+along `Γ.get i = σ`. Its denotation is the environment at `i` transported along
+the same equality. -/
+def projIdentEq {A : AlgSig} (Γ : Ctx RType) (i : Fin Γ.length) (σ : RType)
+    (h : Γ.get i = σ) : RIdent A Γ σ :=
+  h ▸ projIdent Γ i
+
+/-- The transported projection denotes the environment at its position. -/
+theorem projIdentEq_interp {A : AlgSig} (Γ : Ctx RType) (i : Fin Γ.length)
+    (σ : RType) (h : Γ.get i = σ)
+    (ρ : ∀ k : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get k)) :
+    (projIdentEq Γ i σ h).interp ρ
+      = cast (congrArg (RType.interp (FreeAlg A)) h) (ρ i) := by
+  subst h; rfl
+
 /-- The hole contexts of a saturated identifier application: hole `0` is the
 applied identifier `f` at its own context `Δ` and result `τ`; each hole `k + 1`
 is the `k`-th argument identifier at the outer context `Γ` and the argument's
@@ -815,5 +886,130 @@ theorem applyIdent_interp {A : AlgSig} {Γ Δ : Ctx RType} {τ : RType}
     (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) :
     (applyIdent f args).interp ρ = f.interp (fun j => (args j).interp ρ) :=
   rfl
+
+/-- The staggered size sum of the eq. (8) assembly over a base object sort `β`:
+`sizeFold 0 β` is the numeral `0`, and `sizeFold (n + 1) β` adds the size of the
+last input (`szAtIdent β` at the appended variable, landing at `β`) to the
+descending partial sum of the first `n` inputs (`sizeFold n (Ω β)`, landing at
+`Ω β`) through the addition copy `addAtIdent β : β, Ω β → β`. Its numeric
+denotation is `∑ᵢ (countᵢ + 1)` (`sizeFold_interp`). Novel packaging. -/
+def sizeFold : (n : Nat) → (β : RType) → (hβ : β.IsObj) →
+    RIdent natAlgSig (stagCtx n β) β
+  | 0, β, hβ => constObjIdent β hβ (stagCtx 0 β) 0
+  | n + 1, β, hβ =>
+    applyIdent (addAtIdent β hβ)
+      (Fin.cons
+        (applyIdent (szAtIdent β hβ)
+          (Fin.cons
+            (projIdentEq (stagCtx n (RType.omega β) ++ [RType.omega (expFun β)])
+              (finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)] ⟨0, Nat.zero_lt_one⟩)
+              (RType.omega (expFun β))
+              (get_finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)]
+                ⟨0, Nat.zero_lt_one⟩))
+            finZeroElim))
+        (Fin.cons
+          (applyIdent (sizeFold n (RType.omega β) (Or.inr rfl))
+            (fun k => projIdentEq (stagCtx n (RType.omega β) ++ [RType.omega (expFun β)])
+              (finAppL (stagCtx n (RType.omega β)) [RType.omega (expFun β)] k)
+              ((stagCtx n (RType.omega β)).get k)
+              (get_finAppL (stagCtx n (RType.omega β)) [RType.omega (expFun β)] k)))
+          finZeroElim))
+
+/-- The constant identifier's numeric reading is its numeral. -/
+theorem objToNat_constObjIdent (s : RType) (hs : s.IsObj) (Γ : Ctx RType) (k : Nat)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    objToNat hs ((constObjIdent s hs Γ k).interp ρ) = k := by
+  rw [constObjIdent_interp]
+  unfold objToNat
+  exact (congrArg freeAlgToNat (eq_of_heq ((cast_heq _ _).trans (cast_heq _ _)))).trans
+    (freeAlgToNat_natToFreeAlg k)
+
+/-- The numeric reading of the `i`-th input of the staggered context: the count
+of the value at position `i`, an object sort. -/
+def stagCount (n : Nat) (β : RType)
+    (ρ : ∀ i : Fin (stagCtx n β).length,
+      RType.interp (FreeAlg natAlgSig) ((stagCtx n β).get i))
+    (i : Fin (stagCtx n β).length) : ℕ :=
+  objToNat (stagCtx_forall_isObj n β _ ((stagCtx n β).get_mem i)) (ρ i)
+
+/-- The sum over the positions of a snoc context splits into the sum over the
+prefix positions and the value at the appended position. -/
+theorem fin_sum_snoc {M : Type*} [AddCommMonoid M] (l : List RType) (x : RType)
+    (f : Fin (l ++ [x]).length → M) :
+    ∑ i, f i
+      = (∑ k : Fin l.length, f (finAppL l [x] k))
+        + f (finAppR l [x] ⟨0, Nat.zero_lt_one⟩) := by
+  have hlen : (l ++ [x]).length = l.length + 1 := by simp [List.length_append]
+  rw [← Equiv.sum_comp (finCongr hlen).symm f, Fin.sum_univ_castSucc]
+  refine congrArg₂ (· + ·) ?_ (congrArg f (Fin.ext (by simp [finAppR])))
+  exact Finset.sum_congr rfl (fun k _ => congrArg f (Fin.ext rfl))
+
+/-- The staggered size sum denotes the total input size `∑ᵢ (countᵢ + 1)`:
+each per-input size counts `countᵢ + 1` (`szAtIdent_interp`), and the descending
+addition copies sum them. Proved by induction on the input count. -/
+theorem sizeFold_interp : (n : Nat) → (β : RType) → (hβ : β.IsObj) →
+    (ρ : ∀ i : Fin (stagCtx n β).length,
+      RType.interp (FreeAlg natAlgSig) ((stagCtx n β).get i)) →
+    objToNat hβ ((sizeFold n β hβ).interp ρ) = ∑ i, (stagCount n β ρ i + 1)
+  | 0, _β, _hβ, _ρ => by
+    rw [sizeFold, objToNat_constObjIdent]
+    exact (Finset.sum_eq_zero (fun i _ => absurd i.2 (by simp [stagCtx]))).symm
+  | n + 1, β, hβ, ρ => by
+    rw [sizeFold, applyIdent_interp, addAtIdent_interp_env]
+    have hsz : objToNat hβ
+        ((applyIdent (szAtIdent β hβ)
+          (Fin.cons
+            (projIdentEq (stagCtx n (RType.omega β) ++ [RType.omega (expFun β)])
+              (finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)]
+                ⟨0, Nat.zero_lt_one⟩)
+              (RType.omega (expFun β))
+              (get_finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)]
+                ⟨0, Nat.zero_lt_one⟩))
+            finZeroElim)).interp ρ)
+        = stagCount (n + 1) β ρ
+            (finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)]
+              ⟨0, Nat.zero_lt_one⟩) + 1 := by
+      rw [applyIdent_interp, szAtIdent_interp]
+      change freeAlgToNat ((projIdentEq (stagCtx n (RType.omega β) ++ [RType.omega (expFun β)])
+          (finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)] ⟨0, Nat.zero_lt_one⟩)
+          (RType.omega (expFun β))
+          (get_finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)]
+            ⟨0, Nat.zero_lt_one⟩)).interp ρ) + 1 = _
+      rw [projIdentEq_interp, ← objToNat_omega (expFun β), stagCount]
+      exact congrArg (· + 1) (objToNat_cast _ _ _ _)
+    have hpre : freeAlgToNat
+        ((applyIdent (sizeFold n (RType.omega β) (Or.inr rfl))
+          (fun k => projIdentEq (stagCtx n (RType.omega β) ++ [RType.omega (expFun β)])
+            (finAppL (stagCtx n (RType.omega β)) [RType.omega (expFun β)] k)
+            ((stagCtx n (RType.omega β)).get k)
+            (get_finAppL (stagCtx n (RType.omega β)) [RType.omega (expFun β)] k))).interp ρ)
+        = ∑ k : Fin (stagCtx n (RType.omega β)).length,
+            (stagCount (n + 1) β ρ
+              (finAppL (stagCtx n (RType.omega β)) [RType.omega (expFun β)] k) + 1) := by
+      rw [← objToNat_omega β, applyIdent_interp, sizeFold_interp n (RType.omega β) (Or.inr rfl)]
+      refine Finset.sum_congr rfl (fun k _ => ?_)
+      congr 1
+      rw [stagCount, stagCount, projIdentEq_interp]
+      exact objToNat_cast _ _ _ _
+    change objToNat hβ
+          ((applyIdent (szAtIdent β hβ)
+            (Fin.cons
+              (projIdentEq (stagCtx n (RType.omega β) ++ [RType.omega (expFun β)])
+                (finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)] ⟨0, Nat.zero_lt_one⟩)
+                (RType.omega (expFun β))
+                (get_finAppR (stagCtx n (RType.omega β)) [RType.omega (expFun β)]
+                  ⟨0, Nat.zero_lt_one⟩))
+              finZeroElim)).interp ρ)
+        + freeAlgToNat
+          ((applyIdent (sizeFold n (RType.omega β) (Or.inr rfl))
+            (fun k => projIdentEq (stagCtx n (RType.omega β) ++ [RType.omega (expFun β)])
+              (finAppL (stagCtx n (RType.omega β)) [RType.omega (expFun β)] k)
+              ((stagCtx n (RType.omega β)).get k)
+              (get_finAppL (stagCtx n (RType.omega β)) [RType.omega (expFun β)] k))).interp ρ)
+      = ∑ i, (stagCount (n + 1) β ρ i + 1)
+    rw [hsz, hpre]
+    exact (Nat.add_comm _ _).trans
+      (fin_sum_snoc (stagCtx n (RType.omega β)) (RType.omega (expFun β))
+        (fun i => stagCount (n + 1) β ρ i + 1)).symm
 
 end GebLean.Ramified
