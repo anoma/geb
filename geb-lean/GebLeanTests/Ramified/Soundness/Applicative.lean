@@ -25,4 +25,23 @@ example : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow RType.o RType.o) :=
   Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.lam RType.o RType.o)
     (fun j => Fin.cases (Binding.Tm.var ⟨⟨0, by decide⟩, rfl⟩) (fun k => k.elim0) j)
 
+/-- The zero-constructor of `natAlgSig` as a closed term of sort `o`, reused by
+the combinator smoke tests below. -/
+def zeroTm : Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
+  Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o false) (fun j => j.elim0)
+
+/-- The `app'`/`lam'`/`boundVar` combinators compose: the closed redex
+`(λx:o. x) 0` elaborates as a term of sort `o`. -/
+example : Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
+  app' (lam' (Binding.Tm.var boundVar)) zeroTm
+
+/-- The `appSpine` combinator saturates the arity-1 constructor `true` of
+`natAlgSig` (result sort `o^1 → o`) with the single argument `0`, yielding a
+closed term of sort `o`. -/
+example : Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
+  appSpine [RType.o]
+    (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o true)
+      (fun j => j.elim0))
+    (fun i => Fin.cases zeroTm (fun k => k.elim0) i)
+
 end GebLean.Ramified

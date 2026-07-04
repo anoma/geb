@@ -1,5 +1,6 @@
 import Mathlib.Data.Finset.Sort
 import GebLean.Binding.Term
+import GebLean.Binding.Substitution
 import GebLean.Ramified.HigherOrder
 import GebLean.Ramified.Definability.Flat
 
@@ -177,5 +178,46 @@ def rlmrOSig (A : AlgSig) [Fintype A.B] [LinearOrder A.B] : BinderSig RType wher
     | .recur _ => []
     | .dstr _ => []
     | .case _ => []
+
+/-- Application node `f x` of `rlmrOSig`: the operation `app σ τ`, whose two
+subterm arguments carry the empty binder context. Since `Γ ++ [] = Γ` is not
+definitional (`List.append` recurses on its first argument), the function and
+argument terms are transported into the argument context `Γ ++ []` along
+`List.append_nil`. -/
+def app' {A : AlgSig} [Fintype A.B] [LinearOrder A.B] {Γ : Binding.Ctx RType}
+    {σ τ : RType} (f : Binding.Tm (rlmrOSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (rlmrOSig A) Γ σ) : Binding.Tm (rlmrOSig A) Γ τ :=
+  Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.app σ τ) (fun j =>
+    Fin.cases ((List.append_nil Γ).symm ▸ f)
+      (fun k => Fin.cases ((List.append_nil Γ).symm ▸ x) (fun l => l.elim0) k) j)
+
+/-- Abstraction node `λ(:σ). b` of `rlmrOSig`: the operation `lam σ τ`, whose
+sole subterm argument binds one variable of sort `σ` at the end of the context,
+so the body `b` lives in `Γ ++ [σ]` with no transport required. -/
+def lam' {A : AlgSig} [Fintype A.B] [LinearOrder A.B] {Γ : Binding.Ctx RType}
+    {σ τ : RType} (b : Binding.Tm (rlmrOSig A) (Γ ++ [σ]) τ) :
+    Binding.Tm (rlmrOSig A) Γ (RType.arrow σ τ) :=
+  Binding.Tm.op (S := rlmrOSig A) (RlmrOOp.lam σ τ)
+    (fun j => Fin.cases b (fun k => k.elim0) j)
+
+/-- The variable bound by `lam' σ …`: the unique variable of the singleton
+suffix `[σ]`, embedded into `Γ ++ [σ]` by the suffix inclusion
+`Var.appendRight`. -/
+def boundVar {Γ : Binding.Ctx RType} {σ : RType} : Binding.Var (Γ ++ [σ]) σ :=
+  Binding.Var.appendRight Γ ⟨0, rfl⟩
+
+/-- Iterated application of a head term `f` at a curried arrow sort to a
+dependent tuple of arguments whose sorts are `Ts`, producing the curried result.
+Recursion on `Ts`: peel the head sort via `app'`, using that
+`RType.curried (T :: Ts) r = RType.arrow T (RType.curried Ts r)` holds
+definitionally (`RType.curried_cons`). -/
+def appSpine {A : AlgSig} [Fintype A.B] [LinearOrder A.B] {Γ : Binding.Ctx RType}
+    {result : RType} : (Ts : List RType) →
+    Binding.Tm (rlmrOSig A) Γ (RType.curried Ts result) →
+    (∀ i : Fin Ts.length, Binding.Tm (rlmrOSig A) Γ (Ts.get i)) →
+    Binding.Tm (rlmrOSig A) Γ result
+  | [], head, _ => head
+  | _ :: Ts', head, args =>
+      appSpine Ts' (app' head (args ⟨0, Nat.succ_pos _⟩)) (fun i => args i.succ)
 
 end GebLean.Ramified
