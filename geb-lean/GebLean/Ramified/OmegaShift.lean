@@ -958,4 +958,47 @@ theorem cLiftAux_recurse_appChain (A : AlgSig) (θ : RType) (hθ : θ.IsObj)
           (fun i => cLiftAux A D' θ hθ i) xvec (args 0) t))
       (cLiftAux_recurse_appChain A θ hθ xvec D' t (fun k => args k.succ))
 
+/-- Evaluation of the full saturating application chain: applying a combinator at
+the curried sort `curried D θ` to a full argument tuple denotes `appChain` of the
+combinator's value over `D`. Proved by structural recursion on `D` through
+`defnApp_eval`. -/
+theorem appArgs_eval {A : AlgSig} {n : Nat} {holeIdx : Fin n → List RType × RType}
+    {Γ : Ctx RType}
+    (ih : ∀ j : Fin n, (∀ i : Fin (holeIdx j).1.length,
+        RType.interp (FreeAlg A) ((holeIdx j).1.get i)) →
+        RType.interp (FreeAlg A) (holeIdx j).2)
+    (θ : RType) (ρ : (defnModel A n holeIdx ih).Env Γ) :
+    (D : List RType) →
+    (c : Tm (defnSig A n holeIdx) Γ (RType.curried D θ)) →
+    (args : (k : Fin D.length) → Tm (defnSig A n holeIdx) Γ (D.get k)) →
+    (appArgs θ D c args).eval (defnModel A n holeIdx ih) ρ
+      = appChain A D θ (c.eval (defnModel A n holeIdx ih) ρ)
+          (fun k => (args k).eval (defnModel A n holeIdx ih) ρ)
+  | [], _c, _args => rfl
+  | a :: D', c, args => by
+    rw [show appArgs θ (a :: D') c args
+        = appArgs θ D' (defnApp a (RType.curried D' θ) c (args ⟨0, Nat.succ_pos _⟩))
+            (fun k => args k.succ) from rfl,
+      appArgs_eval ih θ ρ D'
+        (defnApp a (RType.curried D' θ) c (args ⟨0, Nat.succ_pos _⟩)) (fun k => args k.succ),
+      defnApp_eval]
+    rfl
+
+/-- The coercion `applyCanon` feeds its input, read at the curried decomposition
+of `τ`, to the canonical functionals at each domain sort (Leivant III section
+2.4(1)): its denotation is the application chain of the transported input over
+the domains `RType.domains τ`. The canonical functionals appear only as the
+argument tuple. Proved by unfolding the explicit definition through
+`appArgs_eval`. -/
+theorem applyCanon_interp (A : AlgSig) (b₀ : A.B) (h₀ : A.ar b₀ = 0) (τ : RType)
+    (env : ∀ i : Fin ([τ] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([τ] : Ctx RType).get i)) :
+    (applyCanon A b₀ h₀ τ).interp env
+      = appChain A (RType.domains τ) (RType.objTarget τ)
+          (cast (congrArg (RType.interp (FreeAlg A)) (RType.curried_domains τ)) (env 0))
+          (fun j => curryInterp A [] ((RType.domains τ).get j)
+            ((canonIdent A b₀ h₀ ((RType.domains τ).get j)).interp)) := by
+  rw [applyCanon, RIdent.interp_defn, appArgs_eval, Tm.eval_transport]
+  rfl
+
 end GebLean.Ramified
