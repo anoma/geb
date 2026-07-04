@@ -887,6 +887,29 @@ theorem applyIdent_interp {A : AlgSig} {Γ Δ : Ctx RType} {τ : RType}
     (applyIdent f args).interp ρ = f.interp (fun j => (args j).interp ρ) :=
   rfl
 
+/-- The denotation of a one-argument application. -/
+theorem applyIdent1_interp {A : AlgSig} {Γ : Ctx RType} {σ τ : RType}
+    (f : RIdent A [σ] τ) (g : RIdent A Γ σ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) :
+    (applyIdent f (Fin.cons g finZeroElim)).interp ρ
+      = f.interp (Fin.cons (g.interp ρ) finZeroElim) := by
+  rw [applyIdent_interp]
+  refine congrArg f.interp (funext (fun j => ?_))
+  refine Fin.cases ?_ (fun j' => j'.elim0) j
+  rfl
+
+/-- The denotation of a two-argument application. -/
+theorem applyIdent2_interp {A : AlgSig} {Γ : Ctx RType} {σ₁ σ₂ τ : RType}
+    (f : RIdent A [σ₁, σ₂] τ) (g₁ : RIdent A Γ σ₁) (g₂ : RIdent A Γ σ₂)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) :
+    (applyIdent f (Fin.cons g₁ (Fin.cons g₂ finZeroElim))).interp ρ
+      = f.interp (Fin.cons (g₁.interp ρ) (Fin.cons (g₂.interp ρ) finZeroElim)) := by
+  rw [applyIdent_interp]
+  refine congrArg f.interp (funext (fun j => ?_))
+  refine Fin.cases ?_ (fun j' => Fin.cases ?_ (fun j'' => j''.elim0) j') j
+  · rfl
+  · rfl
+
 /-- The staggered size sum of the eq. (8) assembly over a base object sort `β`:
 `sizeFold 0 β` is the numeral `0`, and `sizeFold (n + 1) β` adds the size of the
 last input (`szAtIdent β` at the appended variable, landing at `β`) to the
@@ -1011,5 +1034,157 @@ theorem sizeFold_interp : (n : Nat) → (β : RType) → (hβ : β.IsObj) →
     exact (Nat.add_comm _ _).trans
       (fin_sum_snoc (stagCtx n (RType.omega β)) (RType.omega (expFun β))
         (fun i => stagCount (n + 1) β ρ i + 1)).symm
+
+/-- Leivant III eq. (8)'s clock `c × 2_q(sz(a))` (paper section 3.2, p. 221) as
+an identifier over the realizer input context: the constant `c` (a numeral at
+`Ω ω`) times `twoPowIdent q` of the staggered size sum, through the
+multiplication copy `mulAtIdent ω : (Ω ω)² → ω`. Its denotation lands at the
+count sort `ω = Ω (o → o)`. -/
+def machineClock {a : ℕ} (c q : ℕ) :
+    RIdent natAlgSig (machineCtx a q) (RType.omega (RType.arrow RType.o RType.o)) :=
+  applyIdent (mulAtIdent (RType.omega (RType.arrow RType.o RType.o)) (Or.inr rfl))
+    (Fin.cons
+      (constObjIdent (RType.omega (RType.omega (RType.arrow RType.o RType.o))) (Or.inr rfl)
+        (machineCtx a q) c)
+      (Fin.cons
+        (applyIdent
+          (twoPowIdent q (RType.omega (RType.omega (RType.arrow RType.o RType.o))) (Or.inr rfl))
+          (Fin.cons (sizeFold a (machineBaseSort q) (machineBaseSort_isObj q)) finZeroElim))
+        finZeroElim))
+
+/-- Leivant III eq. (8)'s clock denotes `c × 2_q` of the total input size: its
+numeric reading is `c * tower q (∑ᵢ (countᵢ + 1))`. Combines
+`mulAtIdent_interp_env`, `twoPowIdent_interp`, and `sizeFold_interp`. -/
+theorem machineClock_interp {a : ℕ} (c q : ℕ)
+    (ρ : ∀ i : Fin (machineCtx a q).length,
+      RType.interp (FreeAlg natAlgSig) ((machineCtx a q).get i)) :
+    freeAlgToNat ((machineClock c q).interp ρ)
+      = c * GebLean.tower q (∑ i, (stagCount a (machineBaseSort q) ρ i + 1)) := by
+  rw [machineClock, ← objToNat_omega (RType.arrow RType.o RType.o), applyIdent2_interp,
+    mulAtIdent_interp_env]
+  have hc : freeAlgToNat
+      ((constObjIdent (RType.omega (RType.omega (RType.arrow RType.o RType.o))) (Or.inr rfl)
+        (machineCtx a q) c).interp ρ) = c := by
+    rw [← objToNat_omega (RType.omega (RType.arrow RType.o RType.o)), objToNat_constObjIdent]
+  have h2 : freeAlgToNat
+      ((applyIdent
+        (twoPowIdent q (RType.omega (RType.omega (RType.arrow RType.o RType.o))) (Or.inr rfl))
+        (Fin.cons (sizeFold a (machineBaseSort q) (machineBaseSort_isObj q))
+          finZeroElim)).interp ρ)
+      = GebLean.tower q (∑ i, (stagCount a (machineBaseSort q) ρ i + 1)) := by
+    rw [← objToNat_omega (RType.omega (RType.arrow RType.o RType.o)), applyIdent1_interp,
+      twoPowIdent_interp]
+    exact congrArg (GebLean.tower q) (sizeFold_interp a (machineBaseSort q)
+      (machineBaseSort_isObj q) ρ)
+  change freeAlgToNat
+      ((constObjIdent (RType.omega (RType.omega (RType.arrow RType.o RType.o))) (Or.inr rfl)
+        (machineCtx a q) c).interp ρ)
+      * freeAlgToNat
+        ((applyIdent
+          (twoPowIdent q (RType.omega (RType.omega (RType.arrow RType.o RType.o))) (Or.inr rfl))
+          (Fin.cons (sizeFold a (machineBaseSort q) (machineBaseSort_isObj q))
+            finZeroElim)).interp ρ) = _
+  rw [hc, h2]
+
+/-- The numeric environment over the realizer input context: position `i` carries
+the numeral of `v i`, transported to the carrier copy of its object sort. -/
+def machineEnv {a : ℕ} (q : ℕ) (v : Fin a → ℕ) :
+    (standardModel (higherOrder natAlgSig)).Env (machineCtx a q) :=
+  fun i => cast (RType.interp_isObj (FreeAlg natAlgSig) (machineCtx_isObj a q i)).symm
+    (natToFreeAlg (v ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q)⟩))
+
+/-- The numeric reading of the environment at position `i` is `v` at that
+position. -/
+theorem freeAlgToNat_machineEnv {a : ℕ} (q : ℕ) (v : Fin a → ℕ)
+    (i : Fin (machineCtx a q).length) :
+    objToNat (machineCtx_isObj a q i) (machineEnv q v i)
+      = v ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q)⟩ := by
+  unfold objToNat machineEnv
+  refine (congrArg freeAlgToNat (eq_of_heq ((cast_heq _ _).trans (cast_heq _ _)))).trans
+    (freeAlgToNat_natToFreeAlg _)
+
+/-- Cast an identifier along a result-sort equality. -/
+def castResult {A : AlgSig} {Γ : Ctx RType} {σ σ' : RType} (h : σ = σ')
+    (f : RIdent A Γ σ) : RIdent A Γ σ' :=
+  h ▸ f
+
+/-- The cast identifier's denotation is the transported denotation. -/
+theorem castResult_interp {A : AlgSig} {Γ : Ctx RType} {σ σ' : RType} (h : σ = σ')
+    (f : RIdent A Γ σ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) :
+    (castResult h f).interp ρ = cast (congrArg (RType.interp (FreeAlg A)) h) (f.interp ρ) := by
+  subst h; rfl
+
+/-- The parameter-loading coercion for input `i` (eq. (8)'s `δ_{Ω(η→η)}`):
+`deltaIdent` (δ) applied to the `i`-th input variable, reading its numeral back
+at the base sort `o`. -/
+def deltaArg {a : ℕ} (q : ℕ) (i : Fin a) : RIdent natAlgSig (machineCtx a q) RType.o :=
+  applyIdent
+    (deltaIdent natAlgSig false rfl
+      ((machineCtx a q).get ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q).symm⟩)
+      (machineCtx_isObj a q ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q).symm⟩))
+    (Fin.cons
+      (projIdent (machineCtx a q)
+        ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q).symm⟩)
+      finZeroElim)
+
+/-- The parameter coercion reads the input numeral at `o`. -/
+theorem deltaArg_interp {a : ℕ} (q : ℕ) (i : Fin a)
+    (ρ : ∀ j : Fin (machineCtx a q).length,
+      RType.interp (FreeAlg natAlgSig) ((machineCtx a q).get j)) :
+    freeAlgToNat ((deltaArg q i).interp ρ)
+      = objToNat (machineCtx_isObj a q
+          ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q).symm⟩)
+        (ρ ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q).symm⟩) := by
+  rw [deltaArg, applyIdent1_interp, deltaIdent_interp]
+  rfl
+
+/-- The sort at a below-`a` position of the register context is `o`. -/
+theorem machineDom_get_lt {a : ℕ}
+    (k : Fin (List.replicate a RType.o
+      ++ [RType.omega (RType.arrow RType.o RType.o)]).length) (h : k.val < a) :
+    (List.replicate a RType.o
+      ++ [RType.omega (RType.arrow RType.o RType.o)]).get k = RType.o := by
+  rw [get_append_lt _ _ k (by rw [List.length_replicate]; exact h)]
+  exact get_replicate a RType.o _
+
+/-- The sort at an at-or-beyond-`a` position of the register context is `ω`. -/
+theorem machineDom_get_ge {a : ℕ}
+    (k : Fin (List.replicate a RType.o
+      ++ [RType.omega (RType.arrow RType.o RType.o)]).length) (h : ¬ k.val < a) :
+    (List.replicate a RType.o
+      ++ [RType.omega (RType.arrow RType.o RType.o)]).get k
+      = RType.omega (RType.arrow RType.o RType.o) := by
+  rw [get_append_ge _ _ k (by rw [List.length_replicate]; exact h)]
+  exact List.mem_singleton.mp (List.get_mem _ _)
+
+/-- The realizer's argument vector for `regIdent`: the `a` parameter coercions at
+the base-sort positions and the clock at the count position. -/
+def machineArgs {a : ℕ} (c q : ℕ) :
+    (k : Fin (List.replicate a RType.o
+      ++ [RType.omega (RType.arrow RType.o RType.o)]).length) →
+      RIdent natAlgSig (machineCtx a q)
+        ((List.replicate a RType.o
+          ++ [RType.omega (RType.arrow RType.o RType.o)]).get k) :=
+  fun k =>
+    if h : k.val < a then
+      castResult (machineDom_get_lt k h).symm (deltaArg q ⟨k.val, h⟩)
+    else
+      castResult (machineDom_get_ge k h).symm (machineClock c q)
+
+/-- Leivant III eq. (8)'s realizer as an identifier: the output register
+component `regIdent p p.outputReg` fed the parameter coercions and the clock. -/
+def machineIdent {a : ℕ} (p : URMProgram a) (c q : ℕ) :
+    RIdent natAlgSig (machineCtx a q) RType.o :=
+  applyIdent (regIdent p p.outputReg) (machineArgs c q)
+
+/-- Leivant III eq. (8)'s realizer (paper section 3.2, p. 221) as a morphism of
+`RMRecCat natAlgSig` over the staggered input context: the sole term applies the
+output-register component of the machine simulation, fed the parameter coercions
+`δ` on each input and the clock `c × 2_q(sz(a))`. -/
+def machineRealizer {a : ℕ} (p : URMProgram a) (c q : ℕ) :
+    Hom (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig))
+      (machineCtx a q) [RType.o] :=
+  identHom (machineIdent p c q)
 
 end GebLean.Ramified
