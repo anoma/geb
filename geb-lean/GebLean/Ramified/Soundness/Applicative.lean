@@ -56,6 +56,8 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
   `natAlgSig` (Leivant III section 4.1, the standard semantics of section 2.7).
 * `lamSpine`, `suffixThinning` — iterated λ-abstraction of a context suffix and
   the suffix inclusion into an append-at-end context.
+* `joinEnv` — the semantic environment gluing a prefix environment with a suffix
+  environment, the arbitrary-suffix generalization of `childEnv`.
 * `defnModelTerm`, `prop7DefnStep` — the applicative-term model of a definition's
   body and the direct translation of an explicit-definition identifier.
 * `caseAtType`, `frecBranch`, `prop7MrecStep`, `prop7FrecStep` — the higher-type
@@ -75,6 +77,8 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
   `appEval_case` — the evaluation of `appEval` through the term combinators.
 * `arrow_node_eq` — an `arrow`-shape free-algebra node is the `RType.arrow` of
   its two children.
+* `appEval_ren`, `appEval_lamSpine` — renaming fusion for `appEval` and the
+  evaluation of the applicative λ-spine.
 * `prop7Translate_interp` — the direct Proposition 7 translation preserves the
   denoted function (the soundness arm `(1)⟹(4)`).
 
@@ -1060,6 +1064,169 @@ theorem stepAtLabel_stepEnvOfFun {Γ : Binding.Ctx RType} {τ : RType}
     have hEstep : ∀ {b b' : natAlgSig.B}, b = b' → Estep b ≍ Estep b' := by
       intro b b' h; cases h; exact HEq.rfl
     exact hEstep (by rw [← List.get_eq_getElem]; exact ctorList_get_ctorIdx i)
+
+/-- The semantic environment over a concatenated context `Γ ++ Δ`, gluing an
+environment `ρ` for the prefix with an environment `cv` for the suffix: below
+`Γ.length` it reads `ρ`, otherwise `cv`. The semantic counterpart of `joinTuple`
+(`GebLean/Ramified/SynCat.lean`) and the arbitrary-suffix generalization of
+`childEnv` (whose suffix is `List.replicate n σ`); the join threaded through
+`lamSpine`'s abstraction in `appEval_lamSpine` (Leivant III §4.1). -/
+def joinEnv {Γ Δ : Binding.Ctx RType}
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (cv : ∀ j : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get j)) :
+    ∀ k : Fin (Γ ++ Δ).length, RType.interp (FreeAlg natAlgSig) ((Γ ++ Δ).get k) :=
+  fun k =>
+    if h : k.val < Γ.length then
+      cast (congrArg (RType.interp (FreeAlg natAlgSig)) (get_append_lt Γ Δ k h).symm)
+        (ρ ⟨k.val, h⟩)
+    else
+      cast (congrArg (RType.interp (FreeAlg natAlgSig)) (get_append_ge Γ Δ k h).symm)
+        (cv ⟨k.val - Γ.length, by
+          have hk : k.val < Γ.length + Δ.length :=
+            Nat.lt_of_lt_of_eq k.isLt List.length_append
+          omega⟩)
+
+/-- `joinEnv` reads its prefix environment, heterogeneously, at any position below
+`Γ.length`. -/
+theorem joinEnv_heq_left {Γ Δ : Binding.Ctx RType}
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (cv : ∀ j : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get j))
+    (k : Fin (Γ ++ Δ).length) (h : k.val < Γ.length) :
+    joinEnv ρ cv k ≍ ρ ⟨k.val, h⟩ := by
+  unfold joinEnv
+  rw [dif_pos h]
+  exact cast_heq _ _
+
+/-- `joinEnv` reads its suffix environment, heterogeneously, at any position at or
+beyond `Γ.length`. -/
+theorem joinEnv_heq_right {Γ Δ : Binding.Ctx RType}
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (cv : ∀ j : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get j))
+    (k : Fin (Γ ++ Δ).length) (h : ¬ k.val < Γ.length)
+    (hb : k.val - Γ.length < Δ.length) :
+    joinEnv ρ cv k ≍ cv ⟨k.val - Γ.length, hb⟩ := by
+  unfold joinEnv
+  rw [dif_neg h]
+  exact cast_heq _ _
+
+/-- Peeling one binder off a `joinEnv`: transporting the join of a
+one-value-extended prefix `envExtend ρ v` with a suffix `cv` back across the
+append reassociation equals the join of `ρ` with the cons `Fin.cons v cv`. The
+environment reconciliation the step case of `appEval_lamSpine` needs, matching
+`lamSpine`'s `List.append_assoc` reassociation cast. -/
+theorem joinEnv_envExtend {Γ : Binding.Ctx RType} {σ : RType} {Δ' : List RType}
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (v : RType.interp (FreeAlg natAlgSig) σ)
+    (cv : ∀ j : Fin Δ'.length, RType.interp (FreeAlg natAlgSig) (Δ'.get j)) :
+    envCastCtx (List.append_assoc Γ [σ] Δ')
+        (joinEnv (Γ := Γ ++ [σ]) (Δ := Δ') (envExtend ρ v) cv)
+      = joinEnv (Γ := Γ) (Δ := σ :: Δ') ρ (Fin.cons v cv) := by
+  funext k
+  apply eq_of_heq
+  have hσL : (Γ ++ [σ]).length = Γ.length + 1 := by simp
+  have hkub : k.val < Γ.length + 1 + Δ'.length := by
+    have hk := k.isLt
+    simp only [List.length_append, List.length_cons, List.length_nil] at hk
+    omega
+  have hklen : k.val < ((Γ ++ [σ]) ++ Δ').length := by
+    simp only [List.length_append, List.length_singleton]; omega
+  have keyZero : ∀ (i : Fin (Δ'.length + 1)), i.val = 0 →
+      @Fin.cons Δ'.length (fun j => RType.interp (FreeAlg natAlgSig) ((σ :: Δ').get j))
+        v cv i ≍ v := by
+    intro i hi
+    rw [show i = 0 from Fin.ext hi]
+    exact heq_of_eq (Fin.cons_zero
+      (α := fun j => RType.interp (FreeAlg natAlgSig) ((σ :: Δ').get j)) v cv)
+  have keySucc : ∀ (i : Fin (Δ'.length + 1)) (m : Fin Δ'.length),
+      i.val = m.val + 1 →
+      @Fin.cons Δ'.length (fun j => RType.interp (FreeAlg natAlgSig) ((σ :: Δ').get j))
+        v cv i ≍ cv m := by
+    intro i m hi
+    rw [show i = m.succ from Fin.ext (by rw [Fin.val_succ]; exact hi)]
+    exact heq_of_eq (Fin.cons_succ
+      (α := fun j => RType.interp (FreeAlg natAlgSig) ((σ :: Δ').get j)) v cv m)
+  refine (envCastCtx_apply_heq (List.append_assoc Γ [σ] Δ')
+    (joinEnv (envExtend ρ v) cv) k hklen).trans ?_
+  by_cases h1 : k.val < Γ.length
+  · have hkσ : k.val < (Γ ++ [σ]).length := by omega
+    refine (joinEnv_heq_left (envExtend ρ v) cv ⟨k.val, hklen⟩ hkσ).trans ?_
+    refine (childEnv_heq_left (n := 1) ρ (fun _ => v) ⟨k.val, hkσ⟩ h1).trans ?_
+    exact (joinEnv_heq_left ρ (Fin.cons v cv) k h1).symm
+  · by_cases h2 : k.val < Γ.length + 1
+    · have hkeq : k.val = Γ.length := by omega
+      have hkσ : k.val < (Γ ++ [σ]).length := by omega
+      have hnl : ¬ (⟨k.val, hkσ⟩ : Fin (Γ ++ [σ]).length).val < Γ.length := by
+        simp only; omega
+      have hb1 : (⟨k.val, hkσ⟩ : Fin (Γ ++ [σ]).length).val - Γ.length < 1 := by
+        simp only; omega
+      have hb2 : k.val - Γ.length < (σ :: Δ').length := by
+        rw [List.length_cons]; omega
+      have hib : k.val - Γ.length < Δ'.length + 1 := by simpa using hb2
+      refine (joinEnv_heq_left (envExtend ρ v) cv ⟨k.val, hklen⟩ hkσ).trans ?_
+      refine (childEnv_heq_right (n := 1) ρ (fun _ => v) ⟨k.val, hkσ⟩ hnl hb1).trans ?_
+      refine HEq.trans ?_ (joinEnv_heq_right ρ (Fin.cons v cv) k h1 hb2).symm
+      exact (keyZero ⟨k.val - Γ.length, hib⟩ (by change k.val - Γ.length = 0; omega)).symm
+    · have hkσ_ge : ¬ k.val < (Γ ++ [σ]).length := by omega
+      have hbσ : k.val - (Γ ++ [σ]).length < Δ'.length := by omega
+      have hb2 : k.val - Γ.length < (σ :: Δ').length := by
+        rw [List.length_cons]; omega
+      have hib : k.val - Γ.length < Δ'.length + 1 := by simpa using hb2
+      refine (joinEnv_heq_right (envExtend ρ v) cv ⟨k.val, hklen⟩ hkσ_ge hbσ).trans ?_
+      refine HEq.trans ?_ (joinEnv_heq_right ρ (Fin.cons v cv) k h1 hb2).symm
+      exact HEq.symm (keySucc ⟨k.val - Γ.length, hib⟩
+        ⟨k.val - (Γ ++ [σ]).length, hbσ⟩
+        (by change k.val - Γ.length = (k.val - (Γ ++ [σ]).length) + 1; omega))
+
+/-- Transport of `appEval` across a context equality presented as an explicit
+`cast` on the context slot (`lamSpine`'s reassociation form of the transport):
+evaluating the cast term equals evaluating the original at the inversely
+transported environment. The `cast`-shaped companion of `appEval_congr_ctx`. -/
+theorem appEval_cast_ctx {Γ Δ : Binding.Ctx RType} {s : RType} (h : Γ = Δ)
+    (t : Binding.Tm (rlmrOSig natAlgSig) Γ s)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    appEval (cast (congrArg (fun c => Binding.Tm (rlmrOSig natAlgSig) c s) h) t) ρ
+      = appEval t (envCastCtx h.symm ρ) := by
+  subst h
+  rfl
+
+/-- Renaming fusion evaluates the applicative λ-spine (Leivant III §4.1): the
+denotation of `lamSpine Δ body` at `ρ` is the currying of the denotation of
+`body` at the join of `ρ` with the abstracted arguments. Proved by induction on
+`Δ` from `appEval_lam'`, threading `lamSpine`'s `List.append_assoc` reassociation
+via `joinEnv_envExtend`. -/
+theorem appEval_lamSpine : (Γ : Binding.Ctx RType) → (Δ : List RType) → {τ : RType} →
+    (body : Binding.Tm (rlmrOSig natAlgSig) (Γ ++ Δ) τ) →
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) →
+    appEval (lamSpine Δ body) ρ
+      = curryInterp natAlgSig Δ τ (fun cv => appEval body (joinEnv ρ cv))
+  | Γ, [], τ, body, ρ => by
+    change appEval (cast (congrArg (fun c => Binding.Tm (rlmrOSig natAlgSig) c τ)
+      (List.append_nil Γ)) body) ρ = appEval body (joinEnv ρ finZeroElim)
+    rw [appEval_cast_ctx (List.append_nil Γ) body ρ]
+    congr 1
+    funext i
+    apply eq_of_heq
+    have hi : i.val < Γ.length :=
+      lt_of_lt_of_eq i.isLt (congrArg List.length (List.append_nil Γ))
+    refine (envCastCtx_apply_heq (List.append_nil Γ).symm ρ i hi).trans ?_
+    exact (joinEnv_heq_left ρ finZeroElim i hi).symm
+  | Γ, σ :: Δ', τ, body, ρ => by
+    change appEval (lam' (lamSpine Δ' (cast (congrArg
+      (fun c => Binding.Tm (rlmrOSig natAlgSig) c τ)
+      (List.append_assoc Γ [σ] Δ').symm) body))) ρ = _
+    rw [appEval_lam']
+    funext v
+    rw [appEval_lamSpine (Γ ++ [σ]) Δ']
+    change curryInterp natAlgSig Δ' τ
+        (fun cv => appEval (cast (congrArg (fun c => Binding.Tm (rlmrOSig natAlgSig) c τ)
+          (List.append_assoc Γ [σ] Δ').symm) body) (joinEnv (envExtend ρ v) cv))
+      = curryInterp natAlgSig Δ' τ
+        (fun cv => appEval body (joinEnv ρ (Fin.cons v cv)))
+    congr 1
+    funext cv
+    rw [appEval_cast_ctx (List.append_assoc Γ [σ] Δ').symm body (joinEnv (envExtend ρ v) cv)]
+    congr 1
+    exact joinEnv_envExtend ρ v cv
 
 /-- The thinning embedding the suffix `Ξ` of an append-at-end context into the
 whole `Γ ++ Ξ`: drop every entry of the prefix `Γ`, then keep every entry of
