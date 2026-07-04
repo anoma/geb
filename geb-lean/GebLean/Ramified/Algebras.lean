@@ -55,6 +55,8 @@ categories do not inherit a functor from a non-surjective signature morphism
 * `recurse_freeAlgMap` — image-point naturality: a recurrence over the target
   signature, run at a transported value, computes as the pulled-back recurrence
   over the source.
+* `natFreeAlgEquiv_apply`, `natFreeAlgEquiv_symm_apply` — the two directions of
+  `natFreeAlgEquiv` unfold to `freeAlgToNat` and `natToFreeAlg`.
 
 ## Implementation notes
 
@@ -302,6 +304,14 @@ def natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ where
   invFun := natToFreeAlg
   left_inv := natToFreeAlg_freeAlgToNat
   right_inv := freeAlgToNat_natToFreeAlg
+
+/-- The forward direction of `natFreeAlgEquiv` unfolds to `freeAlgToNat`. -/
+@[simp] theorem natFreeAlgEquiv_apply (t : FreeAlg natAlgSig) :
+    natFreeAlgEquiv t = freeAlgToNat t := rfl
+
+/-- The inverse direction of `natFreeAlgEquiv` unfolds to `natToFreeAlg`. -/
+@[simp] theorem natFreeAlgEquiv_symm_apply (n : ℕ) :
+    natFreeAlgEquiv.symm n = natToFreeAlg n := rfl
 
 /-- A morphism of free-algebra signatures (the spec's section 4.3): a
 constructor-label map preserving arities, e.g. `1 + X` into `1 + 2X` (zero to
