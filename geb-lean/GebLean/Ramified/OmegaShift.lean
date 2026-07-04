@@ -857,4 +857,105 @@ theorem cLiftArrow_interp (A : AlgSig) (σ ρ : RType) (i : A.B)
   · exact eq_of_heq ((cast_heq _ _).trans
       (snocEnv_heq_right _ σ phi x _ (Nat.le_add_right _ _)))
 
+/-- The recurrence-context environment over an empty parameter list reads the
+recursive-result family at each replicated position, heterogeneously. A fact
+local to the pointwise constructor lift. -/
+theorem childEnv_nil_heq {C : RType → Type} (σ : RType) (n : Nat)
+    (xvec : ∀ i : Fin ([] : List RType).length, C (([] : List RType).get i))
+    (rest : Fin n → C σ) (k : Fin ([] ++ List.replicate n σ).length) (m : Fin n)
+    (hkm : k.val = m.val) :
+    childEnv [] σ n xvec rest k ≍ rest m := by
+  unfold childEnv
+  rw [dif_neg (by simp : ¬ k.val < ([] : List RType).length)]
+  exact (cast_heq _ _).trans (heq_of_eq (congrArg rest (Fin.ext (by simpa using hkm))))
+
+/-- A recurrence-result read through the arrow lift's cast of an empty-parameter
+recurrence environment recovers the family entry at the matching position. A
+cast-commutation fact local to the arrow-sort lift recurrence. -/
+theorem cLiftArrow_arg_eq (A : AlgSig) (σ ρ : RType) (n : Nat)
+    (xvec : ∀ i : Fin ([] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([] : Ctx RType).get i))
+    (rest : Fin n → RType.interp (FreeAlg A) (RType.arrow σ ρ))
+    (j : Fin (List.replicate n ρ).length) (hjb : j.val < n)
+    (p1 : (List.replicate n ρ).length = (List.replicate n (RType.arrow σ ρ)).length) :
+    cast (congrArg (RType.interp (FreeAlg A))
+        (get_replicate n (RType.arrow σ ρ) (Fin.cast p1 j)))
+      (childEnv [] (RType.arrow σ ρ) n xvec rest (Fin.cast p1 j))
+      = rest ⟨j.val, hjb⟩ :=
+  eq_of_heq ((cast_heq _ _).trans
+    (childEnv_nil_heq (RType.arrow σ ρ) n xvec rest _ ⟨j.val, hjb⟩ rfl))
+
+/-- Applying the arrow-sort lift recurrence to an argument reduces to the
+codomain lift recurrence (Leivant III section 2.4(1)): the recurrence over the
+lifts `cLiftArrow A σ ρ i`, run on a recurrence argument and applied to `x`,
+equals the recurrence over the codomain lifts `ihρ i`. The reconstructed value
+is independent of `x`; the argument is threaded through the pointwise lifts
+without affecting the object-target reconstruction. Proved by structural
+induction via `PolyFix.ind` through `cLiftArrow_interp`. -/
+theorem cLiftArrow_recurse_apply (A : AlgSig) (σ ρ : RType)
+    (ihρ : (i : A.B) → RIdent A (List.replicate (A.ar i) ρ) ρ)
+    (xvec : ∀ i : Fin ([] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([] : Ctx RType).get i))
+    (x : RType.interp (FreeAlg A) σ) (t : FreeAlg A) :
+    (FreeAlg.recurse (A := A) (P := Unit)
+        (fun i _ _sub phi =>
+          (cLiftArrow A σ ρ i (ihρ i)).interp
+            (childEnv [] (RType.arrow σ ρ) (A.ar i) xvec phi))
+        () t) x
+      = FreeAlg.recurse (A := A) (P := Unit)
+          (fun i _ _sub phi => (ihρ i).interp (childEnv [] ρ (A.ar i) xvec phi))
+          () t := by
+  refine PolyFix.ind (P := A.polyEndo)
+    (motive := fun {_} t =>
+      (FreeAlg.recurse (A := A) (P := Unit)
+          (fun i _ _sub phi =>
+            (cLiftArrow A σ ρ i (ihρ i)).interp
+              (childEnv [] (RType.arrow σ ρ) (A.ar i) xvec phi))
+          () t) x
+        = FreeAlg.recurse (A := A) (P := Unit)
+            (fun i _ _sub phi => (ihρ i).interp (childEnv [] ρ (A.ar i) xvec phi))
+            () t)
+    (fun b children ihc => ?_) t
+  refine Eq.trans (cLiftArrow_interp A σ ρ b (ihρ b)
+    (childEnv [] (RType.arrow σ ρ) (A.ar b) xvec
+      (fun e => FreeAlg.recurse (A := A) (P := Unit)
+        (fun i _ _sub phi =>
+          (cLiftArrow A σ ρ i (ihρ i)).interp
+            (childEnv [] (RType.arrow σ ρ) (A.ar i) xvec phi))
+        () (children e))) x) ?_
+  refine congrArg (ihρ b).interp (funext fun j => ?_)
+  have hjb : j.val < A.ar b := by simpa using j.isLt
+  refine eq_of_heq ((cast_heq _ _).trans
+    (HEq.trans ?_ (childEnv_nil_heq ρ (A.ar b) xvec _ j ⟨j.val, hjb⟩ rfl).symm))
+  exact heq_of_eq
+    ((congrArg (fun f => f x) (cLiftArrow_arg_eq A σ ρ (A.ar b) xvec _ j hjb _)).trans
+      (ihc ⟨j.val, hjb⟩))
+
+/-- The full lift recurrence over a curried decomposition reconstructs its
+recurrence argument on the carrier copy (Leivant III section 2.4(1)): applying
+the recurrence over the lifts `cLiftAux A D θ hθ` to any argument tuple over the
+domains `D` recovers the recurrence argument `t`, transported along the
+carrier-copy equality of the object target `θ`. Proved by structural induction on
+`D`: the empty case is `kappaHat_recurse_id`, and the cons step peels one domain
+via `cLiftArrow_recurse_apply`. -/
+theorem cLiftAux_recurse_appChain (A : AlgSig) (θ : RType) (hθ : θ.IsObj)
+    (xvec : ∀ i : Fin ([] : Ctx RType).length,
+      RType.interp (FreeAlg A) (([] : Ctx RType).get i)) :
+    (D : List RType) → (t : FreeAlg A) →
+    (args : ∀ k : Fin D.length, RType.interp (FreeAlg A) (D.get k)) →
+    appChain A D θ
+        (FreeAlg.recurse (A := A) (P := Unit)
+          (fun i _ _sub phi => (cLiftAux A D θ hθ i).interp
+            (childEnv [] (RType.curried D θ) (A.ar i) xvec phi))
+          () t)
+        args
+      = cast (RType.interp_isObj (FreeAlg A) hθ).symm t
+  | [], t, _args => kappaHat_recurse_id A θ hθ xvec t
+  | σ :: D', t, args =>
+    Eq.trans
+      (congrArg (fun z => appChain A D' θ z (fun k => args k.succ))
+        (cLiftArrow_recurse_apply A σ (RType.curried D' θ)
+          (fun i => cLiftAux A D' θ hθ i) xvec (args 0) t))
+      (cLiftAux_recurse_appChain A θ hθ xvec D' t (fun k => args k.succ))
+
 end GebLean.Ramified
