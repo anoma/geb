@@ -3,3 +3,4 @@ import GebLean.Binding.Term
 import GebLean.Binding.Thinning
 import GebLean.Binding.Kit
 import GebLean.Binding.Renaming
+import GebLean.Binding.Substitution
