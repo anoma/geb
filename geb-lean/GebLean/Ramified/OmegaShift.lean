@@ -625,15 +625,6 @@ theorem RIdent.interp_defn {A : AlgSig} {Γ : List RType} {τ : RType}
       = d.body.eval (defnModel A d.numHoles d.holeIdx (fun j => (children j).interp)) ρ :=
   rfl
 
-/-- Evaluation of an operation term applies the model's interpretation of the
-operation to the recursively evaluated arguments. A definitional reduction of
-`Tm.eval` at an operation node. -/
-theorem Tm.eval_op {S : Type} {sig : SortedSig S} {Γ : Ctx S} (M : SortedModel sig)
-    (ρ : M.Env Γ) (o : sig.Op)
-    (args : ∀ i : Fin (sig.arity o).length, Tm sig Γ ((sig.arity o).get i)) :
-    (Tm.op o args).eval M ρ = M.interpOp o (fun i => (args i).eval M ρ) :=
-  rfl
-
 /-- Evaluation of a variable term reads the environment at its position. A
 definitional reduction of `Tm.eval` at a variable node. -/
 theorem Tm.eval_var {S : Type} {sig : SortedSig S} {Γ : Ctx S} (M : SortedModel sig)
@@ -834,6 +825,11 @@ theorem cast_curryInterp_snoc (A : AlgSig) : (Γ : List RType) → (σ τ : RTyp
       (curryInterp A ((γ :: Γ') ++ [σ]) τ g) a).trans ?_
     exact cast_curryInterp_snoc A Γ' σ τ (fun ρ' => g (Fin.cons a ρ'))
 
+/-- The denotation of the arrow-sort pointwise constructor lift `c_i^{σ → ρ}`
+(Leivant III section 2.4(1)): applied to functions `phi` and an argument `x`, it
+is the codomain lift `c_i^ρ` applied to the pointwise evaluations `phi j x`. The
+casts transport each `phi j` and the result along the `List.replicate` position
+equalities of the arity contexts. -/
 theorem cLiftArrow_interp (A : AlgSig) (σ ρ : RType) (i : A.B)
     (ihρ : RIdent A (List.replicate (A.ar i) ρ) ρ)
     (phi : ∀ j : Fin (List.replicate (A.ar i) (RType.arrow σ ρ)).length,
