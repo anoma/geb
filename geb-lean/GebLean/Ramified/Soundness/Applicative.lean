@@ -628,6 +628,41 @@ two branches at enumeration positions `0` and `1`. -/
                 (by rw [List.get_eq_getElem, List.getElem_replicate]))
                 (branchEnv ⟨1, (by decide : (1:Nat) < 2)⟩))) := rfl
 
+/-- `appEval` on an iterated application `appSpine Ts f args` is the semantic
+application chain `appChain` of the function denotation to the argument
+denotations. The applicative-fragment β-reduction lifted to a whole spine, by
+induction on `Ts` from `appEval_app'`. -/
+@[simp] theorem appEval_appSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (Ts : List RType) →
+    (f : Binding.Tm (rlmrOSig natAlgSig) Γ (RType.curried Ts result)) →
+    (args : ∀ i : Fin Ts.length, Binding.Tm (rlmrOSig natAlgSig) Γ (Ts.get i)) →
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) →
+    appEval (appSpine Ts f args) ρ
+      = appChain natAlgSig Ts result (appEval f ρ) (fun i => appEval (args i) ρ)
+  | [], _f, _args, _ρ => rfl
+  | _T :: Ts', f, args, ρ => by
+    rw [appSpine, appEval_appSpine Ts', appEval_app']
+    rfl
+
+/-- `appEval` on the saturated recurrence combinator `recCombinator Estep` is the
+curried closed recurrence reading its step functions positionally from the
+`appEval`-denoted step terms. Collapses the `appEval_recur` currying along the
+step spine via `appChain_curryInterp`. -/
+@[simp] theorem appEval_recCombinator {Γ : Binding.Ctx RType} {τ : RType}
+    (Estep : ∀ b : natAlgSig.B,
+      Binding.Tm (rlmrOSig natAlgSig) Γ (RType.curried (List.replicate (natAlgSig.ar b) τ) τ))
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (recCombinator Estep) ρ
+      = fun z => FreeAlg.recurse (A := natAlgSig) (P := Unit)
+          (fun i _ _sub phi =>
+            appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+              (stepAtLabel (fun idx => appEval (stepEnvOfFun Estep idx) ρ) i)
+              (childEnv [] τ (natAlgSig.ar i) finZeroElim phi))
+          () z := by
+  rw [recCombinator, appEval_appSpine]
+  exact appChain_curryInterp natAlgSig (stepTypes natAlgSig τ τ)
+    (RType.arrow (RType.omega τ) τ) _ (fun i => appEval (stepEnvOfFun Estep i) ρ)
+
 /-- The thinning embedding the suffix `Ξ` of an append-at-end context into the
 whole `Γ ++ Ξ`: drop every entry of the prefix `Γ`, then keep every entry of
 `Ξ` (the identity on the suffix). The suffix-inclusion counterpart of
