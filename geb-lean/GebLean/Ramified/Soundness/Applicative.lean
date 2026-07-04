@@ -53,6 +53,15 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
 * `appEvalOp`, `appEval` — the standard-model denotation of an operation node and
   the standard-model evaluator of an object-sorted applicative term over
   `natAlgSig` (Leivant III section 4.1, the standard semantics of section 2.7).
+* `lamSpine`, `suffixThinning` — iterated λ-abstraction of a context suffix and
+  the suffix inclusion into an append-at-end context.
+* `defnModelTerm`, `prop7DefnStep` — the applicative-term model of a definition's
+  body and the direct translation of an explicit-definition identifier.
+* `caseAtType`, `frecBranch`, `prop7MrecStep`, `prop7FrecStep` — the higher-type
+  case realization, one flat-recurrence branch, and the direct translations of a
+  monotone- and a flat-recurrence identifier.
+* `prop7TranslateStep`, `prop7Translate` — the per-node translation step and the
+  direct Proposition 7 translation.
 
 ## Main statements
 
@@ -63,6 +72,10 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
   operation cases and the context-transport coherence.
 * `appEval_app'`, `appEval_lam'`, `appEval_con`, `appEval_recur`, `appEval_dstr`,
   `appEval_case` — the evaluation of `appEval` through the term combinators.
+* `arrow_node_eq` — an `arrow`-shape free-algebra node is the `RType.arrow` of
+  its two children.
+* `prop7Translate_interp` — the direct Proposition 7 translation preserves the
+  denoted function (the soundness arm `(1)⟹(4)`).
 
 ## Implementation notes
 
@@ -144,10 +157,11 @@ inductive RlmrOOp (A : AlgSig) [Fintype A.B] where
   | case (θ : RType) (hθ : θ.IsObj)
 
 /-- The binding signature of the object-sorted applicative calculus
-`RλMR_o^ω(A)` (Leivant III section 4.1). Shares `app`, `lam`, `con`, and
-`recur` with `rlmrSig`; the flat-recurrence combinator is replaced by the
-destructors `dstr j : o.arrow o` and the case combinators
-`case θ : o.arrow (θ^k → θ)`, both nullary. Novel packaging of section 4.1. -/
+`RλMR_o^ω(A)` (Leivant III section 4.1): the application `app`, the abstraction
+`lam`, the constructor constants `con`, and the recurrence combinator `recur`,
+together with the destructors `dstr j : o.arrow o` and the case combinators
+`case θ : o.arrow (θ^k → θ)` realizing flat recurrence (both nullary). Novel
+packaging of section 4.1. -/
 def rlmrOSig (A : AlgSig) [Fintype A.B] [LinearOrder A.B] : BinderSig RType where
   Op := RlmrOOp A
   result := fun
