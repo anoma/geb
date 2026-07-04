@@ -1,5 +1,7 @@
 import GebLean.Ramified.Algebras
 import GebLean.Ramified.Definability.Simultaneous
+import GebLean.Ramified.Definability.Ladder
+import GebLean.Ramified.Definability.Bounds
 import GebLean.Utilities.ZeroTestURM
 
 /-!
@@ -689,5 +691,129 @@ theorem urm_simul_interp {a : ℕ} (p : URMProgram a) (v : Fin a → ℕ) (t : �
     have h := urm_simulSol_eq p v t ⟨r.val + 1, by have := r.isLt; omega⟩
     rw [dif_neg (Nat.succ_ne_zero r.val)] at h
     exact h.trans (congrArg (URMState.runFor p (URMState.init p v) t).regs (Fin.ext rfl))
+
+/-- The staggered input context of the eq. (8) assembly over a base object sort
+`β`: `stagCtx 0 β = []` and
+`stagCtx (n + 1) β = stagCtx n (Ω β) ++ [Ω (β → β)]`. Position `i` of
+`stagCtx n β` carries the input sort `Ω (θᵢ → θᵢ)` with `θᵢ = Ω^{n-1-i} β`, so
+that the per-input size at `θᵢ` and the descending partial sums chain through
+the addition copies `θ', Ω θ' → θ'` (`addAtIdent`). Novel packaging. -/
+def stagCtx : Nat → RType → Ctx RType
+  | 0, _β => []
+  | n + 1, β => stagCtx n (RType.omega β) ++ [RType.omega (expFun β)]
+
+/-- The staggered input context of length `n` has length `n`. -/
+theorem stagCtx_length : (n : Nat) → (β : RType) → (stagCtx n β).length = n
+  | 0, _β => rfl
+  | n + 1, β => by
+    rw [stagCtx, List.length_append, stagCtx_length n (RType.omega β)]
+    rfl
+
+/-- Every sort of the staggered input context is an object sort: each is an
+`Omega` sort (`Ω (β → β)` at the appended tail, an `Omega` sort recursively). -/
+theorem stagCtx_forall_isObj :
+    (n : Nat) → (β : RType) → ∀ x ∈ stagCtx n β, x.IsObj
+  | 0, _β => by intro x hx; simp [stagCtx] at hx
+  | n + 1, β => by
+    intro x hx
+    rw [stagCtx, List.mem_append] at hx
+    rcases hx with h | h
+    · exact stagCtx_forall_isObj n (RType.omega β) x h
+    · rw [List.mem_singleton] at h; subst h; exact Or.inr rfl
+
+/-- The base object sort of the eq. (8) assembly at clock height `q`:
+`clockSort q (Ω ω)` with `ω = Ω (o → o)` the count sort of the machine
+simultaneous family. The total size sum lands here, and `twoPowIdent q (Ω ω)`
+lowers it to `Ω ω`. -/
+def machineBaseSort (q : ℕ) : RType :=
+  clockSort q (RType.omega (RType.omega (RType.arrow RType.o RType.o)))
+
+/-- The base object sort is an object sort (`clockSort_isObj` at the `Omega`
+sort `Ω ω`). -/
+theorem machineBaseSort_isObj (q : ℕ) : (machineBaseSort q).IsObj :=
+  clockSort_isObj q _ (Or.inr rfl)
+
+/-- Leivant III Lemma 6's realizer input context (paper section 3.2, eq. (8)):
+`a` copies of the staggered input sort `Ω (θᵢ → θᵢ)`, with
+`θᵢ = Ω^{a-1-i}(machineBaseSort q)`. Position `i` carries input `i` at
+`Ω (θᵢ → θᵢ)`; the size `sz` at `θᵢ` and the descending addition copies chain
+the per-input sizes into the total at `machineBaseSort q`, from which
+`twoPowIdent q` and the constant multiple build the clock. Every entry is an
+object sort beyond the tower sorts. -/
+def machineCtx (a q : ℕ) : Ctx RType :=
+  stagCtx a (machineBaseSort q)
+
+/-- The realizer input context has length `a`. -/
+theorem machineCtx_length (a q : ℕ) : (machineCtx a q).length = a :=
+  stagCtx_length a _
+
+/-- Every entry of the realizer input context is an object sort. -/
+theorem machineCtx_isObj (a q : ℕ) :
+    ∀ i : Fin (machineCtx a q).length, ((machineCtx a q).get i).IsObj :=
+  fun i => stagCtx_forall_isObj a _ _ ((machineCtx a q).get_mem i)
+
+/-- The projection identifier reading a context variable: at context `Γ` and
+result `Γ.get i`, the explicit definition whose body is the variable `i`. Its
+denotation is the environment at position `i`. -/
+def projIdent {A : AlgSig} (Γ : Ctx RType) (i : Fin Γ.length) :
+    RIdent A Γ (Γ.get i) :=
+  RIdent.defn ⟨0, finZeroElim, Tm.var i⟩ finZeroElim
+
+/-- The projection identifier denotes the environment at its position. -/
+theorem projIdent_interp {A : AlgSig} (Γ : Ctx RType) (i : Fin Γ.length)
+    (ρ : ∀ k : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get k)) :
+    (projIdent Γ i).interp ρ = ρ i :=
+  rfl
+
+/-- The hole contexts of a saturated identifier application: hole `0` is the
+applied identifier `f` at its own context `Δ` and result `τ`; each hole `k + 1`
+is the `k`-th argument identifier at the outer context `Γ` and the argument's
+sort `Δ.get k`. -/
+def applyHoleIdx (Γ Δ : Ctx RType) (τ : RType) :
+    Fin (Δ.length + 1) → List RType × RType
+  | ⟨0, _⟩ => (Δ, τ)
+  | ⟨k + 1, h⟩ => (Γ, Δ.get ⟨k, by omega⟩)
+
+/-- The defining term of a saturated identifier application: hole `0` (the
+identifier `f`) applied to the argument vector, where the `j`-th argument is
+hole `j + 1` (the `j`-th argument identifier) applied to the outer context's
+variables. -/
+def applyBody {A : AlgSig} (Γ Δ : Ctx RType) (τ : RType) :
+    Tm (defnSig A (Δ.length + 1) (applyHoleIdx Γ Δ τ)) Γ τ :=
+  Tm.op (sig := defnSig A (Δ.length + 1) (applyHoleIdx Γ Δ τ))
+    (Sum.inl (Sum.inr ⟨0, Nat.succ_pos _⟩))
+    (fun j : Fin Δ.length =>
+      Tm.op (sig := defnSig A (Δ.length + 1) (applyHoleIdx Γ Δ τ))
+        (Sum.inl (Sum.inr ⟨j.val + 1, by omega⟩))
+        (fun i : Fin Γ.length => Tm.var i))
+
+/-- The identifiers filling a saturated identifier application's holes: hole `0`
+is the applied identifier `f`; each hole `k + 1` is the `k`-th argument
+identifier. -/
+def applyChildren {A : AlgSig} {Γ Δ : Ctx RType} {τ : RType} (f : RIdent A Δ τ)
+    (args : (k : Fin Δ.length) → RIdent A Γ (Δ.get k)) :
+    (h : Fin (Δ.length + 1)) →
+      RIdent A (applyHoleIdx Γ Δ τ h).1 (applyHoleIdx Γ Δ τ h).2
+  | ⟨0, _⟩ => f
+  | ⟨k + 1, h⟩ => args ⟨k, by omega⟩
+
+/-- Application of an identifier `f : RIdent A Δ τ` to an argument vector, each
+argument an identifier over the outer context `Γ`: the explicit definition
+whose body is `applyBody` and whose holes are `applyChildren`. Its denotation
+applies `f`'s denotation to the argument identifiers' denotations. The
+combinator form used to compose the ladder identifiers of the eq. (8) assembly.
+Novel packaging. -/
+def applyIdent {A : AlgSig} {Γ Δ : Ctx RType} {τ : RType} (f : RIdent A Δ τ)
+    (args : (k : Fin Δ.length) → RIdent A Γ (Δ.get k)) : RIdent A Γ τ :=
+  RIdent.defn ⟨Δ.length + 1, applyHoleIdx Γ Δ τ, applyBody Γ Δ τ⟩
+    (applyChildren f args)
+
+/-- The denotation of a saturated identifier application applies `f`'s
+denotation to the argument identifiers' denotations at the outer environment. -/
+theorem applyIdent_interp {A : AlgSig} {Γ Δ : Ctx RType} {τ : RType}
+    (f : RIdent A Δ τ) (args : (k : Fin Δ.length) → RIdent A Γ (Δ.get k))
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get i)) :
+    (applyIdent f args).interp ρ = f.interp (fun j => (args j).interp ρ) :=
+  rfl
 
 end GebLean.Ramified
