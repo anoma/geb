@@ -1,6 +1,7 @@
 import Mathlib.Data.Finset.Sort
 import GebLean.Binding.Term
 import GebLean.Binding.Substitution
+import GebLean.Binding.Laws
 import GebLean.Ramified.HigherOrder
 import GebLean.Ramified.Definability.Flat
 
@@ -662,6 +663,369 @@ step spine via `appChain_curryInterp`. -/
   rw [recCombinator, appEval_appSpine]
   exact appChain_curryInterp natAlgSig (stepTypes natAlgSig τ τ)
     (RType.arrow (RType.omega τ) τ) _ (fun i => appEval (stepEnvOfFun Estep i) ρ)
+
+/-- The semantic renaming environment of a thinning `θ : Thinning Γ Δ`: pull a
+`Δ`-indexed environment back to a `Γ`-indexed one by reading each `Γ`-position
+through `θ`, transported along `θ`'s sort proof. The standard-model counterpart
+of `renEnv` (`GebLean/Binding/Renaming.lean`); it reconciles the syntactic
+renaming `Binding.ren θ` with `appEval` in `appEval_ren` (Leivant III §4.1). -/
+def renEnvSem {Γ Δ : Binding.Ctx RType} (θ : Binding.Thinning Γ Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i) :=
+  fun i => (θ.app ⟨i, rfl⟩).2 ▸ ρ (θ.app ⟨i, rfl⟩).1
+
+/-- The parallel append of `θ` acts on a suffix-embedded prefix variable
+`Thinning.weakAppend.app v` by renaming `v` under `θ` and re-embedding the result
+into the suffix-extended target. The `Binding.Var`-level computation rule that
+`renEnvSem_appendId_childEnv` uses at prefix positions. -/
+theorem appendId_app_weakAppend {Γ Δ Ξ : Binding.Ctx RType} {s : RType}
+    (θ : Binding.Thinning Γ Δ) (v : Binding.Var Γ s) :
+    (Binding.Thinning.appendId θ Ξ).app (Binding.Thinning.weakAppend.app v)
+      = Binding.Thinning.weakAppend.app (θ.app v) := by
+  rw [Binding.Thinning.appendId_app]
+  exact Binding.Var.appendCases_weakAppend _ Γ _ v
+
+/-- The parallel append of `θ` acts on a suffix inclusion `Var.appendRight Γ y`
+by re-including `y` past the renamed prefix `Δ`. The `Binding.Var`-level
+computation rule that `renEnvSem_appendId_childEnv` uses at suffix positions. -/
+theorem appendId_app_appendRight {Γ Δ Ξ : Binding.Ctx RType} {s : RType}
+    (θ : Binding.Thinning Γ Δ) (y : Binding.Var Ξ s) :
+    (Binding.Thinning.appendId θ Ξ).app (Binding.Var.appendRight Γ y)
+      = Binding.Var.appendRight Δ y := by
+  rw [Binding.Thinning.appendId_app]
+  exact Binding.Var.appendCases_appendRight _ Γ _ y
+
+/-- The suffix embedding `Thinning.weakAppend` preserves a variable's underlying
+position: embedding the prefix `Γ` into `Γ ++ Ξ` keeps every position of `Γ`
+fixed. -/
+theorem weakAppend_app_val : {Γ Ξ : Binding.Ctx RType} → {s : RType} →
+    (v : Binding.Var Γ s) →
+      ((Binding.Thinning.weakAppend (Γ := Γ) (Ξ := Ξ)).app v).1.val = v.1.val
+  | [], _, _, v => v.1.elim0
+  | a :: Γ', Ξ, _s, ⟨i, hi⟩ => by
+      cases i using Fin.cases with
+      | zero => rfl
+      | succ i' =>
+          have h := Binding.Thinning.weakAppend_app_succ (Γ := Γ') (Ξ := Ξ) a ⟨i', hi⟩
+          rw [show (⟨i'.succ, hi⟩ : Binding.Var (a :: Γ') _)
+                = Binding.Var.succ a ⟨i', hi⟩ from rfl, h]
+          exact congrArg (· + 1) (weakAppend_app_val (Γ := Γ') (Ξ := Ξ) ⟨i', hi⟩)
+
+/-- The suffix inclusion `Var.appendRight Γ` shifts a suffix variable's position
+past the whole prefix `Γ`. -/
+theorem appendRight_val : {Ξ : Binding.Ctx RType} → {s : RType} →
+    (Γ : Binding.Ctx RType) → (y : Binding.Var Ξ s) →
+      (Binding.Var.appendRight Γ y).1.val = Γ.length + y.1.val
+  | _, _, [], y => (Nat.zero_add _).symm
+  | _, _, a :: Γ', y => by
+      rw [Binding.Var.appendRight_cons, List.length_cons]
+      have hsucc : (Binding.Var.succ a (Binding.Var.appendRight Γ' y)).1.val
+          = (Binding.Var.appendRight Γ' y).1.val + 1 := rfl
+      rw [hsucc, appendRight_val Γ' y]
+      omega
+
+/-- The action of a thinning on a variable determines the target position from
+the source position alone: two variables with the same underlying index (but
+possibly distinct sort proofs) map to the same target position. -/
+theorem thinning_app_fst {Γ Δ : Binding.Ctx RType} (θ : Binding.Thinning Γ Δ) :
+    ∀ {s s' : RType} (x : Binding.Var Γ s) (x' : Binding.Var Γ s'),
+      x.1 = x'.1 → (θ.app x).1 = (θ.app x').1 := by
+  induction θ with
+  | nil => intro _ _ x _ _; exact x.1.elim0
+  | keep a ρ' ih =>
+      intro _ _ x x' hx
+      obtain ⟨i, hi⟩ := x
+      obtain ⟨i', hi'⟩ := x'
+      simp only at hx
+      subst hx
+      cases i using Fin.cases with
+      | zero => rfl
+      | succ i0 =>
+          rw [show (⟨i0.succ, hi⟩ : Binding.Var (a :: _) _) = Binding.Var.succ a ⟨i0, hi⟩ from rfl,
+            show (⟨i0.succ, hi'⟩ : Binding.Var (a :: _) _) = Binding.Var.succ a ⟨i0, hi'⟩ from rfl,
+            Binding.Thinning.app_keep_of_succ, Binding.Thinning.app_keep_of_succ]
+          exact congrArg Fin.succ (ih ⟨i0, hi⟩ ⟨i0, hi'⟩ rfl)
+  | drop a ρ' ih =>
+      intro _ _ x x' hx
+      rw [Binding.Thinning.app_drop, Binding.Thinning.app_drop]
+      exact congrArg Fin.succ (ih x x' hx)
+
+/-- The recurrence-context environment reads its parameter value, heterogeneously,
+at any position below `params.length`. The value-level companion of
+`childEnv_finAppL`. -/
+theorem childEnv_heq_left {C : RType → Type} {params : List RType} {σ : RType}
+    {n : Nat} (xvec : ∀ i : Fin params.length, C (params.get i))
+    (rest : Fin n → C σ) (k : Fin (params ++ List.replicate n σ).length)
+    (h : k.val < params.length) :
+    childEnv params σ n xvec rest k ≍ xvec ⟨k.val, h⟩ := by
+  unfold childEnv
+  rw [dif_pos h]
+  exact cast_heq _ _
+
+/-- The recurrence-context environment reads its appended value, heterogeneously,
+at any position at or beyond `params.length`. The value-level companion of
+`childEnv_finAppR`. -/
+theorem childEnv_heq_right {C : RType → Type} {params : List RType} {σ : RType}
+    {n : Nat} (xvec : ∀ i : Fin params.length, C (params.get i))
+    (rest : Fin n → C σ) (k : Fin (params ++ List.replicate n σ).length)
+    (h : ¬ k.val < params.length) (hb : k.val - params.length < n) :
+    childEnv params σ n xvec rest k ≍ rest ⟨k.val - params.length, hb⟩ := by
+  unfold childEnv
+  rw [dif_neg h]
+  exact cast_heq _ _
+
+/-- The tautological variable at a left-injected position is the prefix
+embedding of the tautological variable at the source position. Bridges the
+`finAppL` split of `childEnv` to the `Var.appendCases` split of
+`Thinning.appendId_app`. -/
+theorem taut_finAppL_eq {Γ Ξ : Binding.Ctx RType} (i : Fin Γ.length) :
+    (⟨finAppL Γ Ξ i, rfl⟩ : Binding.Var (Γ ++ Ξ) ((Γ ++ Ξ).get (finAppL Γ Ξ i)))
+      = Binding.Thinning.weakAppend.app ⟨i, (get_finAppL Γ Ξ i).symm⟩ :=
+  Subtype.ext (Fin.ext (by rw [weakAppend_app_val]; rfl))
+
+/-- The tautological variable at a right-injected position is the suffix
+inclusion of the tautological variable at the suffix position. Bridges the
+`finAppR` split of `childEnv` to the `Var.appendCases` split of
+`Thinning.appendId_app`. -/
+theorem taut_finAppR_eq {Γ Ξ : Binding.Ctx RType} (j : Fin Ξ.length) :
+    (⟨finAppR Γ Ξ j, rfl⟩ : Binding.Var (Γ ++ Ξ) ((Γ ++ Ξ).get (finAppR Γ Ξ j)))
+      = Binding.Var.appendRight Γ ⟨j, (get_finAppR Γ Ξ j).symm⟩ :=
+  Subtype.ext (Fin.ext (by rw [appendRight_val]; rfl))
+
+/-- The semantic renaming environment of the parallel append `θ.appendId Ξ`
+acting on a recurrence-context gluing `childEnv Δ σ n ρ rest` equals the gluing
+of the pulled-back parameter environment `renEnvSem θ ρ` with the same suffix
+values `rest`. The environment-level naturality reconciling `Binding.ren`'s
+`Env.underBinder` with `appEval`'s binder-extended environments (the crux of
+`appEval_ren` at the `app`/`lam` operation nodes; `Ξ = List.replicate n σ`). -/
+theorem renEnvSem_appendId_childEnv {Γ Δ : Binding.Ctx RType} {σ : RType} {n : Nat}
+    (θ : Binding.Thinning Γ Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i))
+    (rest : Fin n → RType.interp (FreeAlg natAlgSig) σ) :
+    renEnvSem (Binding.Thinning.appendId θ (List.replicate n σ)) (childEnv Δ σ n ρ rest)
+      = childEnv Γ σ n (renEnvSem θ ρ) rest := by
+  funext k
+  refine finApp_cases (Γ := Γ) (Δ := List.replicate n σ)
+    (motive := fun k =>
+      renEnvSem (Binding.Thinning.appendId θ (List.replicate n σ)) (childEnv Δ σ n ρ rest) k
+        = childEnv Γ σ n (renEnvSem θ ρ) rest k)
+    (fun i => ?_) (fun j => ?_) k
+  · apply eq_of_heq
+    have hfin : (finAppL Γ (List.replicate n σ) i).val < Γ.length := i.isLt
+    have hvar : (Binding.Thinning.appendId θ (List.replicate n σ)).app
+          ⟨finAppL Γ (List.replicate n σ) i, rfl⟩
+        = (Binding.Thinning.weakAppend (Ξ := List.replicate n σ)).app
+            (θ.app ⟨i, (get_finAppL Γ (List.replicate n σ) i).symm⟩) := by
+      rw [taut_finAppL_eq]; exact appendId_app_weakAppend θ _
+    have hVval : ((Binding.Thinning.appendId θ (List.replicate n σ)).app
+          ⟨finAppL Γ (List.replicate n σ) i, rfl⟩).1.val
+        = (θ.app ⟨i, rfl⟩).1.val := by
+      rw [congrArg (fun v => v.1.val) hvar, weakAppend_app_val]
+      exact congrArg Fin.val (thinning_app_fst θ _ _ rfl)
+    have hlt' : ((Binding.Thinning.appendId θ (List.replicate n σ)).app
+          ⟨finAppL Γ (List.replicate n σ) i, rfl⟩).1.val < Δ.length := by
+      rw [hVval]; exact (θ.app _).1.isLt
+    have hLHS : renEnvSem (Binding.Thinning.appendId θ (List.replicate n σ))
+        (childEnv Δ σ n ρ rest) (finAppL Γ (List.replicate n σ) i)
+          ≍ renEnvSem θ ρ i := by
+      have hpos : (⟨((Binding.Thinning.appendId θ (List.replicate n σ)).app
+            ⟨finAppL Γ (List.replicate n σ) i, rfl⟩).1.val, hlt'⟩ : Fin Δ.length)
+          = (θ.app ⟨i, rfl⟩).1 := Fin.ext hVval
+      simp only [renEnvSem]
+      refine (eqRec_heq _ _).trans ((childEnv_heq_left ρ rest _ hlt').trans ?_)
+      refine HEq.trans ?_ (eqRec_heq _ _).symm
+      exact hpos ▸ HEq.rfl
+    have hRHS : childEnv Γ σ n (renEnvSem θ ρ) rest (finAppL Γ (List.replicate n σ) i)
+        ≍ renEnvSem θ ρ i :=
+      (childEnv_heq_left (renEnvSem θ ρ) rest _ hfin).trans (heq_of_eq rfl)
+    exact hLHS.trans hRHS.symm
+  · apply eq_of_heq
+    have hj : j.val < n := lt_of_lt_of_eq j.isLt List.length_replicate
+    have hvalR : (finAppR Γ (List.replicate n σ) j).val = Γ.length + j.val := rfl
+    have hgeR : ¬ (finAppR Γ (List.replicate n σ) j).val < Γ.length := by
+      rw [hvalR]; omega
+    have hbR : (finAppR Γ (List.replicate n σ) j).val - Γ.length < n := by
+      rw [hvalR]; omega
+    have hvar : (Binding.Thinning.appendId θ (List.replicate n σ)).app
+          ⟨finAppR Γ (List.replicate n σ) j, rfl⟩
+        = Binding.Var.appendRight Δ ⟨j, (get_finAppR Γ (List.replicate n σ) j).symm⟩ := by
+      rw [taut_finAppR_eq]; exact appendId_app_appendRight θ _
+    have hVval : ((Binding.Thinning.appendId θ (List.replicate n σ)).app
+          ⟨finAppR Γ (List.replicate n σ) j, rfl⟩).1.val = Δ.length + j.val := by
+      rw [congrArg (fun v => v.1.val) hvar, appendRight_val]
+    have hgeL : ¬ ((Binding.Thinning.appendId θ (List.replicate n σ)).app
+          ⟨finAppR Γ (List.replicate n σ) j, rfl⟩).1.val < Δ.length := by
+      rw [hVval]; omega
+    have hbL : ((Binding.Thinning.appendId θ (List.replicate n σ)).app
+          ⟨finAppR Γ (List.replicate n σ) j, rfl⟩).1.val - Δ.length < n := by
+      rw [hVval]; omega
+    have hLHS : renEnvSem (Binding.Thinning.appendId θ (List.replicate n σ))
+        (childEnv Δ σ n ρ rest) (finAppR Γ (List.replicate n σ) j)
+          ≍ rest ⟨j.val, hj⟩ := by
+      have hvaleqL : ((Binding.Thinning.appendId θ (List.replicate n σ)).app
+            ⟨finAppR Γ (List.replicate n σ) j, rfl⟩).1.val - Δ.length = j.val := by
+        rw [hVval]; omega
+      have hposL : (⟨((Binding.Thinning.appendId θ (List.replicate n σ)).app
+            ⟨finAppR Γ (List.replicate n σ) j, rfl⟩).1.val - Δ.length, hbL⟩ : Fin n)
+          = ⟨j.val, hj⟩ := Fin.ext hvaleqL
+      simp only [renEnvSem]
+      refine (eqRec_heq _ _).trans ((childEnv_heq_right ρ rest _ hgeL hbL).trans ?_)
+      exact heq_of_eq (congrArg rest hposL)
+    have hvaleqR : (finAppR Γ (List.replicate n σ) j).val - Γ.length = j.val := by
+      rw [hvalR]; omega
+    have hposR : (⟨(finAppR Γ (List.replicate n σ) j).val - Γ.length, hbR⟩ : Fin n)
+        = ⟨j.val, hj⟩ := Fin.ext hvaleqR
+    have hRHS : childEnv Γ σ n (renEnvSem θ ρ) rest (finAppR Γ (List.replicate n σ) j)
+        ≍ rest ⟨j.val, hj⟩ :=
+      (childEnv_heq_right (renEnvSem θ ρ) rest _ hgeR hbR).trans
+        (heq_of_eq (congrArg rest hposR))
+    exact hLHS.trans hRHS.symm
+
+/-- Reading a context-transported environment at a position below the source
+length recovers the source value, heterogeneously. -/
+theorem envCastCtx_apply_heq {Γ Δ : Binding.Ctx RType} (h : Γ = Δ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (k : Fin Δ.length) (hk : k.val < Γ.length) :
+    envCastCtx h ρ k ≍ ρ ⟨k.val, hk⟩ := by
+  subst h
+  exact HEq.rfl
+
+/-- The context transport across `Δ ++ [] = Δ` is the empty-suffix recurrence
+gluing: the environment `childEnv Δ σ 0` with no appended values. -/
+theorem envCastCtx_eq_childEnv_zero {Δ : Binding.Ctx RType} (σ : RType)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    envCastCtx (List.append_nil Δ).symm ρ = childEnv Δ σ 0 ρ finZeroElim := by
+  funext k
+  have hlt : k.val < Δ.length :=
+    lt_of_lt_of_eq k.isLt (congrArg List.length (List.append_nil Δ))
+  exact eq_of_heq ((envCastCtx_apply_heq _ ρ k hlt).trans
+    (childEnv_heq_left ρ finZeroElim k hlt).symm)
+
+/-- The `app`-node environment reconciliation (empty binder suffix): the semantic
+renaming of the `Γ ++ [] = Γ` transport of `ρ` equals the transport of the
+renamed `ρ`. The `app` arm of `appEvalOp_renEnvSem`. -/
+theorem renEnvSem_appendId_nil {Γ Δ : Binding.Ctx RType} (θ : Binding.Thinning Γ Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    renEnvSem (Binding.Thinning.appendId θ []) (envCastCtx (List.append_nil Δ).symm ρ)
+      = envCastCtx (List.append_nil Γ).symm (renEnvSem θ ρ) := by
+  rw [envCastCtx_eq_childEnv_zero RType.o, envCastCtx_eq_childEnv_zero RType.o]
+  exact renEnvSem_appendId_childEnv θ ρ finZeroElim
+
+/-- The `lam`-node environment reconciliation (singleton binder suffix): the
+semantic renaming of the binder-extended `ρ` equals the extension of the renamed
+`ρ`. The `lam` arm of `appEvalOp_renEnvSem`. -/
+theorem renEnvSem_appendId_extend {Γ Δ : Binding.Ctx RType} {σ : RType}
+    (θ : Binding.Thinning Γ Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i))
+    (v : RType.interp (FreeAlg natAlgSig) σ) :
+    renEnvSem (Binding.Thinning.appendId θ [σ]) (envExtend ρ v)
+      = envExtend (renEnvSem θ ρ) v :=
+  renEnvSem_appendId_childEnv (n := 1) θ ρ (fun _ => v)
+
+/-- Per-operation naturality of `appEvalOp` under semantic renaming: evaluating a
+node over the target context `Δ` on the binder-weakened, pulled-back subterm
+denotations equals evaluating over the source context `Γ` on the subterm
+denotations at the pulled-back environment. The `app` and `lam` arms use the two
+environment reconciliations; the nullary constants ignore both the subterm family
+and the environment. The operation case of `appEval_ren` (Leivant III §4.1). -/
+theorem appEvalOp_renEnvSem {Γ Δ : Binding.Ctx RType} (o : RlmrOOp natAlgSig)
+    (θ : Binding.Thinning Γ Δ)
+    (g : ∀ j : Fin ((rlmrOSig natAlgSig).args o).length,
+      (∀ i : Fin (Γ ++ (((rlmrOSig natAlgSig).args o).get j).1).length,
+        RType.interp (FreeAlg natAlgSig)
+          ((Γ ++ (((rlmrOSig natAlgSig).args o).get j).1).get i)) →
+        RType.interp (FreeAlg natAlgSig) (((rlmrOSig natAlgSig).args o).get j).2)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    appEvalOp (Γ := Δ) o
+        (fun j ρ'' => g j (renEnvSem
+          (Binding.Thinning.appendId θ (((rlmrOSig natAlgSig).args o).get j).1) ρ'')) ρ
+      = appEvalOp (Γ := Γ) o g (renEnvSem θ ρ) := by
+  cases o with
+  | app σ τ =>
+      simp only [appEvalOp]
+      have h0 : renEnvSem (Binding.Thinning.appendId θ
+            (((rlmrOSig natAlgSig).args (RlmrOOp.app σ τ)).get ⟨0, Nat.zero_lt_two⟩).1)
+          (envCastCtx (List.append_nil Δ).symm ρ)
+            = envCastCtx (List.append_nil Γ).symm (renEnvSem θ ρ) := renEnvSem_appendId_nil θ ρ
+      have h1 : renEnvSem (Binding.Thinning.appendId θ
+            (((rlmrOSig natAlgSig).args (RlmrOOp.app σ τ)).get ⟨1, Nat.one_lt_two⟩).1)
+          (envCastCtx (List.append_nil Δ).symm ρ)
+            = envCastCtx (List.append_nil Γ).symm (renEnvSem θ ρ) := renEnvSem_appendId_nil θ ρ
+      rw [h0, h1]
+      rfl
+  | lam σ τ =>
+      simp only [appEvalOp]
+      funext v
+      have h : renEnvSem (Binding.Thinning.appendId θ
+            (((rlmrOSig natAlgSig).args (RlmrOOp.lam σ τ)).get ⟨0, Nat.zero_lt_one⟩).1)
+          (envExtend ρ v) = envExtend (renEnvSem θ ρ) v := renEnvSem_appendId_extend θ ρ v
+      rw [h]
+      rfl
+  | con θ' hθ b => rfl
+  | recur τ => rfl
+  | dstr j => rfl
+  | case θ' hθ => rfl
+
+/-- Renaming fusion at a variable leaf: evaluating a renamed variable reads the
+thinning through `renEnvSem`. Factored with a free sort variable so the sort
+proof can be discharged by substitution. -/
+theorem appEval_ren_var {Γ Δ : Binding.Ctx RType} {s : RType} (θ : Binding.Thinning Γ Δ)
+    (x : Binding.Var Γ s)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    appEval (Binding.ren θ (Binding.Tm.var x)) ρ
+      = appEval (Binding.Tm.var x) (renEnvSem θ ρ) := by
+  rw [Binding.ren, Binding.traverse_var]
+  simp only [Binding.varKit, Binding.renEnv]
+  rw [appEval_var, appEval_var]
+  obtain ⟨pos, hsort⟩ := x
+  subst hsort
+  simp only [renEnvSem]
+
+/-- Renaming fusion for `appEval` (Leivant III §4.1): evaluating a renamed term
+at an environment equals evaluating the original at the semantically renamed
+environment. The base case reads the thinning through `renEnvSem`; the operation
+case is `appEvalOp_renEnvSem` on the binder-weakened subterm denotations. Stated
+over an arbitrary index so the induction on the term goes through. -/
+@[simp] theorem appEval_ren : ∀ {y : Binding.Ctx RType × RType}
+    (t : PolyFix (polyTranslate (Binding.varOver (Ty := RType)) (rlmrOSig natAlgSig).polyEndo) y)
+    {Δ : Binding.Ctx RType} (θ : Binding.Thinning y.1 Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)),
+    appEval (Binding.ren θ t) ρ = appEval t (renEnvSem θ ρ) := by
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ θ ρ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Binding.Tm (rlmrOSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      exact appEval_ren_var θ (leafVar a) ρ
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (rlmrOSig natAlgSig).Op // (rlmrOSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (rlmrOSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (rlmrOSig natAlgSig) Γ' ((rlmrOSig natAlgSig).result o))
+            = Binding.Tm.op o (fun j => children ⟨j⟩) from rfl]
+      rw [Binding.ren, Binding.traverse_op]
+      simp only [Binding.underBinder_renEnv]
+      rw [appEval_op, appEval_op]
+      have hfam : (fun j => appEval (Binding.traverse (Binding.varKit (rlmrOSig natAlgSig))
+            (Binding.renEnv (Binding.Thinning.appendId θ
+              (((rlmrOSig natAlgSig).args o).get j).1)) (children ⟨j⟩)))
+          = (fun (j : Fin ((rlmrOSig natAlgSig).args o).length) ρ'' =>
+              appEval (children ⟨j⟩) (renEnvSem (Binding.Thinning.appendId θ
+                (((rlmrOSig natAlgSig).args o).get j).1) ρ'')) := by
+        funext j ρ''
+        exact ih ⟨j⟩ (Binding.Thinning.appendId θ _) ρ''
+      rw [hfam]
+      exact appEvalOp_renEnvSem o θ (fun j => appEval (children ⟨j⟩)) ρ
 
 /-- The thinning embedding the suffix `Ξ` of an append-at-end context into the
 whole `Γ ++ Ξ`: drop every entry of the prefix `Γ`, then keep every entry of
