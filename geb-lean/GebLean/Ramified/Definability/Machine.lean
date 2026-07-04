@@ -1225,10 +1225,9 @@ closes the read-off.
 
 The `s1.2` embedding argument (the zero-test URM against Leivant's register
 machines) is the fidelity justification recorded in the module docstring. The
-eq. (8) sort reconciliation is a presentation adaptation: the paper\'s "Let
+eq. (8) sort reconciliation is a presentation adaptation: the paper's "Let
 θ = Ωo" display carries surface sort slips, reconciled here by the staggered
-`machineCtx` sorts and the count sort `ω = Ω(o → o)` (standing decision 5 and the
-Task 5.4 preamble). -/
+`machineCtx` sorts and the count sort `ω = Ω(o → o)`. -/
 theorem urm_ramified_definable {a : ℕ} (p : URMProgram a)
     (f : (Fin a → ℕ) → ℕ) (c q : ℕ)
     (hf : ∀ (v : Fin a → ℕ) (t : ℕ),
