@@ -32,6 +32,14 @@ the program counter and registers of `URMState.runFor p (URMState.init p v) t`.
 * `urmEnv` — the environment loading the input numerals at the `o` positions
   and the step-count numeral at the `Ω (o → o)` position.
 
+## Main statements
+
+* `urm_simul_interp` — the Lemma 6 invariant: at step count `t` and inputs
+  `v`, the program-counter and register components denote the program counter
+  and registers of `URMState.runFor p (URMState.init p v) t`, read out through
+  `freeAlgToNat`. Proved by induction on `t` with an arm-by-arm match against
+  `URMState.step`.
+
 ## Implementation notes
 
 The step clauses read the recursive results as the whole selector-indexed state
