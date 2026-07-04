@@ -84,6 +84,28 @@ theorem Var.appendCases_fuse {Ξ Δ : Ctx Ty} {s : Ty} {motive : Sort v}
       | succ i' =>
           exact Var.appendCases_fuse g h Γ (fun v => k (Var.succ a v)) ⟨i', hi⟩
 
+/-- Left identity for thinning composition on the empty source context: the
+empty thinning composes on the left as the identity. Recursion on the second
+thinning, whose source is empty so it carries no `keep` step. -/
+theorem Thinning.nil_comp : {Δ : Ctx Ty} → (τ : Thinning ([] : Ctx Ty) Δ) →
+    Thinning.nil.comp τ = τ
+  | _, Thinning.nil => rfl
+  | _, Thinning.drop s τ' => congrArg (Thinning.drop s) (Thinning.nil_comp τ')
+
+/-- The suffix embedding `Thinning.weakAppend` is natural in the parallel
+append `Thinning.appendId`: renaming into the wider context then embedding the
+suffix equals embedding the suffix then renaming under the append. Recursion on
+`ρ`. -/
+theorem Thinning.weakAppend_comp_appendId {Ξ : Ctx Ty} :
+    {Δ Θ : Ctx Ty} → (ρ : Thinning Δ Θ) →
+      ρ.comp (Thinning.weakAppend (Ξ := Ξ))
+        = (Thinning.weakAppend (Ξ := Ξ)).comp (Thinning.appendId ρ Ξ)
+  | _, _, Thinning.nil => (Thinning.nil_comp _).trans (Thinning.comp_id _).symm
+  | _, _, Thinning.keep a ρ' =>
+      congrArg (Thinning.keep a) (Thinning.weakAppend_comp_appendId ρ')
+  | _, _, Thinning.drop a ρ' =>
+      congrArg (Thinning.drop a) (Thinning.weakAppend_comp_appendId ρ')
+
 /-- The left unit (relative-monad unit) law: substituting a variable reads the
 environment at that variable. -/
 theorem sub_var {S : BinderSig Ty} {Γ Δ : Ctx Ty} {s : Ty} (σ : Env (Tm S) Γ Δ)
@@ -145,5 +167,66 @@ theorem ren_sub {S : BinderSig Ty} {Γ Δ Θ : Ctx Ty} {s : Ty} (ρ : Thinning �
     (σ : Env (Tm S) Δ Θ) (t : Tm S Γ s) :
     sub σ (ren ρ t) = sub (fun s x => σ s (ρ.app x)) t :=
   traverse_ren_sub t ρ σ
+
+/-- Weakening the composed environment `fun s x => ren ρ (σ s x)` under a binder
+binding `Ξ` equals renaming the under-binder weakening of `σ` along the parallel
+append `Thinning.appendId ρ Ξ`. This is the under-binder interaction lemma the
+operation case of `sub_ren` needs. -/
+theorem underBinder_sub_ren {S : BinderSig Ty} {Γ Δ Θ Ξ : Ctx Ty}
+    (σ : Env (Tm S) Γ Δ) (ρ : Thinning Δ Θ) :
+    Env.underBinder (subKit S) (Ξ := Ξ) (fun s x => ren ρ (σ s x))
+      = fun s x => ren (Thinning.appendId ρ Ξ) (Env.underBinder (subKit S) σ s x) := by
+  funext s x
+  simp only [Env.underBinder, subKit]
+  rw [Var.appendCases_natural (ren (Thinning.appendId ρ Ξ))]
+  congr 1
+  · funext y
+    simp only [ren, traverse_var, varKit, renEnv]
+    rw [Thinning.appendId_app, Var.appendCases_appendRight]
+  · funext v
+    rw [← ren_comp, ← ren_comp, Thinning.weakAppend_comp_appendId]
+
+/-- The sub-ren fusion at the traversal level, stated over an arbitrary index
+and quantified over the environment and thinning so the induction on the term
+goes through. -/
+theorem traverse_sub_ren {S : BinderSig Ty} :
+    ∀ {y : Ctx Ty × Ty} (t : PolyFix (polyTranslate varOver S.polyEndo) y)
+      {Δ Θ : Ctx Ty} (σ : Env (Tm S) y.1 Δ) (ρ : Thinning Δ Θ),
+      traverse (varKit S) (renEnv ρ) (traverse (subKit S) σ t)
+        = traverse (subKit S) (fun s x => ren ρ (σ s x)) t := by
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ Θ σ ρ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Tm S y.1 y.2)
+            = Tm.var (leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      simp only [traverse_var, subKit, id]
+      rfl
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : S.Op // S.result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', S.result o) (Sum.inr ⟨o, rfl⟩) children
+            : Tm S Γ' (S.result o))
+            = Tm.op o (fun j => children ⟨j⟩) from rfl]
+      simp only [traverse_op, underBinder_renEnv, underBinder_sub_ren]
+      congr 1
+      funext j
+      exact ih ⟨j⟩ (Env.underBinder (subKit S) σ) (Thinning.appendId ρ _)
+
+/-- The sub-ren fusion law: renaming after substitution is a single
+substitution along the environment postcomposed with the renaming. -/
+theorem sub_ren {S : BinderSig Ty} {Γ Δ Θ : Ctx Ty} {s : Ty} (σ : Env (Tm S) Γ Δ)
+    (ρ : Thinning Δ Θ) (t : Tm S Γ s) :
+    ren ρ (sub σ t) = sub (fun s x => ren ρ (σ s x)) t :=
+  traverse_sub_ren t σ ρ
 
 end GebLean.Binding
