@@ -26,6 +26,12 @@ instantiates the leaf operations to variable-for-variable renaming.
 * `leafVar` — recovery of a `Var` from a leaf of the diagonal variable family.
 * `traverse` — the generic binder-aware fold of a term against an environment.
 
+## Main statements
+
+* `traverse_var` — `traverse` at a variable reads the environment.
+* `traverse_op` — `traverse` at an operation node recurses into the arguments
+  under the binder-weakened environment.
+
 ## References
 
 The kit presentation of binder-aware traversal follows G. Allais, R. Atkey,
@@ -122,5 +128,23 @@ def traverse {S : BinderSig Ty} {V : Ctx Ty → Ty → Type} (K : Kit S V)
           p.2 ▸ Tm.op p.val
             (fun j => ih ⟨j⟩ (Δ' ++ ((S.args p.val).get j).1)
               (Env.underBinder K ρ'))) t Δ ρ
+
+/-- `traverse` at a variable reads the environment at that variable and embeds
+the result via `K.toTm`. -/
+@[simp] theorem traverse_var {S : BinderSig Ty} {V : Ctx Ty → Ty → Type}
+    (K : Kit S V) {Γ Δ : Ctx Ty} {s : Ty} (ρ : Env V Γ Δ) (x : Var Γ s) :
+    traverse K ρ (Tm.var x) = K.toTm (ρ s x) := by
+  obtain ⟨i, hi⟩ := x
+  subst hi
+  rfl
+
+/-- `traverse` at an operation node recurses into each argument under the
+binder-weakened environment `Env.underBinder K ρ`, rebuilding the node. -/
+@[simp] theorem traverse_op {S : BinderSig Ty} {V : Ctx Ty → Ty → Type}
+    (K : Kit S V) {Γ Δ : Ctx Ty} (ρ : Env V Γ Δ) (o : S.Op)
+    (args : ∀ j : Fin (S.args o).length,
+      Tm S (Γ ++ ((S.args o).get j).1) ((S.args o).get j).2) :
+    traverse K ρ (Tm.op o args)
+      = Tm.op o (fun j => traverse K (Env.underBinder K ρ) (args j)) := rfl
 
 end GebLean.Binding
