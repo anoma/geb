@@ -205,20 +205,6 @@ theorem heq_ramifiedEnv_machineEnv (a q : ℕ) (v : Fin a → ℕ) :
     rw [hL, hR, ← hk]
     exact objFromNat_heq _ _ _
 
-/-- Evaluation transported along a domain-context equality: a hom cast along a
-domain equality evaluates by casting the environment back. -/
-theorem eval_cast_dom {P : Presentation} {Γ Γ' Δ : Ctx P.S} (h : Γ = Γ')
-    (f : Hom P (interpQuotRel P) Γ Δ) (ρ : (standardModel P).Env Γ') :
-    (h ▸ f).eval ρ = f.eval (h ▸ ρ) := by
-  subst h; rfl
-
-/-- Evaluation transported along a codomain-context equality: evaluating a hom
-cast along a codomain equality is the transport of the original evaluation. -/
-theorem eval_cast_cod {P : Presentation} {Γ Δ Δ' : Ctx P.S} (h : Δ = Δ')
-    (f : Hom P (interpQuotRel P) Γ Δ) (ρ : (standardModel P).Env Γ) :
-    (h ▸ f).eval ρ = h ▸ (f.eval ρ) := by
-  subst h; rfl
-
 /-- Leivant III eq. (8)'s realizer, retyped over the object-sort contexts of the
 definability family: `machineRealizer p c q` transported along the
 context equalities `machineObjCtx_toCtx` and `oCtx_toCtx`. -/

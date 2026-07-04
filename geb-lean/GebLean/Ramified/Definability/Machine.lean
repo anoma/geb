@@ -830,12 +830,6 @@ def projIdent {A : AlgSig} (Γ : Ctx RType) (i : Fin Γ.length) :
     RIdent A Γ (Γ.get i) :=
   RIdent.defn ⟨0, finZeroElim, Tm.var i⟩ finZeroElim
 
-/-- The projection identifier denotes the environment at its position. -/
-theorem projIdent_interp {A : AlgSig} (Γ : Ctx RType) (i : Fin Γ.length)
-    (ρ : ∀ k : Fin Γ.length, RType.interp (FreeAlg A) (Γ.get k)) :
-    (projIdent Γ i).interp ρ = ρ i :=
-  rfl
-
 /-- The numeric reading of a value at an `Omega` sort is `freeAlgToNat`: the
 carrier-copy transport of `objToNat` at an `Omega` sort is the identity. -/
 theorem objToNat_omega (t : RType) (x : RType.interp (FreeAlg natAlgSig) (RType.omega t)) :
@@ -1148,17 +1142,6 @@ def deltaArg {a : ℕ} (q : ℕ) (i : Fin a) : RIdent natAlgSig (machineCtx a q)
       (projIdent (machineCtx a q)
         ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q).symm⟩)
       finZeroElim)
-
-/-- The parameter coercion reads the input numeral at `o`. -/
-theorem deltaArg_interp {a : ℕ} (q : ℕ) (i : Fin a)
-    (ρ : ∀ j : Fin (machineCtx a q).length,
-      RType.interp (FreeAlg natAlgSig) ((machineCtx a q).get j)) :
-    freeAlgToNat ((deltaArg q i).interp ρ)
-      = objToNat (machineCtx_isObj a q
-          ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q).symm⟩)
-        (ρ ⟨i.val, Nat.lt_of_lt_of_eq i.isLt (machineCtx_length a q).symm⟩) := by
-  rw [deltaArg, applyIdent1_interp, deltaIdent_interp]
-  rfl
 
 /-- The sort at a below-`a` position of the register context is `o`. -/
 theorem machineDom_get_lt {a : ℕ}
