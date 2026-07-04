@@ -408,36 +408,6 @@ def mulAtIdent (θ : RType) (hθ : θ.IsObj) :
     RIdent natAlgSig [RType.omega θ, RType.omega θ] θ :=
   RIdent.mrec [RType.omega θ] θ (mulStepsObj θ hθ)
 
-/-- The nullary constructor at an object sort `θ` reads as `0` under `objToNat`:
-the carrier-copy transports of the constructor and the numeric reading compose
-to the identity, and the empty node has count `0`. -/
-theorem objToNat_cFalse (θ : RType) (hθ : θ.IsObj)
-    (g : ∀ i : Fin ((constructorSig natAlgSig RType.IsObj).arity
-        ((⟨θ, hθ⟩ : {s : RType // s.IsObj}), false)).length,
-      RType.interp (FreeAlg natAlgSig)
-        (((constructorSig natAlgSig RType.IsObj).arity (⟨θ, hθ⟩, false)).get i)) :
-    objToNat hθ (stdConstructorInterp natAlgSig (⟨θ, hθ⟩, false) g) = 0 := by
-  unfold objToNat stdConstructorInterp
-  refine (congrArg freeAlgToNat (eq_of_heq ((cast_heq _ _).trans (cast_heq _ _)))).trans ?_
-  rfl
-
-/-- The unary constructor at an object sort `θ` reads as the successor under
-`objToNat`: the constructor's single child, matched (heterogeneously) with an
-explicit `interp θ` value `c`, contributes `objToNat c` and the node adds one. -/
-theorem objToNat_cSucc (θ : RType) (hθ : θ.IsObj)
-    (g : ∀ i : Fin ((constructorSig natAlgSig RType.IsObj).arity
-        ((⟨θ, hθ⟩ : {s : RType // s.IsObj}), true)).length,
-      RType.interp (FreeAlg natAlgSig)
-        (((constructorSig natAlgSig RType.IsObj).arity (⟨θ, hθ⟩, true)).get i))
-    (c : RType.interp (FreeAlg natAlgSig) θ)
-    (hc : g ⟨0, Nat.zero_lt_one⟩ ≍ c) :
-    objToNat hθ (stdConstructorInterp natAlgSig (⟨θ, hθ⟩, true) g) = objToNat hθ c + 1 := by
-  unfold objToNat stdConstructorInterp
-  refine (congrArg freeAlgToNat (eq_of_heq ((cast_heq _ _).trans (cast_heq _ _)))).trans ?_
-  change freeAlgToNat (FreeAlg.mk true _) = freeAlgToNat (cast _ c) + 1
-  refine congrArg (· + 1) (congrArg freeAlgToNat ?_)
-  exact eq_of_heq ((cast_heq _ _).trans (hc.trans (cast_heq _ _).symm))
-
 /-- Addition's nullary step returns the parameter (under `objToNat`). -/
 theorem objToNat_addZeroStepObj (θ : RType) (hθ : θ.IsObj)
     (env : ∀ i : Fin ([θ] : Ctx RType).length,
@@ -464,16 +434,6 @@ theorem objToNat_addSuccStepObj (θ : RType) (hθ : θ.IsObj)
   rw [hred]
   refine (congrArg freeAlgToNat (eq_of_heq ((cast_heq _ _).trans (cast_heq _ _)))).trans ?_
   rfl
-
-/-- The numeric reading at object sorts is invariant under a heterogeneous
-equality of carrier values: values `x`, `y` at (possibly different) object sorts
-that are heterogeneously equal read to the same natural. -/
-theorem objToNat_cast_heq {s s' : RType} (hs : s.IsObj) (hs' : s'.IsObj)
-    {x : RType.interp (FreeAlg natAlgSig) s} {y : RType.interp (FreeAlg natAlgSig) s'}
-    (hxy : x ≍ y) : objToNat hs x = objToNat hs' y := by
-  unfold objToNat
-  exact congrArg freeAlgToNat
-    (eq_of_heq ((cast_heq _ _).trans (hxy.trans (cast_heq _ _).symm)))
 
 /-- Addition's recurrence read numerically: on a parameter environment `pe` and a
 recurrence argument `s`, the denotation counts to `objToNat (pe 0)` plus the count
