@@ -1412,6 +1412,31 @@ theorem prop7MrecStep_interp {τ : RType} (params : List RType)
     appChain_curryInterp, hchild, renEnvSem_weakAppend_eq_envHead,
     joinEnv_childEnv_nil]
 
+/-- `appEval` on a homogeneous application spine `replicateSpine n base head args`
+is the semantic application chain of the head denotation to the argument
+denotations, reindexed off `List.replicate` (Leivant III §4.1). Specializes
+`appEval_appSpine` to `Ts = List.replicate n base`, discharging the
+`List.getElem_replicate` sort transport on each argument via `appEval_heq`. -/
+theorem appEval_replicateSpine {Γ : Binding.Ctx RType} {result : RType} (n : Nat)
+    (base : RType)
+    (head : Binding.Tm (rlmrOSig natAlgSig) Γ (RType.curried (List.replicate n base) result))
+    (args : Fin n → Binding.Tm (rlmrOSig natAlgSig) Γ base)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (replicateSpine n base head args) ρ
+      = appChain natAlgSig (List.replicate n base) result (appEval head ρ)
+          (fun i => cast (congrArg (RType.interp (FreeAlg natAlgSig))
+            (show base = (List.replicate n base).get i from by
+              rw [List.get_eq_getElem, List.getElem_replicate]))
+            (appEval (args (Fin.cast List.length_replicate i)) ρ)) := by
+  rw [replicateSpine, appEval_appSpine]
+  congr 1
+  funext i
+  apply eq_of_heq
+  refine (appEval_heq _ _ ρ ?_ ?_).trans (cast_heq _ _).symm
+  · rw [List.get_eq_getElem, List.getElem_replicate]
+  · simp only [eq_mpr_eq_cast]
+    exact (cast_heq _ _).trans (cast_heq _ _)
+
 /-- An `arrow`-shape free-algebra node is the `RType.arrow` of its two children.
 A fact local to `caseAtType`, discharging the node-reconstruction transport of
 its arrow case (`RType.interp` avoids the transport by returning a `Type`; a
