@@ -132,6 +132,17 @@ result sort `o` (the `case`/`dstr` realization without η-expansion). -/
 example : Binding.Tm (rlmrOSig natAlgSig) [RType.o] RType.o :=
   prop7Translate ramDstr
 
+/-- The Proposition 7 soundness agreement (Leivant III §4.1, arm `(1)⟹(4)`) holds
+on the flat-recurrence identifier `ramDstr`: at every environment, the
+standard-model denotation of the applicative translation `prop7Translate ramDstr`
+equals `ramDstr`'s own denotation `RIdent.interp ramDstr`. Exercises
+`prop7Translate_interp` through the `frec` case, spot-checking the
+`PolyFix.ind`/defeq reduction of `appEval_caseAtType` end-to-end. -/
+example (ρ : ∀ i : Fin ([RType.o] : Binding.Ctx RType).length,
+    RType.interp (FreeAlg natAlgSig) (([RType.o] : Binding.Ctx RType).get i)) :
+    appEval (prop7Translate ramDstr) ρ = RIdent.interp ramDstr ρ :=
+  prop7Translate_interp ramDstr ρ
+
 /-- The Proposition 7 translation elaborates on a flat-recurrence identifier at a
 higher, arrow-typed result sort: `ramCase (o → o) : (o → o), (o → o), o → (o → o)`
 translates to an applicative term. Exercises the `frec` case together with the

@@ -77,8 +77,10 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
   `appEval_case` — the evaluation of `appEval` through the term combinators.
 * `arrow_node_eq` — an `arrow`-shape free-algebra node is the `RType.arrow` of
   its two children.
-* `appEval_ren`, `appEval_lamSpine` — renaming fusion for `appEval` and the
-  evaluation of the applicative λ-spine.
+* `appEval_ren`, `appEval_sub`, `appEval_lamSpine` — renaming and substitution
+  fusion for `appEval` and the evaluation of the applicative λ-spine.
+* `appEval_caseAtType` — the principal frec-path evaluation lemma, unfolding
+  the higher-type case realization `caseAtType` to `caseSelect`.
 * `prop7DefnStep_interp`, `prop7MrecStep_interp`, `prop7FrecStep_interp` — the
   explicit-definition, monotone-recurrence, and flat-recurrence steps of the
   Proposition 7 translation each preserve the denoted function.
