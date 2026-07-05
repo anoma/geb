@@ -472,4 +472,30 @@ theorem lemma10 {Γ : Binding.Ctx RType} {τ : RType}
       (represents_arrow (Binding.sub Eσ f) (Binding.sub Eσhat (barTm f))).mp ihf
         (Binding.sub Eσ x) (Binding.sub Eσhat (barTm x)) ihx
 
+/-- The recurrence bridge (Leivant III section 4.2–4.3, Proposition 11's
+recurrence case, a decision-2 denotational reformulation): the denotation of the
+saturated recurrence combinator `recCombinator Estep` applied to a recurrence
+argument `A` is the free-algebra recurrence `FreeAlg.recurse` of the
+`appEval`-denoted argument `appEval A ρ`, with the step functions read
+positionally from the `appEval`-denoted step terms (`stepEnvOfFun Estep`). The
+source-side semantics the recurrence case of Proposition 11 consumes: the
+Berarducci-Böhm fold body `barRecur` reduces (target side) to `a g⃗`, whose
+denotation this equates to the recursor. Composes the applicative-fragment
+denotation `appEval_app'` with the saturated-recurrence denotation
+`appEval_recCombinator`. -/
+theorem recurBridge {Γ : Binding.Ctx RType} {τ : RType}
+    (Estep : ∀ b : natAlgSig.B,
+      Binding.Tm (rlmrOSig natAlgSig) Γ (RType.curried (List.replicate (natAlgSig.ar b) τ) τ))
+    (A : Binding.Tm (rlmrOSig natAlgSig) Γ (RType.omega τ))
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (app' (recCombinator Estep) A) ρ
+      = FreeAlg.recurse (A := natAlgSig) (P := Unit)
+          (fun i _ _sub phi =>
+            appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+              (stepAtLabel (fun idx => appEval (stepEnvOfFun Estep idx) ρ) i)
+              (childEnv [] τ (natAlgSig.ar i) finZeroElim phi))
+          () (appEval A ρ) := by
+  rw [appEval_app', appEval_recCombinator]
+  rfl
+
 end GebLean.Ramified
