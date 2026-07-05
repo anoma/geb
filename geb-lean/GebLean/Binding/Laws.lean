@@ -522,4 +522,98 @@ theorem underBinder_append {S : BinderSig Ty} {Γ Δ Ξ₁ Ξ₂ : Ctx Ty}
     simp only [Env.underBinder, subKit, Var.appendCases_weakAppend]
     exact ren_weakAppend_append (ρ s v)
 
+/-- The extended environment `extendEnv σ m` reads as the append-variable
+eliminator over the prefix `Γ`: a prefix variable routes through `σ`, a suffix
+variable of `Ξ` through the meta-map `m`. The `Var.appendCases` presentation of
+`extendEnv`, obtained by pushing the `splitVar` match through
+`Var.appendCases_natural`. -/
+theorem extendEnv_apply {S : BinderSig Ty} {Γ Δ Ξ : Ctx Ty} (σ : Env (Tm S) Γ Δ)
+    (m : ∀ t, Var Ξ t → Tm S Δ t) (s : Ty) (x : Var (Γ ++ Ξ) s) :
+    extendEnv σ m s x = Var.appendCases (fun w => m s w) Γ (fun v => σ s v) x := by
+  have key : Var.appendCases (fun w => m s w) Γ (fun v => σ s v) x
+      = Sum.elim (fun v => σ s v) (fun w => m s w) (splitVar x) := by
+    rw [splitVar]
+    exact (Var.appendCases_natural (Sum.elim (fun v => σ s v) (fun w => m s w))
+      Sum.inr Γ Sum.inl x).symm
+  rw [key]
+  unfold extendEnv
+  split <;> rename_i hs <;> rw [hs] <;> rfl
+
+/-- Evaluating an extended environment at a suffix inclusion `Var.appendRight Γ y`
+reads the meta-map `m` at `y`. -/
+theorem extendEnv_appendRight {S : BinderSig Ty} {Γ Δ Ξ : Ctx Ty} (σ : Env (Tm S) Γ Δ)
+    (m : ∀ t, Var Ξ t → Tm S Δ t) (s : Ty) (y : Var Ξ s) :
+    extendEnv σ m s (Var.appendRight Γ y) = m s y := by
+  rw [extendEnv_apply, Var.appendCases_appendRight]
+
+/-- Evaluating an extended environment at a suffix embedding
+`Thinning.weakAppend.app v` reads the environment `σ` at `v`. -/
+theorem extendEnv_weakAppend {S : BinderSig Ty} {Γ Δ Ξ : Ctx Ty} (σ : Env (Tm S) Γ Δ)
+    (m : ∀ t, Var Ξ t → Tm S Δ t) (s : Ty) (v : Var Γ s) :
+    extendEnv σ m s (Thinning.weakAppend.app v) = σ s v := by
+  rw [extendEnv_apply, Var.appendCases_weakAppend]
+
+/-- The head/tail decomposition of the argument-tuple meta-map `metaTuple` over a
+cons suffix `σ :: Δ`: a suffix variable splits, via `Var.appendCases` at the
+boundary `[σ] | Δ`, into the head — instantiated by `metaOne` at the zeroth
+argument — and the tail — instantiated by `metaTuple` at the shifted arguments
+`fun i => args i.succ`. -/
+theorem metaTuple_cons {S : BinderSig Ty} {Γ : Ctx Ty} {σ : Ty} {Δ : Ctx Ty}
+    (args : ∀ i : Fin (σ :: Δ).length, Tm S Γ ((σ :: Δ).get i)) (b : Ty)
+    (w : Var (σ :: Δ) b) :
+    metaTuple args b w
+      = Var.appendCases (fun w' => metaTuple (fun i => args i.succ) b w') [σ]
+          (fun u => metaOne (a := σ) (args ⟨0, Nat.succ_pos _⟩) b u) w := by
+  obtain ⟨i, hi⟩ := w
+  cases i using Fin.cases with
+  | zero => rfl
+  | succ j => rfl
+
+/-- The cons recurrence of the suffix substitution `instantiate` over an argument
+tuple (the syntactic analog of the denotational binder peel `joinEnv_envExtend`):
+instantiating the whole suffix `σ :: Δ` of `body` by an argument tuple `args`
+equals first instantiating the head `σ` by `args ⟨0, _⟩` under the residual
+`Δ`-binder — the substitution `sub (underBinder (extendEnv idEnv (metaTuple …)))`
+on the append-reassociated body — and then instantiating the remaining suffix
+`Δ` by the tail `fun i => args i.succ`. The induction step of the generic
+λ-spine β-reduction: it collapses, through the substitution associativity law
+`sub_sub`, to the pointwise environment identity dispatched by
+`Var.appendCases`. -/
+theorem instantiate_metaTuple_cons {S : BinderSig Ty} {Γ : Ctx Ty} {σ : Ty}
+    {Δ : Ctx Ty} {s : Ty}
+    (args : ∀ i : Fin (σ :: Δ).length, Tm S Γ ((σ :: Δ).get i))
+    (body : Tm S (Γ ++ (σ :: Δ)) s) :
+    instantiate (metaTuple (fun i => args i.succ))
+        (sub (Env.underBinder (subKit S) (Ξ := Δ)
+            (extendEnv idEnv (metaOne (a := σ) (args ⟨0, Nat.succ_pos _⟩))))
+          ((List.append_assoc Γ [σ] Δ).symm ▸ body))
+      = instantiate (metaTuple args) body := by
+  have dom : ∀ {Θ Θ' : Ctx Ty} {ss : Ty} (h : Θ = Θ') (E : Env (Tm S) Θ' Γ)
+      (t : Tm S Θ ss), sub E (h ▸ t) = sub (fun b x => E b (h ▸ x)) t := by
+    intro Θ Θ' ss h E t; cases h; rfl
+  unfold instantiate
+  rw [sub_sub]
+  refine (dom (List.append_assoc Γ [σ] Δ).symm _ body).trans ?_
+  refine congrArg (fun E => sub E body) ?_
+  funext b x
+  have henv : (fun (t : Ty) (z : Var Γ t) =>
+      extendEnv idEnv (metaTuple fun i => args i.succ) t (Thinning.weakAppend.app z))
+        = (idEnv : Env (Tm S) Γ Γ) := by
+    funext t z; exact extendEnv_weakAppend _ _ t z
+  simp only [Env.underBinder, subKit]
+  rw [Var.appendCases_append_assoc,
+    Var.appendCases_natural (sub (extendEnv idEnv (metaTuple fun i => args i.succ))),
+    extendEnv_apply]
+  congr 1
+  · funext w
+    rw [metaTuple_cons,
+      Var.appendCases_natural (sub (extendEnv idEnv (metaTuple fun i => args i.succ)))]
+    congr 1
+    · funext y
+      rw [sub_var, extendEnv_appendRight]
+    · funext u
+      rw [extendEnv_appendRight, ren_sub, henv, sub_id]
+  · funext v
+    rw [extendEnv_weakAppend, ren_sub, henv, sub_id]
+
 end GebLean.Binding
