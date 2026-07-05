@@ -80,4 +80,23 @@ example :
         (Binding.Tm.var ⟨⟨1, by decide⟩, rfl⟩)) :=
   LamFree.app (LamFree.var _) (LamFree.var _)
 
+/-- `lemma10` on the variable-application term `f a` (with `f : o → o` and
+`a : o` variables of `Γ = [o → o, o]`): given closing environments related by
+`RepresentsEnv`, the source substitution `(f a)[Eσ]` is represented by the
+target substitution into its bar image. Exercises the application case of the
+fundamental lemma non-vacuously. -/
+example
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig))
+      [RType.arrow RType.o RType.o, RType.o] [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig))
+      (([RType.arrow RType.o RType.o, RType.o]).map barTy) [])
+    (hEnv : RepresentsEnv Eσ Eσhat) :
+    Represents RType.o
+      (Binding.sub Eσ
+        (app' (Binding.Tm.var ⟨⟨0, by decide⟩, rfl⟩) (Binding.Tm.var ⟨⟨1, by decide⟩, rfl⟩)))
+      (Binding.sub Eσhat
+        (barTm (app' (Binding.Tm.var ⟨⟨0, by decide⟩, rfl⟩)
+          (Binding.Tm.var ⟨⟨1, by decide⟩, rfl⟩)))) :=
+  lemma10 (LamFree.app (LamFree.var _) (LamFree.var _)) Eσ Eσhat hEnv
+
 end GebLean.Ramified
