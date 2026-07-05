@@ -176,4 +176,41 @@ theorem lemma9_omega (τ' : RType) (F : Binding.Tm (rlmrOSig natAlgSig) [] (RTyp
     Represents (RType.omega τ') F (bbRep (appEval F finZeroElim) (barTy τ')) :=
   Relation.ReflTransGen.refl
 
+/-- Two closing environments related pointwise through the representation
+relation (Leivant III section 4.2, the hypothesis of Lemma 10): a source-side
+environment `Eσ` substituting a closed source term for every variable of `Γ`,
+and a target-side environment `Eσhat` substituting a closed `1λ(A)` term for
+every barred variable of `Γ.map barTy`, such that at each variable the
+substituted terms are `Represents`-related. The logical-relation environment
+condition that `lemma10` carries through a substitution. -/
+def RepresentsEnv {Γ : Binding.Ctx RType}
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) []) : Prop :=
+  ∀ {s : RType} (x : Binding.Var Γ s),
+    Represents s (Eσ s x) (Eσhat (barTy s) (barVar x))
+
+/-- The variable-application fragment of the λ-free terms of the applicative
+calculus `RλMR_o^ω` (Leivant III section 4.2, the terms Lemma 10 quantifies
+over, as consumed by Proposition 11's recurrence case): a term built from
+variables by application alone, with no λ-abstraction (`lam`), no recurrence
+combinator (`recur`), and no object constant (`con`, `dstr`, `case`).
+
+This is precisely the fragment Proposition 11's recurrence case substitutes
+into. There, the Berarducci-Böhm representation `bbRep a τ̄` of a recurrence
+argument's value, applied to represented step terms, reduces to the value's
+constructor template `a{g⃗}` — an application spine over the bound constructor
+variables, hence a variable-application term. Proposition 11's other cases
+(`con^o`, `case`/`dstr`, `con^{Ωτ}`) discharge the object constants directly,
+not through Lemma 10, and `recur`'s compatibility is the separate recurrence
+bridge; so the object constants are absent from the terms Lemma 10 serves and
+are excluded from this predicate. -/
+inductive LamFree {Γ : Binding.Ctx RType} :
+    {τ : RType} → Binding.Tm (rlmrOSig natAlgSig) Γ τ → Prop where
+  /-- A variable is λ-free. -/
+  | var {s : RType} (x : Binding.Var Γ s) : LamFree (Binding.Tm.var x)
+  /-- An application of λ-free terms is λ-free. -/
+  | app {σ τ : RType} {f : Binding.Tm (rlmrOSig natAlgSig) Γ (RType.arrow σ τ)}
+      {x : Binding.Tm (rlmrOSig natAlgSig) Γ σ} (hf : LamFree f) (hx : LamFree x) :
+      LamFree (app' f x)
+
 end GebLean.Ramified

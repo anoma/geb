@@ -70,4 +70,14 @@ example :
       (bbRep (appEval sourceOmegaZero finZeroElim) (barTy RType.o)) :=
   lemma9_omega RType.o sourceOmegaZero
 
+/-- A variable applied to a variable is `LamFree`: with `Γ = [o → o, o]`, the
+application of the function variable at position `0` to the argument variable at
+position `1` is a variable-application term, built from `LamFree.var` at the
+leaves and `LamFree.app` at the node. -/
+example :
+    LamFree (Γ := [RType.arrow RType.o RType.o, RType.o])
+      (app' (Binding.Tm.var ⟨⟨0, by decide⟩, rfl⟩)
+        (Binding.Tm.var ⟨⟨1, by decide⟩, rfl⟩)) :=
+  LamFree.app (LamFree.var _) (LamFree.var _)
+
 end GebLean.Ramified
