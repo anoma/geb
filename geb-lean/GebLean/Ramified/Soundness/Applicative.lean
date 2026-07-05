@@ -82,6 +82,8 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
 * `prop7DefnStep_interp`, `prop7MrecStep_interp`, `prop7FrecStep_interp` — the
   explicit-definition, monotone-recurrence, and flat-recurrence steps of the
   Proposition 7 translation each preserve the denoted function.
+* `prop7TranslateStep_interp` — the per-node translation step preserves the
+  denoted function, dispatching to the three step-agreement lemmas.
 * `prop7Translate_interp` — the direct Proposition 7 translation preserves the
   denoted function (the soundness arm `(1)⟹(4)`).
 
@@ -2266,5 +2268,51 @@ def prop7Translate {Γ : List RType} {τ : RType} (d : RIdent natAlgSig Γ τ) :
   PolyFix.ind (P := identEndo natAlgSig)
     (motive := fun {x} _ => Binding.Tm (rlmrOSig natAlgSig) x.1 x.2)
     (fun {x} shape _children ih => prop7TranslateStep x.1 x.2 shape ih) d
+
+/-- The per-node translation step preserves the denoted function (Leivant III
+§4.1, the soundness arm `(1)⟹(4)`): `appEval` of `prop7TranslateStep` agrees with
+`RIdent.interpStep`, given that the translated children `ihT` denote the semantic
+children `ihS`. Dispatches by cases on the shape to the three step-agreement
+lemmas `prop7DefnStep_interp`, `prop7MrecStep_interp`, `prop7FrecStep_interp`. -/
+theorem prop7TranslateStep_interp (Γ : List RType) (τ : RType)
+    (shape : IdentShape natAlgSig Γ τ)
+    (ihT : ∀ dir : IdentDir natAlgSig Γ τ shape,
+      Binding.Tm (rlmrOSig natAlgSig) (identTarget natAlgSig Γ τ shape dir).1
+        (identTarget natAlgSig Γ τ shape dir).2)
+    (ihS : ∀ dir : IdentDir natAlgSig Γ τ shape,
+      (∀ i : Fin (identTarget natAlgSig Γ τ shape dir).1.length,
+        RType.interp (FreeAlg natAlgSig) ((identTarget natAlgSig Γ τ shape dir).1.get i)) →
+        RType.interp (FreeAlg natAlgSig) (identTarget natAlgSig Γ τ shape dir).2)
+    (hchild : ∀ (dir : IdentDir natAlgSig Γ τ shape)
+      (ρ' : ∀ i : Fin (identTarget natAlgSig Γ τ shape dir).1.length,
+        RType.interp (FreeAlg natAlgSig) ((identTarget natAlgSig Γ τ shape dir).1.get i)),
+      appEval (ihT dir) ρ' = ihS dir ρ')
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (prop7TranslateStep Γ τ shape ihT) ρ
+      = RIdent.interpStep natAlgSig Γ τ shape ihS ρ := by
+  rcases shape with d | ⟨params, rfl⟩ | ⟨params, rfl⟩
+  · exact prop7DefnStep_interp d ihT ihS hchild ρ
+  · exact prop7MrecStep_interp params ihT ihS hchild ρ
+  · exact prop7FrecStep_interp params ihT ihS hchild ρ
+
+/-- The direct Proposition 7 translation preserves the denoted function (Leivant
+III §4.1, the soundness arm `(1)⟹(4)`): for every ramified identifier `d`, the
+standard-model denotation of its object-sorted applicative translation
+`prop7Translate d` agrees with the identifier's own denotation `RIdent.interp d`
+at every environment. The soundness of the whole translation. Proved by induction
+on `d` via `PolyFix.ind`, reducing each node to `prop7TranslateStep_interp` with
+the recursive child agreement. Novel packaging. -/
+theorem prop7Translate_interp {Γ : List RType} {τ : RType} (d : RIdent natAlgSig Γ τ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (prop7Translate d) ρ = d.interp ρ :=
+  PolyFix.ind (P := identEndo natAlgSig)
+    (motive := fun {x} t =>
+      (ρ : ∀ i : Fin x.1.length, RType.interp (FreeAlg natAlgSig) (x.1.get i)) →
+        appEval (prop7Translate t) ρ = RIdent.interp t ρ)
+    (fun {x} shape children ih ρ =>
+      prop7TranslateStep_interp x.1 x.2 shape
+        (fun dir => prop7Translate (children dir))
+        (fun dir => RIdent.interp (children dir)) ih ρ)
+    d ρ
 
 end GebLean.Ramified

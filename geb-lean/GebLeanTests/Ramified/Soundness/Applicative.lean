@@ -114,6 +114,17 @@ functions, the explicit-definition case. -/
 example : Binding.Tm (rlmrOSig natAlgSig) [RType.o, RType.omega RType.o] RType.o :=
   prop7Translate ramAdd
 
+/-- The Proposition 7 soundness agreement (Leivant III §4.1, arm `(1)⟹(4)`) holds
+on the monotone-recurrence identifier `ramAdd`: at every environment, the
+standard-model denotation of the applicative translation `prop7Translate ramAdd`
+equals `ramAdd`'s own denotation `RIdent.interp ramAdd`. The acceptance witness
+for `prop7Translate_interp`. -/
+example (ρ : ∀ i : Fin ([RType.o, RType.omega RType.o] : Binding.Ctx RType).length,
+    RType.interp (FreeAlg natAlgSig)
+      (([RType.o, RType.omega RType.o] : Binding.Ctx RType).get i)) :
+    appEval (prop7Translate ramAdd) ρ = RIdent.interp ramAdd ρ :=
+  prop7Translate_interp ramAdd ρ
+
 /-- The Proposition 7 translation elaborates on the flat-recurrence identifier
 `ramDstr` (the predecessor): the ramified destructor `o → o` translates to an
 applicative term. Exercises the `frec` case of `prop7Translate` at the object
