@@ -44,6 +44,10 @@ implication carrying represented arguments to represented applications.
   recurrence case (Leivant III section 4.2–4.3): the denotation of a saturated
   recurrence combinator applied to an argument is the free-algebra recurrence of
   the argument's denotation.
+* `represents_app` — the application case of Proposition 11's fundamental
+  induction (Leivant III section 4.2–4.3), standalone: representation of a
+  substituted function and argument yields representation of the substituted
+  application.
 
 ## Implementation notes
 
@@ -516,5 +520,28 @@ theorem barTm_op {Γ : Binding.Ctx RType} (o : RlmrOOp natAlgSig)
       Binding.Tm (rlmrOSig natAlgSig) (Γ ++ (((rlmrOSig natAlgSig).args o).get j).1)
         (((rlmrOSig natAlgSig).args o).get j).2) :
     barTm (Binding.Tm.op o args) = barTmOp o (fun j => barTm (args j)) := rfl
+
+/-- Compatibility of the representation relation with application (Leivant III
+section 4.2, Proposition 11's application case, a decision-2 denotational
+reformulation): if the substituted function `sub Eσ f` and argument `sub Eσ x`
+are represented by the parallel target substitutions into their bar images, then
+so is the substituted application `sub Eσ (app' f x)`. The application case of
+Proposition 11's fundamental induction, standalone; substitution distributes over
+both application nodes (`sub_app'`, `OneLambda.sub_app'`) and the bar-map sends
+the node to the `1λ(A)` application (`barTm_app'`), so the arrow clause of
+`Represents` (`represents_arrow`) applied to the two hypotheses closes the goal.
+Generalizes `lemma10`'s application case away from the `LamFree` restriction. -/
+theorem represents_app {Γ : Binding.Ctx RType} {σ' τ' : RType}
+    (f : Binding.Tm (rlmrOSig natAlgSig) Γ (RType.arrow σ' τ'))
+    (x : Binding.Tm (rlmrOSig natAlgSig) Γ σ')
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) [])
+    (ihf : Represents (RType.arrow σ' τ') (Binding.sub Eσ f) (Binding.sub Eσhat (barTm f)))
+    (ihx : Represents σ' (Binding.sub Eσ x) (Binding.sub Eσhat (barTm x))) :
+    Represents τ' (Binding.sub Eσ (app' f x)) (Binding.sub Eσhat (barTm (app' f x))) := by
+  rw [sub_app', barTm_app']
+  exact (OneLambda.sub_app' Eσhat (barTm f) (barTm x)) ▸
+    (represents_arrow (Binding.sub Eσ f) (Binding.sub Eσhat (barTm f))).mp ihf
+      (Binding.sub Eσ x) (Binding.sub Eσhat (barTm x)) ihx
 
 end GebLean.Ramified
