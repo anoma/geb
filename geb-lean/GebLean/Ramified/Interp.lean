@@ -45,6 +45,9 @@ family, so the eliminator is applied directly (following the precedent
 * `Tm.eval_subst` — evaluation of a substituted term equals evaluation of the
   term under the environment that evaluates the substitution (the semantic
   clone law).
+* `Tm.eval_model_morphism` — evaluation commutes with a model morphism: a
+  sort-indexed family commuting with `interpOp` and matching the environments
+  carries `Tm.eval` in one model to `Tm.eval` in the other.
 
 ## Implementation notes
 
@@ -139,6 +142,37 @@ theorem Tm.eval_subst {sig : SortedSig S} {Γ Δ : Ctx S} {s : S}
     | inr o =>
       exact congrArg (cast (congrArg M.carrier o.2))
         (congrArg (M.interpOp o.val) (funext fun i => ih i))
+
+/-- Evaluation commutes with a model morphism. Given two models `M₁ M₂` of the
+same signature, a sort-indexed family `φ` sending `M₁`-values to `M₂`-values that
+commutes with every operation's interpretation, and environments `ρ₁ ρ₂` matched
+by `φ` (`φ (ρ₁ i) = ρ₂ i`), the value of any term under `M₁, ρ₁` maps by `φ` to
+its value under `M₂, ρ₂`. Proved by induction on the term via `PolyFix.ind`; the
+variable case transports `φ` across the fiber cast, the operation case rewrites by
+the commutation hypothesis and the recursive child equalities. The soundness
+route (1)⟹(4) instantiates it with an interpreting `φ` to reduce the applicative
+translation of a definition body to its standard-model value (Leivant III §4.1).
+Novel packaging. -/
+theorem Tm.eval_model_morphism {sig : SortedSig S} {Γ : Ctx S}
+    (M₁ M₂ : SortedModel sig) (φ : ∀ {σ : S}, M₁.carrier σ → M₂.carrier σ)
+    (hop : ∀ (o : sig.Op)
+        (args : ∀ i : Fin (sig.arity o).length, M₁.carrier ((sig.arity o).get i)),
+      φ (M₁.interpOp o args) = M₂.interpOp o (fun i => φ (args i)))
+    (ρ₁ : M₁.Env Γ) (ρ₂ : M₂.Env Γ) (hρ : ∀ i : Fin Γ.length, φ (ρ₁ i) = ρ₂ i)
+    {s : S} (t : Tm sig Γ s) :
+    φ (t.eval M₁ ρ₁) = t.eval M₂ ρ₂ := by
+  have φcast : ∀ {x y : S} (h : x = y) (v : M₁.carrier x),
+      φ (cast (congrArg M₁.carrier h) v) = cast (congrArg M₂.carrier h) (φ v) := by
+    intro x y h v
+    subst h
+    rfl
+  induction t using PolyFix.ind with
+  | step i children ih =>
+    cases i with
+    | inl a => exact (φcast a.2 _).trans (congrArg (cast (congrArg M₂.carrier a.2)) (hρ a.1))
+    | inr o =>
+      refine (φcast o.2 _).trans (congrArg (cast (congrArg M₂.carrier o.2)) ?_)
+      exact (hop o.val _).trans (congrArg (M₂.interpOp o.val) (funext ih))
 
 /-- A presentation: a sort type, a multi-sorted signature, an object-sort
 predicate as plain data (plan decision 6), the base algebra whose carrier the
