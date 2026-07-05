@@ -360,4 +360,102 @@ theorem sub_sub {S : BinderSig Ty} {Γ Δ Θ : Ctx Ty} {s : Ty} (σ : Env (Tm S)
     sub τ (sub σ t) = sub (fun s x => sub τ (σ s x)) t :=
   traverse_sub_sub t σ τ
 
+/-- Transporting a head-shifted variable `Var.succ a v` across a context equality
+prepended by a head entry `a` peels the transport onto the tail. Proved by
+`subst`; the recursion step of `Var.appendCases_append_assoc`. -/
+theorem Var.transport_cons_succ {a : Ty} {C C' : Ctx Ty} {s : Ty} (e : C = C')
+    (v : Var C s) :
+    (congrArg (a :: ·) e) ▸ Var.succ a v = Var.succ a (e ▸ v) := by
+  cases e; rfl
+
+/-- Transporting the head variable `⟨0, _⟩` across a context equality prepended by
+a head entry `a` leaves it fixed at position `0`. Proved by `subst`; the base
+step of `Var.appendCases_append_assoc`. -/
+theorem Var.transport_cons_zero {a : Ty} {C C' : Ctx Ty} {s : Ty} (e : C = C')
+    (hi : List.get (a :: C) 0 = s) :
+    (congrArg (a :: ·) e) ▸ (⟨0, hi⟩ : Var (a :: C) s)
+      = (⟨0, hi⟩ : Var (a :: C') s) := by
+  cases e; rfl
+
+/-- Reassociating a nested append eliminator through the context associativity
+`Γ ++ (Ξ₁ ++ Ξ₂) = (Γ ++ Ξ₁) ++ Ξ₂`: splitting a variable of `(Γ ++ Ξ₁) ++ Ξ₂`
+(transported from `Γ ++ (Ξ₁ ++ Ξ₂)`) at the outer boundary `(Γ ++ Ξ₁) | Ξ₂`
+equals splitting the original variable at `Γ | (Ξ₁ ++ Ξ₂)`, with the suffix
+branch further split at `Ξ₁ | Ξ₂`, embedding a prefix `Γ`-variable through
+`Thinning.weakAppend` and a middle `Ξ₁`-variable through `Var.appendRight`.
+Recursion on the prefix `Γ`, peeling the head shift as in `Var.appendCases`. -/
+theorem Var.appendCases_append_assoc {Ξ₁ Ξ₂ : Ctx Ty} {s : Ty} {motive : Sort v}
+    (fromΞ₂ : Var Ξ₂ s → motive) :
+    (Γ : Ctx Ty) → (fromΓΞ₁ : Var (Γ ++ Ξ₁) s → motive) →
+    (x : Var (Γ ++ (Ξ₁ ++ Ξ₂)) s) →
+      Var.appendCases fromΞ₂ (Γ ++ Ξ₁) fromΓΞ₁ ((List.append_assoc Γ Ξ₁ Ξ₂).symm ▸ x)
+        = Var.appendCases
+            (Var.appendCases fromΞ₂ Ξ₁ (fun w => fromΓΞ₁ (Var.appendRight Γ w))) Γ
+            (fun v => fromΓΞ₁ (Thinning.weakAppend.app v)) x
+  | [], fromΓΞ₁, x => rfl
+  | a :: Γ, fromΓΞ₁, ⟨i, hi⟩ => by
+      cases i using Fin.cases with
+      | zero =>
+          exact congrArg (Var.appendCases fromΞ₂ (a :: Γ ++ Ξ₁) fromΓΞ₁)
+            (Var.transport_cons_zero (List.append_assoc Γ Ξ₁ Ξ₂).symm hi)
+      | succ i' =>
+          refine (congrArg (Var.appendCases fromΞ₂ (a :: Γ ++ Ξ₁) fromΓΞ₁)
+            (Var.transport_cons_succ (List.append_assoc Γ Ξ₁ Ξ₂).symm ⟨i', hi⟩)).trans ?_
+          refine (Var.appendCases_append_assoc fromΞ₂ Γ
+            (fun w => fromΓΞ₁ (Var.succ a w)) ⟨i', hi⟩).trans ?_
+          simp only [Var.appendCases_cons_succ, Var.appendRight_cons,
+            Thinning.weakAppend_app_succ]
+
+/-- Prepending a shared head entry `a` commutes with a codomain transport of a
+thinning: `keep a (e ▸ ρ) = (congrArg (a :: ·) e) ▸ keep a ρ`. Proved by `subst`. -/
+theorem Thinning.keep_transport_cod {a : Ty} {Γ B B' : Ctx Ty} (e : B = B')
+    (ρ : Thinning Γ B) :
+    Thinning.keep a (e ▸ ρ) = (congrArg (a :: ·) e) ▸ Thinning.keep a ρ := by
+  cases e; rfl
+
+/-- Suffix embeddings compose out of the empty prefix: embedding `[] ⊆ Ξ₁` then
+`Ξ₁ ⊆ Ξ₁ ++ Ξ₂` embeds `[] ⊆ Ξ₁ ++ Ξ₂`. Recursion on `Ξ₁`; the base step of
+`Thinning.weakAppend_comp_weakAppend`. -/
+theorem Thinning.weakAppend_nil_comp_weakAppend : (Ξ₁ Ξ₂ : Ctx Ty) →
+    (Thinning.weakAppend (Γ := ([] : Ctx Ty)) (Ξ := Ξ₁)).comp
+        (Thinning.weakAppend (Γ := Ξ₁) (Ξ := Ξ₂))
+      = Thinning.weakAppend (Γ := ([] : Ctx Ty)) (Ξ := Ξ₁ ++ Ξ₂)
+  | [], _ => Thinning.nil_comp _
+  | b :: Ξ₁', Ξ₂ =>
+      congrArg (Thinning.drop b) (Thinning.weakAppend_nil_comp_weakAppend Ξ₁' Ξ₂)
+
+/-- Suffix embeddings compose through the context associativity: embedding
+`Δ ⊆ Δ ++ Ξ₁` then `(Δ ++ Ξ₁) ⊆ (Δ ++ Ξ₁) ++ Ξ₂` equals, up to the
+`List.append_assoc` transport, the single embedding `Δ ⊆ Δ ++ (Ξ₁ ++ Ξ₂)`.
+Recursion on the prefix `Δ`, threading the head shift through
+`Thinning.keep_transport_cod`. -/
+theorem Thinning.weakAppend_comp_weakAppend {Ξ₁ Ξ₂ : Ctx Ty} : (Δ : Ctx Ty) →
+    (Thinning.weakAppend (Γ := Δ) (Ξ := Ξ₁)).comp
+        (Thinning.weakAppend (Γ := Δ ++ Ξ₁) (Ξ := Ξ₂))
+      = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ Thinning.weakAppend (Γ := Δ) (Ξ := Ξ₁ ++ Ξ₂)
+  | [] => Thinning.weakAppend_nil_comp_weakAppend Ξ₁ Ξ₂
+  | a :: Δ => by
+      refine Eq.trans (b := Thinning.keep a
+          ((Thinning.weakAppend (Γ := Δ) (Ξ := Ξ₁)).comp
+            (Thinning.weakAppend (Γ := Δ ++ Ξ₁) (Ξ := Ξ₂)))) rfl ?_
+      rw [Thinning.weakAppend_comp_weakAppend Δ]
+      exact Thinning.keep_transport_cod (List.append_assoc Δ Ξ₁ Ξ₂).symm _
+
+/-- Renaming along a codomain-transported thinning pulls the transport out: for
+`h : Δ = Δ'`, `ren (h ▸ ρ) t = h ▸ ren ρ t`. Proved by `subst`. -/
+theorem ren_transport_cod {S : BinderSig Ty} {Γ Δ Δ' : Ctx Ty} {s : Ty} (h : Δ = Δ')
+    (ρ : Thinning Γ Δ) (t : Tm S Γ s) :
+    ren (h ▸ ρ) t = h ▸ ren ρ t := by
+  cases h; rfl
+
+/-- Iterated weakening along the two suffix embeddings equals, up to the
+`List.append_assoc` transport, a single weakening along the combined suffix. The
+term-level image of `Thinning.weakAppend_comp_weakAppend` under `ren`, obtained
+through `ren_comp`. -/
+theorem ren_weakAppend_append {S : BinderSig Ty} {Δ Ξ₁ Ξ₂ : Ctx Ty} {s : Ty}
+    (t : Tm S Δ s) :
+    ren (Thinning.weakAppend (Ξ := Ξ₂)) (ren (Thinning.weakAppend (Ξ := Ξ₁)) t)
+      = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ ren (Thinning.weakAppend (Ξ := Ξ₁ ++ Ξ₂)) t := by
+  rw [← ren_comp, Thinning.weakAppend_comp_weakAppend Δ, ren_transport_cod]
+
 end GebLean.Binding
