@@ -458,4 +458,26 @@ theorem ren_weakAppend_append {S : BinderSig Ty} {Δ Ξ₁ Ξ₂ : Ctx Ty} {s : 
       = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ ren (Thinning.weakAppend (Ξ := Ξ₁ ++ Ξ₂)) t := by
   rw [← ren_comp, Thinning.weakAppend_comp_weakAppend Δ, ren_transport_cod]
 
+/-- The suffix inclusion `Var.appendRight` reassociates across a nested append:
+transporting `Var.appendRight Δ y` of a suffix variable `y : Var (Ξ₁ ++ Ξ₂) s`
+along `Δ ++ (Ξ₁ ++ Ξ₂) = (Δ ++ Ξ₁) ++ Ξ₂` splits `y` at the boundary `Ξ₁ | Ξ₂`,
+sending the `Ξ₂`-branch through `Var.appendRight (Δ ++ Ξ₁)` and the `Ξ₁`-branch
+through `Var.appendRight Δ` re-embedded by `Thinning.weakAppend`. Recursion on the
+prefix `Δ`, threading the head shift through `Var.appendCases_natural`. -/
+theorem Var.appendRight_append_assoc {Ξ₁ Ξ₂ : Ctx Ty} {s : Ty} : (Δ : Ctx Ty) →
+    (y : Var (Ξ₁ ++ Ξ₂) s) →
+    (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ Var.appendRight Δ y
+      = Var.appendCases (Var.appendRight (Δ ++ Ξ₁)) Ξ₁
+          (fun w => Thinning.weakAppend.app (Var.appendRight Δ w)) y
+  | [], y => (Var.appendCases_self y).symm
+  | a :: Δ, y => by
+      have step := Var.transport_cons_succ (a := a) (List.append_assoc Δ Ξ₁ Ξ₂).symm
+        (Var.appendRight Δ y)
+      rw [Var.appendRight_append_assoc Δ y] at step
+      change (congrArg (a :: ·) (List.append_assoc Δ Ξ₁ Ξ₂).symm) ▸
+        Var.succ a (Var.appendRight Δ y) = _
+      rw [step]
+      exact Var.appendCases_natural (Var.succ a) (Var.appendRight (Δ ++ Ξ₁)) Ξ₁
+        (fun w => Thinning.weakAppend.app (Var.appendRight Δ w)) y
+
 end GebLean.Binding
