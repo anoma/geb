@@ -42,4 +42,13 @@ example :
     Binding.Tm (oneLambdaSig natAlgSig) [] (bbType natAlgSig (RType.arrow RType.o RType.o)) :=
   bbRep (natToFreeAlg 2) (RType.arrow RType.o RType.o)
 
+/-- The type bar-map sends `Ω o` to the Berarducci-Böhm type at the bar of its
+argument (Leivant III section 4.2): `overline(Ω o) = Ω̄ ō = bbType natAlgSig ō`. -/
+example : barTy (RType.omega RType.o) = bbType natAlgSig RType.o := by
+  simp only [barTy_omega, barTy_o]
+
+/-- The bar-map's image is omega-free (simple), the faithfulness invariant of
+the bar-translation (Leivant III section 4.2): `overline(Ω o)` is simple. -/
+example : (barTy (RType.omega RType.o)).IsSimple := barTy_isSimple _
+
 end GebLean.Ramified

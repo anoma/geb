@@ -30,6 +30,16 @@ gives the Church numeral `a^σ = λc̄. cₛ (cₛ (⋯ (c_z)))`.
   the variable of the abstraction context `stepTypes natAlgSig σ σ` selected by a
   constructor label.
 * `bbRep` — the Berarducci-Böhm representation `a^σ = λc̄. a{c̄}`.
+* `barTy` — the type bar-map `overline(·)`: `ō = o`, `overline(σ→ρ) = σ̄→ρ̄`,
+  `overline(Ω τ) = bbType natAlgSig τ̄`.
+
+## Main statements
+
+* `barTy_isSimple` — the type bar-map lands in the simple (omega-free) types,
+  the faithfulness invariant of the bar-translation.
+* `bbType_isSimple` — the Berarducci-Böhm type `bbType A σ` is simple when `σ` is.
+* `RType.curried_isSimple` — a curried arrow over a context of simple types with
+  a simple result sort is itself simple.
 
 ## Implementation notes
 
@@ -148,5 +158,75 @@ def bbRep (a : FreeAlg natAlgSig) (σ : RType) :
       (fun b _ _sub rec =>
         OneLambda.replicateSpine (natAlgSig.ar b) σ
           (Binding.Tm.var (ctorVar b)) rec) () a)
+
+/-- The type bar-map `overline(·)` of the bar-translation (Leivant III section
+4.2, p. 223): `ō = o`, `overline(σ → ρ) = σ̄ → ρ̄`, and `overline(Ω τ) = Ω̄ τ̄ =
+bbType natAlgSig τ̄`, translating each ramified type to a simple (omega-free)
+type by replacing every `Ω` node with the Berarducci-Böhm type `bbType natAlgSig`
+at its bar. Realized by the dependent eliminator `PolyFix.ind` (decision 8),
+following `RType.interp`'s pattern. -/
+def barTy (τ : RType) : RType :=
+  PolyFix.ind (P := rTypeSig.polyEndo) (motive := fun {_} _ => RType)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => RType.o
+      | RTypeShape.arrow, _, ih =>
+        RType.arrow (ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)))
+          (ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)))
+      | RTypeShape.omega, _, ih =>
+        bbType natAlgSig (ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega)))) τ
+
+@[simp] theorem barTy_o : barTy RType.o = RType.o := rfl
+
+@[simp] theorem barTy_arrow (a b : RType) :
+    barTy (RType.arrow a b) = RType.arrow (barTy a) (barTy b) := rfl
+
+@[simp] theorem barTy_omega (a : RType) :
+    barTy (RType.omega a) = bbType natAlgSig (barTy a) := rfl
+
+/-- The curried arrow sort over simple contexts is simple: if every context
+sort and the result sort are omega-free, so is the folded arrow
+`RType.curried Γ τ`. Internal packaging for `bbType_isSimple`, not a statement
+Leivant makes directly. -/
+theorem RType.curried_isSimple {Γ : List RType} {τ : RType}
+    (hΓ : ∀ x ∈ Γ, x.IsSimple) (hτ : τ.IsSimple) :
+    (RType.curried Γ τ).IsSimple := by
+  induction Γ with
+  | nil => simpa using hτ
+  | cons σ Γ' ih =>
+    rw [RType.curried_cons, RType.arrow_isSimple_iff]
+    exact ⟨hΓ σ List.mem_cons_self,
+      ih (fun x hx => hΓ x (List.mem_cons_of_mem _ hx))⟩
+
+/-- The Berarducci-Böhm type is omega-free whenever its sort is (Leivant III
+section 4.2): `bbType A σ` folds the constructor step types `σ^{r_i} → σ`, each
+simple when `σ` is, so the whole curried arrow is simple. The currying step is
+internal packaging (`RType.curried_isSimple`); the substance is Leivant's. -/
+theorem bbType_isSimple {A : AlgSig} [Fintype A.B] [LinearOrder A.B] {σ : RType}
+    (h : σ.IsSimple) : (bbType A σ).IsSimple := by
+  rw [bbType]
+  refine RType.curried_isSimple (fun x hx => ?_) h
+  rw [stepTypes, List.mem_map] at hx
+  obtain ⟨b, _, rfl⟩ := hx
+  exact RType.curried_isSimple
+    (fun y hy => by rw [List.eq_of_mem_replicate hy]; exact h) h
+
+/-- The type bar-map lands in the simple (omega-free) types (Leivant III section
+4.2): every `barTy τ` is simple, the faithfulness invariant of the
+bar-translation into the simply-typed calculus `1λ(A)`. Each `Ω` node is
+replaced by the omega-free `bbType natAlgSig` (`bbType_isSimple`), while `o` and
+`arrow` preserve simplicity. -/
+theorem barTy_isSimple (τ : RType) : (barTy τ).IsSimple :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => (barTy t).IsSimple)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => RType.o_isSimple
+      | RTypeShape.arrow, _, ih =>
+        RType.arrow_isSimple_iff.mpr
+          ⟨ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)),
+            ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow))⟩
+      | RTypeShape.omega, _, ih =>
+        bbType_isSimple (ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega)))) τ
 
 end GebLean.Ramified
