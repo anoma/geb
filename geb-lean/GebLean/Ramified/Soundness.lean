@@ -1,4 +1,5 @@
 import GebLean.Ramified.Soundness.Applicative
+import GebLean.Ramified.Soundness.OneLambda
 
 /-!
 # Ramified recurrence: soundness
@@ -9,7 +10,10 @@ module realizes the object-sorted applicative λ-calculus `RλMR_o^ω` of
 section 4.1 as a binding signature over the ramified types, an instance of the
 indexed binder-substitution kit (`GebLean/Binding/`), and transcribes
 Proposition 7's soundness arm `(1)⟹(4)` — the translation of every ramified
-identifier to a term of that calculus (`Applicative`).
+identifier to a term of that calculus (`Applicative`). The second module
+realizes the simply-typed calculus `1λ(A)` of section 4.2 as a second binding
+signature over the ramified types, with its congruence-closed reduction
+(`OneLambda`).
 
 ## References
 
