@@ -95,4 +95,56 @@ example : Binding.Tm (oneLambdaSig natAlgSig) []
         (barTy (RType.omega RType.o)))) :=
   barCase (RType.omega RType.o) (Or.inr rfl)
 
+/-- The term bar-map of the identity `λx:o. x` applied to the zero constructor
+elaborates at the barred sort `ō = o` (Leivant III section 4.2): a closed
+`o`-variant term exercising the `app`, `lam`, variable, and `con^o` clauses of
+`barTm`. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) ([].map barTy) (barTy RType.o) :=
+  barTm (app' (lam' (Binding.Tm.var boundVar))
+    (Binding.Tm.op (S := rlmrOSig natAlgSig)
+      (RlmrOOp.con RType.o (Or.inl rfl) false) (fun k => k.elim0)))
+
+/-- The term bar-map of the shifted successor constructor `c_true^{Ωo}`
+elaborates at the barred sort (Leivant III section 4.2): the `con^{Ωτ}` clause of
+`barTm` dispatches to `barConOmega`. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) ([].map barTy)
+    (barTy (RType.arrow (RType.omega RType.o) (RType.omega RType.o))) :=
+  barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+    (RlmrOOp.con (RType.omega RType.o) (Or.inr rfl) true) (fun k => k.elim0))
+
+/-- The term bar-map of the recurrence combinator `R^o` elaborates at the barred
+sort (Leivant III section 4.2): the `recur` clause of `barTm` dispatches to
+`barRecur`. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) ([].map barTy)
+    (barTy ((rlmrOSig natAlgSig).result (RlmrOOp.recur RType.o))) :=
+  barTm (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur RType.o) (fun k => k.elim0))
+
+/-- The term bar-map of the case combinator `case^o` elaborates at the barred
+sort (Leivant III section 4.2): the `case` clause of `barTm` dispatches to
+`barCase`. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) ([].map barTy)
+    (barTy ((rlmrOSig natAlgSig).result (RlmrOOp.case RType.o (Or.inl rfl)))) :=
+  barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+    (RlmrOOp.case RType.o (Or.inl rfl)) (fun k => k.elim0))
+
+/-- The term bar-map of the destructor `dstr_0 : o → o` elaborates at the
+barred sort (Leivant III section 4.2): the `dstr` clause of `barTm` dispatches
+to the base destructor `dstr j` of `1λ(A)`. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) ([].map barTy)
+    (barTy ((rlmrOSig natAlgSig).result
+      (RlmrOOp.dstr (⟨0, by decide⟩ : Fin natAlgSig.maxArity)))) :=
+  barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+    (RlmrOOp.dstr (⟨0, by decide⟩ : Fin natAlgSig.maxArity)) (fun k => k.elim0))
+
+/-- The term bar-map of the case combinator `case^{Ωo}` at the higher object
+sort elaborates at the barred sort (Leivant III section 4.2): the `case`
+clause of `barTm` dispatches to `barCase`, which here descends into its
+`omega` shape-split — the branch not exercised by the `case^o` example above,
+reached through the fold rather than by calling `barCase` directly. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) ([].map barTy)
+    (barTy ((rlmrOSig natAlgSig).result
+      (RlmrOOp.case (RType.omega RType.o) (Or.inr rfl)))) :=
+  barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+    (RlmrOOp.case (RType.omega RType.o) (Or.inr rfl)) (fun k => k.elim0))
+
 end GebLean.Ramified

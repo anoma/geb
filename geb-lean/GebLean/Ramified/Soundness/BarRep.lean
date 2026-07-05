@@ -38,6 +38,11 @@ gives the Church numeral `a^σ = λc̄. cₛ (cₛ (⋯ (c_z)))`.
   recurrence combinator `R^τ`.
 * `barCase` — the case bar-map `casē^θ`, the bar image of the case combinator
   `case^θ`, splitting on `θ.IsObj` into the base `case` and its push-under-λ.
+* `RType.omegaArg` — the computable inverse of `RType.omega` on `omega`-headed
+  nodes, internal packaging recovering the shift argument for the `con^{Ωτ}`
+  clause of the bar-map.
+* `barVar`, `barTmOp`, `barTm` — the variable bar-map, the per-operation dispatch,
+  and the term bar-map `Ē` translating `RλMR_o^ω` terms into `1λ(A)`.
 
 ## Main statements
 
@@ -46,6 +51,12 @@ gives the Church numeral `a^σ = λc̄. cₛ (cₛ (⋯ (c_z)))`.
 * `bbType_isSimple` — the Berarducci-Böhm type `bbType A σ` is simple when `σ` is.
 * `RType.curried_isSimple` — a curried arrow over a context of simple types with
   a simple result sort is itself simple.
+* `barTy_curried`, `stepTypes_map_barTy` — the type bar-map distributes over
+  currying and commutes with the recurrence step types.
+* `RType.objTarget_of_isSimple` — the object target of a simple type is `o`.
+* `RType.eq_o_of_shape_o`, `RType.eq_omega_omegaArg_of_shape` — reconstruction
+  of an r-type from its top shape at `o` and at `omega`, internal packaging
+  underlying the shape-splits of `barCase` and `barTmOp`.
 
 ## Implementation notes
 
@@ -372,5 +383,149 @@ def barCase {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj) :
               ((Γ ++ [RType.o]) ++ List.replicate natAlgSig.numCtors (barTy θ))
               (⟨idx, rfl⟩ :
                 Binding.Var (barTy θ).domains ((barTy θ).domains.get idx)))))
+
+/-- The type bar-map distributes over currying (Leivant III section 4.2): the
+bar of a curried arrow `σ⃗ → τ` is the bar of its domains curried over the bar of
+its target, `barTy (curried Γ τ) = curried (Γ.map barTy) (barTy τ)`. By induction
+on the domain list `Γ`. -/
+theorem barTy_curried (Γ : List RType) (τ : RType) :
+    barTy (RType.curried Γ τ) = RType.curried (Γ.map barTy) (barTy τ) := by
+  induction Γ with
+  | nil => rfl
+  | cons σ Γ' ih =>
+    simp only [List.map_cons, RType.curried_cons, barTy_arrow, ih]
+
+/-- The type bar-map commutes with the recurrence step types (Leivant III
+section 4.2): the bars of the step types `stepTypes natAlgSig τ τ` are the step
+types of the barred sort, `(stepTypes natAlgSig τ τ).map barTy =
+stepTypes natAlgSig τ̄ τ̄`. Consumed by the recurrence clause of `barTm`, whose
+image `barRecur` binds the barred step types. -/
+theorem stepTypes_map_barTy (τ : RType) :
+    (stepTypes natAlgSig τ τ).map barTy = stepTypes natAlgSig (barTy τ) (barTy τ) := by
+  rw [stepTypes, stepTypes, List.map_map]
+  refine List.map_congr_left (fun b _ => ?_)
+  rw [Function.comp_apply, barTy_curried, List.map_replicate]
+
+/-- The shift argument `σ` of an r-type, `Ω σ ↦ σ` and any other shape to the
+base sort `o`. The computable inverse of `RType.omega` on `omega`-headed nodes,
+letting the `con^{Ωτ}` clause of the bar-map recover the shift argument without
+eliminating a `Prop` existential into data. Realized by `PolyFix.ind`. -/
+def RType.omegaArg (t : RType) : RType :=
+  PolyFix.ind (P := rTypeSig.polyEndo) (motive := fun {_} _ => RType)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => RType.o
+      | RTypeShape.arrow, _, _ => RType.o
+      | RTypeShape.omega, childx, _ =>
+        childx (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega))) t
+
+/-- An r-type whose top shape is `omega` is `Ω` of its shift argument
+(`RType.omegaArg`). Reconstruction of the `omega`-headed node, used to recover
+the shift argument of the `con^{Ωτ}` clause of the bar-map. -/
+theorem RType.eq_omega_omegaArg_of_shape {t : RType} (h : t.shape = RTypeShape.omega) :
+    t = RType.omega t.omegaArg := by
+  rcases t with ⟨_, i, childx⟩
+  simp only [RType.shape, PolyFix.index] at h
+  subst h
+  exact RType.mk_omega_eq childx
+
+/-- The variable bar-map: a variable of `Γ` at sort `s` becomes the
+position-preserving variable of the barred context `Γ.map barTy` at the barred
+sort `barTy s`. The leaf case of the term bar-map `barTm`, transporting the sort
+proof along `List.getElem_map`. -/
+def barVar {Γ : Binding.Ctx RType} {s : RType} (x : Binding.Var Γ s) :
+    Binding.Var (Γ.map barTy) (barTy s) :=
+  ⟨⟨x.1.val, by rw [List.length_map]; exact x.1.isLt⟩, by
+    rw [List.get_eq_getElem, List.getElem_map, ← List.get_eq_getElem]
+    exact congrArg barTy x.2⟩
+
+/-- The bar image of an operation node of the applicative calculus `RλMR_o^ω`
+(Leivant III section 4.2, p. 223–224): given the bar images `ih` of the node's
+subterms (each at the barred binder-extended context and barred sort), the bar
+image of the whole node at the barred ambient context and barred result sort. The
+per-operation dispatch of the term bar-map `barTm`, the syntactic counterpart of
+`appEvalOp`:
+
+* `app` and `lam` translate to the `1λ(A)` application and abstraction `app'`,
+  `lam'`, transporting the barred child contexts across `List.map_append`;
+* `con` at `θ = o` is the base constructor constant `con b`, and at `θ = Ω τ`
+  the constructor bar-map `barConOmega`;
+* `dstr` is the base destructor `dstr j`;
+* `recur` is the recurrence bar-map `barRecur`, and `case` the case bar-map
+  `barCase`, their result sorts reconciled through `barTy_curried`,
+  `stepTypes_map_barTy`, and `barTy_omega`. -/
+def barTmOp {Γ : Binding.Ctx RType} (o : RlmrOOp natAlgSig)
+    (ih : ∀ j : Fin ((rlmrOSig natAlgSig).args o).length,
+      Binding.Tm (oneLambdaSig natAlgSig)
+        ((Γ ++ (((rlmrOSig natAlgSig).args o).get j).1).map barTy)
+        (barTy (((rlmrOSig natAlgSig).args o).get j).2)) :
+    Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)
+      (barTy ((rlmrOSig natAlgSig).result o)) := by
+  cases o with
+  | app σ τ =>
+    have h0 : (0 : Nat) < ((rlmrOSig natAlgSig).args (RlmrOOp.app σ τ)).length :=
+      Nat.zero_lt_two
+    have h1 : (1 : Nat) < ((rlmrOSig natAlgSig).args (RlmrOOp.app σ τ)).length :=
+      Nat.one_lt_two
+    have hctx : (Γ ++ []).map barTy = Γ.map barTy := by
+      rw [List.map_append, List.map_nil, List.append_nil]
+    exact OneLambda.app' (hctx ▸ ih ⟨0, h0⟩) (hctx ▸ ih ⟨1, h1⟩)
+  | lam σ τ =>
+    have h0 : (0 : Nat) < ((rlmrOSig natAlgSig).args (RlmrOOp.lam σ τ)).length :=
+      Nat.zero_lt_one
+    have hctx : (Γ ++ [σ]).map barTy = Γ.map barTy ++ [barTy σ] := by
+      simp only [List.map_append, List.map_cons, List.map_nil]
+    exact OneLambda.lam' (hctx ▸ ih ⟨0, h0⟩)
+  | con θ hθ b =>
+    cases hs : θ.shape with
+    | o =>
+      have hθo : θ = RType.o := RType.eq_o_of_shape_o hs
+      subst hθo
+      change Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)
+        (barTy (RType.curried (List.replicate (natAlgSig.ar b) RType.o) RType.o))
+      rw [barTy_curried, List.map_replicate, barTy_o]
+      exact Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con b) (fun k => k.elim0)
+    | arrow => exact absurd hθ (by unfold RType.IsObj; rw [hs]; decide)
+    | omega =>
+      have hθω : θ = RType.omega θ.omegaArg := RType.eq_omega_omegaArg_of_shape hs
+      change Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)
+        (barTy (RType.curried (List.replicate (natAlgSig.ar b) θ) θ))
+      rw [hθω, barTy_curried, List.map_replicate, barTy_omega]
+      exact barConOmega b θ.omegaArg
+  | recur τ =>
+    change Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)
+      (barTy (RType.curried (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ)))
+    rw [barTy_curried, stepTypes_map_barTy, barTy_arrow, barTy_omega]
+    exact barRecur τ
+  | dstr j =>
+    change Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy) (barTy (RType.arrow RType.o RType.o))
+    rw [barTy_arrow, barTy_o]
+    exact Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0)
+  | case θ hθ =>
+    change Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)
+      (barTy (RType.arrow RType.o (RType.curried (List.replicate natAlgSig.numCtors θ) θ)))
+    rw [barTy_arrow, barTy_o, barTy_curried, List.map_replicate]
+    exact barCase θ hθ
+
+/-- The term bar-map `Ē` of the bar-translation (Leivant III section 4.2,
+p. 223–224): the translation of a term of the ramified applicative calculus
+`RλMR_o^ω` over `rlmrOSig natAlgSig` into a term of the simply-typed calculus
+`1λ(A)` over `oneLambdaSig natAlgSig`, mapping the context and sort through the
+type bar-map `barTy`. Env-free binder-aware fold via `PolyFix.ind` (decision 8),
+the syntactic counterpart of `appEval`: a variable leaf is the
+position-preserving barred variable (`barVar`), and an operation node dispatches
+through `barTmOp` on the bar images of its subterms. -/
+def barTm {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (rlmrOSig natAlgSig) Γ s) :
+    Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy) (barTy s) :=
+  PolyFix.ind (P := polyTranslate (Binding.varOver (Ty := RType)) (rlmrOSig natAlgSig).polyEndo)
+    (motive := fun {x} _ =>
+      Binding.Tm (oneLambdaSig natAlgSig) (x.1.map barTy) (barTy x.2))
+    (fun {x} i children ih =>
+      match i, children, ih with
+      | Sum.inl a, _, _ => Binding.Tm.var (barVar (Binding.leafVar a))
+      | Sum.inr p, _, ih =>
+        cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) (x.1.map barTy))
+            (congrArg barTy p.2))
+          (barTmOp (Γ := x.1) p.val (fun j => ih ⟨j⟩))) t
 
 end GebLean.Ramified
