@@ -51,6 +51,8 @@ gives the Church numeral `a^σ = λc̄. cₛ (cₛ (⋯ (c_z)))`.
 * `bbType_isSimple` — the Berarducci-Böhm type `bbType A σ` is simple when `σ` is.
 * `RType.curried_isSimple` — a curried arrow over a context of simple types with
   a simple result sort is itself simple.
+* `conc_mk` — the concrete `o`-term at a constructor node: `conc (FreeAlg.mk b
+  sub)` is `con b` saturated with the concrete terms of the subterms.
 * `barTy_curried`, `stepTypes_map_barTy` — the type bar-map distributes over
   currying and commutes with the recurrence step types.
 * `RType.objTarget_of_isSimple` — the object target of a simple type is `o`.
@@ -132,6 +134,17 @@ def conc {A : AlgSig} [Fintype A.B] (a : FreeAlg A) :
       OneLambda.replicateSpine (A.ar b) RType.o
         (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con b) (fun k => k.elim0)) rec)
     () a
+
+/-- The concrete `o`-term at a constructor node (Leivant III section 4.2): the
+fold `conc` of a node `c_b(t₁,…,t_{r_b})` is the constructor constant `con b`
+saturated along the homogeneous application spine with the concrete terms of the
+subterms. The `FreeAlg.recurse` node rule (`FreeAlg.recurse_mk`) specialized to
+`conc`; holds definitionally. -/
+theorem conc_mk {A : AlgSig} [Fintype A.B] (b : A.B) (sub : Fin (A.ar b) → FreeAlg A) :
+    conc (FreeAlg.mk b sub)
+      = OneLambda.replicateSpine (A.ar b) RType.o
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con b) (fun k => k.elim0))
+          (fun i => conc (sub i)) := rfl
 
 /-- The type `Ā[σ]` of the Berarducci-Böhm representation at sort `σ` (Leivant
 III section 4.2, p. 223): the constructor step types `ξ_i = σ^{r_i} → σ` folded
