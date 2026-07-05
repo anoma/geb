@@ -32,6 +32,8 @@ gives the Church numeral `a^σ = λc̄. cₛ (cₛ (⋯ (c_z)))`.
 * `bbRep` — the Berarducci-Böhm representation `a^σ = λc̄. a{c̄}`.
 * `barTy` — the type bar-map `overline(·)`: `ō = o`, `overline(σ→ρ) = σ̄→ρ̄`,
   `overline(Ω τ) = bbType natAlgSig τ̄`.
+* `barConOmega` — the constructor bar-map `c̄_i^{Ωτ}`, the bar image of the
+  shifted constructor constant `c_i^{Ωτ}`.
 
 ## Main statements
 
@@ -228,5 +230,37 @@ theorem barTy_isSimple (τ : RType) : (barTy τ).IsSimple :=
             ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow))⟩
       | RTypeShape.omega, _, ih =>
         bbType_isSimple (ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega)))) τ
+
+/-- The constructor bar-map `c̄_i^{Ωτ}` of the bar-translation (Leivant III
+section 4.2, p. 223–224), the bar image of the shifted constructor constant
+`c_i^{Ωτ}`: the closed `1λ(A)` term
+`λ x_1…x_{r_i}. λ c_1…c_k. c_i (x_1 c⃗) … (x_{r_i} c⃗)` at the type
+`(Ω̄τ)^{r_i} → Ω̄τ`, where `Ω̄τ = bbType natAlgSig τ̄` (`τ̄ = barTy τ`), each `x_j`
+is a Berarducci-Böhm value of type `Ω̄τ`, the `c⃗` are the bound constructor
+variables of `bbType natAlgSig τ̄` (the step types `stepTypes natAlgSig τ̄ τ̄`),
+and `c_i` (via `ctorVar`) is the bound constructor for label `b`. Mirrors
+`bbRep`'s constructor fold at one node, with the recursive results supplied by
+the outer arguments `x⃗` applied along the `c`-spine (`appSpine`). -/
+def barConOmega {Γ : Binding.Ctx RType} (b : natAlgSig.B) (τ : RType) :
+    Binding.Tm (oneLambdaSig natAlgSig) Γ
+      (RType.curried (List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ)))
+        (bbType natAlgSig (barTy τ))) :=
+  OneLambda.lamSpine (List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ)))
+    (OneLambda.lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+      (OneLambda.replicateSpine (natAlgSig.ar b) (barTy τ)
+        (Binding.Tm.var (Binding.Var.appendRight
+          (Γ ++ List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ))) (ctorVar b)))
+        (fun j =>
+          OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+            (Binding.Tm.var (Binding.Thinning.weakAppend.app
+              (Binding.Var.appendRight Γ
+                (⟨⟨j.val, by rw [List.length_replicate]; exact j.isLt⟩,
+                  by rw [List.get_eq_getElem, List.getElem_replicate]⟩ :
+                    Binding.Var (List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ)))
+                      (bbType natAlgSig (barTy τ))))))
+            (fun idx =>
+              Binding.Tm.var (Binding.Var.appendRight
+                (Γ ++ List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ)))
+                ⟨idx, rfl⟩)))))
 
 end GebLean.Ramified

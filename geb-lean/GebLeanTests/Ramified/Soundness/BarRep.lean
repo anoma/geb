@@ -51,4 +51,21 @@ example : barTy (RType.omega RType.o) = bbType natAlgSig RType.o := by
 the bar-translation (Leivant III section 4.2): `overline(Ω o)` is simple. -/
 example : (barTy (RType.omega RType.o)).IsSimple := barTy_isSimple _
 
+/-- The constructor bar-map of the successor constructor `true` at `τ = o`
+elaborates as a closed `1λ(A)` term of sort `(Ω̄o)^1 → Ω̄o` (Leivant III section
+4.2): the bar image of `c_true^{Ωo}` binds its single Berarducci-Böhm argument
+and the two constructor variables before rebuilding the node. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) []
+    (RType.curried (List.replicate (natAlgSig.ar true) (bbType natAlgSig (barTy RType.o)))
+      (bbType natAlgSig (barTy RType.o))) :=
+  barConOmega true RType.o
+
+/-- The constructor bar-map of the zero constructor `false` at `τ = o` elaborates
+as a closed `1λ(A)` term of sort `(Ω̄o)^0 → Ω̄o = Ω̄o` (Leivant III section 4.2):
+the nullary constructor case, binding only the two constructor variables. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) []
+    (RType.curried (List.replicate (natAlgSig.ar false) (bbType natAlgSig (barTy RType.o)))
+      (bbType natAlgSig (barTy RType.o))) :=
+  barConOmega false RType.o
+
 end GebLean.Ramified
