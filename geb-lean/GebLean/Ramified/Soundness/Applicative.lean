@@ -1791,6 +1791,109 @@ def frecBranch {τ : RType} (params : List RType) (i : natAlgSig.B)
           (RlmrOOp.dstr ⟨w.1.val, hlt⟩) (fun k => k.elim0)) z))
     clause
 
+/-- Evaluating a flat-recurrence branch `frecBranch params i clause z` at `ρ` is
+the evaluation of the translated `clause` at the recurrence-context environment
+whose parameter slots read `ρ`'s parameters (`envHead`) and whose `ar i` subterm
+slots read the immediate subterms of the recurrence argument `appEval z ρ`
+(`dstrRead`). Since `frecBranch` is a `Binding.sub`, apply `appEval_sub` and
+reconcile `subEnvSem` of the branch's `extendEnv` with the `childEnv` gluing:
+the parameter variables embed by `weakAppend`, the subterm variables by the
+destructor `dstr`. Leivant III §4.1 Example 2. -/
+theorem appEval_frecBranch {τ : RType} (params : List RType) (i : natAlgSig.B)
+    (clause : Binding.Tm (rlmrOSig natAlgSig)
+      (params ++ List.replicate (natAlgSig.ar i) RType.o) τ)
+    (z : Binding.Tm (rlmrOSig natAlgSig) (params ++ [RType.o]) RType.o)
+    (ρ : ∀ k : Fin (params ++ [RType.o]).length,
+      RType.interp (FreeAlg natAlgSig) ((params ++ [RType.o]).get k)) :
+    appEval (frecBranch params i clause z) ρ
+      = appEval clause (childEnv params RType.o (natAlgSig.ar i)
+          (envHead params RType.o ρ) (fun j => dstrRead j.val (appEval z ρ))) := by
+  rw [frecBranch]
+  refine (appEval_sub clause _ ρ).trans ?_
+  congr 1
+  funext p
+  refine finApp_cases (Γ := params) (Δ := List.replicate (natAlgSig.ar i) RType.o)
+    (motive := fun p => subEnvSem _ ρ p
+      = childEnv params RType.o (natAlgSig.ar i) (envHead params RType.o ρ)
+          (fun j => dstrRead j.val (appEval z ρ)) p)
+    (fun i0 => ?_) (fun j => ?_) p
+  · apply eq_of_heq
+    have hext : Binding.extendEnv
+        (fun _s v => Binding.Tm.var (Binding.Thinning.weakAppend.app v))
+        (fun t w =>
+          have hlen : (List.replicate (natAlgSig.ar i) RType.o).length = natAlgSig.ar i :=
+            List.length_replicate
+          have hval : w.1.val < natAlgSig.ar i :=
+            Nat.lt_of_lt_of_le w.1.isLt (le_of_eq hlen)
+          have hlt : w.1.val < natAlgSig.maxArity :=
+            Nat.lt_of_lt_of_le hval (Finset.le_sup (f := natAlgSig.ar) (Finset.mem_univ i))
+          have hot : RType.o = t := by
+            have hrep : (List.replicate (natAlgSig.ar i) RType.o).get w.1 = RType.o := by
+              rw [List.get_eq_getElem, List.getElem_replicate]
+            exact hrep ▸ w.2
+          (hot ▸ app' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+            (RlmrOOp.dstr ⟨w.1.val, hlt⟩) (fun k => k.elim0)) z
+            : Binding.Tm (rlmrOSig natAlgSig) (params ++ [RType.o]) t))
+        ((params ++ List.replicate (natAlgSig.ar i) RType.o).get
+          (finAppL params (List.replicate (natAlgSig.ar i) RType.o) i0))
+        ⟨finAppL params (List.replicate (natAlgSig.ar i) RType.o) i0, rfl⟩
+        = Binding.Tm.var (Binding.Thinning.weakAppend.app
+            (⟨i0, (get_finAppL params (List.replicate (natAlgSig.ar i) RType.o) i0).symm⟩ :
+              Binding.Var params _)) := by
+      simp only [Binding.extendEnv, Binding.splitVar]
+      rw [taut_finAppL_eq, Binding.Var.appendCases_weakAppend]
+    simp only [subEnvSem]
+    rw [hext, appEval_var, childEnv_finAppL]
+    refine (eqRec_heq _ _).trans (HEq.trans ?_ (cast_heq _ _).symm)
+    simp only [envHead]
+    refine HEq.trans ?_ (cast_heq _ _).symm
+    have hpos : (Binding.Thinning.weakAppend.app
+        (⟨i0, (get_finAppL params (List.replicate (natAlgSig.ar i) RType.o) i0).symm⟩ :
+          Binding.Var params _)).1 = finAppL params [RType.o] i0 :=
+      Fin.ext (by rw [weakAppend_app_val]; simp [finAppL])
+    rw [hpos]
+  · apply eq_of_heq
+    have hj : j.val < natAlgSig.ar i := lt_of_lt_of_eq j.isLt List.length_replicate
+    have hext : Binding.extendEnv
+        (fun _s v => Binding.Tm.var (Binding.Thinning.weakAppend.app v))
+        (fun t w =>
+          have hlen : (List.replicate (natAlgSig.ar i) RType.o).length = natAlgSig.ar i :=
+            List.length_replicate
+          have hval : w.1.val < natAlgSig.ar i :=
+            Nat.lt_of_lt_of_le w.1.isLt (le_of_eq hlen)
+          have hlt : w.1.val < natAlgSig.maxArity :=
+            Nat.lt_of_lt_of_le hval (Finset.le_sup (f := natAlgSig.ar) (Finset.mem_univ i))
+          have hot : RType.o = t := by
+            have hrep : (List.replicate (natAlgSig.ar i) RType.o).get w.1 = RType.o := by
+              rw [List.get_eq_getElem, List.getElem_replicate]
+            exact hrep ▸ w.2
+          (hot ▸ app' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+            (RlmrOOp.dstr ⟨w.1.val, hlt⟩) (fun k => k.elim0)) z
+            : Binding.Tm (rlmrOSig natAlgSig) (params ++ [RType.o]) t))
+        ((params ++ List.replicate (natAlgSig.ar i) RType.o).get
+          (finAppR params (List.replicate (natAlgSig.ar i) RType.o) j))
+        ⟨finAppR params (List.replicate (natAlgSig.ar i) RType.o) j, rfl⟩
+        = (have hlt : j.val < natAlgSig.maxArity :=
+            Nat.lt_of_lt_of_le hj (Finset.le_sup (f := natAlgSig.ar) (Finset.mem_univ i))
+          (show RType.o = (params ++ List.replicate (natAlgSig.ar i) RType.o).get
+              (finAppR params (List.replicate (natAlgSig.ar i) RType.o) j) from by
+            rw [get_finAppR, List.get_eq_getElem, List.getElem_replicate]) ▸
+            app' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+              (RlmrOOp.dstr ⟨j.val, hlt⟩) (fun k => k.elim0)) z) := by
+      simp only [Binding.extendEnv, Binding.splitVar]
+      rw [taut_finAppR_eq, Binding.Var.appendCases_appendRight]
+    simp only [subEnvSem]
+    rw [hext, childEnv_finAppR _ _ _ hj]
+    refine HEq.trans ?_ ((cast_heq _ _).trans (cast_heq _ _)).symm
+    refine (appEval_heq _ (app' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.dstr ⟨j.val, (Nat.lt_of_lt_of_le hj
+          (Finset.le_sup (f := natAlgSig.ar) (Finset.mem_univ i)))⟩)
+        (fun k => k.elim0)) z) ρ ?_ (eqRec_heq _ _)).trans ?_
+    · rw [get_finAppR, List.get_eq_getElem, List.getElem_replicate]
+    · refine heq_of_eq ?_
+      rw [appEval_app']
+      exact congrFun (appEval_dstr _ (fun k => k.elim0) ρ) (appEval z ρ)
+
 /-- The direct Proposition 7 translation of a flat-recurrence identifier
 (Leivant III §4.1 Examples 1–2, the inlined `(3)⟹(4)` step of the soundness arm
 `(1)⟹(4)`): case analysis at the result sort `τ` on the recurrence argument (the
