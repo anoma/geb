@@ -95,4 +95,16 @@ def instantiate₁ {S : BinderSig Ty} {Γ : Ctx Ty} {a s : Ty}
     | zero => exact hi ▸ u
     | succ j => exact j.elim0) t
 
+/-- Assemble the meta-map of `instantiate` from an argument tuple: an indexed
+tuple `args`, supplying a term of `Γ` at each position of the suffix `Ξ`, becomes
+the substitution meta-map sending a suffix variable `⟨i, hi⟩ : Var Ξ t` to
+`args i` transported along the position's sort equality `hi : Ξ.get i = t`. The
+argument-tuple interface of `instantiate`, feeding a positionally-indexed spine
+of arguments (as produced by an application spine) into the suffix
+substitution. -/
+def metaTuple {S : BinderSig Ty} {Γ Ξ : Ctx Ty}
+    (args : ∀ i : Fin Ξ.length, Tm S Γ (Ξ.get i)) :
+    ∀ t, Var Ξ t → Tm S Γ t :=
+  fun _ v => v.2 ▸ args v.1
+
 end GebLean.Binding
