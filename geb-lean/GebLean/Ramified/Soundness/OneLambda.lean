@@ -49,6 +49,8 @@ applicative calculus.
   `Relation.ReflTransGen`-reduction of the whole application.
 * `OneLambda.reduces_appSpine` — reduction of the head of an application spine
   lifts to a reduction of the whole spine.
+* `OneLambda.reduces_beta` — the single-argument β-contraction
+  `(λx. b) N ⇒* b[x := N]` as a `Relation.ReflTransGen`-reduction.
 
 ## Implementation notes
 
@@ -304,6 +306,17 @@ theorem reduces_appSpine {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
       exact reduces_appSpine Ts' (app' f (args ⟨0, Nat.succ_pos _⟩))
         (app' f' (args ⟨0, Nat.succ_pos _⟩)) (fun i => args i.succ)
         (reduces_app'_left (args ⟨0, Nat.succ_pos _⟩) h)
+
+/-- The single-argument β-contraction as a `Relation.ReflTransGen`-reduction:
+`(λx:σ. b) N ⇒* b[x := N]`, the reflexive-transitive lift of the base redex rule
+`OneLambdaStep.beta`. The named β-reduction the `Represents` cases prepend
+(through `lemma8`) when a `1λ(A)` abstraction meets its argument under an
+application spine. -/
+theorem reduces_beta {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} {σ τ : RType}
+    (b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) (N : Binding.Tm (oneLambdaSig A) Γ σ) :
+    Relation.ReflTransGen OneLambdaStep (app' (lam' b) N) (Binding.instantiate₁ N b) :=
+  Relation.ReflTransGen.single (OneLambdaStep.beta b N)
 
 end OneLambda
 
