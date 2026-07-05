@@ -595,6 +595,31 @@ theorem OneLambda.reduces_betaSpine :
           (Binding.metaOne (a := σ) (args ⟨0, Nat.succ_pos _⟩))) _
       exact heq3 ▸ OneLambda.reduces_betaSpine Δ' _ (fun i => args i.succ)
 
+/-- The Berarducci-Böhm representation `bbRep v σ` saturated with represented
+step terms along its abstraction spine reduces to the instantiated fold body
+(Leivant III section 4.2, Proposition 11's recurrence case): applying
+`bbRep v σ` — the iterated abstraction of the `FreeAlg.recurse` fold of `v` over
+the constructor-step types — to an argument tuple `Ghat` along the step-type
+application spine reduces (`OneLambdaStep`, reflexive-transitively) to the fold
+body with the step arguments simultaneously substituted for the abstracted
+constructor variables (`instantiate (metaTuple Ghat)`). The direct instance of
+the generic λ-spine β-reduction `reduces_betaSpine` at `bbRep`'s single
+abstraction spine; the resulting substituted `ctorVar`-headed spine is the
+variable-application template `lemma10` consumes. -/
+theorem OneLambda.bbRep_appSpine_reduces (v : FreeAlg natAlgSig) (σ : RType)
+    (Ghat : ∀ i : Fin (stepTypes natAlgSig σ σ).length,
+      Binding.Tm (oneLambdaSig natAlgSig) [] ((stepTypes natAlgSig σ σ).get i)) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.appSpine (stepTypes natAlgSig σ σ) (bbRep v σ) Ghat)
+      (Binding.instantiate (Binding.metaTuple Ghat)
+        (FreeAlg.recurse (A := natAlgSig) (P := Unit)
+          (C := Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ)
+          (fun b _ _sub rec =>
+            OneLambda.replicateSpine (natAlgSig.ar b) σ
+              (Binding.Tm.var (ctorVar b)) rec) () v)) := by
+  rw [bbRep]
+  exact OneLambda.reduces_betaSpine (stepTypes natAlgSig σ σ) _ Ghat
+
 /-- Two closing environments related pointwise through the representation
 relation (Leivant III section 4.2, the hypothesis of Lemma 10): a source-side
 environment `Eσ` substituting a closed source term for every variable of `Γ`,
