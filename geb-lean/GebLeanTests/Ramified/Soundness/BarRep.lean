@@ -1,0 +1,45 @@
+import GebLean.Ramified.Soundness.BarRep
+
+/-!
+# Tests for the Berarducci-Böhm representation
+
+The bare names `Tm`, `Tm.op`, and `Tm.var` are qualified to `GebLean.Binding`
+throughout, since `GebLean.Ramified` carries its own `Tm` (the sorted-signature
+term type of `GebLean/Ramified/Term.lean`) that would otherwise shadow the
+binder-kit `Tm` used here.
+-/
+
+namespace GebLean.Ramified
+
+/-- The concrete `o`-term of the zero value elaborates: `conc (natToFreeAlg 0)`
+is the nullary constructor spine, a closed `oneLambdaSig` term of sort `o`. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
+  conc (natToFreeAlg 0)
+
+/-- The concrete `o`-term of the value `2` elaborates as a closed term of sort
+`o`: the successor constructor applied twice to the zero constructor. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
+  conc (natToFreeAlg 2)
+
+/-- The type `Ā[o]` of the Berarducci-Böhm representation over `natAlgSig` is the
+Church type `N̄` (Leivant III section 4.2, p. 223), in the `ctorList natAlgSig`
+enumeration order (zero-first): `o → (o→o) → o`, the constructor reordering of
+Leivant's presented `(o→o)→o→o`. -/
+example : bbType natAlgSig RType.o =
+    RType.arrow RType.o (RType.arrow (RType.arrow RType.o RType.o) RType.o) := by
+  simp only [bbType, stepTypes, ctorList_natAlgSig]
+  rfl
+
+/-- The Berarducci-Böhm representation `2̄^o` elaborates at the type `bbType
+natAlgSig o = N̄` (the `N̄` example of task 6.2.0): the abstract representation of
+the value `2` binds the two constructors and reruns the concrete fold. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) [] (bbType natAlgSig RType.o) :=
+  bbRep (natToFreeAlg 2) RType.o
+
+/-- The Berarducci-Böhm representation is uniform in the sort `σ`: `2̄^{o→o}`
+elaborates at `bbType natAlgSig (o→o)`, exercising `bbRep` at a non-base sort. -/
+example :
+    Binding.Tm (oneLambdaSig natAlgSig) [] (bbType natAlgSig (RType.arrow RType.o RType.o)) :=
+  bbRep (natToFreeAlg 2) (RType.arrow RType.o RType.o)
+
+end GebLean.Ramified

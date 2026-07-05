@@ -1,5 +1,6 @@
 import GebLean.Ramified.Soundness.Applicative
 import GebLean.Ramified.Soundness.OneLambda
+import GebLean.Ramified.Soundness.BarRep
 
 /-!
 # Ramified recurrence: soundness
