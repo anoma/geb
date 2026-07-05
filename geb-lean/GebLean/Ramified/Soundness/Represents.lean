@@ -439,6 +439,89 @@ theorem OneLambda.sub_lam' {Γ Δ : Binding.Ctx RType} {σ' τ' : RType}
   refine Fin.cases ?_ (fun k => k.elim0) j
   rfl
 
+/-- A context-`cast` of a term equals the corresponding `Eq.rec` transport
+`h ▸ t`: both realize the same context equality. Proved by `subst`. Bridges
+`OneLambda.lamSpine`'s `cast` presentation to the `▸` presentation of
+`traverse_congr_dom`/`traverse_congr_cod`. -/
+theorem tm_cast_eq_eqRec {S : Binding.BinderSig RType} {Γ Γ' : Binding.Ctx RType}
+    {s : RType} (h : Γ = Γ') (t : Binding.Tm S Γ s) :
+    cast (congrArg (fun c => Binding.Tm S c s) h) t = h ▸ t := by
+  cases h; rfl
+
+/-- A context transport followed by its inverse cancels. Proved by `subst`. -/
+theorem eqRec_symm_eqRec {motive : Binding.Ctx RType → Type} {a b : Binding.Ctx RType}
+    (h : a = b) (x : motive a) : (h.symm ▸ (h ▸ x : motive b) : motive a) = x := by
+  cases h; rfl
+
+/-- An inverse context transport followed by the transport cancels. Proved by
+`subst`. -/
+theorem eqRec_eqRec_symm {motive : Binding.Ctx RType → Type} {a b : Binding.Ctx RType}
+    (h : a = b) (y : motive b) : (h ▸ (h.symm ▸ y : motive a) : motive b) = y := by
+  cases h; rfl
+
+/-- Substitution commutes with the iterated abstraction `OneLambda.lamSpine`:
+`sub ρ (lamSpine Δ body) = lamSpine Δ (sub (underBinder (Ξ := Δ) ρ) body)`,
+pushing the substitution under all of the abstracted binders `Δ` at once by
+weakening the environment with `Env.underBinder` at the combined binder context.
+The spine dual of `OneLambda.sub_lam'`. Proved by recursion on `Δ`: the base
+case is the empty-binder coherence `sub_underBinder_nil`, and the cons case peels
+one binder via `OneLambda.sub_lam'`, applies the recursion, and reconciles the
+two nested `Env.underBinder` weakenings with the single combined one through the
+append-associativity keystone `Binding.underBinder_append`. -/
+theorem OneLambda.sub_lamSpine :
+    {Γ Γ' : Binding.Ctx RType} → (Δ : List RType) → {τ : RType} →
+    (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Γ') →
+    (body : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ Δ) τ) →
+    Binding.sub ρ (OneLambda.lamSpine Δ body)
+      = OneLambda.lamSpine Δ (Binding.sub
+          (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := Δ) ρ) body)
+  | Γ, Γ', [], τ, ρ, body => by
+      unfold Binding.sub
+      change Binding.traverse (Binding.subKit (oneLambdaSig natAlgSig)) ρ
+          (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ)
+            (List.append_nil Γ)) body)
+        = cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ) (List.append_nil Γ'))
+            (Binding.traverse (Binding.subKit (oneLambdaSig natAlgSig))
+              (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := []) ρ) body)
+      rw [tm_cast_eq_eqRec (List.append_nil Γ) body,
+        tm_cast_eq_eqRec (List.append_nil Γ')
+          (Binding.traverse (Binding.subKit (oneLambdaSig natAlgSig))
+            (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := []) ρ) body)]
+      have key := sub_underBinder_nil ρ ((List.append_nil Γ) ▸ body)
+      rw [eqRec_symm_eqRec (motive := fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ)
+        (List.append_nil Γ) body] at key
+      rw [key, eqRec_eqRec_symm (motive := fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ)]
+  | Γ, Γ', σ :: Δ', τ, ρ, body => by
+      rw [OneLambda.lamSpine]
+      refine (OneLambda.sub_lam' ρ _).trans ?_
+      refine (congrArg OneLambda.lam' (OneLambda.sub_lamSpine Δ' _ _)).trans ?_
+      conv_rhs => rw [OneLambda.lamSpine]
+      refine congrArg OneLambda.lam' ?_
+      refine congrArg (OneLambda.lamSpine Δ') ?_
+      unfold Binding.sub
+      rw [tm_cast_eq_eqRec (List.append_assoc Γ [σ] Δ').symm body]
+      refine (traverse_congr_dom (Binding.subKit (oneLambdaSig natAlgSig))
+        (List.append_assoc Γ [σ] Δ').symm
+        (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+          (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) ρ)) body).trans ?_
+      have henv :
+          (fun (b : RType) (x : Binding.Var (Γ ++ σ :: Δ') b) =>
+              Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+                (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) ρ) b
+                ((List.append_assoc Γ [σ] Δ').symm ▸ x))
+            = (fun (b : RType) (x : Binding.Var (Γ ++ σ :: Δ') b) =>
+                (List.append_assoc Γ' [σ] Δ').symm ▸
+                  Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+                    (Ξ := σ :: Δ') ρ b x) := by
+        funext b x
+        exact Binding.underBinder_append (Ξ₁ := [σ]) (Ξ₂ := Δ') ρ b x
+      refine (congrArg (fun e =>
+        Binding.traverse (Binding.subKit (oneLambdaSig natAlgSig)) e body) henv).trans ?_
+      rw [tm_cast_eq_eqRec (List.append_assoc Γ' [σ] Δ').symm]
+      exact traverse_congr_cod (Binding.subKit (oneLambdaSig natAlgSig))
+        (List.append_assoc Γ' [σ] Δ').symm
+        (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := σ :: Δ') ρ) body
+
 /-- Two closing environments related pointwise through the representation
 relation (Leivant III section 4.2, the hypothesis of Lemma 10): a source-side
 environment `Eσ` substituting a closed source term for every variable of `Γ`,
