@@ -119,4 +119,16 @@ example (n : Nat) :
 -- The doubling constant applied via the application former: `2 * 3 = 6`.
 #guard freeAlgToNat ((doublingConstApp).eval (standardModel (higherOrder A)) (envDouble 3)) = 6
 
+-- The semantic constructor node rule (`appChain_stdConstructorInterp`) at a
+-- concrete successor node: the curried `succ` constructor applied to the
+-- one-element spine `[2]`, read at the base object sort, is the node
+-- `succ 2 = 3`.
+#guard
+  freeAlgToNat
+      (cast (RType.interp_isObj (FreeAlg A) (show RType.o.IsObj from Or.inl rfl))
+        (appChain A (List.replicate (A.ar true) RType.o) RType.o
+          (curryInterp A (List.replicate (A.ar true) RType.o) RType.o
+            (stdConstructorInterp A (⟨RType.o, Or.inl rfl⟩, true)))
+          (Fin.cons (natToFreeAlg 2) finZeroElim))) = 3
+
 end GebLeanTests.Ramified.HigherOrderTest
