@@ -19,6 +19,11 @@ implication carrying represented arguments to represented applications.
   calculus, the empty-context specialization of `Ramified.app'`.
 * `Represents` — the representation relation of Leivant III section 4.2.
 
+## Main statements
+
+* `lemma8` — target-reduction closure of `Represents` (Leivant III section 4.2,
+  Lemma 8): a `1λ(A)` reduction may be prepended to a representative.
+
 ## Implementation notes
 
 `Represents` is a decision-2 denotational reformulation of Leivant III section
@@ -110,5 +115,40 @@ def Represents (τ : RType) (F : Binding.Tm (rlmrOSig natAlgSig) [] τ)
           Relation.ReflTransGen OneLambdaStep Fhat
             (bbRep (appEval F finZeroElim)
               (barTy (childx (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega)))))) τ F Fhat
+
+/-- Target-reduction closure of `Represents` (Leivant III section 4.2, Lemma 8),
+a decision-2 denotational reformulation: a `1λ(A)` reduction may be prepended to a
+representative. If `Fhat` represents `F` at r-type `τ` and `Fhat'` reduces to
+`Fhat` (`OneLambdaStep`, reflexive-transitively), then `Fhat'` also represents `F`.
+
+Because the source side is read only through `appEval` (decision 2), no source
+metatheory is required: at the object sorts `o` and `Ω τ'` closure is target
+transitivity of the reduction to the anchoring value, and at an arrow the reduction
+is carried under the application spine by `OneLambda.reduces_app'_left` before the
+recursion. Proved by the dependent eliminator `PolyFix.ind` (decision 8) on `τ`
+with a motive quantifying over the terms, the representation, and the reduction. -/
+theorem lemma8 {τ : RType} {F : Binding.Tm (rlmrOSig natAlgSig) [] τ}
+    {Fhat' Fhat : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy τ)}
+    (h : Represents τ F Fhat)
+    (hred : Relation.ReflTransGen OneLambdaStep Fhat' Fhat) :
+    Represents τ F Fhat' :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} (t : RType) =>
+      ∀ (F : Binding.Tm (rlmrOSig natAlgSig) [] t)
+        (Fhat' Fhat : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy t)),
+        Represents t F Fhat →
+          Relation.ReflTransGen OneLambdaStep Fhat' Fhat → Represents t F Fhat')
+    (fun {x} i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => fun _ _ _ h hred => hred.trans h
+      | RTypeShape.arrow, childx, ih =>
+        fun F Fhat' Fhat h hred G Ghat hGG =>
+          have hApp : Represents (childx (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)))
+              (sourceApp (arrow_node_eq x childx ▸ F) G) (OneLambda.app' Fhat Ghat) :=
+            h G Ghat hGG
+          ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)) _
+            (OneLambda.app' Fhat' Ghat) (OneLambda.app' Fhat Ghat) hApp
+            (OneLambda.reduces_app'_left Ghat hred)
+      | RTypeShape.omega, _, _ => fun _ _ _ h hred => hred.trans h) τ F Fhat' Fhat h hred
 
 end GebLean.Ramified

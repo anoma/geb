@@ -36,4 +36,15 @@ example (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow RType.o RType.o))
           Represents RType.o (sourceApp F G) (OneLambda.app' Fhat Ghat)) :
     Represents (RType.arrow RType.o RType.o) F Fhat := h
 
+/-- `lemma8` prepends a `1λ(A)` reduction to a representative. Exercised
+non-vacuously at the base sort `o` with a concrete one-step β reduction
+`(λx:o. b) N ⇒ b[x := N]`: representation of the reduct `b[x := N]` yields
+representation of the redex `(λx:o. b) N`. -/
+example (b : Binding.Tm (oneLambdaSig natAlgSig) ([] ++ [RType.o]) RType.o)
+    (N : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o)
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] RType.o)
+    (h : Represents RType.o F (Binding.instantiate₁ N b)) :
+    Represents RType.o F (OneLambda.app' (OneLambda.lam' b) N) :=
+  lemma8 h (Relation.ReflTransGen.single (OneLambdaStep.beta b N))
+
 end GebLean.Ramified
