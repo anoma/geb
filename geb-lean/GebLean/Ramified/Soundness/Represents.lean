@@ -34,10 +34,16 @@ implication carrying represented arguments to represented applications.
   terms (Leivant III section 4.2, Lemma 10): substituting represented terms for
   the free variables of a λ-free term yields a represented substitution into its
   bar image.
-* `sub_app'`, `OneLambda.sub_app'`, `barTm_app'`, `barTm_var`,
+* `sub_app'`, `OneLambda.sub_app'`, `barTm_app'`, `barTm_var`, `barTm_op`,
   `represents_arrow` — the substitution/bar-map distribution and relation-
   unfolding facts the Lemma 10 induction consumes; `sub_underBinder_nil` and
-  `weakAppend_nil` are the empty-binder coherence they rest on.
+  `weakAppend_nil` are the empty-binder coherence they rest on. `barTm_op` is
+  the general operation-node reduction of the term bar-map (`barTm_var` and
+  `barTm_app'` are its leaf and application instances).
+* `recurBridge` — the source-side recurrence semantics of Proposition 11's
+  recurrence case (Leivant III section 4.2–4.3): the denotation of a saturated
+  recurrence combinator applied to an argument is the free-algebra recurrence of
+  the argument's denotation.
 
 ## Implementation notes
 
@@ -497,5 +503,18 @@ theorem recurBridge {Γ : Binding.Ctx RType} {τ : RType}
           () (appEval A ρ) := by
   rw [appEval_app', appEval_recCombinator]
   rfl
+
+/-- The term bar-map at an operation node dispatches through `barTmOp` on the bar
+images of the node's subterms (Leivant III section 4.2): `barTm (Tm.op o args) =
+barTmOp o (fun j => barTm (args j))`. The general reduction rule of the term
+bar-map, the `PolyFix.ind` β-reduction of the operation case that `barTm_var`'s
+leaf rule and `barTm_app'`'s app instance rest on, the syntactic counterpart of
+`appEval_op`. Holds definitionally since the node's result-sort proof is `rfl`,
+collapsing `barTm`'s reconstruction cast. -/
+theorem barTm_op {Γ : Binding.Ctx RType} (o : RlmrOOp natAlgSig)
+    (args : ∀ j : Fin ((rlmrOSig natAlgSig).args o).length,
+      Binding.Tm (rlmrOSig natAlgSig) (Γ ++ (((rlmrOSig natAlgSig).args o).get j).1)
+        (((rlmrOSig natAlgSig).args o).get j).2) :
+    barTm (Binding.Tm.op o args) = barTmOp o (fun j => barTm (args j)) := rfl
 
 end GebLean.Ramified
