@@ -46,4 +46,9 @@ example : RType.interp Nat arrowOO = (Nat → Nat) := rfl
 #guard omegaO ≠ arrowOO
 #guard RType.arrow o omegaO = RType.arrow o omegaO
 
+-- Simple-type decisions (via the `DecidablePred RType.IsSimple` instance).
+example : RType.o.IsSimple := by decide
+example : ¬ (RType.omega RType.o).IsSimple := by decide
+example : arrowOO.IsSimple := by decide
+
 end GebLeanTests.Ramified.RTypeTest
