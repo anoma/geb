@@ -1,6 +1,7 @@
 import GebLeanTests.Ramified.Soundness.Applicative
 import GebLeanTests.Ramified.Soundness.OneLambda
 import GebLeanTests.Ramified.Soundness.BarRep
+import GebLeanTests.Ramified.Soundness.Represents
 
 /-!
 # Ramified-recurrence soundness test index
