@@ -2071,6 +2071,90 @@ def prop7FrecStep {τ : RType} (params : List RType)
       frecBranch params (ctorAt idx) (ih (ctorAt idx))
         (Binding.Tm.var (boundVar (Γ := params) (σ := RType.o))))
 
+/-- The constructor enumeration of `natAlgSig` in ascending `Bool` order is
+`[false, true]`: the nullary constructor precedes the unary. -/
+theorem ctorList_natAlgSig : ctorList natAlgSig = [false, true] := by
+  have hperm : List.Perm (ctorList natAlgSig) [false, true] := by
+    rw [← Multiset.coe_eq_coe, ctorList, Finset.sort_eq]
+    decide
+  have hp1 : List.Pairwise (· ≤ ·) (ctorList natAlgSig) := by
+    rw [ctorList]; exact Finset.pairwise_sort Finset.univ (· ≤ ·)
+  have hp2 : List.Pairwise (· ≤ ·) ([false, true] : List Bool) := by decide
+  exact List.Perm.eq_of_pairwise' hp1 hp2 hperm
+
+/-- The constructor label at enumeration position `0` of `natAlgSig` is the
+nullary constructor `false`; a fact of the `Bool` order used by the final branch
+selection of `prop7FrecStep_interp`. -/
+theorem ctorAt_zero : ctorAt (⟨0, by decide⟩ : Fin natAlgSig.numCtors) = false := by
+  simp only [ctorAt, List.get_eq_getElem, ctorList_natAlgSig]
+  rfl
+
+/-- The constructor label at enumeration position `1` of `natAlgSig` is the unary
+constructor `true`; a fact of the `Bool` order used by the final branch selection
+of `prop7FrecStep_interp`. -/
+theorem ctorAt_one : ctorAt (⟨1, by decide⟩ : Fin natAlgSig.numCtors) = true := by
+  simp only [ctorAt, List.get_eq_getElem, ctorList_natAlgSig]
+  rfl
+
+/-- The destructor `dstrRead j` on a free-algebra node reads the `j`-th subterm
+when `j` is below the node's arity and returns the node otherwise. The `mk`-reduction
+of `dstrRead` used to match the flat recurrence against `FreeAlg.recurse` in
+`prop7FrecStep_interp`. -/
+theorem dstrRead_mk (j : Nat) (b : natAlgSig.B)
+    (subs : Fin (natAlgSig.ar b) → FreeAlg natAlgSig) :
+    dstrRead j (FreeAlg.mk b subs)
+      = if h : j < natAlgSig.ar b then subs ⟨j, h⟩ else FreeAlg.mk b subs := rfl
+
+/-- The flat-recurrence step of the direct Proposition 7 translation preserves
+the denoted function (Leivant III §4.1, the soundness arm `(1)⟹(4)`, inlining the
+`(3)⟹(4)` flat-operator step): `appEval` of `prop7FrecStep params ih` at a
+recurrence-context environment agrees with `RIdent.interpStep`'s `frec` arm, given
+that the translated children `ih` denote the semantic children `ihS`. The case
+analysis at the result sort evaluates by `appEval_caseAtType` to a `caseSelect` on
+the recurrence argument (`boundVar_appEval_eq_envLast`); each branch evaluates by
+`appEval_frecBranch` reading the immediate subterms by `dstrRead`; the top
+constructor of the argument then selects the matching branch, matching the flat
+recurrence `FreeAlg.recurse` on the scrutinee. -/
+theorem prop7FrecStep_interp {τ : RType} (params : List RType)
+    (ih : (i : natAlgSig.B) →
+      Binding.Tm (rlmrOSig natAlgSig) (params ++ List.replicate (natAlgSig.ar i) RType.o) τ)
+    (ihS : (i : natAlgSig.B) →
+      (∀ k : Fin (params ++ List.replicate (natAlgSig.ar i) RType.o).length,
+        RType.interp (FreeAlg natAlgSig)
+          ((params ++ List.replicate (natAlgSig.ar i) RType.o).get k)) →
+        RType.interp (FreeAlg natAlgSig) τ)
+    (hchild : ∀ (b : natAlgSig.B)
+      (ρ' : ∀ k : Fin (params ++ List.replicate (natAlgSig.ar b) RType.o).length,
+        RType.interp (FreeAlg natAlgSig)
+          ((params ++ List.replicate (natAlgSig.ar b) RType.o).get k)),
+      appEval (ih b) ρ' = ihS b ρ')
+    (ρ : ∀ k : Fin (params ++ [RType.o]).length,
+      RType.interp (FreeAlg natAlgSig) ((params ++ [RType.o]).get k)) :
+    appEval (prop7FrecStep params ih) ρ
+      = FreeAlg.recurse (A := natAlgSig) (P := Unit)
+          (fun i _ sub _phi =>
+            ihS i (childEnv params RType.o (natAlgSig.ar i)
+              (envHead params RType.o ρ) (fun j => sub j)))
+          () (envLast params RType.o ρ) := by
+  rw [prop7FrecStep, appEval_caseAtType]
+  simp only [appEval_frecBranch, boundVar_appEval_eq_envLast, hchild]
+  rw [ctorAt_zero, ctorAt_one]
+  generalize hw : envLast params RType.o ρ = w
+  cases w with
+  | mk _ b subs =>
+    cases b with
+    | false =>
+      refine congrArg (ihS false) ?_
+      congr 1
+      funext j
+      exact j.elim0
+    | true =>
+      refine congrArg (ihS true) ?_
+      congr 1
+      funext j
+      change dstrRead (↑j) (FreeAlg.mk true subs) = subs j
+      rw [dstrRead_mk, dif_pos (show (↑j : Nat) < natAlgSig.ar true from j.isLt)]
+
 /-- The translation step of `prop7Translate` at one identifier node, the
 applicative-term twin of `RIdent.interpStep` (`GebLean/Ramified/HigherOrder.lean`):
 a `defn` folds its body into an applicative term (`prop7DefnStep`); a `mrec`
