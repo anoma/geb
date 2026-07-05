@@ -47,4 +47,27 @@ example (b : Binding.Tm (oneLambdaSig natAlgSig) ([] ++ [RType.o]) RType.o)
     Represents RType.o F (OneLambda.app' (OneLambda.lam' b) N) :=
   lemma8 h (Relation.ReflTransGen.single (OneLambdaStep.beta b N))
 
+/-- `lemma9_o` applied to a concrete closed source term at the base sort:
+`sourceZero` represents itself as the concrete `o`-term of its denotation. -/
+example : Represents RType.o sourceZero (conc (appEval sourceZero finZeroElim)) :=
+  lemma9_o sourceZero
+
+/-- The zero-successor combinator `λx:o. c_true^o(x) : o → o` as a closed
+source term, exercising `lemma9_omega` at the shifted object sort `Ω o`. Since
+its body is closed under the empty context, `RlmrOOp.lam` here targets the
+object sort `RType.omega RType.o`, giving a closed term of that sort directly
+via the `con` node — no binder is needed at `Ω τ'` itself, so the source term
+is simply the shifted constructor node. -/
+def sourceOmegaZero : Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega RType.o) :=
+  Binding.Tm.op (S := rlmrOSig natAlgSig)
+    (RlmrOOp.con (RType.omega RType.o) (Or.inr rfl) false) (fun k => k.elim0)
+
+/-- `lemma9_omega` applied to a concrete closed source term at an object sort
+`Ω τ'`: `sourceOmegaZero` represents itself as the Berarducci-Böhm
+representation of its own denotation. -/
+example :
+    Represents (RType.omega RType.o) sourceOmegaZero
+      (bbRep (appEval sourceOmegaZero finZeroElim) (barTy RType.o)) :=
+  lemma9_omega RType.o sourceOmegaZero
+
 end GebLean.Ramified

@@ -23,6 +23,9 @@ implication carrying represented arguments to represented applications.
 
 * `lemma8` — target-reduction closure of `Represents` (Leivant III section 4.2,
   Lemma 8): a `1λ(A)` reduction may be prepended to a representative.
+* `lemma9_o`, `lemma9_omega` — self-representation of a closed source term at
+  the object sorts (Leivant III section 4.2, Lemma 9, weakened): a closed term
+  is represented by the canonical bar-term of its own denotation.
 
 ## Implementation notes
 
@@ -150,5 +153,27 @@ theorem lemma8 {τ : RType} {F : Binding.Tm (rlmrOSig natAlgSig) [] τ}
             (OneLambda.app' Fhat' Ghat) (OneLambda.app' Fhat Ghat) hApp
             (OneLambda.reduces_app'_left Ghat hred)
       | RTypeShape.omega, _, _ => fun _ _ _ h hred => hred.trans h) τ F Fhat' Fhat h hred
+
+/-- Self-representation at the base object sort `o` (Leivant III section 4.2,
+Lemma 9, weakened): a closed source term `F : o` is represented by the concrete
+`o`-term of its own denotation, `conc (appEval F finZeroElim)`. Leivant's Lemma
+9 additionally asserts that this representative is the *unique* normal `1λ(A)`
+term representing `F`; under decision 2's denotational reformulation that
+uniqueness content is dropped as unneeded (`Prop11` case 7 reads `F̂`'s normal
+form from the `Represents` hypothesis directly, not from this lemma). What
+remains is existence, and at `o` the object clause of `Represents` *is* the
+statement that its target reduces to this term, so the anchor represents
+itself reflexively. -/
+theorem lemma9_o (F : Binding.Tm (rlmrOSig natAlgSig) [] RType.o) :
+    Represents RType.o F (conc (appEval F finZeroElim)) :=
+  Relation.ReflTransGen.refl
+
+/-- Self-representation at an object sort `Ω τ'` (Leivant III section 4.2,
+Lemma 9, weakened): a closed source term `F : Ω τ'` is represented by the
+Berarducci-Böhm representation of its own denotation, `bbRep (appEval F
+finZeroElim) (barTy τ')`. See `lemma9_o` for the dropped uniqueness content. -/
+theorem lemma9_omega (τ' : RType) (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega τ')) :
+    Represents (RType.omega τ') F (bbRep (appEval F finZeroElim) (barTy τ')) :=
+  Relation.ReflTransGen.refl
 
 end GebLean.Ramified
