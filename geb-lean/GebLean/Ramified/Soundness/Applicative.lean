@@ -79,8 +79,9 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
   its two children.
 * `appEval_ren`, `appEval_lamSpine` — renaming fusion for `appEval` and the
   evaluation of the applicative λ-spine.
-* `prop7MrecStep_interp` — the monotone-recurrence step of the Proposition 7
-  translation preserves the denoted function.
+* `prop7DefnStep_interp`, `prop7MrecStep_interp`, `prop7FrecStep_interp` — the
+  explicit-definition, monotone-recurrence, and flat-recurrence steps of the
+  Proposition 7 translation each preserve the denoted function.
 * `prop7Translate_interp` — the direct Proposition 7 translation preserves the
   denoted function (the soundness arm `(1)⟹(4)`).
 
@@ -2154,6 +2155,86 @@ theorem prop7FrecStep_interp {τ : RType} (params : List RType)
       funext j
       change dstrRead (↑j) (FreeAlg.mk true subs) = subs j
       rw [dstrRead_mk, dif_pos (show (↑j : Nat) < natAlgSig.ar true from j.isLt)]
+
+/-- The suffix inclusion `suffixThinning Γ` acts on a suffix variable as the
+suffix embedding `Var.appendRight Γ`. The `Thinning`-level identity that reads
+`suffixThinning`'s action on the parameter suffix. -/
+theorem suffixThinning_app : (Γ : Binding.Ctx RType) → {Ξ : Binding.Ctx RType} →
+    {s : RType} → (x : Binding.Var Ξ s) →
+      (suffixThinning Γ (Ξ := Ξ)).app x = Binding.Var.appendRight Γ x
+  | [], _Ξ, _s, x => Binding.Thinning.app_id x
+  | a :: Γ', _Ξ, _s, x => congrArg (Binding.Var.succ a) (suffixThinning_app Γ' x)
+
+/-- The semantic renaming of the suffix inclusion `suffixThinning Γ` reads the
+suffix values of a `joinEnv`: `renEnvSem (suffixThinning Γ)` recovers `cv`. The
+suffix counterpart of `renEnvSem_weakAppend_childEnv`, reconciling the
+curried-hole abstraction of `prop7DefnStep` with the currying of `defnModel`. -/
+theorem renEnvSem_suffixThinning_joinEnv {Γ Ξ : Binding.Ctx RType}
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (cv : ∀ j : Fin Ξ.length, RType.interp (FreeAlg natAlgSig) (Ξ.get j)) :
+    renEnvSem (suffixThinning Γ (Ξ := Ξ)) (joinEnv ρ cv) = cv := by
+  funext i
+  apply eq_of_heq
+  simp only [renEnvSem]
+  refine (eqRec_heq _ _).trans ?_
+  have hval : ((suffixThinning Γ (Ξ := Ξ)).app (⟨i, rfl⟩ : Binding.Var Ξ (Ξ.get i))).1.val
+      = Γ.length + i.val := by rw [suffixThinning_app, appendRight_val]
+  have hge : ¬ ((suffixThinning Γ (Ξ := Ξ)).app (⟨i, rfl⟩ : Binding.Var Ξ (Ξ.get i))).1.val
+      < Γ.length := by rw [hval]; omega
+  have hb : ((suffixThinning Γ (Ξ := Ξ)).app (⟨i, rfl⟩ : Binding.Var Ξ (Ξ.get i))).1.val
+      - Γ.length < Ξ.length := by rw [hval]; have := i.isLt; omega
+  refine (joinEnv_heq_right ρ cv _ hge hb).trans (congr_arg_heq cv ?_)
+  apply Fin.ext
+  simp [hval]
+
+/-- The explicit-definition step of the direct Proposition 7 translation preserves
+the denoted function (Leivant III §4.1, the soundness arm `(1)⟹(4)`): `appEval` of
+`prop7DefnStep d ihT` agrees with `RIdent.interpStep`'s `defn` arm — the fold of
+the body against `defnModel` — given that the translated children `ihT` denote the
+semantic children `ihS`. The fold is transported by the model morphism
+`Tm.eval_model_morphism` along `appEval(·, ρ)`, whose per-operation commutation is
+discharged by `appEval_appSpine`/`appEval_con`/`appChain_curryInterp` (constructor),
+`appEval_app'` (application), `appEval_sub` (saturated hole), and
+`appEval_lamSpine`/`appEval_ren`/`renEnvSem_suffixThinning_joinEnv` (curried hole). -/
+theorem prop7DefnStep_interp {Γ : Binding.Ctx RType} {τ : RType}
+    (d : DefnShape natAlgSig Γ τ)
+    (ihT : ∀ j : Fin d.numHoles,
+      Binding.Tm (rlmrOSig natAlgSig) (d.holeIdx j).1 (d.holeIdx j).2)
+    (ihS : ∀ j : Fin d.numHoles,
+      (∀ i : Fin (d.holeIdx j).1.length,
+        RType.interp (FreeAlg natAlgSig) ((d.holeIdx j).1.get i)) →
+        RType.interp (FreeAlg natAlgSig) (d.holeIdx j).2)
+    (hchild : ∀ (j : Fin d.numHoles)
+      (ρ' : ∀ i : Fin (d.holeIdx j).1.length,
+        RType.interp (FreeAlg natAlgSig) ((d.holeIdx j).1.get i)),
+      appEval (ihT j) ρ' = ihS j ρ')
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (prop7DefnStep d ihT) ρ
+      = d.body.eval (defnModel natAlgSig d.numHoles d.holeIdx ihS) ρ := by
+  refine Tm.eval_model_morphism
+    (defnModelTerm (Γ := Γ) d.numHoles d.holeIdx ihT)
+    (defnModel natAlgSig d.numHoles d.holeIdx ihS)
+    (fun {_σ} t => appEval t ρ) ?_
+    (fun i => Binding.Tm.var ⟨i, rfl⟩) ρ (fun i => appEval_var ⟨i, rfl⟩ ρ) d.body
+  intro o args
+  rcases o with ((cop | aop) | j) | j
+  · simp only [defnModelTerm, defnModel, defnSig, SortedSig.sum, constructorSig,
+      Sum.elim_inl, appEval_appSpine]
+    exact appChain_curryInterp natAlgSig (List.replicate (natAlgSig.ar cop.2) cop.1.val)
+      cop.1.val (stdConstructorInterp natAlgSig cop) (fun i => appEval (args i) ρ)
+  · dsimp only [defnModelTerm, defnModel]
+    rw [appEval_app']
+    rfl
+  · dsimp only [defnModelTerm, defnModel]
+    refine (appEval_sub (ihT j) _ ρ).trans ?_
+    exact hchild j _
+  · dsimp only [defnModelTerm, defnModel]
+    refine (appEval_lamSpine Γ (d.holeIdx j).1
+      (Binding.ren (suffixThinning Γ) (ihT j)) ρ).trans ?_
+    refine congrArg (curryInterp natAlgSig (d.holeIdx j).1 (d.holeIdx j).2) ?_
+    funext cv
+    rw [appEval_ren, renEnvSem_suffixThinning_joinEnv]
+    exact hchild j cv
 
 /-- The translation step of `prop7Translate` at one identifier node, the
 applicative-term twin of `RIdent.interpStep` (`GebLean/Ramified/HigherOrder.lean`):
