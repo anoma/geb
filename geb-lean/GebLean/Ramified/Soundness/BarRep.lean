@@ -34,6 +34,8 @@ gives the Church numeral `a^σ = λc̄. cₛ (cₛ (⋯ (c_z)))`.
   `overline(Ω τ) = bbType natAlgSig τ̄`.
 * `barConOmega` — the constructor bar-map `c̄_i^{Ωτ}`, the bar image of the
   shifted constructor constant `c_i^{Ωτ}`.
+* `barRecur` — the recurrence bar-map `R̄^τ = λ g⃗ a. a g⃗`, the bar image of the
+  recurrence combinator `R^τ`.
 
 ## Main statements
 
@@ -262,5 +264,31 @@ def barConOmega {Γ : Binding.Ctx RType} (b : natAlgSig.B) (τ : RType) :
               Binding.Tm.var (Binding.Var.appendRight
                 (Γ ++ List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ)))
                 ⟨idx, rfl⟩)))))
+
+/-- The recurrence bar-map `R̄^τ` of the bar-translation (Leivant III section
+4.2, p. 223–224), the bar image of the recurrence combinator `R^τ`: the closed
+`1λ(A)` term `λ g_1…g_k a. a g_1…g_k` at the type `ξ̄_1, …, ξ̄_k, Ω̄τ → τ̄`, where
+the `g_i` have the step types `stepTypes natAlgSig τ̄ τ̄` (`τ̄ = barTy τ`), `a` is
+a Berarducci-Böhm value of type `Ω̄τ = bbType natAlgSig τ̄`, and `a g_1…g_k`
+applies the Church-encoded `a` to its step arguments along the `g`-spine
+(`appSpine`), yielding `τ̄`. The Berarducci-Böhm iterator: a Church value is its
+own recursor. -/
+def barRecur {Γ : Binding.Ctx RType} (τ : RType) :
+    Binding.Tm (oneLambdaSig natAlgSig) Γ
+      (RType.curried (stepTypes natAlgSig (barTy τ) (barTy τ))
+        (RType.arrow (bbType natAlgSig (barTy τ)) (barTy τ))) :=
+  OneLambda.lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+    (OneLambda.lamSpine [bbType natAlgSig (barTy τ)]
+      (OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+        (Binding.Tm.var (Binding.Var.appendRight
+          (Γ ++ stepTypes natAlgSig (barTy τ) (barTy τ))
+          (⟨⟨0, by simp⟩, rfl⟩ :
+            Binding.Var [bbType natAlgSig (barTy τ)] (bbType natAlgSig (barTy τ)))))
+        (fun idx =>
+          Binding.Tm.var (Binding.Thinning.weakAppend.app
+            (Binding.Var.appendRight Γ
+              (⟨idx, rfl⟩ :
+                Binding.Var (stepTypes natAlgSig (barTy τ) (barTy τ))
+                  ((stepTypes natAlgSig (barTy τ) (barTy τ)).get idx)))))))
 
 end GebLean.Ramified

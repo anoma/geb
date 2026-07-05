@@ -68,4 +68,13 @@ example : Binding.Tm (oneLambdaSig natAlgSig) []
       (bbType natAlgSig (barTy RType.o))) :=
   barConOmega false RType.o
 
+/-- The recurrence bar-map at `τ = o` elaborates as a closed `1λ(A)` term of
+sort `ξ̄_1, ξ̄_2, Ω̄o → ō` (Leivant III section 4.2): the bar image of `R^o` binds
+the two step functions and the Berarducci-Böhm argument, then iterates the
+argument on the steps. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) []
+    (RType.curried (stepTypes natAlgSig (barTy RType.o) (barTy RType.o))
+      (RType.arrow (bbType natAlgSig (barTy RType.o)) (barTy RType.o))) :=
+  barRecur RType.o
+
 end GebLean.Ramified
