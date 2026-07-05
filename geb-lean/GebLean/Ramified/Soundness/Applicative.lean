@@ -1721,6 +1721,16 @@ theorem arrow_node_eq (x : PUnit)
   | ⟨0, _⟩ => rfl
   | ⟨1, _⟩ => rfl
 
+/-- Applying a function-valued `caseSelect` commutes with pushing the argument
+into each branch: `caseSelect z f₀ f₁ v = caseSelect z (f₀ v) (f₁ v)`. Both sides
+reduce through `FreeAlg.recurse` on the scrutinee's top constructor. Discharges
+the arrow arm of `appEval_caseAtType`, where the η-expanded case is applied to
+the fresh binder value (Leivant III §4.1). -/
+theorem caseSelect_apply {A B : Type} (z : FreeAlg natAlgSig) (f0 f1 : A → B) (v : A) :
+    caseSelect z f0 f1 v = caseSelect z (f0 v) (f1 v) := by
+  cases z with
+  | mk _ b subs => cases b <;> rfl
+
 /-- Case analysis at an arbitrary result sort `τ`, η-expanding through arrows
 down to the object-sorted `case` combinator (Leivant III §4.1 Examples 1–2, the
 push of `case` under λ that realizes flat recurrence at higher type). At an
@@ -1761,6 +1771,153 @@ def caseAtType : (τ : RType) → (Γ : Binding.Ctx RType) →
             (fun k => app'
               (Binding.ren Binding.Thinning.weakAppend ((arrow_node_eq x childx) ▸ bs k))
               (Binding.Tm.var boundVar))))
+
+/-- The definitional reduction of `caseAtType` at an arrow node: η-expansion under
+one binder, recursing on the codomain, with the domain `childx ⟨0⟩` bound and the
+recurrence argument and branches weakened along `Thinning.weakAppend`. Stated with
+`childx` at the object domain `Fin (rTypeSig.ar RTypeShape.arrow)` (as
+`arrow_node_eq`) so the arrow arm of `appEval_caseAtType` can rewrite by it. -/
+theorem caseAtType_arrow (x : PUnit)
+    (childx : Fin (rTypeSig.ar RTypeShape.arrow) → RType) (Γ : Binding.Ctx RType)
+    (z : Binding.Tm (rlmrOSig natAlgSig) Γ RType.o)
+    (bs : Fin natAlgSig.numCtors →
+      Binding.Tm (rlmrOSig natAlgSig) Γ (PolyFix.mk x RTypeShape.arrow childx)) :
+    caseAtType (PolyFix.mk x RTypeShape.arrow childx) Γ z bs
+      = (arrow_node_eq x childx).symm ▸ lam'
+          (caseAtType (childx ⟨1, by decide⟩) (Γ ++ [childx ⟨0, by decide⟩])
+            (Binding.ren Binding.Thinning.weakAppend z)
+            (fun k => app'
+              (Binding.ren Binding.Thinning.weakAppend ((arrow_node_eq x childx) ▸ bs k))
+              (Binding.Tm.var boundVar))) := rfl
+
+/-- Transport of `appEval` across an equality of sorts: evaluating the
+sort-transported term is the transport of the evaluation. Discharges the
+node-reconstruction transport `arrow_node_eq` in the arrow arm of
+`appEval_caseAtType`. -/
+theorem appEval_eqRec {Γ : Binding.Ctx RType} {a b : RType} (h : a = b)
+    (t : Binding.Tm (rlmrOSig natAlgSig) Γ a)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (h ▸ t) ρ = h ▸ appEval t ρ := by
+  cases h
+  rfl
+
+/-- Evaluating the object-sorted case redex `case^θ z b⃗` (the `replicateSpine`
+of a `case` head applied to the recurrence argument `z` and the branches `bs`) at
+an object sort `θ` is the branch selector `caseSelect` on the recurrence
+argument's denotation and the two branch denotations (Leivant III §4.1 Example 1).
+The shared object arm of `appEval_caseAtType`: `appEval_replicateSpine` exposes the
+application chain, the `case` head evaluates to a `curryInterp` (folded back by
+`appChain_curryInterp`), and the `List.replicate` sort transports cancel. -/
+theorem appEval_caseRedex {θ : RType} (hθ : θ.IsObj) {Γ : Binding.Ctx RType}
+    (z : Binding.Tm (rlmrOSig natAlgSig) Γ RType.o)
+    (bs : Fin natAlgSig.numCtors → Binding.Tm (rlmrOSig natAlgSig) Γ θ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (replicateSpine natAlgSig.numCtors θ
+        (app' (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.case θ hθ)
+          (fun k => k.elim0)) z) bs) ρ
+      = caseSelect (appEval z ρ)
+          (appEval (bs ⟨0, by decide⟩) ρ) (appEval (bs ⟨1, by decide⟩) ρ) := by
+  rw [appEval_replicateSpine]
+  simp only [appEval_app']
+  conv_lhs =>
+    arg 4
+    change curryInterp natAlgSig (List.replicate natAlgSig.numCtors θ) θ
+      (fun be => caseSelect (appEval z ρ)
+        (cast (congrArg (RType.interp (FreeAlg natAlgSig))
+          (by rw [List.get_eq_getElem, List.getElem_replicate])) (be ⟨0, Nat.zero_lt_two⟩))
+        (cast (congrArg (RType.interp (FreeAlg natAlgSig))
+          (by rw [List.get_eq_getElem, List.getElem_replicate])) (be ⟨1, Nat.one_lt_two⟩)))
+  rw [appChain_curryInterp]
+  beta_reduce
+  refine congrArg₂ (caseSelect (appEval z ρ)) ?_ ?_ <;>
+    exact eq_of_heq ((cast_heq _ _).trans (cast_heq _ _))
+
+/-- Weakening a term by one fresh binder and evaluating at a one-value extension
+reads the original environment: `ren weakAppend` is inverted by `envExtend`. The
+prefix-embedding reconciliation of the arrow arm of `appEval_caseAtType`. -/
+theorem appEval_ren_weakAppend_envExtend {Γ : Binding.Ctx RType} {σ s : RType}
+    (t : Binding.Tm (rlmrOSig natAlgSig) Γ s)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (v : RType.interp (FreeAlg natAlgSig) σ) :
+    appEval (Binding.ren (Binding.Thinning.weakAppend (Ξ := [σ])) t) (envExtend ρ v)
+      = appEval t ρ := by
+  rw [appEval_ren t (Binding.Thinning.weakAppend (Ξ := [σ])) (envExtend ρ v)]
+  congr 1
+  exact renEnvSem_weakAppend_childEnv ρ (fun _ => v)
+
+/-- The fresh binder variable reads the extension value: `boundVar` evaluated at
+`envExtend ρ v` is `v`. The bound-variable reconciliation of the arrow arm of
+`appEval_caseAtType`. -/
+theorem boundVar_appEval_envExtend {Γ : Binding.Ctx RType} {σ : RType}
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (v : RType.interp (FreeAlg natAlgSig) σ) :
+    appEval (Binding.Tm.var (boundVar (Γ := Γ) (σ := σ))) (envExtend ρ v) = v := by
+  rw [boundVar_appEval_eq_envLast]
+  apply eq_of_heq
+  simp only [envLast, envExtend]
+  refine (cast_heq _ _).trans ?_
+  refine (heq_of_eq (childEnv_finAppR ρ (fun _ => v) ⟨0, by simp⟩ Nat.zero_lt_one)).trans ?_
+  exact (cast_heq _ _).trans (cast_heq _ _)
+
+/-- Evaluating case analysis at an arbitrary result sort `τ` (`caseAtType`) is the
+branch selector `caseSelect` on the recurrence argument's denotation and the two
+branch denotations (Leivant III §4.1 Examples 1–2). At an object sort the
+`replicateSpine`/`case` redex evaluates by `appEval_replicateSpine`,
+`appEval_case`, and `appChain_curryInterp`; at an arrow the η-expansion is
+unfolded pointwise, pushing the fresh argument through `caseSelect_apply` and the
+weakenings through `appEval_ren`/`renEnvSem_weakAppend_childEnv`, then closed by
+the codomain induction hypothesis. Recursion on `τ` via `PolyFix.ind`, generalized
+over the ambient context, mirroring `caseAtType`. -/
+theorem appEval_caseAtType (τ : RType) (Γ : Binding.Ctx RType)
+    (z : Binding.Tm (rlmrOSig natAlgSig) Γ RType.o)
+    (bs : Fin natAlgSig.numCtors → Binding.Tm (rlmrOSig natAlgSig) Γ τ)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (caseAtType τ Γ z bs) ρ
+      = caseSelect (appEval z ρ)
+          (appEval (bs ⟨0, by decide⟩) ρ) (appEval (bs ⟨1, by decide⟩) ρ) := by
+  revert Γ z bs ρ
+  refine PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => ∀ (Γ : Binding.Ctx RType)
+      (z : Binding.Tm (rlmrOSig natAlgSig) Γ RType.o)
+      (bs : Fin natAlgSig.numCtors → Binding.Tm (rlmrOSig natAlgSig) Γ t)
+      (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)),
+      appEval (caseAtType t Γ z bs) ρ
+        = caseSelect (appEval z ρ)
+            (appEval (bs ⟨0, by decide⟩) ρ) (appEval (bs ⟨1, by decide⟩) ρ))
+    (fun {x} i childx ih => ?_) τ
+  revert ih
+  cases i with
+  | o =>
+    intro _ih Γ z bs ρ
+    exact appEval_caseRedex (θ := PolyFix.mk x RTypeShape.o childx) (Or.inl rfl) z bs ρ
+  | omega =>
+    intro _ih Γ z bs ρ
+    exact appEval_caseRedex (θ := PolyFix.mk x RTypeShape.omega childx) (Or.inr rfl) z bs ρ
+  | arrow =>
+    intro ih Γ z bs ρ
+    rw [caseAtType_arrow]
+    apply eq_of_heq
+    refine (appEval_heq _ (lam' _) ρ (arrow_node_eq x childx) (eqRec_heq _ _)).trans
+      (heq_of_eq ?_)
+    rw [appEval_lam']
+    funext v
+    rw [ih]
+    rw [show caseSelect (appEval z ρ) (appEval (bs ⟨0, by decide⟩) ρ)
+          (appEval (bs ⟨1, by decide⟩) ρ) v
+        = caseSelect (appEval z ρ) (appEval (bs ⟨0, by decide⟩) ρ v)
+          (appEval (bs ⟨1, by decide⟩) ρ v)
+      from caseSelect_apply _ _ _ v]
+    have hbr : ∀ k : Fin natAlgSig.numCtors,
+        appEval (app' (Binding.ren Binding.Thinning.weakAppend
+            ((arrow_node_eq x childx) ▸ bs k)) (Binding.Tm.var boundVar)) (envExtend ρ v)
+          = appEval (bs k) ρ v := by
+      intro k
+      rw [appEval_app', appEval_ren_weakAppend_envExtend]
+      refine Eq.trans ?_ (congrArg (appEval (bs k) ρ) (boundVar_appEval_envExtend ρ v))
+      exact congrFun (eq_of_heq (appEval_heq _ (bs k) ρ
+        (arrow_node_eq x childx).symm (eqRec_heq _ _))) _
+    rw [appEval_ren_weakAppend_envExtend, hbr ⟨0, by decide⟩, hbr ⟨1, by decide⟩]
+    rfl
 
 /-- One branch of the flat-recurrence realization (Leivant III §4.1 Example 2):
 the translated clause `clause` for constructor `i`, moved into the recurrence
