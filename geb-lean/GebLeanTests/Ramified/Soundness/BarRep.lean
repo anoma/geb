@@ -77,4 +77,22 @@ example : Binding.Tm (oneLambdaSig natAlgSig) []
       (RType.arrow (bbType natAlgSig (barTy RType.o)) (barTy RType.o))) :=
   barRecur RType.o
 
+/-- The case bar-map at the base object sort `o` elaborates as a closed `1λ(A)`
+term of sort `o → (ō)^k → ō` (Leivant III section 4.2): the `casē^o` clause is
+the base case combinator, so no descent under branch abstractions occurs. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) []
+    (RType.arrow RType.o
+      (RType.curried (List.replicate natAlgSig.numCtors (barTy RType.o)) (barTy RType.o))) :=
+  barCase RType.o (Or.inl rfl)
+
+/-- The case bar-map at the higher object sort `Ω o` elaborates as a closed
+`1λ(A)` term (Leivant III section 4.2): the `casē^{Ωo}` clause pushes the case
+under the abstractions of its branch functions, since the branches now have the
+Berarducci-Böhm type `Ω̄o = σ⃗ → o` rather than the base sort. -/
+example : Binding.Tm (oneLambdaSig natAlgSig) []
+    (RType.arrow RType.o
+      (RType.curried (List.replicate natAlgSig.numCtors (barTy (RType.omega RType.o)))
+        (barTy (RType.omega RType.o)))) :=
+  barCase (RType.omega RType.o) (Or.inr rfl)
+
 end GebLean.Ramified

@@ -36,6 +36,8 @@ gives the Church numeral `a^σ = λc̄. cₛ (cₛ (⋯ (c_z)))`.
   shifted constructor constant `c_i^{Ωτ}`.
 * `barRecur` — the recurrence bar-map `R̄^τ = λ g⃗ a. a g⃗`, the bar image of the
   recurrence combinator `R^τ`.
+* `barCase` — the case bar-map `casē^θ`, the bar image of the case combinator
+  `case^θ`, splitting on `θ.IsObj` into the base `case` and its push-under-λ.
 
 ## Main statements
 
@@ -290,5 +292,85 @@ def barRecur {Γ : Binding.Ctx RType} (τ : RType) :
               (⟨idx, rfl⟩ :
                 Binding.Var (stepTypes natAlgSig (barTy τ) (barTy τ))
                   ((stepTypes natAlgSig (barTy τ) (barTy τ)).get idx)))))))
+
+/-- An r-type whose top shape is `o` is the base sort `o`. Reconstruction of the
+`o`-headed node, the shape-level counterpart of `RType.objTarget_of_isObj` used
+to reduce the `case^o` clause of the bar-map to the base case combinator. -/
+theorem RType.eq_o_of_shape_o {t : RType} (h : t.shape = RTypeShape.o) : t = RType.o := by
+  rcases t with ⟨_, i, childx⟩
+  simp only [RType.shape, PolyFix.index] at h
+  subst h
+  exact RType.mk_o_eq childx
+
+/-- The object target of a simple (omega-free) r-type is the base sort `o`
+(Leivant III section 4.2, with section 2.4): a simple type is a chain of arrows
+terminating in `o`, so its rightmost object target is `o`. Proved by structural
+induction via `PolyFix.ind`, the simple-type counterpart of
+`RType.objTarget_of_isObj`. -/
+theorem RType.objTarget_of_isSimple (t : RType) (h : RType.IsSimple t) :
+    RType.objTarget t = RType.o :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => RType.IsSimple t → RType.objTarget t = RType.o)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => fun _ => rfl
+      | RTypeShape.arrow, _, ih =>
+        fun hs => ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)) hs.2
+      | RTypeShape.omega, _, _ => fun hs => hs.elim) t h
+
+/-- The case bar-map `casē^θ` of the bar-translation (Leivant III section 4.2,
+p. 223–224), the bar image of the case combinator `case^θ`, split on `θ.IsObj`:
+
+* at `θ = o` it is the base case combinator `case` of `1λ(A)`;
+* at `θ = Ω τ` it is the push-under-λ term
+  `λ a^o x_1…x_k^{θ̄} y⃗:σ⃗. case(a, x_1 y⃗, …, x_k y⃗)`, where `θ̄ = barTy θ = σ⃗ → o`
+  (with `σ⃗ = θ̄.domains`, `o = θ̄.objTarget` by `RType.objTarget_of_isSimple`),
+  each branch `x_j : θ̄` is applied along the `y`-spine (`appSpine`) to reach the
+  base sort before the base `case` selects among the `k = numCtors` results.
+
+At the higher object type the branches are functions, so the case must descend
+under their argument abstractions; at `o` no descent is needed. -/
+def barCase {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj) :
+    Binding.Tm (oneLambdaSig natAlgSig) Γ
+      (RType.arrow RType.o
+        (RType.curried (List.replicate natAlgSig.numCtors (barTy θ)) (barTy θ))) := by
+  cases hs : θ.shape with
+  | o =>
+    have hθo : θ = RType.o := RType.eq_o_of_shape_o hs
+    subst hθo
+    exact Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0)
+  | arrow => exact absurd hθ (by unfold RType.IsObj; rw [hs]; decide)
+  | omega =>
+    have hobj : (barTy θ).objTarget = RType.o :=
+      RType.objTarget_of_isSimple (barTy θ) (barTy_isSimple θ)
+    have h_ctd : RType.curried (barTy θ).domains RType.o = barTy θ :=
+      (congrArg (RType.curried (barTy θ).domains) hobj.symm).trans
+        (RType.curried_domains (barTy θ)).symm
+    refine OneLambda.lamSpine [RType.o]
+      (OneLambda.lamSpine (List.replicate natAlgSig.numCtors (barTy θ))
+        (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig)
+            ((Γ ++ [RType.o]) ++ List.replicate natAlgSig.numCtors (barTy θ))) h_ctd)
+          (OneLambda.lamSpine (barTy θ).domains ?_)))
+    refine OneLambda.replicateSpine natAlgSig.numCtors RType.o
+      (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0))
+        (Binding.Tm.var (Binding.Thinning.weakAppend.app (Binding.Thinning.weakAppend.app
+          (Binding.Var.appendRight Γ
+            (⟨⟨0, Nat.zero_lt_one⟩, rfl⟩ : Binding.Var [RType.o] RType.o))))))
+      (fun j =>
+        OneLambda.appSpine (barTy θ).domains
+          (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig)
+              (((Γ ++ [RType.o]) ++ List.replicate natAlgSig.numCtors (barTy θ))
+                ++ (barTy θ).domains)) h_ctd.symm)
+            (Binding.Tm.var (Binding.Thinning.weakAppend.app
+              (Binding.Var.appendRight (Γ ++ [RType.o])
+                (⟨⟨j.val, by rw [List.length_replicate]; exact j.isLt⟩,
+                  by rw [List.get_eq_getElem, List.getElem_replicate]⟩ :
+                    Binding.Var (List.replicate natAlgSig.numCtors (barTy θ)) (barTy θ))))))
+          (fun idx =>
+            Binding.Tm.var (Binding.Var.appendRight
+              ((Γ ++ [RType.o]) ++ List.replicate natAlgSig.numCtors (barTy θ))
+              (⟨idx, rfl⟩ :
+                Binding.Var (barTy θ).domains ((barTy θ).domains.get idx)))))
 
 end GebLean.Ramified
