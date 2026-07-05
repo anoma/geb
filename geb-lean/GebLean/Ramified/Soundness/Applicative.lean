@@ -79,6 +79,8 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
   its two children.
 * `appEval_ren`, `appEval_lamSpine` — renaming fusion for `appEval` and the
   evaluation of the applicative λ-spine.
+* `prop7MrecStep_interp` — the monotone-recurrence step of the Proposition 7
+  translation preserves the denoted function.
 * `prop7Translate_interp` — the direct Proposition 7 translation preserves the
   denoted function (the soundness arm `(1)⟹(4)`).
 
@@ -1296,6 +1298,119 @@ def prop7MrecStep {τ : RType} (params : List RType)
       Binding.ren Binding.Thinning.weakAppend
         (lamSpine (List.replicate (natAlgSig.ar b) τ) (ih b))))
     (Binding.Tm.var (boundVar (Γ := params) (σ := RType.omega τ)))
+
+/-- The semantic renaming of the prefix embedding `Thinning.weakAppend` reads the
+parameter prefix of a recurrence-context environment: `renEnvSem weakAppend`
+agrees with `envHead`. The reconciliation of the fused renaming with the
+recurrence step's parameter read (`prop7MrecStep_interp`). -/
+theorem renEnvSem_weakAppend_eq_envHead {params : List RType} {ω : RType}
+    (ρ : ∀ k : Fin (params ++ [ω]).length,
+      RType.interp (FreeAlg natAlgSig) ((params ++ [ω]).get k)) :
+    renEnvSem Binding.Thinning.weakAppend ρ = envHead params ω ρ := by
+  funext i
+  apply eq_of_heq
+  simp only [renEnvSem, envHead]
+  refine (eqRec_heq _ _).trans ?_
+  refine HEq.trans ?_ (cast_heq _ _).symm
+  have hpos : (Binding.Thinning.weakAppend.app
+      (⟨i, rfl⟩ : Binding.Var params (params.get i))).1 = finAppL params [ω] i :=
+    Fin.ext (by rw [weakAppend_app_val]; simp [finAppL])
+  rw [hpos]
+
+/-- The join of a parameter environment with the closed recurrence-result gluing
+`childEnv [] σ n finZeroElim phi` equals the full recurrence-context gluing
+`childEnv params σ n ρ phi`. The reconciliation of `appEval_lamSpine`'s join with
+the recurrence step's `childEnv` (`prop7MrecStep_interp`). -/
+theorem joinEnv_childEnv_nil {params : List RType} {σ : RType} {n : Nat}
+    (ρ : ∀ i : Fin params.length, RType.interp (FreeAlg natAlgSig) (params.get i))
+    (phi : Fin n → RType.interp (FreeAlg natAlgSig) σ) :
+    joinEnv (Γ := params) (Δ := List.replicate n σ) ρ
+        (childEnv [] σ n finZeroElim phi)
+      = childEnv params σ n ρ phi := by
+  funext k
+  refine finApp_cases (Γ := params) (Δ := List.replicate n σ)
+    (motive := fun k => joinEnv ρ (childEnv [] σ n finZeroElim phi) k
+      = childEnv params σ n ρ phi k)
+    (fun i => ?_) (fun j => ?_) k
+  · apply eq_of_heq
+    have hlt : (finAppL params (List.replicate n σ) i).val < params.length := i.isLt
+    exact (joinEnv_heq_left ρ (childEnv [] σ n finZeroElim phi) _ hlt).trans
+      (childEnv_heq_left ρ phi _ hlt).symm
+  · apply eq_of_heq
+    have hjn : j.val < n := lt_of_lt_of_eq j.isLt List.length_replicate
+    have hge : ¬ (finAppR params (List.replicate n σ) j).val < params.length := by
+      simp only [finAppR]; omega
+    have hbn : (finAppR params (List.replicate n σ) j).val - params.length < n := by
+      simp only [finAppR]; omega
+    have hbΔ : (finAppR params (List.replicate n σ) j).val - params.length
+        < (List.replicate n σ).length := lt_of_lt_of_eq hbn List.length_replicate.symm
+    refine (joinEnv_heq_right ρ (childEnv [] σ n finZeroElim phi) _ hge hbΔ).trans ?_
+    refine (childEnv_heq_right (params := []) finZeroElim phi
+      ⟨_, hbΔ⟩ (Nat.not_lt_zero _) (by simpa using hbn)).trans ?_
+    refine HEq.trans ?_ (childEnv_heq_right ρ phi _ hge hbn).symm
+    exact heq_of_eq (congrArg phi (Fin.ext (by simp)))
+
+/-- Evaluating the sole suffix variable `boundVar` of `params ++ [ω]` reads the
+recurrence argument `envLast`. The recurrence-argument reconciliation of
+`prop7MrecStep_interp`. -/
+theorem boundVar_appEval_eq_envLast {params : List RType} {ω : RType}
+    (ρ : ∀ k : Fin (params ++ [ω]).length,
+      RType.interp (FreeAlg natAlgSig) ((params ++ [ω]).get k)) :
+    appEval (Binding.Tm.var (boundVar (Γ := params) (σ := ω))) ρ = envLast params ω ρ := by
+  rw [appEval_var]
+  apply eq_of_heq
+  refine (eqRec_heq _ _).trans ?_
+  simp only [envLast]
+  refine HEq.trans ?_ (cast_heq _ _).symm
+  have hpos : (boundVar (Γ := params) (σ := ω)).1 = finAppR params [ω] ⟨0, by simp⟩ := by
+    apply Fin.ext
+    unfold boundVar
+    rw [appendRight_val]
+    simp [finAppR]
+  rw [hpos]
+
+/-- The monotone-recurrence step of the direct Proposition 7 translation preserves
+the denoted function (Leivant III §4.1, eq. (9), the soundness arm `(1)⟹(4)`):
+`appEval` of `prop7MrecStep params ihT` at a recurrence-context environment agrees
+with `RIdent.interpStep`'s `mrec` arm, given that the translated children `ihT`
+denote the semantic children `ihS`. Assembled from `appEval_app'`,
+`appEval_recCombinator`, `stepAtLabel_stepEnvOfFun`, `appEval_ren`,
+`appEval_lamSpine`, and `appChain_curryInterp`, reconciled through
+`renEnvSem_weakAppend_eq_envHead`, `joinEnv_childEnv_nil`, and
+`boundVar_appEval_eq_envLast`. -/
+theorem prop7MrecStep_interp {τ : RType} (params : List RType)
+    (ihT : (i : natAlgSig.B) →
+      Binding.Tm (rlmrOSig natAlgSig) (params ++ List.replicate (natAlgSig.ar i) τ) τ)
+    (ihS : (i : natAlgSig.B) →
+      (∀ k : Fin (params ++ List.replicate (natAlgSig.ar i) τ).length,
+        RType.interp (FreeAlg natAlgSig)
+          ((params ++ List.replicate (natAlgSig.ar i) τ).get k)) →
+        RType.interp (FreeAlg natAlgSig) τ)
+    (hchild : ∀ (b : natAlgSig.B)
+      (ρ' : ∀ k : Fin (params ++ List.replicate (natAlgSig.ar b) τ).length,
+        RType.interp (FreeAlg natAlgSig)
+          ((params ++ List.replicate (natAlgSig.ar b) τ).get k)),
+      appEval (ihT b) ρ' = ihS b ρ')
+    (ρ : ∀ k : Fin (params ++ [RType.omega τ]).length,
+      RType.interp (FreeAlg natAlgSig) ((params ++ [RType.omega τ]).get k)) :
+    appEval (prop7MrecStep params ihT) ρ
+      = FreeAlg.recurse (A := natAlgSig) (P := Unit)
+          (fun i _ _sub phi =>
+            ihS i (childEnv params τ (natAlgSig.ar i)
+              (envHead params (RType.omega τ) ρ) phi))
+          () (envLast params (RType.omega τ) ρ) := by
+  rw [prop7MrecStep, appEval_app', appEval_recCombinator]
+  refine congrArg₂ (fun s a => FreeAlg.recurse (A := natAlgSig) (P := Unit) s () a) ?_
+    (boundVar_appEval_eq_envLast ρ)
+  funext i _u sub phi
+  rw [stepAtLabel_stepEnvOfFun]
+  rw [congrArg (fun A => appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ A
+      (childEnv [] τ (natAlgSig.ar i) finZeroElim phi))
+    (appEval_ren (lamSpine (List.replicate (natAlgSig.ar i) τ) (ihT i))
+      Binding.Thinning.weakAppend ρ)]
+  rw [appEval_lamSpine params (List.replicate (natAlgSig.ar i) τ) (ihT i),
+    appChain_curryInterp, hchild, renEnvSem_weakAppend_eq_envHead,
+    joinEnv_childEnv_nil]
 
 /-- An `arrow`-shape free-algebra node is the `RType.arrow` of its two children.
 A fact local to `caseAtType`, discharging the node-reconstruction transport of
