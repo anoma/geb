@@ -176,4 +176,135 @@ def replicateSpine {A : AlgSig} [Fintype A.B]
 
 end OneLambda
 
+/-- The congruence-closed one-step reduction of the simply-typed calculus
+`1λ(A)` (Leivant III section 4.2, p. 223). A `Prop`-valued inductively-defined
+relation whose inhabitants are reduction proofs, not computational data, so
+decision 8's requirement that recursive data be a `PolyFix` W-type does not
+apply. The base redex rules are β and η for the `lam`/`app` fragment, the two
+destructor cases (`dstr` on a matching or non-matching argument position), and
+the case contraction; the constructor `recur` of the applicative calculus is
+absent. Unlike the top-level-only `RlmrOStep`, this relation adds the
+compatible-closure constructors `appL`, `appR`, and `lamBody`, reducing a
+subterm of an application node or the body of an abstraction, since the
+`Represents` relation of section 4.2 reduces terms under application spines. The
+context `Γ` is an index (not a parameter) so that `lamBody` may relate a step in
+the binder-extended context `Γ ++ [σ]` to a step in `Γ`. -/
+inductive OneLambdaStep {A : AlgSig} [Fintype A.B] [LinearOrder A.B] :
+    {Γ : Binding.Ctx RType} → {s : RType} →
+    Binding.Tm (oneLambdaSig A) Γ s → Binding.Tm (oneLambdaSig A) Γ s → Prop where
+  /-- β: `(λx:σ. b) N ⇒ b[x := N]`, the substitution `instantiate₁`. -/
+  | beta {Γ : Binding.Ctx RType} {σ τ : RType}
+      (b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ)
+      (N : Binding.Tm (oneLambdaSig A) Γ σ) :
+      OneLambdaStep (OneLambda.app' (OneLambda.lam' b) N) (Binding.instantiate₁ N b)
+  /-- η: `λx:σ. (M x) ⇒ M`. The body applies the pre-weakened `M` (renamed along
+  the suffix embedding into `Γ ++ [σ]`) to the freshly bound variable, so no
+  free-variable side condition is needed. -/
+  | eta {Γ : Binding.Ctx RType} {σ τ : RType}
+      (M : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)) :
+      OneLambdaStep
+        (OneLambda.lam' (OneLambda.app'
+          (Binding.ren (Binding.Thinning.weakAppend (Ξ := [σ])) M)
+          (Binding.Tm.var boundVar))) M
+  /-- Destructor hit (`j < r_i`): `dstr_j (c_i a₁…a_{r_i}) ⇒ a_j`. -/
+  | dstrHit {Γ : Binding.Ctx RType} {i : A.B} (j : Fin A.maxArity) (h : j.val < A.ar i)
+      (a : Fin (A.ar i) → Binding.Tm (oneLambdaSig A) Γ RType.o) :
+      OneLambdaStep
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) (fun k => k.elim0))
+          (OneLambda.replicateSpine (A.ar i) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun k => k.elim0)) a))
+        (a ⟨j.val, h⟩)
+  /-- Destructor miss (`j ≥ r_i`): `dstr_j (c_i ā) ⇒ c_i ā`, identity on the
+  scrutinee. -/
+  | dstrMiss {Γ : Binding.Ctx RType} {i : A.B} (j : Fin A.maxArity) (h : A.ar i ≤ j.val)
+      (a : Fin (A.ar i) → Binding.Tm (oneLambdaSig A) Γ RType.o) :
+      OneLambdaStep
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) (fun k => k.elim0))
+          (OneLambda.replicateSpine (A.ar i) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun k => k.elim0)) a))
+        (OneLambda.replicateSpine (A.ar i) RType.o
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun k => k.elim0)) a)
+  /-- Case: `case (c_i ā) b₁…b_k ⇒ b_i`, selecting the branch at the scrutinee
+  constructor's enumeration position `idx`. -/
+  | case {Γ : Binding.Ctx RType} (idx : Fin A.numCtors)
+      (a : Fin (A.ar (ctorAt idx)) → Binding.Tm (oneLambdaSig A) Γ RType.o)
+      (b : Fin A.numCtors → Binding.Tm (oneLambdaSig A) Γ RType.o) :
+      OneLambdaStep
+        (OneLambda.replicateSpine A.numCtors RType.o
+          (OneLambda.app'
+            (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case (fun k => k.elim0))
+            (OneLambda.replicateSpine (A.ar (ctorAt idx)) RType.o
+              (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+                (fun k => k.elim0)) a))
+          b)
+        (b idx)
+  /-- Compatibility under the function subterm of an application: `f ⇒ f'` gives
+  `f x ⇒ f' x`. -/
+  | appL {Γ : Binding.Ctx RType} {σ τ : RType}
+      {f f' : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)}
+      (x : Binding.Tm (oneLambdaSig A) Γ σ) (h : OneLambdaStep f f') :
+      OneLambdaStep (OneLambda.app' f x) (OneLambda.app' f' x)
+  /-- Compatibility under the argument subterm of an application: `x ⇒ x'` gives
+  `f x ⇒ f x'`. -/
+  | appR {Γ : Binding.Ctx RType} {σ τ : RType}
+      (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+      {x x' : Binding.Tm (oneLambdaSig A) Γ σ} (h : OneLambdaStep x x') :
+      OneLambdaStep (OneLambda.app' f x) (OneLambda.app' f x')
+  /-- Compatibility under the body of an abstraction: `b ⇒ b'` in `Γ ++ [σ]`
+  gives `λx:σ. b ⇒ λx:σ. b'` in `Γ`. -/
+  | lamBody {Γ : Binding.Ctx RType} {σ τ : RType}
+      {b b' : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ} (h : OneLambdaStep b b') :
+      OneLambdaStep (OneLambda.lam' b) (OneLambda.lam' b')
+
+namespace OneLambda
+
+/-- Reduction of the function subterm of an application lifts to a
+`Relation.ReflTransGen`-reduction of the whole application: if
+`f ⇒* f'` then `f x ⇒* f' x`. Consumed by the `Represents` cases that reduce
+under application spines. -/
+theorem reduces_app'_left {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} {σ τ : RType}
+    {f f' : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)}
+    (x : Binding.Tm (oneLambdaSig A) Γ σ)
+    (h : Relation.ReflTransGen OneLambdaStep f f') :
+    Relation.ReflTransGen OneLambdaStep (app' f x) (app' f' x) := by
+  induction h with
+  | refl => exact Relation.ReflTransGen.refl
+  | tail _ hstep ih => exact ih.tail (OneLambdaStep.appL x hstep)
+
+/-- Reduction of the argument subterm of an application lifts to a
+`Relation.ReflTransGen`-reduction of the whole application: if
+`x ⇒* x'` then `f x ⇒* f x'`. -/
+theorem reduces_app'_right {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    {x x' : Binding.Tm (oneLambdaSig A) Γ σ}
+    (h : Relation.ReflTransGen OneLambdaStep x x') :
+    Relation.ReflTransGen OneLambdaStep (app' f x) (app' f x') := by
+  induction h with
+  | refl => exact Relation.ReflTransGen.refl
+  | tail _ hstep ih => exact ih.tail (OneLambdaStep.appR f hstep)
+
+/-- Reduction of the head of an application spine lifts to a
+`Relation.ReflTransGen`-reduction of the whole spine: if `f ⇒* f'` then
+`appSpine Ts f args ⇒* appSpine Ts f' args`. By induction on `Ts` from
+`reduces_app'_left`. -/
+theorem reduces_appSpine {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} {result : RType} :
+    (Ts : List RType) →
+    (f f' : Binding.Tm (oneLambdaSig A) Γ (RType.curried Ts result)) →
+    (args : ∀ i : Fin Ts.length, Binding.Tm (oneLambdaSig A) Γ (Ts.get i)) →
+    Relation.ReflTransGen OneLambdaStep f f' →
+    Relation.ReflTransGen OneLambdaStep (appSpine Ts f args) (appSpine Ts f' args)
+  | [], _f, _f', _args, h => h
+  | _T :: Ts', f, f', args, h => by
+      rw [appSpine, appSpine]
+      exact reduces_appSpine Ts' (app' f (args ⟨0, Nat.succ_pos _⟩))
+        (app' f' (args ⟨0, Nat.succ_pos _⟩)) (fun i => args i.succ)
+        (reduces_app'_left (args ⟨0, Nat.succ_pos _⟩) h)
+
+end OneLambda
+
 end GebLean.Ramified
