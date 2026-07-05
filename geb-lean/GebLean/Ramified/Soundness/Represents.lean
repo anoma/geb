@@ -522,6 +522,79 @@ theorem OneLambda.sub_lamSpine :
         (List.append_assoc Γ' [σ] Δ').symm
         (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := σ :: Δ') ρ) body
 
+/-- Instantiating the empty append-at-end suffix is the append-nil context
+transport: `instantiate m body = (append_nil Γ) ▸ body` for any (vacuous)
+meta-map `m` on `[]`. The empty-suffix base of the generic λ-spine β-reduction.
+Reduces, through `traverse_congr_dom`, to the pointwise fact that the extended
+environment reads the append-nil transport of a variable as its identity image
+(`extendEnv_weakAppend`, `weakAppend_app_nil`), closed by `sub_id`. -/
+theorem instantiate_nil {S : Binding.BinderSig RType} {Γ : Binding.Ctx RType} {τ : RType}
+    (m : ∀ t, Binding.Var ([] : Binding.Ctx RType) t → Binding.Tm S Γ t)
+    (body : Binding.Tm S (Γ ++ []) τ) :
+    Binding.instantiate m body = (List.append_nil Γ) ▸ body := by
+  have h := traverse_congr_dom (Binding.subKit S) (List.append_nil Γ).symm
+    (Binding.extendEnv Binding.idEnv m) ((List.append_nil Γ) ▸ body)
+  rw [eqRec_symm_eqRec (motive := fun c => Binding.Tm S c τ)] at h
+  have henv : (fun (b : RType) (x : Binding.Var Γ b) =>
+      Binding.extendEnv Binding.idEnv m b ((List.append_nil Γ).symm ▸ x))
+        = (Binding.idEnv : Binding.Env (Binding.Tm S) Γ Γ) := by
+    funext b x
+    rw [← weakAppend_app_nil]
+    exact Binding.extendEnv_weakAppend Binding.idEnv m b x
+  rw [Binding.instantiate]
+  unfold Binding.sub
+  rw [h, henv]
+  exact traverse_idEnv _
+
+/-- The generic λ-spine β-reduction of the simply-typed calculus `1λ(A)` (the
+reduction dual of the denotational `appEval_lamSpine`, Leivant III section 4.1):
+saturating the iterated abstraction `lamSpine Δ body` with an argument tuple
+`args` along the application spine reduces (`OneLambdaStep`, reflexive-
+transitively) to the simultaneous substitution `instantiate (metaTuple args) body`
+of the arguments for the abstracted binders. Proved by recursion on `Δ`: the base
+case is the empty-suffix instantiation `instantiate_nil`, and the cons case peels
+one binder by β (`reduces_beta` under `reduces_appSpine`), pushes the resulting
+single substitution through the residual `lamSpine` (`sub_lamSpine`), and
+reconciles the peeled substitution with the tuple instantiation through the cons
+recurrence `instantiate_metaTuple_cons`. -/
+theorem OneLambda.reduces_betaSpine :
+    {Γ : Binding.Ctx RType} → (Δ : List RType) → {τ : RType} →
+    (body : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ Δ) τ) →
+    (args : ∀ i : Fin Δ.length, Binding.Tm (oneLambdaSig natAlgSig) Γ (Δ.get i)) →
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.appSpine Δ (OneLambda.lamSpine Δ body) args)
+      (Binding.instantiate (Binding.metaTuple args) body)
+  | Γ, [], τ, body, args => by
+      rw [OneLambda.appSpine]
+      change Relation.ReflTransGen OneLambdaStep
+          (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ)
+            (List.append_nil Γ)) body)
+          (Binding.instantiate (Binding.metaTuple args) body)
+      rw [tm_cast_eq_eqRec (List.append_nil Γ) body,
+        instantiate_nil (Binding.metaTuple args) body]
+  | Γ, σ :: Δ', τ, body, args => by
+      have hlam : OneLambda.lamSpine (σ :: Δ') body
+          = OneLambda.lam' (OneLambda.lamSpine Δ' ((List.append_assoc Γ [σ] Δ').symm ▸ body)) := by
+        change OneLambda.lam' (OneLambda.lamSpine Δ'
+            (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ)
+              (List.append_assoc Γ [σ] Δ').symm) body))
+          = OneLambda.lam' (OneLambda.lamSpine Δ' ((List.append_assoc Γ [σ] Δ').symm ▸ body))
+        rw [tm_cast_eq_eqRec (List.append_assoc Γ [σ] Δ').symm body]
+      rw [← Binding.instantiate_metaTuple_cons args body, OneLambda.appSpine, hlam]
+      refine (OneLambda.reduces_appSpine Δ' _ _ (fun i => args i.succ)
+        (OneLambda.reduces_beta _ (args ⟨0, Nat.succ_pos _⟩))).trans ?_
+      have heq3 : Binding.instantiate₁ (args ⟨0, Nat.succ_pos _⟩)
+          (OneLambda.lamSpine Δ' ((List.append_assoc Γ [σ] Δ').symm ▸ body))
+          = OneLambda.lamSpine Δ' (Binding.sub
+              (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := Δ')
+                (Binding.extendEnv Binding.idEnv
+                  (Binding.metaOne (a := σ) (args ⟨0, Nat.succ_pos _⟩))))
+              ((List.append_assoc Γ [σ] Δ').symm ▸ body)) := by
+        rw [Binding.instantiate₁, Binding.instantiate]
+        exact OneLambda.sub_lamSpine Δ' (Binding.extendEnv Binding.idEnv
+          (Binding.metaOne (a := σ) (args ⟨0, Nat.succ_pos _⟩))) _
+      exact heq3 ▸ OneLambda.reduces_betaSpine Δ' _ (fun i => args i.succ)
+
 /-- Two closing environments related pointwise through the representation
 relation (Leivant III section 4.2, the hypothesis of Lemma 10): a source-side
 environment `Eσ` substituting a closed source term for every variable of `Γ`,
