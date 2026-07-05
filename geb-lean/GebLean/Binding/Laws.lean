@@ -480,4 +480,46 @@ theorem Var.appendRight_append_assoc {Ξ₁ Ξ₂ : Ctx Ty} {s : Ty} : (Δ : Ctx
       exact Var.appendCases_natural (Var.succ a) (Var.appendRight (Δ ++ Ξ₁)) Ξ₁
         (fun w => Thinning.weakAppend.app (Var.appendRight Δ w)) y
 
+/-- Embedding a variable as a term commutes with a codomain transport: for
+`e : Δ = Δ'`, `Tm.var (e ▸ v) = e ▸ Tm.var v`. Proved by `subst`. -/
+theorem Tm.var_transport_cod {S : BinderSig Ty} {Δ Δ' : Ctx Ty} {s : Ty} (e : Δ = Δ')
+    (v : Var Δ s) : Tm.var (e ▸ v) = e ▸ (Tm.var v : Tm S Δ s) := by
+  cases e; rfl
+
+/-- Weakening an environment under two nested binder contexts `Ξ₁` then `Ξ₂`
+equals, up to the `List.append_assoc` transports on the source and target
+contexts, weakening once under the combined binder context `Ξ₁ ++ Ξ₂`. The
+syntactic reassociation analog of the denotational `joinEnv_envExtend`: the
+freshly bound variables reassociate through `Var.appendRight_append_assoc`
+(under `Tm.var`), and the old values reassociate through
+`ren_weakAppend_append`. Dispatched pointwise by `Var.appendCases_append_assoc`. -/
+theorem underBinder_append {S : BinderSig Ty} {Γ Δ Ξ₁ Ξ₂ : Ctx Ty}
+    (ρ : Env (Tm S) Γ Δ) (s : Ty) (x : Var (Γ ++ (Ξ₁ ++ Ξ₂)) s) :
+    Env.underBinder (subKit S) (Ξ := Ξ₂) (Env.underBinder (subKit S) (Ξ := Ξ₁) ρ) s
+        ((List.append_assoc Γ Ξ₁ Ξ₂).symm ▸ x)
+      = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸
+          Env.underBinder (subKit S) (Ξ := Ξ₁ ++ Ξ₂) ρ s x := by
+  change Var.appendCases (fun y => Tm.var (Var.appendRight (Δ ++ Ξ₁) y)) (Γ ++ Ξ₁)
+      (fun v => ren Thinning.weakAppend (Env.underBinder (subKit S) (Ξ := Ξ₁) ρ s v))
+      ((List.append_assoc Γ Ξ₁ Ξ₂).symm ▸ x)
+    = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸
+        Var.appendCases (fun y => Tm.var (Var.appendRight Δ y)) Γ
+          (fun v => ren Thinning.weakAppend (ρ s v)) x
+  rw [Var.appendCases_append_assoc (fun y => Tm.var (Var.appendRight (Δ ++ Ξ₁) y)) Γ
+        (fun v => ren Thinning.weakAppend (Env.underBinder (subKit S) (Ξ := Ξ₁) ρ s v)) x]
+  have hnat := Var.appendCases_natural
+      (fun z : Tm S (Δ ++ (Ξ₁ ++ Ξ₂)) s => (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ z)
+      (fun y => Tm.var (Var.appendRight Δ y)) Γ (fun v => ren Thinning.weakAppend (ρ s v)) x
+  rw [hnat]
+  congr 1
+  · funext y
+    simp only [Env.underBinder, subKit, Var.appendCases_appendRight, ren, traverse_var,
+      varKit, renEnv]
+    rw [← Tm.var_transport_cod, Var.appendRight_append_assoc Δ y]
+    exact (Var.appendCases_natural Tm.var (Var.appendRight (Δ ++ Ξ₁)) Ξ₁
+      (fun w => Thinning.weakAppend.app (Var.appendRight Δ w)) y).symm
+  · funext v
+    simp only [Env.underBinder, subKit, Var.appendCases_weakAppend]
+    exact ren_weakAppend_append (ρ s v)
+
 end GebLean.Binding
