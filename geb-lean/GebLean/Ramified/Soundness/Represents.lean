@@ -410,6 +410,35 @@ theorem OneLambda.sub_app' {Γ Δ : Binding.Ctx RType} {σ' τ' : RType}
   · exact sub_underBinder_nil ρ f
   · exact sub_underBinder_nil ρ x
 
+/-- Substitution distributes over the abstraction node of the simply-typed
+calculus `1λ(A)`: `sub ρ (OneLambda.lam' b) = OneLambda.lam' (sub (underBinder ρ)
+b)`, pushing the substitution under the bound variable of sort `σ'` by weakening
+the environment with `Env.underBinder`. The `oneLambdaSig` abstraction
+counterpart of `OneLambda.sub_app'`; the sole subterm slot carries the binder
+`[σ']`, so no append-nil transport intervenes and the bound branch is
+definitional. -/
+theorem OneLambda.sub_lam' {Γ Δ : Binding.Ctx RType} {σ' τ' : RType}
+    (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    (b : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [σ']) τ') :
+    Binding.sub ρ (OneLambda.lam' b)
+      = OneLambda.lam' (Binding.sub
+          (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) ρ) b) := by
+  refine Eq.trans (b := Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.lam σ' τ')
+      (fun j => Binding.traverse (Binding.subKit (oneLambdaSig natAlgSig))
+        (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) ρ)
+        (Fin.cases b (fun k => k.elim0) j)))
+    rfl ?_
+  refine Eq.trans ?_ (rfl : Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.lam σ' τ')
+      (fun j => Fin.cases (Binding.sub
+          (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) ρ) b)
+        (fun k => k.elim0) j)
+    = OneLambda.lam' (Binding.sub
+        (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) ρ) b))
+  refine congrArg (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.lam σ' τ')) ?_
+  funext j
+  refine Fin.cases ?_ (fun k => k.elim0) j
+  rfl
+
 /-- Two closing environments related pointwise through the representation
 relation (Leivant III section 4.2, the hypothesis of Lemma 10): a source-side
 environment `Eσ` substituting a closed source term for every variable of `Γ`,
