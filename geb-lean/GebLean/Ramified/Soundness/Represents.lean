@@ -1678,6 +1678,27 @@ theorem reduces_cast_sort {Γ : Binding.Ctx RType} {s s' : RType} (h : s = s')
       (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) Γ) h) Y) := by
   cases h; exact hr
 
+/-- Reduction of the arguments of a homogeneous application spine lifts to a
+reduction of the whole spine: if `args j ⇒* args' j` pointwise then
+`replicateSpine n base head args ⇒* replicateSpine n base head args'`. The
+homogeneous instance of `OneLambda.reduces_appSpine_args`, transporting the
+per-index reduction across the `List.getElem_replicate` sort reindexing through
+`reduces_cast_sort`. -/
+theorem OneLambda.reduces_replicateSpine_args {Γ : Binding.Ctx RType} {result : RType}
+    (n : Nat) (base : RType)
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried (List.replicate n base) result))
+    (args args' : Fin n → Binding.Tm (oneLambdaSig natAlgSig) Γ base)
+    (h : ∀ j, Relation.ReflTransGen OneLambdaStep (args j) (args' j)) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.replicateSpine n base head args)
+      (OneLambda.replicateSpine n base head args') := by
+  rw [OneLambda.replicateSpine, OneLambda.replicateSpine]
+  refine OneLambda.reduces_appSpine_args (List.replicate n base) head _ _ (fun idx => ?_)
+  simp only [eq_mpr_eq_cast, cast_cast]
+  have hs : base = (List.replicate n base).get idx := by
+    rw [List.get_eq_getElem, List.getElem_replicate]
+  exact reduces_cast_sort hs (h (idx.cast List.length_replicate))
+
 /-- Renaming distributes over the iterated application `OneLambda.appSpine`:
 `ren ρ (appSpine Ts head args) = appSpine Ts (ren ρ head) (fun i => ren ρ (args
 i))`. The renaming counterpart of `OneLambda.sub_appSpine`, by recursion on the
