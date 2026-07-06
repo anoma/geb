@@ -2254,4 +2254,49 @@ theorem barConOmegaBody_instantiate (τ : RType)
         exact Binding.extendEnv_appendRight Binding.idEnv (Binding.metaOne N) _ _
       | (n + 1), h => exact absurd h (by have : natAlgSig.ar true = 1 := rfl; omega)
 
+/-- The constructor bar-map saturation keystone (Leivant III section 4.2,
+Proposition 11's `con^{Ωτ}` case at the unary constructor `true`): applying
+`barConOmega true τ` to an argument representative `Ghat` that reduces to the
+Berarducci-Böhm representation of a value `v` reduces (`OneLambdaStep`,
+reflexive-transitively) to the Berarducci-Böhm representation of the constructor
+node `mk true` on `v`. Reduces the argument first (`reduces_app'_right`), folds
+the outer spine to one binder (`barConOmega_true_fold`), fires the β-redex
+(`reduces_beta`), simplifies the substituted body
+(`barConOmegaBody_instantiate`), and collapses the weakened `bbRep v` applied to
+the freshly bound constructor variables back to its fold body
+(`reduces_appSpine_ren_lamSpine`) under the constructor abstraction
+(`reduces_lamSpine`, `reduces_replicateSpine_args`). Novel packaging of section
+4.2. -/
+theorem barConOmega_app_reduces (τ : RType) (v : FreeAlg natAlgSig)
+    (Ghat : Binding.Tm (oneLambdaSig natAlgSig) [] (bbType natAlgSig (barTy τ)))
+    (hG : Relation.ReflTransGen OneLambdaStep Ghat (bbRep v (barTy τ))) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app' (OneLambda.lam' (barConOmegaBody τ)) Ghat)
+      (bbRep (FreeAlg.mk true (fun _ => v)) (barTy τ)) := by
+  refine (OneLambda.reduces_app'_right _ hG).trans ?_
+  refine (OneLambda.reduces_beta _ _).trans ?_
+  rw [barConOmegaBody_instantiate]
+  -- The fold body of `bbRep v (barTy τ)`, the per-argument collapse target.
+  have hbb : bbRep (FreeAlg.mk true (fun _ => v)) (barTy τ)
+      = OneLambda.lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+          (OneLambda.replicateSpine (natAlgSig.ar true) (barTy τ)
+            (Binding.Tm.var (Binding.Var.appendRight [] (ctorVar true)))
+            (fun _e => FreeAlg.recurse (A := natAlgSig) (P := Unit)
+              (C := Binding.Tm (oneLambdaSig natAlgSig)
+                (stepTypes natAlgSig (barTy τ) (barTy τ)) (barTy τ))
+              (fun b _ _sub rec =>
+                OneLambda.replicateSpine (natAlgSig.ar b) (barTy τ)
+                  (Binding.Tm.var (ctorVar b)) rec) () v)) := rfl
+  rw [hbb, bbRep]
+  exact OneLambda.reduces_lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+    (OneLambda.reduces_replicateSpine_args (natAlgSig.ar true) (barTy τ) _ _ _
+      (fun _j => OneLambda.reduces_appSpine_ren_lamSpine (Γ := [])
+        (stepTypes natAlgSig (barTy τ) (barTy τ))
+        (FreeAlg.recurse (A := natAlgSig) (P := Unit)
+          (C := Binding.Tm (oneLambdaSig natAlgSig)
+            (stepTypes natAlgSig (barTy τ) (barTy τ)) (barTy τ))
+          (fun b _ _sub rec =>
+            OneLambda.replicateSpine (natAlgSig.ar b) (barTy τ)
+              (Binding.Tm.var (ctorVar b)) rec) () v)))
+
 end GebLean.Ramified
