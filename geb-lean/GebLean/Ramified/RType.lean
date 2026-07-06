@@ -32,6 +32,8 @@ whose shapes are a nullary `o`, a binary `arrow`, and a unary `omega`.
 * `RType.tower` — the tower sorts `Omega^m o`.
 * `RType.IsTower` — the tower-sort predicate (a chain of `Omega`s ending in
   `o`), with a `DecidablePred` instance.
+* `RType.IsSimple` — the omega-free predicate (no `Omega` occurs anywhere in
+  the r-type), with a `DecidablePred` instance.
 * `RType.interp` — the denotation of an r-type over a carrier.
 * `oObj` — the base object sort `o` as an object-sort witness.
 
@@ -42,6 +44,8 @@ whose shapes are a nullary `o`, a binary `arrow`, and a unary `omega`.
 * `RType.tower_isObj` — every tower sort is an object sort.
 * `RType.tower_isTower` — every tower sort satisfies `RType.IsTower`.
 * `RType.interp_isObj` — every object sort denotes a copy of the carrier.
+* `RType.o_isSimple`, `RType.arrow_isSimple_iff` — the simple-type predicate
+  on the base type and on `arrow`.
 
 ## Implementation notes
 
@@ -63,7 +67,8 @@ Higher type recurrence and elementary complexity", Annals of Pure and
 Applied Logic 96 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`.
 The r-types are section 2.3; the tower sorts `Omega^m o` are section
 2.4(3); the standard denotation of object sorts as copies of the base
-carrier is section 2.7.
+carrier is section 2.7; the simple (omega-free) types are section 4.2
+("the types are not ramified").
 
 ## Tags
 
@@ -261,5 +266,43 @@ theorem RType.tower_isTower (m : Nat) : (RType.tower m).IsTower := by
   induction m with
   | zero => exact True.intro
   | succ n ih => exact ih
+
+/-- The omega-free (simple-type) predicate (Leivant III section 4.2: "the
+types are not ramified"): `o` is simple, `arrow a b` is simple exactly when
+both `a` and `b` are, and no `omega tau` is simple. Unlike `RType.IsTower`'s
+`arrow` case, which contributes no recursive obligation, `arrow` here recurses
+on both children. Realized by the dependent eliminator `PolyFix.ind`
+(decision 8), following `RType.IsTower`'s pattern. Novel packaging. -/
+def RType.IsSimple (t : RType) : Prop :=
+  PolyFix.ind (P := rTypeSig.polyEndo) (motive := fun {_} _ => Prop)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => True
+      | RTypeShape.arrow, _, ih =>
+        ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)) ∧
+          ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow))
+      | RTypeShape.omega, _, _ => False) t
+
+instance : DecidablePred RType.IsSimple := fun t =>
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => Decidable (RType.IsSimple t))
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => isTrue True.intro
+      | RTypeShape.arrow, _, ih =>
+        match ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)),
+            ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)) with
+        | isTrue h0, isTrue h1 => isTrue ⟨h0, h1⟩
+        | isFalse h0, _ => isFalse (fun h => h0 h.1)
+        | isTrue _, isFalse h1 => isFalse (fun h => h1 h.2)
+      | RTypeShape.omega, _, _ => isFalse (fun h => h)) t
+
+/-- The base type `o` is simple (Leivant III section 4.2). -/
+theorem RType.o_isSimple : RType.o.IsSimple := True.intro
+
+/-- `arrow a b` is simple exactly when both `a` and `b` are (Leivant III
+section 4.2). -/
+theorem RType.arrow_isSimple_iff {a b : RType} :
+    (RType.arrow a b).IsSimple ↔ a.IsSimple ∧ b.IsSimple := Iff.rfl
 
 end GebLean.Ramified

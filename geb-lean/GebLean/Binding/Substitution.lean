@@ -82,17 +82,35 @@ def instantiate {S : BinderSig Ty} {Γ Ξ : Ctx Ty} {s : Ty}
     (m : ∀ t, Var Ξ t → Tm S Γ t) (t : Tm S (Γ ++ Ξ) s) : Tm S Γ s :=
   sub (extendEnv idEnv m) t
 
-/-- The single-variable specialization of `instantiate`: substitute the sole
-bound variable of the singleton suffix `[a]` by the term `u`. The meta-map
-recovers the sort equality `a = b` from a variable `v : Var [a] b` — its
-position is the unique element of `Fin 1`, so `[a].get v.1` reduces to `a` —
-and transports `u` along it. -/
-def instantiate₁ {S : BinderSig Ty} {Γ : Ctx Ty} {a s : Ty}
-    (u : Tm S Γ a) (t : Tm S (Γ ++ [a]) s) : Tm S Γ s :=
-  instantiate (fun b v => by
+/-- The single-variable substitution meta-map: the sole bound variable of the
+singleton suffix `[a]` maps to the term `u`. Its position is the unique element
+of `Fin 1`, so `[a].get v.1` reduces to `a`; the map transports `u` along that
+sort equality. The meta-map `instantiate₁` instantiates along. -/
+def metaOne {S : BinderSig Ty} {Γ : Ctx Ty} {a : Ty} (u : Tm S Γ a) :
+    ∀ b, Var [a] b → Tm S Γ b :=
+  fun b v => by
     obtain ⟨i, hi⟩ := v
     cases i using Fin.cases with
     | zero => exact hi ▸ u
-    | succ j => exact j.elim0) t
+    | succ j => exact j.elim0
+
+/-- The single-variable specialization of `instantiate`: substitute the sole
+bound variable of the singleton suffix `[a]` by the term `u`, instantiating
+along the single-variable meta-map `metaOne u`. -/
+def instantiate₁ {S : BinderSig Ty} {Γ : Ctx Ty} {a s : Ty}
+    (u : Tm S Γ a) (t : Tm S (Γ ++ [a]) s) : Tm S Γ s :=
+  instantiate (metaOne u) t
+
+/-- Assemble the meta-map of `instantiate` from an argument tuple: an indexed
+tuple `args`, supplying a term of `Γ` at each position of the suffix `Ξ`, becomes
+the substitution meta-map sending a suffix variable `⟨i, hi⟩ : Var Ξ t` to
+`args i` transported along the position's sort equality `hi : Ξ.get i = t`. The
+argument-tuple interface of `instantiate`, feeding a positionally-indexed spine
+of arguments (as produced by an application spine) into the suffix
+substitution. -/
+def metaTuple {S : BinderSig Ty} {Γ Ξ : Ctx Ty}
+    (args : ∀ i : Fin Ξ.length, Tm S Γ (Ξ.get i)) :
+    ∀ t, Var Ξ t → Tm S Γ t :=
+  fun _ v => v.2 ▸ args v.1
 
 end GebLean.Binding

@@ -106,6 +106,17 @@ def FreeAlg.recurse {A : AlgSig} {P C : Type}
     PolyFix.ind (P := A.polyEndo) (motive := fun {_} _ => P → C)
       (fun i children ih q => g i q children fun e => ih e q) t p
 
+/-- The reduction rule of the free-algebra recurrence at a constructor node
+(Leivant III section 2.1, eq. (1)): `FreeAlg.recurse g p (FreeAlg.mk b sub)`
+unfolds to the step function `g` at `b` applied to the parameter `p`, the
+subterms `sub`, and the recursive results on the subterms. The `PolyFix.ind`
+iota rule at a `FreeAlg.mk` node; holds definitionally. -/
+theorem FreeAlg.recurse_mk {A : AlgSig} {P C : Type}
+    (g : (b : A.B) → P → (Fin (A.ar b) → FreeAlg A) → (Fin (A.ar b) → C) → C)
+    (p : P) (b : A.B) (sub : Fin (A.ar b) → FreeAlg A) :
+    FreeAlg.recurse g p (FreeAlg.mk b sub)
+      = g b p sub (fun e => FreeAlg.recurse g p (sub e)) := rfl
+
 /-- The `1 + X` signature (monadic word algebra): one 0-ary constructor
 (`false`) and one unary constructor (`true`). Used from Phase 2 onward;
 the other canonical instances arrive in Phase 3. -/

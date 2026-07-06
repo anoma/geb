@@ -360,4 +360,260 @@ theorem sub_sub {S : BinderSig Ty} {Γ Δ Θ : Ctx Ty} {s : Ty} (σ : Env (Tm S)
     sub τ (sub σ t) = sub (fun s x => sub τ (σ s x)) t :=
   traverse_sub_sub t σ τ
 
+/-- Transporting a head-shifted variable `Var.succ a v` across a context equality
+prepended by a head entry `a` peels the transport onto the tail. Proved by
+`subst`; the recursion step of `Var.appendCases_append_assoc`. -/
+theorem Var.transport_cons_succ {a : Ty} {C C' : Ctx Ty} {s : Ty} (e : C = C')
+    (v : Var C s) :
+    (congrArg (a :: ·) e) ▸ Var.succ a v = Var.succ a (e ▸ v) := by
+  cases e; rfl
+
+/-- Transporting the head variable `⟨0, _⟩` across a context equality prepended by
+a head entry `a` leaves it fixed at position `0`. Proved by `subst`; the base
+step of `Var.appendCases_append_assoc`. -/
+theorem Var.transport_cons_zero {a : Ty} {C C' : Ctx Ty} {s : Ty} (e : C = C')
+    (hi : List.get (a :: C) 0 = s) :
+    (congrArg (a :: ·) e) ▸ (⟨0, hi⟩ : Var (a :: C) s)
+      = (⟨0, hi⟩ : Var (a :: C') s) := by
+  cases e; rfl
+
+/-- Reassociating a nested append eliminator through the context associativity
+`Γ ++ (Ξ₁ ++ Ξ₂) = (Γ ++ Ξ₁) ++ Ξ₂`: splitting a variable of `(Γ ++ Ξ₁) ++ Ξ₂`
+(transported from `Γ ++ (Ξ₁ ++ Ξ₂)`) at the outer boundary `(Γ ++ Ξ₁) | Ξ₂`
+equals splitting the original variable at `Γ | (Ξ₁ ++ Ξ₂)`, with the suffix
+branch further split at `Ξ₁ | Ξ₂`, embedding a prefix `Γ`-variable through
+`Thinning.weakAppend` and a middle `Ξ₁`-variable through `Var.appendRight`.
+Recursion on the prefix `Γ`, peeling the head shift as in `Var.appendCases`. -/
+theorem Var.appendCases_append_assoc {Ξ₁ Ξ₂ : Ctx Ty} {s : Ty} {motive : Sort v}
+    (fromΞ₂ : Var Ξ₂ s → motive) :
+    (Γ : Ctx Ty) → (fromΓΞ₁ : Var (Γ ++ Ξ₁) s → motive) →
+    (x : Var (Γ ++ (Ξ₁ ++ Ξ₂)) s) →
+      Var.appendCases fromΞ₂ (Γ ++ Ξ₁) fromΓΞ₁ ((List.append_assoc Γ Ξ₁ Ξ₂).symm ▸ x)
+        = Var.appendCases
+            (Var.appendCases fromΞ₂ Ξ₁ (fun w => fromΓΞ₁ (Var.appendRight Γ w))) Γ
+            (fun v => fromΓΞ₁ (Thinning.weakAppend.app v)) x
+  | [], fromΓΞ₁, x => rfl
+  | a :: Γ, fromΓΞ₁, ⟨i, hi⟩ => by
+      cases i using Fin.cases with
+      | zero =>
+          exact congrArg (Var.appendCases fromΞ₂ (a :: Γ ++ Ξ₁) fromΓΞ₁)
+            (Var.transport_cons_zero (List.append_assoc Γ Ξ₁ Ξ₂).symm hi)
+      | succ i' =>
+          refine (congrArg (Var.appendCases fromΞ₂ (a :: Γ ++ Ξ₁) fromΓΞ₁)
+            (Var.transport_cons_succ (List.append_assoc Γ Ξ₁ Ξ₂).symm ⟨i', hi⟩)).trans ?_
+          refine (Var.appendCases_append_assoc fromΞ₂ Γ
+            (fun w => fromΓΞ₁ (Var.succ a w)) ⟨i', hi⟩).trans ?_
+          simp only [Var.appendCases_cons_succ, Var.appendRight_cons,
+            Thinning.weakAppend_app_succ]
+
+/-- Prepending a shared head entry `a` commutes with a codomain transport of a
+thinning: `keep a (e ▸ ρ) = (congrArg (a :: ·) e) ▸ keep a ρ`. Proved by `subst`. -/
+theorem Thinning.keep_transport_cod {a : Ty} {Γ B B' : Ctx Ty} (e : B = B')
+    (ρ : Thinning Γ B) :
+    Thinning.keep a (e ▸ ρ) = (congrArg (a :: ·) e) ▸ Thinning.keep a ρ := by
+  cases e; rfl
+
+/-- Suffix embeddings compose out of the empty prefix: embedding `[] ⊆ Ξ₁` then
+`Ξ₁ ⊆ Ξ₁ ++ Ξ₂` embeds `[] ⊆ Ξ₁ ++ Ξ₂`. Recursion on `Ξ₁`; the base step of
+`Thinning.weakAppend_comp_weakAppend`. -/
+theorem Thinning.weakAppend_nil_comp_weakAppend : (Ξ₁ Ξ₂ : Ctx Ty) →
+    (Thinning.weakAppend (Γ := ([] : Ctx Ty)) (Ξ := Ξ₁)).comp
+        (Thinning.weakAppend (Γ := Ξ₁) (Ξ := Ξ₂))
+      = Thinning.weakAppend (Γ := ([] : Ctx Ty)) (Ξ := Ξ₁ ++ Ξ₂)
+  | [], _ => Thinning.nil_comp _
+  | b :: Ξ₁', Ξ₂ =>
+      congrArg (Thinning.drop b) (Thinning.weakAppend_nil_comp_weakAppend Ξ₁' Ξ₂)
+
+/-- Suffix embeddings compose through the context associativity: embedding
+`Δ ⊆ Δ ++ Ξ₁` then `(Δ ++ Ξ₁) ⊆ (Δ ++ Ξ₁) ++ Ξ₂` equals, up to the
+`List.append_assoc` transport, the single embedding `Δ ⊆ Δ ++ (Ξ₁ ++ Ξ₂)`.
+Recursion on the prefix `Δ`, threading the head shift through
+`Thinning.keep_transport_cod`. -/
+theorem Thinning.weakAppend_comp_weakAppend {Ξ₁ Ξ₂ : Ctx Ty} : (Δ : Ctx Ty) →
+    (Thinning.weakAppend (Γ := Δ) (Ξ := Ξ₁)).comp
+        (Thinning.weakAppend (Γ := Δ ++ Ξ₁) (Ξ := Ξ₂))
+      = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ Thinning.weakAppend (Γ := Δ) (Ξ := Ξ₁ ++ Ξ₂)
+  | [] => Thinning.weakAppend_nil_comp_weakAppend Ξ₁ Ξ₂
+  | a :: Δ => by
+      refine Eq.trans (b := Thinning.keep a
+          ((Thinning.weakAppend (Γ := Δ) (Ξ := Ξ₁)).comp
+            (Thinning.weakAppend (Γ := Δ ++ Ξ₁) (Ξ := Ξ₂)))) rfl ?_
+      rw [Thinning.weakAppend_comp_weakAppend Δ]
+      exact Thinning.keep_transport_cod (List.append_assoc Δ Ξ₁ Ξ₂).symm _
+
+/-- Renaming along a codomain-transported thinning pulls the transport out: for
+`h : Δ = Δ'`, `ren (h ▸ ρ) t = h ▸ ren ρ t`. Proved by `subst`. -/
+theorem ren_transport_cod {S : BinderSig Ty} {Γ Δ Δ' : Ctx Ty} {s : Ty} (h : Δ = Δ')
+    (ρ : Thinning Γ Δ) (t : Tm S Γ s) :
+    ren (h ▸ ρ) t = h ▸ ren ρ t := by
+  cases h; rfl
+
+/-- Iterated weakening along the two suffix embeddings equals, up to the
+`List.append_assoc` transport, a single weakening along the combined suffix. The
+term-level image of `Thinning.weakAppend_comp_weakAppend` under `ren`, obtained
+through `ren_comp`. -/
+theorem ren_weakAppend_append {S : BinderSig Ty} {Δ Ξ₁ Ξ₂ : Ctx Ty} {s : Ty}
+    (t : Tm S Δ s) :
+    ren (Thinning.weakAppend (Ξ := Ξ₂)) (ren (Thinning.weakAppend (Ξ := Ξ₁)) t)
+      = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ ren (Thinning.weakAppend (Ξ := Ξ₁ ++ Ξ₂)) t := by
+  rw [← ren_comp, Thinning.weakAppend_comp_weakAppend Δ, ren_transport_cod]
+
+/-- The suffix inclusion `Var.appendRight` reassociates across a nested append:
+transporting `Var.appendRight Δ y` of a suffix variable `y : Var (Ξ₁ ++ Ξ₂) s`
+along `Δ ++ (Ξ₁ ++ Ξ₂) = (Δ ++ Ξ₁) ++ Ξ₂` splits `y` at the boundary `Ξ₁ | Ξ₂`,
+sending the `Ξ₂`-branch through `Var.appendRight (Δ ++ Ξ₁)` and the `Ξ₁`-branch
+through `Var.appendRight Δ` re-embedded by `Thinning.weakAppend`. Recursion on the
+prefix `Δ`, threading the head shift through `Var.appendCases_natural`. -/
+theorem Var.appendRight_append_assoc {Ξ₁ Ξ₂ : Ctx Ty} {s : Ty} : (Δ : Ctx Ty) →
+    (y : Var (Ξ₁ ++ Ξ₂) s) →
+    (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ Var.appendRight Δ y
+      = Var.appendCases (Var.appendRight (Δ ++ Ξ₁)) Ξ₁
+          (fun w => Thinning.weakAppend.app (Var.appendRight Δ w)) y
+  | [], y => (Var.appendCases_self y).symm
+  | a :: Δ, y => by
+      have step := Var.transport_cons_succ (a := a) (List.append_assoc Δ Ξ₁ Ξ₂).symm
+        (Var.appendRight Δ y)
+      rw [Var.appendRight_append_assoc Δ y] at step
+      change (congrArg (a :: ·) (List.append_assoc Δ Ξ₁ Ξ₂).symm) ▸
+        Var.succ a (Var.appendRight Δ y) = _
+      rw [step]
+      exact Var.appendCases_natural (Var.succ a) (Var.appendRight (Δ ++ Ξ₁)) Ξ₁
+        (fun w => Thinning.weakAppend.app (Var.appendRight Δ w)) y
+
+/-- Embedding a variable as a term commutes with a codomain transport: for
+`e : Δ = Δ'`, `Tm.var (e ▸ v) = e ▸ Tm.var v`. Proved by `subst`. -/
+theorem Tm.var_transport_cod {S : BinderSig Ty} {Δ Δ' : Ctx Ty} {s : Ty} (e : Δ = Δ')
+    (v : Var Δ s) : Tm.var (e ▸ v) = e ▸ (Tm.var v : Tm S Δ s) := by
+  cases e; rfl
+
+/-- Weakening an environment under two nested binder contexts `Ξ₁` then `Ξ₂`
+equals, up to the `List.append_assoc` transports on the source and target
+contexts, weakening once under the combined binder context `Ξ₁ ++ Ξ₂`. The
+syntactic reassociation analog of the denotational `joinEnv_envExtend`: the
+freshly bound variables reassociate through `Var.appendRight_append_assoc`
+(under `Tm.var`), and the old values reassociate through
+`ren_weakAppend_append`. Dispatched pointwise by `Var.appendCases_append_assoc`. -/
+theorem underBinder_append {S : BinderSig Ty} {Γ Δ Ξ₁ Ξ₂ : Ctx Ty}
+    (ρ : Env (Tm S) Γ Δ) (s : Ty) (x : Var (Γ ++ (Ξ₁ ++ Ξ₂)) s) :
+    Env.underBinder (subKit S) (Ξ := Ξ₂) (Env.underBinder (subKit S) (Ξ := Ξ₁) ρ) s
+        ((List.append_assoc Γ Ξ₁ Ξ₂).symm ▸ x)
+      = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸
+          Env.underBinder (subKit S) (Ξ := Ξ₁ ++ Ξ₂) ρ s x := by
+  change Var.appendCases (fun y => Tm.var (Var.appendRight (Δ ++ Ξ₁) y)) (Γ ++ Ξ₁)
+      (fun v => ren Thinning.weakAppend (Env.underBinder (subKit S) (Ξ := Ξ₁) ρ s v))
+      ((List.append_assoc Γ Ξ₁ Ξ₂).symm ▸ x)
+    = (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸
+        Var.appendCases (fun y => Tm.var (Var.appendRight Δ y)) Γ
+          (fun v => ren Thinning.weakAppend (ρ s v)) x
+  rw [Var.appendCases_append_assoc (fun y => Tm.var (Var.appendRight (Δ ++ Ξ₁) y)) Γ
+        (fun v => ren Thinning.weakAppend (Env.underBinder (subKit S) (Ξ := Ξ₁) ρ s v)) x]
+  have hnat := Var.appendCases_natural
+      (fun z : Tm S (Δ ++ (Ξ₁ ++ Ξ₂)) s => (List.append_assoc Δ Ξ₁ Ξ₂).symm ▸ z)
+      (fun y => Tm.var (Var.appendRight Δ y)) Γ (fun v => ren Thinning.weakAppend (ρ s v)) x
+  rw [hnat]
+  congr 1
+  · funext y
+    simp only [Env.underBinder, subKit, Var.appendCases_appendRight, ren, traverse_var,
+      varKit, renEnv]
+    rw [← Tm.var_transport_cod, Var.appendRight_append_assoc Δ y]
+    exact (Var.appendCases_natural Tm.var (Var.appendRight (Δ ++ Ξ₁)) Ξ₁
+      (fun w => Thinning.weakAppend.app (Var.appendRight Δ w)) y).symm
+  · funext v
+    simp only [Env.underBinder, subKit, Var.appendCases_weakAppend]
+    exact ren_weakAppend_append (ρ s v)
+
+/-- The extended environment `extendEnv σ m` reads as the append-variable
+eliminator over the prefix `Γ`: a prefix variable routes through `σ`, a suffix
+variable of `Ξ` through the meta-map `m`. The `Var.appendCases` presentation of
+`extendEnv`, obtained by pushing the `splitVar` match through
+`Var.appendCases_natural`. -/
+theorem extendEnv_apply {S : BinderSig Ty} {Γ Δ Ξ : Ctx Ty} (σ : Env (Tm S) Γ Δ)
+    (m : ∀ t, Var Ξ t → Tm S Δ t) (s : Ty) (x : Var (Γ ++ Ξ) s) :
+    extendEnv σ m s x = Var.appendCases (fun w => m s w) Γ (fun v => σ s v) x := by
+  have key : Var.appendCases (fun w => m s w) Γ (fun v => σ s v) x
+      = Sum.elim (fun v => σ s v) (fun w => m s w) (splitVar x) := by
+    rw [splitVar]
+    exact (Var.appendCases_natural (Sum.elim (fun v => σ s v) (fun w => m s w))
+      Sum.inr Γ Sum.inl x).symm
+  rw [key]
+  unfold extendEnv
+  split <;> rename_i hs <;> rw [hs] <;> rfl
+
+/-- Evaluating an extended environment at a suffix inclusion `Var.appendRight Γ y`
+reads the meta-map `m` at `y`. -/
+theorem extendEnv_appendRight {S : BinderSig Ty} {Γ Δ Ξ : Ctx Ty} (σ : Env (Tm S) Γ Δ)
+    (m : ∀ t, Var Ξ t → Tm S Δ t) (s : Ty) (y : Var Ξ s) :
+    extendEnv σ m s (Var.appendRight Γ y) = m s y := by
+  rw [extendEnv_apply, Var.appendCases_appendRight]
+
+/-- Evaluating an extended environment at a suffix embedding
+`Thinning.weakAppend.app v` reads the environment `σ` at `v`. -/
+theorem extendEnv_weakAppend {S : BinderSig Ty} {Γ Δ Ξ : Ctx Ty} (σ : Env (Tm S) Γ Δ)
+    (m : ∀ t, Var Ξ t → Tm S Δ t) (s : Ty) (v : Var Γ s) :
+    extendEnv σ m s (Thinning.weakAppend.app v) = σ s v := by
+  rw [extendEnv_apply, Var.appendCases_weakAppend]
+
+/-- The head/tail decomposition of the argument-tuple meta-map `metaTuple` over a
+cons suffix `σ :: Δ`: a suffix variable splits, via `Var.appendCases` at the
+boundary `[σ] | Δ`, into the head — instantiated by `metaOne` at the zeroth
+argument — and the tail — instantiated by `metaTuple` at the shifted arguments
+`fun i => args i.succ`. -/
+theorem metaTuple_cons {S : BinderSig Ty} {Γ : Ctx Ty} {σ : Ty} {Δ : Ctx Ty}
+    (args : ∀ i : Fin (σ :: Δ).length, Tm S Γ ((σ :: Δ).get i)) (b : Ty)
+    (w : Var (σ :: Δ) b) :
+    metaTuple args b w
+      = Var.appendCases (fun w' => metaTuple (fun i => args i.succ) b w') [σ]
+          (fun u => metaOne (a := σ) (args ⟨0, Nat.succ_pos _⟩) b u) w := by
+  obtain ⟨i, hi⟩ := w
+  cases i using Fin.cases with
+  | zero => rfl
+  | succ j => rfl
+
+/-- The cons recurrence of the suffix substitution `instantiate` over an argument
+tuple (the syntactic analog of the denotational binder peel `joinEnv_envExtend`):
+instantiating the whole suffix `σ :: Δ` of `body` by an argument tuple `args`
+equals first instantiating the head `σ` by `args ⟨0, _⟩` under the residual
+`Δ`-binder — the substitution `sub (underBinder (extendEnv idEnv (metaTuple …)))`
+on the append-reassociated body — and then instantiating the remaining suffix
+`Δ` by the tail `fun i => args i.succ`. The induction step of the generic
+λ-spine β-reduction: it collapses, through the substitution associativity law
+`sub_sub`, to the pointwise environment identity dispatched by
+`Var.appendCases`. -/
+theorem instantiate_metaTuple_cons {S : BinderSig Ty} {Γ : Ctx Ty} {σ : Ty}
+    {Δ : Ctx Ty} {s : Ty}
+    (args : ∀ i : Fin (σ :: Δ).length, Tm S Γ ((σ :: Δ).get i))
+    (body : Tm S (Γ ++ (σ :: Δ)) s) :
+    instantiate (metaTuple (fun i => args i.succ))
+        (sub (Env.underBinder (subKit S) (Ξ := Δ)
+            (extendEnv idEnv (metaOne (a := σ) (args ⟨0, Nat.succ_pos _⟩))))
+          ((List.append_assoc Γ [σ] Δ).symm ▸ body))
+      = instantiate (metaTuple args) body := by
+  have dom : ∀ {Θ Θ' : Ctx Ty} {ss : Ty} (h : Θ = Θ') (E : Env (Tm S) Θ' Γ)
+      (t : Tm S Θ ss), sub E (h ▸ t) = sub (fun b x => E b (h ▸ x)) t := by
+    intro Θ Θ' ss h E t; cases h; rfl
+  unfold instantiate
+  rw [sub_sub]
+  refine (dom (List.append_assoc Γ [σ] Δ).symm _ body).trans ?_
+  refine congrArg (fun E => sub E body) ?_
+  funext b x
+  have henv : (fun (t : Ty) (z : Var Γ t) =>
+      extendEnv idEnv (metaTuple fun i => args i.succ) t (Thinning.weakAppend.app z))
+        = (idEnv : Env (Tm S) Γ Γ) := by
+    funext t z; exact extendEnv_weakAppend _ _ t z
+  simp only [Env.underBinder, subKit]
+  rw [Var.appendCases_append_assoc,
+    Var.appendCases_natural (sub (extendEnv idEnv (metaTuple fun i => args i.succ))),
+    extendEnv_apply]
+  congr 1
+  · funext w
+    rw [metaTuple_cons,
+      Var.appendCases_natural (sub (extendEnv idEnv (metaTuple fun i => args i.succ)))]
+    congr 1
+    · funext y
+      rw [sub_var, extendEnv_appendRight]
+    · funext u
+      rw [extendEnv_appendRight, ren_sub, henv, sub_id]
+  · funext v
+    rw [extendEnv_weakAppend, ren_sub, henv, sub_id]
+
 end GebLean.Binding
