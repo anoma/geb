@@ -703,6 +703,90 @@ theorem OneLambda.appSpine_transport_cod {A : AlgSig} [Fintype A.B]
       = OneLambda.appSpine Ts (h ▸ head) (fun i => h ▸ args i) := by
   subst h; rfl
 
+/-- The multi-binder η collapse of the simply-typed calculus `1λ(A)`: the
+iterated abstraction `lamSpine Δ` of the head `M` — pre-weakened past `Δ`
+(`ren (weakAppend Δ)`) and re-applied along the spine to the freshly bound
+variables `Var.appendRight Γ` in spine order — reduces (`OneLambdaStep`,
+reflexive-transitively) back to `M`. The iterated form of the single-binder base
+rule `OneLambdaStep.eta`, proved by recursion on `Δ` peeling the outermost `lam'`:
+the base case is the append-nil transport cancellation, and the cons case moves
+the residual spine under the peeled binder (`reduces_lamBody` on the inductive
+hypothesis) and fires one `OneLambdaStep.eta`. Novel packaging of the standard
+λ-calculus η collapse. -/
+theorem OneLambda.reduces_etaSpine :
+    {Γ : Binding.Ctx RType} → (Δ : List RType) → {σ : RType} →
+    (M : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried Δ σ)) →
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.lamSpine Δ
+        (OneLambda.appSpine Δ (Binding.ren (Binding.Thinning.weakAppend (Ξ := Δ)) M)
+          (fun i => Binding.Tm.var
+            (Binding.Var.appendRight Γ (⟨i, rfl⟩ : Binding.Var Δ (Δ.get i))))))
+      M
+  | Γ, [], σ, M => by
+      change Relation.ReflTransGen OneLambdaStep
+          (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c (RType.curried [] σ))
+              (List.append_nil Γ))
+            (Binding.ren (Binding.Thinning.weakAppend (Ξ := [])) M)) M
+      rw [tm_cast_eq_eqRec (List.append_nil Γ)
+          (Binding.ren (Binding.Thinning.weakAppend (Ξ := [])) M),
+        ren_weakAppend_nil M,
+        eqRec_eqRec_symm
+          (motive := fun c => Binding.Tm (oneLambdaSig natAlgSig) c (RType.curried [] σ))]
+  | Γ, a :: Δ', σ, M => by
+      rw [OneLambda.appSpine, OneLambda.lamSpine]
+      refine (OneLambda.reduces_lamBody ?_).trans
+        (Relation.ReflTransGen.single (OneLambdaStep.eta M))
+      -- The residual body head, after peeling the outermost binder `a`: `M`
+      -- applied to the freshly bound `a`-variable, weakened past the remaining
+      -- binders `Δ'`. Fires the outer η once `reduces_etaSpine Δ'` collapses it.
+      set Mstep : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [a]) (RType.curried Δ' σ) :=
+        OneLambda.app' (Binding.ren (Binding.Thinning.weakAppend (Ξ := [a])) M)
+          (Binding.Tm.var (boundVar (Γ := Γ) (σ := a))) with hMstep
+      have hhead :
+          (List.append_assoc Γ [a] Δ').symm ▸ OneLambda.app'
+              (Binding.ren (Binding.Thinning.weakAppend (Ξ := a :: Δ')) M)
+              (Binding.Tm.var
+                (Binding.Var.appendRight Γ (⟨⟨0, Nat.succ_pos _⟩, rfl⟩ : Binding.Var (a :: Δ') a)))
+            = Binding.ren (Binding.Thinning.weakAppend (Ξ := Δ')) Mstep := by
+        rw [hMstep, OneLambda.app'_transport_cod, OneLambda.ren_app', ren_var]
+        refine congr_arg₂ OneLambda.app' ?_ ?_
+        · exact (ren_weakAppend_append M).symm
+        · rw [← Tm.var_transport_cod]
+          refine congrArg Binding.Tm.var ?_
+          exact (Var.appendRight_append_assoc Γ
+            (⟨⟨0, Nat.succ_pos _⟩, rfl⟩ : Binding.Var ([a] ++ Δ') a)).trans rfl
+      have hargs :
+          (fun i : Fin Δ'.length => (List.append_assoc Γ [a] Δ').symm ▸ Binding.Tm.var
+              (Binding.Var.appendRight Γ
+                (⟨i.succ, rfl⟩ : Binding.Var (a :: Δ') ((a :: Δ').get i.succ))))
+            = (fun i : Fin Δ'.length =>
+                (Binding.Tm.var
+                  (Binding.Var.appendRight (Γ ++ [a]) (⟨i, rfl⟩ : Binding.Var Δ' (Δ'.get i))) :
+                  Binding.Tm (oneLambdaSig natAlgSig) ((Γ ++ [a]) ++ Δ') (Δ'.get i))) := by
+        funext i
+        rw [← Tm.var_transport_cod]
+        refine congrArg Binding.Tm.var ?_
+        exact (Var.appendRight_append_assoc Γ
+          (⟨i.succ, rfl⟩ : Binding.Var ([a] ++ Δ') (([a] ++ Δ').get i.succ))).trans rfl
+      have emid :
+          (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c σ)
+              (List.append_assoc Γ [a] Δ').symm)
+            (OneLambda.appSpine Δ'
+              (OneLambda.app' (Binding.ren (Binding.Thinning.weakAppend (Ξ := a :: Δ')) M)
+                (Binding.Tm.var
+                  (Binding.Var.appendRight Γ
+                    (⟨⟨0, Nat.succ_pos _⟩, rfl⟩ : Binding.Var (a :: Δ') a))))
+              (fun i => Binding.Tm.var
+                (Binding.Var.appendRight Γ
+                  (⟨i.succ, rfl⟩ : Binding.Var (a :: Δ') ((a :: Δ').get i.succ))))))
+            = OneLambda.appSpine Δ' (Binding.ren (Binding.Thinning.weakAppend (Ξ := Δ')) Mstep)
+                (fun i => Binding.Tm.var
+                  (Binding.Var.appendRight (Γ ++ [a]) (⟨i, rfl⟩ : Binding.Var Δ' (Δ'.get i)))) := by
+        rw [tm_cast_eq_eqRec (List.append_assoc Γ [a] Δ').symm]
+        refine (OneLambda.appSpine_transport_cod (List.append_assoc Γ [a] Δ').symm Δ' _ _).trans ?_
+        rw [hhead, hargs]
+      exact (congrArg (OneLambda.lamSpine Δ') emid).symm ▸ OneLambda.reduces_etaSpine Δ' Mstep
+
 /-- The Berarducci-Böhm representation `bbRep v σ` saturated with represented
 step terms along its abstraction spine reduces to the instantiated fold body
 (Leivant III section 4.2, Proposition 11's recurrence case): applying
