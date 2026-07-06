@@ -918,4 +918,52 @@ theorem barTmOp_con_omega {Γ : Binding.Ctx RType} (τ : RType) (b : natAlgSig.B
   exact (eq_mpr_heq _ _).trans
     ((eq_mpr_heq _ _).trans ((eq_mpr_heq _ _).trans (cast_heq _ _).symm))
 
+/-- The base destructor `1λ(A)` term applied to the concrete term of a
+constructor node reduces to the concrete term of the destructed subterm (Leivant
+III section 4.1–4.2, Proposition 11's destructor case): `dstr_j (conc (mk b s⃗))`
+reduces (`OneLambdaStep`, reflexive-transitively) to `conc (dstrRead j (mk b s⃗))`,
+the `j`-th concrete subterm when `j < r_b` (destructor hit) and the concrete term
+of the whole node when `j ≥ r_b` (destructor miss). Unfolds the head through
+`conc_mk` and fires the single base redex `OneLambdaStep.dstrHit`/`dstrMiss`,
+whose contractum matches the two branches of `dstrRead`'s `FreeAlg.recurse`
+(`FreeAlg.recurse_mk`). Novel packaging of section 4.2. -/
+theorem conc_app_dstr_reduces (j : Fin natAlgSig.maxArity) (b : natAlgSig.B)
+    (sub : Fin (natAlgSig.ar b) → FreeAlg natAlgSig) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0))
+        (conc (FreeAlg.mk b sub)))
+      (conc (dstrRead j.val (FreeAlg.mk b sub))) := by
+  rw [conc_mk]
+  by_cases h : j.val < natAlgSig.ar b
+  · rw [show dstrRead j.val (FreeAlg.mk b sub) = sub ⟨j.val, h⟩ by
+        rw [dstrRead, FreeAlg.recurse_mk, dif_pos h]]
+    exact Relation.ReflTransGen.single (OneLambdaStep.dstrHit j h (fun i => conc (sub i)))
+  · rw [show dstrRead j.val (FreeAlg.mk b sub) = FreeAlg.mk b sub by
+        rw [dstrRead, FreeAlg.recurse_mk, dif_neg h], conc_mk]
+    exact Relation.ReflTransGen.single
+      (OneLambdaStep.dstrMiss j (Nat.le_of_not_lt h) (fun i => conc (sub i)))
+
+/-- The base case `1λ(A)` spine over the concrete term of a constructor node
+reduces to the selected branch (Leivant III section 4.1–4.2, Proposition 11's
+case): the case spine `case (conc (mk (ctorAt idx) s⃗)) b₁…b_k` reduces
+(`OneLambdaStep`, reflexive-transitively) to the branch `b_idx` at the scrutinee
+constructor's enumeration position. Unfolds the scrutinee through `conc_mk` and
+fires the single base redex `OneLambdaStep.case`. Novel packaging of section
+4.2. -/
+theorem conc_replicateSpine_case_reduces (idx : Fin natAlgSig.numCtors)
+    (sub : Fin (natAlgSig.ar (ctorAt idx)) → FreeAlg natAlgSig)
+    (branches : Fin natAlgSig.numCtors →
+      Binding.Tm (oneLambdaSig natAlgSig) [] RType.o) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.replicateSpine natAlgSig.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0))
+          (conc (FreeAlg.mk (ctorAt idx) sub)))
+        branches)
+      (branches idx) := by
+  rw [conc_mk]
+  exact Relation.ReflTransGen.single
+    (OneLambdaStep.case idx (fun i => conc (sub i)) branches)
+
 end GebLean.Ramified
