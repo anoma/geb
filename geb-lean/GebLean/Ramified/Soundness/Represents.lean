@@ -1634,6 +1634,39 @@ theorem ren_conc_replicateSpine_case_reduces {Γ : Binding.Ctx RType}
   exact Relation.ReflTransGen.single
     (OneLambdaStep.case idx (fun i => Binding.ren ρ (conc (sub i))) branches)
 
+/-- A `1λ(A)` reduction is carried through a source-context transport of its
+endpoints: for `h : Γ = Γ'`, `X ⇒* Y` gives `cast … X ⇒* cast … Y`, since a
+context transport is a type coercion inert on the reduction relation. Proved by
+`cases h`. The context counterpart of `reduces_cast_sort`; internal packaging for
+the multi-binder reduction lift `reduces_lamSpine`. -/
+theorem reduces_tm_ctx_cast {Γ Γ' : Binding.Ctx RType} {τ : RType} (h : Γ = Γ')
+    {X Y : Binding.Tm (oneLambdaSig natAlgSig) Γ τ}
+    (hr : Relation.ReflTransGen OneLambdaStep X Y) :
+    Relation.ReflTransGen OneLambdaStep
+      (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ) h) X)
+      (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ) h) Y) := by
+  cases h; exact hr
+
+/-- Reduction under an iterated abstraction spine lifts to the whole spine
+(Leivant III section 4.1, structural): if `b ⇒* b'` in `Γ ++ Δ` then
+`lamSpine Δ b ⇒* lamSpine Δ b'`. The multi-binder counterpart of
+`OneLambda.reduces_lamBody`, by recursion on `Δ` reducing under each peeled `lam'`
+(`reduces_lamBody`) and carrying the interposed context reassociation
+(`reduces_tm_ctx_cast`). Internal packaging for the `barCase` saturation keystone,
+reducing the case redex under `barCase`'s residual domain binders. -/
+theorem OneLambda.reduces_lamSpine {Γ : Binding.Ctx RType} :
+    (Δ : List RType) → {τ : RType} →
+    {b b' : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ Δ) τ} →
+    Relation.ReflTransGen OneLambdaStep b b' →
+    Relation.ReflTransGen OneLambdaStep (OneLambda.lamSpine Δ b) (OneLambda.lamSpine Δ b')
+  | [], _τ, _b, _b', h => by
+      rw [OneLambda.lamSpine, OneLambda.lamSpine]
+      exact reduces_tm_ctx_cast (List.append_nil Γ) h
+  | σ :: Δ', _τ, _b, _b', h => by
+      rw [OneLambda.lamSpine, OneLambda.lamSpine]
+      exact OneLambda.reduces_lamBody
+        (OneLambda.reduces_lamSpine Δ' (reduces_tm_ctx_cast (List.append_assoc Γ [σ] Δ').symm h))
+
 /-- The reconciliation of the curried branch type of the case bar-map at a shifted
 object sort (Leivant III section 4.2): `curried (barTy (Ω τ')).domains o = barTy
 (Ω τ')`, since `barTy (Ω τ')` is simple (`barTy_isSimple`) with object target `o`
@@ -1706,5 +1739,133 @@ theorem barCase_omega_fold (τ' : RType) (hθ : (RType.omega τ').IsObj) :
   simp only [RType.shape_omega]
   exact OneLambda.lamSpine_cons RType.o
     (List.replicate natAlgSig.numCtors (barTy (RType.omega τ'))) _
+
+/-- The case bar-map inner body after saturating substitution (Leivant III section
+4.2): the result of instantiating `barCaseOmegaBodyBig`'s three outer binders with
+a scrutinee `s : o` and branch family `g`, in the closed context. The scrutinee
+`s` and each branch `g j` are weakened past the residual `domains` binder
+(`ren weakAppend`); the domain variables `y` remain the freshly bound
+`Var.appendRight []` positions. The named target of the saturation keystone's
+substitution step (`barCase_omega_instantiate`), the operand its `case`-redex and
+η-collapse consume. Novel packaging of section 4.2. -/
+def barCaseOmegaBodySub (τ' : RType)
+    (s : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o)
+    (g : Fin natAlgSig.numCtors →
+      Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (RType.omega τ'))) :
+    Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (RType.omega τ')) :=
+  cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) []) (barCase_omega_ctd τ'))
+    (OneLambda.lamSpine (barTy (RType.omega τ')).domains
+      (OneLambda.replicateSpine natAlgSig.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0))
+          (Binding.ren
+            (Binding.Thinning.weakAppend (Ξ := (barTy (RType.omega τ')).domains)) s))
+        (fun j =>
+          OneLambda.appSpine (barTy (RType.omega τ')).domains
+            (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) (barTy (RType.omega τ')).domains)
+                (barCase_omega_ctd τ').symm)
+              (Binding.ren
+                (Binding.Thinning.weakAppend (Ξ := (barTy (RType.omega τ')).domains)) (g j)))
+            (fun idx =>
+              Binding.Tm.var (Binding.Var.appendRight []
+                (⟨idx, rfl⟩ : Binding.Var (barTy (RType.omega τ')).domains
+                  ((barTy (RType.omega τ')).domains.get idx)))))))
+
+theorem barCase_omega_instantiate (τ' : RType)
+    (s : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o)
+    (g : Fin natAlgSig.numCtors →
+      Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (RType.omega τ'))) :
+    Binding.instantiate
+        (Binding.metaTuple
+          (fun i : Fin (RType.o :: List.replicate natAlgSig.numCtors
+              (barTy (RType.omega τ'))).length =>
+            Fin.cases s
+              (fun j => Fin.cases (g ⟨0, by decide⟩)
+                (fun k => Fin.cases (g ⟨1, by decide⟩) (fun l => l.elim0) k) j) i))
+        (barCaseOmegaBodyBig τ')
+      = barCaseOmegaBodySub τ' s g := by
+  rw [Binding.instantiate]
+  unfold barCaseOmegaBodyBig barCaseOmegaBodySub
+  refine (sub_cast_sort _ (barCase_omega_ctd τ') _).trans ?_
+  refine congrArg
+    (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) []) (barCase_omega_ctd τ'))) ?_
+  refine (OneLambda.sub_lamSpine (barTy (RType.omega τ')).domains _ _).trans ?_
+  refine congrArg (OneLambda.lamSpine (barTy (RType.omega τ')).domains) ?_
+  refine (OneLambda.sub_replicateSpine _ _ _ _ _).trans ?_
+  congr 1
+  · refine (OneLambda.sub_app' _ _ _).trans ?_
+    refine congr (congrArg OneLambda.app' (OneLambda.sub_caseOp _)) ?_
+    exact sub_underBinder_weakAppend _ _
+  · funext j
+    refine (OneLambda.sub_appSpine _ _ _ _).trans ?_
+    congr 1
+    · refine (sub_cast_sort _ (barCase_omega_ctd τ').symm _).trans ?_
+      refine congrArg (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig)
+        (barTy (RType.omega τ')).domains) (barCase_omega_ctd τ').symm)) ?_
+      refine (sub_underBinder_weakAppend _ _).trans ?_
+      refine congrArg (Binding.ren Binding.Thinning.weakAppend) ?_
+      obtain ⟨i, hi⟩ := j
+      match i, hi with
+      | 0, _ => rfl
+      | 1, _ => rfl
+      | (n + 2), h => exact absurd h (by have : natAlgSig.numCtors = 2 := rfl; omega)
+
+theorem barCase_appSpine_reduces (τ' : RType) (hθ : (RType.omega τ').IsObj)
+    (idx : Fin natAlgSig.numCtors)
+    (subv : Fin (natAlgSig.ar (ctorAt idx)) → FreeAlg natAlgSig)
+    (Ghat0 : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o)
+    (Ghats : Fin natAlgSig.numCtors →
+      Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (RType.omega τ')))
+    (h0 : Relation.ReflTransGen OneLambdaStep Ghat0
+      (conc (FreeAlg.mk (ctorAt idx) subv))) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app'
+        (OneLambda.app' (OneLambda.app' (barCase (Γ := []) (RType.omega τ') hθ) Ghat0)
+          (Ghats ⟨0, by decide⟩))
+        (Ghats ⟨1, by decide⟩))
+      (Ghats idx) := by
+  refine (OneLambda.reduces_app'_left _ (OneLambda.reduces_app'_left _
+    (OneLambda.reduces_app'_right _ h0))).trans ?_
+  rw [barCase_omega_fold]
+  have happ : OneLambda.app'
+      (OneLambda.app' (OneLambda.app'
+        (OneLambda.lamSpine (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+          (barCaseOmegaBodyBig τ')) (conc (FreeAlg.mk (ctorAt idx) subv)))
+        (Ghats ⟨0, by decide⟩))
+      (Ghats ⟨1, by decide⟩)
+    = OneLambda.appSpine (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+        (OneLambda.lamSpine (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+          (barCaseOmegaBodyBig τ'))
+        (fun i => Fin.cases (conc (FreeAlg.mk (ctorAt idx) subv))
+          (fun j => Fin.cases (Ghats ⟨0, by decide⟩)
+            (fun k => Fin.cases (Ghats ⟨1, by decide⟩) (fun l => l.elim0) k) j) i) := rfl
+  rw [happ]
+  have hbeta := OneLambda.reduces_betaSpine
+    (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+    (barCaseOmegaBodyBig τ')
+    (fun i => Fin.cases (conc (FreeAlg.mk (ctorAt idx) subv))
+      (fun j => Fin.cases (Ghats ⟨0, by decide⟩)
+        (fun k => Fin.cases (Ghats ⟨1, by decide⟩) (fun l => l.elim0) k) j) i)
+  refine hbeta.trans ?_
+  rw [barCase_omega_instantiate]
+  unfold barCaseOmegaBodySub
+  have hgi : cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) []) (barCase_omega_ctd τ'))
+      (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) []) (barCase_omega_ctd τ').symm)
+        (Ghats idx)) = Ghats idx :=
+    eq_of_heq ((cast_heq _ _).trans (cast_heq _ _))
+  refine hgi ▸ ?_
+  refine reduces_cast_sort (barCase_omega_ctd τ') ?_
+  refine (OneLambda.reduces_lamSpine (barTy (RType.omega τ')).domains
+    (ren_conc_replicateSpine_case_reduces Binding.Thinning.weakAppend idx subv _)).trans ?_
+  have hhead : cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig)
+        (barTy (RType.omega τ')).domains) (barCase_omega_ctd τ').symm)
+        (Binding.ren Binding.Thinning.weakAppend (Ghats idx))
+      = Binding.ren Binding.Thinning.weakAppend
+          (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) []) (barCase_omega_ctd τ').symm)
+            (Ghats idx)) :=
+    (ren_cast_sort Binding.Thinning.weakAppend (barCase_omega_ctd τ').symm (Ghats idx)).symm
+  exact hhead ▸ OneLambda.reduces_etaSpine (barTy (RType.omega τ')).domains
+    (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) []) (barCase_omega_ctd τ').symm)
+      (Ghats idx))
 
 end GebLean.Ramified
