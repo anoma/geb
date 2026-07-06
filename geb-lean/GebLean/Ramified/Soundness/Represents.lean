@@ -2421,9 +2421,9 @@ theorem barTy_get_map (Ts : List RType) (i : Fin Ts.length) :
 `cases e`. The sort-transport counterpart of `OneLambda.app'_transport_cod`,
 threading the `barTy_curried` result-sort transport through the argument peel of
 `represents_curried`. -/
-theorem OneLambda.app'_eqRec_cod {a b b' : RType} (e : b = b')
-    (f : Binding.Tm (oneLambdaSig natAlgSig) [] (RType.arrow a b))
-    (x : Binding.Tm (oneLambdaSig natAlgSig) [] a) :
+theorem OneLambda.app'_eqRec_cod {Γ : Binding.Ctx RType} {a b b' : RType} (e : b = b')
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow a b))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ a) :
     OneLambda.app' (congrArg (RType.arrow a) e ▸ f) x = e ▸ OneLambda.app' f x := by
   cases e; rfl
 
@@ -2484,5 +2484,34 @@ theorem represents_curried {r : RType} :
     have key := hspine Gc Ghatc hrep
     rw [← OneLambda.app'_eqRec_cod (barTy_curried Ts' r) Fhat Ghat0]
     exact key
+
+/-- The term bar-map distributes over the iterated application spine (Leivant III
+section 4.2): `barTm (appSpine Ts head args)` is the `1λ(A)` application spine
+`OneLambda.appSpine (Ts.map barTy)` of the barred head (with its curried result
+sort reconciled through `barTy_curried`) applied to the barred arguments (each
+read off the barred argument-sort list through `barTy_get_map`). By recursion on
+`Ts`, dispatching the head application through `barTm_app'` and threading the
+result-sort transport with `OneLambda.app'_eqRec_cod`. The spine homomorphism of
+the term bar-map, novel packaging of section 4.2. -/
+theorem barTm_appSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (Ts : List RType) →
+    (head : Binding.Tm (rlmrOSig natAlgSig) Γ (RType.curried Ts result)) →
+    (args : ∀ i : Fin Ts.length, Binding.Tm (rlmrOSig natAlgSig) Γ (Ts.get i)) →
+    barTm (appSpine Ts head args)
+      = OneLambda.appSpine (Ts.map barTy) (barTy_curried Ts result ▸ barTm head)
+          (fun j => (barTy_get_map Ts (j.cast (List.length_map barTy))).symm ▸
+            barTm (args (j.cast (List.length_map barTy))))
+  | [], head, args => by
+    change barTm head = _
+    rfl
+  | σ :: Ts', head, args => by
+    rw [appSpine]
+    rw [barTm_appSpine Ts' (app' head (args ⟨0, Nat.succ_pos _⟩)) (fun i => args i.succ)]
+    simp only [List.map_cons]
+    rw [OneLambda.appSpine]
+    congr 1
+    rw [barTm_app']
+    exact (OneLambda.app'_eqRec_cod (barTy_curried Ts' result) (barTm head)
+      (barTm (args ⟨0, Nat.succ_pos _⟩))).symm
 
 end GebLean.Ramified
