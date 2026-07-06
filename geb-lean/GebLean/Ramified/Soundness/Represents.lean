@@ -359,6 +359,72 @@ theorem sub_underBinder_nil {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx R
     _ = (List.append_nil Δ).symm ▸ Binding.traverse (Binding.subKit S) ρ t :=
         traverse_congr_cod (Binding.subKit S) (List.append_nil Δ).symm ρ t
 
+/-- The empty-binder coherence of `ren` (the renaming counterpart of
+`sub_underBinder_nil`, underlying `OneLambda.ren_app'`): renaming under an empty
+binder, along the append-nil context transport, is renaming along the original
+thinning, again up to the append-nil transport. Reduces, through
+`traverse_congr_dom`/`_cod`, to the per-variable computation of `Env.underBinder`
+at the empty suffix (`Var.appendCases_weakAppend`), whose weakening is the
+append-nil transport (`weakAppend_app_nil`) on the variable recovered by the same
+lemma. -/
+theorem ren_underBinder_nil {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
+    {s : RType} (ρ : Binding.Thinning Γ Δ) (t : Binding.Tm S Γ s) :
+    Binding.traverse (Binding.varKit S)
+        (Binding.Env.underBinder (Binding.varKit S) (Ξ := []) (Binding.renEnv ρ))
+        ((List.append_nil Γ).symm ▸ t)
+      = (List.append_nil Δ).symm ▸ Binding.traverse (Binding.varKit S) (Binding.renEnv ρ) t := by
+  have henv :
+      (fun (b : RType) (x : Binding.Var Γ b) =>
+          Binding.Env.underBinder (Binding.varKit S) (Ξ := []) (Binding.renEnv ρ) b
+            ((List.append_nil Γ).symm ▸ x))
+        = (fun (b : RType) (x : Binding.Var Γ b) =>
+            (List.append_nil Δ).symm ▸ Binding.renEnv ρ b x) := by
+    funext b x
+    rw [← weakAppend_app_nil x]
+    simp only [Binding.Env.underBinder, Binding.varKit]
+    rw [Var.appendCases_weakAppend]
+    exact weakAppend_app_nil (Binding.renEnv ρ b x)
+  calc Binding.traverse (Binding.varKit S)
+          (Binding.Env.underBinder (Binding.varKit S) (Ξ := []) (Binding.renEnv ρ))
+          ((List.append_nil Γ).symm ▸ t)
+      = Binding.traverse (Binding.varKit S)
+          (fun b x => Binding.Env.underBinder (Binding.varKit S) (Ξ := []) (Binding.renEnv ρ) b
+            ((List.append_nil Γ).symm ▸ x)) t :=
+        traverse_congr_dom (Binding.varKit S) (List.append_nil Γ).symm _ t
+    _ = Binding.traverse (Binding.varKit S)
+          (fun b x => (List.append_nil Δ).symm ▸ Binding.renEnv ρ b x) t := by rw [henv]
+    _ = (List.append_nil Δ).symm ▸ Binding.traverse (Binding.varKit S) (Binding.renEnv ρ) t :=
+        traverse_congr_cod (Binding.varKit S) (List.append_nil Δ).symm (Binding.renEnv ρ) t
+
+/-- Renaming distributes over the application node of the simply-typed calculus
+`1λ(A)`: `ren ρ (OneLambda.app' f x) = OneLambda.app' (ren ρ f) (ren ρ x)`. The
+renaming counterpart of `OneLambda.sub_app'`; the two `app'`-argument slots carry
+the empty binder, so their `ren` is the empty-binder coherence
+`ren_underBinder_nil`, and the outer reassembly is definitional (`traverse_op`).
+-/
+theorem OneLambda.ren_app' {Γ Δ : Binding.Ctx RType} {σ' τ' : RType}
+    (ρ : Binding.Thinning Γ Δ)
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ' τ'))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ') :
+    Binding.ren ρ (OneLambda.app' f x)
+      = OneLambda.app' (Binding.ren ρ f) (Binding.ren ρ x) := by
+  refine Eq.trans (b := Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.app σ' τ')
+      (fun j => Binding.traverse (Binding.varKit (oneLambdaSig natAlgSig))
+        (Binding.Env.underBinder (Binding.varKit (oneLambdaSig natAlgSig)) (Binding.renEnv ρ))
+        (Fin.cases ((List.append_nil Γ).symm ▸ f)
+          (fun k => Fin.cases ((List.append_nil Γ).symm ▸ x) (fun l => l.elim0) k) j)))
+    rfl ?_
+  refine Eq.trans ?_ (rfl : Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.app σ' τ')
+      (fun j => Fin.cases ((List.append_nil Δ).symm ▸ Binding.ren ρ f)
+        (fun k => Fin.cases ((List.append_nil Δ).symm ▸ Binding.ren ρ x)
+          (fun l => l.elim0) k) j)
+    = OneLambda.app' (Binding.ren ρ f) (Binding.ren ρ x))
+  refine congrArg (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.app σ' τ')) ?_
+  funext j
+  refine Fin.cases ?_ (fun k => Fin.cases ?_ (fun l => l.elim0) k) j
+  · exact ren_underBinder_nil ρ f
+  · exact ren_underBinder_nil ρ x
+
 /-- Substitution distributes over the application node of the applicative
 calculus `RλMR_o^ω`: `sub ρ (app' f x) = app' (sub ρ f) (sub ρ x)`. The two
 `app'`-argument slots carry the empty binder, so their `sub` is the empty-binder
