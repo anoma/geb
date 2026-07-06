@@ -966,4 +966,89 @@ theorem conc_replicateSpine_case_reduces (idx : Fin natAlgSig.numCtors)
   exact Relation.ReflTransGen.single
     (OneLambdaStep.case idx (fun i => conc (sub i)) branches)
 
+/-- Compatibility of the representation relation with a base-object constructor
+constant (Leivant III section 4.2, Proposition 11's `con^o` case, a decision-2
+denotational reformulation): the constructor node `con^o_b` is represented by the
+parallel target substitution into its bar image `con_b` of `1λ(A)`. The nullary
+node is fixed by both substitutions; the zero-arity constructor represents itself
+reflexively (`barTm` of the zero constructor is definitionally `conc` of its
+denotation), and the successor branch reduces the applied bar constructor to the
+concrete term of the semantic node (`appChain_stdConstructorInterp`, `conc_mk`),
+carrying the argument representative under the constructor by
+`OneLambda.reduces_app'_right`. Uses `barTmOp_con_o` to strip the bar-image
+transport. -/
+theorem represents_con_succ {Γ : Binding.Ctx RType} (b : natAlgSig.B)
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) []) :
+    Represents (RType.curried (List.replicate (natAlgSig.ar b) RType.o) RType.o)
+      (Binding.sub Eσ
+        (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con RType.o (Or.inl rfl) b) (fun k => k.elim0)))
+      (Binding.sub Eσhat
+        (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con RType.o (Or.inl rfl) b) (fun k => k.elim0)))) := by
+  cases b with
+  | false =>
+    have htgt : Binding.sub Eσhat
+          (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+            (RlmrOOp.con RType.o (Or.inl rfl) false) (fun k => k.elim0)))
+        = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+            (OneLambdaOp.con false) (fun k => k.elim0) := by
+      rw [barTm_op, barTmOp_con_o false _ rfl]
+      change Binding.sub Eσhat
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con false) (fun k => k.elim0))
+        = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con false) (fun k => k.elim0)
+      rw [Binding.sub, Binding.traverse_op]; congr 1; funext k; exact k.elim0
+    exact htgt ▸ Relation.ReflTransGen.refl
+  | true =>
+    have htgt : Binding.sub Eσhat
+          (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+            (RlmrOOp.con RType.o (Or.inl rfl) true) (fun k => k.elim0)))
+        = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+            (OneLambdaOp.con true) (fun k => k.elim0) := by
+      rw [barTm_op, barTmOp_con_o true _ rfl]
+      change Binding.sub Eσhat
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true) (fun k => k.elim0))
+        = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true) (fun k => k.elim0)
+      rw [Binding.sub, Binding.traverse_op]; congr 1; funext k; exact k.elim0
+    refine htgt ▸ ?_
+    change Represents (RType.arrow RType.o RType.o)
+      (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con RType.o (Or.inl rfl) true) (fun k => k.elim0)))
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true) (fun k => k.elim0))
+    rw [represents_arrow]
+    intro G Ghat hG
+    have hsrc : Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con RType.o (Or.inl rfl) true) (fun k => k.elim0))
+        = Binding.Tm.op (S := rlmrOSig natAlgSig)
+            (RlmrOOp.con RType.o (Or.inl rfl) true) (fun k => k.elim0) := by
+      rw [Binding.sub, Binding.traverse_op]; congr 1; funext k; exact k.elim0
+    have hsem : appEval (sourceApp (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con RType.o (Or.inl rfl) true) (fun k => k.elim0))) G) finZeroElim
+        = FreeAlg.mk true (fun _ => appEval G finZeroElim) := by
+      refine (congrArg (fun t => appEval (sourceApp t G) finZeroElim) hsrc).trans ?_
+      rw [sourceApp, appEval_app']
+      change stdConstructorInterp natAlgSig (⟨RType.o, Or.inl rfl⟩, true)
+          (Fin.cons (appEval G finZeroElim) finZeroElim)
+        = FreeAlg.mk true (fun _ => appEval G finZeroElim)
+      simp only [stdConstructorInterp]
+      refine congrArg (FreeAlg.mk (A := natAlgSig) true) ?_
+      funext i
+      have hi : i = (⟨0, by decide⟩ : Fin (natAlgSig.ar true)) :=
+        Fin.ext (Nat.lt_one_iff.mp i.isLt)
+      subst hi
+      rfl
+    have hconc : conc (FreeAlg.mk true (fun _ => appEval G finZeroElim))
+        = OneLambda.app' (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+            (OneLambdaOp.con true) (fun k => k.elim0)) (conc (appEval G finZeroElim)) := by
+      rw [conc_mk]
+      rfl
+    change Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app' (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+        (OneLambdaOp.con true) (fun k => k.elim0)) Ghat)
+      (conc (appEval (sourceApp (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con RType.o (Or.inl rfl) true) (fun k => k.elim0))) G) finZeroElim))
+    rw [hsem, hconc]
+    exact OneLambda.reduces_app'_right _ hG
+
 end GebLean.Ramified
