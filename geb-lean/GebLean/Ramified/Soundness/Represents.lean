@@ -1611,4 +1611,27 @@ theorem ren_conc_mk {Γ : Binding.Ctx RType} (ρ : Binding.Thinning [] Γ)
   funext k
   exact k.elim0
 
+/-- The base case `1λ(A)` spine over a renamed concrete term of a constructor
+node reduces to the selected branch (Leivant III section 4.2, Proposition 11's
+case at the higher object type): with the scrutinee `ren ρ (conc (mk (ctorAt idx)
+sub))` weakened into an ambient context `Γ`, the case spine reduces
+(`OneLambdaStep`, reflexive-transitively) to the branch `branches idx`. The
+general-context counterpart of `conc_replicateSpine_case_reduces`, recovering the
+constructor-headed spine through `ren_conc_mk` before firing `OneLambdaStep.case`.
+Novel packaging of section 4.2. -/
+theorem ren_conc_replicateSpine_case_reduces {Γ : Binding.Ctx RType}
+    (ρ : Binding.Thinning [] Γ) (idx : Fin natAlgSig.numCtors)
+    (sub : Fin (natAlgSig.ar (ctorAt idx)) → FreeAlg natAlgSig)
+    (branches : Fin natAlgSig.numCtors → Binding.Tm (oneLambdaSig natAlgSig) Γ RType.o) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.replicateSpine natAlgSig.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0))
+          (Binding.ren ρ (conc (FreeAlg.mk (ctorAt idx) sub))))
+        branches)
+      (branches idx) := by
+  rw [ren_conc_mk]
+  exact Relation.ReflTransGen.single
+    (OneLambdaStep.case idx (fun i => Binding.ren ρ (conc (sub i))) branches)
+
 end GebLean.Ramified
