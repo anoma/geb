@@ -981,6 +981,30 @@ theorem OneLambda.sub_barConOmega {Γ Δ : Binding.Ctx RType} (b : natAlgSig.B) 
     · funext idx
       rw [sub_underBinder_appendRight]
 
+/-- Substitution fixes the recurrence bar-map `barRecur` (Leivant III section
+4.2): `sub ρ (barRecur τ) = barRecur τ`, rebasing only the ambient context marker
+from `Γ` to `Δ`. `barRecur`'s image is closed with respect to the ambient
+context: every variable occurring in it points into `barRecur`'s own local
+binders (its outer step-argument spine, the recurrence-argument binder, and the
+inner application spine), never into `Γ`, so `ρ` has nothing reachable to act on.
+Proved by unfolding through the two abstraction spines (`sub_lamSpine`) and the
+application spine (`sub_appSpine`), discharging the residual local variables with
+`sub_underBinder_weakAppend` and `sub_underBinder_appendRight`. Novel packaging of
+section 4.2. -/
+theorem OneLambda.sub_barRecur {Γ Δ : Binding.Ctx RType} (τ : RType)
+    (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ) :
+    Binding.sub ρ (barRecur (Γ := Γ) τ) = barRecur (Γ := Δ) τ := by
+  unfold barRecur
+  refine (OneLambda.sub_lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ)) ρ _).trans ?_
+  refine congrArg (OneLambda.lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))) ?_
+  refine (OneLambda.sub_lamSpine [bbType natAlgSig (barTy τ)] _ _).trans ?_
+  refine congrArg (OneLambda.lamSpine [bbType natAlgSig (barTy τ)]) ?_
+  rw [OneLambda.sub_appSpine]
+  congr 1
+  · rw [sub_underBinder_appendRight]
+  · funext idx
+    rw [sub_underBinder_weakAppend, sub_underBinder_appendRight, ren_var]
+
 /-- Renaming is substitution by the variable-embedding environment: `ren ρ t =
 sub (fun s x => var (ρ.app x)) t`, presenting a thinning as the substitution that
 sends each variable to the variable it is thinned to. The `σ = idEnv`
