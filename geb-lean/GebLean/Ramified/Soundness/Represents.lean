@@ -2701,4 +2701,72 @@ theorem representsEnv_metaTuple {τ : RType}
   rw [show Binding.metaTuple G ((stepTypes natAlgSig τ τ).get xi) ⟨xi, rfl⟩ = G xi from rfl]
   exact hrep xi
 
+/-- The standard-model denotation of a bound constructor variable is the step
+function read positionally from the environment (Leivant III section 4.2, DOI
+`10.1016/S0168-0072(98)00040-2`, Proposition 11's recurrence case): evaluating
+`ctorVar b` at a step environment `ρ` gives the recurrence step `stepAtLabel ρ b`.
+Both are the environment value at `b`'s enumeration position `ctorIdx b`,
+transported to `b`'s step type; the transports reconcile heterogeneously. The
+source-side head of the `sourceFoldBody` node. Novel packaging of section 4.2. -/
+theorem appEval_var_ctorVar {τ : RType} (b : natAlgSig.B)
+    (ρ : ∀ i : Fin (stepTypes natAlgSig τ τ).length,
+      RType.interp (FreeAlg natAlgSig) ((stepTypes natAlgSig τ τ).get i)) :
+    appEval (Binding.Tm.var (ctorVar b)) ρ = stepAtLabel ρ b := by
+  rw [appEval_var]
+  apply eq_of_heq
+  unfold stepAtLabel
+  simp only [eqRec_eq_cast]
+  refine (cast_heq _ _).trans ((cast_heq _ _).symm)
+
+/-- The standard-model denotation of the source fold body `sourceFoldBody τ v` is
+the free-algebra recurrence of `v` over the step environment (Leivant III section
+4.2, DOI `10.1016/S0168-0072(98)00040-2`, Proposition 11's recurrence case, the
+source-side connection lemma): evaluating `sourceFoldBody τ v` at a step
+environment `ρ` folds `v` with the recurrence step reading its step functions
+positionally (`stepAtLabel ρ`) and gluing the recursive results with `childEnv`.
+By induction on `v`, dispatching the constructor node's homogeneous application
+spine through `appEval_replicateSpine`, its head through `appEval_var_ctorVar`, and
+its recursive arguments through `childEnv`. The `recurBridge`-caliber
+reconciliation the recurrence case reads the source fold through. Novel packaging
+of section 4.2. -/
+theorem appEval_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig)
+    (ρ : ∀ i : Fin (stepTypes natAlgSig τ τ).length,
+      RType.interp (FreeAlg natAlgSig) ((stepTypes natAlgSig τ τ).get i)) :
+    appEval (sourceFoldBody τ v) ρ
+      = FreeAlg.recurse (A := natAlgSig) (P := Unit)
+          (fun i _ _sub phi =>
+            appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+              (stepAtLabel ρ i)
+              (childEnv [] τ (natAlgSig.ar i) finZeroElim phi))
+          () v := by
+  refine PolyFix.ind (P := natAlgSig.polyEndo)
+    (motive := fun {_} v =>
+      appEval (sourceFoldBody τ v) ρ
+        = FreeAlg.recurse (A := natAlgSig) (P := Unit)
+            (fun i _ _sub phi =>
+              appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+                (stepAtLabel ρ i)
+                (childEnv [] τ (natAlgSig.ar i) finZeroElim phi))
+            () v)
+    (fun {_} b subt ih => ?_) v
+  change appEval (sourceFoldBody τ (FreeAlg.mk b subt)) ρ
+    = FreeAlg.recurse (A := natAlgSig) (P := Unit)
+        (fun i _ _sub phi =>
+          appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+            (stepAtLabel ρ i)
+            (childEnv [] τ (natAlgSig.ar i) finZeroElim phi))
+        () (FreeAlg.mk b subt)
+  rw [sourceFoldBody, FreeAlg.recurse_mk, FreeAlg.recurse_mk]
+  rw [appEval_replicateSpine, appEval_var_ctorVar]
+  refine congrArg (appChain natAlgSig (List.replicate (natAlgSig.ar b) τ) τ
+    (stepAtLabel ρ b)) ?_
+  funext i
+  apply eq_of_heq
+  refine (cast_heq _ _).trans ?_
+  refine HEq.trans (heq_of_eq (ih (Fin.cast List.length_replicate i))) ?_
+  refine HEq.trans ?_ (childEnv_heq_right (params := []) (σ := τ)
+    (n := natAlgSig.ar b) finZeroElim _ i (by simp)
+    (by simpa [List.length_replicate] using i.isLt)).symm
+  rfl
+
 end GebLean.Ramified
