@@ -2514,4 +2514,116 @@ theorem barTm_appSpine {Γ : Binding.Ctx RType} {result : RType} :
     exact (OneLambda.app'_eqRec_cod (barTy_curried Ts' result) (barTm head)
       (barTm (args ⟨0, Nat.succ_pos _⟩))).symm
 
+/-- Heterogeneous congruence of the term bar-map in the sort: bar-mapping through
+heterogeneously-equal terms at sorts related by `h : a = b` yields
+heterogeneously-equal results. Proved by `cases h` then `eq_of_heq`. Internal
+packaging for the fold-body induction, reconciling the `Eq.mpr` sort transports the
+homogeneous replicate spine emits. -/
+theorem barTm_heq_of_heq {Γ : Binding.Ctx RType} {a b : RType} (h : a = b)
+    {t : Binding.Tm (rlmrOSig natAlgSig) Γ a} {u : Binding.Tm (rlmrOSig natAlgSig) Γ b}
+    (ht : HEq t u) :
+    HEq (barTm t) (barTm u) := by
+  cases h; rw [eq_of_heq ht]
+
+/-- Heterogeneous congruence of a variable term: two variable terms whose
+underlying positions agree are heterogeneously equal once their contexts are
+identified. Proved by `subst` on the context equality and proof irrelevance of the
+position bound and sort witnesses. The leaf reconciliation the term bar-map's
+fold-body induction uses for the constructor-step variable `ctorVar`. -/
+theorem Binding.Tm.var_heq {S : Binding.BinderSig RType} {Γ Γ' : Binding.Ctx RType}
+    {s s' : RType} (hΓ : Γ = Γ') (v : Binding.Var Γ s) (v' : Binding.Var Γ' s')
+    (hv : v.1.val = v'.1.val) :
+    HEq (Binding.Tm.var (S := S) v) (Binding.Tm.var (S := S) v') := by
+  subst hΓ
+  obtain ⟨⟨vn, vlt⟩, vs⟩ := v
+  obtain ⟨⟨vn', vlt'⟩, vs'⟩ := v'
+  simp only at hv
+  subst hv
+  obtain rfl : s = s' := vs.symm.trans vs'
+  rfl
+
+/-- Heterogeneous congruence of the `1λ(A)` application spine: over a common
+ambient context, application spines with equal argument-sort lists, heterogeneously
+equal heads, and pointwise heterogeneously equal arguments are equal. Proved by
+`subst` on the sort-list equality followed by extensionality. The transport-robust
+congruence the term bar-map's fold-body induction routes its `List.map_replicate`
+and `Eq.mpr` reconciliations through. -/
+theorem OneLambda.appSpine_heq {Γ : Binding.Ctx RType} {result : RType}
+    {Ts Ts' : List RType} (hT : Ts = Ts')
+    {head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried Ts result)}
+    {head' : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried Ts' result)}
+    (hh : HEq head head')
+    {args : ∀ i : Fin Ts.length, Binding.Tm (oneLambdaSig natAlgSig) Γ (Ts.get i)}
+    {args' : ∀ i : Fin Ts'.length, Binding.Tm (oneLambdaSig natAlgSig) Γ (Ts'.get i)}
+    (ha : ∀ (i : Fin Ts.length) (i' : Fin Ts'.length), i.val = i'.val →
+      HEq (args i) (args' i')) :
+    OneLambda.appSpine Ts head args = OneLambda.appSpine Ts' head' args' := by
+  subst hT
+  obtain rfl : head = head' := eq_of_heq hh
+  congr 1
+  funext i
+  exact eq_of_heq (ha i i rfl)
+
+/-- The source-side fold body `E_v` of Proposition 11's recurrence case (Leivant
+III section 4.2): the `FreeAlg.recurse` fold of a value `v` over the source
+constructor-step variables of `stepTypes natAlgSig τ τ`, replacing each node
+`c_b(t₁,…,t_{r_b})` by the constructor-step variable `ctorVar b` applied along the
+homogeneous application spine to the recursive results. A closed-over λ-free term
+whose target-side counterpart is `bbFoldBody`. Novel packaging of section 4.2. -/
+def sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig) :
+    Binding.Tm (rlmrOSig natAlgSig) (stepTypes natAlgSig τ τ) τ :=
+  FreeAlg.recurse (A := natAlgSig) (P := Unit)
+    (C := Binding.Tm (rlmrOSig natAlgSig) (stepTypes natAlgSig τ τ) τ)
+    (fun b _ _sub rec =>
+      replicateSpine (natAlgSig.ar b) τ (Binding.Tm.var (ctorVar b)) rec) () v
+
+/-- The target-side Berarducci-Böhm fold body of Proposition 11's recurrence case
+(Leivant III section 4.2): the `FreeAlg.recurse` fold of a value `v` over the
+`1λ(A)` constructor-step variables of `stepTypes natAlgSig σ σ`, the body under
+`bbRep`'s abstraction spine (`bbRep a σ = lamSpine (stepTypes σ σ)
+(bbFoldBody σ a)`) and the term the saturation keystone `bbRep_appSpine_reduces`
+lands on. Novel packaging of section 4.2. -/
+def bbFoldBody (σ : RType) (v : FreeAlg natAlgSig) :
+    Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ :=
+  FreeAlg.recurse (A := natAlgSig) (P := Unit)
+    (C := Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ)
+    (fun b _ _sub rec =>
+      OneLambda.replicateSpine (natAlgSig.ar b) σ (Binding.Tm.var (ctorVar b)) rec) () v
+
+/-- The term bar-map commutes with the free-algebra fold body (Leivant III section
+4.2, Proposition 11's recurrence case, first Lemma-10 sub-lemma): the bar image of
+the source fold body `sourceFoldBody τ v`, transported along `stepTypes_map_barTy`,
+is the target Berarducci-Böhm fold body `bbFoldBody (barTy τ) v`. By induction on
+`v`, dispatching the constructor node's application spine through `barTm_appSpine`
+and reconciling the constructor-step variable `ctorVar` under the bar-map. Novel
+packaging of section 4.2. -/
+theorem barTm_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig) :
+    (stepTypes_map_barTy τ) ▸ barTm (sourceFoldBody τ v) = bbFoldBody (barTy τ) v := by
+  refine PolyFix.ind (P := natAlgSig.polyEndo)
+    (motive := fun {_} v =>
+      (stepTypes_map_barTy τ) ▸ barTm (sourceFoldBody τ v) = bbFoldBody (barTy τ) v)
+    (fun {_} b subt ih => ?_) v
+  change (stepTypes_map_barTy τ) ▸ barTm (sourceFoldBody τ (FreeAlg.mk b subt))
+    = bbFoldBody (barTy τ) (FreeAlg.mk b subt)
+  rw [sourceFoldBody, FreeAlg.recurse_mk]
+  rw [bbFoldBody, FreeAlg.recurse_mk]
+  rw [replicateSpine, OneLambda.replicateSpine, barTm_appSpine]
+  rw [OneLambda.appSpine_transport_cod]
+  refine OneLambda.appSpine_heq (by rw [List.map_replicate]) ?_ ?_
+  · rw [barTm_var]
+    simp only [eqRec_eq_cast]
+    refine (cast_heq _ _).trans ((cast_heq _ _).trans ?_)
+    exact Binding.Tm.var_heq (stepTypes_map_barTy τ) (barVar (ctorVar b)) (ctorVar b) rfl
+  · intro i i' hii
+    simp only [eqRec_eq_cast]
+    refine (cast_heq _ _).trans ((cast_heq _ _).trans ?_)
+    refine (barTm_heq_of_heq (by rw [List.get_eq_getElem, List.getElem_replicate])
+      ((eq_mpr_heq _ _).trans (eq_mpr_heq _ _))).trans ?_
+    refine HEq.trans ?_ ((eq_mpr_heq _ _).trans (eq_mpr_heq _ _)).symm
+    refine HEq.trans ?_ (heq_of_eq (ih _))
+    simp only [eqRec_eq_cast]
+    refine HEq.trans ?_ (cast_heq _ _).symm
+    exact heq_of_eq (congrArg (fun w => barTm (sourceFoldBody τ (subt w)))
+      (Fin.ext (by simpa using hii)))
+
 end GebLean.Ramified
