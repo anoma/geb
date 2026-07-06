@@ -981,6 +981,84 @@ theorem OneLambda.sub_barConOmega {Γ Δ : Binding.Ctx RType} (b : natAlgSig.B) 
     · funext idx
       rw [sub_underBinder_appendRight]
 
+/-- Renaming is substitution by the variable-embedding environment: `ren ρ t =
+sub (fun s x => var (ρ.app x)) t`, presenting a thinning as the substitution that
+sends each variable to the variable it is thinned to. The `σ = idEnv`
+specialization of the sub-ren fusion law `sub_ren`, closed by the right-unit law
+`sub_id`. Lets the substitution algebra (`sub_lamSpine`, `sub_sub`) act on renamed
+terms without a parallel renaming-under-binder development. -/
+theorem ren_eq_sub_var {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType} {s : RType}
+    (ρ : Binding.Thinning Γ Δ) (t : Binding.Tm S Γ s) :
+    Binding.ren ρ t = Binding.sub (fun _ x => Binding.Tm.var (ρ.app x)) t := by
+  rw [← Binding.sub_id (Binding.ren ρ t), Binding.ren_sub]
+  rfl
+
+/-- Instantiating a binder-weakened abstraction spine with the freshly bound
+variables cancels (Leivant III section 4.2, the β-collapse dual of
+`reduces_etaSpine`): the iterated abstraction `lamSpine Δ M`, weakened past a
+fresh copy of `Δ` and applied along the spine to the freshly bound `Δ`-variables,
+reduces (`OneLambdaStep`, reflexive-transitively) back to the body `M`. Presents
+the outer weakening as a substitution (`ren_eq_sub_var`), pushes it under the
+abstraction spine (`sub_lamSpine`), β-reduces the saturated spine
+(`reduces_betaSpine`), and cancels the composite substitution to the identity
+(`sub_sub`, `sub_id`) by the variable computation that the freshly bound spine
+inverts the weakening. Novel packaging of section 4.2. -/
+theorem OneLambda.reduces_appSpine_ren_lamSpine {Γ : Binding.Ctx RType}
+    (Δ : List RType) {σ : RType} (M : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ Δ) σ) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.appSpine Δ
+        (Binding.ren (Binding.Thinning.weakAppend (Ξ := Δ)) (OneLambda.lamSpine Δ M))
+        (fun i => Binding.Tm.var
+          (Binding.Var.appendRight Γ (⟨i, rfl⟩ : Binding.Var Δ (Δ.get i)))))
+      M := by
+  rw [ren_eq_sub_var, OneLambda.sub_lamSpine]
+  refine (OneLambda.reduces_betaSpine Δ _ _).trans ?_
+  have hcancel :
+      Binding.instantiate
+        (Binding.metaTuple (fun i => Binding.Tm.var
+          (Binding.Var.appendRight Γ (⟨i, rfl⟩ : Binding.Var Δ (Δ.get i)))))
+        (Binding.sub
+          (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := Δ)
+            (fun _ x => Binding.Tm.var (Binding.Thinning.weakAppend.app x))) M)
+        = M := by
+    rw [Binding.instantiate, Binding.sub_sub]
+    have henv :
+        (fun (s : RType) (x : Binding.Var (Γ ++ Δ) s) =>
+          Binding.sub (Binding.extendEnv Binding.idEnv
+            (Binding.metaTuple (fun i => Binding.Tm.var
+              (Binding.Var.appendRight Γ (⟨i, rfl⟩ : Binding.Var Δ (Δ.get i))))))
+            (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := Δ)
+              (fun _ x => Binding.Tm.var (Binding.Thinning.weakAppend.app x)) s x))
+          = (Binding.idEnv : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig))
+              (Γ ++ Δ) (Γ ++ Δ)) := by
+      funext s x
+      set τ := Binding.extendEnv Binding.idEnv
+        (Binding.metaTuple (fun i => Binding.Tm.var
+          (Binding.Var.appendRight Γ (⟨i, rfl⟩ : Binding.Var Δ (Δ.get i)))))
+        with hτ
+      simp only [Binding.Env.underBinder, Binding.subKit]
+      rw [Binding.Var.appendCases_natural (Binding.sub τ)]
+      have hb1 : (fun y : Binding.Var Δ s =>
+            Binding.sub τ (Binding.Tm.var (Binding.Var.appendRight (Γ ++ Δ) y)))
+          = fun y => Binding.Tm.var (Binding.Var.appendRight Γ y) := by
+        funext y
+        rw [Binding.sub_var, hτ, Binding.extendEnv_appendRight]
+        obtain ⟨i, hi⟩ := y
+        subst hi
+        rfl
+      have hb2 : (fun v : Binding.Var Γ s =>
+            Binding.sub τ (Binding.ren Binding.Thinning.weakAppend
+              (Binding.Tm.var (Binding.Thinning.weakAppend.app v))))
+          = fun v => Binding.Tm.var (Binding.Thinning.weakAppend.app v) := by
+        funext v
+        rw [ren_var, Binding.sub_var, hτ, Binding.extendEnv_weakAppend]
+        rfl
+      rw [hb1, hb2, ← Binding.Var.appendCases_natural Binding.Tm.var,
+        Binding.Var.appendCases_self]
+      rfl
+    rw [henv, Binding.sub_id]
+  rw [hcancel]
+
 /-- The Berarducci-Böhm representation `bbRep v σ` saturated with represented
 step terms along its abstraction spine reduces to the instantiated fold body
 (Leivant III section 4.2, Proposition 11's recurrence case): applying
