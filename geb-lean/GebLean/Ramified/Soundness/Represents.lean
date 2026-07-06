@@ -840,6 +840,107 @@ theorem OneLambda.reduces_etaSpine :
         rw [hhead, hargs]
       exact (congrArg (OneLambda.lamSpine Δ') emid).symm ▸ OneLambda.reduces_etaSpine Δ' Mstep
 
+/-- Substitution commutes with a sort transport of a term: for `h : s = s'`,
+`sub ρ (cast (congrArg (Tm S Γ) h) t) = cast (congrArg (Tm S Δ) h) (sub ρ t)`,
+carrying the sort equality through the substitution unchanged. Proved by `cases
+h`. Internal packaging for `sub_barCase`, discharging `barCase`'s interposed
+`cast h_ctd` reconciling the curried branch type to `barTy θ`. -/
+theorem sub_cast_sort {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
+    {s s' : RType} (ρ : Binding.Env (Binding.Tm S) Γ Δ) (h : s = s')
+    (t : Binding.Tm S Γ s) :
+    Binding.sub ρ (cast (congrArg (Binding.Tm S Γ) h) t)
+      = cast (congrArg (Binding.Tm S Δ) h) (Binding.sub ρ t) := by
+  cases h; rfl
+
+/-- Substituting under a binder `Ξ` fixes a bound-suffix variable: for a variable
+`v` of the binder `Ξ`, `sub (underBinder ρ) (var (appendRight Γ v)) = var
+(appendRight Δ v)`, rebasing the ambient prefix `Γ ↦ Δ` while leaving the bound
+position unchanged. The `appendRight`-branch computation of `Env.underBinder`
+(`Var.appendCases_appendRight`). Internal packaging for `sub_barCase`. -/
+theorem sub_underBinder_appendRight {S : Binding.BinderSig RType}
+    {Γ Δ Ξ : Binding.Ctx RType} {s : RType} (ρ : Binding.Env (Binding.Tm S) Γ Δ)
+    (v : Binding.Var Ξ s) :
+    Binding.sub (Binding.Env.underBinder (Binding.subKit S) (Ξ := Ξ) ρ)
+        (Binding.Tm.var (Binding.Var.appendRight Γ v))
+      = Binding.Tm.var (Binding.Var.appendRight Δ v) := by
+  rw [Binding.sub_var]
+  simp only [Binding.Env.underBinder, Binding.subKit]
+  rw [Binding.Var.appendCases_appendRight]
+
+/-- Substituting under a binder `Ξ` weakens a prefix variable: for a variable `w`
+of the ambient prefix, `sub (underBinder ρ) (var (weakAppend.app w)) = ren
+weakAppend (sub ρ (var w))`, pushing the substitution past the suffix embedding.
+The `weakAppend`-branch computation of `Env.underBinder`
+(`Var.appendCases_weakAppend`). Internal packaging for `sub_barCase`. -/
+theorem sub_underBinder_weakAppend {S : Binding.BinderSig RType}
+    {Γ Δ Ξ : Binding.Ctx RType} {s : RType} (ρ : Binding.Env (Binding.Tm S) Γ Δ)
+    (w : Binding.Var Γ s) :
+    Binding.sub (Binding.Env.underBinder (Binding.subKit S) (Ξ := Ξ) ρ)
+        (Binding.Tm.var (Binding.Thinning.weakAppend.app w))
+      = Binding.ren Binding.Thinning.weakAppend (Binding.sub ρ (Binding.Tm.var w)) := by
+  rw [Binding.sub_var, Binding.sub_var]
+  simp only [Binding.Env.underBinder, Binding.subKit]
+  rw [Binding.Var.appendCases_weakAppend]
+
+/-- Substitution fixes the nullary case combinator of `1λ(A)`: `sub ρ (Tm.op case
+elim0) = Tm.op case elim0`. The constant carries no subterms, so both environments
+leave it unchanged (`traverse_op` over the empty argument family). Internal
+packaging for `sub_barCase` and the `θ = o` arm of `represents_case`. -/
+theorem OneLambda.sub_caseOp {Γ Δ : Binding.Ctx RType}
+    (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ) :
+    Binding.sub ρ (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+        OneLambdaOp.case (fun k => k.elim0))
+      = Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0) := by
+  rw [Binding.sub, Binding.traverse_op]
+  congr 1
+  funext k
+  exact k.elim0
+
+theorem OneLambda.sub_barCase {Γ Δ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
+    (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ) :
+    Binding.sub ρ (barCase (Γ := Γ) θ hθ) = barCase (Γ := Δ) θ hθ := by
+  cases hs : θ.shape with
+  | o =>
+    have hθo : θ = RType.o := RType.eq_o_of_shape_o hs
+    subst hθo
+    change Binding.sub ρ (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+        OneLambdaOp.case (fun k => k.elim0))
+      = Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0)
+    rw [Binding.sub, Binding.traverse_op]
+    congr 1
+    funext k
+    exact k.elim0
+  | arrow => exact absurd hθ (by unfold RType.IsObj; rw [hs]; decide)
+  | omega =>
+    obtain ⟨τ', rfl⟩ : ∃ τ', θ = RType.omega τ' :=
+      ⟨θ.omegaArg, RType.eq_omega_omegaArg_of_shape hs⟩
+    unfold barCase
+    simp only [RType.shape_omega]
+    refine (OneLambda.sub_lamSpine [RType.o] ρ _).trans ?_
+    refine congrArg (OneLambda.lamSpine [RType.o]) ?_
+    refine (OneLambda.sub_lamSpine
+      (List.replicate natAlgSig.numCtors (barTy τ'.omega)) _ _).trans ?_
+    refine congrArg
+      (OneLambda.lamSpine (List.replicate natAlgSig.numCtors (barTy τ'.omega))) ?_
+    rw [sub_cast_sort]
+    · congr 1
+      refine (OneLambda.sub_lamSpine (barTy τ'.omega).domains _ _).trans ?_
+      refine congrArg (OneLambda.lamSpine (barTy τ'.omega).domains) ?_
+      rw [OneLambda.sub_replicateSpine, OneLambda.sub_app']
+      congr 1
+      · refine congr (congrArg OneLambda.app' (OneLambda.sub_caseOp _)) ?_
+        rw [sub_underBinder_weakAppend, sub_underBinder_weakAppend,
+          sub_underBinder_appendRight, ren_var, ren_var]
+      · funext idx
+        simp only [OneLambda.sub_appSpine, sub_underBinder_appendRight]
+        rw [sub_cast_sort, sub_underBinder_weakAppend, sub_underBinder_appendRight, ren_var]
+        exact ((congrArg (RType.curried (barTy τ'.omega).domains)
+          (RType.objTarget_of_isSimple (barTy τ'.omega) (barTy_isSimple _)).symm).trans
+          (RType.curried_domains (barTy τ'.omega)).symm).symm
+    · exact (congrArg (RType.curried (barTy τ'.omega).domains)
+        (RType.objTarget_of_isSimple (barTy τ'.omega) (barTy_isSimple _)).symm).trans
+        (RType.curried_domains (barTy τ'.omega)).symm
+
 /-- The Berarducci-Böhm representation `bbRep v σ` saturated with represented
 step terms along its abstraction spine reduces to the instantiated fold body
 (Leivant III section 4.2, Proposition 11's recurrence case): applying
