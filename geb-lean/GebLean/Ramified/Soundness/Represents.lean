@@ -984,7 +984,7 @@ theorem OneLambda.sub_barConOmega {Γ Δ : Binding.Ctx RType} (b : natAlgSig.B) 
 /-- Renaming is substitution by the variable-embedding environment: `ren ρ t =
 sub (fun s x => var (ρ.app x)) t`, presenting a thinning as the substitution that
 sends each variable to the variable it is thinned to. The `σ = idEnv`
-specialization of the sub-ren fusion law `sub_ren`, closed by the right-unit law
+specialization of the ren-sub fusion law `ren_sub`, closed by the right-unit law
 `sub_id`. Lets the substitution algebra (`sub_lamSpine`, `sub_sub`) act on renamed
 terms without a parallel renaming-under-binder development. -/
 theorem ren_eq_sub_var {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType} {s : RType}
