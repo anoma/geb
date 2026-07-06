@@ -1589,4 +1589,26 @@ theorem OneLambda.ren_replicateSpine {Γ Δ : Binding.Ctx RType} {result : RType
     ((eq_mpr_heq _ _).trans (eq_mpr_heq _ _))).trans
     (HEq.symm ((eq_mpr_heq _ _).trans (eq_mpr_heq _ _))))
 
+/-- Renaming distributes over the concrete term at a constructor node (Leivant
+III section 4.2): `ren ρ (conc (mk b sub))` is the constructor constant `con b`
+saturated along the homogeneous application spine with the renamed concrete
+subterms, `replicateSpine (ar b) o (con b) (fun i => ren ρ (conc (sub i)))`. Since
+`conc` is a spine of nullary constructor constants (`conc_mk`), renaming
+distributes through the spine (`ren_replicateSpine`) and fixes the nullary `con b`.
+The general-context bridge letting the saturated `barCase` fire its `case` redex on
+the weakened scrutinee. Novel packaging of section 4.2. -/
+theorem ren_conc_mk {Γ : Binding.Ctx RType} (ρ : Binding.Thinning [] Γ)
+    (b : natAlgSig.B) (sub : Fin (natAlgSig.ar b) → FreeAlg natAlgSig) :
+    Binding.ren ρ (conc (FreeAlg.mk b sub))
+      = OneLambda.replicateSpine (natAlgSig.ar b) RType.o
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con b) (fun k => k.elim0))
+          (fun i => Binding.ren ρ (conc (sub i))) := by
+  rw [conc_mk, OneLambda.ren_replicateSpine]
+  refine congrArg (OneLambda.replicateSpine (natAlgSig.ar b) RType.o · _) ?_
+  rw [Binding.ren]
+  refine Eq.trans (Binding.traverse_op _ _ _ _) ?_
+  refine congrArg (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con b)) ?_
+  funext k
+  exact k.elim0
+
 end GebLean.Ramified
