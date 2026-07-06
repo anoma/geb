@@ -462,6 +462,14 @@ theorem eqRec_eqRec_symm {motive : Binding.Ctx RType → Type} {a b : Binding.Ct
     (h : a = b) (y : motive b) : (h ▸ (h.symm ▸ y : motive a) : motive b) = y := by
   cases h; rfl
 
+/-- A `Eq.mpr` transport is heterogeneously equal to its argument: `Eq.mpr h x`
+carries `x` across the type equality `h` without changing its value. Proved by
+`subst`. The heterogeneous counterpart of `tm_cast_eq_eqRec`, letting the
+`barTmOp`-unfolding lemmas collapse the `Eq.mpr` chains the source-def's
+`rw`-transports emit against a single `cast`. -/
+theorem eq_mpr_heq.{u} {α β : Sort u} (h : α = β) (x : β) : HEq (Eq.mpr h x) x := by
+  subst h; rfl
+
 /-- Substitution commutes with the iterated abstraction `OneLambda.lamSpine`:
 `sub ρ (lamSpine Δ body) = lamSpine Δ (sub (underBinder (Ξ := Δ) ρ) body)`,
 pushing the substitution under all of the abstracted binders `Δ` at once by
@@ -805,5 +813,31 @@ theorem barTmOp_dstr {Γ : Binding.Ctx RType} (j : Fin natAlgSig.maxArity)
     barTmOp (Γ := Γ) (RlmrOOp.dstr j) ih
       = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0) :=
   rfl
+
+/-- The term bar-map at a base-object constructor node is the base constructor
+constant of `1λ(A)` (Leivant III section 4.2): `barTmOp (con o b) ih = con b`,
+modulo the type transport of the constructor result sort under the bar-map. The
+result sort `o^{A.ar b} → o` is not bar-invariant syntactically — the bar-map
+distributes over currying by induction (`barTy_curried`, not `rfl`) — so the
+equation carries the residual `cast` along `hbar` from `barTy` of the source
+result sort to the `1λ(A)` result sort, which the consumer discharges. The
+`barTmOp` con-branch unfolding at `θ = o`, novel packaging of section 4.2. -/
+theorem barTmOp_con_o {Γ : Binding.Ctx RType} (b : natAlgSig.B)
+    (ih : ∀ jj : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.con RType.o (Or.inl rfl) b)).length,
+      Binding.Tm (oneLambdaSig natAlgSig)
+        ((Γ ++ (((rlmrOSig natAlgSig).args
+          (RlmrOOp.con RType.o (Or.inl rfl) b)).get jj).1).map barTy)
+        (barTy (((rlmrOSig natAlgSig).args
+          (RlmrOOp.con RType.o (Or.inl rfl) b)).get jj).2))
+    (hbar : barTy ((rlmrOSig natAlgSig).result (RlmrOOp.con RType.o (Or.inl rfl) b))
+      = (oneLambdaSig natAlgSig).result (OneLambdaOp.con b)) :
+    barTmOp (Γ := Γ) (RlmrOOp.con RType.o (Or.inl rfl) b) ih
+      = cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)) hbar.symm)
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con b) (fun k => k.elim0)) := by
+  dsimp only [barTmOp, RType.shape_o]
+  apply eq_of_heq
+  rw [id_eq]
+  exact (eq_mpr_heq _ _).trans
+    ((eq_mpr_heq _ _).trans ((eq_mpr_heq _ _).trans (cast_heq _ _).symm))
 
 end GebLean.Ramified
