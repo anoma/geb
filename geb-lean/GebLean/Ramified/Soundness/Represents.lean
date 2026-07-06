@@ -2210,4 +2210,48 @@ section 4.2. -/
 theorem barConOmega_true_fold (τ : RType) :
     barConOmega (Γ := []) true τ = OneLambda.lam' (barConOmegaBody τ) := rfl
 
+/-- The saturating substitution of the constructor bar-map body (Leivant III
+section 4.2, the substitution step of Proposition 11's `con^{Ωτ}` case):
+instantiating `barConOmegaBody`'s sole outer binder with a Berarducci-Böhm
+argument `N` weakens `N` past the residual constructor binders (`ren
+weakAppend`) inside the `c`-spine while fixing the bound constructor head and
+spine variables. Proved by pushing the instantiation through the constructor
+`lamSpine`, the `replicateSpine`, and the per-argument application spine,
+resolving each abstracted variable to its substituted image
+(`sub_underBinder_appendRight`, `sub_underBinder_weakAppend`,
+`extendEnv_appendRight`). Internal packaging for the `barConOmega` saturation
+keystone. -/
+theorem barConOmegaBody_instantiate (τ : RType)
+    (N : Binding.Tm (oneLambdaSig natAlgSig) [] (bbType natAlgSig (barTy τ))) :
+    Binding.instantiate₁ N (barConOmegaBody τ)
+      = OneLambda.lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+          (OneLambda.replicateSpine (natAlgSig.ar true) (barTy τ)
+            (Binding.Tm.var (Binding.Var.appendRight [] (ctorVar true)))
+            (fun _j =>
+              OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+                (Binding.ren (Binding.Thinning.weakAppend
+                  (Ξ := stepTypes natAlgSig (barTy τ) (barTy τ))) N)
+                (fun idx =>
+                  Binding.Tm.var (Binding.Var.appendRight []
+                    (⟨idx, rfl⟩ : Binding.Var (stepTypes natAlgSig (barTy τ) (barTy τ))
+                      ((stepTypes natAlgSig (barTy τ) (barTy τ)).get idx)))))) := by
+  rw [Binding.instantiate₁, Binding.instantiate]
+  unfold barConOmegaBody
+  refine (OneLambda.sub_lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ)) _ _).trans ?_
+  refine congrArg (OneLambda.lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))) ?_
+  refine (OneLambda.sub_replicateSpine _ _ _ _ _).trans ?_
+  congr 1
+  · exact sub_underBinder_appendRight _ _
+  · funext j
+    refine (OneLambda.sub_appSpine _ _ _ _).trans ?_
+    congr 1
+    · refine (sub_underBinder_weakAppend _ _).trans ?_
+      refine congrArg (Binding.ren Binding.Thinning.weakAppend) ?_
+      rw [Binding.sub_var]
+      obtain ⟨jv, hj⟩ := j
+      match jv, hj with
+      | 0, _ =>
+        exact Binding.extendEnv_appendRight Binding.idEnv (Binding.metaOne N) _ _
+      | (n + 1), h => exact absurd h (by have : natAlgSig.ar true = 1 := rfl; omega)
+
 end GebLean.Ramified
