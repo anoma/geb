@@ -2626,4 +2626,56 @@ theorem barTm_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig) :
     exact heq_of_eq (congrArg (fun w => barTm (sourceFoldBody τ (subt w)))
       (Fin.ext (by simpa using hii)))
 
+/-- The standard-model denotation commutes with a sort transport of a term: for
+`e : s = s'`, `appEval (e ▸ m) ρ = e ▸ appEval m ρ`. Proved by `cases e`. Internal
+packaging threading `arrow_node_eq`'s sort reconstruction through `appEval` in
+`represents_congr_appEval`. -/
+theorem appEval_eqRec_sort {Γ : Binding.Ctx RType} {s s' : RType} (e : s = s')
+    (m : Binding.Tm (rlmrOSig natAlgSig) Γ s)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (e ▸ m) ρ = e ▸ appEval m ρ := by
+  cases e; rfl
+
+/-- The representation relation depends on its source term only through the
+term's denotation (Leivant III section 4.2, a decision-2 consequence): source
+terms with equal standard-model denotations represent the same target terms. By
+induction on the r-type, the object clauses reading the denotation directly
+(`conc`, `bbRep`) and the arrow clause carrying the denotation equality under one
+application through `appEval_app'` and `appEval_eqRec_sort`. The source-side
+invariance the recurrence case uses to replace the recursor redex by its fold. -/
+theorem represents_congr_appEval {τ : RType} {M M' : Binding.Tm (rlmrOSig natAlgSig) [] τ}
+    {Mhat : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy τ)}
+    (h : appEval M finZeroElim = appEval M' finZeroElim)
+    (hRep : Represents τ M Mhat) : Represents τ M' Mhat :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} (t : RType) =>
+      ∀ (M M' : Binding.Tm (rlmrOSig natAlgSig) [] t)
+        (Mhat : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy t)),
+        appEval M finZeroElim = appEval M' finZeroElim →
+          Represents t M Mhat → Represents t M' Mhat)
+    (fun {x} i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => fun M M' Mhat h hRep => by
+          change Relation.ReflTransGen OneLambdaStep Mhat (conc (appEval M' finZeroElim))
+          rw [← h]; exact hRep
+      | RTypeShape.arrow, childx, ih => fun M M' Mhat h hRep G Ghat hG => by
+          have hApp := hRep G Ghat hG
+          have happ : ∀ m : Binding.Tm (rlmrOSig natAlgSig) []
+                (PolyFix.mk x RTypeShape.arrow childx : RType),
+              appEval (sourceApp (arrow_node_eq x childx ▸ m) G) finZeroElim
+                = (arrow_node_eq x childx ▸ appEval m finZeroElim) (appEval G finZeroElim) :=
+            fun m => by
+              rw [sourceApp, appEval_app']
+              exact congrArg (fun f => f (appEval G finZeroElim))
+                (appEval_eqRec_sort (arrow_node_eq x childx) m finZeroElim)
+          exact ih _ _ _ _
+            ((happ M).trans ((congrArg
+              (fun d => (arrow_node_eq x childx ▸ d) (appEval G finZeroElim)) h).trans
+              (happ M').symm)) hApp
+      | RTypeShape.omega, childx, _ => fun M M' Mhat h hRep => by
+          change Relation.ReflTransGen OneLambdaStep Mhat
+            (bbRep (appEval M' finZeroElim)
+              (barTy (childx (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega)))))
+          rw [← h]; exact hRep) τ M M' Mhat h hRep
+
 end GebLean.Ramified
