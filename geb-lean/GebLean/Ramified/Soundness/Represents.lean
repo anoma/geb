@@ -1106,4 +1106,49 @@ theorem represents_dstr {Γ : Binding.Ctx RType} (j : Fin natAlgSig.maxArity)
     (fun {_} b sub _ => ?_) v
   exact conc_app_dstr_reduces j b sub
 
+/-- The case bar-map at the base object sort `o` is the base case combinator of
+`1λ(A)` (Leivant III section 4.2): `barCase o hθ = case`, independent of the
+object-sort witness `hθ`. The `θ = o` branch of `barCase`'s shape split; holds
+definitionally, since at `o` no push-under-λ intervenes. Novel packaging of
+section 4.2. -/
+theorem barCase_o {Γ : Binding.Ctx RType} (hθ : RType.o.IsObj) :
+    barCase (Γ := Γ) RType.o hθ
+      = Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0) :=
+  rfl
+
+/-- The branch selector `caseSelect` on a constructor node reads the branch at the
+scrutinee constructor's enumeration position (Leivant III section 4.1): for
+`idx : Fin natAlgSig.numCtors` and a branch family `bs`, `caseSelect (mk (ctorAt
+idx) sub) (bs 0) (bs 1) = bs idx`. Over `natAlgSig` the enumeration is zero-first
+(`ctorAt 0 = false`, `ctorAt 1 = true`), so `caseSelect (mk b sub)` is `cond b`,
+matching the two branch positions. Novel packaging of section 4.1. -/
+theorem caseSelect_mk_ctorAt {C : Type} (idx : Fin natAlgSig.numCtors)
+    (sub : Fin (natAlgSig.ar (ctorAt idx)) → FreeAlg natAlgSig)
+    (bs : Fin natAlgSig.numCtors → C) :
+    caseSelect (FreeAlg.mk (ctorAt idx) sub)
+        (bs ⟨0, by decide⟩) (bs ⟨1, by decide⟩) = bs idx := by
+  obtain ⟨i, hi⟩ := idx
+  have hnc : natAlgSig.numCtors = 2 := by decide
+  match i, hi with
+  | 0, h =>
+    change cond (ctorAt (⟨0, h⟩ : Fin natAlgSig.numCtors))
+        (bs ⟨1, by decide⟩) (bs ⟨0, by decide⟩) = bs ⟨0, h⟩
+    rw [show ctorAt (⟨0, h⟩ : Fin natAlgSig.numCtors) = false from ctorAt_zero]; rfl
+  | 1, h =>
+    change cond (ctorAt (⟨1, h⟩ : Fin natAlgSig.numCtors))
+        (bs ⟨1, by decide⟩) (bs ⟨0, by decide⟩) = bs ⟨1, h⟩
+    rw [show ctorAt (⟨1, h⟩ : Fin natAlgSig.numCtors) = true from ctorAt_one]; rfl
+  | (n + 2), h => exact absurd (hnc ▸ h) (by omega)
+
+/-- The Berarducci-Böhm representation commutes with the branch selector
+`caseSelect` (Leivant III section 4.2): `bbRep (caseSelect z v₀ v₁) σ = caseSelect
+z (bbRep v₀ σ) (bbRep v₁ σ)`, since `caseSelect` on a constructor node is a plain
+selection of one of `v₀`, `v₁` and `bbRep` distributes through it. The
+push-through the case case of Proposition 11's case compatibility consumes at the
+higher object type. Novel packaging of section 4.2. -/
+theorem bbRep_caseSelect (z v0 v1 : FreeAlg natAlgSig) (σ : RType) :
+    bbRep (caseSelect z v0 v1) σ = caseSelect z (bbRep v0 σ) (bbRep v1 σ) := by
+  cases z with
+  | mk _ b subs => cases b <;> rfl
+
 end GebLean.Ramified
