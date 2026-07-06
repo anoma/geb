@@ -2769,4 +2769,48 @@ theorem appEval_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig)
     (by simpa [List.length_replicate] using i.isLt)).symm
   rfl
 
+/-- λ-freedom transfers along a heterogeneous equality of terms at equal
+contexts: `LamFree t'` whenever `t ≍ t'`, `s = s'`, and `LamFree t`. By `subst`
+and `cases`. Internal packaging reconciling `lamFree_appSpine`'s homogeneous-spine
+sort transports. -/
+theorem lamFree_heq {Γ : Binding.Ctx RType} {s s' : RType}
+    {t : Binding.Tm (rlmrOSig natAlgSig) Γ s} {t' : Binding.Tm (rlmrOSig natAlgSig) Γ s'}
+    (hs : s = s') (h : t ≍ t') (ht : LamFree t) : LamFree t' := by
+  subst hs; cases h; exact ht
+
+/-- An application spine over λ-free head and arguments is λ-free (Leivant III
+section 4.2, DOI `10.1016/S0168-0072(98)00040-2`): `appSpine Ts head args` is
+`LamFree` when `head` and every `args i` are. By induction on `Ts`, folding one
+`app'` per step through the application constructor `LamFree.app`. Novel packaging
+of section 4.2. -/
+theorem lamFree_appSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (Ts : List RType) →
+    (head : Binding.Tm (rlmrOSig natAlgSig) Γ (RType.curried Ts result)) →
+    (args : ∀ i : Fin Ts.length, Binding.Tm (rlmrOSig natAlgSig) Γ (Ts.get i)) →
+    LamFree head → (∀ i : Fin Ts.length, LamFree (args i)) →
+    LamFree (appSpine Ts head args)
+  | [], head, _args, hhead, _hargs => hhead
+  | _T :: Ts', head, args, hhead, hargs => by
+    rw [appSpine]
+    exact lamFree_appSpine Ts' (app' head (args ⟨0, Nat.succ_pos _⟩)) (fun i => args i.succ)
+      (LamFree.app hhead (hargs ⟨0, Nat.succ_pos _⟩)) (fun i => hargs i.succ)
+
+/-- The source fold body is λ-free (Leivant III section 4.2, DOI
+`10.1016/S0168-0072(98)00040-2`, Proposition 11's recurrence case): every
+`sourceFoldBody τ v` is a variable-application term, hence in the fragment
+`lemma10` quantifies over. By induction on `v`, the constructor node being a
+homogeneous application spine (`lamFree_appSpine`) over the constructor-step
+variable and the recursive results. Novel packaging of section 4.2. -/
+theorem lamFree_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig) :
+    LamFree (sourceFoldBody τ v) := by
+  refine PolyFix.ind (P := natAlgSig.polyEndo)
+    (motive := fun {_} v => LamFree (sourceFoldBody τ v))
+    (fun {_} b subt ih => ?_) v
+  change LamFree (sourceFoldBody τ (FreeAlg.mk b subt))
+  rw [sourceFoldBody, FreeAlg.recurse_mk, replicateSpine]
+  refine lamFree_appSpine _ _ _ (LamFree.var _) (fun idx => ?_)
+  simp only [eq_mpr_eq_cast]
+  refine lamFree_heq (by rw [List.get_eq_getElem, List.getElem_replicate])
+    (HEq.symm ((cast_heq _ _).trans (cast_heq _ _))) (ih (idx.cast List.length_replicate))
+
 end GebLean.Ramified
