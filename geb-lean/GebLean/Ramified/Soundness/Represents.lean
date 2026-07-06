@@ -2171,4 +2171,43 @@ theorem represents_case {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
         (hGbtRep idx : Relation.ReflTransGen OneLambdaStep (Ghatbt idx)
           (bbRep (appEval (Gbt idx) finZeroElim) (barTy τ')))))
 
+/-- The abstraction body of the constructor bar-map `barConOmega` at the unary
+constructor `true` in the closed ambient context (Leivant III section 4.2):
+`λ c⃗. c_true (x c⃗)` as a term of the singleton saturation context
+`[] ++ [Ω̄τ]`, whose sole outer binder `x` stands for the constructor's
+Berarducci-Böhm argument. The named target of the saturation keystone's fold
+step (`barConOmega_true_fold`), the operand its `reduces_beta` instantiation
+substitutes into. Novel packaging of section 4.2. -/
+def barConOmegaBody (τ : RType) :
+    Binding.Tm (oneLambdaSig natAlgSig) ([] ++ [bbType natAlgSig (barTy τ)])
+      (bbType natAlgSig (barTy τ)) :=
+  OneLambda.lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+    (OneLambda.replicateSpine (natAlgSig.ar true) (barTy τ)
+      (Binding.Tm.var (Binding.Var.appendRight
+        ([] ++ List.replicate (natAlgSig.ar true) (bbType natAlgSig (barTy τ)))
+        (ctorVar true)))
+      (fun j =>
+        OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+          (Binding.Tm.var (Binding.Thinning.weakAppend.app
+            (Binding.Var.appendRight []
+              (⟨⟨j.val, by rw [List.length_replicate]; exact j.isLt⟩,
+                by rw [List.get_eq_getElem, List.getElem_replicate]⟩ :
+                  Binding.Var (List.replicate (natAlgSig.ar true) (bbType natAlgSig (barTy τ)))
+                    (bbType natAlgSig (barTy τ))))))
+          (fun idx =>
+            Binding.Tm.var (Binding.Var.appendRight
+              ([] ++ List.replicate (natAlgSig.ar true) (bbType natAlgSig (barTy τ)))
+              ⟨idx, rfl⟩))))
+
+/-- The constructor bar-map at the unary constructor `true` in the closed ambient
+context folds into a single abstraction over its named body (Leivant III section
+4.2): `barConOmega true τ = lam' (barConOmegaBody τ)`, the outer argument spine
+`lamSpine (replicate 1 Ω̄τ)` collapsing to one `lam'` in the closed context, where
+the interposed empty-suffix and reassociation transports reduce by definitional
+proof irrelevance. The fold step of the `barConOmega` saturation keystone,
+exposing the single binder that `reduces_beta` saturates. Novel packaging of
+section 4.2. -/
+theorem barConOmega_true_fold (τ : RType) :
+    barConOmega (Γ := []) true τ = OneLambda.lam' (barConOmegaBody τ) := rfl
+
 end GebLean.Ramified
