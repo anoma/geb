@@ -617,6 +617,41 @@ theorem OneLambda.sub_appSpine {Γ Δ : Binding.Ctx RType} {result : RType} :
       rw [OneLambda.appSpine, OneLambda.sub_appSpine Ts', OneLambda.sub_app']
       rfl
 
+/-- Heterogeneous congruence of substitution in the sort: substituting through
+heterogeneously-equal terms at sorts related by `h : a = b` yields
+heterogeneously-equal results. Proved by `cases h` then `eq_of_heq`. Internal
+packaging for `sub_replicateSpine`, reconciling the `Eq.mpr` sort transports the
+homogeneous spine emits. -/
+theorem sub_heq_of_heq {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
+    {a b : RType} (ρ : Binding.Env (Binding.Tm S) Γ Δ) (h : a = b)
+    {t : Binding.Tm S Γ a} {u : Binding.Tm S Γ b} (ht : HEq t u) :
+    HEq (Binding.sub ρ t) (Binding.sub ρ u) := by
+  cases h; rw [eq_of_heq ht]
+
+/-- Substitution distributes over the homogeneous iterated application
+`OneLambda.replicateSpine`: `sub ρ (replicateSpine n base head args) =
+replicateSpine n base (sub ρ head) (fun idx => sub ρ (args idx))`, applying the
+substitution to the head and every argument. The homogeneous instance of
+`OneLambda.sub_appSpine`, reconciling the per-index `Eq.mpr` sort transport
+through `sub_heq_of_heq`. Internal packaging for `sub_barCase`. -/
+theorem OneLambda.sub_replicateSpine {Γ Δ : Binding.Ctx RType} {result : RType}
+    (n : Nat) (base : RType)
+    (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ
+      (RType.curried (List.replicate n base) result))
+    (args : Fin n → Binding.Tm (oneLambdaSig natAlgSig) Γ base) :
+    Binding.sub ρ (OneLambda.replicateSpine n base head args)
+      = OneLambda.replicateSpine n base (Binding.sub ρ head)
+          (fun idx => Binding.sub ρ (args idx)) := by
+  rw [OneLambda.replicateSpine, OneLambda.sub_appSpine, OneLambda.replicateSpine]
+  refine congrArg (OneLambda.appSpine (List.replicate n base) (Binding.sub ρ head)) ?_
+  funext i
+  have hs : (List.replicate n base).get i = base := by
+    rw [List.get_eq_getElem, List.getElem_replicate]
+  refine eq_of_heq ((sub_heq_of_heq ρ hs
+    ((eq_mpr_heq _ _).trans (eq_mpr_heq _ _))).trans
+    (HEq.symm ((eq_mpr_heq _ _).trans (eq_mpr_heq _ _))))
+
 /-- Instantiating the empty append-at-end suffix is the append-nil context
 transport: `instantiate m body = (append_nil Γ) ▸ body` for any (vacuous)
 meta-map `m` on `[]`. The empty-suffix base of the generic λ-spine β-reduction.
