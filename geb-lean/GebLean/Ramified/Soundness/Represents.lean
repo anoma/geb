@@ -1634,4 +1634,77 @@ theorem ren_conc_replicateSpine_case_reduces {Γ : Binding.Ctx RType}
   exact Relation.ReflTransGen.single
     (OneLambdaStep.case idx (fun i => Binding.ren ρ (conc (sub i))) branches)
 
+/-- The reconciliation of the curried branch type of the case bar-map at a shifted
+object sort (Leivant III section 4.2): `curried (barTy (Ω τ')).domains o = barTy
+(Ω τ')`, since `barTy (Ω τ')` is simple (`barTy_isSimple`) with object target `o`
+(`objTarget_of_isSimple`) and equals the currying of its domains over that target
+(`curried_domains`). The proof term `barCase` interposes as `cast h_ctd`; named so
+the saturation keystone's intermediate bodies can reference it. Internal packaging
+for the `barCase` saturation keystone. -/
+theorem barCase_omega_ctd (τ' : RType) :
+    RType.curried (barTy (RType.omega τ')).domains RType.o = barTy (RType.omega τ') :=
+  (congrArg (RType.curried (barTy (RType.omega τ')).domains)
+      (RType.objTarget_of_isSimple (barTy (RType.omega τ')) (barTy_isSimple _)).symm).trans
+    (RType.curried_domains (barTy (RType.omega τ'))).symm
+
+/-- The inner body of the case bar-map at a shifted object sort `Ω τ'`, after
+folding its two outer abstraction spines into a single `lamSpine (o :: replicate
+numCtors (barTy (Ω τ')))` (Leivant III section 4.2): the `cast`-reconciled
+`lamSpine (barTy (Ω τ')).domains` over the case redex `replicateSpine numCtors o
+(case (var a)) (fun j => appSpine domains (cast (var x_j)) yvars)`, in the closed
+saturation context `[o, (barTy (Ω τ'))^numCtors]`. The named target of the
+saturation keystone's fold step (`barCase_omega_fold`), the operand its
+`reduces_betaSpine` instantiation substitutes into. Novel packaging of section
+4.2. -/
+def barCaseOmegaBodyBig (τ' : RType) :
+    Binding.Tm (oneLambdaSig natAlgSig)
+      (([] ++ [RType.o]) ++ List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+      (barTy (RType.omega τ')) :=
+  cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig)
+      (([] ++ [RType.o]) ++ List.replicate natAlgSig.numCtors (barTy (RType.omega τ'))))
+      (barCase_omega_ctd τ'))
+    (OneLambda.lamSpine (barTy (RType.omega τ')).domains
+      (OneLambda.replicateSpine natAlgSig.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0))
+          (Binding.Tm.var (Binding.Thinning.weakAppend.app (Binding.Thinning.weakAppend.app
+            (Binding.Var.appendRight []
+              (⟨⟨0, Nat.zero_lt_one⟩, rfl⟩ : Binding.Var [RType.o] RType.o))))))
+        (fun j =>
+          OneLambda.appSpine (barTy (RType.omega τ')).domains
+            (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig)
+                ((([] ++ [RType.o])
+                    ++ List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+                  ++ (barTy (RType.omega τ')).domains)) (barCase_omega_ctd τ').symm)
+              (Binding.Tm.var (Binding.Thinning.weakAppend.app
+                (Binding.Var.appendRight ([] ++ [RType.o])
+                  (⟨⟨j.val, by rw [List.length_replicate]; exact j.isLt⟩,
+                    by rw [List.get_eq_getElem, List.getElem_replicate]⟩ :
+                      Binding.Var (List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+                        (barTy (RType.omega τ')))))))
+            (fun idx =>
+              Binding.Tm.var (Binding.Var.appendRight
+                (([] ++ [RType.o])
+                  ++ List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+                (⟨idx, rfl⟩ :
+                  Binding.Var (barTy (RType.omega τ')).domains
+                    ((barTy (RType.omega τ')).domains.get idx)))))))
+
+/-- The case bar-map at a shifted object sort `Ω τ'` folds into a single
+abstraction spine over its saturating context (Leivant III section 4.2):
+`barCase (Ω τ') hθ = lamSpine (o :: replicate numCtors (barTy (Ω τ')))
+(barCaseOmegaBodyBig τ')`, merging its outer `lamSpine [o]` and `lamSpine
+(replicate numCtors (barTy (Ω τ')))` through `lamSpine_cons` (the interposed
+context reassociation `append_assoc [] [o] _` is `rfl` in the closed context). The
+fold step of the saturation keystone, exposing the single spine that
+`reduces_betaSpine` saturates. Novel packaging of section 4.2. -/
+theorem barCase_omega_fold (τ' : RType) (hθ : (RType.omega τ').IsObj) :
+    barCase (Γ := []) (RType.omega τ') hθ
+      = OneLambda.lamSpine (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
+          (barCaseOmegaBodyBig τ') := by
+  unfold barCase
+  simp only [RType.shape_omega]
+  exact OneLambda.lamSpine_cons RType.o
+    (List.replicate natAlgSig.numCtors (barTy (RType.omega τ'))) _
+
 end GebLean.Ramified
