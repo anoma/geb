@@ -672,6 +672,37 @@ theorem OneLambda.reduces_betaSpine :
           (Binding.metaOne (a := σ) (args ⟨0, Nat.succ_pos _⟩))) _
       exact heq3 ▸ OneLambda.reduces_betaSpine Δ' _ (fun i => args i.succ)
 
+/-- Renaming a variable is the variable at the thinned position: `ren ρ (Tm.var
+v) = Tm.var (ρ.app v)`. The renaming kit reads the variable through `ρ` and
+re-embeds it (`traverse_var`). Internal packaging for `reduces_etaSpine`. -/
+theorem ren_var {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType} {s : RType}
+    (ρ : Binding.Thinning Γ Δ) (v : Binding.Var Γ s) :
+    Binding.ren ρ (Binding.Tm.var v : Binding.Tm S Γ s)
+      = Binding.Tm.var (ρ.app v) := by
+  simp only [Binding.ren, Binding.traverse_var, Binding.renEnv, Binding.varKit]
+
+/-- A source-context transport commutes with the application node of `1λ(A)`:
+for `h : Γ = Γ'`, `h ▸ app' f x = app' (h ▸ f) (h ▸ x)`. Proved by `subst`.
+Internal packaging for `reduces_etaSpine`. -/
+theorem OneLambda.app'_transport_cod {A : AlgSig} [Fintype A.B]
+    {Γ Γ' : Binding.Ctx RType} {σ τ : RType} (h : Γ = Γ')
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) :
+    h ▸ OneLambda.app' f x = OneLambda.app' (h ▸ f) (h ▸ x) := by
+  subst h; rfl
+
+/-- A source-context transport commutes with the application spine of `1λ(A)`:
+for `h : Γ = Γ'`, `h ▸ appSpine Ts head args = appSpine Ts (h ▸ head)
+(fun i => h ▸ args i)`. Proved by `subst`. Internal packaging for
+`reduces_etaSpine`. -/
+theorem OneLambda.appSpine_transport_cod {A : AlgSig} [Fintype A.B]
+    {Γ Γ' : Binding.Ctx RType} {result : RType} (h : Γ = Γ') (Ts : List RType)
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried Ts result))
+    (args : ∀ i : Fin Ts.length, Binding.Tm (oneLambdaSig A) Γ (Ts.get i)) :
+    h ▸ OneLambda.appSpine Ts head args
+      = OneLambda.appSpine Ts (h ▸ head) (fun i => h ▸ args i) := by
+  subst h; rfl
+
 /-- The Berarducci-Böhm representation `bbRep v σ` saturated with represented
 step terms along its abstraction spine reduces to the instantiated fold body
 (Leivant III section 4.2, Proposition 11's recurrence case): applying
