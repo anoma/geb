@@ -1771,6 +1771,15 @@ def barCaseOmegaBodySub (τ' : RType)
                 (⟨idx, rfl⟩ : Binding.Var (barTy (RType.omega τ')).domains
                   ((barTy (RType.omega τ')).domains.get idx)))))))
 
+/-- The saturating substitution of the folded case bar-map body (Leivant III
+section 4.2, the substitution step of Proposition 11's case at a shifted object
+sort): instantiating `barCaseOmegaBodyBig`'s three outer binders with a scrutinee
+`s` and branches `g` yields `barCaseOmegaBodySub τ' s g`, weakening `s` and each
+`g j` past the residual domain binder while fixing the domain variables. Proved by
+pushing the instantiation through the interposed `cast`, the domain `lamSpine`, the
+`replicateSpine`, and the case redex's application spine, resolving each abstracted
+variable to its substituted image. Internal packaging for the `barCase` saturation
+keystone. -/
 theorem barCase_omega_instantiate (τ' : RType)
     (s : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o)
     (g : Fin natAlgSig.numCtors →
@@ -1810,6 +1819,18 @@ theorem barCase_omega_instantiate (τ' : RType)
       | 1, _ => rfl
       | (n + 2), h => exact absurd h (by have : natAlgSig.numCtors = 2 := rfl; omega)
 
+/-- The case bar-map saturation keystone (Leivant III section 4.2, Proposition
+11's case at a shifted object sort `Ω τ'`): applying `barCase (Ω τ')` to a
+scrutinee `Ghat0` and the `numCtors` branch representatives `Ghats` along the
+application spine reduces (`OneLambdaStep`, reflexive-transitively) to the branch
+`Ghats idx` selected by the scrutinee's constructor, given that `Ghat0` reduces to
+the concrete term of `mk (ctorAt idx) subv`. Folds the two outer abstraction spines
+into one (`barCase_omega_fold`), saturates them by the generic λ-spine β-reduction
+(`reduces_betaSpine`), simplifies the substituted body (`barCase_omega_instantiate`),
+fires the case redex on the weakened scrutinee under the residual domain binders
+(`reduces_lamSpine`, `ren_conc_replicateSpine_case_reduces`), and η-collapses the
+selected branch (`reduces_etaSpine`), transporting across the branch-type
+reconciliation cast (`reduces_cast_sort`). Novel packaging of section 4.2. -/
 theorem barCase_appSpine_reduces (τ' : RType) (hθ : (RType.omega τ').IsObj)
     (idx : Fin natAlgSig.numCtors)
     (subv : Fin (natAlgSig.ar (ctorAt idx)) → FreeAlg natAlgSig)
@@ -1877,6 +1898,20 @@ theorem freeAlg_mk_transport {b c : natAlgSig.B} (h : b = c)
     (s : Fin (natAlgSig.ar b) → FreeAlg natAlgSig) :
     FreeAlg.mk b s = FreeAlg.mk c (h ▸ s) := by cases h; rfl
 
+/-- Compatibility of the representation relation with a case constant (Leivant III
+section 4.2, Proposition 11's case case, a decision-2 denotational reformulation):
+the case node `case θ hθ` is represented by the parallel target substitution into
+its bar image `barCase θ hθ` of `1λ(A)`. The nullary node is fixed on the source
+side (`sub` over `elim0`) and mapped to the case bar-map on the target side
+(`barTmOp_case`, whose branch-type transport vanishes at the concrete `numCtors`,
+then `sub_barCase`). Peeling the scrutinee and two branches with `represents_arrow`
+exposes a `caseSelect` on the represented arguments (`appEval_caseRedex`); casing
+the scrutinee's value on its top constructor (`ctorAt`) selects a branch through
+`caseSelect_mk_ctorAt`, matched on the target side by the base case reduction
+(`conc_replicateSpine_case_reduces`) at the base object sort `o` and the saturation
+keystone (`barCase_appSpine_reduces`) at a shifted object sort `Ω τ'`, both closed
+under `lemma8` against the branch representatives' self-representation (`lemma9_o`,
+`lemma9_omega`). -/
 theorem represents_case {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
     (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
     (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) []) :
