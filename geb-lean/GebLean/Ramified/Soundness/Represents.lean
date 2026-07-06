@@ -1868,4 +1868,112 @@ theorem barCase_appSpine_reduces (τ' : RType) (hθ : (RType.omega τ').IsObj)
     (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) []) (barCase_omega_ctd τ').symm)
       (Ghats idx))
 
+/-- Re-labelling a free-algebra node along a constructor equality (Leivant III
+section 4.1, structural): for `h : b = c`, `FreeAlg.mk b s = FreeAlg.mk c (h ▸ s)`,
+transporting the subterm family across the arity change. Proved by `cases h`.
+Internal packaging for `represents_case`, expressing a scrutinee constructor as the
+enumerated `ctorAt idx`. -/
+theorem freeAlg_mk_transport {b c : natAlgSig.B} (h : b = c)
+    (s : Fin (natAlgSig.ar b) → FreeAlg natAlgSig) :
+    FreeAlg.mk b s = FreeAlg.mk c (h ▸ s) := by cases h; rfl
+
+theorem represents_case {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) []) :
+    Represents (RType.arrow RType.o (RType.curried (List.replicate natAlgSig.numCtors θ) θ))
+      (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.case θ hθ) (fun k => k.elim0)))
+      (Binding.sub Eσhat (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.case θ hθ) (fun k => k.elim0)))) := by
+  have hsrc : Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.case θ hθ) (fun k => k.elim0))
+      = Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.case θ hθ) (fun k => k.elim0) := by
+    rw [Binding.sub, Binding.traverse_op]; congr 1; funext k; exact k.elim0
+  have htgt : Binding.sub Eσhat (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.case θ hθ) (fun k => k.elim0)))
+      = barCase (Γ := []) θ hθ := by
+    rw [barTm_op, barTmOp_case θ hθ _ rfl]
+    change Binding.sub Eσhat (barCase (Γ := Γ.map barTy) θ hθ) = barCase (Γ := []) θ hθ
+    exact OneLambda.sub_barCase θ hθ Eσhat
+  refine htgt ▸ ?_
+  rw [represents_arrow]
+  intro G Ghat0 hG0
+  change Represents (RType.arrow θ (RType.arrow θ θ))
+    (sourceApp (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+      (RlmrOOp.case θ hθ) (fun k => k.elim0))) G)
+    (OneLambda.app' (barCase (Γ := []) θ hθ) Ghat0)
+  rw [represents_arrow]
+  intro Gb0 Ghatb0 hGb0
+  rw [represents_arrow]
+  intro Gb1 Ghatb1 hGb1
+  have hsem : appEval (sourceApp (sourceApp (sourceApp (Binding.sub Eσ
+        (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.case θ hθ) (fun k => k.elim0)))
+        G) Gb0) Gb1) finZeroElim
+      = caseSelect (appEval G finZeroElim)
+          (appEval Gb0 finZeroElim) (appEval Gb1 finZeroElim) := by
+    refine (congrArg (fun t => appEval
+      (sourceApp (sourceApp (sourceApp t G) Gb0) Gb1) finZeroElim) hsrc).trans ?_
+    exact appEval_caseRedex (θ := θ) hθ G
+      (fun j => Fin.cases Gb0 (fun k => Fin.cases Gb1 (fun l => l.elim0) k) j) finZeroElim
+  -- Express the scrutinee value as an enumerated constructor node.
+  obtain ⟨idx, subv, hmk⟩ : ∃ (idx : Fin natAlgSig.numCtors)
+      (subv : Fin (natAlgSig.ar (ctorAt idx)) → FreeAlg natAlgSig),
+      appEval G finZeroElim = FreeAlg.mk (ctorAt idx) subv := by
+    obtain ⟨b, subb, hv0⟩ : ∃ b subb, appEval G finZeroElim = FreeAlg.mk b subb :=
+      PolyFix.ind (P := natAlgSig.polyEndo)
+        (motive := fun {_} v => ∃ b subb, v = FreeAlg.mk b subb)
+        (fun {_} b subb _ => ⟨b, subb, rfl⟩) (appEval G finZeroElim)
+    cases b with
+    | false => exact ⟨⟨0, by decide⟩, ctorAt_zero.symm ▸ subb,
+        hv0.trans (freeAlg_mk_transport ctorAt_zero.symm subb)⟩
+    | true => exact ⟨⟨1, by decide⟩, ctorAt_one.symm ▸ subb,
+        hv0.trans (freeAlg_mk_transport ctorAt_one.symm subb)⟩
+  rw [hmk] at hsem
+  have hG0' : Relation.ReflTransGen OneLambdaStep Ghat0
+      (conc (FreeAlg.mk (ctorAt idx) subv)) := hmk ▸ hG0
+  -- Branch families over the enumeration, and the pointwise representation.
+  set Ghatbt : Fin natAlgSig.numCtors →
+      Binding.Tm (oneLambdaSig natAlgSig) [] (barTy θ) :=
+    fun i => Fin.cases Ghatb0 (fun k => Fin.cases Ghatb1 (fun l => l.elim0) k) i with hGhatbt
+  set Gbt : Fin natAlgSig.numCtors → Binding.Tm (rlmrOSig natAlgSig) [] θ :=
+    fun i => Fin.cases Gb0 (fun k => Fin.cases Gb1 (fun l => l.elim0) k) i with hGbt
+  have hGbtRep : ∀ i : Fin natAlgSig.numCtors, Represents θ (Gbt i) (Ghatbt i) := by
+    intro i
+    obtain ⟨iv, hiv⟩ := i
+    match iv, hiv with
+    | 0, _ => exact hGb0
+    | 1, _ => exact hGb1
+    | (n + 2), h => exact absurd h (by have : natAlgSig.numCtors = 2 := rfl; omega)
+  have hae : appEval (sourceApp (sourceApp (sourceApp (Binding.sub Eσ
+        (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.case θ hθ) (fun k => k.elim0)))
+        G) Gb0) Gb1) finZeroElim
+      = appEval (Gbt idx) finZeroElim :=
+    hsem.trans (caseSelect_mk_ctorAt idx subv (fun i => appEval (Gbt i) finZeroElim))
+  cases hs : θ.shape with
+  | o =>
+    obtain rfl : θ = RType.o := RType.eq_o_of_shape_o hs
+    have htargetred : Relation.ReflTransGen OneLambdaStep
+        (OneLambda.app' (OneLambda.app' (OneLambda.app' (barCase (Γ := []) RType.o hθ) Ghat0)
+          Ghatb0) Ghatb1) (Ghatbt idx) := by
+      rw [barCase_o]
+      refine (OneLambda.reduces_app'_left _ (OneLambda.reduces_app'_left _
+        (OneLambda.reduces_app'_right _ hG0'))).trans ?_
+      exact conc_replicateSpine_case_reduces idx subv Ghatbt
+    exact lemma8 (lemma9_o _)
+      (htargetred.trans ((congrArg conc hae).symm ▸
+        (hGbtRep idx : Relation.ReflTransGen OneLambdaStep (Ghatbt idx)
+          (conc (appEval (Gbt idx) finZeroElim)))))
+  | arrow => exact absurd hθ (by unfold RType.IsObj; rw [hs]; decide)
+  | omega =>
+    obtain ⟨τ', rfl⟩ : ∃ τ', θ = RType.omega τ' :=
+      ⟨θ.omegaArg, RType.eq_omega_omegaArg_of_shape hs⟩
+    have htargetred : Relation.ReflTransGen OneLambdaStep
+        (OneLambda.app' (OneLambda.app' (OneLambda.app'
+          (barCase (Γ := []) (RType.omega τ') hθ) Ghat0) Ghatb0) Ghatb1) (Ghatbt idx) :=
+      barCase_appSpine_reduces τ' hθ idx subv Ghat0 Ghatbt hG0'
+    exact lemma8 (lemma9_omega τ' _)
+      (htargetred.trans ((congrArg (fun v => bbRep v (barTy τ')) hae).symm ▸
+        (hGbtRep idx : Relation.ReflTransGen OneLambdaStep (Ghatbt idx)
+          (bbRep (appEval (Gbt idx) finZeroElim) (barTy τ')))))
+
 end GebLean.Ramified
