@@ -48,6 +48,9 @@ implication carrying represented arguments to represented applications.
   induction (Leivant III section 4.2–4.3), standalone: representation of a
   substituted function and argument yields representation of the substituted
   application.
+* `barRecur_appSpine_reduces` — the recurrence bar-map saturated with represented
+  step terms reduces to its instantiated inner body, the recurrence-combinator
+  counterpart of `OneLambda.bbRep_appSpine_reduces`.
 
 ## Implementation notes
 
@@ -753,5 +756,39 @@ theorem represents_app {Γ : Binding.Ctx RType} {σ' τ' : RType}
   exact (OneLambda.sub_app' Eσhat (barTm f) (barTm x)) ▸
     (represents_arrow (Binding.sub Eσ f) (Binding.sub Eσhat (barTm f))).mp ihf
       (Binding.sub Eσ x) (Binding.sub Eσhat (barTm x)) ihx
+
+/-- The recurrence bar-map `barRecur τ` saturated with represented step terms
+along the outer abstraction spine reduces to the instantiated inner body (Leivant
+III section 4.2–4.3, Proposition 11's recurrence case): applying `barRecur τ` —
+whose outer `lamSpine` binds the `k` constructor step variables — to a step-term
+tuple `Ghat` along the step-type application spine reduces (`OneLambdaStep`,
+reflexive-transitively) to the residual abstraction `λ a. a g⃗` with the step
+arguments simultaneously substituted for the abstracted step variables
+(`instantiate (metaTuple Ghat)`). The direct instance of the generic λ-spine
+β-reduction `reduces_betaSpine` at `barRecur`'s outer abstraction spine, the
+recurrence-combinator counterpart of `bbRep_appSpine_reduces`; saturating the
+residual with the recurrence argument and β-reducing yields the value spine the
+recurrence case reads through `recurBridge`. -/
+theorem barRecur_appSpine_reduces (τ : RType)
+    (Ghat : ∀ i : Fin (stepTypes natAlgSig (barTy τ) (barTy τ)).length,
+      Binding.Tm (oneLambdaSig natAlgSig) [] ((stepTypes natAlgSig (barTy τ) (barTy τ)).get i)) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+        (barRecur (Γ := []) τ) Ghat)
+      (Binding.instantiate (Binding.metaTuple Ghat)
+        (OneLambda.lamSpine [bbType natAlgSig (barTy τ)]
+          (OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+            (Binding.Tm.var (Binding.Var.appendRight
+              ([] ++ stepTypes natAlgSig (barTy τ) (barTy τ))
+              (⟨⟨0, by simp⟩, rfl⟩ :
+                Binding.Var [bbType natAlgSig (barTy τ)] (bbType natAlgSig (barTy τ)))))
+            (fun idx =>
+              Binding.Tm.var (Binding.Thinning.weakAppend.app
+                (Binding.Var.appendRight []
+                  (⟨idx, rfl⟩ :
+                    Binding.Var (stepTypes natAlgSig (barTy τ) (barTy τ))
+                      ((stepTypes natAlgSig (barTy τ) (barTy τ)).get idx)))))))) := by
+  rw [barRecur]
+  exact OneLambda.reduces_betaSpine _ _ Ghat
 
 end GebLean.Ramified
