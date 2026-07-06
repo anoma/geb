@@ -2299,4 +2299,88 @@ theorem barConOmega_app_reduces (τ : RType) (v : FreeAlg natAlgSig)
             OneLambda.replicateSpine (natAlgSig.ar b) (barTy τ)
               (Binding.Tm.var (ctorVar b)) rec) () v)))
 
+/-- Compatibility of the representation relation with a shifted constructor
+constant (Leivant III section 4.2, Proposition 11's `con^{Ωτ}` case, a decision-2
+denotational reformulation): the constructor node `con^{Ωτ}_b` is represented by
+the parallel target substitution into its bar image `barConOmega b τ` of `1λ(A)`.
+The nullary node is fixed on the source side (`sub` over `elim0`) and mapped to
+the constructor bar-map on the target side (`barTmOp_con_omega`, whose result-sort
+transport vanishes at the concrete constructors of `natAlgSig`, then
+`sub_barConOmega`). The zero-arity constructor's bar image is definitionally the
+Berarducci-Böhm representation of its own denotation, so it represents itself
+reflexively; the unary constructor peels its argument with `represents_arrow`,
+reads the applied denotation as the semantic node (`appEval_app'`,
+`stdConstructorInterp`), and closes by the saturation keystone
+(`barConOmega_app_reduces`, through `barConOmega_true_fold`). -/
+theorem represents_con_omega {Γ : Binding.Ctx RType} (τ : RType) (b : natAlgSig.B)
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) []) :
+    Represents
+      (RType.curried (List.replicate (natAlgSig.ar b) (RType.omega τ)) (RType.omega τ))
+      (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b) (fun k => k.elim0)))
+      (Binding.sub Eσhat (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b) (fun k => k.elim0)))) := by
+  have hsrc : Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b) (fun k => k.elim0))
+      = Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b) (fun k => k.elim0) := by
+    rw [Binding.sub, Binding.traverse_op]; congr 1; funext k; exact k.elim0
+  cases b with
+  | false =>
+    have htgt : Binding.sub Eσhat (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con (RType.omega τ) (Or.inr rfl) false) (fun k => k.elim0)))
+        = barConOmega (Γ := []) false τ := by
+      rw [barTm_op, barTmOp_con_omega τ false _ rfl]
+      change Binding.sub Eσhat (barConOmega (Γ := Γ.map barTy) false τ)
+        = barConOmega (Γ := []) false τ
+      exact OneLambda.sub_barConOmega false τ Eσhat
+    refine htgt ▸ ?_
+    change Relation.ReflTransGen OneLambdaStep (barConOmega (Γ := []) false τ)
+      (bbRep (appEval (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con (RType.omega τ) (Or.inr rfl) false) (fun k => k.elim0)))
+        finZeroElim) (barTy τ))
+    rw [hsrc]
+    exact Relation.ReflTransGen.refl
+  | true =>
+    have htgt : Binding.sub Eσhat (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con (RType.omega τ) (Or.inr rfl) true) (fun k => k.elim0)))
+        = barConOmega (Γ := []) true τ := by
+      rw [barTm_op, barTmOp_con_omega τ true _ rfl]
+      change Binding.sub Eσhat (barConOmega (Γ := Γ.map barTy) true τ)
+        = barConOmega (Γ := []) true τ
+      exact OneLambda.sub_barConOmega true τ Eσhat
+    refine htgt ▸ ?_
+    change Represents (RType.arrow (RType.omega τ) (RType.omega τ))
+      (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con (RType.omega τ) (Or.inr rfl) true) (fun k => k.elim0)))
+      (barConOmega (Γ := []) true τ)
+    rw [represents_arrow]
+    intro G Ghat hG
+    have hsem : appEval (sourceApp (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con (RType.omega τ) (Or.inr rfl) true) (fun k => k.elim0))) G) finZeroElim
+        = FreeAlg.mk true (fun _ => appEval G finZeroElim) := by
+      refine (congrArg (fun t => appEval (sourceApp t G) finZeroElim) hsrc).trans ?_
+      rw [sourceApp, appEval_app']
+      change stdConstructorInterp natAlgSig (⟨RType.omega τ, Or.inr rfl⟩, true)
+          (Fin.cons (appEval G finZeroElim) finZeroElim)
+        = FreeAlg.mk true (fun _ => appEval G finZeroElim)
+      simp only [stdConstructorInterp]
+      refine eq_of_heq ((cast_heq _ _).trans (heq_of_eq ?_))
+      refine congrArg (FreeAlg.mk (A := natAlgSig) true) ?_
+      funext i
+      have hi : i = (⟨0, by decide⟩ : Fin (natAlgSig.ar true)) :=
+        Fin.ext (Nat.lt_one_iff.mp i.isLt)
+      subst hi
+      exact eq_of_heq (cast_heq _ _)
+    have hG' : Relation.ReflTransGen OneLambdaStep Ghat
+        (bbRep (appEval G finZeroElim) (barTy τ)) := hG
+    change Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app' (barConOmega (Γ := []) true τ) Ghat)
+      (bbRep (appEval (sourceApp (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con (RType.omega τ) (Or.inr rfl) true) (fun k => k.elim0))) G)
+        finZeroElim) (barTy τ))
+    rw [hsem, barConOmega_true_fold]
+    exact barConOmega_app_reduces τ (appEval G finZeroElim) Ghat hG'
+
 end GebLean.Ramified
