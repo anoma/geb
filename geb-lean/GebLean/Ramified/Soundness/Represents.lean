@@ -1051,4 +1051,59 @@ theorem represents_con_succ {Γ : Binding.Ctx RType} (b : natAlgSig.B)
     rw [hsem, hconc]
     exact OneLambda.reduces_app'_right _ hG
 
+/-- Compatibility of the representation relation with a destructor constant
+(Leivant III section 4.2, Proposition 11's destructor case, a decision-2
+denotational reformulation): the destructor node `dstr_j` is represented by the
+parallel target substitution into its bar image `dstr_j` of `1λ(A)`. The nullary
+node is fixed by both substitutions; the base destructor bar image needs no
+transport (`barTmOp_dstr`), and on a represented argument the applied destructor
+reduces to the concrete term of the destructed subterm through the shared
+concrete-reduction lemma `conc_app_dstr_reduces`, after casing the argument's
+value on its top constructor (`PolyFix.ind`). -/
+theorem represents_dstr {Γ : Binding.Ctx RType} (j : Fin natAlgSig.maxArity)
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) []) :
+    Represents (RType.arrow RType.o RType.o)
+      (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.dstr j) (fun k => k.elim0)))
+      (Binding.sub Eσhat (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.dstr j) (fun k => k.elim0)))) := by
+  have htgt : Binding.sub Eσhat (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.dstr j) (fun k => k.elim0)))
+      = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0) := by
+    rw [barTm_op, barTmOp_dstr]
+    change Binding.sub Eσhat
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0))
+      = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0)
+    rw [Binding.sub, Binding.traverse_op]; congr 1; funext k; exact k.elim0
+  refine htgt ▸ ?_
+  rw [represents_arrow]
+  intro G Ghat hG
+  have hsrc : Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.dstr j) (fun k => k.elim0))
+      = Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.dstr j) (fun k => k.elim0) := by
+    rw [Binding.sub, Binding.traverse_op]; congr 1; funext k; exact k.elim0
+  have heq : appEval (sourceApp (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.dstr j) (fun k => k.elim0))) G) finZeroElim
+      = dstrRead j.val (appEval G finZeroElim) := by
+    refine (congrArg (fun t => appEval (sourceApp t G) finZeroElim) hsrc).trans ?_
+    rw [sourceApp, appEval_app']
+    rfl
+  change Relation.ReflTransGen OneLambdaStep
+    (OneLambda.app' (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+      (OneLambdaOp.dstr j) (fun k => k.elim0)) Ghat)
+    (conc (appEval (sourceApp (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+      (RlmrOOp.dstr j) (fun k => k.elim0))) G) finZeroElim))
+  rw [heq]
+  have hG' : Relation.ReflTransGen OneLambdaStep Ghat (conc (appEval G finZeroElim)) := hG
+  refine (OneLambda.reduces_app'_right _ hG').trans ?_
+  generalize appEval G finZeroElim = v
+  refine PolyFix.ind (P := natAlgSig.polyEndo)
+    (motive := fun {_} v => Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app' (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+        (OneLambdaOp.dstr j) (fun k => k.elim0)) (conc v))
+      (conc (dstrRead j.val v)))
+    (fun {_} b sub _ => ?_) v
+  exact conc_app_dstr_reduces j b sub
+
 end GebLean.Ramified
