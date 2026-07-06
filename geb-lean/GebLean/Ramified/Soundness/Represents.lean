@@ -2869,6 +2869,19 @@ theorem sub_metaTuple_barTm_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig)
     = Binding.sub (Binding.metaTuple (stepTypes_map_barTy τ ▸ Ghat)) (bbFoldBody (barTy τ) v)
   rw [sub_congr_dom, metaTuple_congr_dom]
 
+/-- A dependent tuple over a list, transported along a list equality, is
+heterogeneously equal to the original tuple at corresponding positions: for
+`h : L = L'`, `f i ≍ (h ▸ f) i'` whenever `i.val = i'.val`. By `subst` and
+`Fin.ext`. Internal packaging reconciling the step tuple of the recurrence
+bar-map's application spine across `stepTypes_map_barTy`. -/
+theorem eqRec_fun_apply_heq {L L' : List RType} (h : L = L')
+    {C : RType → Type*} (f : ∀ i : Fin L.length, C (L.get i))
+    (i : Fin L.length) (i' : Fin L'.length) (hii : i.val = i'.val) :
+    HEq (f i) ((h ▸ f : ∀ j : Fin L'.length, C (L'.get j)) i') := by
+  subst h
+  obtain rfl : i = i' := Fin.ext hii
+  rfl
+
 /-- The residual `1λ(A)` term of the recurrence bar-map after saturating its step
 spine (Leivant III section 4.2, DOI `10.1016/S0168-0072(98)00040-2`, Proposition
 11's recurrence case): the abstraction `λ a. a c⃗` binding the Berarducci-Böhm
@@ -2954,5 +2967,156 @@ theorem barRecur_app_reduces (τ : RType)
     exact Binding.sub_id _
   simp only [ha]
   exact Relation.ReflTransGen.refl
+
+/-- Substitution commutes with a result-sort transport of the substituted term:
+for `h : s = s'`, `sub ρ (h ▸ t) = h ▸ sub ρ t`. By `cases h`. The substitution
+counterpart of `appEval_eqRec_sort`; internal packaging for the recurrence bar-map
+head reconciliation. -/
+theorem sub_eqRec_sort {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
+    {s s' : RType} (h : s = s') (ρ : Binding.Env (Binding.Tm S) Γ Δ)
+    (t : Binding.Tm S Γ s) :
+    Binding.sub ρ (h ▸ t) = h ▸ Binding.sub ρ t := by
+  cases h; rfl
+
+/-- Compatibility of the representation relation with the recurrence combinator
+(Leivant III section 4.2, DOI `10.1016/S0168-0072(98)00040-2`, Proposition 11's
+recurrence case, a decision-2 denotational reformulation): the recurrence node
+`recur τ` is represented by the parallel target substitution into its bar image.
+The nullary node is fixed on the source side (`sub` over `elim0`) and mapped to the
+recurrence bar-map on the target side (`barTmOp_recur`, `sub_barRecur`). Peels the
+curried step spine with `represents_curried`, reconciling the bar image with
+`barRecur` through the `barTmOp_recur` cast (`appSpine_heq`), then reads the source
+recursor through its free-algebra fold (`appEval_sourceFoldBody`) whose bar image is
+represented by `lemma10` at the source fold body, transferring source terms of equal
+denotation (`represents_congr_appEval`). The target saturates the step spine and the
+recurrence argument (`barRecur_app_reduces`, `bbRep_appSpine_reduces`) and closes by
+the fold-body fusion (`sub_metaTuple_barTm_sourceFoldBody`) under `lemma8`. Novel
+packaging of section 4.2. -/
+theorem represents_recur {Γ : Binding.Ctx RType} (τ : RType)
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) []) :
+    Represents
+      (RType.curried (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ))
+      (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.recur τ) (fun k => k.elim0)))
+      (Binding.sub Eσhat (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.recur τ) (fun k => k.elim0)))) := by
+  have hsrc : Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.recur τ) (fun k => k.elim0))
+      = Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ) (fun k => k.elim0) := by
+    rw [Binding.sub, Binding.traverse_op]; congr 1; funext k; exact k.elim0
+  have hbar : barTy ((rlmrOSig natAlgSig).result (RlmrOOp.recur τ))
+      = RType.curried (stepTypes natAlgSig (barTy τ) (barTy τ))
+          (RType.arrow (bbType natAlgSig (barTy τ)) (barTy τ)) := by
+    change barTy (RType.curried (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ)) = _
+    rw [barTy_curried, stepTypes_map_barTy, barTy_arrow, barTy_omega]
+  have hsubRec : Binding.sub Eσhat
+        (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ) (fun k => k.elim0)))
+      = hbar.symm ▸ barRecur (Γ := []) τ := by
+    apply eq_of_heq
+    rw [barTm_op, barTmOp_recur τ _ hbar]
+    simp only [eqRec_eq_cast]
+    refine HEq.trans ?_ (cast_heq _ (barRecur (Γ := []) τ)).symm
+    refine HEq.trans ?_ (heq_of_eq (OneLambda.sub_barRecur τ Eσhat))
+    congr 1
+    exact cast_heq _ _
+  refine represents_curried (stepTypes natAlgSig τ τ) _ _ ?_
+  intro G Ghat hG
+  rw [represents_arrow]
+  intro A Ahat hA
+  have hAbb : Relation.ReflTransGen OneLambdaStep Ahat
+      (bbRep (appEval A finZeroElim) (barTy τ)) := hA
+  have htgt_head :
+      OneLambda.appSpine ((stepTypes natAlgSig τ τ).map barTy)
+        ((barTy_curried (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ)) ▸
+          Binding.sub Eσhat
+            (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ)
+              (fun k => k.elim0))))
+        Ghat
+      = OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ)) (barRecur (Γ := []) τ)
+          (stepTypes_map_barTy τ ▸ Ghat :
+            ∀ i : Fin (stepTypes natAlgSig (barTy τ) (barTy τ)).length,
+              Binding.Tm (oneLambdaSig natAlgSig) []
+                ((stepTypes natAlgSig (barTy τ) (barTy τ)).get i)) := by
+    refine OneLambda.appSpine_heq (stepTypes_map_barTy τ) ?_ ?_
+    · simp only [eqRec_eq_cast]
+      refine (cast_heq _ _).trans ((heq_of_eq hsubRec).trans ?_)
+      simp only [eqRec_eq_cast]
+      exact cast_heq _ _
+    · intro i i' hii
+      exact eqRec_fun_apply_heq (stepTypes_map_barTy τ) Ghat i i' hii
+  have htgt_red : Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app'
+        (OneLambda.appSpine ((stepTypes natAlgSig τ τ).map barTy)
+          ((barTy_curried (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ)) ▸
+            Binding.sub Eσhat
+              (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ)
+                (fun k => k.elim0))))
+          Ghat)
+        Ahat)
+      (Binding.sub (Binding.metaTuple Ghat)
+        (barTm (sourceFoldBody τ (appEval A finZeroElim)))) := by
+    refine htgt_head ▸ ?_
+    refine (OneLambda.reduces_app'_right _ hAbb).trans ?_
+    refine (barRecur_app_reduces τ _ (bbRep (appEval A finZeroElim) (barTy τ))).trans ?_
+    refine (OneLambda.bbRep_appSpine_reduces (appEval A finZeroElim) (barTy τ) _).trans ?_
+    rw [sub_metaTuple_barTm_sourceFoldBody τ (appEval A finZeroElim) Ghat]
+    exact Relation.ReflTransGen.refl
+  have hRep10 : Represents τ
+      (Binding.sub (Binding.metaTuple G) (sourceFoldBody τ (appEval A finZeroElim)))
+      (Binding.sub (Binding.metaTuple Ghat)
+        (barTm (sourceFoldBody τ (appEval A finZeroElim)))) :=
+    lemma10 (lamFree_sourceFoldBody τ (appEval A finZeroElim))
+      (Binding.metaTuple G) (Binding.metaTuple Ghat)
+      (representsEnv_metaTuple G Ghat hG)
+  have hRep' : Represents τ
+      (Binding.sub (Binding.metaTuple G) (sourceFoldBody τ (appEval A finZeroElim)))
+      (OneLambda.app'
+        (OneLambda.appSpine ((stepTypes natAlgSig τ τ).map barTy)
+          ((barTy_curried (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ)) ▸
+            Binding.sub Eσhat
+              (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ)
+                (fun k => k.elim0))))
+          Ghat)
+        Ahat) :=
+    lemma8 hRep10 htgt_red
+  have hval :
+      appEval (Binding.sub (Binding.metaTuple G) (sourceFoldBody τ (appEval A finZeroElim)))
+          finZeroElim
+        = appEval (sourceApp
+            (appSpine (stepTypes natAlgSig τ τ)
+              (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ) (fun k => k.elim0)) G)
+            A) finZeroElim := by
+    have hRHS : appEval (sourceApp
+          (appSpine (stepTypes natAlgSig τ τ)
+            (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ) (fun k => k.elim0)) G) A)
+          finZeroElim
+        = FreeAlg.recurse (A := natAlgSig) (P := Unit)
+            (fun i _ _sub phi => appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+              (stepAtLabel (fun j => appEval (G j) finZeroElim) i)
+              (childEnv [] τ (natAlgSig.ar i) finZeroElim phi)) () (appEval A finZeroElim) := by
+      rw [sourceApp, appEval_app', appEval_appSpine]
+      exact congrFun
+        (appChain_curryInterp natAlgSig (stepTypes natAlgSig τ τ) (RType.arrow (RType.omega τ) τ)
+          (fun stepEnv z => FreeAlg.recurse (A := natAlgSig) (P := Unit)
+            (fun i _ _sub phi => appChain natAlgSig (List.replicate (natAlgSig.ar i) τ) τ
+              (stepAtLabel stepEnv i) (childEnv [] τ (natAlgSig.ar i) finZeroElim phi)) () z)
+          (fun j => appEval (G j) finZeroElim))
+        (appEval A finZeroElim)
+    rw [appEval_sub (sourceFoldBody τ (appEval A finZeroElim)) (Binding.metaTuple G) finZeroElim,
+      appEval_sourceFoldBody, hRHS]
+    rfl
+  have happEval :
+      appEval (Binding.sub (Binding.metaTuple G) (sourceFoldBody τ (appEval A finZeroElim)))
+          finZeroElim
+        = appEval (sourceApp
+            (appSpine (stepTypes natAlgSig τ τ)
+              (Binding.sub Eσ (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ)
+                (fun k => k.elim0))) G)
+            A) finZeroElim :=
+    hval.trans
+      (congrArg (fun f => appEval (sourceApp
+        (appSpine (stepTypes natAlgSig τ τ) f G) A) finZeroElim) hsrc).symm
+  exact represents_congr_appEval happEval hRep'
 
 end GebLean.Ramified
