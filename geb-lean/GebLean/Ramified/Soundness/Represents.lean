@@ -840,4 +840,29 @@ theorem barTmOp_con_o {Γ : Binding.Ctx RType} (b : natAlgSig.B)
   exact (eq_mpr_heq _ _).trans
     ((eq_mpr_heq _ _).trans ((eq_mpr_heq _ _).trans (cast_heq _ _).symm))
 
+/-- The term bar-map at a recurrence node is the recurrence bar-map `barRecur`
+(Leivant III section 4.2): `barTmOp (recur τ) ih = barRecur τ`, modulo the type
+transport of the recurrence result sort under the bar-map. The source result
+sort `ξ⃗, Ωτ → τ` maps under `barTy` to `barRecur`'s type only after distributing
+the bar-map over the curried step types (`barTy_curried`, `stepTypes_map_barTy`,
+not `rfl`), so the equation carries the residual `cast` along `hbar`, which the
+consumer discharges. The `barTmOp` recur-branch unfolding, novel packaging of
+section 4.2. -/
+theorem barTmOp_recur {Γ : Binding.Ctx RType} (τ : RType)
+    (ih : ∀ jj : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.recur τ)).length,
+      Binding.Tm (oneLambdaSig natAlgSig)
+        ((Γ ++ (((rlmrOSig natAlgSig).args (RlmrOOp.recur τ)).get jj).1).map barTy)
+        (barTy (((rlmrOSig natAlgSig).args (RlmrOOp.recur τ)).get jj).2))
+    (hbar : barTy ((rlmrOSig natAlgSig).result (RlmrOOp.recur τ))
+      = RType.curried (stepTypes natAlgSig (barTy τ) (barTy τ))
+          (RType.arrow (bbType natAlgSig (barTy τ)) (barTy τ))) :
+    barTmOp (Γ := Γ) (RlmrOOp.recur τ) ih
+      = cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)) hbar.symm)
+          (barRecur τ) := by
+  dsimp only [barTmOp]
+  apply eq_of_heq
+  rw [id_eq]
+  exact (eq_mpr_heq _ _).trans
+    ((eq_mpr_heq _ _).trans ((eq_mpr_heq _ _).trans (cast_heq _ _).symm))
+
 end GebLean.Ramified
