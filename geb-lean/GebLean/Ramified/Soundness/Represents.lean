@@ -889,4 +889,33 @@ theorem barTmOp_case {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
   exact (eq_mpr_heq _ _).trans
     ((eq_mpr_heq _ _).trans ((eq_mpr_heq _ _).trans (cast_heq _ _).symm))
 
+/-- The term bar-map at a shifted constructor node is the constructor bar-map
+`barConOmega` (Leivant III section 4.2): `barTmOp (con (Ω τ) b) ih =
+barConOmega b τ`, modulo the type transport of the constructor result sort under
+the bar-map. The source result sort `(Ω τ)^{A.ar b} → Ω τ` maps under `barTy` to
+`barConOmega`'s type only after distributing the bar-map over the curried shifted
+domains (`barTy_curried`, not `rfl`) and recovering the shift argument
+(`θ.omegaArg` at `θ = Ω τ` reduces to `τ`), so the equation carries the residual
+`cast` along `hbar`, which the consumer discharges. The `barTmOp` con-branch
+unfolding at `θ = Ω τ`, novel packaging of section 4.2. -/
+theorem barTmOp_con_omega {Γ : Binding.Ctx RType} (τ : RType) (b : natAlgSig.B)
+    (ih : ∀ jj : Fin
+        ((rlmrOSig natAlgSig).args (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b)).length,
+      Binding.Tm (oneLambdaSig natAlgSig)
+        ((Γ ++ (((rlmrOSig natAlgSig).args
+          (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b)).get jj).1).map barTy)
+        (barTy (((rlmrOSig natAlgSig).args
+          (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b)).get jj).2))
+    (hbar : barTy ((rlmrOSig natAlgSig).result (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b))
+      = RType.curried (List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ)))
+          (bbType natAlgSig (barTy τ))) :
+    barTmOp (Γ := Γ) (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b) ih
+      = cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)) hbar.symm)
+          (barConOmega b τ) := by
+  dsimp only [barTmOp, RType.shape_omega]
+  apply eq_of_heq
+  rw [id_eq]
+  exact (eq_mpr_heq _ _).trans
+    ((eq_mpr_heq _ _).trans ((eq_mpr_heq _ _).trans (cast_heq _ _).symm))
+
 end GebLean.Ramified
