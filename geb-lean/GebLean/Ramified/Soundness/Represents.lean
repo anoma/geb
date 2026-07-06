@@ -950,6 +950,37 @@ theorem OneLambda.sub_barCase {Γ Δ : Binding.Ctx RType} (θ : RType) (hθ : θ
         (RType.objTarget_of_isSimple (barTy τ'.omega) (barTy_isSimple _)).symm).trans
         (RType.curried_domains (barTy τ'.omega)).symm
 
+/-- Substitution fixes the constructor bar-map `barConOmega` (Leivant III section
+4.2): `sub ρ (barConOmega b τ) = barConOmega b τ`, rebasing only the ambient
+context marker from `Γ` to `Δ`. `barConOmega`'s image is closed with respect to
+the ambient context: every variable occurring in it points into `barConOmega`'s
+own local binders (its outer argument spine, its constructor-variable spine, and
+its per-argument application spine), never into `Γ`, so `ρ` has nothing reachable
+to act on. Proved by unfolding through the two abstraction spines
+(`sub_lamSpine`), the homogeneous constructor spine (`sub_replicateSpine`), and
+the per-argument application spine (`sub_appSpine`), discharging the residual
+local variables with `sub_underBinder_weakAppend` and
+`sub_underBinder_appendRight`. Novel packaging of section 4.2. -/
+theorem OneLambda.sub_barConOmega {Γ Δ : Binding.Ctx RType} (b : natAlgSig.B) (τ : RType)
+    (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ) :
+    Binding.sub ρ (barConOmega (Γ := Γ) b τ) = barConOmega (Γ := Δ) b τ := by
+  unfold barConOmega
+  refine (OneLambda.sub_lamSpine
+    (List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ))) ρ _).trans ?_
+  refine congrArg
+    (OneLambda.lamSpine (List.replicate (natAlgSig.ar b) (bbType natAlgSig (barTy τ)))) ?_
+  refine (OneLambda.sub_lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ)) _ _).trans ?_
+  refine congrArg (OneLambda.lamSpine (stepTypes natAlgSig (barTy τ) (barTy τ))) ?_
+  rw [OneLambda.sub_replicateSpine]
+  congr 1
+  · rw [sub_underBinder_appendRight]
+  · funext j
+    rw [OneLambda.sub_appSpine]
+    congr 1
+    · rw [sub_underBinder_weakAppend, sub_underBinder_appendRight, ren_var]
+    · funext idx
+      rw [sub_underBinder_appendRight]
+
 /-- The Berarducci-Böhm representation `bbRep v σ` saturated with represented
 step terms along its abstraction spine reduces to the instantiated fold body
 (Leivant III section 4.2, Proposition 11's recurrence case): applying
