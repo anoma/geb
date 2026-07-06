@@ -2581,8 +2581,8 @@ def sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig) :
 (Leivant III section 4.2): the `FreeAlg.recurse` fold of a value `v` over the
 `1λ(A)` constructor-step variables of `stepTypes natAlgSig σ σ`, the body under
 `bbRep`'s abstraction spine (`bbRep a σ = lamSpine (stepTypes σ σ)
-(bbFoldBody σ a)`) and the term the saturation keystone `bbRep_appSpine_reduces`
-lands on. Novel packaging of section 4.2. -/
+(bbFoldBody σ a)`) and the term the saturation reduction
+`bbRep_appSpine_reduces` reduces to. Novel packaging of section 4.2. -/
 def bbFoldBody (σ : RType) (v : FreeAlg natAlgSig) :
     Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ :=
   FreeAlg.recurse (A := natAlgSig) (P := Unit)
@@ -2886,7 +2886,7 @@ theorem eqRec_fun_apply_heq {L L' : List RType} (h : L = L')
 spine (Leivant III section 4.2, DOI `10.1016/S0168-0072(98)00040-2`, Proposition
 11's recurrence case): the abstraction `λ a. a c⃗` binding the Berarducci-Böhm
 recurrence argument `a` and applying it along the bound step spine, the term
-`barRecur_appSpine_reduces` lands on under the `instantiate` of the step tuple.
+`barRecur_appSpine_reduces` reduces to under the `instantiate` of the step tuple.
 The recurrence counterpart of `barConOmegaBody`. Novel packaging of section 4.2. -/
 def barRecurResidual (τ : RType) :
     Binding.Tm (oneLambdaSig natAlgSig) ([] ++ stepTypes natAlgSig (barTy τ) (barTy τ))
@@ -2967,16 +2967,6 @@ theorem barRecur_app_reduces (τ : RType)
     exact Binding.sub_id _
   simp only [ha]
   exact Relation.ReflTransGen.refl
-
-/-- Substitution commutes with a result-sort transport of the substituted term:
-for `h : s = s'`, `sub ρ (h ▸ t) = h ▸ sub ρ t`. By `cases h`. The substitution
-counterpart of `appEval_eqRec_sort`; internal packaging for the recurrence bar-map
-head reconciliation. -/
-theorem sub_eqRec_sort {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
-    {s s' : RType} (h : s = s') (ρ : Binding.Env (Binding.Tm S) Γ Δ)
-    (t : Binding.Tm S Γ s) :
-    Binding.sub ρ (h ▸ t) = h ▸ Binding.sub ρ t := by
-  cases h; rfl
 
 /-- Compatibility of the representation relation with the recurrence combinator
 (Leivant III section 4.2, DOI `10.1016/S0168-0072(98)00040-2`, Proposition 11's
