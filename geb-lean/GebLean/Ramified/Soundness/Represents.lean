@@ -865,4 +865,28 @@ theorem barTmOp_recur {Γ : Binding.Ctx RType} (τ : RType)
   exact (eq_mpr_heq _ _).trans
     ((eq_mpr_heq _ _).trans ((eq_mpr_heq _ _).trans (cast_heq _ _).symm))
 
+/-- The term bar-map at a case node is the case bar-map `barCase` (Leivant III
+section 4.2): `barTmOp (case θ hθ) ih = barCase θ hθ`, modulo the type transport
+of the case result sort under the bar-map. The source result sort
+`o, θ^k → θ` maps under `barTy` to `barCase`'s type only after distributing the
+bar-map over the curried branch types (`barTy_curried`, not `rfl`), so the
+equation carries the residual `cast` along `hbar`, which the consumer discharges.
+The `barTmOp` case-branch unfolding, novel packaging of section 4.2. -/
+theorem barTmOp_case {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
+    (ih : ∀ jj : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.case θ hθ)).length,
+      Binding.Tm (oneLambdaSig natAlgSig)
+        ((Γ ++ (((rlmrOSig natAlgSig).args (RlmrOOp.case θ hθ)).get jj).1).map barTy)
+        (barTy (((rlmrOSig natAlgSig).args (RlmrOOp.case θ hθ)).get jj).2))
+    (hbar : barTy ((rlmrOSig natAlgSig).result (RlmrOOp.case θ hθ))
+      = RType.arrow RType.o
+          (RType.curried (List.replicate natAlgSig.numCtors (barTy θ)) (barTy θ))) :
+    barTmOp (Γ := Γ) (RlmrOOp.case θ hθ) ih
+      = cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) (Γ.map barTy)) hbar.symm)
+          (barCase θ hθ) := by
+  dsimp only [barTmOp]
+  apply eq_of_heq
+  rw [id_eq]
+  exact (eq_mpr_heq _ _).trans
+    ((eq_mpr_heq _ _).trans ((eq_mpr_heq _ _).trans (cast_heq _ _).symm))
+
 end GebLean.Ramified
