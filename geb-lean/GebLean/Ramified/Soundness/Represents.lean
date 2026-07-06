@@ -1059,6 +1059,27 @@ theorem OneLambda.reduces_appSpine_ren_lamSpine {Γ : Binding.Ctx RType}
     rw [henv, Binding.sub_id]
   rw [hcancel]
 
+/-- Reduction of the arguments of an application spine lifts to a reduction of
+the whole spine: if `args i ⇒* args' i` pointwise then `appSpine Ts head args ⇒*
+appSpine Ts head args'`. By recursion on `Ts`, reducing the head application's
+argument through `reduces_app'_right` under the residual spine
+(`reduces_appSpine`) and the remaining arguments by the recursion. The
+argument-side counterpart of `OneLambda.reduces_appSpine`. -/
+theorem OneLambda.reduces_appSpine_args {Γ : Binding.Ctx RType} {result : RType} :
+    (Ts : List RType) →
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried Ts result)) →
+    (args args' : ∀ i : Fin Ts.length, Binding.Tm (oneLambdaSig natAlgSig) Γ (Ts.get i)) →
+    (∀ i, Relation.ReflTransGen OneLambdaStep (args i) (args' i)) →
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.appSpine Ts head args) (OneLambda.appSpine Ts head args')
+  | [], _head, _args, _args', _h => Relation.ReflTransGen.refl
+  | _T :: Ts', head, args, args', h => by
+      rw [OneLambda.appSpine, OneLambda.appSpine]
+      refine (OneLambda.reduces_appSpine Ts' _ _ (fun i => args i.succ)
+        (OneLambda.reduces_app'_right head (h ⟨0, Nat.succ_pos _⟩))).trans ?_
+      exact OneLambda.reduces_appSpine_args Ts' (OneLambda.app' head (args' ⟨0, Nat.succ_pos _⟩))
+        (fun i => args i.succ) (fun i => args' i.succ) (fun i => h i.succ)
+
 /-- The Berarducci-Böhm representation `bbRep v σ` saturated with represented
 step terms along its abstraction spine reduces to the instantiated fold body
 (Leivant III section 4.2, Proposition 11's recurrence case): applying
