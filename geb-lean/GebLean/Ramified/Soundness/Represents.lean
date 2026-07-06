@@ -2407,4 +2407,82 @@ theorem represents_con_omega {Γ : Binding.Ctx RType} (τ : RType) (b : natAlgSi
     rw [hsem, barConOmega_true_fold]
     exact barConOmega_app_reduces τ (appEval G finZeroElim) Ghat hG'
 
+/-- The per-index reconciliation between the bar image of a context sort and the
+context bar-map at the same position: `(Ts.map barTy).get (i.cast …) = barTy
+(Ts.get i)`. The list-position counterpart of `barVar`'s sort transport, letting
+the represented-argument hypothesis of `represents_curried` read the `barTy`-image
+of each source-argument sort off the barred context. From `List.getElem_map`. -/
+theorem barTy_get_map (Ts : List RType) (i : Fin Ts.length) :
+    (Ts.map barTy).get (i.cast (List.length_map barTy).symm) = barTy (Ts.get i) := by
+  simp [List.get_eq_getElem, List.getElem_map]
+
+/-- A result-sort transport commutes with the application node of `1λ(A)`: for
+`e : b = b'`, `app' ((congrArg (arrow a) e) ▸ f) x = e ▸ app' f x`. Proved by
+`cases e`. The sort-transport counterpart of `OneLambda.app'_transport_cod`,
+threading the `barTy_curried` result-sort transport through the argument peel of
+`represents_curried`. -/
+theorem OneLambda.app'_eqRec_cod {a b b' : RType} (e : b = b')
+    (f : Binding.Tm (oneLambdaSig natAlgSig) [] (RType.arrow a b))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) [] a) :
+    OneLambda.app' (congrArg (RType.arrow a) e ▸ f) x = e ▸ OneLambda.app' f x := by
+  cases e; rfl
+
+/-- The peeling lemma of the representation relation at a curried result sort
+(Leivant III section 4.2, the spine generalization of `represents_arrow`): a
+closed source term `F` at a curried sort `curried Ts r` is represented by `Fhat`
+whenever, for every tuple of represented arguments `(G, Ghat)`, the source
+application spine `appSpine Ts F G` is represented by the target application spine
+`appSpine (Ts.map barTy) ((barTy_curried Ts r) ▸ Fhat) Ghat`.
+
+Generic over the argument-sort list `Ts` (which need not reduce to a literal
+`cons`), so it applies at `Ts = stepTypes natAlgSig τ τ` where the recurrence
+step-type list does not unfold; the length-one instance recovers
+`represents_arrow`. The result-sort transport `barTy_curried Ts r` reconciling
+`barTy (curried Ts r)` with `curried (Ts.map barTy) (barTy r)` is exposed on the
+target spine head, so a consumer holding a bar image at `barTy (curried Ts r)`
+(such as the recurrence bar-map, cast along `barTmOp_recur`'s `hbar`) supplies it
+to `Fhat` directly and discharges the transport where it saturates the spine.
+
+Proved by recursion on `Ts`: the empty spine reduces both applications to their
+heads and closes by the hypothesis at the empty tuples; the `cons` case peels one
+argument with `represents_arrow`, feeds the residual spine hypothesis assembled
+from `Fin.cons` of the peeled argument, and threads the result-sort transport
+through the head application with `OneLambda.app'_eqRec_cod`. Novel packaging of
+section 4.2. -/
+theorem represents_curried {r : RType} :
+    (Ts : List RType) →
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.curried Ts r)) →
+    (Fhat : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (RType.curried Ts r))) →
+    (∀ (G : ∀ i : Fin Ts.length, Binding.Tm (rlmrOSig natAlgSig) [] (Ts.get i))
+       (Ghat : ∀ i : Fin (Ts.map barTy).length,
+         Binding.Tm (oneLambdaSig natAlgSig) [] ((Ts.map barTy).get i)),
+       (∀ i : Fin Ts.length,
+         Represents (Ts.get i) (G i)
+           (barTy_get_map Ts i ▸ Ghat (i.cast (List.length_map barTy).symm))) →
+         Represents r (appSpine Ts F G)
+           (OneLambda.appSpine (Ts.map barTy) ((barTy_curried Ts r) ▸ Fhat) Ghat)) →
+    Represents (RType.curried Ts r) F Fhat
+  | [], F, Fhat, hspine =>
+    hspine (fun i => i.elim0) (fun i => i.elim0) (fun i => i.elim0)
+  | σ :: Ts', F, Fhat, hspine => by
+    change Represents (RType.arrow σ (RType.curried Ts' r)) F Fhat
+    refine (represents_arrow F Fhat).mpr ?_
+    intro G0 Ghat0 hG0
+    refine represents_curried Ts' (sourceApp F G0) (OneLambda.app' Fhat Ghat0) ?_
+    intro G' Ghat' hrep'
+    let Gc : ∀ i : Fin (σ :: Ts').length,
+        Binding.Tm (rlmrOSig natAlgSig) [] ((σ :: Ts').get i) := Fin.cons G0 G'
+    let Ghatc : ∀ i : Fin (List.map barTy (σ :: Ts')).length,
+        Binding.Tm (oneLambdaSig natAlgSig) [] ((List.map barTy (σ :: Ts')).get i) :=
+      Fin.cons Ghat0 Ghat'
+    have hrep : ∀ i : Fin (σ :: Ts').length,
+        Represents ((σ :: Ts').get i) (Gc i)
+          (barTy_get_map (σ :: Ts') i ▸ Ghatc (i.cast (List.length_map barTy).symm)) := by
+      refine Fin.cases ?_ ?_
+      · simpa [Gc, Ghatc] using hG0
+      · intro j; simpa [Gc, Ghatc] using hrep' j
+    have key := hspine Gc Ghatc hrep
+    rw [← OneLambda.app'_eqRec_cod (barTy_curried Ts' r) Fhat Ghat0]
+    exact key
+
 end GebLean.Ramified
