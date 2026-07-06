@@ -2813,4 +2813,60 @@ theorem lamFree_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig) :
   refine lamFree_heq (by rw [List.get_eq_getElem, List.getElem_replicate])
     (HEq.symm ((cast_heq _ _).trans (cast_heq _ _))) (ih (idx.cast List.length_replicate))
 
+/-- Substitution commutes with a source-context transport of the substituted
+term, pulling the transport onto the environment: for `h : Γ = Γ'`,
+`sub ρ (h ▸ t) = sub (fun b x => ρ b (h ▸ x)) t`. The substitution instance of
+`traverse_congr_dom`. Internal packaging for the recurrence fusion identity. -/
+theorem sub_congr_dom {S : Binding.BinderSig RType} {Γ Γ' Δ : Binding.Ctx RType}
+    {s : RType} (h : Γ = Γ') (ρ : Binding.Env (Binding.Tm S) Γ' Δ)
+    (t : Binding.Tm S Γ s) :
+    Binding.sub ρ (h ▸ t) = Binding.sub (fun b x => ρ b (h ▸ x)) t :=
+  traverse_congr_dom (Binding.subKit S) h ρ t
+
+/-- Rearranging a transport equality: from `h ▸ x = y` conclude `x = h.symm ▸ y`.
+By `cases h`. Internal packaging for the recurrence fusion identity. -/
+theorem eqRec_symm_eq {α : Type*} {C : α → Type*} {a b : α} (h : a = b)
+    (x : C a) (y : C b) (H : (h ▸ x : C b) = y) : x = (h.symm ▸ y : C a) := by
+  cases h; exact H
+
+/-- Reindexing the argument tuple of `metaTuple` along a source-context transport:
+`(fun b x => metaTuple Gh b (h ▸ x)) = metaTuple (h.symm ▸ Gh)`. By `subst`.
+Internal packaging for the recurrence fusion identity. -/
+theorem metaTuple_congr_dom {S : Binding.BinderSig RType} {Γ Γ' Δ : Binding.Ctx RType}
+    (h : Γ = Γ') (Gh : ∀ i : Fin Γ'.length, Binding.Tm S Δ (Γ'.get i)) :
+    (fun (b : RType) (x : Binding.Var Γ b) => Binding.metaTuple Gh b (h ▸ x))
+      = Binding.metaTuple (h.symm ▸ Gh) := by
+  subst h; rfl
+
+/-- The recurrence fusion identity (Leivant III section 4.2, DOI
+`10.1016/S0168-0072(98)00040-2`, Proposition 11's recurrence case, second Lemma-10
+sub-lemma): substituting the target step tuple `Ghat` into the bar image of the
+source fold body equals instantiating the reindexed step tuple into the
+Berarducci-Böhm fold body. The bar-map/fold-body commutation
+(`barTm_sourceFoldBody`) rewrites the bar image to a context transport of
+`bbFoldBody`; substitution pulls the transport onto the environment
+(`sub_congr_dom`, `metaTuple_congr_dom`) and `instantiate` over the empty prefix is
+`sub` definitionally. Novel packaging of section 4.2. -/
+theorem sub_metaTuple_barTm_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig)
+    (Ghat : ∀ i : Fin ((stepTypes natAlgSig τ τ).map barTy).length,
+      Binding.Tm (oneLambdaSig natAlgSig) []
+        (((stepTypes natAlgSig τ τ).map barTy).get i)) :
+    Binding.sub (Binding.metaTuple Ghat) (barTm (sourceFoldBody τ v))
+      = Binding.instantiate (Binding.metaTuple
+          (stepTypes_map_barTy τ ▸ Ghat :
+            ∀ i : Fin (stepTypes natAlgSig (barTy τ) (barTy τ)).length,
+              Binding.Tm (oneLambdaSig natAlgSig) []
+                ((stepTypes natAlgSig (barTy τ) (barTy τ)).get i)))
+          (bbFoldBody (barTy τ) v) := by
+  have hbtm : barTm (sourceFoldBody τ v)
+      = (stepTypes_map_barTy τ).symm ▸ bbFoldBody (barTy τ) v :=
+    eqRec_symm_eq (C := fun L => Binding.Tm (oneLambdaSig natAlgSig) L (barTy τ))
+      (stepTypes_map_barTy τ) (barTm (sourceFoldBody τ v)) (bbFoldBody (barTy τ) v)
+      (barTm_sourceFoldBody τ v)
+  rw [hbtm]
+  change Binding.sub (Binding.metaTuple Ghat)
+      ((stepTypes_map_barTy τ).symm ▸ bbFoldBody (barTy τ) v)
+    = Binding.sub (Binding.metaTuple (stepTypes_map_barTy τ ▸ Ghat)) (bbFoldBody (barTy τ) v)
+  rw [sub_congr_dom, metaTuple_congr_dom]
+
 end GebLean.Ramified
