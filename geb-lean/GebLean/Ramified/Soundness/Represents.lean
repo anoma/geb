@@ -791,4 +791,19 @@ theorem barRecur_appSpine_reduces (τ : RType)
   rw [barRecur]
   exact OneLambda.reduces_betaSpine _ _ Ghat
 
+/-- The term bar-map at a destructor node is the base destructor constant of
+`1λ(A)` (Leivant III section 4.2): `barTmOp (dstr j) ih = Tm.op (dstr j)`. The
+destructor result sort `o → o` is bar-invariant (`barTy (arrow o o) = arrow o o`
+definitionally), so the branch's `rw [barTy_arrow, barTy_o]` transport collapses
+and the equation holds outright. The `barTmOp` dstr-branch unfolding, novel
+packaging of section 4.2. -/
+theorem barTmOp_dstr {Γ : Binding.Ctx RType} (j : Fin natAlgSig.maxArity)
+    (ih : ∀ jj : Fin ((rlmrOSig natAlgSig).args (RlmrOOp.dstr j)).length,
+      Binding.Tm (oneLambdaSig natAlgSig)
+        ((Γ ++ (((rlmrOSig natAlgSig).args (RlmrOOp.dstr j)).get jj).1).map barTy)
+        (barTy (((rlmrOSig natAlgSig).args (RlmrOOp.dstr j)).get jj).2)) :
+    barTmOp (Γ := Γ) (RlmrOOp.dstr j) ih
+      = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0) :=
+  rfl
+
 end GebLean.Ramified
