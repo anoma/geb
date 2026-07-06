@@ -896,6 +896,15 @@ theorem OneLambda.sub_caseOp {Γ Δ : Binding.Ctx RType}
   funext k
   exact k.elim0
 
+/-- Substitution fixes the case bar-map `barCase` (Leivant III section 4.2): `sub ρ
+(barCase θ hθ) = barCase θ hθ`, rebasing only the ambient context marker from `Γ` to `Δ`.
+`barCase`'s image is closed with respect to the ambient context: every variable occurring
+in it points into `barCase`'s own local binders (its abstraction spines, replicate-spine,
+and case-argument spine), never into `Γ`, so `ρ` has nothing reachable to act on. Proved by
+cases on `θ.shape`: the `o` branch is `sub_caseOp`; the `omega` branch unfolds through
+`sub_lamSpine`, `sub_cast_sort`, `sub_replicateSpine`, `sub_app'`, `sub_caseOp`, and
+`sub_appSpine`, discharging the residual local variables with `sub_underBinder_weakAppend`
+and `sub_underBinder_appendRight`. Novel packaging of section 4.2. -/
 theorem OneLambda.sub_barCase {Γ Δ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
     (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ) :
     Binding.sub ρ (barCase (Γ := Γ) θ hθ) = barCase (Γ := Δ) θ hθ := by
