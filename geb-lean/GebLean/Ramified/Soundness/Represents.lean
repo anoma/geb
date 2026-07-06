@@ -2678,4 +2678,27 @@ theorem represents_congr_appEval {τ : RType} {M M' : Binding.Tm (rlmrOSig natAl
               (barTy (childx (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega)))))
           rw [← h]; exact hRep) τ M M' Mhat h hRep
 
+/-- The representation-related environment built from per-constructor step pairs
+(Leivant III section 4.2, Proposition 11's recurrence case, fourth Lemma-10
+sub-lemma): the substitution environments `metaTuple G` and `metaTuple Ghat`
+assembled from a source step tuple `G` and a target step tuple `Ghat` are
+`RepresentsEnv`-related whenever each step pair is `Represents`-related at the
+corresponding step type. The environment `lemma10` consumes for the fold body.
+Novel packaging of section 4.2. -/
+theorem representsEnv_metaTuple {τ : RType}
+    (G : ∀ i : Fin (stepTypes natAlgSig τ τ).length,
+      Binding.Tm (rlmrOSig natAlgSig) [] ((stepTypes natAlgSig τ τ).get i))
+    (Ghat : ∀ i : Fin ((stepTypes natAlgSig τ τ).map barTy).length,
+      Binding.Tm (oneLambdaSig natAlgSig) [] (((stepTypes natAlgSig τ τ).map barTy).get i))
+    (hrep : ∀ i : Fin (stepTypes natAlgSig τ τ).length,
+      Represents ((stepTypes natAlgSig τ τ).get i) (G i)
+        (barTy_get_map (stepTypes natAlgSig τ τ) i ▸
+          Ghat (i.cast (List.length_map barTy).symm))) :
+    RepresentsEnv (Binding.metaTuple G) (Binding.metaTuple Ghat) := by
+  intro s x
+  obtain ⟨xi, xh⟩ := x
+  subst xh
+  rw [show Binding.metaTuple G ((stepTypes natAlgSig τ τ).get xi) ⟨xi, rfl⟩ = G xi from rfl]
+  exact hrep xi
+
 end GebLean.Ramified
