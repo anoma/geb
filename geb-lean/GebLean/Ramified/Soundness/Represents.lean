@@ -1486,4 +1486,32 @@ theorem bbRep_caseSelect (z v0 v1 : FreeAlg natAlgSig) (σ : RType) :
   cases z with
   | mk _ b subs => cases b <;> rfl
 
+/-- A singleton abstraction spine is a single abstraction (Leivant III section
+4.1, structural): `lamSpine [σ] body = lam' body`, the two interposed casts of
+`lamSpine`'s empty-suffix base case cancelling. Internal packaging for
+`lamSpine_cons` and the `barCase` saturation keystone. -/
+theorem OneLambda.lamSpine_single {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RType}
+    (σ : RType) {τ : RType} (body : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) :
+    OneLambda.lamSpine [σ] body = OneLambda.lam' body := by
+  rw [OneLambda.lamSpine, OneLambda.lamSpine]
+  exact congrArg OneLambda.lam' (eq_of_heq ((cast_heq _ _).trans (cast_heq _ _)))
+
+/-- Nesting one outer abstraction over an iterated abstraction merges the two
+into a single abstraction spine (Leivant III section 4.1, structural): abstracting
+`Δ` and then a single sort `σ` equals abstracting the whole `σ :: Δ`, up to the
+reassociation of the abstraction context `(Γ ++ [σ]) ++ Δ = Γ ++ (σ :: Δ)`.
+Internal packaging for the `barCase` saturation keystone, folding `barCase`'s
+outer `lamSpine [o]` / `lamSpine (replicate …)` into one spine that
+`reduces_betaSpine` saturates. -/
+theorem OneLambda.lamSpine_cons {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RType}
+    (σ : RType) (Δ : List RType) {τ : RType}
+    (body : Binding.Tm (oneLambdaSig A) ((Γ ++ [σ]) ++ Δ) τ) :
+    OneLambda.lamSpine [σ] (OneLambda.lamSpine Δ body)
+      = OneLambda.lamSpine (σ :: Δ) ((List.append_assoc Γ [σ] Δ) ▸ body) := by
+  rw [OneLambda.lamSpine_single, OneLambda.lamSpine]
+  refine congrArg OneLambda.lam' (congrArg (OneLambda.lamSpine Δ) ?_)
+  rw [tm_cast_eq_eqRec (List.append_assoc Γ [σ] Δ).symm]
+  exact (eqRec_symm_eqRec (motive := fun c => Binding.Tm (oneLambdaSig A) c τ)
+    (List.append_assoc Γ [σ] Δ) body).symm
+
 end GebLean.Ramified
