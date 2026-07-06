@@ -599,6 +599,24 @@ theorem OneLambda.sub_lamSpine :
         (List.append_assoc Γ' [σ] Δ').symm
         (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := σ :: Δ') ρ) body
 
+/-- Substitution distributes over the iterated application `OneLambda.appSpine`:
+`sub ρ (appSpine Ts head args) = appSpine Ts (sub ρ head) (fun i => sub ρ (args
+i))`, applying the substitution to the head and every argument of the spine. The
+spine dual of `OneLambda.sub_app'`, by recursion on the argument-sort list `Ts`
+peeling one application through `OneLambda.sub_app'`. Internal packaging for
+`sub_barCase`. -/
+theorem OneLambda.sub_appSpine {Γ Δ : Binding.Ctx RType} {result : RType} :
+    (Ts : List RType) →
+    (ρ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ) →
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried Ts result)) →
+    (args : ∀ i : Fin Ts.length, Binding.Tm (oneLambdaSig natAlgSig) Γ (Ts.get i)) →
+    Binding.sub ρ (OneLambda.appSpine Ts head args)
+      = OneLambda.appSpine Ts (Binding.sub ρ head) (fun i => Binding.sub ρ (args i))
+  | [], _ρ, _head, _args => rfl
+  | _T :: Ts', ρ, head, args => by
+      rw [OneLambda.appSpine, OneLambda.sub_appSpine Ts', OneLambda.sub_app']
+      rfl
+
 /-- Instantiating the empty append-at-end suffix is the append-nil context
 transport: `instantiate m body = (append_nil Γ) ▸ body` for any (vacuous)
 meta-map `m` on `[]`. The empty-suffix base of the generic λ-spine β-reduction.
