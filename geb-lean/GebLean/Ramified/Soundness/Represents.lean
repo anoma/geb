@@ -1514,4 +1514,79 @@ theorem OneLambda.lamSpine_cons {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RTy
   exact (eqRec_symm_eqRec (motive := fun c => Binding.Tm (oneLambdaSig A) c τ)
     (List.append_assoc Γ [σ] Δ) body).symm
 
+/-- Renaming commutes with a sort transport of a term: for `h : s = s'`,
+`ren ρ (cast (congrArg (Tm S Γ) h) t) = cast (congrArg (Tm S Δ) h) (ren ρ t)`,
+carrying the sort equality through the renaming unchanged. Proved by `cases h`.
+The renaming counterpart of `sub_cast_sort`; internal packaging for the `barCase`
+saturation keystone. -/
+theorem ren_cast_sort {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
+    {s s' : RType} (ρ : Binding.Thinning Γ Δ) (h : s = s')
+    (t : Binding.Tm S Γ s) :
+    Binding.ren ρ (cast (congrArg (Binding.Tm S Γ) h) t)
+      = cast (congrArg (Binding.Tm S Δ) h) (Binding.ren ρ t) := by
+  cases h; rfl
+
+/-- A `1λ(A)` reduction is carried through a sort transport of its endpoints: for
+`h : s = s'`, `X ⇒* Y` gives `cast … X ⇒* cast … Y`, since a sort transport is a
+type coercion inert on the reduction relation. Proved by `cases h`. Internal
+packaging for the `barCase` saturation keystone, transporting the eta-collapsed
+branch across the `curried domains o = barTy θ` reconciliation. -/
+theorem reduces_cast_sort {Γ : Binding.Ctx RType} {s s' : RType} (h : s = s')
+    {X Y : Binding.Tm (oneLambdaSig natAlgSig) Γ s}
+    (hr : Relation.ReflTransGen OneLambdaStep X Y) :
+    Relation.ReflTransGen OneLambdaStep
+      (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) Γ) h) X)
+      (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) Γ) h) Y) := by
+  cases h; exact hr
+
+/-- Renaming distributes over the iterated application `OneLambda.appSpine`:
+`ren ρ (appSpine Ts head args) = appSpine Ts (ren ρ head) (fun i => ren ρ (args
+i))`. The renaming counterpart of `OneLambda.sub_appSpine`, by recursion on the
+argument-sort list `Ts` peeling one application through `OneLambda.ren_app'`.
+Internal packaging for the `barCase` saturation keystone. -/
+theorem OneLambda.ren_appSpine {Γ Δ : Binding.Ctx RType} {result : RType}
+    (ρ : Binding.Thinning Γ Δ) :
+    (Ts : List RType) →
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried Ts result)) →
+    (args : ∀ i : Fin Ts.length, Binding.Tm (oneLambdaSig natAlgSig) Γ (Ts.get i)) →
+    Binding.ren ρ (OneLambda.appSpine Ts head args)
+      = OneLambda.appSpine Ts (Binding.ren ρ head) (fun i => Binding.ren ρ (args i))
+  | [], _head, _args => rfl
+  | _T :: Ts', head, args => by
+      rw [OneLambda.appSpine, OneLambda.ren_appSpine ρ Ts', OneLambda.ren_app']
+      rfl
+
+/-- Heterogeneous congruence of renaming in the sort: renaming through
+heterogeneously-equal terms at sorts related by `h : a = b` yields
+heterogeneously-equal results. Proved by `cases h` then `eq_of_heq`. The renaming
+counterpart of `sub_heq_of_heq`; internal packaging for `ren_replicateSpine`. -/
+theorem ren_heq_of_heq {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
+    {a b : RType} (ρ : Binding.Thinning Γ Δ) (h : a = b)
+    {t : Binding.Tm S Γ a} {u : Binding.Tm S Γ b} (ht : HEq t u) :
+    HEq (Binding.ren ρ t) (Binding.ren ρ u) := by
+  cases h; rw [eq_of_heq ht]
+
+/-- Renaming distributes over the homogeneous iterated application
+`OneLambda.replicateSpine`: `ren ρ (replicateSpine n base head args) =
+replicateSpine n base (ren ρ head) (fun idx => ren ρ (args idx))`. The homogeneous
+instance of `OneLambda.ren_appSpine`, reconciling the per-index `Eq.mpr` sort
+transport through `ren_cast_sort`'s heterogeneous analogue. Internal packaging for
+the `barCase` saturation keystone. -/
+theorem OneLambda.ren_replicateSpine {Γ Δ : Binding.Ctx RType} {result : RType}
+    (n : Nat) (base : RType) (ρ : Binding.Thinning Γ Δ)
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ
+      (RType.curried (List.replicate n base) result))
+    (args : Fin n → Binding.Tm (oneLambdaSig natAlgSig) Γ base) :
+    Binding.ren ρ (OneLambda.replicateSpine n base head args)
+      = OneLambda.replicateSpine n base (Binding.ren ρ head)
+          (fun idx => Binding.ren ρ (args idx)) := by
+  rw [OneLambda.replicateSpine, OneLambda.ren_appSpine, OneLambda.replicateSpine]
+  refine congrArg (OneLambda.appSpine (List.replicate n base) (Binding.ren ρ head)) ?_
+  funext i
+  have hs : (List.replicate n base).get i = base := by
+    rw [List.get_eq_getElem, List.getElem_replicate]
+  refine eq_of_heq ((ren_heq_of_heq ρ hs
+    ((eq_mpr_heq _ _).trans (eq_mpr_heq _ _))).trans
+    (HEq.symm ((eq_mpr_heq _ _).trans (eq_mpr_heq _ _))))
+
 end GebLean.Ramified
