@@ -2869,4 +2869,90 @@ theorem sub_metaTuple_barTm_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig)
     = Binding.sub (Binding.metaTuple (stepTypes_map_barTy τ ▸ Ghat)) (bbFoldBody (barTy τ) v)
   rw [sub_congr_dom, metaTuple_congr_dom]
 
+/-- The residual `1λ(A)` term of the recurrence bar-map after saturating its step
+spine (Leivant III section 4.2, DOI `10.1016/S0168-0072(98)00040-2`, Proposition
+11's recurrence case): the abstraction `λ a. a c⃗` binding the Berarducci-Böhm
+recurrence argument `a` and applying it along the bound step spine, the term
+`barRecur_appSpine_reduces` lands on under the `instantiate` of the step tuple.
+The recurrence counterpart of `barConOmegaBody`. Novel packaging of section 4.2. -/
+def barRecurResidual (τ : RType) :
+    Binding.Tm (oneLambdaSig natAlgSig) ([] ++ stepTypes natAlgSig (barTy τ) (barTy τ))
+      (RType.arrow (bbType natAlgSig (barTy τ)) (barTy τ)) :=
+  OneLambda.lamSpine [bbType natAlgSig (barTy τ)]
+    (OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+      (Binding.Tm.var (Binding.Var.appendRight
+        ([] ++ stepTypes natAlgSig (barTy τ) (barTy τ))
+        (⟨⟨0, by simp⟩, rfl⟩ :
+          Binding.Var [bbType natAlgSig (barTy τ)] (bbType natAlgSig (barTy τ)))))
+      (fun idx =>
+        Binding.Tm.var (Binding.Thinning.weakAppend.app
+          (Binding.Var.appendRight []
+            (⟨idx, rfl⟩ :
+              Binding.Var (stepTypes natAlgSig (barTy τ) (barTy τ))
+                ((stepTypes natAlgSig (barTy τ) (barTy τ)).get idx))))))
+
+/-- The recurrence bar-map applied to a step tuple and a Berarducci-Böhm argument
+reduces to the argument applied along the step spine (Leivant III section 4.2, DOI
+`10.1016/S0168-0072(98)00040-2`, Proposition 11's recurrence case): `barRecur τ`
+saturated with `Ghat` and then `A` reduces (`OneLambdaStep`,
+reflexive-transitively) to `appSpine (stepTypes barred) A Ghat` — a Church value is
+its own iterator. Saturates the outer step spine (`barRecur_appSpine_reduces`),
+fires the residual β-redex (`reduces_beta`), and resolves the composed
+substitution back to the step spine (`sub_underBinder_appendRight`,
+`sub_underBinder_weakAppend`). Novel packaging of section 4.2. -/
+theorem barRecur_app_reduces (τ : RType)
+    (Ghat : ∀ i : Fin (stepTypes natAlgSig (barTy τ) (barTy τ)).length,
+      Binding.Tm (oneLambdaSig natAlgSig) []
+        ((stepTypes natAlgSig (barTy τ) (barTy τ)).get i))
+    (A : Binding.Tm (oneLambdaSig natAlgSig) [] (bbType natAlgSig (barTy τ))) :
+    Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app'
+        (OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+          (barRecur (Γ := []) τ) Ghat)
+        A)
+      (OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ)) A Ghat) := by
+  refine (OneLambda.reduces_app'_left A (barRecur_appSpine_reduces τ Ghat)).trans ?_
+  change Relation.ReflTransGen OneLambdaStep
+    (OneLambda.app' (Binding.instantiate (Binding.metaTuple Ghat) (barRecurResidual τ)) A)
+    (OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ)) A Ghat)
+  have hlam : Binding.instantiate (Binding.metaTuple Ghat) (barRecurResidual τ)
+      = OneLambda.lam'
+          (OneLambda.appSpine (stepTypes natAlgSig (barTy τ) (barTy τ))
+            (Binding.Tm.var (Binding.Var.appendRight []
+              (⟨⟨0, by simp⟩, rfl⟩ :
+                Binding.Var [bbType natAlgSig (barTy τ)] (bbType natAlgSig (barTy τ)))))
+            (fun idx =>
+              Binding.ren (Binding.Thinning.weakAppend
+                (Ξ := [bbType natAlgSig (barTy τ)])) (Ghat idx))) := by
+    rw [Binding.instantiate]
+    unfold barRecurResidual
+    refine (OneLambda.sub_lamSpine [bbType natAlgSig (barTy τ)] _ _).trans ?_
+    rw [OneLambda.lamSpine_single]
+    refine congrArg OneLambda.lam' ?_
+    refine (OneLambda.sub_appSpine _ _ _ _).trans ?_
+    congr 1
+    · exact sub_underBinder_appendRight _ _
+    · funext idx
+      rw [sub_underBinder_weakAppend]
+      refine congrArg (Binding.ren (Binding.Thinning.weakAppend
+        (Ξ := [bbType natAlgSig (barTy τ)]))) ?_
+      rw [Binding.sub_var]
+      exact Binding.extendEnv_appendRight Binding.idEnv (Binding.metaTuple Ghat) _ _
+  rw [hlam]
+  refine (OneLambda.reduces_beta _ A).trans ?_
+  rw [Binding.instantiate₁, Binding.instantiate, OneLambda.sub_appSpine]
+  have ha : (fun idx => Binding.sub (Binding.extendEnv Binding.idEnv (Binding.metaOne A))
+      (Binding.ren (Binding.Thinning.weakAppend (Ξ := [bbType natAlgSig (barTy τ)]))
+        (Ghat idx))) = Ghat := by
+    funext idx
+    rw [Binding.ren_sub,
+      show (fun s (x : Binding.Var [] s) =>
+          Binding.extendEnv Binding.idEnv (Binding.metaOne A) s
+            (Binding.Thinning.weakAppend.app x))
+        = (Binding.idEnv : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) [] []) from by
+        funext s x; exact x.1.elim0]
+    exact Binding.sub_id _
+  simp only [ha]
+  exact Relation.ReflTransGen.refl
+
 end GebLean.Ramified
