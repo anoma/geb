@@ -1,4 +1,6 @@
 import GebLean.Ramified.Soundness.BarRep
+import GebLean.Ramified.Soundness.Represents
+import GebLean.Ramified.Soundness.OneLambdaEval
 import GebLean.Ramified.Definability.Bounds
 import GebLean.Binding.Measures
 import GebLean.Utilities.Tower
@@ -108,6 +110,11 @@ splits into `betaRedexRank` and `hasIota`.
   sort is the concrete term `conc a` of a free-algebra value.
 * `appEval_sourceWord` — the source-side constructor word `sourceWord a τ`
   evaluates to the value `a` it encodes.
+* `prop13_elementary` — Proposition 13: for a closed `F : Ω τ → o` of
+  `RλMR_o^ω(natAlgSig)` there is a constant `c` such that for every word `a`,
+  the bar-image application `barTm F` applied to `bbRep a (barTy τ)` reduces to
+  the constructor word of `F`'s denotation at `a` in at most
+  `tower c (Tm.height (bbRep a (barTy τ)) + c)` steps.
 
 ## References
 
@@ -117,7 +124,7 @@ Logic 96 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`, section 2.2
 (p. 213): the order of a simple type; section 4.2 (p. 224): the redexes, their
 ranks, and normality of `1λ(A)`; section 5, proof paragraph (ii) (p. 226): the
 substitution redex-rank bound (note N2); section 5, proof paragraph (iii)
-(p. 226): the ι-phase step accounting.
+(p. 226): the ι-phase step accounting; section 5 (p. 226): Proposition 13.
 
 ## Tags
 
@@ -3081,5 +3088,96 @@ private theorem succ_mul_tower_le_tower (q x : ℕ) :
     _ = 2 ^ tower (2 * q + 1) x := by
         rw [tower_comp, show q + 1 + q = 2 * q + 1 by omega]
     _ = tower (2 * q + 2) x := (tower_succ (2 * q + 1) x).symm
+
+/-- Proposition 13 (Leivant III section 5, p. 226, DOI
+`10.1016/S0168-0072(98)00040-2`): the value of a represented function is
+computed by `1λ(natAlgSig)` normalization of the bar-image application within a
+step count elementary in the input's representation height, with the tower
+height a constant of `F`. For a closed function term `F : Ω τ → o` of
+`RλMR_o^ω(natAlgSig)` there is a constant `c` such that for every word `a`, the
+application of the bar image `barTm F` to the Berarducci-Böhm representation
+`bbRep a (barTy τ)` reduces, in at most
+`tower c (Tm.height (bbRep a (barTy τ)) + c)` steps, to the constructor word of
+`F`'s denotation at `a`.
+
+The hypothesis type `Ω τ → o` transcribes the paper's Lemma 4
+"without loss of generality" step (section 1.1): Lemma 4 (p. 219) is not
+formalized, and its role in the paper's proof — reducing a represented function
+to a unary word-to-word term — is expressed here by the hypothesis type (design
+spec `docs/superpowers/specs/2026-07-06-ramified-p6.3-lemma12-design.md`,
+section 5.2, decision D4).
+
+The normal form produced by `OneLambda.lemma12_clock` is identified with the
+value word semantically (decision P4): the closed normal reduct at sort `o` is
+a constructor word (`OneLambda.normal_closed_o_eq_conc`), and evaluating both
+the counted chain and the `prop11_represents` reduction with the standard
+evaluator (`oneEval_reduces`, `oneEval_conc`) forces that word to be the
+denotation `appEval (sourceApp F (sourceWord a τ)) finZeroElim`. The constant
+`c` absorbs the rank uniformity (`redexRank_app'_le` with `normal_bbRep`) and
+the clock coefficient (`succ_mul_tower_le_tower`), so it depends only on the
+rank and height of `barTm F` and the sort data — the paper's "since `F̄` is
+constant" step. -/
+theorem prop13_elementary {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) :
+    ∃ c : ℕ, ∀ a : FreeAlg natAlgSig,
+      ∃ k : ℕ,
+        k ≤ tower c (Tm.height (bbRep a (barTy τ)) + c) ∧
+        Relation.RelatesInSteps OneLambdaStep
+          (OneLambda.app' (barTm F) (bbRep a (barTy τ)))
+          (conc (appEval (sourceApp F (sourceWord a τ)) finZeroElim)) k := by
+  -- The uniform rank constant of `F`: the argument's rank vanishes by
+  -- `normal_bbRep`, leaving the rank of `barTm F` and the sort data.
+  set qF : ℕ := max (OneLambda.redexRank (barTm F))
+    (max 1 (RType.ord (barTy (RType.arrow (RType.omega τ) RType.o)))) with hqF
+  obtain ⟨c, hc2q, hcH⟩ : ∃ c : ℕ, 2 * qF + 2 ≤ c ∧ 1 + Tm.height (barTm F) ≤ c :=
+    ⟨max (2 * qF + 2) (1 + Tm.height (barTm F)), le_max_left _ _, le_max_right _ _⟩
+  refine ⟨c, fun a => ?_⟩
+  -- Lemma 12 on the bar-image application.
+  set W : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
+    OneLambda.app' (barTm F) (bbRep a (barTy τ)) with hW
+  obtain ⟨n, k, hnorm, hchain, _, hk⟩ := OneLambda.lemma12_clock W
+  refine ⟨k, ?_, ?_⟩
+  · -- Rank uniformity and clock absorption into the single tower.
+    have happ : OneLambda.redexRank W
+        ≤ max (OneLambda.redexRank (barTm F)) (max (OneLambda.redexRank (bbRep a (barTy τ)))
+            (max 1 (RType.ord (barTy (RType.arrow (RType.omega τ) RType.o))))) :=
+      OneLambda.redexRank_app'_le (barTm F) (bbRep a (barTy τ))
+    have h0 : OneLambda.redexRank (bbRep a (barTy τ)) = 0 := OneLambda.normal_bbRep a (barTy τ)
+    have hrank : OneLambda.redexRank W ≤ qF := by rw [h0] at happ; omega
+    have hh : Tm.height W = 1 + max (Tm.height (barTm F)) (Tm.height (bbRep a (barTy τ))) :=
+      OneLambda.height_app' (barTm F) (bbRep a (barTy τ))
+    have hheight : Tm.height W ≤ Tm.height (bbRep a (barTy τ)) + c := by omega
+    calc k ≤ (OneLambda.redexRank W + 1) * tower (OneLambda.redexRank W + 1) (Tm.height W) := hk
+      _ ≤ (qF + 1) * tower (qF + 1) (Tm.height W) :=
+          Nat.mul_le_mul (Nat.add_le_add_right hrank 1)
+            (tower_mono_left (Nat.add_le_add_right hrank 1) _)
+      _ ≤ tower (2 * qF + 2) (Tm.height W) := succ_mul_tower_le_tower qF _
+      _ ≤ tower (2 * qF + 2) (Tm.height (bbRep a (barTy τ)) + c) := tower_mono_right _ hheight
+      _ ≤ tower c (Tm.height (bbRep a (barTy τ)) + c) := tower_mono_left hc2q _
+  · -- Representation: the bar-image application reduces to the value word.
+    have h9 : Represents (RType.omega τ) (sourceWord a τ) (bbRep a (barTy τ)) := by
+      have h := lemma9_omega τ (sourceWord a τ)
+      rwa [appEval_sourceWord] at h
+    have hrep : Represents RType.o (sourceApp F (sourceWord a τ)) W :=
+      (represents_arrow F (barTm F)).mp (prop11_represents F) (sourceWord a τ)
+        (bbRep a (barTy τ)) h9
+    have hred : Relation.ReflTransGen OneLambdaStep W
+        (conc (appEval (sourceApp F (sourceWord a τ)) finZeroElim)) := hrep
+    -- Decision P4: the closed normal reduct at sort `o` is a constructor word,
+    -- and evaluating both reductions identifies it with the value word.
+    obtain ⟨b, hb⟩ := OneLambda.normal_closed_o_eq_conc n hnorm
+    have hval : b = appEval (sourceApp F (sourceWord a τ)) finZeroElim := by
+      have h1 := oneEval_reduces
+        (OneLambda.relatesInSteps_stepWithin_reflTransGen hchain) finZeroElim
+      have h2 := oneEval_reduces hred finZeroElim
+      rw [hb, oneEval_conc] at h1
+      rw [oneEval_conc] at h2
+      exact h1.symm.trans h2
+    -- The lemma-12 chain therefore ends at the value word; project it to the
+    -- plain reduction.
+    have hchain' : Relation.RelatesInSteps OneLambdaStep W n k :=
+      OneLambda.relatesInSteps_mono (fun _ _ h => h.1) hchain
+    rw [hb, hval] at hchain'
+    exact hchain'
 
 end GebLean.Ramified
