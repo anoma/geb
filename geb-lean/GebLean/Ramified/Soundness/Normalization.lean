@@ -875,6 +875,116 @@ theorem normal_bbRep (a : FreeAlg natAlgSig) (σ : RType) : Normal (bbRep a σ) 
   exact ⟨(betaRedexRank_lamSpine _ _).trans hinner.1,
     (hasIota_lamSpine _ _).trans hinner.2.1⟩
 
+/-- Transporting a term along a context equality and back along its inverse is
+the identity. The round-trip cancellation discharging the `Γ ++ [] = Γ`
+transports that `app'` re-applies to already-transported subterms. -/
+private theorem eqRec_symm_eqRec {Γ Γ' : Binding.Ctx RType} {s : RType} (h : Γ = Γ')
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    h.symm ▸ (h ▸ t : Binding.Tm (oneLambdaSig A) Γ' s) = t := by cases h; rfl
+
+/-- A reduction step transports along a context equality: the congruence- and
+redex-rule shapes are context-generic. -/
+private theorem oneLambdaStep_cast [LinearOrder A.B] {Γ Γ' : Binding.Ctx RType} {s : RType}
+    (hΓ : Γ = Γ') {t u : Binding.Tm (oneLambdaSig A) Γ s} (h : OneLambdaStep t u) :
+    OneLambdaStep (hΓ ▸ t : Binding.Tm (oneLambdaSig A) Γ' s) (hΓ ▸ u) := by
+  cases hΓ; exact h
+
+/-- Every application node is an `app'`: the η-expansion of `Tm.op` at an `app`
+operation, recovering the combinator form from an arbitrary argument tuple. The
+subterms are transported out of the argument context `Γ ++ []` along
+`List.append_nil`; `app'` transports them back. -/
+private theorem op_app_eta {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).2) :
+    Binding.Tm.op (OneLambdaOp.app σ τ) args
+      = app' (List.append_nil Γ ▸ (args ⟨0, Nat.succ_pos 1⟩ :
+            Binding.Tm (oneLambdaSig A) (Γ ++ []) (RType.arrow σ τ)))
+          (List.append_nil Γ ▸ (args ⟨1, Nat.one_lt_two⟩ :
+            Binding.Tm (oneLambdaSig A) (Γ ++ []) σ)) := by
+  unfold app'
+  congr 1
+  funext j
+  match j with
+  | ⟨0, _⟩ => exact (eqRec_symm_eqRec (List.append_nil Γ) _).symm
+  | ⟨1, _⟩ => exact (eqRec_symm_eqRec (List.append_nil Γ) _).symm
+
+/-- Every abstraction node is a `lam'`: the η-expansion of `Tm.op` at a `lam`
+operation. The sole subterm lives at the binder-extended context `Γ ++ [σ]`
+directly, so no transport is required. -/
+private theorem op_lam_eta {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).2) :
+    Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args
+      = lam' (σ := σ) (τ := τ)
+          (args ⟨0, Nat.one_pos⟩ : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) := by
+  unfold lam'
+  congr 1
+  funext j
+  match j with
+  | ⟨0, _⟩ => rfl
+
+/-- The head-form cases of a term of `1λ(A)`: a variable, or an operation node
+whose result sort transports to the term's sort. The non-recursive case
+principle on the `PolyFix` structure, packaging the index dance of the term
+measures' inductions for reuse by the redex inversions. Novel packaging. -/
+private theorem tm_cases {y : Binding.Ctx RType × RType}
+    (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig A).polyEndo) y) :
+    (∃ x : Binding.Var y.1 y.2, t = (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) y.1 y.2)) ∨
+    ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = y.2)
+      (args : ∀ j : Fin (((oneLambdaSig A).args o).length),
+        Binding.Tm (oneLambdaSig A) (y.1 ++ (((oneLambdaSig A).args o).get j).1)
+          (((oneLambdaSig A).args o).get j).2),
+      t = (hs ▸ Binding.Tm.op (S := oneLambdaSig A) o args
+            : Binding.Tm (oneLambdaSig A) y.1 y.2) := by
+  cases t with
+  | mk y idx children =>
+    cases idx with
+    | inl a =>
+      refine Or.inl ⟨Binding.leafVar a, ?_⟩
+      obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+      congr 1
+      funext e
+      exact e.elim
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : OneLambdaOp A // (oneLambdaSig A).result o = s' } at p
+      revert children
+      obtain ⟨o, rfl⟩ := p
+      intro children
+      exact Or.inr ⟨o, rfl, fun j => children ⟨j⟩, rfl⟩
+
+/-- The operation node behind a `headTag` value: a term whose head tag is
+`some o` is an operation node at `o`, its sort the transported result sort of
+`o`. The inversion consumed by the redex-shape recognitions. -/
+private theorem exists_op_of_headTag {Γ : Binding.Ctx RType} {s : RType}
+    {t : Binding.Tm (oneLambdaSig A) Γ s} {o : OneLambdaOp A} (h : headTag t = some o) :
+    ∃ (hs : (oneLambdaSig A).result o = s)
+      (args : ∀ j : Fin (((oneLambdaSig A).args o).length),
+        Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args o).get j).1)
+          (((oneLambdaSig A).args o).get j).2),
+      t = (hs ▸ Binding.Tm.op (S := oneLambdaSig A) o args
+            : Binding.Tm (oneLambdaSig A) Γ s) := by
+  rcases tm_cases t with ⟨x, rfl⟩ | ⟨o', hs, args, rfl⟩
+  · rw [headTag_var] at h
+    simp at h
+  · have ho : o' = o := by
+      have := (headTag_cast rfl hs (Binding.Tm.op (S := oneLambdaSig A) o' args)).symm.trans h
+      rw [headTag_op] at this
+      exact Option.some.inj this
+    subst ho
+    exact ⟨hs, args, rfl⟩
+
+/-- An r-type of shape `o` is the base type `o`: the nullary shape determines
+the node. -/
+private theorem eq_o_of_shape_o {s : RType} (h : s.shape = RTypeShape.o) : s = RType.o := by
+  rcases s with ⟨_, i, children⟩
+  have hi : i = RTypeShape.o := h
+  subst hi
+  change FreeAlg.mk (A := rTypeSig) RTypeShape.o children = RType.o
+  exact congrArg (FreeAlg.mk (A := rTypeSig) RTypeShape.o) (funext fun e => e.elim0)
+
 end OneLambda
 
 end GebLean.Ramified
