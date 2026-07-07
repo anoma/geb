@@ -121,6 +121,24 @@ example :
         ∧ betaRedexRank t' = 0 :=
   exists_iota_step_of_hasIota _ (by rw [hasIota_app']; rfl) rfl
 
+/-- One rank-elimination cycle on the identity β-redex `(λx:o. x) c₀` (note
+N3): the rank-`1` term of size `4` and height `3` reduces, within the hybrid
+ceiling `260 = 4 + 2 ^ (2 ^ 3)`, to a β-normal term. The rank and ceiling side
+conditions are discharged by kernel computation on the closed term. -/
+example :
+    ∃ (t' : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o) (k : ℕ),
+      Relation.RelatesInSteps (stepWithin 260)
+        (OneLambda.app'
+          (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+          (conc (natToFreeAlg 0))) t' k ∧ betaRedexRank t' = 0 := by
+  obtain ⟨t', k, hchain, hrank, -, -, -⟩ :=
+    beta_cycle (A := natAlgSig) 1 le_rfl
+      (OneLambda.app'
+        (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+        (conc (natToFreeAlg 0)))
+      (by decide) (M := 260) (by decide)
+  exact ⟨t', k, hchain, by omega⟩
+
 /-- Note N2 on a small instance: instantiating the identity body `x` (the sole
 bound variable) by the zero word `N` yields `N`, whose β-rank `0` is within the
 bound `max (betaRedexRank b) (max (betaRedexRank N) (RType.ord o))`. -/

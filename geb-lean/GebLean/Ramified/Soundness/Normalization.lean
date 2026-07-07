@@ -85,6 +85,10 @@ splits into `betaRedexRank` and `hasIota`.
   `stepWithin` chain obeys the chain's size ceiling whenever the start does.
 * `OneLambda.size_le_two_pow_height` — the arity inequality at `oneLambdaSig`:
   a term's size is bounded by `2` raised to its height.
+* `OneLambda.beta_cycle` — one rank-elimination cycle (note N3): a term of
+  β-rank at most `q ≥ 1` reduces in at most `Tm.size t` counted steps to a term
+  of β-rank at most `q - 1` and height at most `2 ^ Tm.height t`, every
+  intermediate within the hybrid ceiling `Tm.size t + 2 ^ (2 ^ Tm.height t)`.
 
 ## References
 
@@ -2308,6 +2312,166 @@ private theorem betaCycle_app'_contraction [LinearOrder A.B] {Γ : Binding.Ctx R
       rw [RType.ord_arrow]
       omega
     omega
+
+/-- The application case of the rank-elimination cycle (note N3): the subterm
+cycles lift through the application congruences and chain within the hybrid
+ceiling; the endpoint dispatches to the non-contraction assembly when its
+function head is not an abstraction or the arrow order is below the budget, and
+to the contraction assembly otherwise — the shape invariant on the function
+subterm licensing the order bound in the latter. -/
+private theorem betaCycle_app' [LinearOrder A.B] {Γ : Binding.Ctx RType} {σ τ : RType}
+    {q : ℕ} (hq : 1 ≤ q)
+    {D : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)}
+    {E : Binding.Tm (oneLambdaSig A) Γ σ}
+    (ht : betaRedexRank (app' D E) ≤ q)
+    (hD : BetaCycle q (Tm.size D + 2 ^ (2 ^ Tm.height D)) D)
+    (hE : BetaCycle q (Tm.size E + 2 ^ (2 ^ Tm.height E)) E)
+    {M : ℕ} (hM : Tm.size (app' D E) + 2 ^ (2 ^ Tm.height (app' D E)) ≤ M) :
+    BetaCycle q M (app' D E) := by
+  obtain ⟨D', kD, hchainD, hrankD, hheightD, hkD, hinvD⟩ := hD
+  obtain ⟨E', kE, hchainE, hrankE, hheightE, hkE, _⟩ := hE
+  have hpD : 2 ^ Tm.height D ≤ 2 ^ max (Tm.height D) (Tm.height E) :=
+    Nat.pow_le_pow_right (by omega) (le_max_left _ _)
+  have hpE : 2 ^ Tm.height E ≤ 2 ^ max (Tm.height D) (Tm.height E) :=
+    Nat.pow_le_pow_right (by omega) (le_max_right _ _)
+  have hppD : 2 ^ (2 ^ Tm.height D) ≤ 2 ^ (2 ^ max (Tm.height D) (Tm.height E)) :=
+    Nat.pow_le_pow_right (by omega) hpD
+  have hppE : 2 ^ (2 ^ Tm.height E) ≤ 2 ^ (2 ^ max (Tm.height D) (Tm.height E)) :=
+    Nat.pow_le_pow_right (by omega) hpE
+  have honeD : (1 : ℕ) ≤ 2 ^ (2 ^ Tm.height D) := Nat.one_le_two_pow
+  have honeE : (1 : ℕ) ≤ 2 ^ (2 ^ Tm.height E) := Nat.one_le_two_pow
+  have hsum : 2 ^ (2 ^ max (Tm.height D) (Tm.height E))
+        + 2 ^ (2 ^ max (Tm.height D) (Tm.height E))
+      ≤ 2 ^ (2 ^ (1 + max (Tm.height D) (Tm.height E))) := by
+    have htwo : 2 ^ (1 + max (Tm.height D) (Tm.height E))
+        = 2 * 2 ^ max (Tm.height D) (Tm.height E) := by rw [pow_add, pow_one]
+    have hsucc : 2 ^ (2 ^ max (Tm.height D) (Tm.height E))
+          + 2 ^ (2 ^ max (Tm.height D) (Tm.height E))
+        = 2 ^ (2 ^ max (Tm.height D) (Tm.height E) + 1) := by
+      rw [pow_succ]
+      omega
+    have hx1 : (1 : ℕ) ≤ 2 ^ max (Tm.height D) (Tm.height E) := Nat.one_le_two_pow
+    rw [hsucc, htwo]
+    exact Nat.pow_le_pow_right (by omega) (by omega)
+  have hM' := hM
+  rw [size_app', height_app'] at hM'
+  have hsizeD' : Tm.size D' ≤ Tm.size D + 2 ^ (2 ^ Tm.height D) :=
+    relatesInSteps_stepWithin_size_le hchainD (by omega)
+  have hchain1 : Relation.RelatesInSteps (stepWithin M) (app' D E) (app' D' E) kD :=
+    relatesInSteps_mono (fun _ _ => stepWithin_mono (by omega))
+      (relatesInSteps_app'_left E hchainD)
+  have hchain2 : Relation.RelatesInSteps (stepWithin M) (app' D' E) (app' D' E') kE :=
+    relatesInSteps_mono (fun _ _ => stepWithin_mono (by omega))
+      (relatesInSteps_app'_right D' hchainE)
+  have hchain := hchain1.trans hchain2
+  cases hL : isLam D' with
+  | false =>
+      refine betaCycle_app'_of_topBetaRank hchain ?_ hrankD hrankE hheightD hheightE hkD hkE
+      rw [topBetaRank_app', hL, if_neg Bool.false_ne_true]
+      omega
+  | true =>
+      rcases Nat.lt_or_ge (RType.ord (RType.arrow σ τ)) q with hlt | _
+      · refine betaCycle_app'_of_topBetaRank hchain ?_ hrankD hrankE hheightD hheightE hkD hkE
+        rw [topBetaRank_app', hL, if_pos rfl]
+        omega
+      · have hord : RType.ord (RType.arrow σ τ) ≤ q := by
+          rcases hinvD hL with hDlam | hle
+          · have hDlam' : isLam D = true := hDlam
+            have h1 : topBetaRank (app' D E) = RType.ord (RType.arrow σ τ) := by
+              rw [topBetaRank_app', if_pos hDlam']
+            have h2 := betaRedexRank_app' D E
+            omega
+          · exact hle
+        obtain ⟨b, rfl⟩ := exists_lam'_of_isLam hL
+        exact betaCycle_app'_contraction hchain hM hord hrankD hrankE hheightD hheightE hkD hkE
+
+/-- The strong-induction shell of the rank-elimination cycle (note N3):
+structural descent by strong induction on `Tm.size`, dispatching each head form
+to its case lemma — variables and the nullary constants to the identity cycle,
+abstractions to the body's cycle, applications to the congruence-chaining
+dispatcher. -/
+private theorem beta_cycle_aux [LinearOrder A.B] :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} {q : ℕ}, 1 ≤ q →
+      ∀ (t : Binding.Tm (oneLambdaSig A) Γ s), Tm.size t ≤ N → betaRedexRank t ≤ q →
+      ∀ {M : ℕ}, Tm.size t + 2 ^ (2 ^ Tm.height t) ≤ M → BetaCycle q M t
+  | 0, _, _, _, _, t, hN, _, _, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, q, hq, t, hN, ht, M, hM => by
+      rcases tm_cases t with ⟨x, rfl⟩ | ⟨o, hs0, args, ht_eq⟩
+      · exact betaCycle_of_rank_zero (betaRedexRank_var x)
+      · cases o with
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args :=
+              ht_eq
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht_eq
+            subst ht_eq
+            rw [size_lam'] at hN
+            rw [betaRedexRank_lam'] at ht
+            exact betaCycle_lam' (beta_cycle_aux N hq b (by omega) ht le_rfl) hM
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args :=
+              ht_eq
+            obtain ⟨D, E, hDE⟩ := op_app_inv args
+            rw [hDE] at ht_eq
+            subst ht_eq
+            rw [size_app'] at hN
+            have h1E := Tm.one_le_size E
+            have h1D := Tm.one_le_size D
+            exact betaCycle_app' hq ht
+              (beta_cycle_aux N hq D (by omega)
+                ((betaRedexRank_le_betaRedexRank_app' D E).trans ht) le_rfl)
+              (beta_cycle_aux N hq E (by omega)
+                ((betaRedexRank_arg_le_betaRedexRank_app' D E).trans ht) le_rfl)
+              hM
+        | con i =>
+            have hs1 : RType.curried (List.replicate (A.ar i) RType.o) RType.o = s := hs0
+            subst hs1
+            replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args :=
+              ht_eq
+            subst ht_eq
+            exact betaCycle_of_rank_zero rfl
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args :=
+              ht_eq
+            subst ht_eq
+            exact betaCycle_of_rank_zero rfl
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate A.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args :=
+              ht_eq
+            subst ht_eq
+            exact betaCycle_of_rank_zero rfl
+
+/-- One rank-elimination cycle (Leivant III section 5, proof paragraph (ii),
+p. 226, DOI `10.1016/S0168-0072(98)00040-2`; notes N3/N5): every term of β-rank
+at most `q ≥ 1` reduces, by a counted `stepWithin M` chain of at most
+`Tm.size t` steps, to a term of β-rank at most `q - 1` whose height is at most
+`2 ^ Tm.height t`, provided the ceiling `M` covers the hybrid bound
+`Tm.size t + 2 ^ (2 ^ Tm.height t)` (every intermediate term of the chain is a
+hybrid of processed and unprocessed subterms within that bound). The final
+conjunct is the shape invariant, novel packaging elaborating the source's
+recursion: an abstraction endpoint forces an abstraction start or a result sort
+of order at most `q`, which licenses the contraction case's rank accounting at
+the recursive call sites. -/
+theorem beta_cycle [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
+    (q : ℕ) (hq : 1 ≤ q)
+    (t : Binding.Tm (oneLambdaSig A) Γ s) (ht : betaRedexRank t ≤ q)
+    {M : ℕ} (hM : Tm.size t + 2 ^ (2 ^ Tm.height t) ≤ M) :
+    ∃ (t' : Binding.Tm (oneLambdaSig A) Γ s) (k : ℕ),
+      Relation.RelatesInSteps (stepWithin M) t t' k ∧
+      betaRedexRank t' ≤ q - 1 ∧
+      Tm.height t' ≤ 2 ^ Tm.height t ∧
+      k ≤ Tm.size t ∧
+      (IsLam t' → IsLam t ∨ RType.ord s ≤ q) :=
+  beta_cycle_aux (Tm.size t) hq t le_rfl ht hM
 
 end OneLambda
 
