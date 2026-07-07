@@ -40,10 +40,12 @@ implication carrying represented arguments to represented applications.
   `weakAppend_nil` are the empty-binder coherence they rest on. `barTm_op` is
   the general operation-node reduction of the term bar-map (`barTm_var` and
   `barTm_app'` are its leaf and application instances).
-* `recurBridge` — the source-side recurrence semantics of Proposition 11's
-  recurrence case (Leivant III section 4.2–4.3): the denotation of a saturated
-  recurrence combinator applied to an argument is the free-algebra recurrence of
-  the argument's denotation.
+* `recurBridge` — a source-side recurrence semantics for the saturated
+  recurrence combinator (Leivant III section 4.2–4.3): the denotation of
+  `recCombinator Estep` applied to an argument is the free-algebra recurrence of
+  the argument's denotation. Standalone; the delivered `represents_recur` derives
+  the corresponding semantic fact directly (`appEval_app'`, `appEval_appSpine`,
+  `appChain_curryInterp`) rather than composing `recurBridge`.
 * `represents_app` — the application case of Proposition 11's fundamental
   induction (Leivant III section 4.2–4.3), standalone: representation of a
   substituted function and argument yields representation of the substituted
@@ -54,12 +56,17 @@ implication carrying represented arguments to represented applications.
   extension yields representation of the substituted abstraction, discharged by
   one `1λ(A)` β-reduction (`representsEnv_extend`, `instantiate_sub_underBinder`,
   `subEnvSem_extendEnv_metaOne`).
+* `represents_con_o`, `represents_con_omega`, `represents_dstr`, `represents_case`,
+  `represents_recur` — the remaining case lemmas of Proposition 11's fundamental
+  induction (Leivant III section 4.2–4.3), covering the constructor, destructor,
+  case, and recurrence nodes; dispatched by `prop11_aux` alongside `represents_app`
+  and `represents_lam`.
 * `barRecur_appSpine_reduces` — the recurrence bar-map saturated with represented
   step terms reduces to its instantiated inner body, the recurrence-combinator
   counterpart of `OneLambda.bbRep_appSpine_reduces`.
 * `prop11_aux`, `prop11_represents` — the fundamental lemma of the representation
   relation (Leivant III section 4.2, Proposition 11): the six-way induction over
-  terms of `RλMR_o^ω` dispatching to the banked case lemmas (`prop11_aux`), and
+  terms of `RλMR_o^ω` dispatching to the case lemmas (`prop11_aux`), and
   its closed-term instance `barTm F` represents `F` (`prop11_represents`).
 
 ## Implementation notes
@@ -1283,8 +1290,8 @@ arguments simultaneously substituted for the abstracted step variables
 (`instantiate (metaTuple Ghat)`). The direct instance of the generic λ-spine
 β-reduction `reduces_betaSpine` at `barRecur`'s outer abstraction spine, the
 recurrence-combinator counterpart of `bbRep_appSpine_reduces`; saturating the
-residual with the recurrence argument and β-reducing yields the value spine the
-recurrence case reads through `recurBridge`. -/
+residual with the recurrence argument and β-reducing (`barRecur_app_reduces`)
+yields the value spine the recurrence case lemma `represents_recur` consumes. -/
 theorem barRecur_appSpine_reduces (τ : RType)
     (Ghat : ∀ i : Fin (stepTypes natAlgSig (barTy τ) (barTy τ)).length,
       Binding.Tm (oneLambdaSig natAlgSig) [] ((stepTypes natAlgSig (barTy τ) (barTy τ)).get i)) :
@@ -1485,7 +1492,7 @@ concrete term of the semantic node (`appChain_stdConstructorInterp`, `conc_mk`),
 carrying the argument representative under the constructor by
 `OneLambda.reduces_app'_right`. Uses `barTmOp_con_o` to strip the bar-image
 transport. -/
-theorem represents_con_succ {Γ : Binding.Ctx RType} (b : natAlgSig.B)
+theorem represents_con_o {Γ : Binding.Ctx RType} (b : natAlgSig.B)
     (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
     (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) []) :
     Represents (RType.curried (List.replicate (natAlgSig.ar b) RType.o) RType.o)
@@ -1648,21 +1655,10 @@ theorem caseSelect_mk_ctorAt {C : Type} (idx : Fin natAlgSig.numCtors)
     rw [show ctorAt (⟨1, h⟩ : Fin natAlgSig.numCtors) = true from ctorAt_one]; rfl
   | (n + 2), h => exact absurd (hnc ▸ h) (by omega)
 
-/-- The Berarducci-Böhm representation commutes with the branch selector
-`caseSelect` (Leivant III section 4.2): `bbRep (caseSelect z v₀ v₁) σ = caseSelect
-z (bbRep v₀ σ) (bbRep v₁ σ)`, since `caseSelect` on a constructor node is a plain
-selection of one of `v₀`, `v₁` and `bbRep` distributes through it. The
-push-through the case case of Proposition 11's case compatibility consumes at the
-higher object type. Novel packaging of section 4.2. -/
-theorem bbRep_caseSelect (z v0 v1 : FreeAlg natAlgSig) (σ : RType) :
-    bbRep (caseSelect z v0 v1) σ = caseSelect z (bbRep v0 σ) (bbRep v1 σ) := by
-  cases z with
-  | mk _ b subs => cases b <;> rfl
-
 /-- A singleton abstraction spine is a single abstraction (Leivant III section
 4.1, structural): `lamSpine [σ] body = lam' body`, the two interposed casts of
 `lamSpine`'s empty-suffix base case cancelling. Internal packaging for
-`lamSpine_cons` and the `barCase` saturation keystone. -/
+`lamSpine_cons` and the `barCase` saturation lemma. -/
 theorem OneLambda.lamSpine_single {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RType}
     (σ : RType) {τ : RType} (body : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) :
     OneLambda.lamSpine [σ] body = OneLambda.lam' body := by
@@ -1673,7 +1669,7 @@ theorem OneLambda.lamSpine_single {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx R
 into a single abstraction spine (Leivant III section 4.1, structural): abstracting
 `Δ` and then a single sort `σ` equals abstracting the whole `σ :: Δ`, up to the
 reassociation of the abstraction context `(Γ ++ [σ]) ++ Δ = Γ ++ (σ :: Δ)`.
-Internal packaging for the `barCase` saturation keystone, folding `barCase`'s
+Internal packaging for the `barCase` saturation lemma, folding `barCase`'s
 outer `lamSpine [o]` / `lamSpine (replicate …)` into one spine that
 `reduces_betaSpine` saturates. -/
 theorem OneLambda.lamSpine_cons {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RType}
@@ -1691,7 +1687,7 @@ theorem OneLambda.lamSpine_cons {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RTy
 `ren ρ (cast (congrArg (Tm S Γ) h) t) = cast (congrArg (Tm S Δ) h) (ren ρ t)`,
 carrying the sort equality through the renaming unchanged. Proved by `cases h`.
 The renaming counterpart of `sub_cast_sort`; internal packaging for the `barCase`
-saturation keystone. -/
+saturation lemma. -/
 theorem ren_cast_sort {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
     {s s' : RType} (ρ : Binding.Thinning Γ Δ) (h : s = s')
     (t : Binding.Tm S Γ s) :
@@ -1702,7 +1698,7 @@ theorem ren_cast_sort {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
 /-- A `1λ(A)` reduction is carried through a sort transport of its endpoints: for
 `h : s = s'`, `X ⇒* Y` gives `cast … X ⇒* cast … Y`, since a sort transport is a
 type coercion inert on the reduction relation. Proved by `cases h`. Internal
-packaging for the `barCase` saturation keystone, transporting the eta-collapsed
+packaging for the `barCase` saturation lemma, transporting the eta-collapsed
 branch across the `curried domains o = barTy θ` reconciliation. -/
 theorem reduces_cast_sort {Γ : Binding.Ctx RType} {s s' : RType} (h : s = s')
     {X Y : Binding.Tm (oneLambdaSig natAlgSig) Γ s}
@@ -1737,7 +1733,7 @@ theorem OneLambda.reduces_replicateSpine_args {Γ : Binding.Ctx RType} {result :
 `ren ρ (appSpine Ts head args) = appSpine Ts (ren ρ head) (fun i => ren ρ (args
 i))`. The renaming counterpart of `OneLambda.sub_appSpine`, by recursion on the
 argument-sort list `Ts` peeling one application through `OneLambda.ren_app'`.
-Internal packaging for the `barCase` saturation keystone. -/
+Internal packaging for the `barCase` saturation lemma. -/
 theorem OneLambda.ren_appSpine {Γ Δ : Binding.Ctx RType} {result : RType}
     (ρ : Binding.Thinning Γ Δ) :
     (Ts : List RType) →
@@ -1765,7 +1761,7 @@ theorem ren_heq_of_heq {S : Binding.BinderSig RType} {Γ Δ : Binding.Ctx RType}
 replicateSpine n base (ren ρ head) (fun idx => ren ρ (args idx))`. The homogeneous
 instance of `OneLambda.ren_appSpine`, reconciling the per-index `Eq.mpr` sort
 transport through `ren_cast_sort`'s heterogeneous analogue. Internal packaging for
-the `barCase` saturation keystone. -/
+the `barCase` saturation lemma. -/
 theorem OneLambda.ren_replicateSpine {Γ Δ : Binding.Ctx RType} {result : RType}
     (n : Nat) (base : RType) (ρ : Binding.Thinning Γ Δ)
     (head : Binding.Tm (oneLambdaSig natAlgSig) Γ
@@ -1846,7 +1842,7 @@ theorem reduces_tm_ctx_cast {Γ Γ' : Binding.Ctx RType} {τ : RType} (h : Γ = 
 `lamSpine Δ b ⇒* lamSpine Δ b'`. The multi-binder counterpart of
 `OneLambda.reduces_lamBody`, by recursion on `Δ` reducing under each peeled `lam'`
 (`reduces_lamBody`) and carrying the interposed context reassociation
-(`reduces_tm_ctx_cast`). Internal packaging for the `barCase` saturation keystone,
+(`reduces_tm_ctx_cast`). Internal packaging for the `barCase` saturation lemma,
 reducing the case redex under `barCase`'s residual domain binders. -/
 theorem OneLambda.reduces_lamSpine {Γ : Binding.Ctx RType} :
     (Δ : List RType) → {τ : RType} →
@@ -1866,8 +1862,8 @@ object sort (Leivant III section 4.2): `curried (barTy (Ω τ')).domains o = bar
 (Ω τ')`, since `barTy (Ω τ')` is simple (`barTy_isSimple`) with object target `o`
 (`objTarget_of_isSimple`) and equals the currying of its domains over that target
 (`curried_domains`). The proof term `barCase` interposes as `cast h_ctd`; named so
-the saturation keystone's intermediate bodies can reference it. Internal packaging
-for the `barCase` saturation keystone. -/
+the saturation lemma's intermediate bodies can reference it. Internal packaging
+for the `barCase` saturation lemma. -/
 theorem barCase_omega_ctd (τ' : RType) :
     RType.curried (barTy (RType.omega τ')).domains RType.o = barTy (RType.omega τ') :=
   (congrArg (RType.curried (barTy (RType.omega τ')).domains)
@@ -1880,10 +1876,10 @@ numCtors (barTy (Ω τ')))` (Leivant III section 4.2): the `cast`-reconciled
 `lamSpine (barTy (Ω τ')).domains` over the case redex `replicateSpine numCtors o
 (case (var a)) (fun j => appSpine domains (cast (var x_j)) yvars)`, in the closed
 saturation context `[o, (barTy (Ω τ'))^numCtors]`. The named target of the
-saturation keystone's fold step (`barCase_omega_fold`), the operand its
+saturation lemma's fold step (`barCase_omega_fold`), the operand its
 `reduces_betaSpine` instantiation substitutes into. Novel packaging of section
 4.2. -/
-def barCaseOmegaBodyBig (τ' : RType) :
+def barCaseOmegaBodyFolded (τ' : RType) :
     Binding.Tm (oneLambdaSig natAlgSig)
       (([] ++ [RType.o]) ++ List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
       (barTy (RType.omega τ')) :=
@@ -1920,26 +1916,26 @@ def barCaseOmegaBodyBig (τ' : RType) :
 /-- The case bar-map at a shifted object sort `Ω τ'` folds into a single
 abstraction spine over its saturating context (Leivant III section 4.2):
 `barCase (Ω τ') hθ = lamSpine (o :: replicate numCtors (barTy (Ω τ')))
-(barCaseOmegaBodyBig τ')`, merging its outer `lamSpine [o]` and `lamSpine
+(barCaseOmegaBodyFolded τ')`, merging its outer `lamSpine [o]` and `lamSpine
 (replicate numCtors (barTy (Ω τ')))` through `lamSpine_cons` (the interposed
 context reassociation `append_assoc [] [o] _` is `rfl` in the closed context). The
-fold step of the saturation keystone, exposing the single spine that
+fold step of the saturation lemma, exposing the single spine that
 `reduces_betaSpine` saturates. Novel packaging of section 4.2. -/
 theorem barCase_omega_fold (τ' : RType) (hθ : (RType.omega τ').IsObj) :
     barCase (Γ := []) (RType.omega τ') hθ
       = OneLambda.lamSpine (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
-          (barCaseOmegaBodyBig τ') := by
+          (barCaseOmegaBodyFolded τ') := by
   unfold barCase
   simp only [RType.shape_omega]
   exact OneLambda.lamSpine_cons RType.o
     (List.replicate natAlgSig.numCtors (barTy (RType.omega τ'))) _
 
 /-- The case bar-map inner body after saturating substitution (Leivant III section
-4.2): the result of instantiating `barCaseOmegaBodyBig`'s three outer binders with
+4.2): the result of instantiating `barCaseOmegaBodyFolded`'s three outer binders with
 a scrutinee `s : o` and branch family `g`, in the closed context. The scrutinee
 `s` and each branch `g j` are weakened past the residual `domains` binder
 (`ren weakAppend`); the domain variables `y` remain the freshly bound
-`Var.appendRight []` positions. The named target of the saturation keystone's
+`Var.appendRight []` positions. The named target of the saturation lemma's
 substitution step (`barCase_omega_instantiate`), the operand its `case`-redex and
 η-collapse consume. Novel packaging of section 4.2. -/
 def barCaseOmegaBodySub (τ' : RType)
@@ -1967,13 +1963,13 @@ def barCaseOmegaBodySub (τ' : RType)
 
 /-- The saturating substitution of the folded case bar-map body (Leivant III
 section 4.2, the substitution step of Proposition 11's case at a shifted object
-sort): instantiating `barCaseOmegaBodyBig`'s three outer binders with a scrutinee
+sort): instantiating `barCaseOmegaBodyFolded`'s three outer binders with a scrutinee
 `s` and branches `g` yields `barCaseOmegaBodySub τ' s g`, weakening `s` and each
 `g j` past the residual domain binder while fixing the domain variables. Proved by
 pushing the instantiation through the interposed `cast`, the domain `lamSpine`, the
 `replicateSpine`, and the case redex's application spine, resolving each abstracted
 variable to its substituted image. Internal packaging for the `barCase` saturation
-keystone. -/
+lemma. -/
 theorem barCase_omega_instantiate (τ' : RType)
     (s : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o)
     (g : Fin natAlgSig.numCtors →
@@ -1985,10 +1981,10 @@ theorem barCase_omega_instantiate (τ' : RType)
             Fin.cases s
               (fun j => Fin.cases (g ⟨0, by decide⟩)
                 (fun k => Fin.cases (g ⟨1, by decide⟩) (fun l => l.elim0) k) j) i))
-        (barCaseOmegaBodyBig τ')
+        (barCaseOmegaBodyFolded τ')
       = barCaseOmegaBodySub τ' s g := by
   rw [Binding.instantiate]
-  unfold barCaseOmegaBodyBig barCaseOmegaBodySub
+  unfold barCaseOmegaBodyFolded barCaseOmegaBodySub
   refine (sub_cast_sort _ (barCase_omega_ctd τ') _).trans ?_
   refine congrArg
     (cast (congrArg (Binding.Tm (oneLambdaSig natAlgSig) []) (barCase_omega_ctd τ'))) ?_
@@ -2013,7 +2009,7 @@ theorem barCase_omega_instantiate (τ' : RType)
       | 1, _ => rfl
       | (n + 2), h => exact absurd h (by have : natAlgSig.numCtors = 2 := rfl; omega)
 
-/-- The case bar-map saturation keystone (Leivant III section 4.2, Proposition
+/-- The case bar-map saturation lemma (Leivant III section 4.2, Proposition
 11's case at a shifted object sort `Ω τ'`): applying `barCase (Ω τ')` to a
 scrutinee `Ghat0` and the `numCtors` branch representatives `Ghats` along the
 application spine reduces (`OneLambdaStep`, reflexive-transitively) to the branch
@@ -2045,19 +2041,19 @@ theorem barCase_appSpine_reduces (τ' : RType) (hθ : (RType.omega τ').IsObj)
   have happ : OneLambda.app'
       (OneLambda.app' (OneLambda.app'
         (OneLambda.lamSpine (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
-          (barCaseOmegaBodyBig τ')) (conc (FreeAlg.mk (ctorAt idx) subv)))
+          (barCaseOmegaBodyFolded τ')) (conc (FreeAlg.mk (ctorAt idx) subv)))
         (Ghats ⟨0, by decide⟩))
       (Ghats ⟨1, by decide⟩)
     = OneLambda.appSpine (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
         (OneLambda.lamSpine (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
-          (barCaseOmegaBodyBig τ'))
+          (barCaseOmegaBodyFolded τ'))
         (fun i => Fin.cases (conc (FreeAlg.mk (ctorAt idx) subv))
           (fun j => Fin.cases (Ghats ⟨0, by decide⟩)
             (fun k => Fin.cases (Ghats ⟨1, by decide⟩) (fun l => l.elim0) k) j) i) := rfl
   rw [happ]
   have hbeta := OneLambda.reduces_betaSpine
     (RType.o :: List.replicate natAlgSig.numCtors (barTy (RType.omega τ')))
-    (barCaseOmegaBodyBig τ')
+    (barCaseOmegaBodyFolded τ')
     (fun i => Fin.cases (conc (FreeAlg.mk (ctorAt idx) subv))
       (fun j => Fin.cases (Ghats ⟨0, by decide⟩)
         (fun k => Fin.cases (Ghats ⟨1, by decide⟩) (fun l => l.elim0) k) j) i)
@@ -2103,7 +2099,7 @@ exposes a `caseSelect` on the represented arguments (`appEval_caseRedex`); casin
 the scrutinee's value on its top constructor (`ctorAt`) selects a branch through
 `caseSelect_mk_ctorAt`, matched on the target side by the base case reduction
 (`conc_replicateSpine_case_reduces`) at the base object sort `o` and the saturation
-keystone (`barCase_appSpine_reduces`) at a shifted object sort `Ω τ'`, both closed
+lemma (`barCase_appSpine_reduces`) at a shifted object sort `Ω τ'`, both closed
 under `lemma8` against the branch representatives' self-representation (`lemma9_o`,
 `lemma9_omega`). -/
 theorem represents_case {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
@@ -2209,7 +2205,7 @@ theorem represents_case {Γ : Binding.Ctx RType} (θ : RType) (hθ : θ.IsObj)
 constructor `true` in the closed ambient context (Leivant III section 4.2):
 `λ c⃗. c_true (x c⃗)` as a term of the singleton saturation context
 `[] ++ [Ω̄τ]`, whose sole outer binder `x` stands for the constructor's
-Berarducci-Böhm argument. The named target of the saturation keystone's fold
+Berarducci-Böhm argument. The named target of the saturation lemma's fold
 step (`barConOmega_true_fold`), the operand its `reduces_beta` instantiation
 substitutes into. Novel packaging of section 4.2. -/
 def barConOmegaBody (τ : RType) :
@@ -2238,7 +2234,7 @@ context folds into a single abstraction over its named body (Leivant III section
 4.2): `barConOmega true τ = lam' (barConOmegaBody τ)`, the outer argument spine
 `lamSpine (replicate 1 Ω̄τ)` collapsing to one `lam'` in the closed context, where
 the interposed empty-suffix and reassociation transports reduce by definitional
-proof irrelevance. The fold step of the `barConOmega` saturation keystone,
+proof irrelevance. The fold step of the `barConOmega` saturation lemma,
 exposing the single binder that `reduces_beta` saturates. Novel packaging of
 section 4.2. -/
 theorem barConOmega_true_fold (τ : RType) :
@@ -2254,7 +2250,7 @@ spine variables. Proved by pushing the instantiation through the constructor
 resolving each abstracted variable to its substituted image
 (`sub_underBinder_appendRight`, `sub_underBinder_weakAppend`,
 `extendEnv_appendRight`). Internal packaging for the `barConOmega` saturation
-keystone. -/
+lemma. -/
 theorem barConOmegaBody_instantiate (τ : RType)
     (N : Binding.Tm (oneLambdaSig natAlgSig) [] (bbType natAlgSig (barTy τ))) :
     Binding.instantiate₁ N (barConOmegaBody τ)
@@ -2288,7 +2284,7 @@ theorem barConOmegaBody_instantiate (τ : RType)
         exact Binding.extendEnv_appendRight Binding.idEnv (Binding.metaOne N) _ _
       | (n + 1), h => exact absurd h (by have : natAlgSig.ar true = 1 := rfl; omega)
 
-/-- The constructor bar-map saturation keystone (Leivant III section 4.2,
+/-- The constructor bar-map saturation lemma (Leivant III section 4.2,
 Proposition 11's `con^{Ωτ}` case at the unary constructor `true`): applying
 `barConOmega true τ` to an argument representative `Ghat` that reduces to the
 Berarducci-Böhm representation of a value `v` reduces (`OneLambdaStep`,
@@ -2344,7 +2340,7 @@ transport vanishes at the concrete constructors of `natAlgSig`, then
 Berarducci-Böhm representation of its own denotation, so it represents itself
 reflexively; the unary constructor peels its argument with `represents_arrow`,
 reads the applied denotation as the semantic node (`appEval_app'`,
-`stdConstructorInterp`), and closes by the saturation keystone
+`stdConstructorInterp`), and closes by the saturation lemma
 (`barConOmega_app_reduces`, through `barConOmega_true_fold`). -/
 theorem represents_con_omega {Γ : Binding.Ctx RType} (τ : RType) (b : natAlgSig.B)
     (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
@@ -2736,8 +2732,8 @@ environment `ρ` folds `v` with the recurrence step reading its step functions
 positionally (`stepAtLabel ρ`) and gluing the recursive results with `childEnv`.
 By induction on `v`, dispatching the constructor node's homogeneous application
 spine through `appEval_replicateSpine`, its head through `appEval_var_ctorVar`, and
-its recursive arguments through `childEnv`. The `recurBridge`-caliber
-reconciliation the recurrence case reads the source fold through. Novel packaging
+its recursive arguments through `childEnv`. The source-side reconciliation
+`represents_recur`'s fold-body identity rests on. Novel packaging
 of section 4.2. -/
 theorem appEval_sourceFoldBody (τ : RType) (v : FreeAlg natAlgSig)
     (ρ : ∀ i : Fin (stepTypes natAlgSig τ τ).length,
@@ -3493,10 +3489,10 @@ environments `Eσ` and `Eσhat` that are pointwise `Represents`-related
 Proved by induction on the term `E` (six-way, over the leaf variable and the six
 operation nodes of `rlmrOSig`). At a variable the two sides read the related
 environments (`sub_var`, `barTm_var`), closed by the environment hypothesis. Each
-operation node dispatches to its banked case lemma: application to `represents_app`
+operation node dispatches to the case lemma for its shape: application to `represents_app`
 (via the `app'` reassembly of the two children); abstraction to `represents_lam`
 (via the `lam'` reassembly of the body child, with the raw per-child induction
-hypothesis supplied directly); the constructor constant to `represents_con_succ`
+hypothesis supplied directly); the constructor constant to `represents_con_o`
 at object sort `o` and `represents_con_omega` at `Ω τ` (splitting `θ.IsObj` by
 `RType.eq_o_of_shape_o` / `RType.eq_omega_omegaArg_of_shape`); the destructor to
 `represents_dstr`; the case combinator to `represents_case`; the recurrence
@@ -3580,7 +3576,7 @@ theorem prop11_aux : ∀ {y : Binding.Ctx RType × RType}
         rw [hop]
         rcases hθ with ho | hω
         · obtain rfl := RType.eq_o_of_shape_o ho
-          exact represents_con_succ b Eσ Eσhat
+          exact represents_con_o b Eσ Eσhat
         · obtain ⟨a, rfl⟩ : ∃ a, θ = RType.omega a :=
             ⟨θ.omegaArg, RType.eq_omega_omegaArg_of_shape hω⟩
           exact represents_con_omega a b Eσ Eσhat
