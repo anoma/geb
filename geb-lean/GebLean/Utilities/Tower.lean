@@ -46,6 +46,15 @@ theorem tower_mono_right (k : ℕ) {x y : ℕ} (h : x ≤ y) :
   | succ k ih =>
     exact Nat.pow_le_pow_right (by omega) ih
 
+/-- `tower k` is strictly monotone in its second argument: `x < y` gives
+`tower k x < tower k y`. The name avoids a misparse against `tower_succ`, whose
+successor is the height argument; consumers read this lemma at `y = x + 1`. -/
+theorem tower_lt_tower_right (k : ℕ) {x y : ℕ} (h : x < y) :
+    tower k x < tower k y := by
+  induction k with
+  | zero => exact h
+  | succ k ih => exact Nat.pow_lt_pow_right Nat.one_lt_two ih
+
 /-- Composition of towers: applying a height-`j` tower to a
 height-`k` tower of `x` equals applying a height-`j+k` tower to `x`. -/
 theorem tower_comp (j k x : ℕ) :

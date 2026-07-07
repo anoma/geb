@@ -11,6 +11,10 @@ namespace GebLean.Ramified
 
 open GebLean.Binding GebLean.Ramified.OneLambda
 
+/-- The tower of twos is strictly monotone in its second argument: a
+statement-shape check for `tower_lt_tower_right` at height `2`. -/
+example : tower 2 3 < tower 2 4 := tower_lt_tower_right 2 (by decide)
+
 /-- The order of the twice-nested arrow `(o → o) → o` is `2` (Leivant III
 section 2.2, p. 213): the outer `arrow` takes the maximum of `1 + ord (o → o)`
 and `ord o`, and `ord (o → o) = max (1 + ord o) (ord o) = 1`. -/

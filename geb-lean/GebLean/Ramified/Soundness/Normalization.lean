@@ -1,6 +1,8 @@
 import GebLean.Ramified.Soundness.BarRep
 import GebLean.Binding.Measures
+import GebLean.Utilities.Tower
 import Mathlib.Algebra.BigOperators.Fin
+import Cslib.Foundations.Data.RelatesInSteps
 
 /-!
 # Ramified recurrence: the Lemma 12 normalization bound
@@ -1739,6 +1741,103 @@ theorem exists_iota_step_of_hasIota {Γ s} [LinearOrder A.B]
       Tm.height t' ≤ Tm.height t ∧ betaRedexRank t' = 0 := by
   obtain ⟨t', hstep, hsz, hht, hβ', _⟩ := exists_iota_step_aux (Tm.size t) t le_rfl h hβ
   exact ⟨t', hstep, hsz, hht, hβ'⟩
+
+/-- The size-bounded counted step relation (Leivant III section 4.2, realizing
+the spec's size-invariant intersection relation): a single `OneLambdaStep` whose
+target has size at most `M`. Restricting the reduction to a size ceiling makes
+its counted chains `Relation.RelatesInSteps` bound the reduction length while the
+individual terms stay inside a fixed size envelope. Novel packaging. -/
+def stepWithin [LinearOrder A.B] (M : ℕ) {Γ : Binding.Ctx RType} {s : RType} :
+    Binding.Tm (oneLambdaSig A) Γ s → Binding.Tm (oneLambdaSig A) Γ s → Prop :=
+  fun a b => OneLambdaStep a b ∧ Tm.size b ≤ M
+
+/-- The size ceiling of `stepWithin` is monotone: a step within `M` is a step
+within any larger ceiling `M'`. -/
+theorem stepWithin_mono [LinearOrder A.B] {M M' : ℕ} (h : M ≤ M')
+    {Γ : Binding.Ctx RType} {s : RType}
+    {a b : Binding.Tm (oneLambdaSig A) Γ s} (hab : stepWithin M a b) :
+    stepWithin M' a b :=
+  ⟨hab.1, le_trans hab.2 h⟩
+
+/-- Monotonicity of a counted chain in its relation: a chain of `r`-steps is a
+chain of `r'`-steps at the same length whenever `r` refines to `r'`. Derived from
+CSLib's `Relation.RelatesInSteps.map` at the identity carrier map. -/
+theorem relatesInSteps_mono {α : Type*} {r r' : α → α → Prop}
+    (h : ∀ a b, r a b → r' a b) {a b : α} {n : ℕ}
+    (hab : Relation.RelatesInSteps r a b n) : Relation.RelatesInSteps r' a b n :=
+  Relation.RelatesInSteps.map id h hab
+
+/-- A counted `stepWithin` chain projects to a `Relation.ReflTransGen` reduction:
+forgetting both the step count and the size ceiling recovers the ordinary
+reflexive-transitive reduction. -/
+theorem relatesInSteps_stepWithin_reflTransGen [LinearOrder A.B] {M : ℕ}
+    {Γ : Binding.Ctx RType} {s : RType}
+    {a b : Binding.Tm (oneLambdaSig A) Γ s} {n : ℕ}
+    (h : Relation.RelatesInSteps (stepWithin M) a b n) :
+    Relation.ReflTransGen OneLambdaStep a b :=
+  (relatesInSteps_mono (fun _ _ hab => hab.1) h).reflTransGen
+
+/-- A counted chain in the function subterm lifts through the application
+congruence rule `OneLambdaStep.appL`: a chain `f ⇒* f'` of `stepWithin M` steps
+of length `k` gives a chain `app' f x ⇒* app' f' x` of the same length `k` at the
+size ceiling shifted by the fixed argument `x` (the additive constant
+`Tm.size x + 1` is the size the application node adds over its function subterm,
+read off `size_app'`). Novel packaging of decision D2/P3's size-invariant chain
+lifting. -/
+theorem relatesInSteps_app'_left [LinearOrder A.B] {M : ℕ}
+    {Γ : Binding.Ctx RType} {σ τ : RType}
+    {f f' : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)}
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) {k : ℕ}
+    (h : Relation.RelatesInSteps (stepWithin M) f f' k) :
+    Relation.RelatesInSteps (stepWithin (M + Tm.size x + 1)) (app' f x) (app' f' x) k := by
+  induction h with
+  | refl => exact Relation.RelatesInSteps.refl _
+  | tail g g' n hchain hstep ih =>
+      refine Relation.RelatesInSteps.tail (app' f x) (app' g x) (app' g' x) n ih
+        ⟨OneLambdaStep.appL x hstep.1, ?_⟩
+      rw [size_app']
+      have := hstep.2
+      omega
+
+/-- A counted chain in the argument subterm lifts through the application
+congruence rule `OneLambdaStep.appR`: a chain `x ⇒* x'` of `stepWithin M` steps of
+length `k` gives a chain `app' f x ⇒* app' f x'` of the same length `k` at the
+size ceiling shifted by the fixed function `f` (the additive constant
+`Tm.size f + 1` read off `size_app'`). Novel packaging of decision D2/P3. -/
+theorem relatesInSteps_app'_right [LinearOrder A.B] {M : ℕ}
+    {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    {x x' : Binding.Tm (oneLambdaSig A) Γ σ} {k : ℕ}
+    (h : Relation.RelatesInSteps (stepWithin M) x x' k) :
+    Relation.RelatesInSteps (stepWithin (M + Tm.size f + 1)) (app' f x) (app' f x') k := by
+  induction h with
+  | refl => exact Relation.RelatesInSteps.refl _
+  | tail g g' n hchain hstep ih =>
+      refine Relation.RelatesInSteps.tail (app' f x) (app' f g) (app' f g') n ih
+        ⟨OneLambdaStep.appR f hstep.1, ?_⟩
+      rw [size_app']
+      have := hstep.2
+      omega
+
+/-- A counted chain in the abstraction body lifts through the congruence rule
+`OneLambdaStep.lamBody`: a chain `b ⇒* b'` of `stepWithin M` steps of length `k` in
+the binder-extended context `Γ ++ [σ]` gives a chain `lam' b ⇒* lam' b'` of the
+same length `k` in `Γ` at the size ceiling shifted by the abstraction node (the
+additive constant `1` read off `size_lam'`). Novel packaging of decision
+D2/P3. -/
+theorem relatesInSteps_lamBody [LinearOrder A.B] {M : ℕ}
+    {Γ : Binding.Ctx RType} {σ τ : RType}
+    {b b' : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ} {k : ℕ}
+    (h : Relation.RelatesInSteps (stepWithin M) b b' k) :
+    Relation.RelatesInSteps (stepWithin (M + 1)) (lam' b) (lam' b') k := by
+  induction h with
+  | refl => exact Relation.RelatesInSteps.refl _
+  | tail c c' n hchain hstep ih =>
+      refine Relation.RelatesInSteps.tail (lam' b) (lam' c) (lam' c') n ih
+        ⟨OneLambdaStep.lamBody hstep.1, ?_⟩
+      rw [size_lam']
+      have := hstep.2
+      omega
 
 end OneLambda
 
