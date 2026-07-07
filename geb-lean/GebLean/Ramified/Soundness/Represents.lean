@@ -48,6 +48,12 @@ implication carrying represented arguments to represented applications.
   induction (Leivant III section 4.2–4.3), standalone: representation of a
   substituted function and argument yields representation of the substituted
   application.
+* `represents_lam` — the abstraction case of Proposition 11's fundamental
+  induction (Leivant III section 4.2–4.3), standalone and parametrized by the
+  body's induction hypothesis: representation of the body under every represented
+  extension yields representation of the substituted abstraction, discharged by
+  one `1λ(A)` β-reduction (`representsEnv_extend`, `instantiate_sub_underBinder`,
+  `subEnvSem_extendEnv_metaOne`).
 * `barRecur_appSpine_reduces` — the recurrence bar-map saturated with represented
   step terms reduces to its instantiated inner body, the recurrence-combinator
   counterpart of `OneLambda.bbRep_appSpine_reduces`.
@@ -3364,5 +3370,73 @@ theorem representsEnv_extend {Γ : Binding.Ctx RType} {σ : RType}
     induction yfin using Fin.cases with
     | zero => intro hys; subst hys; exact hG
     | succ k => intro _; exact k.elim0
+
+/-- Compatibility of the representation relation with abstraction (Leivant III
+section 4.2, Proposition 11's abstraction case, a decision-2 denotational
+reformulation): if for every represented extension the substituted body `sub Eσ' b`
+is represented by the parallel target substitution into the bar image `barTm b`,
+then the substituted abstraction `sub Eσ (lam' b)` is represented by `sub Eσhat
+(barTm (lam' b))`. The abstraction case of Proposition 11's fundamental induction,
+standalone; parametrized by the induction hypothesis `ih` for the body.
+
+The arrow clause (`represents_arrow`) takes a represented argument pair `G`/`Ghat`.
+On the target side the bar-map sends the node to the `1λ(A)` abstraction
+(`barTm_lam'`), substitution pushes under the binder (`OneLambda.sub_lam'`), and one
+`OneLambdaStep.beta` reduction (`OneLambda.reduces_beta`, prepended through
+`lemma8`) contracts the applied abstraction to the instantiated body, which the
+substitution fusion (`instantiate_sub_underBinder`, `sub_transport_dom`) identifies
+with the induction hypothesis' target at the extended environment
+(`representsEnv_extend`). On the source side the applied substituted abstraction has
+the same denotation as the extended-environment substitution
+(`subEnvSem_extendEnv_metaOne`), so `represents_congr_appEval` transfers the
+representation. Novel packaging of section 4.2. -/
+theorem represents_lam {Γ : Binding.Ctx RType} {σ τ' : RType}
+    (b : Binding.Tm (rlmrOSig natAlgSig) (Γ ++ [σ]) τ')
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) [])
+    (hEnv : RepresentsEnv Eσ Eσhat)
+    (ih : ∀ (Eσ' : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) (Γ ++ [σ]) [])
+        (Eσhat' : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) ((Γ ++ [σ]).map barTy) []),
+        RepresentsEnv Eσ' Eσhat' →
+          Represents τ' (Binding.sub Eσ' b) (Binding.sub Eσhat' (barTm b))) :
+    Represents (RType.arrow σ τ')
+      (Binding.sub Eσ (lam' b)) (Binding.sub Eσhat (barTm (lam' b))) := by
+  refine (represents_arrow (Binding.sub Eσ (lam' b))
+    (Binding.sub Eσhat (barTm (lam' b)))).mpr ?_
+  intro G Ghat hGG
+  set body := Binding.sub
+    (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) Eσhat)
+    (map_barTy_snoc Γ σ ▸ barTm b) with hbody
+  have htgt : Binding.sub Eσhat (barTm (lam' b)) = OneLambda.lam' body := by
+    rw [barTm_lam']
+    exact OneLambda.sub_lam' Eσhat _
+  have hbeta : Relation.ReflTransGen OneLambdaStep
+      (OneLambda.app' (Binding.sub Eσhat (barTm (lam' b))) Ghat)
+      (Binding.instantiate₁ Ghat body) := by
+    have hcongr : OneLambda.app' (Binding.sub Eσhat (barTm (lam' b))) Ghat
+        = OneLambda.app' (OneLambda.lam' body) Ghat :=
+      congrArg (fun f => OneLambda.app' f Ghat) htgt
+    rw [hcongr]
+    exact OneLambda.reduces_beta body Ghat
+  have hRepIH : Represents τ'
+      (Binding.sub (Binding.extendEnv Eσ (Binding.metaOne G)) b)
+      (Binding.sub ((map_barTy_snoc Γ σ).symm ▸ Binding.extendEnv Eσhat (Binding.metaOne Ghat))
+        (barTm b)) :=
+    ih (Binding.extendEnv Eσ (Binding.metaOne G))
+      ((map_barTy_snoc Γ σ).symm ▸ Binding.extendEnv Eσhat (Binding.metaOne Ghat))
+      (representsEnv_extend Eσ Eσhat G Ghat hEnv hGG)
+  have htgteq : Binding.sub
+        ((map_barTy_snoc Γ σ).symm ▸ Binding.extendEnv Eσhat (Binding.metaOne Ghat)) (barTm b)
+      = Binding.instantiate₁ Ghat body := by
+    rw [sub_transport_dom, Binding.instantiate₁, hbody, instantiate_sub_underBinder]
+  have hRep' : Represents τ'
+      (Binding.sub (Binding.extendEnv Eσ (Binding.metaOne G)) b)
+      (OneLambda.app' (Binding.sub Eσhat (barTm (lam' b))) Ghat) :=
+    lemma8 (htgteq ▸ hRepIH) hbeta
+  refine represents_congr_appEval ?_ hRep'
+  rw [appEval_sub b (Binding.extendEnv Eσ (Binding.metaOne G)) finZeroElim,
+    subEnvSem_extendEnv_metaOne, sourceApp, appEval_app',
+    appEval_sub (lam' b) Eσ finZeroElim, appEval_lam']
+  rfl
 
 end GebLean.Ramified
