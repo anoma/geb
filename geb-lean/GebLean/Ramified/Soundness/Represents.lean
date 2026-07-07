@@ -3163,4 +3163,76 @@ theorem barTm_lam' {Γ : Binding.Ctx RType} {σ τ' : RType}
     (b : Binding.Tm (rlmrOSig natAlgSig) (Γ ++ [σ]) τ') :
     barTm (lam' b) = OneLambda.lam' (map_barTy_snoc Γ σ ▸ barTm b) := rfl
 
+/-- The semantic substitution environment of a single represented extension
+factors as the semantic environment extension (Leivant III section 4.1, the
+denotational binder peel of the abstraction case): substituting the extended
+environment `extendEnv Eσ (metaOne G)` under the standard model at `ρ` equals
+extending the substituted prefix environment `subEnvSem Eσ ρ` by the value
+`appEval G ρ` of the substituted variable. Dispatched pointwise by `finApp_cases`:
+at a prefix position the extension reads `Eσ` (`extendEnv_weakAppend`), at the sole
+suffix position it reads `G` (`extendEnv_appendRight`, `metaOne`). Novel packaging
+of section 4.1. -/
+theorem subEnvSem_extendEnv_metaOne {Γ Δ : Binding.Ctx RType} {σ : RType}
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ Δ)
+    (G : Binding.Tm (rlmrOSig natAlgSig) Δ σ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    subEnvSem (Binding.extendEnv Eσ (Binding.metaOne G)) ρ
+      = envExtend (subEnvSem Eσ ρ) (appEval G ρ) := by
+  have hmeta : ∀ (b : RType) (v : Binding.Var [σ] b),
+      appEval (Binding.metaOne G b v) ρ ≍ appEval G ρ := by
+    intro b v
+    obtain ⟨i, hi⟩ := v
+    revert hi
+    induction i using Fin.cases with
+    | zero => intro hi; exact appEval_heq _ G ρ hi.symm (eqRec_heq hi G)
+    | succ k => intro _; exact k.elim0
+  funext k
+  refine finApp_cases (Γ := Γ) (Δ := [σ])
+    (motive := fun k =>
+      subEnvSem (Binding.extendEnv Eσ (Binding.metaOne G)) ρ k
+        = envExtend (subEnvSem Eσ ρ) (appEval G ρ) k)
+    (fun i => ?_) (fun j => ?_) k
+  · apply eq_of_heq
+    have hfin : (finAppL Γ [σ] i).val < Γ.length := i.isLt
+    have hvar : Binding.extendEnv Eσ (Binding.metaOne G)
+          ((Γ ++ [σ]).get (finAppL Γ [σ] i)) ⟨finAppL Γ [σ] i, rfl⟩
+        = Eσ ((Γ ++ [σ]).get (finAppL Γ [σ] i)) ⟨i, (get_finAppL Γ [σ] i).symm⟩ := by
+      rw [taut_finAppL_eq]
+      exact Binding.extendEnv_weakAppend Eσ (Binding.metaOne G) _ _
+    have hLHS : subEnvSem (Binding.extendEnv Eσ (Binding.metaOne G)) ρ (finAppL Γ [σ] i)
+        ≍ subEnvSem Eσ ρ i := by
+      simp only [subEnvSem]
+      rw [hvar]
+      exact appEval_heq _ _ ρ (get_finAppL Γ [σ] i)
+        (subEnvSem_val_heq Eσ (get_finAppL Γ [σ] i) i _ rfl)
+    have hRHS : envExtend (subEnvSem Eσ ρ) (appEval G ρ) (finAppL Γ [σ] i)
+        ≍ subEnvSem Eσ ρ i := by
+      change childEnv Γ σ 1 (subEnvSem Eσ ρ) (fun _ => appEval G ρ) (finAppL Γ [σ] i)
+        ≍ subEnvSem Eσ ρ i
+      exact (childEnv_heq_left (subEnvSem Eσ ρ) _ _ hfin).trans (heq_of_eq rfl)
+    exact hLHS.trans hRHS.symm
+  · apply eq_of_heq
+    have hvalR : (finAppR Γ [σ] j).val = Γ.length + j.val := rfl
+    have hgeR : ¬ (finAppR Γ [σ] j).val < Γ.length := by rw [hvalR]; omega
+    have hbR : (finAppR Γ [σ] j).val - Γ.length < 1 := by
+      have hj : j.val < 1 := j.isLt
+      rw [hvalR]; omega
+    have hvar : Binding.extendEnv Eσ (Binding.metaOne G)
+          ((Γ ++ [σ]).get (finAppR Γ [σ] j)) ⟨finAppR Γ [σ] j, rfl⟩
+        = Binding.metaOne G ((Γ ++ [σ]).get (finAppR Γ [σ] j))
+            ⟨j, (get_finAppR Γ [σ] j).symm⟩ := by
+      rw [taut_finAppR_eq]
+      exact Binding.extendEnv_appendRight Eσ (Binding.metaOne G) _ _
+    have hLHS : subEnvSem (Binding.extendEnv Eσ (Binding.metaOne G)) ρ (finAppR Γ [σ] j)
+        ≍ appEval G ρ := by
+      simp only [subEnvSem]
+      rw [hvar]
+      exact hmeta _ _
+    have hRHS : envExtend (subEnvSem Eσ ρ) (appEval G ρ) (finAppR Γ [σ] j)
+        ≍ appEval G ρ := by
+      change childEnv Γ σ 1 (subEnvSem Eσ ρ) (fun _ => appEval G ρ) (finAppR Γ [σ] j)
+        ≍ appEval G ρ
+      exact (childEnv_heq_right (subEnvSem Eσ ρ) _ _ hgeR hbR).trans (heq_of_eq rfl)
+    exact hLHS.trans hRHS.symm
+
 end GebLean.Ramified
