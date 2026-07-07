@@ -37,8 +37,10 @@ splits into `betaRedexRank` and `hasIota`.
 * `OneLambda.conHeaded` — the head of the application spine is a `con`.
 * `OneLambda.topBetaRank` — the order of the applied abstraction's arrow sort
   if the node is a β-redex, else `0`.
+* `OneLambda.iotaSpine` — the node's function spine bottoms out at a destructor
+  or case head over a `con`-headed scrutinee, ignoring saturation.
 * `OneLambda.topIota` — the node is a saturated destructor- or case-redex over
-  a `con`-headed scrutinee.
+  a `con`-headed scrutinee: `iotaSpine` restricted to result sort `o`.
 * `OneLambda.IsLam` — the node is a `lam` operation.
 * `OneLambda.betaRedexRank` — the maximum of `topBetaRank` over all subterm
   positions.
@@ -365,11 +367,12 @@ function subterm is an abstraction, and `0` otherwise. -/
   change (if isLam ((List.append_nil Γ).symm ▸ f) then RType.ord (RType.arrow σ τ) else 0) = _
   rw [isLam_appendNil]
 
-/-- The operation dispatch of `topIota`: at an `app` node, inspecting the head
+/-- The operation dispatch of `iotaSpine`: at an `app` node, inspecting the head
 of the function subterm — a `dstr` or a `case` gives the `con`-headedness of the
 argument (the scrutinee), a further `app` continues the descent along the spine,
-and anything else is `false`; non-`app` nodes are `false`. -/
-def topIotaOp {Γ : Binding.Ctx RType} (o : OneLambdaOp A)
+and anything else is `false`; non-`app` nodes are `false`. This dispatch ignores
+saturation; the saturation guard is applied by `topIota`. -/
+def iotaSpineOp {Γ : Binding.Ctx RType} (o : OneLambdaOp A)
     (children : ∀ j : Fin ((oneLambdaSig A).args o).length,
       Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args o).get j).1)
         (((oneLambdaSig A).args o).get j).2)
@@ -383,13 +386,13 @@ def topIotaOp {Γ : Binding.Ctx RType} (o : OneLambdaOp A)
       | _ => false
   | _ => false
 
-/-- Whether the node is a saturated destructor- or case-redex over a
-`con`-headed scrutinee (Leivant III section 4.2, p. 224): a `dstr j` applied to
-a `con`-headed argument, or a `case` spine whose scrutinee is `con`-headed
-(found by descending the spine's function subterms). Saturation is implied by
-the intrinsic sort `o` (section 4.3). Structural recursion by `PolyFix.ind`;
+/-- Whether the function spine of the node bottoms out at a `dstr` or `case` head
+over a `con`-headed scrutinee (Leivant III section 4.2, p. 224), ignoring
+saturation: a `dstr j` or `case` applied — via the spine's function subterms — to
+a `con`-headed argument. The ungated spine detector; `topIota` restricts it to
+saturated nodes by the result-sort guard. Structural recursion by `PolyFix.ind`;
 transcription of section 4.2's ι-redex head-forms. -/
-def topIota {Γ : Binding.Ctx RType} {s : RType}
+def iotaSpine {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig A) Γ s) : Bool :=
   PolyFix.ind (P := polyTranslate Binding.varOver (oneLambdaSig A).polyEndo)
     (motive := fun {_} _ => Bool)
@@ -397,55 +400,102 @@ def topIota {Γ : Binding.Ctx RType} {s : RType}
       match i, children, ih with
       | Sum.inl _, _, _ => false
       | Sum.inr p, children, ih =>
-        topIotaOp (Γ := x.1) p.val (fun j => children ⟨j⟩) (fun j => ih ⟨j⟩)) t
+        iotaSpineOp (Γ := x.1) p.val (fun j => children ⟨j⟩) (fun j => ih ⟨j⟩)) t
 
-/-- `topIota` at an operation node is `topIotaOp` on its subterms, with the
-recursive `topIota` on the function subterm for the spine descent. -/
-@[simp] theorem topIota_op {Γ : Binding.Ctx RType} (o : OneLambdaOp A)
+/-- `iotaSpine` at an operation node is `iotaSpineOp` on its subterms, with the
+recursive `iotaSpine` on the function subterm for the spine descent. -/
+@[simp] theorem iotaSpine_op {Γ : Binding.Ctx RType} (o : OneLambdaOp A)
     (args : ∀ j : Fin ((oneLambdaSig A).args o).length,
       Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args o).get j).1)
         (((oneLambdaSig A).args o).get j).2) :
-    topIota (Binding.Tm.op o args) = topIotaOp o args (fun j => topIota (args j)) := rfl
+    iotaSpine (Binding.Tm.op o args) = iotaSpineOp o args (fun j => iotaSpine (args j)) := rfl
+
+/-- `iotaSpine` at a variable is `false`. -/
+@[simp] theorem iotaSpine_var {Γ : Binding.Ctx RType} {s : RType} (x : Binding.Var Γ s) :
+    iotaSpine (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) Γ s) = false := by
+  obtain ⟨i, hi⟩ := x; subst hi; rfl
+
+/-- `iotaSpine` at an abstraction node is `false`: a `lam` head is not an
+ι-redex. -/
+@[simp] theorem iotaSpine_lam' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) : iotaSpine (lam' b) = false := rfl
+
+/-- `iotaSpine` is invariant under transport of the context and sort indices. -/
+theorem iotaSpine_cast {Γ Γ' : Binding.Ctx RType} {s s' : RType}
+    (hΓ : Γ = Γ') (hs : s = s') (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    iotaSpine (hs ▸ hΓ ▸ t) = iotaSpine t := by subst hΓ; subst hs; rfl
+
+/-- `iotaSpine` ignores the `Γ ++ [] = Γ` transport that `app'` applies. -/
+private theorem iotaSpine_appendNil {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    iotaSpine ((List.append_nil Γ).symm ▸ t) = iotaSpine t :=
+  iotaSpine_cast (List.append_nil Γ).symm rfl t
+
+/-- `iotaSpine` at an application node inspects the head of the function subterm:
+a destructor or case head over a `con`-headed argument bottoms the spine; a
+further application continues the spine descent. -/
+theorem iotaSpine_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) :
+    iotaSpine (app' f x)
+      = (match headTag f with
+         | some (OneLambdaOp.dstr _) => conHeaded x
+         | some OneLambdaOp.case => conHeaded x
+         | some (OneLambdaOp.app _ _) => iotaSpine f
+         | _ => false) := by
+  change (match headTag ((List.append_nil Γ).symm ▸ f) with
+      | some (OneLambdaOp.dstr _) => conHeaded ((List.append_nil Γ).symm ▸ x)
+      | some OneLambdaOp.case => conHeaded ((List.append_nil Γ).symm ▸ x)
+      | some (OneLambdaOp.app _ _) => iotaSpine ((List.append_nil Γ).symm ▸ f)
+      | _ => false) = _
+  rw [headTag_appendNil, conHeaded_appendNil, iotaSpine_appendNil]
+
+/-- The ι-redex indicator at the top node (Leivant III section 4.2, p. 224):
+whether the node is a genuine saturated destructor- or case-redex over a
+`con`-headed scrutinee. The result-sort guard `s.shape = RTypeShape.o` restricts
+the ungated `iotaSpine` to saturated nodes: `case : o^{numCtors+1} → o` and
+`dstr : o → o`, so a `dstr`- or `case`-spine node of result sort `o` is exactly
+one saturated through the intrinsic sorts, and every genuine ι-redex (the
+`OneLambdaStep.dstrHit`/`dstrMiss`/`case` shape) has result sort `o` at its root.
+The guard removes exactly the unsaturated `iotaSpine` flags — an arrow-sorted
+partial application such as `app' case scrut` — and no genuine redex.
+Non-recursive read of the top node. Transcription of section 4.2's ι-redex
+head-forms. -/
+def topIota {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) : Bool :=
+  if s.shape = RTypeShape.o then iotaSpine t else false
 
 /-- `topIota` at a variable is `false`. -/
 @[simp] theorem topIota_var {Γ : Binding.Ctx RType} {s : RType} (x : Binding.Var Γ s) :
     topIota (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) Γ s) = false := by
-  obtain ⟨i, hi⟩ := x; subst hi; rfl
+  simp only [topIota, iotaSpine_var, ite_self]
 
-/-- `topIota` at an abstraction node is `false`: a `lam` head is not an
-ι-redex. -/
+/-- `topIota` at an abstraction node is `false`: a `lam`-headed node has arrow
+sort, and a `lam` head is not an ι-redex. -/
 @[simp] theorem topIota_lam' {Γ : Binding.Ctx RType} {σ τ : RType}
-    (b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) : topIota (lam' b) = false := rfl
+    (b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) : topIota (lam' b) = false := by
+  simp only [topIota, iotaSpine_lam', ite_self]
 
 /-- `topIota` is invariant under transport of the context and sort indices. -/
 theorem topIota_cast {Γ Γ' : Binding.Ctx RType} {s s' : RType}
     (hΓ : Γ = Γ') (hs : s = s') (t : Binding.Tm (oneLambdaSig A) Γ s) :
     topIota (hs ▸ hΓ ▸ t) = topIota t := by subst hΓ; subst hs; rfl
 
-/-- `topIota` ignores the `Γ ++ [] = Γ` transport that `app'` applies. -/
-private theorem topIota_appendNil {Γ : Binding.Ctx RType} {s : RType}
-    (t : Binding.Tm (oneLambdaSig A) Γ s) :
-    topIota ((List.append_nil Γ).symm ▸ t) = topIota t :=
-  topIota_cast (List.append_nil Γ).symm rfl t
-
-/-- `topIota` at an application node inspects the head of the function subterm:
-a destructor or case head over a `con`-headed argument is an ι-redex; a further
-application continues the spine descent. -/
+/-- `topIota` at an application node applies the result-sort saturation guard to
+the spine detector: an ι-redex requires result sort `o` together with a
+destructor- or case-headed spine over a `con`-headed argument. -/
 theorem topIota_app' {Γ : Binding.Ctx RType} {σ τ : RType}
     (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
     (x : Binding.Tm (oneLambdaSig A) Γ σ) :
     topIota (app' f x)
-      = (match headTag f with
-         | some (OneLambdaOp.dstr _) => conHeaded x
-         | some OneLambdaOp.case => conHeaded x
-         | some (OneLambdaOp.app _ _) => topIota f
-         | _ => false) := by
-  change (match headTag ((List.append_nil Γ).symm ▸ f) with
-      | some (OneLambdaOp.dstr _) => conHeaded ((List.append_nil Γ).symm ▸ x)
-      | some OneLambdaOp.case => conHeaded ((List.append_nil Γ).symm ▸ x)
-      | some (OneLambdaOp.app _ _) => topIota ((List.append_nil Γ).symm ▸ f)
-      | _ => false) = _
-  rw [headTag_appendNil, conHeaded_appendNil, topIota_appendNil]
+      = (if τ.shape = RTypeShape.o then
+          (match headTag f with
+           | some (OneLambdaOp.dstr _) => conHeaded x
+           | some OneLambdaOp.case => conHeaded x
+           | some (OneLambdaOp.app _ _) => iotaSpine f
+           | _ => false)
+         else false) := by
+  simp only [topIota, iotaSpine_app']
 
 /-- The β-rank measure (Leivant III section 4.2, p. 224): the maximum of
 `topBetaRank` over every subterm position. Structural recursion by
@@ -528,7 +578,10 @@ def hasIota {Γ : Binding.Ctx RType} {s : RType}
       match i, children, ih with
       | Sum.inl _, _, _ => false
       | Sum.inr p, children, ih =>
-        (topIotaOp (Γ := x.1) p.val (fun j => children ⟨j⟩) (fun j => topIota (children ⟨j⟩)))
+        (if x.2.shape = RTypeShape.o then
+          iotaSpineOp (Γ := x.1) p.val (fun j => children ⟨j⟩)
+            (fun j => iotaSpine (children ⟨j⟩))
+         else false)
           || Finset.univ.sup (fun j => ih ⟨j⟩)) t
 
 /-- `hasIota` at an operation node disjoins the top ι-redex detector with the

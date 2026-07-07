@@ -55,4 +55,37 @@ example :
   · rw [redexRank_app', topBetaRank_app', htop, hN, hdnode, hil]; simp
   · rw [hasIota_app', htop]; rfl
 
+/-- An unsaturated con-headed case application `case (c₀)` sits at an arrow sort:
+`case : o → o^{numCtors} → o` applied only to its scrutinee has result sort
+`o^{numCtors} → o`, so it is irreducible under `OneLambdaStep`. The result-sort
+saturation guard reports no ι-redex there: `hasIota … = false`, and with no
+β-redex the term is `Normal`. Regression for the guard against flagging
+arrow-typed partial case applications. -/
+example :
+    hasIota (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := []) OneLambdaOp.case
+          (fun k => k.elim0)) (conc (natToFreeAlg 0))) = false
+      ∧ Normal (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := []) OneLambdaOp.case
+          (fun k => k.elim0)) (conc (natToFreeAlg 0))) := by
+  refine ⟨rfl, ?_⟩
+  rw [normal_iff]; exact ⟨rfl, rfl⟩
+
+/-- A saturated case spine `case (c₀) b₀ b₁` over the con-headed zero word (all
+branches the zero word) is a genuine ι-redex at result sort `o`: `hasIota … =
+true` and its redex rank is `1`. Confirms the guard preserves detection of the
+`OneLambdaStep.case` shape. -/
+example :
+    redexRank (OneLambda.replicateSpine natAlgSig.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := []) OneLambdaOp.case
+            (fun k => k.elim0)) (conc (natToFreeAlg 0)))
+        (fun _ => conc (natToFreeAlg 0))) = 1
+      ∧ hasIota (OneLambda.replicateSpine natAlgSig.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := []) OneLambdaOp.case
+            (fun k => k.elim0)) (conc (natToFreeAlg 0)))
+        (fun _ => conc (natToFreeAlg 0))) = true :=
+  ⟨rfl, rfl⟩
+
 end GebLean.Ramified
