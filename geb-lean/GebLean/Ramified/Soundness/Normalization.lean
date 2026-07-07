@@ -50,6 +50,8 @@ splits into `betaRedexRank` and `hasIota`.
 * `OneLambda.redexRank` — the aggregate `max (betaRedexRank t) (if hasIota t
   then 1 else 0)`.
 * `OneLambda.Normal` — `redexRank t = 0`.
+* `OneLambda.stepWithin` — the size-bounded one-step reduction: an `OneLambdaStep`
+  whose target has size at most a fixed ceiling.
 
 ## Main statements
 
@@ -67,6 +69,18 @@ splits into `betaRedexRank` and `hasIota`.
 * `OneLambda.exists_iota_step_of_hasIota` — a β-normal term with an ι-redex
   takes a step that strictly decreases the size, does not increase the height,
   and preserves β-normality.
+* `OneLambda.relatesInSteps_mono`, `OneLambda.stepWithin_mono`,
+  `OneLambda.relatesInSteps_stepWithin_reflTransGen` — monotonicity of a counted
+  chain in its relation and of `stepWithin` in its ceiling, and the projection of
+  a counted `stepWithin` chain to a `Relation.ReflTransGen` reduction.
+* `OneLambda.relatesInSteps_app'_left`, `OneLambda.relatesInSteps_app'_right`,
+  `OneLambda.relatesInSteps_lamBody` — counted chains lift through the congruence
+  rules at the same length, with the size ceiling shifted by the fixed sibling.
+* `OneLambda.betaRedexRank_ren`, `OneLambda.isLam_ren` — invariance of the β-rank
+  and the abstraction detector under renaming.
+* `OneLambda.betaRedexRank_instantiate₁_le` — the β-rank of a single-variable
+  substitution instance is bounded by the β-ranks of the body and the substituted
+  term together with the order of the substituted sort (note N2).
 
 ## References
 
@@ -74,8 +88,9 @@ D. Leivant, "Ramified recurrence and computational complexity III: Higher
 type recurrence and elementary complexity", Annals of Pure and Applied
 Logic 96 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`, section 2.2
 (p. 213): the order of a simple type; section 4.2 (p. 224): the redexes, their
-ranks, and normality of `1λ(A)`; section 5, proof paragraph (iii) (p. 226):
-the ι-phase step accounting.
+ranks, and normality of `1λ(A)`; section 5, proof paragraph (ii) (p. 226): the
+substitution redex-rank bound (note N2); section 5, proof paragraph (iii)
+(p. 226): the ι-phase step accounting.
 
 ## Tags
 
@@ -1838,6 +1853,259 @@ theorem relatesInSteps_lamBody [LinearOrder A.B] {M : ℕ}
       rw [size_lam']
       have := hstep.2
       omega
+
+/-- `isLam` is invariant under renaming: a renaming preserves the head operation
+of a term. The redex-detection sibling of `Tm.size_ren`/`Tm.height_ren`. -/
+theorem isLam_ren {Γ Δ : Binding.Ctx RType} {s : RType} (ρ : Binding.Thinning Γ Δ)
+    (t : Binding.Tm (oneLambdaSig A) Γ s) : isLam (Binding.ren ρ t) = isLam t := by
+  rcases tm_cases t with ⟨x, rfl⟩ | ⟨o, hs, args, rfl⟩
+  · rw [Binding.ren, Binding.traverse_var]
+    simp only [Binding.varKit, isLam_var]
+  · subst hs
+    rw [Binding.ren, Binding.traverse_op]
+    rfl
+
+/-- `betaRedexRank` is invariant under renaming: a renaming preserves the
+operation tree and therefore every `topBetaRank` contribution, using `isLam_ren`
+at each application node. The redex-rank sibling of `Tm.size_ren`. -/
+@[simp] theorem betaRedexRank_ren {Γ Δ : Binding.Ctx RType} {s : RType}
+    (ρ : Binding.Thinning Γ Δ) (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    betaRedexRank (Binding.ren ρ t) = betaRedexRank t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig A).polyEndo) y)
+      {Δ : Binding.Ctx RType} (ρ : Binding.Thinning y.1 Δ),
+      betaRedexRank (Γ := Δ) (Binding.traverse (Binding.varKit (oneLambdaSig A))
+          (Binding.renEnv ρ) t)
+        = betaRedexRank (Γ := y.1) (s := y.2) t from h t ρ
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ ρ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Binding.Tm (oneLambdaSig A) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      simp only [Binding.traverse_var, Binding.varKit, betaRedexRank_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : OneLambdaOp A // (oneLambdaSig A).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      change betaRedexRank (Binding.traverse (Binding.varKit (oneLambdaSig A)) (Binding.renEnv ρ)
+            (Binding.Tm.op (S := oneLambdaSig A) o (fun j => children ⟨j⟩)))
+          = betaRedexRank (Binding.Tm.op (S := oneLambdaSig A) o (fun j => children ⟨j⟩))
+      rw [Binding.traverse_op, betaRedexRank_op, betaRedexRank_op]
+      congr 1
+      · cases o with
+        | app σ'' τ'' =>
+          have hlam : isLam (Binding.traverse (Binding.varKit (oneLambdaSig A))
+              (Binding.Env.underBinder (Binding.varKit (oneLambdaSig A)) (Binding.renEnv ρ))
+              (children ⟨0, Nat.succ_pos 1⟩))
+            = isLam (children ⟨0, Nat.succ_pos 1⟩) := by
+            rw [Binding.underBinder_renEnv]; exact isLam_ren _ _
+          simp only [topBetaRank_op, topBetaRankOp, hlam]
+        | lam _ _ => simp only [topBetaRank_op, topBetaRankOp]
+        | con _ => simp only [topBetaRank_op, topBetaRankOp]
+        | dstr _ => simp only [topBetaRank_op, topBetaRankOp]
+        | case => simp only [topBetaRank_op, topBetaRankOp]
+      · refine Finset.sup_congr rfl fun j _ => ?_
+        rw [Binding.underBinder_renEnv]
+        exact ih ⟨j⟩ (Binding.Thinning.appendId ρ _)
+
+/-- The per-image bound of note N2's substitution redex-rank invariant: the
+β-rank of an image, together with the order of its sort when the image is a `lam`.
+A `lam` image dropped into function position creates a β-redex of exactly that
+order; a variable image (`isLam` false) creates none, so its sort is exempt — the
+exemption that makes the invariant stable under `Env.underBinder`, whose fresh
+images are variables. -/
+private def subBound {Γ : Binding.Ctx RType} (u : RType)
+    (w : Binding.Tm (oneLambdaSig A) Γ u) : ℕ :=
+  max (betaRedexRank w) (if isLam w then RType.ord u else 0)
+
+/-- The β-rank of an image is bounded by its `subBound`. -/
+private theorem betaRedexRank_le_subBound {Γ : Binding.Ctx RType} (u : RType)
+    (w : Binding.Tm (oneLambdaSig A) Γ u) : betaRedexRank w ≤ subBound u w :=
+  le_max_left _ _
+
+/-- The `subBound` of a variable image is `0`: a variable has no β-redex and is
+not a `lam`. -/
+private theorem subBound_var {Γ : Binding.Ctx RType} (u : RType) (x : Binding.Var Γ u) :
+    subBound u (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) Γ u) = 0 := by
+  unfold subBound
+  rw [betaRedexRank_var, isLam_var]
+  simp
+
+/-- `subBound` is invariant under renaming (`betaRedexRank_ren`, `isLam_ren`),
+so a renamed image keeps its bound. -/
+private theorem subBound_ren {Γ Δ : Binding.Ctx RType} (u : RType)
+    (ρ : Binding.Thinning Γ Δ) (w : Binding.Tm (oneLambdaSig A) Γ u) :
+    subBound u (Binding.ren ρ w) = subBound u w := by
+  simp only [subBound, betaRedexRank_ren, isLam_ren]
+
+/-- `subBound` is invariant under transport of the sort index. -/
+private theorem subBound_cast {Γ : Binding.Ctx RType} {u u' : RType} (h : u = u')
+    (w : Binding.Tm (oneLambdaSig A) Γ u) :
+    subBound u' (h ▸ w) = subBound u w := by subst h; rfl
+
+/-- The head of a substitution instance is a `lam` only if the original head is a
+`lam` or the substituted variable's image is a `lam`. The substitution rebuilds an
+operation node with its head unchanged, so a fresh `lam` head can arise only at a
+variable leaf, from that leaf's image. -/
+private theorem isLam_sub_imp {Γ Δ : Binding.Ctx RType} {s : RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig A)) Γ Δ)
+    (t : Binding.Tm (oneLambdaSig A) Γ s) (h : isLam (Binding.sub σ t) = true) :
+    isLam t = true ∨ ∃ x : Binding.Var Γ s, isLam (σ s x) = true := by
+  rcases tm_cases t with ⟨x, rfl⟩ | ⟨o, hs, args, rfl⟩
+  · exact Or.inr ⟨x, by rwa [Binding.sub_var] at h⟩
+  · refine Or.inl ?_
+    subst hs
+    have h' : isLam (Binding.traverse (Binding.subKit (oneLambdaSig A)) σ
+        (Binding.Tm.op (S := oneLambdaSig A) o args)) = true := h
+    rw [Binding.traverse_op] at h'
+    exact h'
+
+/-- The environment-generalized redex-rank bound of note N2: substituting along an
+environment whose images all satisfy `subBound _ _ ≤ M` raises the β-rank by at
+most `M`. Proved by the kit's substitution induction; the binder case feeds the
+under-binder environment, whose fresh images are variables (`subBound = 0`) and
+whose old images are renamings (`subBound` preserved by `subBound_ren`). The
+top-node β-redex created at an application whose function is a variable leaf is
+bounded through `isLam_sub_imp` by the leaf image's sort order, which the invariant
+carries for `lam` images. Novel packaging serving Leivant III section 5, proof
+paragraph (ii), p. 226. -/
+private theorem betaRedexRank_sub_le {Γ Δ : Binding.Ctx RType} {s : RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig A)) Γ Δ)
+    (t : Binding.Tm (oneLambdaSig A) Γ s) {M : ℕ}
+    (hσ : ∀ u (x : Binding.Var Γ u), subBound u (σ u x) ≤ M) :
+    betaRedexRank (Binding.sub σ t) ≤ max (betaRedexRank t) M := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig A).polyEndo) y)
+      {Δ : Binding.Ctx RType} (σ : Binding.Env (Binding.Tm (oneLambdaSig A)) y.1 Δ),
+      (∀ u (x : Binding.Var y.1 u), subBound u (σ u x) ≤ M) →
+      betaRedexRank (Γ := Δ) (Binding.traverse (Binding.subKit (oneLambdaSig A)) σ t)
+        ≤ max (betaRedexRank (Γ := y.1) (s := y.2) t) M from h t σ hσ
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ σ hσ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Binding.Tm (oneLambdaSig A) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [Binding.traverse_var]
+      simp only [Binding.subKit, id, betaRedexRank_var]
+      exact le_trans (le_trans (betaRedexRank_le_subBound _ _) (hσ y.2 (Binding.leafVar a)))
+        (le_max_right _ _)
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : OneLambdaOp A // (oneLambdaSig A).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      change betaRedexRank (Binding.traverse (Binding.subKit (oneLambdaSig A)) σ
+            (Binding.Tm.op (S := oneLambdaSig A) o (fun j => children ⟨j⟩)))
+          ≤ max (betaRedexRank (Binding.Tm.op (S := oneLambdaSig A) o (fun j => children ⟨j⟩))) M
+      rw [Binding.traverse_op, betaRedexRank_op, betaRedexRank_op]
+      have hunder : ∀ (Ξ : Binding.Ctx RType) u (x : Binding.Var (Γ' ++ Ξ) u),
+          subBound u (Binding.Env.underBinder (Binding.subKit (oneLambdaSig A)) (Ξ := Ξ) σ u x)
+            ≤ M := by
+        intro Ξ u x
+        simp only [Binding.Env.underBinder, Binding.subKit]
+        rw [Binding.Var.appendCases_natural (subBound u)]
+        apply Binding.Var.appendCases_le
+        · intro y
+          rw [subBound_var]
+          exact Nat.zero_le _
+        · intro v
+          rw [subBound_ren]
+          exact hσ u v
+      have htkey : topBetaRank (Binding.Tm.op (S := oneLambdaSig A) o
+            (fun j => Binding.traverse (Binding.subKit (oneLambdaSig A))
+              (Binding.Env.underBinder (Binding.subKit (oneLambdaSig A)) σ) (children ⟨j⟩)))
+          ≤ max (topBetaRank (Binding.Tm.op (S := oneLambdaSig A) o (fun j => children ⟨j⟩))) M :=
+        by
+        cases o with
+        | app σ'' τ'' =>
+          simp only [topBetaRank_op, topBetaRankOp]
+          by_cases hs1 : isLam (Binding.traverse (Binding.subKit (oneLambdaSig A))
+              (Binding.Env.underBinder (Binding.subKit (oneLambdaSig A)) σ)
+              (children ⟨0, Nat.succ_pos 1⟩)) = true
+          · rw [if_pos hs1]
+            rcases isLam_sub_imp (Binding.Env.underBinder (Binding.subKit (oneLambdaSig A)) σ)
+                (children ⟨0, Nat.succ_pos 1⟩) hs1 with hc | ⟨y, hy⟩
+            · rw [if_pos hc]
+              exact le_max_left _ _
+            · have hb := hunder [] (RType.arrow σ'' τ'') y
+              have hy' : isLam (Binding.Env.underBinder (Binding.subKit (oneLambdaSig A)) σ
+                  (RType.arrow σ'' τ'') y) = true := hy
+              have hO : RType.ord (RType.arrow σ'' τ'')
+                  ≤ subBound (RType.arrow σ'' τ'')
+                    (Binding.Env.underBinder (Binding.subKit (oneLambdaSig A)) σ
+                      (RType.arrow σ'' τ'') y) := by
+                unfold subBound
+                rw [if_pos hy']
+                exact le_max_right _ _
+              exact le_trans (le_trans hO hb) (le_max_right _ _)
+          · rw [if_neg hs1]
+            exact Nat.zero_le _
+        | lam _ _ => simp [topBetaRank_op, topBetaRankOp]
+        | con _ => simp [topBetaRank_op, topBetaRankOp]
+        | dstr _ => simp [topBetaRank_op, topBetaRankOp]
+        | case => simp [topBetaRank_op, topBetaRankOp]
+      apply max_le
+      · exact le_trans htkey (by
+          have := le_max_left (topBetaRank (Binding.Tm.op (S := oneLambdaSig A) o
+            (fun j => children ⟨j⟩)))
+            (Finset.univ.sup (fun j => betaRedexRank (children ⟨j⟩)))
+          omega)
+      · apply Finset.sup_le
+        intro j _
+        have hj := ih ⟨j⟩ (Binding.Env.underBinder (Binding.subKit (oneLambdaSig A)) σ)
+          (fun u x => hunder _ u x)
+        have hle : betaRedexRank (children ⟨j⟩)
+            ≤ Finset.univ.sup (fun k => betaRedexRank (children ⟨k⟩)) :=
+          Finset.le_sup (f := fun k => betaRedexRank (children ⟨k⟩)) (Finset.mem_univ j)
+        exact le_trans hj (max_le_max (le_trans hle (le_max_right _ _)) (le_refl M))
+
+/-- Note N2 (Leivant III section 4.2, p. 224; ι-phase accounting of section 5,
+proof paragraph (iii), p. 226): the β-rank of a single-variable substitution
+instance is bounded by the β-ranks of the body and the substituted term together
+with the order of the substituted sort. The substituted term dropped into function
+position can create a β-redex of rank `RType.ord σ`, but no higher; the corollary
+of `betaRedexRank_sub_le` at the instantiating environment, whose sole non-variable
+image is `N` (sort `σ`) and whose old images are the identity variables. -/
+theorem betaRedexRank_instantiate₁_le {Γ : Binding.Ctx RType} {σ τ : RType}
+    (N : Binding.Tm (oneLambdaSig A) Γ σ) (b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) :
+    betaRedexRank (Binding.instantiate₁ N b)
+      ≤ max (betaRedexRank b) (max (betaRedexRank N) (RType.ord σ)) := by
+  unfold Binding.instantiate₁ Binding.instantiate
+  refine betaRedexRank_sub_le _ b ?_
+  intro u x
+  rw [Binding.extendEnv_apply, Binding.Var.appendCases_natural (subBound u)]
+  apply Binding.Var.appendCases_le
+  · intro w
+    obtain ⟨i, hi⟩ := w
+    cases i using Fin.cases with
+    | zero =>
+      subst hi
+      refine max_le (le_max_left _ _) (le_trans ?_ (le_max_right _ _))
+      split
+      · exact le_refl _
+      · exact Nat.zero_le _
+    | succ j => exact j.elim0
+  · intro v
+    simp only [Binding.idEnv]
+    rw [subBound_var]
+    exact Nat.zero_le _
 
 end OneLambda
 

@@ -121,4 +121,13 @@ example :
         ∧ betaRedexRank t' = 0 :=
   exists_iota_step_of_hasIota _ (by rw [hasIota_app']; rfl) rfl
 
+/-- Note N2 on a small instance: instantiating the identity body `x` (the sole
+bound variable) by the zero word `N` yields `N`, whose β-rank `0` is within the
+bound `max (betaRedexRank b) (max (betaRedexRank N) (RType.ord o))`. -/
+example (b : Binding.Tm (oneLambdaSig natAlgSig) ([] ++ [RType.o]) RType.o) :
+    betaRedexRank (Binding.instantiate₁ (conc (natToFreeAlg 0)) b)
+      ≤ max (betaRedexRank b)
+          (max (betaRedexRank (conc (natToFreeAlg 0))) (RType.ord RType.o)) :=
+  betaRedexRank_instantiate₁_le _ _
+
 end GebLean.Ramified
