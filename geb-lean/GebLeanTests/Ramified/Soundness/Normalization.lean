@@ -220,4 +220,29 @@ example (a : FreeAlg natAlgSig) : ∃ b : FreeAlg natAlgSig, conc a = conc b :=
 example : appEval (sourceWord (natToFreeAlg 0) RType.o) finZeroElim = natToFreeAlg 0 :=
   appEval_sourceWord _ _
 
+/-- Proposition 13 consumed on a concrete function term (Leivant III section 5):
+the constant-zero function `λx:Ω o. c₀ : Ω o → o`, the smallest closed
+abstraction at a `prop13_elementary` hypothesis sort. No Phase 6.1
+`prop7Translate` image is a closed term of a sort `Ω τ → o` (the translations of
+`ramAdd`, `ramDstr`, and `ramCase` live in their nonempty recurrence contexts),
+so the acceptance instance follows the 6.2 zero-constructor precedent with an
+abstraction over the zero word. -/
+example :
+    ∃ c : ℕ, ∀ a : FreeAlg natAlgSig, ∃ k : ℕ,
+      k ≤ tower c (Tm.height (bbRep a (barTy RType.o)) + c) ∧
+      Relation.RelatesInSteps OneLambdaStep
+        (OneLambda.app'
+          (barTm ((Ramified.lam' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+              (RlmrOOp.con RType.o (Or.inl rfl) false) (fun k => k.elim0))) :
+            Binding.Tm (rlmrOSig natAlgSig) []
+              (RType.arrow (RType.omega RType.o) RType.o)))
+          (bbRep a (barTy RType.o)))
+        (conc (appEval (sourceApp
+          ((Ramified.lam' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+              (RlmrOOp.con RType.o (Or.inl rfl) false) (fun k => k.elim0))) :
+            Binding.Tm (rlmrOSig natAlgSig) []
+              (RType.arrow (RType.omega RType.o) RType.o))
+          (sourceWord a RType.o)) finZeroElim)) k :=
+  prop13_elementary _
+
 end GebLean.Ramified
