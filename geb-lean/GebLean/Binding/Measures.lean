@@ -242,7 +242,7 @@ structure-preserving on the operation tree. -/
       rw [underBinder_renEnv]
       exact ih ⟨j⟩ (Thinning.appendId ρ _)
 
-/-- The append-variable eliminator lands within a common `ℕ`-bound: if both the
+/-- The append-variable eliminator falls within a common `ℕ`-bound: if both the
 suffix branch `fromΞ` and the prefix branch `fromΓ` are bounded by `c`, so is the
 eliminator's result. Recursion on the prefix `Γ`, mirroring `Var.appendCases`.
 Novel; consumed by the under-binder measure bounds of the substitution lemmas and

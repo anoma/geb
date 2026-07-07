@@ -18,7 +18,7 @@ sort `o`; `dstr j` evaluates to the destructor `dstrRead`, whose hit/miss split
 matches `OneLambdaStep.dstrHit`/`dstrMiss`; `case` evaluates to the branch
 selector `caseSelect`, whose branch selection matches `OneLambdaStep.case`. The
 model is the evident one (novel packaging); it reuses the applicative calculus's
-semantic environment machinery (`renEnvSem`, `envExtend`, `envCastCtx`,
+semantic environment infrastructure (`renEnvSem`, `envExtend`, `envCastCtx`,
 `childEnv`, and the renaming reconciliations), which is signature-independent.
 
 ## Main definitions
@@ -35,12 +35,16 @@ semantic environment machinery (`renEnvSem`, `envExtend`, `envCastCtx`,
 * `oneEval_ren`, `oneEval_sub` — renaming and substitution fusion.
 * `oneEval_instantiate₁` — the fusion corollary for single-variable substitution.
 * `conc_injective` — injectivity of `conc`, via `oneEval_conc`.
+* `oneEval_step` — a `OneLambdaStep`-reduction preserves the denotation.
+* `oneEval_reduces` — a `Relation.ReflTransGen`-reduction preserves the
+  denotation, the reflexive-transitive lift of `oneEval_step`.
 
 ## References
 
 D. Leivant, "Ramified recurrence and computational complexity III: Higher type
 recurrence and elementary complexity", Annals of Pure and Applied Logic 96
-(1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`.
+(1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`, section 4.2 (p. 223): the
+evaluator, its reduction rules, and their soundness.
 
 ## Tags
 
@@ -397,7 +401,7 @@ theorem oneEval_ren_var {Γ Δ : Binding.Ctx RType} {s : RType} (θ : Binding.Th
   subst hsort
   simp only [renEnvSem]
 
-/-- Renaming fusion for `oneEval` (Leivant III §4.2): evaluating a renamed term at
+/-- Renaming fusion for `oneEval` (Leivant III section 4.2): evaluating a renamed term at
 an environment equals evaluating the original at the semantically renamed
 environment. The base case reads the thinning through `renEnvSem`; the operation
 case is `oneEvalOp_renEnvSem` on the binder-weakened subterm denotations. The
@@ -645,7 +649,7 @@ theorem oneEval_sub_var {Γ Δ : Binding.Ctx RType} {s : RType}
   subst hsort
   simp only [subEnvSemOne]
 
-/-- Substitution fusion for `oneEval` (Leivant III §4.2): evaluating a substituted
+/-- Substitution fusion for `oneEval` (Leivant III section 4.2): evaluating a substituted
 term at an environment equals evaluating the original at the semantically
 substituted environment. The base case reads the environment through
 `subEnvSemOne`; the operation case is `oneEvalOp_subEnvSemOne` on the
@@ -752,7 +756,7 @@ theorem subEnvSemOne_instantiate₁ {Γ : Binding.Ctx RType} {a : RType}
 /-- Single-variable substitution fusion for `oneEval`: evaluating the instantiation
 `instantiate₁ N b` equals evaluating `b` at the environment extended by the
 denotation of `N`. The denotational form of the β-rule of `1λ(A)` (Leivant III
-§4.2), specializing `oneEval_sub` through `subEnvSemOne_instantiate₁`. -/
+section 4.2), specializing `oneEval_sub` through `subEnvSemOne_instantiate₁`. -/
 theorem oneEval_instantiate₁ {Γ : Binding.Ctx RType} {a s : RType}
     (N : Binding.Tm (oneLambdaSig natAlgSig) Γ a)
     (b : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [a]) s)
@@ -762,7 +766,7 @@ theorem oneEval_instantiate₁ {Γ : Binding.Ctx RType} {a s : RType}
     oneEval_sub b (Binding.extendEnv Binding.idEnv (Binding.metaOne N)) ρ,
     subEnvSemOne_instantiate₁]
 
-/-- Injectivity of the concrete term `conc` (Leivant III §4.2): distinct values
+/-- Injectivity of the concrete term `conc` (Leivant III section 4.2): distinct values
 have distinct concrete terms. Evaluate both sides of `conc a = conc b` at the empty
 environment through `oneEval_conc`. -/
 theorem conc_injective {a b : FreeAlg natAlgSig} (h : conc a = conc b) : a = b := by

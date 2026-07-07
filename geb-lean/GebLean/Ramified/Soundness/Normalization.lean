@@ -32,8 +32,8 @@ saturated case spine over a `con`-headed scrutinee. For sort-`o` terms,
 `con`-headedness implies saturation by the intrinsic sorts (section 4.3's
 head-form observation), which is what makes Bool-valued structural detection
 sufficient. Following the p. 224 subtlety that ι-redexes count rank exactly `1`
-while the cycle machinery reads only the β-rank, the aggregate `redexRank`
-splits into `betaRedexRank` and `hasIota`.
+while the rank-elimination cycle (`beta_cycle`) reads only the β-rank, the
+aggregate `redexRank` splits into `betaRedexRank` and `hasIota`.
 
 ## Main definitions
 
@@ -296,8 +296,9 @@ def isLam {Γ : Binding.Ctx RType} {s : RType}
   | _ => false
 
 /-- The node is an abstraction (Leivant III section 4.2): its head operation is
-a `lam`. The `Prop`-valued predicate consumed by Task 6.3.6's shape invariant.
-Transcription of section 4.2's abstraction head-form. -/
+a `lam`. The `Prop`-valued predicate consumed by the rank-elimination cycle's
+shape invariant (`BetaCycle`). Transcription of section 4.2's abstraction
+head-form. -/
 def IsLam {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig A) Γ s) : Prop := isLam t = true
 
@@ -533,11 +534,6 @@ sort, and a `lam` head is not an ι-redex. -/
     (b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) : topIota (lam' b) = false := by
   simp only [topIota, iotaSpine_lam', ite_self]
 
-/-- `topIota` is invariant under transport of the context and sort indices. -/
-theorem topIota_cast {Γ Γ' : Binding.Ctx RType} {s s' : RType}
-    (hΓ : Γ = Γ') (hs : s = s') (t : Binding.Tm (oneLambdaSig A) Γ s) :
-    topIota (hs ▸ hΓ ▸ t) = topIota t := by subst hΓ; subst hs; rfl
-
 /-- `topIota` at an application node applies the result-sort saturation guard to
 the spine detector: an ι-redex requires result sort `o` together with a
 destructor- or case-headed spine over a `con`-headed argument. -/
@@ -556,9 +552,9 @@ theorem topIota_app' {Γ : Binding.Ctx RType} {σ τ : RType}
 
 /-- The β-rank measure (Leivant III section 4.2, p. 224): the maximum of
 `topBetaRank` over every subterm position. Structural recursion by
-`PolyFix.ind` maxing the top contribution with the children's ranks. The cycle
-machinery of Lemma 12 reads only this component of the aggregate `redexRank`.
-Transcription of section 4.2's rank measure. -/
+`PolyFix.ind` maxing the top contribution with the children's ranks. The
+rank-elimination cycle of Lemma 12 reads only this component of the aggregate
+`redexRank`. Transcription of section 4.2's rank measure. -/
 def betaRedexRank {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig A) Γ s) : ℕ :=
   PolyFix.ind (P := polyTranslate Binding.varOver (oneLambdaSig A).polyEndo)
@@ -625,7 +621,7 @@ head contributes no top β-rank). -/
 position is a destructor- or case-redex over a `con`-headed scrutinee.
 Structural recursion by `PolyFix.ind` disjoining the top detector with the
 children. Per the p. 224 aggregate, an ι-redex counts rank exactly `1`, so the
-cycle machinery reads this indicator separately from `betaRedexRank`.
+rank-elimination cycle reads this indicator separately from `betaRedexRank`.
 Transcription of section 4.2's ι-redex census. -/
 def hasIota {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig A) Γ s) : Bool :=
@@ -953,13 +949,6 @@ private theorem eqRec_symm_eqRec {Γ Γ' : Binding.Ctx RType} {s : RType} (h : �
     (t : Binding.Tm (oneLambdaSig A) Γ s) :
     h.symm ▸ (h ▸ t : Binding.Tm (oneLambdaSig A) Γ' s) = t := by cases h; rfl
 
-/-- A reduction step transports along a context equality: the congruence- and
-redex-rule shapes are context-generic. -/
-private theorem oneLambdaStep_cast [LinearOrder A.B] {Γ Γ' : Binding.Ctx RType} {s : RType}
-    (hΓ : Γ = Γ') {t u : Binding.Tm (oneLambdaSig A) Γ s} (h : OneLambdaStep t u) :
-    OneLambdaStep (hΓ ▸ t : Binding.Tm (oneLambdaSig A) Γ' s) (hΓ ▸ u) := by
-  cases hΓ; exact h
-
 /-- Every application node is an `app'`: the η-expansion of `Tm.op` at an `app`
 operation, recovering the combinator form from an arbitrary argument tuple. The
 subterms are transported out of the argument context `Γ ++ []` along
@@ -1095,7 +1084,7 @@ private theorem arrow_ne_o (σ τ : RType) : RType.arrow σ τ ≠ RType.o := fu
   simp at this
 
 /-- The curried sort of a homogeneous spine absorbs one further `o`-argument of
-its result sort: `o^n → (o → ρ) = o^{n+1} → ρ`. The sort-level bookkeeping of
+its result sort: `o^n → (o → ρ) = o^{n+1} → ρ`. The sort-level accounting of
 `replicateSpine_snoc`. -/
 private theorem curried_replicate_snoc (n : ℕ) (ρ : RType) :
     RType.curried (List.replicate n RType.o) (RType.arrow RType.o ρ)
@@ -1109,10 +1098,6 @@ target sorts are pinned by the equality proof's type and cast-commutation
 lemmas match syntactically. -/
 private def castSort {Γ : Binding.Ctx RType} {s s' : RType} (h : s = s')
     (t : Binding.Tm (oneLambdaSig A) Γ s) : Binding.Tm (oneLambdaSig A) Γ s' := h ▸ t
-
-/-- Transport along a self-equality is the identity, by proof irrelevance. -/
-private theorem castSort_self {Γ : Binding.Ctx RType} {s : RType} (h : s = s)
-    (t : Binding.Tm (oneLambdaSig A) Γ s) : castSort h t = t := rfl
 
 /-- Transport along a composite of sort equalities is the transport along the
 composite equality. -/
@@ -1323,7 +1308,7 @@ private theorem betaRedexRank_arg_le_replicateSpine {Γ : Binding.Ctx RType} {re
 head-form observation), tracking the pending-argument count: a `conHeaded` term
 of sort `o^k → o` is a constructor constant `con i` applied along an
 application spine to `n` arguments of sort `o`, with `A.ar i = n + k`. The
-intrinsic sorts force the count bookkeeping; the sort transports record the
+intrinsic sorts force the count accounting; the sort transports record the
 curried-sort arithmetic. By strong induction on the term size. -/
 private theorem conHeaded_inv_aux :
     (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
@@ -1432,11 +1417,11 @@ private theorem conHeaded_o_inv {Γ : Binding.Ctx RType}
       exact ⟨i, a, hx⟩
 
 /-- The ι-spine inversion (Leivant III section 4.2, p. 224), tracking the
-pending-argument count: a term whose `iotaSpine` detector fires is either a
-destructor applied to a `con`-headed scrutinee — necessarily at sort `o` — or
-a case combinator applied to a `con`-headed scrutinee and then, along the
-application spine, to `n` branch arguments with `A.numCtors = n + k` pending.
-By strong induction on the term size; the sort transports record the
+pending-argument count: a term for which the `iotaSpine` detector applies is
+either a destructor applied to a `con`-headed scrutinee — necessarily at sort
+`o` — or a case combinator applied to a `con`-headed scrutinee and then, along
+the application spine, to `n` branch arguments with `A.numCtors = n + k`
+pending. By strong induction on the term size; the sort transports record the
 curried-sort arithmetic. -/
 private theorem iotaSpine_inv_aux :
     (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
@@ -1611,11 +1596,12 @@ private theorem exists_ctorAt_eq [LinearOrder A.B] (i : A.B) :
   obtain ⟨m, hm⟩ := List.get_of_mem hmem
   exact ⟨m.cast ctorList_length, hm⟩
 
-/-- The strengthened induction form of `exists_iota_step_of_hasIota` (plan note
-N6): the extra final clause — a step inside a term of non-`o` sort preserves
-the `isLam` head flag — closes the `appL` congruence case, where β-normality
-of the rewritten application requires the stepped function subterm not to
-become an abstraction. By strong induction on the term size. -/
+/-- The strengthened induction form of `exists_iota_step_of_hasIota`, for the
+ι-phase step accounting: the extra final clause — a step inside a term of
+non-`o` sort preserves the `isLam` head flag — closes the `appL` congruence
+case, where β-normality of the rewritten application requires the stepped
+function subterm not to become an abstraction. By strong induction on the
+term size. -/
 private theorem exists_iota_step_aux [LinearOrder A.B] :
     (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
     Tm.size t ≤ N → hasIota t = true → betaRedexRank t = 0 →
@@ -1994,11 +1980,6 @@ private theorem subBound_ren {Γ Δ : Binding.Ctx RType} (u : RType)
     (ρ : Binding.Thinning Γ Δ) (w : Binding.Tm (oneLambdaSig A) Γ u) :
     subBound u (Binding.ren ρ w) = subBound u w := by
   simp only [subBound, betaRedexRank_ren, isLam_ren]
-
-/-- `subBound` is invariant under transport of the sort index. -/
-private theorem subBound_cast {Γ : Binding.Ctx RType} {u u' : RType} (h : u = u')
-    (w : Binding.Tm (oneLambdaSig A) Γ u) :
-    subBound u' (h ▸ w) = subBound u w := by subst h; rfl
 
 /-- The head of a substitution instance is a `lam` only if the original head is a
 `lam` or the substituted variable's image is a `lam`. The substitution rebuilds an
@@ -2542,11 +2523,13 @@ private theorem hyb_le_tower_two {Γ : Binding.Ctx RType} {s : RType}
 section 5, proof paragraph (ii), p. 226, DOI `10.1016/S0168-0072(98)00040-2`;
 note N4): a term of β-rank at most `q` and height at most `H` reduces, by a
 counted `stepWithin (tower (q + 1) (H + 1))` chain of at most `q * tower q H`
-steps, to a β-normal term of height at most `tower q H`. Each of the `q` cycles
-starts one tower level higher than the previous, so heights compose through
-`tower_comp` and the per-cycle step count `≤ tower (q + 1) H` telescopes into
-`q * tower q H`. The uniform ceiling absorbs every cycle's hybrid bound via
-`hyb_le_tower_two` and `tower_mono_left`. -/
+steps, to a β-normal term of height at most `tower q H`. At rank budget `q`,
+the current cycle's step count is bounded by the term's size, in turn bounded
+by `2 ^ H ≤ tower q H` at the stage's height bound, and the recursive tail at
+budget `q - 1` contributes the remaining `(q - 1) * tower q H`, closing to the
+`q * tower q H` total; heights compose through `tower_comp`. The uniform
+ceiling absorbs every cycle's hybrid bound via `hyb_le_tower_two` and
+`tower_mono_left`. -/
 private theorem beta_normalize_aux [LinearOrder A.B] {Γ : Binding.Ctx RType}
     {s : RType} (q : ℕ) :
     ∀ (t : Binding.Tm (oneLambdaSig A) Γ s) (H : ℕ),
@@ -2811,7 +2794,7 @@ private theorem hasIota_arg_imp_replicateSpine {Γ : Binding.Ctx RType} {result 
         ⟨iv, Nat.lt_of_succ_lt_succ hi⟩ h
 
 /-- At the base object sort the ι-redex indicator of the top node is its ungated
-spine detector: the result-sort saturation guard fires. -/
+spine detector: the result-sort saturation guard applies unconditionally. -/
 private theorem topIota_eq_iotaSpine_o {Γ : Binding.Ctx RType}
     (t : Binding.Tm (oneLambdaSig A) Γ RType.o) : topIota t = iotaSpine t := by
   unfold topIota; exact if_pos rfl
