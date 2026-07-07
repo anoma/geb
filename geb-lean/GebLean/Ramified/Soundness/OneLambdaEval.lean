@@ -327,4 +327,433 @@ theorem oneEval_boundVar_envExtend {Γ : Binding.Ctx RType} {σ : RType}
   refine (heq_of_eq (childEnv_finAppR ρ (fun _ => v) ⟨0, by simp⟩ Nat.zero_lt_one)).trans ?_
   exact (cast_heq _ _).trans (cast_heq _ _)
 
+/-- Per-operation naturality of `oneEvalOp` under semantic renaming: the `oneEval`
+counterpart of `appEvalOp_renEnvSem`. The `app` and `lam` arms use the two
+environment reconciliations; the nullary constants ignore both the subterm family
+and the environment. The operation case of `oneEval_ren`. -/
+theorem oneEvalOp_renEnvSem {Γ Δ : Binding.Ctx RType} (o : OneLambdaOp natAlgSig)
+    (θ : Binding.Thinning Γ Δ)
+    (g : ∀ j : Fin ((oneLambdaSig natAlgSig).args o).length,
+      (∀ i : Fin (Γ ++ (((oneLambdaSig natAlgSig).args o).get j).1).length,
+        RType.interp (FreeAlg natAlgSig)
+          ((Γ ++ (((oneLambdaSig natAlgSig).args o).get j).1).get i)) →
+        RType.interp (FreeAlg natAlgSig) (((oneLambdaSig natAlgSig).args o).get j).2)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    oneEvalOp (Γ := Δ) o
+        (fun j ρ'' => g j (renEnvSem
+          (Binding.Thinning.appendId θ (((oneLambdaSig natAlgSig).args o).get j).1) ρ'')) ρ
+      = oneEvalOp (Γ := Γ) o g (renEnvSem θ ρ) := by
+  cases o with
+  | app σ τ =>
+      simp only [oneEvalOp]
+      have h0 : renEnvSem (Binding.Thinning.appendId θ
+            (((oneLambdaSig natAlgSig).args (OneLambdaOp.app σ τ)).get ⟨0, Nat.zero_lt_two⟩).1)
+          (envCastCtx (List.append_nil Δ).symm ρ)
+            = envCastCtx (List.append_nil Γ).symm (renEnvSem θ ρ) := renEnvSem_appendId_nil θ ρ
+      have h1 : renEnvSem (Binding.Thinning.appendId θ
+            (((oneLambdaSig natAlgSig).args (OneLambdaOp.app σ τ)).get ⟨1, Nat.one_lt_two⟩).1)
+          (envCastCtx (List.append_nil Δ).symm ρ)
+            = envCastCtx (List.append_nil Γ).symm (renEnvSem θ ρ) := renEnvSem_appendId_nil θ ρ
+      rw [h0, h1]
+      rfl
+  | lam σ τ =>
+      simp only [oneEvalOp]
+      funext v
+      have h : renEnvSem (Binding.Thinning.appendId θ
+            (((oneLambdaSig natAlgSig).args (OneLambdaOp.lam σ τ)).get ⟨0, Nat.zero_lt_one⟩).1)
+          (envExtend ρ v) = envExtend (renEnvSem θ ρ) v := renEnvSem_appendId_extend θ ρ v
+      rw [h]
+      rfl
+  | con b => rfl
+  | dstr j => rfl
+  | case => rfl
+
+/-- Renaming fusion at a variable leaf: evaluating a renamed variable reads the
+thinning through `renEnvSem`. Factored with a free sort variable so the sort proof
+can be discharged by substitution. The `oneEval` counterpart of `appEval_ren_var`. -/
+theorem oneEval_ren_var {Γ Δ : Binding.Ctx RType} {s : RType} (θ : Binding.Thinning Γ Δ)
+    (x : Binding.Var Γ s)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    oneEval (Binding.ren θ (Binding.Tm.var x)) ρ
+      = oneEval (Binding.Tm.var x) (renEnvSem θ ρ) := by
+  rw [Binding.ren, Binding.traverse_var]
+  simp only [Binding.varKit, Binding.renEnv]
+  rw [oneEval_var, oneEval_var]
+  obtain ⟨pos, hsort⟩ := x
+  subst hsort
+  simp only [renEnvSem]
+
+/-- Renaming fusion for `oneEval` (Leivant III §4.2): evaluating a renamed term at
+an environment equals evaluating the original at the semantically renamed
+environment. The base case reads the thinning through `renEnvSem`; the operation
+case is `oneEvalOp_renEnvSem` on the binder-weakened subterm denotations. The
+`oneEval` counterpart of `appEval_ren`; stated over an arbitrary index so the
+induction on the term goes through. -/
+@[simp] theorem oneEval_ren : ∀ {y : Binding.Ctx RType × RType}
+    (t : PolyFix
+      (polyTranslate (Binding.varOver (Ty := RType)) (oneLambdaSig natAlgSig).polyEndo) y)
+    {Δ : Binding.Ctx RType} (θ : Binding.Thinning y.1 Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)),
+    oneEval (Binding.ren θ t) ρ = oneEval t (renEnvSem θ ρ) := by
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ θ ρ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      exact oneEval_ren_var θ (leafVar a) ρ
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op o (fun j => children ⟨j⟩) from rfl]
+      rw [Binding.ren, Binding.traverse_op]
+      simp only [Binding.underBinder_renEnv]
+      rw [oneEval_op, oneEval_op]
+      have hfam : (fun j => oneEval (Binding.traverse (Binding.varKit (oneLambdaSig natAlgSig))
+            (Binding.renEnv (Binding.Thinning.appendId θ
+              (((oneLambdaSig natAlgSig).args o).get j).1)) (children ⟨j⟩)))
+          = (fun (j : Fin ((oneLambdaSig natAlgSig).args o).length) ρ'' =>
+              oneEval (children ⟨j⟩) (renEnvSem (Binding.Thinning.appendId θ
+                (((oneLambdaSig natAlgSig).args o).get j).1) ρ'')) := by
+        funext j ρ''
+        exact ih ⟨j⟩ (Binding.Thinning.appendId θ _) ρ''
+      rw [hfam]
+      exact oneEvalOp_renEnvSem o θ (fun j => oneEval (children ⟨j⟩)) ρ
+
+/-- The semantic substitution environment of a term environment
+`σ : Env (Tm (oneLambdaSig natAlgSig)) Γ Δ`: read each `Γ`-position's tautological
+variable through `σ` and evaluate the resulting `Δ`-term at `ρ`. The `oneEval`
+counterpart of `subEnvSem`, reconciling `Binding.sub σ` with `oneEval` in
+`oneEval_sub`. -/
+def subEnvSemOne {Γ Δ : Binding.Ctx RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i) :=
+  fun i => oneEval (σ (Γ.get i) ⟨i, rfl⟩) ρ
+
+/-- Evaluating a term environment at two positions of the same underlying index but
+possibly distinct sorts gives heterogeneously equal denotations. -/
+theorem subEnvSemOne_val_heq {Γ Δ : Binding.Ctx RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    {s s' : RType} (hs : s = s') (i : Fin Γ.length)
+    (hi : Γ.get i = s) (hi' : Γ.get i = s') :
+    σ s ⟨i, hi⟩ ≍ σ s' ⟨i, hi'⟩ := by
+  subst hs
+  rfl
+
+/-- The semantic substitution environment of an under-binder weakening
+`Env.underBinder subKit σ` acting on a recurrence-context gluing
+`childEnv Δ σ' n ρ rest` equals the gluing of the substituted prefix environment
+`subEnvSemOne σ ρ` with the same suffix values `rest`. The `oneEval` counterpart of
+`subEnvSem_underBinder_childEnv`; at prefix positions the binder-weakening
+`wk = ren weakAppend` is pushed through `oneEval` by `oneEval_ren` and collapsed by
+`renEnvSem_weakAppend_childEnv`; at suffix positions the freshly bound variable
+reads `rest` directly. -/
+theorem subEnvSemOne_underBinder_childEnv {Γ Δ : Binding.Ctx RType} {σ' : RType} {n : Nat}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i))
+    (rest : Fin n → RType.interp (FreeAlg natAlgSig) σ') :
+    subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+        (Ξ := List.replicate n σ') σ) (childEnv Δ σ' n ρ rest)
+      = childEnv Γ σ' n (subEnvSemOne σ ρ) rest := by
+  funext k
+  refine finApp_cases (Γ := Γ) (Δ := List.replicate n σ')
+    (motive := fun k =>
+      subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+        (Ξ := List.replicate n σ') σ) (childEnv Δ σ' n ρ rest) k
+        = childEnv Γ σ' n (subEnvSemOne σ ρ) rest k)
+    (fun i => ?_) (fun j => ?_) k
+  · apply eq_of_heq
+    have hfin : (finAppL Γ (List.replicate n σ') i).val < Γ.length := i.isLt
+    have hvar : Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+          (Ξ := List.replicate n σ') σ
+          ((Γ ++ List.replicate n σ').get (finAppL Γ (List.replicate n σ') i))
+          ⟨finAppL Γ (List.replicate n σ') i, rfl⟩
+        = Binding.ren Binding.Thinning.weakAppend
+            (σ ((Γ ++ List.replicate n σ').get (finAppL Γ (List.replicate n σ') i))
+              ⟨i, (get_finAppL Γ (List.replicate n σ') i).symm⟩) := by
+      simp only [Binding.Env.underBinder, Binding.subKit]
+      rw [taut_finAppL_eq]
+      exact Binding.Var.appendCases_weakAppend _ Γ _ _
+    have hLHS : subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+          (Ξ := List.replicate n σ') σ) (childEnv Δ σ' n ρ rest)
+          (finAppL Γ (List.replicate n σ') i) ≍ subEnvSemOne σ ρ i := by
+      simp only [subEnvSemOne]
+      rw [hvar]
+      rw [oneEval_ren (σ ((Γ ++ List.replicate n σ').get (finAppL Γ (List.replicate n σ') i))
+            ⟨i, (get_finAppL Γ (List.replicate n σ') i).symm⟩)
+          Binding.Thinning.weakAppend (childEnv Δ σ' n ρ rest),
+        renEnvSem_weakAppend_childEnv]
+      exact oneEval_heq _ _ ρ (get_finAppL Γ (List.replicate n σ') i)
+        (subEnvSemOne_val_heq σ (get_finAppL Γ (List.replicate n σ') i) i _ rfl)
+    have hRHS : childEnv Γ σ' n (subEnvSemOne σ ρ) rest (finAppL Γ (List.replicate n σ') i)
+        ≍ subEnvSemOne σ ρ i :=
+      (childEnv_heq_left (subEnvSemOne σ ρ) rest _ hfin).trans (heq_of_eq rfl)
+    exact hLHS.trans hRHS.symm
+  · apply eq_of_heq
+    have hj : j.val < n := lt_of_lt_of_eq j.isLt List.length_replicate
+    have hvalR : (finAppR Γ (List.replicate n σ') j).val = Γ.length + j.val := rfl
+    have hgeR : ¬ (finAppR Γ (List.replicate n σ') j).val < Γ.length := by rw [hvalR]; omega
+    have hbR : (finAppR Γ (List.replicate n σ') j).val - Γ.length < n := by rw [hvalR]; omega
+    have hvar : Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+          (Ξ := List.replicate n σ') σ
+          ((Γ ++ List.replicate n σ').get (finAppR Γ (List.replicate n σ') j))
+          ⟨finAppR Γ (List.replicate n σ') j, rfl⟩
+        = Binding.Tm.var (Binding.Var.appendRight Δ
+            ⟨j, (get_finAppR Γ (List.replicate n σ') j).symm⟩) := by
+      simp only [Binding.Env.underBinder, Binding.subKit]
+      rw [taut_finAppR_eq]
+      exact Binding.Var.appendCases_appendRight _ Γ _ _
+    have hLHS : subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+          (Ξ := List.replicate n σ') σ) (childEnv Δ σ' n ρ rest)
+          (finAppR Γ (List.replicate n σ') j) ≍ rest ⟨j.val, hj⟩ := by
+      have hposval : (Binding.Var.appendRight Δ
+          (⟨j, (get_finAppR Γ (List.replicate n σ') j).symm⟩ :
+            Binding.Var (List.replicate n σ') _)).1.val = Δ.length + j.val := by
+        rw [appendRight_val]
+      have hgeD : ¬ (Binding.Var.appendRight Δ
+          (⟨j, (get_finAppR Γ (List.replicate n σ') j).symm⟩ :
+            Binding.Var (List.replicate n σ') _)).1.val < Δ.length := by rw [hposval]; omega
+      have hbD : (Binding.Var.appendRight Δ
+          (⟨j, (get_finAppR Γ (List.replicate n σ') j).symm⟩ :
+            Binding.Var (List.replicate n σ') _)).1.val - Δ.length < n := by rw [hposval]; omega
+      have hvaleqD : (Binding.Var.appendRight Δ
+          (⟨j, (get_finAppR Γ (List.replicate n σ') j).symm⟩ :
+            Binding.Var (List.replicate n σ') _)).1.val - Δ.length = j.val := by
+        rw [hposval]; omega
+      have hposD : (⟨(Binding.Var.appendRight Δ
+          (⟨j, (get_finAppR Γ (List.replicate n σ') j).symm⟩ :
+            Binding.Var (List.replicate n σ') _)).1.val - Δ.length, hbD⟩ : Fin n)
+          = ⟨j.val, hj⟩ := Fin.ext hvaleqD
+      simp only [subEnvSemOne]
+      rw [hvar, oneEval_var]
+      refine (eqRec_heq _ _).trans ((childEnv_heq_right ρ rest _ hgeD hbD).trans ?_)
+      exact heq_of_eq (congrArg rest hposD)
+    have hvaleqR : (finAppR Γ (List.replicate n σ') j).val - Γ.length = j.val := by
+      rw [hvalR]; omega
+    have hposR : (⟨(finAppR Γ (List.replicate n σ') j).val - Γ.length, hbR⟩ : Fin n)
+        = ⟨j.val, hj⟩ := Fin.ext hvaleqR
+    have hRHS : childEnv Γ σ' n (subEnvSemOne σ ρ) rest (finAppR Γ (List.replicate n σ') j)
+        ≍ rest ⟨j.val, hj⟩ :=
+      (childEnv_heq_right (subEnvSemOne σ ρ) rest _ hgeR hbR).trans
+        (heq_of_eq (congrArg rest hposR))
+    exact hLHS.trans hRHS.symm
+
+/-- The `app`-node substitution reconciliation (empty binder suffix). The `app`
+arm of `oneEvalOp_subEnvSemOne`. -/
+theorem subEnvSemOne_underBinder_nil {Γ Δ : Binding.Ctx RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := []) σ)
+        (envCastCtx (List.append_nil Δ).symm ρ)
+      = envCastCtx (List.append_nil Γ).symm (subEnvSemOne σ ρ) := by
+  rw [envCastCtx_eq_childEnv_zero RType.o, envCastCtx_eq_childEnv_zero RType.o]
+  exact subEnvSemOne_underBinder_childEnv σ ρ finZeroElim
+
+/-- The `lam`-node substitution reconciliation (singleton binder suffix). The `lam`
+arm of `oneEvalOp_subEnvSemOne`. -/
+theorem subEnvSemOne_underBinder_extend {Γ Δ : Binding.Ctx RType} {σ' : RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i))
+    (v : RType.interp (FreeAlg natAlgSig) σ') :
+    subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) (Ξ := [σ']) σ)
+        (envExtend ρ v)
+      = envExtend (subEnvSemOne σ ρ) v :=
+  subEnvSemOne_underBinder_childEnv (n := 1) σ ρ (fun _ => v)
+
+/-- Per-operation naturality of `oneEvalOp` under semantic substitution: the
+`oneEval` counterpart of `appEvalOp_subEnvSem`. The `app` and `lam` arms use the
+two substitution reconciliations; the nullary constants ignore both the subterm
+family and the environment. The operation case of `oneEval_sub`. -/
+theorem oneEvalOp_subEnvSemOne {Γ Δ : Binding.Ctx RType} (o : OneLambdaOp natAlgSig)
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    (g : ∀ j : Fin ((oneLambdaSig natAlgSig).args o).length,
+      (∀ i : Fin (Γ ++ (((oneLambdaSig natAlgSig).args o).get j).1).length,
+        RType.interp (FreeAlg natAlgSig)
+          ((Γ ++ (((oneLambdaSig natAlgSig).args o).get j).1).get i)) →
+        RType.interp (FreeAlg natAlgSig) (((oneLambdaSig natAlgSig).args o).get j).2)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    oneEvalOp (Γ := Δ) o
+        (fun j ρ'' => g j (subEnvSemOne (Binding.Env.underBinder
+          (Binding.subKit (oneLambdaSig natAlgSig))
+          (Ξ := (((oneLambdaSig natAlgSig).args o).get j).1) σ) ρ'')) ρ
+      = oneEvalOp (Γ := Γ) o g (subEnvSemOne σ ρ) := by
+  cases o with
+  | app σ' τ =>
+      simp only [oneEvalOp]
+      have h0 : subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+            (Ξ := (((oneLambdaSig natAlgSig).args
+              (OneLambdaOp.app σ' τ)).get ⟨0, Nat.zero_lt_two⟩).1) σ)
+          (envCastCtx (List.append_nil Δ).symm ρ)
+            = envCastCtx (List.append_nil Γ).symm (subEnvSemOne σ ρ) :=
+        subEnvSemOne_underBinder_nil σ ρ
+      have h1 : subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+            (Ξ := (((oneLambdaSig natAlgSig).args
+              (OneLambdaOp.app σ' τ)).get ⟨1, Nat.one_lt_two⟩).1) σ)
+          (envCastCtx (List.append_nil Δ).symm ρ)
+            = envCastCtx (List.append_nil Γ).symm (subEnvSemOne σ ρ) :=
+        subEnvSemOne_underBinder_nil σ ρ
+      rw [h0, h1]
+      rfl
+  | lam σ' τ =>
+      simp only [oneEvalOp]
+      funext v
+      have h : subEnvSemOne (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+            (Ξ := (((oneLambdaSig natAlgSig).args
+              (OneLambdaOp.lam σ' τ)).get ⟨0, Nat.zero_lt_one⟩).1) σ)
+          (envExtend ρ v) = envExtend (subEnvSemOne σ ρ) v := subEnvSemOne_underBinder_extend σ ρ v
+      rw [h]
+      rfl
+  | con b => rfl
+  | dstr j => rfl
+  | case => rfl
+
+/-- Substitution fusion at a variable leaf: substituting a variable reads the
+environment through `subEnvSemOne`. The `oneEval` counterpart of `appEval_sub_var`. -/
+theorem oneEval_sub_var {Γ Δ : Binding.Ctx RType} {s : RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ) (x : Binding.Var Γ s)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)) :
+    oneEval (Binding.sub σ (Binding.Tm.var x)) ρ
+      = oneEval (Binding.Tm.var x) (subEnvSemOne σ ρ) := by
+  rw [Binding.sub_var, oneEval_var]
+  obtain ⟨pos, hsort⟩ := x
+  subst hsort
+  simp only [subEnvSemOne]
+
+/-- Substitution fusion for `oneEval` (Leivant III §4.2): evaluating a substituted
+term at an environment equals evaluating the original at the semantically
+substituted environment. The base case reads the environment through
+`subEnvSemOne`; the operation case is `oneEvalOp_subEnvSemOne` on the
+binder-weakened subterm denotations. The `oneEval` counterpart of `appEval_sub`,
+whose binder-weakening step reuses `oneEval_ren`; stated over an arbitrary index so
+the induction on the term goes through. -/
+@[simp] theorem oneEval_sub : ∀ {y : Binding.Ctx RType × RType}
+    (t : PolyFix
+      (polyTranslate (Binding.varOver (Ty := RType)) (oneLambdaSig natAlgSig).polyEndo) y)
+    {Δ : Binding.Ctx RType} (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) y.1 Δ)
+    (ρ : ∀ i : Fin Δ.length, RType.interp (FreeAlg natAlgSig) (Δ.get i)),
+    oneEval (Binding.sub σ t) ρ = oneEval t (subEnvSemOne σ ρ) := by
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ σ ρ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      exact oneEval_sub_var σ (leafVar a) ρ
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op o (fun j => children ⟨j⟩) from rfl]
+      rw [Binding.sub, Binding.traverse_op, oneEval_op, oneEval_op]
+      have hfam : (fun j => oneEval (Binding.traverse (Binding.subKit (oneLambdaSig natAlgSig))
+            (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) σ) (children ⟨j⟩)))
+          = (fun (j : Fin ((oneLambdaSig natAlgSig).args o).length) ρ'' =>
+              oneEval (children ⟨j⟩) (subEnvSemOne (Binding.Env.underBinder
+                (Binding.subKit (oneLambdaSig natAlgSig)) σ) ρ'')) := by
+        funext j ρ''
+        exact ih ⟨j⟩ (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig)) σ) ρ''
+      rw [hfam]
+      exact oneEvalOp_subEnvSemOne o σ (fun j => oneEval (children ⟨j⟩)) ρ
+
+/-- The semantic substitution environment of a single-variable instantiation
+`extendEnv idEnv (metaOne N)` is the environment extension by `oneEval N ρ`: prefix
+positions read `ρ` (through `idEnv`), the sole suffix position reads `oneEval N ρ`
+(through `metaOne N`). The bridge from `oneEval_sub` to `oneEval_instantiate₁`. -/
+theorem subEnvSemOne_instantiate₁ {Γ : Binding.Ctx RType} {a : RType}
+    (N : Binding.Tm (oneLambdaSig natAlgSig) Γ a)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    subEnvSemOne (Binding.extendEnv Binding.idEnv (Binding.metaOne N)) ρ
+      = envExtend ρ (oneEval N ρ) := by
+  funext k
+  refine finApp_cases (Γ := Γ) (Δ := [a])
+    (motive := fun k =>
+      subEnvSemOne (Binding.extendEnv Binding.idEnv (Binding.metaOne N)) ρ k
+        = envExtend ρ (oneEval N ρ) k)
+    (fun i => ?_) (fun j => ?_) k
+  · apply eq_of_heq
+    have hfin : (finAppL Γ [a] i).val < Γ.length := i.isLt
+    have hvar : Binding.extendEnv Binding.idEnv (Binding.metaOne N)
+          ((Γ ++ [a]).get (finAppL Γ [a] i)) ⟨finAppL Γ [a] i, rfl⟩
+        = Binding.Tm.var (⟨i, (get_finAppL Γ [a] i).symm⟩ :
+            Binding.Var Γ ((Γ ++ [a]).get (finAppL Γ [a] i))) := by
+      rw [taut_finAppL_eq, Binding.extendEnv_weakAppend]
+      rfl
+    have hLHS : subEnvSemOne (Binding.extendEnv Binding.idEnv (Binding.metaOne N)) ρ
+          (finAppL Γ [a] i) ≍ ρ i := by
+      simp only [subEnvSemOne]
+      rw [hvar, oneEval_var]
+      exact eqRec_heq _ _
+    have hRHS : envExtend ρ (oneEval N ρ) (finAppL Γ [a] i) ≍ ρ i := by
+      simp only [envExtend]
+      exact (childEnv_heq_left ρ (fun _ => oneEval N ρ) _ hfin).trans (heq_of_eq rfl)
+    exact hLHS.trans hRHS.symm
+  · apply eq_of_heq
+    have hj : j.val < 1 := j.isLt
+    have hj0 : j = ⟨0, Nat.one_pos⟩ := Fin.ext (Nat.lt_one_iff.mp hj)
+    subst hj0
+    have hvar : Binding.extendEnv Binding.idEnv (Binding.metaOne N)
+          ((Γ ++ [a]).get (finAppR Γ [a] ⟨0, Nat.one_pos⟩))
+          ⟨finAppR Γ [a] ⟨0, Nat.one_pos⟩, rfl⟩
+        = (get_finAppR Γ [a] ⟨0, Nat.one_pos⟩).symm ▸ N := by
+      rw [taut_finAppR_eq, Binding.extendEnv_appendRight]
+      rfl
+    have hLHS : subEnvSemOne (Binding.extendEnv Binding.idEnv (Binding.metaOne N)) ρ
+          (finAppR Γ [a] ⟨0, Nat.one_pos⟩) ≍ oneEval N ρ := by
+      simp only [subEnvSemOne]
+      rw [hvar]
+      exact oneEval_heq _ _ ρ (get_finAppR Γ [a] ⟨0, Nat.one_pos⟩) (eqRec_heq _ _)
+    have hbR : (finAppR Γ [a] ⟨0, Nat.one_pos⟩).val - Γ.length < 1 := by
+      have hv : (finAppR Γ [a] ⟨0, Nat.one_pos⟩).val = Γ.length + 0 := rfl
+      rw [hv]; omega
+    have hgeR : ¬ (finAppR Γ [a] ⟨0, Nat.one_pos⟩).val < Γ.length := by
+      have hv : (finAppR Γ [a] ⟨0, Nat.one_pos⟩).val = Γ.length + 0 := rfl
+      rw [hv]; omega
+    have hRHS : envExtend ρ (oneEval N ρ) (finAppR Γ [a] ⟨0, Nat.one_pos⟩) ≍ oneEval N ρ := by
+      simp only [envExtend]
+      exact (childEnv_heq_right ρ (fun _ => oneEval N ρ) _ hgeR hbR).trans (heq_of_eq rfl)
+    exact hLHS.trans hRHS.symm
+
+/-- Single-variable substitution fusion for `oneEval`: evaluating the instantiation
+`instantiate₁ N b` equals evaluating `b` at the environment extended by the
+denotation of `N`. The denotational form of the β-rule of `1λ(A)` (Leivant III
+§4.2), specializing `oneEval_sub` through `subEnvSemOne_instantiate₁`. -/
+theorem oneEval_instantiate₁ {Γ : Binding.Ctx RType} {a s : RType}
+    (N : Binding.Tm (oneLambdaSig natAlgSig) Γ a)
+    (b : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [a]) s)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    oneEval (Binding.instantiate₁ N b) ρ = oneEval b (envExtend ρ (oneEval N ρ)) := by
+  rw [Binding.instantiate₁, Binding.instantiate,
+    oneEval_sub b (Binding.extendEnv Binding.idEnv (Binding.metaOne N)) ρ,
+    subEnvSemOne_instantiate₁]
+
+/-- Injectivity of the concrete term `conc` (Leivant III §4.2): distinct values
+have distinct concrete terms. Evaluate both sides of `conc a = conc b` at the empty
+environment through `oneEval_conc`. -/
+theorem conc_injective {a b : FreeAlg natAlgSig} (h : conc a = conc b) : a = b := by
+  have hval := congrArg
+    (fun t : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o => oneEval t finZeroElim) h
+  simpa only [oneEval_conc] using hval
+
 end GebLean.Ramified

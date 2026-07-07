@@ -38,4 +38,18 @@ check exercising `oneEval` on a `con`-headed application spine of depth one. -/
 example : oneEval (conc (natToFreeAlg 1)) finZeroElim = natToFreeAlg 1 :=
   oneEval_conc _ _
 
+/-- The β-rule of `1λ(A)` is sound for `oneEval`: the redex `(λx:o. b) N` and its
+contractum `b[x := N]` have equal denotation, via `oneEval_instantiate₁` and the
+node rules (the denotational payload consumed by step soundness). -/
+example (b : Binding.Tm (oneLambdaSig natAlgSig) ([] ++ [RType.o]) RType.o)
+    (N : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o) :
+    oneEval (OneLambda.app' (OneLambda.lam' b) N) finZeroElim
+      = oneEval (Binding.instantiate₁ N b) finZeroElim := by
+  rw [oneEval_instantiate₁, oneEval_app', oneEval_lam']
+  rfl
+
+/-- Injectivity of `conc` is available as an interface statement (task 6.3.9a):
+equal concrete terms come from equal values. -/
+example (a b : FreeAlg natAlgSig) (h : conc a = conc b) : a = b := conc_injective h
+
 end GebLean.Ramified
