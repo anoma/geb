@@ -3109,4 +3109,41 @@ theorem represents_recur {Γ : Binding.Ctx RType} (τ : RType)
         (appSpine (stepTypes natAlgSig τ τ) f G) A) finZeroElim) hsrc).symm
   exact represents_congr_appEval happEval hRep'
 
+/-- The single-binder substitution fusion (novel `Binding` packaging, candidate for
+promotion to `GebLean/Binding/Laws.lean`): instantiating the suffix `Ξ` of a term
+already substituted under the binder `Ξ` by an environment `ρ` equals substituting
+along the extended environment `extendEnv ρ m` in one pass. The `underBinder`/
+`extendEnv` analogue of the substitution associativity `sub_sub`, collapsed
+pointwise by `Var.appendCases`: at a prefix variable the weakening then
+instantiation cancels (`ren_sub`, `extendEnv_weakAppend`, `sub_id`); at a suffix
+variable the freshly bound variable reads the meta-map `m` (`sub_var`,
+`extendEnv_appendRight`). -/
+theorem instantiate_sub_underBinder {S : Binding.BinderSig RType}
+    {Γ Δ Ξ : Binding.Ctx RType} {s : RType}
+    (ρ : Binding.Env (Binding.Tm S) Γ Δ)
+    (m : ∀ t, Binding.Var Ξ t → Binding.Tm S Δ t) (t : Binding.Tm S (Γ ++ Ξ) s) :
+    Binding.instantiate m
+        (Binding.sub (Binding.Env.underBinder (Binding.subKit S) (Ξ := Ξ) ρ) t)
+      = Binding.sub (Binding.extendEnv ρ m) t := by
+  unfold Binding.instantiate
+  rw [sub_sub]
+  refine congrArg (fun E => Binding.sub E t) ?_
+  funext b x
+  rw [Binding.extendEnv_apply]
+  change Binding.sub (Binding.extendEnv Binding.idEnv m)
+      (Var.appendCases (fun y => Binding.Tm.var (Binding.Var.appendRight Δ y)) Γ
+        (fun v => Binding.ren Binding.Thinning.weakAppend (ρ b v)) x)
+    = Var.appendCases (fun w => m b w) Γ (fun v => ρ b v) x
+  rw [Var.appendCases_natural (Binding.sub (Binding.extendEnv Binding.idEnv m))]
+  have henv : (fun (t : RType) (z : Binding.Var Δ t) =>
+      Binding.extendEnv Binding.idEnv m t (Binding.Thinning.weakAppend.app z))
+        = (Binding.idEnv : Binding.Env (Binding.Tm S) Δ Δ) := by
+    funext t z
+    exact Binding.extendEnv_weakAppend _ _ t z
+  congr 1
+  · funext y
+    rw [Binding.sub_var, Binding.extendEnv_appendRight]
+  · funext v
+    rw [Binding.ren_sub, henv, Binding.sub_id]
+
 end GebLean.Ramified
