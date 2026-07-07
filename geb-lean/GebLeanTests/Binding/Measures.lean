@@ -50,4 +50,20 @@ example : (stlcApp StlcTy.base).size = 3 := by rfl
 
 example : (stlcApp StlcTy.base).height = 2 := by rfl
 
+-- `height_instantiate₁_le` on the identity-into-identity substitution: at
+-- `a := base ⇒ base`, instantiating the body `stlcBody a` (a term of
+-- `[] ++ [a]`) by `stlcId base` bounds the substituted height by the sum of the
+-- body and instantiated heights.
+example :
+    (instantiate₁ (stlcId StlcTy.base)
+        (stlcBody (StlcTy.arrow StlcTy.base StlcTy.base))).height
+      ≤ (stlcBody (StlcTy.arrow StlcTy.base StlcTy.base)).height
+          + (stlcId StlcTy.base).height :=
+  Tm.height_instantiate₁_le _ _
+
+-- `size_le_pow_height` at the two-ary arity bound `m = 2` of `stlcSig`: the
+-- application node's size (`3`) is bounded by `2 ^ height` (`2 ^ 2 = 4`).
+example : (stlcApp StlcTy.base).size ≤ 2 ^ (stlcApp StlcTy.base).height :=
+  Tm.size_le_pow_height (stlcApp StlcTy.base) (le_refl 2) (fun o => by cases o <;> simp [stlcSig])
+
 end GebLean.Binding.Test
