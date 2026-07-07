@@ -3235,4 +3235,67 @@ theorem subEnvSem_extendEnv_metaOne {Γ Δ : Binding.Ctx RType} {σ : RType}
       exact (childEnv_heq_right (subEnvSem Eσ ρ) _ _ hgeR hbR).trans (heq_of_eq rfl)
     exact hLHS.trans hRHS.symm
 
+/-- A source-context transport of a variable preserves the underlying position:
+`(h ▸ w).1.val = w.1.val`. By `cases h`. Internal packaging for the bar-map
+variable-embedding commutations `barVar_weakAppend`, `barVar_appendRight`. -/
+theorem Binding.Var.transport_val {C C' : Binding.Ctx RType} {s : RType} (h : C = C')
+    (w : Binding.Var C s) : (h ▸ w : Binding.Var C' s).1.val = w.1.val := by
+  cases h; rfl
+
+/-- Evaluating a source-context transport of an environment at a variable reads
+the original environment at the transported variable: for `h : A = B`,
+`(h.symm ▸ E) t w = E t (h ▸ w)`. By `cases h`. The environment-application
+counterpart of `sub_transport_dom`, used to read the transported extended target
+environment inside `representsEnv_extend`. -/
+theorem Binding.Env.transport_dom_apply {S : Binding.BinderSig RType}
+    {A B Δ : Binding.Ctx RType} (h : A = B) (E : Binding.Env (Binding.Tm S) B Δ)
+    {t : RType} (w : Binding.Var A t) :
+    (h.symm ▸ E : Binding.Env (Binding.Tm S) A Δ) t w = E t (h ▸ w) := by
+  cases h; rfl
+
+/-- Substitution commutes with a source-context transport of the environment
+(the environment-transport counterpart of `sub_congr_dom`): for `h : A = B`,
+`sub (h.symm ▸ E) t = sub E (h ▸ t)`. By `cases h`. Reconciles the transported
+extended target environment with the induction hypothesis' body substitution in
+`represents_lam`. -/
+theorem sub_transport_dom {S : Binding.BinderSig RType} {A B Δ : Binding.Ctx RType}
+    {s : RType} (h : A = B) (E : Binding.Env (Binding.Tm S) B Δ)
+    (t : Binding.Tm S A s) :
+    Binding.sub (h.symm ▸ E : Binding.Env (Binding.Tm S) A Δ) t = Binding.sub E (h ▸ t) := by
+  cases h; rfl
+
+/-- The variable bar-map commutes with the suffix embedding of a snoc binder:
+transporting the bar image of a prefix-embedded variable across `map_barTy_snoc`
+is the prefix embedding of the bar image. Both variables preserve the underlying
+position (`Var.transport_val`, `weakAppend_app_val`), so `Var` extensionality
+closes it. -/
+theorem barVar_weakAppend {Γ : Binding.Ctx RType} {σ s : RType} (v : Binding.Var Γ s) :
+    (map_barTy_snoc Γ σ ▸ barVar (Binding.Thinning.weakAppend.app v)
+      : Binding.Var (Γ.map barTy ++ [barTy σ]) (barTy s))
+      = Binding.Thinning.weakAppend.app (barVar v) := by
+  apply Subtype.ext
+  apply Fin.ext
+  rw [Binding.Var.transport_val]
+  change (Binding.Thinning.weakAppend.app v).1.val
+    = (Binding.Thinning.weakAppend.app (barVar v)).1.val
+  rw [weakAppend_app_val, weakAppend_app_val]
+  rfl
+
+/-- The variable bar-map commutes with the suffix inclusion of a snoc binder:
+transporting the bar image of a suffix-included variable across `map_barTy_snoc`
+is the suffix inclusion of the bar image. Both variables preserve the underlying
+position up to the context length (`Var.transport_val`, `appendRight_val`,
+`List.length_map`), so `Var` extensionality closes it. -/
+theorem barVar_appendRight {Γ : Binding.Ctx RType} {σ s : RType} (y : Binding.Var [σ] s) :
+    (map_barTy_snoc Γ σ ▸ barVar (Binding.Var.appendRight Γ y)
+      : Binding.Var (Γ.map barTy ++ [barTy σ]) (barTy s))
+      = Binding.Var.appendRight (Γ.map barTy) (barVar y) := by
+  apply Subtype.ext
+  apply Fin.ext
+  rw [Binding.Var.transport_val]
+  change (Binding.Var.appendRight Γ y).1.val
+    = (Binding.Var.appendRight (Γ.map barTy) (barVar y)).1.val
+  rw [appendRight_val, appendRight_val, List.length_map]
+  rfl
+
 end GebLean.Ramified
