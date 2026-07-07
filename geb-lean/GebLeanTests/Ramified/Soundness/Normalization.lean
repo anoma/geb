@@ -215,4 +215,9 @@ example : ∃ a : FreeAlg natAlgSig, conc (natToFreeAlg 0) = conc a :=
 example (a : FreeAlg natAlgSig) : ∃ b : FreeAlg natAlgSig, conc a = conc b :=
   normal_closed_o_eq_conc (conc a) (normal_conc a)
 
+/-- The source-side constructor word evaluates to the value it encodes (task
+6.3.11): `appEval (sourceWord a₀ RType.o) finZeroElim = a₀` at the zero word. -/
+example : appEval (sourceWord (natToFreeAlg 0) RType.o) finZeroElim = natToFreeAlg 0 :=
+  appEval_sourceWord _ _
+
 end GebLean.Ramified

@@ -52,6 +52,8 @@ splits into `betaRedexRank` and `hasIota`.
 * `OneLambda.Normal` — `redexRank t = 0`.
 * `OneLambda.stepWithin` — the size-bounded one-step reduction: an `OneLambdaStep`
   whose target has size at most a fixed ceiling.
+* `sourceWord` — the source-side constructor word `⌜a⌝_{Ω τ}` of a free-algebra
+  value, the `RλMR_o^ω(natAlgSig)` analogue of the concrete term `conc`.
 
 ## Main statements
 
@@ -103,6 +105,8 @@ splits into `betaRedexRank` and `hasIota`.
   and single-tower step-count corollaries of Lemma 12.
 * `OneLambda.normal_closed_o_eq_conc` — a closed normal term of the base object
   sort is the concrete term `conc a` of a free-algebra value.
+* `appEval_sourceWord` — the source-side constructor word `sourceWord a τ`
+  evaluates to the value `a` it encodes.
 
 ## References
 
@@ -2981,5 +2985,66 @@ theorem normal_closed_o_eq_conc (t : Binding.Tm (oneLambdaSig natAlgSig) [] RTyp
   normal_closed_o_eq_conc_aux (Tm.size t) t le_rfl hn
 
 end OneLambda
+
+/-- The source-side constructor word `⌜a⌝_{Ω τ}` of a free-algebra value `a`
+(Leivant III section 4.2, DOI `10.1016/S0168-0072(98)00040-2`, decision P5): the
+fold of `a`'s constructor nodes into `con`-headed application spines over
+`rlmrOSig natAlgSig` at the shifted object sort `Ω τ`, a closed term of the
+object-sorted applicative calculus `RλMR_o^ω(natAlgSig)`. The source-side
+analogue of the concrete term `conc`
+(`GebLean/Ramified/Soundness/BarRep.lean`) one signature over, realized by the
+free-algebra recurrence `FreeAlg.recurse` replacing each node `c_b(t₁,…,t_{r_b})`
+by the constructor constant `con^{Ω τ}_b` saturated with the recursive results.
+Serves Proposition 13's `∀ a` quantification over the words of `natAlgSig`. -/
+def sourceWord (a : FreeAlg natAlgSig) (τ : RType) :
+    Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega τ) :=
+  FreeAlg.recurse (A := natAlgSig) (P := Unit)
+    (fun b _ _sub rec =>
+      replicateSpine (natAlgSig.ar b) (RType.omega τ)
+        (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b) (fun k => k.elim0)) rec)
+    () a
+
+/-- A `con^{Ω τ}_b`-headed homogeneous application spine over `rlmrOSig natAlgSig`
+evaluates to the free-algebra node `FreeAlg.mk b` on the evaluated arguments
+(Leivant III section 4.2): the curried constructor `stdConstructorInterp` applied
+along the spine is folded back to the node by `appEval_replicateSpine` and
+`appChain_stdConstructorInterp`, the object-sort transports cancelling. The
+`con`-node computation of `appEval_sourceWord`, the source-side analogue of
+`oneEval_conSpine` (`GebLean/Ramified/Soundness/OneLambdaEval.lean`) one
+signature over. -/
+private theorem appEval_conSpine {τ : RType} {Γ : Binding.Ctx RType} (b : natAlgSig.B)
+    (a : Fin (natAlgSig.ar b) → Binding.Tm (rlmrOSig natAlgSig) Γ (RType.omega τ))
+    (env : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    appEval (replicateSpine (natAlgSig.ar b) (RType.omega τ)
+        (Binding.Tm.op (S := rlmrOSig natAlgSig)
+          (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b) (fun k => k.elim0)) a) env
+      = FreeAlg.mk b (fun k => appEval (a k) env) := by
+  rw [appEval_replicateSpine]
+  apply eq_of_heq
+  refine (cast_heq (RType.interp_isObj (FreeAlg natAlgSig) (Or.inr rfl)) _).symm.trans
+    (heq_of_eq ?_)
+  refine (appChain_stdConstructorInterp natAlgSig b (Or.inr rfl) _).trans ?_
+  refine congrArg (FreeAlg.mk (A := natAlgSig) b) ?_
+  funext i
+  apply eq_of_heq
+  exact (cast_heq _ _).trans ((cast_heq _ _).trans HEq.rfl)
+
+/-- The source-side constructor word evaluates to the value it encodes (Leivant
+III section 4.2, decision P5): the standard denotation inverts the `con`-node
+fold `sourceWord`. By the free-algebra recurrence, each node `c_b(sub)` evaluates
+its `con^{Ω τ}_b`-headed spine back to `FreeAlg.mk b sub` (`appEval_conSpine`),
+the recursive results supplied by the induction hypothesis. -/
+@[simp] theorem appEval_sourceWord (a : FreeAlg natAlgSig) (τ : RType) :
+    appEval (sourceWord a τ) finZeroElim = a := by
+  refine PolyFix.ind (P := natAlgSig.polyEndo)
+    (motive := fun {_} a => appEval (sourceWord a τ) finZeroElim = a)
+    (fun b children ih => ?_) a
+  change appEval (replicateSpine (natAlgSig.ar b) (RType.omega τ)
+      (Binding.Tm.op (S := rlmrOSig natAlgSig)
+        (RlmrOOp.con (RType.omega τ) (Or.inr rfl) b) (fun k => k.elim0))
+      (fun e => sourceWord (children e) τ)) finZeroElim = FreeAlg.mk b children
+  rw [appEval_conSpine]
+  exact congrArg (FreeAlg.mk b) (funext ih)
 
 end GebLean.Ramified
