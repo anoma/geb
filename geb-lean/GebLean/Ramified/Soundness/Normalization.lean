@@ -89,6 +89,18 @@ splits into `betaRedexRank` and `hasIota`.
   β-rank at most `q ≥ 1` reduces in at most `Tm.size t` counted steps to a term
   of β-rank at most `q - 1` and height at most `2 ^ Tm.height t`, every
   intermediate within the hybrid ceiling `Tm.size t + 2 ^ (2 ^ Tm.height t)`.
+* `OneLambda.beta_normalize` — β-normalization (note N4): every term reduces,
+  within the tower ceiling `tower (betaRedexRank t + 1) (Tm.height t + 1)`, to a
+  β-normal term of height at most `tower (betaRedexRank t) (Tm.height t)`.
+* `OneLambda.iota_normalize` — the ι-phase (note N6): every β-normal term
+  reduces, within its own size ceiling `Tm.size t` and in at most `Tm.size t`
+  steps, to a `Normal` term of no greater height.
+* `OneLambda.lemma12` — Lemma 12 (note N7): every term of `1λ(A)` reduces to a
+  `Normal` term, within the tower ceiling `tower (redexRank t + 1)
+  (Tm.height t + 1)`, of height at most `tower (redexRank t) (Tm.height t)` and
+  in the step count of decision P2.
+* `OneLambda.lemma12_reduces`, `OneLambda.lemma12_clock` — the ordinary-reduction
+  and single-tower step-count corollaries of Lemma 12.
 
 ## References
 
@@ -2569,6 +2581,46 @@ theorem beta_normalize [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
       Tm.height t' ≤ tower (betaRedexRank t) (Tm.height t) ∧
       k ≤ betaRedexRank t * tower (betaRedexRank t) (Tm.height t) :=
   beta_normalize_aux (betaRedexRank t) t (Tm.height t) le_rfl le_rfl
+
+/-- The ι-phase by strong induction on the term size (Leivant III section 5,
+proof paragraph (iii), p. 226, DOI `10.1016/S0168-0072(98)00040-2`; note N6):
+a β-normal term reduces, by a counted `stepWithin (Tm.size t)` chain of at most
+`Tm.size t` steps, to a `Normal` term of no greater height. The fuel `N` bounds
+the term size; each ι-step strictly decreases the size, so the recursion
+terminates and every intermediate term stays within the start's size ceiling. -/
+private theorem iota_normalize_aux [LinearOrder A.B] :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
+    Tm.size t ≤ N → betaRedexRank t = 0 →
+    ∃ (n : Binding.Tm (oneLambdaSig A) Γ s) (k : ℕ),
+      Relation.RelatesInSteps (stepWithin (Tm.size t)) t n k ∧
+      Normal n ∧ Tm.height n ≤ Tm.height t ∧ k ≤ Tm.size t
+  | 0, _, _, t, hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, _, _, t, hN, hβ => by
+      cases hio : hasIota t with
+      | false =>
+          exact ⟨t, 0, Relation.RelatesInSteps.refl t,
+            (normal_iff t).mpr ⟨hβ, hio⟩, le_rfl, Nat.zero_le _⟩
+      | true =>
+          obtain ⟨t', hstep, hsz, hht, hβ'⟩ := exists_iota_step_of_hasIota t hio hβ
+          obtain ⟨n, k, hchain, hnorm, hheight, hk⟩ :=
+            iota_normalize_aux N t' (by omega) hβ'
+          refine ⟨n, k + 1, ?_, hnorm, le_trans hheight hht, by omega⟩
+          exact Relation.RelatesInSteps.head t t' n k ⟨hstep, le_of_lt hsz⟩
+            (relatesInSteps_mono (fun _ _ h => stepWithin_mono (le_of_lt hsz) h) hchain)
+
+/-- The ι-phase (Leivant III section 5, proof paragraph (iii), p. 226,
+DOI `10.1016/S0168-0072(98)00040-2`; note N6): every β-normal term of `1λ(A)`
+reduces, by a counted `stepWithin (Tm.size t)` chain of at most `Tm.size t`
+steps, to a `Normal` term of no greater height. Strong induction on the size
+through `exists_iota_step_of_hasIota`, whose strict size decrease (a recorded
+strengthening of the paper's decrease) both drives the induction and keeps every
+intermediate within the start's size ceiling. -/
+theorem iota_normalize [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) (hβ : betaRedexRank t = 0) :
+    ∃ (n : Binding.Tm (oneLambdaSig A) Γ s) (k : ℕ),
+      Relation.RelatesInSteps (stepWithin (Tm.size t)) t n k ∧
+      Normal n ∧ Tm.height n ≤ Tm.height t ∧ k ≤ Tm.size t :=
+  iota_normalize_aux (Tm.size t) t le_rfl hβ
 
 end OneLambda
 
