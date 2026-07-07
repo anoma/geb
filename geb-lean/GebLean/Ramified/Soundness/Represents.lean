@@ -1631,30 +1631,6 @@ theorem barCase_o {Γ : Binding.Ctx RType} (hθ : RType.o.IsObj) :
       = Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0) :=
   rfl
 
-/-- The branch selector `caseSelect` on a constructor node reads the branch at the
-scrutinee constructor's enumeration position (Leivant III section 4.1): for
-`idx : Fin natAlgSig.numCtors` and a branch family `bs`, `caseSelect (mk (ctorAt
-idx) sub) (bs 0) (bs 1) = bs idx`. Over `natAlgSig` the enumeration is zero-first
-(`ctorAt 0 = false`, `ctorAt 1 = true`), so `caseSelect (mk b sub)` is `cond b`,
-matching the two branch positions. Novel packaging of section 4.1. -/
-theorem caseSelect_mk_ctorAt {C : Type} (idx : Fin natAlgSig.numCtors)
-    (sub : Fin (natAlgSig.ar (ctorAt idx)) → FreeAlg natAlgSig)
-    (bs : Fin natAlgSig.numCtors → C) :
-    caseSelect (FreeAlg.mk (ctorAt idx) sub)
-        (bs ⟨0, by decide⟩) (bs ⟨1, by decide⟩) = bs idx := by
-  obtain ⟨i, hi⟩ := idx
-  have hnc : natAlgSig.numCtors = 2 := by decide
-  match i, hi with
-  | 0, h =>
-    change cond (ctorAt (⟨0, h⟩ : Fin natAlgSig.numCtors))
-        (bs ⟨1, by decide⟩) (bs ⟨0, by decide⟩) = bs ⟨0, h⟩
-    rw [show ctorAt (⟨0, h⟩ : Fin natAlgSig.numCtors) = false from ctorAt_zero]; rfl
-  | 1, h =>
-    change cond (ctorAt (⟨1, h⟩ : Fin natAlgSig.numCtors))
-        (bs ⟨1, by decide⟩) (bs ⟨0, by decide⟩) = bs ⟨1, h⟩
-    rw [show ctorAt (⟨1, h⟩ : Fin natAlgSig.numCtors) = true from ctorAt_one]; rfl
-  | (n + 2), h => exact absurd (hnc ▸ h) (by omega)
-
 /-- A singleton abstraction spine is a single abstraction (Leivant III section
 4.1, structural): `lamSpine [σ] body = lam' body`, the two interposed casts of
 `lamSpine`'s empty-suffix base case cancelling. Internal packaging for

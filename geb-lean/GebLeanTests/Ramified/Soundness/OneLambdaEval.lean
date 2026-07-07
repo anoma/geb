@@ -52,4 +52,41 @@ example (b : Binding.Tm (oneLambdaSig natAlgSig) ([] ++ [RType.o]) RType.o)
 equal concrete terms come from equal values. -/
 example (a b : FreeAlg natAlgSig) (h : conc a = conc b) : a = b := conc_injective h
 
+/-- Step soundness (task 6.3.9b): a `OneLambdaStep`-reduction preserves the
+denotation. The β-redex `(λx:o. x) c₀` steps to `c₀`'s concrete term and both
+denote the zero word. -/
+example :
+    oneEval (OneLambda.app'
+        (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+        (conc (natToFreeAlg 0))) finZeroElim
+      = oneEval (Binding.instantiate₁ (conc (natToFreeAlg 0))
+          (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))) finZeroElim :=
+  oneEval_step (OneLambdaStep.beta (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))
+    (conc (natToFreeAlg 0))) finZeroElim
+
+/-- Step soundness at a destructor hit: `dstr₀ (c_true a) ⇒ a` preserves the
+denotation, a direct instance of `oneEval_step` on `OneLambdaStep.dstrHit`. -/
+example (a : Fin (natAlgSig.ar true) → Binding.Tm (oneLambdaSig natAlgSig) [] RType.o) :
+    oneEval (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+          (OneLambdaOp.dstr ⟨0, by decide⟩) (fun k => k.elim0))
+        (OneLambda.replicateSpine (natAlgSig.ar true) RType.o
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true)
+            (fun k => k.elim0)) a)) finZeroElim
+      = oneEval (a ⟨0, by decide⟩) finZeroElim :=
+  oneEval_step (OneLambdaStep.dstrHit ⟨0, by decide⟩ (by decide) a) finZeroElim
+
+/-- Multi-step soundness (task 6.3.9b): `oneEval_reduces` on the reflexive-
+transitive lift of the acceptance β-redex evaluates `(λx:o. x) c₀` to the zero
+word through the whole reduction sequence. -/
+example :
+    oneEval (OneLambda.app'
+        (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+        (conc (natToFreeAlg 0))) finZeroElim = natToFreeAlg 0 := by
+  rw [oneEval_reduces
+    (OneLambda.reduces_beta (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))
+      (conc (natToFreeAlg 0))) finZeroElim,
+    oneEval_instantiate₁, oneEval_boundVar_envExtend]
+  exact oneEval_conc _ _
+
 end GebLean.Ramified

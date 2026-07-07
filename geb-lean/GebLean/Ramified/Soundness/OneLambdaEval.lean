@@ -270,20 +270,20 @@ theorem oneEval_replicateSpine {Γ : Binding.Ctx RType} {result : RType} (n : Na
   · simp only [eq_mpr_eq_cast]
     exact (cast_heq _ _).trans (cast_heq _ _)
 
-/-- The concrete term `conc a` of a free-algebra value evaluates to the value `a`
-itself (Leivant III section 4.2): the standard denotation inverts the `con`-node
-fold `conc`. By the free-algebra recurrence, each node `c_b(sub)` evaluates its
-`con b`-headed spine — the curried constructor applied to the recursively
-evaluated subterms — back to `FreeAlg.mk b sub` (`oneEval_replicateSpine`,
-`appChain_stdConstructorInterp`). -/
-@[simp] theorem oneEval_conc (a : FreeAlg natAlgSig)
-    (env : ∀ i : Fin ([] : Binding.Ctx RType).length,
-      RType.interp (FreeAlg natAlgSig) (([] : Binding.Ctx RType).get i)) :
-    oneEval (conc a) env = a := by
-  refine PolyFix.ind (P := natAlgSig.polyEndo)
-    (motive := fun {_} a => oneEval (conc a) env = a) (fun b children ih => ?_) a
-  change oneEval (conc (FreeAlg.mk b children)) env = FreeAlg.mk b children
-  rw [conc_mk, oneEval_replicateSpine]
+/-- A `con b`-headed homogeneous application spine evaluates to the free-algebra
+node `FreeAlg.mk b` on the evaluated arguments (Leivant III section 4.2, p. 223):
+the curried constructor `stdConstructorInterp` applied along the spine is folded
+back to the node by `oneEval_replicateSpine` and `appChain_stdConstructorInterp`,
+the object-sort transports cancelling. The `con`-node computation shared by
+`oneEval_conc` and by the `dstr`/`case` redex soundness of `oneEval_step`. -/
+theorem oneEval_conSpine {Γ : Binding.Ctx RType} (b : natAlgSig.B)
+    (a : Fin (natAlgSig.ar b) → Binding.Tm (oneLambdaSig natAlgSig) Γ RType.o)
+    (env : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    oneEval (OneLambda.replicateSpine (natAlgSig.ar b) RType.o
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con b) (fun k => k.elim0)) a)
+        env
+      = FreeAlg.mk b (fun k => oneEval (a k) env) := by
+  rw [oneEval_replicateSpine]
   apply eq_of_heq
   refine (cast_heq (RType.interp_isObj (FreeAlg natAlgSig) (Or.inl rfl)) _).symm.trans
     (heq_of_eq ?_)
@@ -291,8 +291,22 @@ evaluated subterms — back to `FreeAlg.mk b sub` (`oneEval_replicateSpine`,
   refine congrArg (FreeAlg.mk (A := natAlgSig) b) ?_
   funext i
   apply eq_of_heq
-  refine (cast_heq _ _).trans ((cast_heq _ _).trans ?_)
-  exact (heq_of_eq (ih _)).trans HEq.rfl
+  exact (cast_heq _ _).trans ((cast_heq _ _).trans HEq.rfl)
+
+/-- The concrete term `conc a` of a free-algebra value evaluates to the value `a`
+itself (Leivant III section 4.2): the standard denotation inverts the `con`-node
+fold `conc`. By the free-algebra recurrence, each node `c_b(sub)` evaluates its
+`con b`-headed spine back to `FreeAlg.mk b sub` (`oneEval_conSpine`), the
+recursive results supplied by the induction hypothesis. -/
+@[simp] theorem oneEval_conc (a : FreeAlg natAlgSig)
+    (env : ∀ i : Fin ([] : Binding.Ctx RType).length,
+      RType.interp (FreeAlg natAlgSig) (([] : Binding.Ctx RType).get i)) :
+    oneEval (conc a) env = a := by
+  refine PolyFix.ind (P := natAlgSig.polyEndo)
+    (motive := fun {_} a => oneEval (conc a) env = a) (fun b children ih => ?_) a
+  change oneEval (conc (FreeAlg.mk b children)) env = FreeAlg.mk b children
+  rw [conc_mk, oneEval_conSpine]
+  exact congrArg (FreeAlg.mk b) (funext ih)
 
 /-- Evaluating the sole suffix variable `boundVar` of `params ++ [ω]` reads the
 recurrence argument `envLast`. The `oneEval` counterpart of
@@ -755,5 +769,126 @@ theorem conc_injective {a b : FreeAlg natAlgSig} (h : conc a = conc b) : a = b :
   have hval := congrArg
     (fun t : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o => oneEval t finZeroElim) h
   simpa only [oneEval_conc] using hval
+
+/-- The case redex `case z b⃗` (the `replicateSpine` of a `case` head applied to
+the recurrence argument `z` and the `numCtors` branches `bs`) evaluates to the
+branch selector `caseSelect` on `z`'s denotation and the two branch denotations
+(Leivant III section 4.2, p. 223): `oneEval_replicateSpine` exposes the
+application chain, the `case` head evaluates to a `curryInterp` (folded back by
+`appChain_curryInterp`), and the `List.replicate` sort transports cancel. The
+`case`-redex computation of `oneEval_step`; the `oneEval` counterpart of
+`appEval_caseRedex`. -/
+theorem oneEval_caseSpine {Γ : Binding.Ctx RType}
+    (z : Binding.Tm (oneLambdaSig natAlgSig) Γ RType.o)
+    (bs : Fin natAlgSig.numCtors → Binding.Tm (oneLambdaSig natAlgSig) Γ RType.o)
+    (env : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    oneEval (OneLambda.replicateSpine natAlgSig.numCtors RType.o
+        (OneLambda.app' (Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case
+          (fun k => k.elim0)) z) bs) env
+      = caseSelect (oneEval z env)
+          (oneEval (bs ⟨0, by decide⟩) env) (oneEval (bs ⟨1, by decide⟩) env) := by
+  rw [oneEval_replicateSpine]
+  simp only [oneEval_app']
+  conv_lhs =>
+    arg 4
+    change curryInterp natAlgSig (List.replicate natAlgSig.numCtors RType.o) RType.o
+      (fun be => caseSelect (oneEval z env)
+        (cast (congrArg (RType.interp (FreeAlg natAlgSig))
+          (by rw [List.get_eq_getElem, List.getElem_replicate])) (be ⟨0, Nat.zero_lt_two⟩))
+        (cast (congrArg (RType.interp (FreeAlg natAlgSig))
+          (by rw [List.get_eq_getElem, List.getElem_replicate])) (be ⟨1, Nat.one_lt_two⟩)))
+  rw [appChain_curryInterp]
+  beta_reduce
+  refine congrArg₂ (caseSelect (oneEval z env)) ?_ ?_ <;>
+    exact eq_of_heq ((cast_heq _ _).trans (cast_heq _ _))
+
+/-- Applying a destructor constant `dstr j` to an argument evaluates to the
+destructor `dstrRead j` on the argument's denotation (Leivant III section 4.2):
+the `dstr`-redex computation of `oneEval_step`, folding `oneEval_dstr` through the
+application node. Stated as a separate lemma since the destructor clause reduces a
+partially-applied node, which `rewrite`/`simp` do not reach under an application. -/
+theorem oneEval_dstrApp {Γ : Binding.Ctx RType} (j : Fin natAlgSig.maxArity)
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ RType.o)
+    (env : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    oneEval (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0)) x)
+        env
+      = dstrRead j.val (oneEval x env) := by
+  rw [oneEval_app']
+  exact congrFun (oneEval_dstr j (fun k => k.elim0) env) (oneEval x env)
+
+/-- Weakening a term by one fresh binder and evaluating at a one-value extension
+reads the original environment: `ren weakAppend` is inverted by `envExtend`. The
+`oneEval` counterpart of `appEval_ren_weakAppend_envExtend`; the prefix-embedding
+reconciliation the η-rule denotation of `oneEval_step` rests on. -/
+theorem oneEval_ren_weakAppend_envExtend {Γ : Binding.Ctx RType} {σ s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s)
+    (ρ : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i))
+    (v : RType.interp (FreeAlg natAlgSig) σ) :
+    oneEval (Binding.ren (Binding.Thinning.weakAppend (Ξ := [σ])) t) (envExtend ρ v)
+      = oneEval t ρ := by
+  rw [oneEval_ren t (Binding.Thinning.weakAppend (Ξ := [σ])) (envExtend ρ v)]
+  congr 1
+  exact renEnvSem_weakAppend_childEnv ρ (fun _ => v)
+
+/-- Soundness of one-step reduction for the standard evaluator (Leivant III
+section 4.2, p. 223): a `OneLambdaStep`-reduction preserves the denotation. The
+base redexes match the constant clauses — β by the `instantiate₁` fusion
+(`oneEval_instantiate₁`), η by function extensionality with `oneEval_ren`, the
+destructor and case redexes by the `con`-spine and `case`-spine computations
+(`oneEval_conSpine`, `oneEval_caseSpine`) against `dstrRead`/`caseSelect` — and
+the compatibility rules by the induction hypothesis through the node clauses. -/
+theorem oneEval_step {Γ : Binding.Ctx RType} {s : RType}
+    {t t' : Binding.Tm (oneLambdaSig natAlgSig) Γ s} (h : OneLambdaStep t t')
+    (env : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    oneEval t env = oneEval t' env := by
+  revert env
+  induction h with
+  | beta b N =>
+    intro env
+    rw [oneEval_instantiate₁, oneEval_app', oneEval_lam']
+    rfl
+  | eta M =>
+    intro env
+    rw [oneEval_lam']
+    funext v
+    rw [oneEval_app', oneEval_ren_weakAppend_envExtend]
+    exact congrArg (oneEval M env) (oneEval_boundVar_envExtend env v)
+  | dstrHit j hlt a =>
+    intro env
+    rw [oneEval_dstrApp, oneEval_conSpine, dstrRead_mk]
+    exact dif_pos hlt
+  | dstrMiss j hge a =>
+    intro env
+    rw [oneEval_dstrApp, oneEval_conSpine, dstrRead_mk, dif_neg (Nat.not_lt.mpr hge)]
+  | case idx a b =>
+    intro env
+    rw [oneEval_caseSpine, oneEval_conSpine]
+    exact caseSelect_mk_ctorAt idx (fun k => oneEval (a k) env) (fun k => oneEval (b k) env)
+  | appL x _h ih =>
+    intro env
+    rw [oneEval_app', oneEval_app', ih env]
+  | appR f _h ih =>
+    intro env
+    rw [oneEval_app', oneEval_app']
+    exact congrArg (oneEval f env) (ih env)
+  | lamBody _h ih =>
+    intro env
+    rw [oneEval_lam', oneEval_lam']
+    funext v
+    exact ih (envExtend env v)
+
+/-- Soundness of multi-step reduction for the standard evaluator (Leivant III
+section 4.2, p. 223): a `Relation.ReflTransGen`-reduction preserves the
+denotation. The reflexive-transitive lift of `oneEval_step`, by induction on the
+reduction sequence. -/
+theorem oneEval_reduces {Γ : Binding.Ctx RType} {s : RType}
+    {t t' : Binding.Tm (oneLambdaSig natAlgSig) Γ s}
+    (h : Relation.ReflTransGen OneLambdaStep t t')
+    (env : ∀ i : Fin Γ.length, RType.interp (FreeAlg natAlgSig) (Γ.get i)) :
+    oneEval t env = oneEval t' env := by
+  induction h with
+  | refl => rfl
+  | tail _ hstep ih => exact ih.trans (oneEval_step hstep env)
 
 end GebLean.Ramified
