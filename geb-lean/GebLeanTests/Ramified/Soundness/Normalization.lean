@@ -166,4 +166,41 @@ example (b : Binding.Tm (oneLambdaSig natAlgSig) ([] ++ [RType.o]) RType.o) :
           (max (betaRedexRank (conc (natToFreeAlg 0))) (RType.ord RType.o)) :=
   betaRedexRank_instantiate₁_le _ _
 
+/-- Lemma 12 on the identity β-redex `(λx:o. x) c₀` (note N7): the rank-`1`,
+height-`3` term reduces to a `Normal` form, within the tower ceiling
+`tower 2 4`, of height at most `tower 1 3 = 8` and in at most
+`1 * tower 1 3 + tower 2 3 = 264` steps. The redex rank and height are reduced
+by the node simp equations (`redexRank t₀ = 1`, `Tm.height t₀ = 3`); the
+resulting numeric bounds close by arithmetic. The mathematical reduct and step
+count are `n = c₀` and `k = 1`, well within the elementary bound. -/
+example :
+    ∃ (n : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o) (k : ℕ),
+      Normal n ∧
+      Relation.RelatesInSteps (stepWithin (tower 2 4))
+        (OneLambda.app'
+          (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+          (conc (natToFreeAlg 0))) n k ∧
+      Tm.height n ≤ 8 ∧ k ≤ 264 := by
+  obtain ⟨n, k, hnorm, hchain, hheight, hk⟩ := lemma12 (A := natAlgSig)
+    (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))
+  have hrank : redexRank (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0))) = 1 := by
+    have hN : redexRank (conc (natToFreeAlg 0)) = 0 := rfl
+    rw [redexRank_app', topBetaRank_app', topIota_app', hN]
+    simp [isLam_lam', headTag_lam', redexRank, betaRedexRank_lam', hasIota_lam',
+      betaRedexRank_var, hasIota_var, RType.ord_arrow, RType.ord_o]
+  have hheq : Tm.height (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0))) = 3 := by
+    rw [height_app', height_lam', Binding.Tm.height_var,
+      show Tm.height (conc (natToFreeAlg 0)) = 1 from rfl]
+    omega
+  rw [hrank, hheq] at hchain hheight hk
+  have ht13 : (tower 1 3 : ℕ) = 8 := rfl
+  have ht23 : (tower (1 + 1) 3 : ℕ) = 256 := rfl
+  exact ⟨n, k, hnorm, hchain, by omega, by omega⟩
+
 end GebLean.Ramified

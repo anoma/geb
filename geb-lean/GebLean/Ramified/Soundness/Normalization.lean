@@ -2622,6 +2622,95 @@ theorem iota_normalize [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
       Normal n ∧ Tm.height n ≤ Tm.height t ∧ k ≤ Tm.size t :=
   iota_normalize_aux (Tm.size t) t le_rfl hβ
 
+/-- Lemma 12 (Leivant III section 5, p. 226, DOI
+`10.1016/S0168-0072(98)00040-2`; spec §5.1; note N7): every term of `1λ(A)` of
+height `h := Tm.height t` and redex rank `q := redexRank t` reduces to a `Normal`
+term, by a counted `stepWithin (tower (q + 1) (h + 1))` chain, of height at most
+`tower q h` and in at most `q * tower q h + tower (q + 1) h` steps.
+
+Reading note (design spec §2 recorded reconciliation, file
+`docs/superpowers/specs/2026-07-06-ramified-p6.3-lemma12-design.md` §2): the
+paper states Lemma 12 for a term of `RλMR_o^ω(A)`, but the redex-rank
+terminology is defined for the simply-typed `1λ(A)` (p. 224) and the proof
+opens and closes there; the formalization states the lemma for `1λ(A)`.
+
+The step count is tighter than the paper's `O((2_{q+1}(h))^2)`. Under footnote
+10's model freedom the constant factor is immaterial at elementary time, so
+decision P2 records the concrete additive split `q * tower q h + tower (q + 1) h`
+(the β-phase's `q * tower q h` cycles composed with the ι-phase's at most
+`Tm.size t' ≤ tower (q + 1) h` steps) in place of the square. Assembles
+`beta_normalize` and `iota_normalize`, relaxing both counted chains to the
+uniform ceiling by `tower_mono_left`/`tower_mono_right` and the junction size
+bound `size_le_two_pow_height`. -/
+theorem lemma12 [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    ∃ (n : Binding.Tm (oneLambdaSig A) Γ s) (k : ℕ),
+      Normal n ∧
+      Relation.RelatesInSteps
+        (stepWithin (tower (redexRank t + 1) (Tm.height t + 1))) t n k ∧
+      Tm.height n ≤ tower (redexRank t) (Tm.height t) ∧
+      k ≤ redexRank t * tower (redexRank t) (Tm.height t)
+            + tower (redexRank t + 1) (Tm.height t) := by
+  set q := redexRank t with hq
+  set h := Tm.height t with hh
+  have hbq : betaRedexRank t ≤ q := betaRedexRank_le_redexRank t
+  obtain ⟨t₁, k₁, hchain₁, hβ₁, hheight₁, hk₁⟩ := beta_normalize t
+  obtain ⟨n, k₂, hchain₂, hnorm, hheight₂, hk₂⟩ := iota_normalize t₁ hβ₁
+  -- The β-phase reduct's height is bounded by `tower q h`.
+  have hheight₁' : Tm.height t₁ ≤ tower q h :=
+    le_trans hheight₁ (tower_mono_left hbq h)
+  -- The junction size is at most `tower (q + 1) h`.
+  have hsize₁ : Tm.size t₁ ≤ tower (q + 1) h :=
+    calc Tm.size t₁ ≤ 2 ^ Tm.height t₁ := size_le_two_pow_height t₁
+      _ ≤ 2 ^ tower q h := Nat.pow_le_pow_right (by omega) hheight₁'
+      _ = tower (q + 1) h := rfl
+  refine ⟨n, k₁ + k₂, hnorm, ?_, le_trans hheight₂ hheight₁', ?_⟩
+  · -- Compose both counted chains under the uniform ceiling `tower (q + 1) (h + 1)`.
+    refine Relation.RelatesInSteps.trans
+      (relatesInSteps_mono (fun _ _ hab => stepWithin_mono ?_ hab) hchain₁)
+      (relatesInSteps_mono (fun _ _ hab => stepWithin_mono ?_ hab) hchain₂)
+    · exact tower_mono_left (by omega) (h + 1)
+    · exact le_trans hsize₁ (tower_mono_right (q + 1) (by omega))
+  · -- The step count: β-phase cycles plus the ι-phase steps.
+    have hkβ : k₁ ≤ q * tower q h :=
+      le_trans hk₁ (Nat.mul_le_mul hbq (tower_mono_left hbq h))
+    exact Nat.add_le_add hkβ (le_trans hk₂ hsize₁)
+
+/-- The ordinary-reduction corollary of Lemma 12: every term of `1λ(A)` reduces,
+under `Relation.ReflTransGen OneLambdaStep`, to a `Normal` term. Forgets the
+step count and size ceiling of `lemma12` through
+`relatesInSteps_stepWithin_reflTransGen`. -/
+theorem lemma12_reduces [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    ∃ (n : Binding.Tm (oneLambdaSig A) Γ s),
+      Normal n ∧ Relation.ReflTransGen OneLambdaStep t n := by
+  obtain ⟨n, _, hnorm, hchain, _, _⟩ := lemma12 t
+  exact ⟨n, hnorm, relatesInSteps_stepWithin_reflTransGen hchain⟩
+
+/-- The single-tower step-count corollary of Lemma 12: the reduction of `lemma12`
+takes at most `(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)` steps.
+Absorbs the two summands of `lemma12`'s bound by `tower_mono_left`
+(`tower q h ≤ tower (q + 1) h`) and `Nat.succ_mul`. -/
+theorem lemma12_clock [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    ∃ (n : Binding.Tm (oneLambdaSig A) Γ s) (k : ℕ),
+      Normal n ∧
+      Relation.RelatesInSteps
+        (stepWithin (tower (redexRank t + 1) (Tm.height t + 1))) t n k ∧
+      Tm.height n ≤ tower (redexRank t) (Tm.height t) ∧
+      k ≤ (redexRank t + 1) * tower (redexRank t + 1) (Tm.height t) := by
+  obtain ⟨n, k, hnorm, hchain, hheight, hk⟩ := lemma12 t
+  refine ⟨n, k, hnorm, hchain, hheight, ?_⟩
+  have hmono : tower (redexRank t) (Tm.height t)
+      ≤ tower (redexRank t + 1) (Tm.height t) := tower_mono_left (by omega) _
+  calc k ≤ redexRank t * tower (redexRank t) (Tm.height t)
+              + tower (redexRank t + 1) (Tm.height t) := hk
+    _ ≤ redexRank t * tower (redexRank t + 1) (Tm.height t)
+              + tower (redexRank t + 1) (Tm.height t) :=
+        Nat.add_le_add_right (Nat.mul_le_mul le_rfl hmono) _
+    _ = (redexRank t + 1) * tower (redexRank t + 1) (Tm.height t) :=
+        (Nat.succ_mul _ _).symm
+
 end OneLambda
 
 end GebLean.Ramified
