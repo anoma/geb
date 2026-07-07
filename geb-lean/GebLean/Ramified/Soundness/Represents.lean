@@ -57,6 +57,10 @@ implication carrying represented arguments to represented applications.
 * `barRecur_appSpine_reduces` — the recurrence bar-map saturated with represented
   step terms reduces to its instantiated inner body, the recurrence-combinator
   counterpart of `OneLambda.bbRep_appSpine_reduces`.
+* `prop11_aux`, `prop11_represents` — the fundamental lemma of the representation
+  relation (Leivant III section 4.2, Proposition 11): the six-way induction over
+  terms of `RλMR_o^ω` dispatching to the banked case lemmas (`prop11_aux`), and
+  its closed-term instance `barTm F` represents `F` (`prop11_represents`).
 
 ## Implementation notes
 
@@ -3438,5 +3442,168 @@ theorem represents_lam {Γ : Binding.Ctx RType} {σ τ' : RType}
     subEnvSem_extendEnv_metaOne, sourceApp, appEval_app',
     appEval_sub (lam' b) Eσ finZeroElim, appEval_lam']
   rfl
+
+/-- Transport of the representation-relating environments along a source-context
+equality: relating environments over equal contexts stay pointwise represented.
+Proved by `subst`. Reconciles the induction hypotheses of `prop11_aux` at an
+operation node's empty-binder child contexts `Γ ++ []` with the node's ambient
+context `Γ`. -/
+theorem representsEnv_ctx_transport {A B : Binding.Ctx RType} (h : A = B)
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) A [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (A.map barTy) [])
+    (hEnv : RepresentsEnv Eσ Eσhat) :
+    RepresentsEnv (h ▸ Eσ) ((congrArg (List.map barTy) h) ▸ Eσhat) := by
+  subst h; exact hEnv
+
+/-- The fundamental-lemma conclusion at an empty-binder operation child (Leivant
+III section 4.2, Proposition 11): given the per-child induction hypothesis
+`hchild` at the child's context `Γ ++ []`, the append-nil-transported child is
+represented under the node's ambient closing environments `Eσ`, `Eσhat`. The
+child environments are the transports of `Eσ`, `Eσhat` across `Γ ++ [] = Γ`
+(`representsEnv_ctx_transport`), and both substitution and bar-map commute with
+that transport (`sub_transport_dom`, `barTm_congr_ctx`). Dispatches the
+application node's two children in the `prop11_aux` induction. -/
+theorem represents_appendNil_child {Γ : Binding.Ctx RType} {s : RType}
+    (child : Binding.Tm (rlmrOSig natAlgSig) (Γ ++ []) s)
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) [])
+    (hEnv : RepresentsEnv Eσ Eσhat)
+    (hchild : ∀ (Eσ' : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) (Γ ++ []) [])
+        (Eσhat' : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) ((Γ ++ []).map barTy) []),
+        RepresentsEnv Eσ' Eσhat' →
+          Represents s (Binding.sub Eσ' child) (Binding.sub Eσhat' (barTm child))) :
+    Represents s (Binding.sub Eσ ((List.append_nil Γ) ▸ child))
+      (Binding.sub Eσhat (barTm ((List.append_nil Γ) ▸ child))) := by
+  have hmap : (Γ ++ []).map barTy = Γ.map barTy := congrArg (List.map barTy) (List.append_nil Γ)
+  have key := hchild ((List.append_nil Γ).symm ▸ Eσ) (hmap.symm ▸ Eσhat)
+    (representsEnv_ctx_transport (List.append_nil Γ).symm Eσ Eσhat hEnv)
+  rw [sub_transport_dom (List.append_nil Γ) Eσ child,
+    sub_transport_dom hmap Eσhat (barTm child)] at key
+  rw [barTm_congr_ctx (List.append_nil Γ) child]
+  exact key
+
+/-- The fundamental lemma of the representation relation (Leivant III section 4.2,
+Proposition 11, a decision-2 denotational reformulation): substituting represented
+closed terms for the free variables of an arbitrary term `E` of the applicative
+calculus `RλMR_o^ω` produces, on the source side, a term represented by the
+parallel target-side substitution into the bar image `barTm E`. Given closing
+environments `Eσ` and `Eσhat` that are pointwise `Represents`-related
+(`RepresentsEnv`), `sub Eσ E` is represented by `sub Eσhat (barTm E)`.
+
+Proved by induction on the term `E` (six-way, over the leaf variable and the six
+operation nodes of `rlmrOSig`). At a variable the two sides read the related
+environments (`sub_var`, `barTm_var`), closed by the environment hypothesis. Each
+operation node dispatches to its banked case lemma: application to `represents_app`
+(via the `app'` reassembly of the two children); abstraction to `represents_lam`
+(via the `lam'` reassembly of the body child, with the raw per-child induction
+hypothesis supplied directly); the constructor constant to `represents_con_succ`
+at object sort `o` and `represents_con_omega` at `Ω τ` (splitting `θ.IsObj` by
+`RType.eq_o_of_shape_o` / `RType.eq_omega_omegaArg_of_shape`); the destructor to
+`represents_dstr`; the case combinator to `represents_case`; the recurrence
+combinator to `represents_recur`. The empty-binder application children are
+reconciled to the node's ambient context by `represents_appendNil_child`; the
+nullary constant nodes carry no children. -/
+theorem prop11_aux : ∀ {y : Binding.Ctx RType × RType}
+    (E : PolyFix (polyTranslate (Binding.varOver (Ty := RType)) (rlmrOSig natAlgSig).polyEndo) y)
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) y.1 [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (y.1.map barTy) []),
+    RepresentsEnv Eσ Eσhat →
+      Represents y.2 (Binding.sub Eσ E) (Binding.sub Eσhat (barTm E)) := by
+  intro y E
+  induction E with
+  | mk y idx children ih =>
+    intro Eσ Eσhat hEnv
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Binding.Tm (rlmrOSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [Binding.sub_var, barTm_var, Binding.sub_var]
+      exact hEnv (Binding.leafVar a)
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (rlmrOSig natAlgSig).Op // (rlmrOSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (rlmrOSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (rlmrOSig natAlgSig) Γ' ((rlmrOSig natAlgSig).result o))
+            = Binding.Tm.op o (fun j => children ⟨j⟩) from rfl]
+      cases o with
+      | app σ τ =>
+        have hΓ : Γ' ++ [] = Γ' := List.append_nil Γ'
+        set f : Binding.Tm (rlmrOSig natAlgSig) Γ' (RType.arrow σ τ) :=
+          hΓ ▸ children ⟨(0 : Fin 2)⟩ with hf_def
+        set x : Binding.Tm (rlmrOSig natAlgSig) Γ' σ :=
+          hΓ ▸ children ⟨(1 : Fin 2)⟩ with hx_def
+        have hN : (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.app σ τ)
+              (fun j => children ⟨j⟩)) = app' f x := by
+          rw [app', hf_def, hx_def]
+          refine congrArg (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.app σ τ)) ?_
+          funext j
+          refine j.cases ?_ (fun k => ?_)
+          · simp only [Fin.cases_zero]
+            exact (eqRec_symm_eqRec
+              (motive := fun c => Binding.Tm (rlmrOSig natAlgSig) c (RType.arrow σ τ))
+              hΓ (children ⟨(0 : Fin 2)⟩)).symm
+          · refine k.cases ?_ (fun l => l.elim0)
+            simp only [Fin.cases_succ, Fin.cases_zero]
+            exact (eqRec_symm_eqRec
+              (motive := fun c => Binding.Tm (rlmrOSig natAlgSig) c σ)
+              hΓ (children ⟨(1 : Fin 2)⟩)).symm
+        rw [hN]
+        have ihf : Represents (RType.arrow σ τ) (Binding.sub Eσ f) (Binding.sub Eσhat (barTm f)) :=
+          represents_appendNil_child (Γ := Γ') (children ⟨(0 : Fin 2)⟩) Eσ Eσhat hEnv
+            (ih ⟨(0 : Fin 2)⟩)
+        have ihx : Represents σ (Binding.sub Eσ x) (Binding.sub Eσhat (barTm x)) :=
+          represents_appendNil_child (Γ := Γ') (children ⟨(1 : Fin 2)⟩) Eσ Eσhat hEnv
+            (ih ⟨(1 : Fin 2)⟩)
+        exact represents_app f x Eσ Eσhat ihf ihx
+      | lam σ τ =>
+        have hN : (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.lam σ τ)
+              (fun j => children ⟨j⟩)) = lam' (children ⟨(0 : Fin 1)⟩) := by
+          rw [lam']
+          refine congrArg (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.lam σ τ)) ?_
+          funext j
+          refine j.cases ?_ (fun k => k.elim0)
+          rfl
+        rw [hN]
+        exact represents_lam (children ⟨(0 : Fin 1)⟩) Eσ Eσhat hEnv (ih ⟨(0 : Fin 1)⟩)
+      | con θ hθ b =>
+        have hop : (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con θ hθ b)
+              (fun k => children ⟨k⟩))
+            = Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con θ hθ b) (fun k => k.elim0) := by
+          congr 1; funext k; exact k.elim0
+        rw [hop]
+        rcases hθ with ho | hω
+        · obtain rfl := RType.eq_o_of_shape_o ho
+          exact represents_con_succ b Eσ Eσhat
+        · obtain ⟨a, rfl⟩ : ∃ a, θ = RType.omega a :=
+            ⟨θ.omegaArg, RType.eq_omega_omegaArg_of_shape hω⟩
+          exact represents_con_omega a b Eσ Eσhat
+      | recur τ =>
+        have hop : (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ)
+              (fun k => children ⟨k⟩))
+            = Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.recur τ) (fun k => k.elim0) := by
+          congr 1; funext k; exact k.elim0
+        rw [hop]
+        exact represents_recur τ Eσ Eσhat
+      | dstr j =>
+        have hop : (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.dstr j)
+              (fun k => children ⟨k⟩))
+            = Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.dstr j) (fun k => k.elim0) := by
+          congr 1; funext k; exact k.elim0
+        rw [hop]
+        exact represents_dstr j Eσ Eσhat
+      | case θ hθ =>
+        have hop : (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.case θ hθ)
+              (fun k => children ⟨k⟩))
+            = Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.case θ hθ) (fun k => k.elim0) := by
+          congr 1; funext k; exact k.elim0
+        rw [hop]
+        exact represents_case θ hθ Eσ Eσhat
 
 end GebLean.Ramified
