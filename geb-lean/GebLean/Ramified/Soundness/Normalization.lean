@@ -2210,6 +2210,41 @@ private theorem betaCycle_lam' [LinearOrder A.B] {Γ : Binding.Ctx RType} {σ τ
   · rw [size_lam']
     omega
 
+/-- The non-contraction assembly of the application case (note N3): given the
+already-lifted, chained cycles of the function and argument subterms at the
+ambient ceiling `M`, and a top β-rank already below the budget, the application
+of the two endpoints closes the cycle. The endpoint is an application node, so
+the shape invariant holds vacuously. -/
+private theorem betaCycle_app'_of_topBetaRank [LinearOrder A.B] {Γ : Binding.Ctx RType}
+    {σ τ : RType} {q M kD kE : ℕ}
+    {D D' : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)}
+    {E E' : Binding.Tm (oneLambdaSig A) Γ σ}
+    (hchain : Relation.RelatesInSteps (stepWithin M) (app' D E) (app' D' E') (kD + kE))
+    (htop : topBetaRank (app' D' E') ≤ q - 1)
+    (hrankD : betaRedexRank D' ≤ q - 1) (hrankE : betaRedexRank E' ≤ q - 1)
+    (hheightD : Tm.height D' ≤ 2 ^ Tm.height D)
+    (hheightE : Tm.height E' ≤ 2 ^ Tm.height E)
+    (hkD : kD ≤ Tm.size D) (hkE : kE ≤ Tm.size E) :
+    BetaCycle q M (app' D E) := by
+  refine ⟨app' D' E', kD + kE, hchain, ?_, ?_, ?_, ?_⟩
+  · rw [betaRedexRank_app']
+    omega
+  · rw [height_app', height_app']
+    have hpD : 2 ^ Tm.height D ≤ 2 ^ max (Tm.height D) (Tm.height E) :=
+      Nat.pow_le_pow_right (by omega) (le_max_left _ _)
+    have hpE : 2 ^ Tm.height E ≤ 2 ^ max (Tm.height D) (Tm.height E) :=
+      Nat.pow_le_pow_right (by omega) (le_max_right _ _)
+    have hx1 : (1 : ℕ) ≤ 2 ^ max (Tm.height D) (Tm.height E) := Nat.one_le_two_pow
+    have htwo : 2 ^ (1 + max (Tm.height D) (Tm.height E))
+        = 2 * 2 ^ max (Tm.height D) (Tm.height E) := by rw [pow_add, pow_one]
+    omega
+  · rw [size_app']
+    omega
+  · intro habs
+    have hfalse : isLam (app' D' E') = true := habs
+    rw [isLam_app'] at hfalse
+    exact Bool.noConfusion hfalse
+
 end OneLambda
 
 end GebLean.Ramified
