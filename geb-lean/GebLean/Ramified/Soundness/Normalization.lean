@@ -985,6 +985,236 @@ private theorem eq_o_of_shape_o {s : RType} (h : s.shape = RTypeShape.o) : s = R
   change FreeAlg.mk (A := rTypeSig) RTypeShape.o children = RType.o
   exact congrArg (FreeAlg.mk (A := rTypeSig) RTypeShape.o) (funext fun e => e.elim0)
 
+/-- An arrow type is not the base type `o`: their shapes differ. -/
+private theorem arrow_ne_o (σ τ : RType) : RType.arrow σ τ ≠ RType.o := fun hcon => by
+  have := congrArg RType.shape hcon
+  simp at this
+
+/-- The curried sort of a homogeneous spine absorbs one further `o`-argument of
+its result sort: `o^n → (o → ρ) = o^{n+1} → ρ`. The sort-level bookkeeping of
+`replicateSpine_snoc`. -/
+private theorem curried_replicate_snoc (n : ℕ) (ρ : RType) :
+    RType.curried (List.replicate n RType.o) (RType.arrow RType.o ρ)
+      = RType.curried (List.replicate (n + 1) RType.o) ρ := by
+  induction n with
+  | zero => rfl
+  | succ n ih => exact congrArg (RType.arrow RType.o) ih
+
+/-- Sort transport of a term, packaged as a definition so that its source and
+target sorts are pinned by the equality proof's type and cast-commutation
+lemmas match syntactically. -/
+private def castSort {Γ : Binding.Ctx RType} {s s' : RType} (h : s = s')
+    (t : Binding.Tm (oneLambdaSig A) Γ s) : Binding.Tm (oneLambdaSig A) Γ s' := h ▸ t
+
+/-- Transport along a self-equality is the identity, by proof irrelevance. -/
+private theorem castSort_self {Γ : Binding.Ctx RType} {s : RType} (h : s = s)
+    (t : Binding.Tm (oneLambdaSig A) Γ s) : castSort h t = t := rfl
+
+/-- Transport along a composite of sort equalities is the transport along the
+composite equality. -/
+private theorem castSort_trans {Γ : Binding.Ctx RType} {a b c : RType} (h₁ : a = b) (h₂ : b = c)
+    (t : Binding.Tm (oneLambdaSig A) Γ a) :
+    castSort h₂ (castSort h₁ t) = castSort (h₁.trans h₂) t := by
+  cases h₂; rfl
+
+/-- An application whose function is transported in its codomain sort is the
+transport of the application: `app'` commutes with a codomain cast. -/
+private theorem app'_castSort {Γ : Binding.Ctx RType} {σ τ τ' : RType} (hτ : τ = τ')
+    (harr : RType.arrow σ τ = RType.arrow σ τ')
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) :
+    app' (castSort harr f) x = castSort hτ (app' f x) := by
+  cases hτ; rfl
+
+/-- The function subterm of an application is no larger than the application. -/
+private theorem size_le_size_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) : Tm.size f ≤ Tm.size (app' f x) := by
+  rw [size_app']; omega
+
+/-- The argument subterm of an application is strictly smaller than the
+application. -/
+private theorem size_arg_lt_size_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) : Tm.size x < Tm.size (app' f x) := by
+  rw [size_app']
+  have := Tm.one_le_size f
+  omega
+
+/-- The function subterm of an application is no taller than the application. -/
+private theorem height_le_height_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) : Tm.height f ≤ Tm.height (app' f x) := by
+  rw [height_app']; omega
+
+/-- The argument subterm of an application sits strictly below the application's
+height. -/
+private theorem height_arg_lt_height_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) : Tm.height x < Tm.height (app' f x) := by
+  rw [height_app']; omega
+
+/-- The β-rank of the function subterm of an application is bounded by the
+application's β-rank. -/
+private theorem betaRedexRank_le_betaRedexRank_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) :
+    betaRedexRank f ≤ betaRedexRank (app' f x) := by
+  rw [betaRedexRank_app']; omega
+
+/-- The β-rank of the argument subterm of an application is bounded by the
+application's β-rank. -/
+private theorem betaRedexRank_arg_le_betaRedexRank_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) :
+    betaRedexRank x ≤ betaRedexRank (app' f x) := by
+  rw [betaRedexRank_app']; omega
+
+/-- Peeling the first argument of a homogeneous spine: an `(n+1)`-argument spine
+is the `n`-argument spine over the head applied to the first argument. -/
+private theorem replicateSpine_cons {Γ : Binding.Ctx RType} {result : RType} (n : ℕ)
+    (base : RType)
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate (n + 1) base) result))
+    (a : Fin (n + 1) → Binding.Tm (oneLambdaSig A) Γ base) :
+    replicateSpine (n + 1) base head a
+      = replicateSpine n base
+          (app' (σ := base) (τ := RType.curried (List.replicate n base) result) head
+            (a ⟨0, n.succ_pos⟩))
+          (fun i => a i.succ) := rfl
+
+/-- The last-index composite of a `Fin.snoc` with the successor embedding is the
+`Fin.snoc` of the composite: reading a snoc-extended tuple at shifted indices
+drops the first entry. -/
+private theorem fin_snoc_comp_succ {n : ℕ} {C : Sort _} (a : Fin (n + 1) → C) (w : C) :
+    (fun i : Fin (n + 1) => Fin.snoc (α := fun _ => C) a w i.succ)
+      = Fin.snoc (α := fun _ => C) (fun i => a i.succ) w := by
+  funext i
+  induction i using Fin.lastCases with
+  | last => simp [Fin.succ_last]
+  | cast i => simp only [Fin.succ_castSucc, Fin.snoc_castSucc]
+
+/-- Appending one further argument to a homogeneous spine: applying an
+`n`-argument spine to one more base-sort argument is the `(n+1)`-argument spine
+at the sort-transported head over the `Fin.snoc`-extended argument tuple. -/
+private theorem replicateSpine_snoc {Γ : Binding.Ctx RType} {ρ : RType} :
+    (n : ℕ) →
+    (head : Binding.Tm (oneLambdaSig A) Γ
+      (RType.curried (List.replicate n RType.o) (RType.arrow RType.o ρ))) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ RType.o) →
+    (w : Binding.Tm (oneLambdaSig A) Γ RType.o) →
+    app' (replicateSpine n RType.o head a) w
+      = replicateSpine (n + 1) RType.o (castSort (curried_replicate_snoc n ρ) head)
+          (Fin.snoc a w)
+  | 0, head, a, w => rfl
+  | n + 1, head, a, w => by
+      calc app' (replicateSpine (n + 1) RType.o head a) w
+          = app' (replicateSpine n RType.o
+              (app' (σ := RType.o) head (a ⟨0, n.succ_pos⟩)) (fun i => a i.succ)) w := by
+            rw [replicateSpine_cons]
+        _ = replicateSpine (n + 1) RType.o
+              (castSort (curried_replicate_snoc n ρ)
+                (app' (σ := RType.o) head (a ⟨0, n.succ_pos⟩)))
+              (Fin.snoc (fun i => a i.succ) w) :=
+            replicateSpine_snoc n _ _ w
+        _ = replicateSpine (n + 1) RType.o
+              (app' (σ := RType.o) (castSort (curried_replicate_snoc (n + 1) ρ) head)
+                (a ⟨0, n.succ_pos⟩))
+              (Fin.snoc (fun i => a i.succ) w) :=
+            congrArg
+              (fun H => replicateSpine (n + 1) RType.o H (Fin.snoc (fun i => a i.succ) w))
+              (app'_castSort (curried_replicate_snoc n ρ)
+                (curried_replicate_snoc (n + 1) ρ) head (a ⟨0, n.succ_pos⟩)).symm
+        _ = replicateSpine (n + 1 + 1) RType.o
+              (castSort (curried_replicate_snoc (n + 1) ρ) head) (Fin.snoc a w) := by
+            rw [replicateSpine_cons (n + 1) RType.o
+              (castSort (curried_replicate_snoc (n + 1) ρ) head) (Fin.snoc a w),
+              fin_snoc_comp_succ]
+            rfl
+
+/-- The head of a homogeneous spine is no larger than the spine. -/
+private theorem size_head_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) →
+    Tm.size head ≤ Tm.size (replicateSpine n base head a)
+  | 0, _base, _head, _a => le_refl _
+  | n + 1, base, head, a => by
+      rw [replicateSpine_cons]
+      exact le_trans (size_le_size_app' head (a ⟨0, n.succ_pos⟩))
+        (size_head_le_replicateSpine n base _ _)
+
+/-- Every argument of a homogeneous spine is strictly smaller than the spine. -/
+private theorem size_arg_lt_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) → (i : Fin n) →
+    Tm.size (a i) < Tm.size (replicateSpine n base head a)
+  | n + 1, base, head, a, ⟨0, _⟩ => by
+      rw [replicateSpine_cons]
+      exact lt_of_lt_of_le (size_arg_lt_size_app' head (a ⟨0, n.succ_pos⟩))
+        (size_head_le_replicateSpine n base _ _)
+  | n + 1, base, head, a, ⟨iv + 1, hi⟩ => by
+      rw [replicateSpine_cons]
+      exact size_arg_lt_replicateSpine n base _ (fun i => a i.succ)
+        ⟨iv, Nat.lt_of_succ_lt_succ hi⟩
+
+/-- The head of a homogeneous spine is no taller than the spine. -/
+private theorem height_head_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) →
+    Tm.height head ≤ Tm.height (replicateSpine n base head a)
+  | 0, _base, _head, _a => le_refl _
+  | n + 1, base, head, a => by
+      rw [replicateSpine_cons]
+      exact le_trans (height_le_height_app' head (a ⟨0, n.succ_pos⟩))
+        (height_head_le_replicateSpine n base _ _)
+
+/-- Every argument of a homogeneous spine sits strictly below the spine's
+height. -/
+private theorem height_arg_lt_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) → (i : Fin n) →
+    Tm.height (a i) < Tm.height (replicateSpine n base head a)
+  | n + 1, base, head, a, ⟨0, _⟩ => by
+      rw [replicateSpine_cons]
+      exact lt_of_lt_of_le (height_arg_lt_height_app' head (a ⟨0, n.succ_pos⟩))
+        (height_head_le_replicateSpine n base _ _)
+  | n + 1, base, head, a, ⟨iv + 1, hi⟩ => by
+      rw [replicateSpine_cons]
+      exact height_arg_lt_replicateSpine n base _ (fun i => a i.succ)
+        ⟨iv, Nat.lt_of_succ_lt_succ hi⟩
+
+/-- The β-rank of the head of a homogeneous spine is bounded by the spine's
+β-rank. -/
+private theorem betaRedexRank_head_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) →
+    betaRedexRank head ≤ betaRedexRank (replicateSpine n base head a)
+  | 0, _base, _head, _a => le_refl _
+  | n + 1, base, head, a => by
+      rw [replicateSpine_cons]
+      exact le_trans (betaRedexRank_le_betaRedexRank_app' head (a ⟨0, n.succ_pos⟩))
+        (betaRedexRank_head_le_replicateSpine n base _ _)
+
+/-- The β-rank of every argument of a homogeneous spine is bounded by the
+spine's β-rank. -/
+private theorem betaRedexRank_arg_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) → (i : Fin n) →
+    betaRedexRank (a i) ≤ betaRedexRank (replicateSpine n base head a)
+  | n + 1, base, head, a, ⟨0, _⟩ => by
+      rw [replicateSpine_cons]
+      exact le_trans (betaRedexRank_arg_le_betaRedexRank_app' head (a ⟨0, n.succ_pos⟩))
+        (betaRedexRank_head_le_replicateSpine n base _ _)
+  | n + 1, base, head, a, ⟨iv + 1, hi⟩ => by
+      rw [replicateSpine_cons]
+      exact betaRedexRank_arg_le_replicateSpine n base _ (fun i => a i.succ)
+        ⟨iv, Nat.lt_of_succ_lt_succ hi⟩
+
 end OneLambda
 
 end GebLean.Ramified
