@@ -925,19 +925,52 @@ private theorem op_lam_eta {Γ : Binding.Ctx RType} {σ τ : RType}
   match j with
   | ⟨0, _⟩ => rfl
 
+/-- Every application node is an `app'` of some function and argument at the
+node's own context: the existential packaging of `op_app_eta`, whose components
+carry the plain arrow and domain sorts. -/
+private theorem op_app_inv {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).2) :
+    ∃ (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+      (x : Binding.Tm (oneLambdaSig A) Γ σ),
+      Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args = app' f x :=
+  ⟨_, _, op_app_eta args⟩
+
+/-- Every abstraction node is a `lam'` of some body at the binder-extended
+context: the existential packaging of `op_lam_eta`. -/
+private theorem op_lam_inv {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).2) :
+    ∃ b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ,
+      Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args = lam' b :=
+  ⟨_, op_lam_eta args⟩
+
 /-- The head-form cases of a term of `1λ(A)`: a variable, or an operation node
 whose result sort transports to the term's sort. The non-recursive case
 principle on the `PolyFix` structure, packaging the index dance of the term
 measures' inductions for reuse by the redex inversions. Novel packaging. -/
-private theorem tm_cases {y : Binding.Ctx RType × RType}
-    (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig A).polyEndo) y) :
-    (∃ x : Binding.Var y.1 y.2, t = (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) y.1 y.2)) ∨
-    ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = y.2)
+private theorem tm_cases {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    (∃ x : Binding.Var Γ s, t = Binding.Tm.var x) ∨
+    ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = s)
       (args : ∀ j : Fin (((oneLambdaSig A).args o).length),
-        Binding.Tm (oneLambdaSig A) (y.1 ++ (((oneLambdaSig A).args o).get j).1)
+        Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args o).get j).1)
           (((oneLambdaSig A).args o).get j).2),
       t = (hs ▸ Binding.Tm.op (S := oneLambdaSig A) o args
-            : Binding.Tm (oneLambdaSig A) y.1 y.2) := by
+            : Binding.Tm (oneLambdaSig A) Γ s) := by
+  suffices haux : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig A).polyEndo) y),
+      (∃ x : Binding.Var y.1 y.2,
+        t = (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) y.1 y.2)) ∨
+      ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = y.2)
+        (args : ∀ j : Fin (((oneLambdaSig A).args o).length),
+          Binding.Tm (oneLambdaSig A) (y.1 ++ (((oneLambdaSig A).args o).get j).1)
+            (((oneLambdaSig A).args o).get j).2),
+        t = (hs ▸ Binding.Tm.op (S := oneLambdaSig A) o args
+              : Binding.Tm (oneLambdaSig A) y.1 y.2) from haux t
+  intro y t
   cases t with
   | mk y idx children =>
     cases idx with
@@ -1214,6 +1247,118 @@ private theorem betaRedexRank_arg_le_replicateSpine {Γ : Binding.Ctx RType} {re
       rw [replicateSpine_cons]
       exact betaRedexRank_arg_le_replicateSpine n base _ (fun i => a i.succ)
         ⟨iv, Nat.lt_of_succ_lt_succ hi⟩
+
+/-- The generalized constructor-spine inversion (Leivant III section 4.3's
+head-form observation), tracking the pending-argument count: a `conHeaded` term
+of sort `o^k → o` is a constructor constant `con i` applied along an
+application spine to `n` arguments of sort `o`, with `A.ar i = n + k`. The
+intrinsic sorts force the count bookkeeping; the sort transports record the
+curried-sort arithmetic. By strong induction on the term size. -/
+private theorem conHeaded_inv_aux :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
+    Tm.size t ≤ N → conHeaded t = true →
+    ∃ (i : A.B) (n k : ℕ) (_ : A.ar i = n + k)
+      (hs : s = RType.curried (List.replicate k RType.o) RType.o)
+      (hh : RType.curried (List.replicate (A.ar i) RType.o) RType.o
+          = RType.curried (List.replicate n RType.o)
+              (RType.curried (List.replicate k RType.o) RType.o))
+      (a : Fin n → Binding.Tm (oneLambdaSig A) Γ RType.o),
+      t = castSort hs.symm (replicateSpine n RType.o
+            (castSort hh (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i)
+              (fun l => l.elim0))) a)
+  | 0, _, _, t, hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN, h => by
+      rcases tm_cases t with ⟨x0, ht⟩ | ⟨o, hs0, args, ht⟩
+      · subst ht
+        rw [conHeaded_var] at h
+        simp at h
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args :=
+              ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            rw [conHeaded_app'] at h
+            obtain ⟨i, n, k, hnk, hsf, hh, a, hf⟩ := conHeaded_inv_aux N f (by omega) h
+            cases k with
+            | zero =>
+                rw [List.replicate_zero, RType.curried_nil] at hsf
+                exact absurd hsf (arrow_ne_o σ τ)
+            | succ k' =>
+                have hsf' := hsf
+                rw [List.replicate_succ, RType.curried_cons, RType.arrow_eq_arrow] at hsf'
+                obtain ⟨hσ, hτ⟩ := hsf'
+                subst hσ
+                subst hτ
+                replace hf : f = replicateSpine n RType.o
+                    (castSort hh (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i)
+                      (fun l => l.elim0))) a := hf
+                refine ⟨i, n + 1, k', by omega, rfl,
+                  hh.trans (curried_replicate_snoc n
+                    (RType.curried (List.replicate k' RType.o) RType.o)),
+                  Fin.snoc a x, ?_⟩
+                rw [hf]
+                exact (replicateSpine_snoc n _ a x).trans
+                  (congrArg (fun H => replicateSpine (n + 1) RType.o H (Fin.snoc a x))
+                    (castSort_trans hh (curried_replicate_snoc n _) _))
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args :=
+              ht
+            subst ht
+            replace h : false = true := h
+            exact Bool.noConfusion h
+        | con i =>
+            have hs1 : RType.curried (List.replicate (A.ar i) RType.o) RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args :=
+              ht
+            subst ht
+            refine ⟨i, 0, A.ar i, (Nat.zero_add _).symm, rfl, rfl, fun l => l.elim0, ?_⟩
+            change Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args
+              = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) fun l => l.elim0
+            exact congrArg _ (funext fun j => j.elim0)
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args :=
+              ht
+            subst ht
+            replace h : false = true := h
+            exact Bool.noConfusion h
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate A.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args := ht
+            subst ht
+            replace h : false = true := h
+            exact Bool.noConfusion h
+
+/-- The constructor-headed inversion at the base sort (Leivant III section
+4.3's head-form observation): a `conHeaded` term of sort `o` is a constructor
+constant applied to a full argument tuple — `con`-headedness at sort `o`
+implies saturation through the intrinsic sorts. -/
+private theorem conHeaded_o_inv {Γ : Binding.Ctx RType}
+    {x : Binding.Tm (oneLambdaSig A) Γ RType.o} (h : conHeaded x = true) :
+    ∃ (i : A.B) (a : Fin (A.ar i) → Binding.Tm (oneLambdaSig A) Γ RType.o),
+      x = replicateSpine (A.ar i) RType.o
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a := by
+  obtain ⟨i, n, k, hnk, hs, hh, a, hx⟩ := conHeaded_inv_aux (Tm.size x) x le_rfl h
+  cases k with
+  | succ k' =>
+      have hs' := hs
+      rw [List.replicate_succ, RType.curried_cons] at hs'
+      exact absurd hs'.symm (arrow_ne_o _ _)
+  | zero =>
+      have hn : A.ar i = n := hnk
+      subst hn
+      exact ⟨i, a, hx⟩
 
 end OneLambda
 
