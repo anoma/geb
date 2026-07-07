@@ -2245,6 +2245,70 @@ private theorem betaCycle_app'_of_topBetaRank [LinearOrder A.B] {Γ : Binding.Ct
     rw [isLam_app'] at hfalse
     exact Bool.noConfusion hfalse
 
+/-- The contraction assembly of the application case (notes N2/N3/N5): when the
+chained subterm cycles end at an abstraction applied to a reduced argument, and
+the arrow order is within the budget, one further β-step contracts the redex.
+The substitution rank bound `betaRedexRank_instantiate₁_le` discharges the rank
+obligation, `Tm.height_instantiate₁_le` the height, and `size_le_two_pow_height`
+the size ceiling of the contractum (the hybrid bound of note N5). The endpoint
+sort is `τ`, of order at most the budget — the shape invariant's right
+disjunct. -/
+private theorem betaCycle_app'_contraction [LinearOrder A.B] {Γ : Binding.Ctx RType}
+    {σ τ : RType} {q M kD kE : ℕ}
+    {D : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)}
+    {E E' : Binding.Tm (oneLambdaSig A) Γ σ}
+    {b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ}
+    (hchain : Relation.RelatesInSteps (stepWithin M) (app' D E) (app' (lam' b) E')
+      (kD + kE))
+    (hM : Tm.size (app' D E) + 2 ^ (2 ^ Tm.height (app' D E)) ≤ M)
+    (hord : RType.ord (RType.arrow σ τ) ≤ q)
+    (hrankD : betaRedexRank (lam' b) ≤ q - 1) (hrankE : betaRedexRank E' ≤ q - 1)
+    (hheightD : Tm.height (lam' b) ≤ 2 ^ Tm.height D)
+    (hheightE : Tm.height E' ≤ 2 ^ Tm.height E)
+    (hkD : kD ≤ Tm.size D) (hkE : kE ≤ Tm.size E) :
+    BetaCycle q M (app' D E) := by
+  have hpD : 2 ^ Tm.height D ≤ 2 ^ max (Tm.height D) (Tm.height E) :=
+    Nat.pow_le_pow_right (by omega) (le_max_left _ _)
+  have hpE : 2 ^ Tm.height E ≤ 2 ^ max (Tm.height D) (Tm.height E) :=
+    Nat.pow_le_pow_right (by omega) (le_max_right _ _)
+  have htwo : 2 ^ (1 + max (Tm.height D) (Tm.height E))
+      = 2 * 2 ^ max (Tm.height D) (Tm.height E) := by rw [pow_add, pow_one]
+  have hbody : Tm.height b + 1 ≤ 2 ^ Tm.height D := by
+    rw [height_lam'] at hheightD
+    omega
+  have hinsth : Tm.height (Binding.instantiate₁ E' b) ≤ Tm.height b + Tm.height E' :=
+    Tm.height_instantiate₁_le E' b
+  have hexph : Tm.height (Binding.instantiate₁ E' b) + 1
+      ≤ 2 ^ (1 + max (Tm.height D) (Tm.height E)) := by
+    omega
+  have hceil : Tm.size (Binding.instantiate₁ E' b) ≤ M := by
+    have h1 : Tm.size (Binding.instantiate₁ E' b)
+        ≤ 2 ^ Tm.height (Binding.instantiate₁ E' b) := size_le_two_pow_height _
+    have h2 : 2 ^ Tm.height (Binding.instantiate₁ E' b)
+        ≤ 2 ^ (2 ^ (1 + max (Tm.height D) (Tm.height E))) :=
+      Nat.pow_le_pow_right (by omega) (by omega)
+    rw [size_app', height_app'] at hM
+    omega
+  refine ⟨Binding.instantiate₁ E' b, kD + kE + 1,
+    Relation.RelatesInSteps.tail _ _ _ _ hchain ⟨OneLambdaStep.beta b E', hceil⟩,
+    ?_, ?_, ?_, ?_⟩
+  · have hN2 := betaRedexRank_instantiate₁_le E' b
+    rw [betaRedexRank_lam'] at hrankD
+    have hσ : RType.ord σ + 1 ≤ RType.ord (RType.arrow σ τ) := by
+      rw [RType.ord_arrow]
+      omega
+    omega
+  · rw [height_app']
+    omega
+  · rw [size_app']
+    omega
+  · intro _
+    refine Or.inr ?_
+    have hτ : RType.ord τ ≤ RType.ord (RType.arrow σ τ) := by
+      rw [RType.ord_arrow]
+      omega
+    omega
+
 end OneLambda
 
 end GebLean.Ramified
