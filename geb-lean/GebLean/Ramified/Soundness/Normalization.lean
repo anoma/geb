@@ -101,6 +101,8 @@ splits into `betaRedexRank` and `hasIota`.
   in the step count of decision P2.
 * `OneLambda.lemma12_reduces`, `OneLambda.lemma12_clock` — the ordinary-reduction
   and single-tower step-count corollaries of Lemma 12.
+* `OneLambda.normal_closed_o_eq_conc` — a closed normal term of the base object
+  sort is the concrete term `conc a` of a free-algebra value.
 
 ## References
 
@@ -2710,6 +2712,273 @@ theorem lemma12_clock [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
         Nat.add_le_add_right (Nat.mul_le_mul le_rfl hmono) _
     _ = (redexRank t + 1) * tower (redexRank t + 1) (Tm.height t) :=
         (Nat.succ_mul _ _).symm
+
+/-- The constructor-headedness of a homogeneous application spine is that of its
+head: `conHeaded` descends the function subterm of each `app` node, and a
+`replicateSpine` interposes only `app` nodes above the head. By recursion on the
+argument count, peeling one `app'` at a time (`conHeaded_app'`). -/
+private theorem conHeaded_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) →
+    conHeaded (replicateSpine n base head a) = conHeaded head
+  | 0, _base, _head, _a => rfl
+  | n + 1, base, head, a =>
+      (conHeaded_replicateSpine n base
+        (app' head (a ⟨0, n.succ_pos⟩)) (fun i => a i.succ)).trans
+        (conHeaded_app' head (a ⟨0, n.succ_pos⟩))
+
+/-- The concrete term of a free-algebra value is `con`-headed (Leivant III
+section 4.2, p. 223): `conc a` folds each node into a constructor-headed
+application spine, so the spine head is the constructor constant. By
+recurrence-structural induction on `a` with `conc_mk` and
+`conHeaded_replicateSpine`. -/
+private theorem conHeaded_conc (a : FreeAlg A) : conHeaded (conc a) = true := by
+  refine PolyFix.ind (P := A.polyEndo) (motive := fun {_} a => conHeaded (conc a) = true)
+    (fun b children _ => ?_) a
+  change conHeaded (conc (FreeAlg.mk b children)) = true
+  rw [conc_mk, conHeaded_replicateSpine]
+  rfl
+
+/-- The ι-redex indicator implication at an application node over an ι-flagged
+function subterm: a function subterm carrying an ι-redex propagates the flag to
+the application. -/
+private theorem hasIota_head_imp_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) (h : hasIota f = true) :
+    hasIota (app' f x) = true := by rw [hasIota_app', h]; simp
+
+/-- The ι-redex indicator implication at an application node over an ι-flagged
+argument subterm. -/
+private theorem hasIota_arg_imp_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) (h : hasIota x = true) :
+    hasIota (app' f x) = true := by rw [hasIota_app', h]; simp
+
+/-- The ι-redex indicator implication at a homogeneous spine over an ι-flagged
+head: an ι-redex in the head propagates to the spine. -/
+private theorem hasIota_head_imp_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) → hasIota head = true →
+    hasIota (replicateSpine n base head a) = true
+  | 0, _base, _head, _a, h => h
+  | n + 1, base, head, a, h => by
+      rw [replicateSpine_cons]
+      exact hasIota_head_imp_replicateSpine n base _ _
+        (hasIota_head_imp_app' head (a ⟨0, n.succ_pos⟩) h)
+
+/-- The ι-redex indicator implication at a homogeneous spine over an ι-flagged
+argument: an ι-redex in any argument propagates to the spine. -/
+private theorem hasIota_arg_imp_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) → (i : Fin n) → hasIota (a i) = true →
+    hasIota (replicateSpine n base head a) = true
+  | n + 1, base, head, a, ⟨0, _⟩, h => by
+      rw [replicateSpine_cons]
+      exact hasIota_head_imp_replicateSpine n base _ _
+        (hasIota_arg_imp_app' head (a ⟨0, n.succ_pos⟩) h)
+  | n + 1, base, head, a, ⟨iv + 1, hi⟩, h => by
+      rw [replicateSpine_cons]
+      exact hasIota_arg_imp_replicateSpine n base _ (fun i => a i.succ)
+        ⟨iv, Nat.lt_of_succ_lt_succ hi⟩ h
+
+/-- At the base object sort the ι-redex indicator of the top node is its ungated
+spine detector: the result-sort saturation guard fires. -/
+private theorem topIota_eq_iotaSpine_o {Γ : Binding.Ctx RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ RType.o) : topIota t = iotaSpine t := by
+  unfold topIota; exact if_pos rfl
+
+/-- The head-form descent for closed β-normal application spines (Leivant III
+section 4.3's head-form observation): a closed application node with no β-redex,
+no ι-redex, and no ungated ι-spine is `con`-headed, provided every strictly
+smaller closed normal term of base sort is `con`-headed (`hword`). By strong
+induction on the term size, descending the function spine: a `dstr`- or
+`case`-headed function node is excluded because its saturating base-sort
+argument is `con`-headed by `hword`, contradicting the ι-spine hypothesis; a
+`lam`-headed function node is a β-redex, excluded by the β-rank hypothesis; a
+variable head is excluded by closedness; a `con` head bottoms the spine; and an
+`app` head continues the descent. -/
+private theorem headCon :
+    (bound : ℕ) →
+    (hword : ∀ z : Binding.Tm (oneLambdaSig A) [] RType.o,
+      Tm.size z < bound → Normal z → conHeaded z = true) →
+    (N : ℕ) → {σ τ : RType} → (g : Binding.Tm (oneLambdaSig A) [] (RType.arrow σ τ)) →
+      (y : Binding.Tm (oneLambdaSig A) [] σ) →
+      Tm.size (app' g y) ≤ N → Tm.size (app' g y) ≤ bound →
+      betaRedexRank (app' g y) = 0 → hasIota (app' g y) = false →
+      iotaSpine (app' g y) = false →
+      conHeaded (app' g y) = true
+  | _bound, _hword, 0, _σ, _τ, g, y, hN, _, _, _, _ =>
+      absurd (Tm.one_le_size (app' g y)) (by omega)
+  | bound, hword, N + 1, σ, τ, g, y, hN, hb, hβ, hi, hio => by
+      rw [conHeaded_app']
+      rcases tm_cases g with ⟨x0, _hg⟩ | ⟨o, hs0, args, hg⟩
+      · obtain ⟨⟨v, hv⟩, _⟩ := x0
+        exact absurd hv (Nat.not_lt_zero v)
+      · cases o with
+        | app σ' τ' =>
+            have hs1 : τ' = RType.arrow σ τ := hs0
+            subst hs1
+            replace hg : g = Binding.Tm.op (S := oneLambdaSig A)
+              (OneLambdaOp.app σ' (RType.arrow σ τ)) args := hg
+            obtain ⟨g', y', hg'⟩ := op_app_inv args
+            rw [hg'] at hg
+            subst hg
+            refine headCon bound hword N g' y' ?_ ?_ ?_ ?_ ?_
+            · rw [size_app'] at hN; omega
+            · rw [size_app'] at hb; omega
+            · rw [betaRedexRank_app'] at hβ; omega
+            · rw [hasIota_app'] at hi
+              exact (Bool.or_eq_false_iff.mp (Bool.or_eq_false_iff.mp hi).1).2
+            · have h2 := hio
+              rw [iotaSpine_app'] at h2
+              exact h2
+        | lam σ' τ' =>
+            exfalso
+            have hlam : isLam g = true := by
+              rw [hg]
+              exact (isLam_cast rfl hs0
+                (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ' τ') args)).trans rfl
+            have htop : topBetaRank (app' g y) = RType.ord (RType.arrow σ τ) := by
+              rw [topBetaRank_app', hlam]; simp
+            rw [betaRedexRank_app', htop] at hβ
+            have := RType.one_le_ord_arrow σ τ
+            omega
+        | con i =>
+            rw [hg]
+            exact (conHeaded_cast rfl hs0
+              (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args)).trans rfl
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = RType.arrow σ τ := hs0
+            rw [RType.arrow_eq_arrow] at hs1
+            obtain ⟨hσ, hτ⟩ := hs1
+            subst hσ; subst hτ
+            replace hg : g = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args := hg
+            subst hg
+            exfalso
+            rw [iotaSpine_app'] at hio
+            have hy : Normal y := by
+              rw [normal_iff]
+              refine ⟨?_, ?_⟩
+              · rw [betaRedexRank_app'] at hβ; omega
+              · rw [hasIota_app'] at hi
+                exact (Bool.or_eq_false_iff.mp hi).2
+            have hcy : conHeaded y = false := hio
+            rw [hword y (lt_of_lt_of_le (size_arg_lt_size_app' _ y) hb) hy] at hcy
+            exact Bool.noConfusion hcy
+        | case =>
+            have hs1 : RType.arrow RType.o
+              (RType.curried (List.replicate A.numCtors RType.o) RType.o) = RType.arrow σ τ := hs0
+            rw [RType.arrow_eq_arrow] at hs1
+            obtain ⟨hσ, hτ⟩ := hs1
+            subst hσ; subst hτ
+            replace hg : g = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args := hg
+            subst hg
+            exfalso
+            rw [iotaSpine_app'] at hio
+            have hy : Normal y := by
+              rw [normal_iff]
+              refine ⟨?_, ?_⟩
+              · rw [betaRedexRank_app'] at hβ; omega
+              · rw [hasIota_app'] at hi
+                exact (Bool.or_eq_false_iff.mp hi).2
+            have hcy : conHeaded y = false := hio
+            rw [hword y (lt_of_lt_of_le (size_arg_lt_size_app' _ y) hb) hy] at hcy
+            exact Bool.noConfusion hcy
+
+/-- Closed normal terms of the base object sort are constructor words (Leivant
+III section 4.3, the head-form consequence of section 4.2's normality): by
+strong induction on the term size, a closed normal term of sort `o` is
+`con`-headed (`headCon`, using the induction hypothesis that strictly smaller
+closed normal base-sort terms are words hence `con`-headed via `conHeaded_conc`),
+so by `conHeaded_o_inv` it is a constructor constant saturated by an application
+spine whose arguments are themselves closed normal base-sort terms, each a word
+by the induction hypothesis. -/
+private theorem normal_closed_o_eq_conc_aux :
+    (N : ℕ) → (t : Binding.Tm (oneLambdaSig A) [] RType.o) → Tm.size t ≤ N → Normal t →
+    ∃ a : FreeAlg A, t = conc a
+  | 0, t, _hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, t, hN, hnorm => by
+      have hword : ∀ z : Binding.Tm (oneLambdaSig A) [] RType.o,
+          Tm.size z < Tm.size t → Normal z → conHeaded z = true := by
+        intro z hz hnz
+        obtain ⟨c, hc⟩ := normal_closed_o_eq_conc_aux N z (by omega) hnz
+        rw [hc]; exact conHeaded_conc c
+      obtain ⟨hβt, hit⟩ := (normal_iff t).mp hnorm
+      have hcon : conHeaded t = true := by
+        rcases tm_cases t with ⟨x, _ht⟩ | ⟨o, hs0, args, ht⟩
+        · obtain ⟨⟨v, hv⟩, _⟩ := x
+          exact absurd hv (Nat.not_lt_zero v)
+        · cases o with
+          | app σ τ =>
+              have hs1 : τ = RType.o := hs0
+              subst hs1
+              replace ht : t = Binding.Tm.op (S := oneLambdaSig A)
+                (OneLambdaOp.app σ RType.o) args := ht
+              obtain ⟨f, x, hfx⟩ := op_app_inv args
+              rw [hfx] at ht
+              rw [ht] at hβt hit ⊢
+              have htf : topIota (app' f x) = false := by
+                rw [hasIota_app'] at hit
+                exact (Bool.or_eq_false_iff.mp (Bool.or_eq_false_iff.mp hit).1).1
+              have hiotaFalse : iotaSpine (app' f x) = false :=
+                (topIota_eq_iotaSpine_o (app' f x)).symm.trans htf
+              exact headCon (Tm.size t) hword (Tm.size (app' f x)) f x
+                le_rfl (le_of_eq (congrArg Tm.size ht.symm)) hβt hit hiotaFalse
+          | lam σ τ =>
+              exact absurd (show RType.arrow σ τ = RType.o from hs0) (arrow_ne_o σ τ)
+          | con i =>
+              rw [ht]
+              exact (conHeaded_cast rfl hs0
+                (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args)).trans rfl
+          | dstr j =>
+              exact absurd (show RType.arrow RType.o RType.o = RType.o from hs0)
+                (arrow_ne_o _ _)
+          | case =>
+              exact absurd (show RType.arrow RType.o
+                (RType.curried (List.replicate A.numCtors RType.o) RType.o) = RType.o from hs0)
+                (arrow_ne_o _ _)
+      obtain ⟨i, a, hta⟩ := conHeaded_o_inv hcon
+      have hex : ∀ j : Fin (A.ar i), ∃ c : FreeAlg A, a j = conc c := by
+        intro j
+        refine normal_closed_o_eq_conc_aux N (a j) ?_ ?_
+        · have hsz := size_arg_lt_replicateSpine (A.ar i) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a j
+          rw [← hta] at hsz
+          omega
+        · rw [normal_iff]
+          refine ⟨?_, ?_⟩
+          · have hbr := betaRedexRank_arg_le_replicateSpine (A.ar i) RType.o
+              (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a j
+            rw [← hta] at hbr
+            omega
+          · cases hj : hasIota (a j) with
+            | false => rfl
+            | true =>
+                exfalso
+                have himp := hasIota_arg_imp_replicateSpine (A.ar i) RType.o
+                  (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0))
+                  a j hj
+                rw [← hta, hit] at himp
+                exact Bool.noConfusion himp
+      choose child hchild using hex
+      refine ⟨FreeAlg.mk i child, ?_⟩
+      rw [hta, conc_mk]
+      exact congrArg (replicateSpine (A.ar i) RType.o
+        (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)))
+        (funext fun j => hchild j)
+
+/-- A closed normal term of the base object sort of `1λ(natAlgSig)` is the
+concrete term `conc a` of a free-algebra value (Leivant III section 4.3, the
+head-form consequence of section 4.2's normality, DOI
+`10.1016/S0168-0072(98)00040-2`): the closed β- and ι-normal forms at sort `o`
+are exactly the constructor words. Instantiates `normal_closed_o_eq_conc_aux` at
+the term's own size. -/
+theorem normal_closed_o_eq_conc (t : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o)
+    (hn : Normal t) : ∃ a : FreeAlg natAlgSig, t = conc a :=
+  normal_closed_o_eq_conc_aux (Tm.size t) t le_rfl hn
 
 end OneLambda
 

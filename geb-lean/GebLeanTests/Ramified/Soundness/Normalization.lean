@@ -203,4 +203,16 @@ example :
   have ht23 : (tower (1 + 1) 3 : ℕ) = 256 := rfl
   exact ⟨n, k, hnorm, hchain, by omega, by omega⟩
 
+/-- A closed normal term of the base object sort is a constructor word (task
+6.3.10): applied to the concrete term of the zero word, `normal_closed_o_eq_conc`
+produces a free-algebra value whose concrete term it equals. A statement-shape
+check; the existential witness is opaque. -/
+example : ∃ a : FreeAlg natAlgSig, conc (natToFreeAlg 0) = conc a :=
+  normal_closed_o_eq_conc (conc (natToFreeAlg 0)) (normal_conc _)
+
+/-- The head-form reading applies to the concrete term of any free-algebra value:
+`conc a` is closed, normal, and at sort `o`, so it is some word's concrete term. -/
+example (a : FreeAlg natAlgSig) : ∃ b : FreeAlg natAlgSig, conc a = conc b :=
+  normal_closed_o_eq_conc (conc a) (normal_conc a)
+
 end GebLean.Ramified
