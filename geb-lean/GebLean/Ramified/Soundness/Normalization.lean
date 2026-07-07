@@ -1360,6 +1360,186 @@ private theorem conHeaded_o_inv {Γ : Binding.Ctx RType}
       subst hn
       exact ⟨i, a, hx⟩
 
+/-- The ι-spine inversion (Leivant III section 4.2, p. 224), tracking the
+pending-argument count: a term whose `iotaSpine` detector fires is either a
+destructor applied to a `con`-headed scrutinee — necessarily at sort `o` — or
+a case combinator applied to a `con`-headed scrutinee and then, along the
+application spine, to `n` branch arguments with `A.numCtors = n + k` pending.
+By strong induction on the term size; the sort transports record the
+curried-sort arithmetic. -/
+private theorem iotaSpine_inv_aux :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
+    Tm.size t ≤ N → iotaSpine t = true →
+    (∃ (j : Fin A.maxArity) (w : Binding.Tm (oneLambdaSig A) Γ RType.o) (hs : s = RType.o),
+      conHeaded w = true ∧
+      t = castSort hs.symm (app' (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j)
+            (fun l => l.elim0)) w)) ∨
+    (∃ (n k : ℕ) (_ : A.numCtors = n + k)
+      (hs : s = RType.curried (List.replicate k RType.o) RType.o)
+      (hh : RType.arrow RType.o (RType.curried (List.replicate A.numCtors RType.o) RType.o)
+          = RType.arrow RType.o (RType.curried (List.replicate n RType.o)
+              (RType.curried (List.replicate k RType.o) RType.o)))
+      (scrut : Binding.Tm (oneLambdaSig A) Γ RType.o)
+      (b : Fin n → Binding.Tm (oneLambdaSig A) Γ RType.o),
+      conHeaded scrut = true ∧
+      t = castSort hs.symm (replicateSpine n RType.o
+            (app' (castSort hh (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case
+              (fun l => l.elim0))) scrut) b))
+  | 0, _, _, t, hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN, h => by
+      rcases tm_cases t with ⟨x0, ht⟩ | ⟨o, hs0, args, ht⟩
+      · subst ht
+        rw [iotaSpine_var] at h
+        simp at h
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args :=
+              ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            rw [iotaSpine_app'] at h
+            rcases hhf : headTag f with _ | o'
+            · rw [hhf] at h
+              replace h : false = true := h
+              exact Bool.noConfusion h
+            · rw [hhf] at h
+              cases o' with
+              | app σ' τ' =>
+                  replace h : iotaSpine f = true := h
+                  rcases iotaSpine_inv_aux N f (by omega) h with
+                    ⟨j, w, hso, hcw, hfA⟩ | ⟨n, k, hnk, hsB, hh, scrut, b, hcs, hfB⟩
+                  · exact absurd hso (arrow_ne_o σ τ)
+                  · cases k with
+                    | zero =>
+                        rw [List.replicate_zero, RType.curried_nil] at hsB
+                        exact absurd hsB (arrow_ne_o σ τ)
+                    | succ k' =>
+                        have hsB' := hsB
+                        rw [List.replicate_succ, RType.curried_cons,
+                          RType.arrow_eq_arrow] at hsB'
+                        obtain ⟨hσ, hτ⟩ := hsB'
+                        subst hσ
+                        subst hτ
+                        replace hfB : f = replicateSpine n RType.o
+                            (app' (castSort hh (Binding.Tm.op (S := oneLambdaSig A)
+                              OneLambdaOp.case (fun l => l.elim0))) scrut) b := hfB
+                        refine Or.inr ⟨n + 1, k', by omega, rfl,
+                          hh.trans (congrArg (RType.arrow RType.o)
+                            (curried_replicate_snoc n
+                              (RType.curried (List.replicate k' RType.o) RType.o))),
+                          scrut, Fin.snoc b x, hcs, ?_⟩
+                        rw [hfB]
+                        refine (replicateSpine_snoc n _ b x).trans ?_
+                        refine congrArg
+                          (fun H => replicateSpine (n + 1) RType.o H (Fin.snoc b x)) ?_
+                        refine (app'_castSort (curried_replicate_snoc n _)
+                          (congrArg (RType.arrow RType.o) (curried_replicate_snoc n _))
+                          (castSort hh (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case
+                            (fun l => l.elim0))) scrut).symm.trans ?_
+                        exact congrArg (fun F => app' F scrut)
+                          (castSort_trans hh (congrArg (RType.arrow RType.o)
+                            (curried_replicate_snoc n
+                              (RType.curried (List.replicate k' RType.o) RType.o)))
+                            (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case
+                              (fun l => l.elim0)))
+              | dstr j =>
+                  replace h : conHeaded x = true := h
+                  obtain ⟨hsd, args', hfd⟩ := exists_op_of_headTag hhf
+                  replace hsd : RType.arrow RType.o RType.o = RType.arrow σ τ := hsd
+                  rw [RType.arrow_eq_arrow] at hsd
+                  obtain ⟨hσ, hτ⟩ := hsd
+                  subst hσ
+                  subst hτ
+                  refine Or.inl ⟨j, x, rfl, h, ?_⟩
+                  replace hfd : f = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j)
+                      args' := hfd
+                  rw [hfd]
+                  refine congrArg (fun F => app' F x) ?_
+                  change Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args'
+                    = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j)
+                        fun l => l.elim0
+                  exact congrArg _ (funext fun l => l.elim0)
+              | case =>
+                  replace h : conHeaded x = true := h
+                  obtain ⟨hsc, args', hfc⟩ := exists_op_of_headTag hhf
+                  replace hsc : RType.arrow RType.o (RType.curried
+                      (List.replicate A.numCtors RType.o) RType.o) = RType.arrow σ τ := hsc
+                  rw [RType.arrow_eq_arrow] at hsc
+                  obtain ⟨hσ, hτ⟩ := hsc
+                  subst hσ
+                  subst hτ
+                  refine Or.inr ⟨0, A.numCtors, (Nat.zero_add _).symm, rfl, rfl, x,
+                    fun l => l.elim0, h, ?_⟩
+                  replace hfc : f = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case
+                      args' := hfc
+                  rw [hfc]
+                  refine congrArg (fun F => app' F x) ?_
+                  change Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args'
+                    = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case fun l => l.elim0
+                  exact congrArg _ (funext fun l => l.elim0)
+              | lam σ' τ' =>
+                  replace h : false = true := h
+                  exact Bool.noConfusion h
+              | con i =>
+                  replace h : false = true := h
+                  exact Bool.noConfusion h
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args :=
+              ht
+            subst ht
+            replace h : false = true := h
+            exact Bool.noConfusion h
+        | con i =>
+            have hs1 : RType.curried (List.replicate (A.ar i) RType.o) RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args :=
+              ht
+            subst ht
+            replace h : false = true := h
+            exact Bool.noConfusion h
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args :=
+              ht
+            subst ht
+            replace h : false = true := h
+            exact Bool.noConfusion h
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate A.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args := ht
+            subst ht
+            replace h : false = true := h
+            exact Bool.noConfusion h
+
+/-- The base type is not a curried sort with pending arguments: `o = o^k → o`
+forces `k = 0`. -/
+private theorem eq_zero_of_o_eq_curried {k : ℕ}
+    (h : RType.o = RType.curried (List.replicate k RType.o) RType.o) : k = 0 := by
+  cases k with
+  | zero => rfl
+  | succ k' =>
+      rw [List.replicate_succ, RType.curried_cons] at h
+      exact absurd h.symm (arrow_ne_o _ _)
+
+/-- Every constructor label appears in the sorted enumeration: `ctorAt` is
+surjective. -/
+private theorem exists_ctorAt_eq [LinearOrder A.B] (i : A.B) :
+    ∃ idx : Fin A.numCtors, ctorAt idx = i := by
+  have hmem : i ∈ ctorList A := by
+    unfold ctorList
+    exact (Finset.mem_sort _).mpr (Finset.mem_univ i)
+  obtain ⟨m, hm⟩ := List.get_of_mem hmem
+  exact ⟨m.cast ctorList_length, hm⟩
+
 end OneLambda
 
 end GebLean.Ramified
