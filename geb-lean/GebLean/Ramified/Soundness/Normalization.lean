@@ -60,6 +60,11 @@ splits into `betaRedexRank` and `hasIota`.
   ι-redex.
 * `OneLambda.redexRank_app'` — the aggregate rank of an application in terms of
   the ranks of its subterms and the top detectors.
+* `OneLambda.normal_conc`, `OneLambda.normal_bbRep` — the value forms of the
+  bar-translation are normal.
+* `OneLambda.exists_iota_step_of_hasIota` — a β-normal term with an ι-redex
+  takes a step that strictly decreases the size, does not increase the height,
+  and preserves β-normality.
 
 ## References
 
@@ -67,7 +72,8 @@ D. Leivant, "Ramified recurrence and computational complexity III: Higher
 type recurrence and elementary complexity", Annals of Pure and Applied
 Logic 96 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`, section 2.2
 (p. 213): the order of a simple type; section 4.2 (p. 224): the redexes, their
-ranks, and normality of `1λ(A)`.
+ranks, and normality of `1λ(A)`; section 5, proof paragraph (iii) (p. 226):
+the ι-phase step accounting.
 
 ## Tags
 
@@ -1539,6 +1545,200 @@ private theorem exists_ctorAt_eq [LinearOrder A.B] (i : A.B) :
     exact (Finset.mem_sort _).mpr (Finset.mem_univ i)
   obtain ⟨m, hm⟩ := List.get_of_mem hmem
   exact ⟨m.cast ctorList_length, hm⟩
+
+/-- The strengthened induction form of `exists_iota_step_of_hasIota` (plan note
+N6): the extra final clause — a step inside a term of non-`o` sort preserves
+the `isLam` head flag — closes the `appL` congruence case, where β-normality
+of the rewritten application requires the stepped function subterm not to
+become an abstraction. By strong induction on the term size. -/
+private theorem exists_iota_step_aux [LinearOrder A.B] :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
+    Tm.size t ≤ N → hasIota t = true → betaRedexRank t = 0 →
+    ∃ t', OneLambdaStep t t' ∧ Tm.size t' < Tm.size t ∧ Tm.height t' ≤ Tm.height t ∧
+      betaRedexRank t' = 0 ∧ (s.shape ≠ RTypeShape.o → isLam t' = isLam t)
+  | 0, _, _, t, hN, _, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN, h, hβ => by
+      rcases tm_cases t with ⟨x0, ht⟩ | ⟨o, hs0, args, ht⟩
+      · subst ht
+        rw [hasIota_var] at h
+        simp at h
+      · cases o with
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args :=
+              ht
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht
+            subst ht
+            rw [size_lam'] at hN
+            rw [hasIota_lam'] at h
+            rw [betaRedexRank_lam'] at hβ
+            obtain ⟨b', hstep, hsz, hht, hβ', _⟩ := exists_iota_step_aux N b (by omega) h hβ
+            refine ⟨lam' b', OneLambdaStep.lamBody hstep, ?_, ?_, ?_, fun _ => rfl⟩
+            · rw [size_lam', size_lam']; omega
+            · rw [height_lam', height_lam']; omega
+            · rw [betaRedexRank_lam']; exact hβ'
+        | con i =>
+            have hs1 : RType.curried (List.replicate (A.ar i) RType.o) RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args :=
+              ht
+            subst ht
+            have hfalse : hasIota (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                (OneLambdaOp.con i) args) = false := by
+              rw [hasIota_op]
+              simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self, Bool.false_or]
+              rfl
+            exact Bool.noConfusion (hfalse.symm.trans h)
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args :=
+              ht
+            subst ht
+            have hfalse : hasIota (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                (OneLambdaOp.dstr j) args) = false := by
+              rw [hasIota_op]
+              simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self, Bool.false_or]
+              rfl
+            exact Bool.noConfusion (hfalse.symm.trans h)
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate A.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args := ht
+            subst ht
+            have hfalse : hasIota (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                OneLambdaOp.case args) = false := by
+              rw [hasIota_op]
+              simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self, Bool.false_or]
+              rfl
+            exact Bool.noConfusion (hfalse.symm.trans h)
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args :=
+              ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            rw [hasIota_app'] at h
+            cases htop : topIota (app' f x) with
+            | false =>
+                rw [htop, Bool.false_or] at h
+                have hβ2 := hβ
+                rw [betaRedexRank_app'] at hβ2
+                have hβf : betaRedexRank f = 0 := by omega
+                have hβx : betaRedexRank x = 0 := by omega
+                have htb : topBetaRank (app' f x) = 0 := by omega
+                cases hfio : hasIota f with
+                | true =>
+                    have hLf : isLam f = false := by
+                      rw [topBetaRank_app'] at htb
+                      cases hLf' : isLam f with
+                      | false => rfl
+                      | true =>
+                          rw [hLf'] at htb
+                          rw [if_pos rfl] at htb
+                          have := RType.one_le_ord_arrow σ τ
+                          omega
+                    obtain ⟨f', hstep, hsz, hht, hβ', hLam⟩ :=
+                      exists_iota_step_aux N f (by omega) hfio hβf
+                    have hLf' : isLam f' = false := (hLam (by simp)).trans hLf
+                    refine ⟨app' f' x, OneLambdaStep.appL x hstep, ?_, ?_, ?_, fun _ => rfl⟩
+                    · rw [size_app', size_app']; omega
+                    · rw [height_app', height_app']; omega
+                    · rw [betaRedexRank_app', topBetaRank_app', hLf']
+                      rw [if_neg (by simp)]
+                      omega
+                | false =>
+                    rw [hfio, Bool.false_or] at h
+                    obtain ⟨x', hstep, hsz, hht, hβ', _⟩ :=
+                      exists_iota_step_aux N x (by omega) h hβx
+                    refine ⟨app' f x', OneLambdaStep.appR f hstep, ?_, ?_, ?_, fun _ => rfl⟩
+                    · rw [size_app', size_app']; omega
+                    · rw [height_app', height_app']; omega
+                    · rw [betaRedexRank_app']
+                      have htb' : topBetaRank (app' f x') = topBetaRank (app' f x) := by
+                        rw [topBetaRank_app', topBetaRank_app']
+                      omega
+            | true =>
+                have hsh : τ.shape = RTypeShape.o := by
+                  by_contra hcon
+                  unfold topIota at htop
+                  rw [if_neg hcon] at htop
+                  simp at htop
+                have hτo := eq_o_of_shape_o hsh
+                subst hτo
+                have hio : iotaSpine (app' f x) = true := by
+                  unfold topIota at htop
+                  rwa [if_pos hsh] at htop
+                rcases iotaSpine_inv_aux (Tm.size (app' f x)) (app' f x) le_rfl hio with
+                  ⟨j, w, hso, hcw, htEq⟩ | ⟨n, k, hnk, hsB, hh, scrut, b, hcs, htEq⟩
+                · -- destructor redex
+                  replace htEq : app' f x = app'
+                      (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j)
+                        (fun l => l.elim0)) w := htEq
+                  obtain ⟨i, a, hwEq⟩ := conHeaded_o_inv hcw
+                  rw [hwEq] at htEq
+                  rw [htEq] at hβ ⊢
+                  rcases Nat.lt_or_ge j.val (A.ar i) with hj | hj
+                  · refine ⟨a ⟨j.val, hj⟩, OneLambdaStep.dstrHit j hj a, ?_, ?_, ?_,
+                      fun habs => absurd rfl habs⟩
+                    · exact lt_trans
+                        (size_arg_lt_replicateSpine (A.ar i) RType.o _ a ⟨j.val, hj⟩)
+                        (size_arg_lt_size_app' _ _)
+                    · exact le_of_lt (lt_trans
+                        (height_arg_lt_replicateSpine (A.ar i) RType.o _ a ⟨j.val, hj⟩)
+                        (height_arg_lt_height_app' _ _))
+                    · exact Nat.le_zero.mp
+                        (((betaRedexRank_arg_le_replicateSpine (A.ar i) RType.o _ a
+                            ⟨j.val, hj⟩).trans
+                          (betaRedexRank_arg_le_betaRedexRank_app' _ _)).trans
+                          (le_of_eq hβ))
+                  · refine ⟨_, OneLambdaStep.dstrMiss j hj a, ?_, ?_, ?_,
+                      fun habs => absurd rfl habs⟩
+                    · exact size_arg_lt_size_app' _ _
+                    · exact le_of_lt (height_arg_lt_height_app' _ _)
+                    · exact Nat.le_zero.mp
+                        ((betaRedexRank_arg_le_betaRedexRank_app' _ _).trans (le_of_eq hβ))
+                · -- case redex
+                  have hk : k = 0 := eq_zero_of_o_eq_curried hsB
+                  subst hk
+                  have hn : A.numCtors = n := hnk
+                  subst hn
+                  replace htEq : app' f x = replicateSpine A.numCtors RType.o
+                      (app' (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case
+                        (fun l => l.elim0)) scrut) b := htEq
+                  obtain ⟨i, a, hscrEq⟩ := conHeaded_o_inv hcs
+                  obtain ⟨idx, hidx⟩ := exists_ctorAt_eq i
+                  subst hidx
+                  rw [hscrEq] at htEq
+                  rw [htEq] at hβ ⊢
+                  refine ⟨b idx, OneLambdaStep.case idx a b, ?_, ?_, ?_,
+                    fun habs => absurd rfl habs⟩
+                  · exact size_arg_lt_replicateSpine A.numCtors RType.o _ b idx
+                  · exact le_of_lt (height_arg_lt_replicateSpine A.numCtors RType.o _ b idx)
+                  · exact Nat.le_zero.mp
+                      ((betaRedexRank_arg_le_replicateSpine A.numCtors RType.o _ b idx).trans
+                        (le_of_eq hβ))
+
+/-- Lemma 12's ι-step existence (Leivant III section 4.2, p. 224, with the
+ι-phase accounting of section 5, proof paragraph (iii), p. 226): a β-normal
+term with an ι-redex takes a `OneLambdaStep` that strictly decreases the size,
+does not increase the height, and preserves β-normality. The strict size
+decrease is a recorded strengthening of the paper's decrease: each contractum
+is an immediate constituent of its redex (`dstrHit`, `case`) or drops the
+destructor node (`dstrMiss`). -/
+theorem exists_iota_step_of_hasIota {Γ s} [LinearOrder A.B]
+    (t : Binding.Tm (oneLambdaSig A) Γ s)
+    (h : hasIota t = true) (hβ : betaRedexRank t = 0) :
+    ∃ t', OneLambdaStep t t' ∧ Tm.size t' < Tm.size t ∧
+      Tm.height t' ≤ Tm.height t ∧ betaRedexRank t' = 0 := by
+  obtain ⟨t', hstep, hsz, hht, hβ', _⟩ := exists_iota_step_aux (Tm.size t) t le_rfl h hβ
+  exact ⟨t', hstep, hsz, hht, hβ'⟩
 
 end OneLambda
 

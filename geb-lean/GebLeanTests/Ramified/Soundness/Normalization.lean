@@ -102,4 +102,19 @@ instance of `normal_bbRep`. -/
 example : Normal (bbRep (natToFreeAlg 2) (RType.arrow RType.o RType.o)) :=
   normal_bbRep _ _
 
+/-- Lemma 12's ι-step existence on the saturated destructor redex `dstr 0` over
+the con-headed zero word: the flagged β-normal term takes a step that strictly
+decreases the size, does not increase the height, and preserves β-normality. -/
+example :
+    ∃ t', OneLambdaStep (OneLambda.app' (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := [])
+          (OneLambdaOp.dstr ⟨0, by decide⟩) (fun k => k.elim0)) (conc (natToFreeAlg 0))) t'
+        ∧ Tm.size t' < Tm.size (OneLambda.app' (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+          (Γ := []) (OneLambdaOp.dstr ⟨0, by decide⟩) (fun k => k.elim0))
+          (conc (natToFreeAlg 0)))
+        ∧ Tm.height t' ≤ Tm.height (OneLambda.app' (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+          (Γ := []) (OneLambdaOp.dstr ⟨0, by decide⟩) (fun k => k.elim0))
+          (conc (natToFreeAlg 0)))
+        ∧ betaRedexRank t' = 0 :=
+  exists_iota_step_of_hasIota _ (by rw [hasIota_app']; rfl) rfl
+
 end GebLean.Ramified
