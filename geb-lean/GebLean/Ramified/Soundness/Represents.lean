@@ -3146,4 +3146,21 @@ theorem instantiate_sub_underBinder {S : Binding.BinderSig RType}
   · funext v
     rw [Binding.ren_sub, henv, Binding.sub_id]
 
+/-- The bar-map of a snoc context distributes over the append: `(Γ ++ [σ]).map
+barTy = Γ.map barTy ++ [barTy σ]`. The context transport of the abstraction node
+that `barTm_lam'` and the represented environment extension `representsEnv_extend`
+carry. -/
+theorem map_barTy_snoc (Γ : Binding.Ctx RType) (σ : RType) :
+    (Γ ++ [σ]).map barTy = Γ.map barTy ++ [barTy σ] := by
+  simp only [List.map_append, List.map_cons, List.map_nil]
+
+/-- The term bar-map at an abstraction node is the `1λ(A)` abstraction of the bar
+image (Leivant III section 4.2): `barTm (lam' b) = OneLambda.lam' (barTm b)`, with
+the barred body context reconciled to `Γ.map barTy ++ [barTy σ]` through
+`map_barTy_snoc`. The `barTmOp` lam-branch dispatch, the abstraction analogue of
+`barTm_app'`. -/
+theorem barTm_lam' {Γ : Binding.Ctx RType} {σ τ' : RType}
+    (b : Binding.Tm (rlmrOSig natAlgSig) (Γ ++ [σ]) τ') :
+    barTm (lam' b) = OneLambda.lam' (map_barTy_snoc Γ σ ▸ barTm b) := rfl
+
 end GebLean.Ramified
