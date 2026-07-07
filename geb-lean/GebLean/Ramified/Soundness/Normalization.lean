@@ -81,6 +81,10 @@ splits into `betaRedexRank` and `hasIota`.
 * `OneLambda.betaRedexRank_instantiate₁_le` — the β-rank of a single-variable
   substitution instance is bounded by the β-ranks of the body and the substituted
   term together with the order of the substituted sort (note N2).
+* `OneLambda.relatesInSteps_stepWithin_size_le` — the endpoint of a counted
+  `stepWithin` chain obeys the chain's size ceiling whenever the start does.
+* `OneLambda.size_le_two_pow_height` — the arity inequality at `oneLambdaSig`:
+  a term's size is bounded by `2` raised to its height.
 
 ## References
 
@@ -2106,6 +2110,105 @@ theorem betaRedexRank_instantiate₁_le {Γ : Binding.Ctx RType} {σ τ : RType}
     simp only [Binding.idEnv]
     rw [subBound_var]
     exact Nat.zero_le _
+
+/-- The endpoint of a counted `stepWithin` chain obeys the chain's size ceiling
+whenever the start does: a step's target is bounded by the ceiling by
+definition, and an empty chain ends at its start. Consumed when composing
+cycles, where the endpoint of one chain seeds the ceiling hypothesis of the
+next. -/
+theorem relatesInSteps_stepWithin_size_le [LinearOrder A.B] {M : ℕ}
+    {Γ : Binding.Ctx RType} {s : RType}
+    {a b : Binding.Tm (oneLambdaSig A) Γ s} {n : ℕ}
+    (h : Relation.RelatesInSteps (stepWithin M) a b n) (ha : Tm.size a ≤ M) :
+    Tm.size b ≤ M := by
+  cases h with
+  | refl => exact ha
+  | tail _ _ _ _ hstep => exact hstep.2
+
+/-- The arity inequality at `oneLambdaSig`: every operation has at most two
+subterm arguments (`app` has two, `lam` one, the constants none), so a term's
+size is bounded by `2` raised to its height (Leivant III section 5, proof
+paragraph (ii), p. 226) — the instance of `Tm.size_le_pow_height` at `m = 2`. -/
+theorem size_le_two_pow_height {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) : Tm.size t ≤ 2 ^ Tm.height t :=
+  Tm.size_le_pow_height t le_rfl (fun o => by cases o <;> simp [oneLambdaSig])
+
+/-- An abstraction-headed term at an arrow sort is a `lam'` of some body: the
+inversion of the `isLam` detector, recovering the body for the contraction case
+of the rank-elimination cycle. -/
+private theorem exists_lam'_of_isLam {Γ : Binding.Ctx RType} {σ τ : RType}
+    {f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)} (h : isLam f = true) :
+    ∃ b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ, f = lam' b := by
+  unfold isLam at h
+  rcases hht : headTag f with _ | o
+  · rw [hht] at h
+    exact Bool.noConfusion h
+  · rw [hht] at h
+    cases o with
+    | lam σ' τ' =>
+        obtain ⟨hs, args, hEq⟩ := exists_op_of_headTag hht
+        have hs1 : RType.arrow σ' τ' = RType.arrow σ τ := hs
+        rw [RType.arrow_eq_arrow] at hs1
+        obtain ⟨rfl, rfl⟩ := hs1
+        replace hEq : f
+            = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ' τ') args := hEq
+        obtain ⟨b, hb⟩ := op_lam_inv args
+        exact ⟨b, hEq.trans hb⟩
+    | app σ' τ' => exact Bool.noConfusion h
+    | con i => exact Bool.noConfusion h
+    | dstr j => exact Bool.noConfusion h
+    | case => exact Bool.noConfusion h
+
+/-- The conclusion of one rank-elimination cycle at rank budget `q` and size
+ceiling `M` (notes N3/N5): a counted `stepWithin M` chain from `t` to a term of
+β-rank below `q`, with the endpoint height bounded by `2 ^ Tm.height t`, the
+step count by `Tm.size t`, and the shape invariant — an abstraction endpoint
+forces an abstraction start or a sort of order at most `q`. The motive of the
+`beta_cycle` induction, packaged so its per-node case lemmas share one
+statement. -/
+private def BetaCycle [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
+    (q M : ℕ) (t : Binding.Tm (oneLambdaSig A) Γ s) : Prop :=
+  ∃ (t' : Binding.Tm (oneLambdaSig A) Γ s) (k : ℕ),
+    Relation.RelatesInSteps (stepWithin M) t t' k ∧
+    betaRedexRank t' ≤ q - 1 ∧
+    Tm.height t' ≤ 2 ^ Tm.height t ∧
+    k ≤ Tm.size t ∧
+    (IsLam t' → IsLam t ∨ RType.ord s ≤ q)
+
+/-- The identity cycle: a term already of β-rank `0` satisfies the cycle
+conclusion with the empty chain. Discharges the variable and constant leaves of
+the `beta_cycle` induction. -/
+private theorem betaCycle_of_rank_zero [LinearOrder A.B] {Γ : Binding.Ctx RType}
+    {s : RType} {q M : ℕ} {t : Binding.Tm (oneLambdaSig A) Γ s}
+    (ht : betaRedexRank t = 0) : BetaCycle q M t :=
+  ⟨t, 0, Relation.RelatesInSteps.refl t, by omega, Nat.lt_two_pow_self.le,
+    Nat.zero_le _, fun h => Or.inl h⟩
+
+/-- The abstraction case of the rank-elimination cycle (note N3): the body's
+cycle lifts through `relatesInSteps_lamBody`, the abstraction node adding one to
+the size ceiling and the height. The endpoint is an abstraction, but so is the
+start — the shape invariant's left disjunct. -/
+private theorem betaCycle_lam' [LinearOrder A.B] {Γ : Binding.Ctx RType} {σ τ : RType}
+    {q : ℕ} {b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ}
+    (hb : BetaCycle q (Tm.size b + 2 ^ (2 ^ Tm.height b)) b)
+    {M : ℕ} (hM : Tm.size (lam' b) + 2 ^ (2 ^ Tm.height (lam' b)) ≤ M) :
+    BetaCycle q M (lam' b) := by
+  obtain ⟨b', k, hchain, hrank, hheight, hk, _⟩ := hb
+  have hle : Tm.size b + 2 ^ (2 ^ Tm.height b) + 1 ≤ M := by
+    rw [size_lam', height_lam'] at hM
+    have hpow : 2 ^ (2 ^ Tm.height b) ≤ 2 ^ (2 ^ (1 + Tm.height b)) :=
+      Nat.pow_le_pow_right (by omega) (Nat.pow_le_pow_right (by omega) (by omega))
+    omega
+  refine ⟨lam' b', k,
+    relatesInSteps_mono (fun _ _ => stepWithin_mono hle) (relatesInSteps_lamBody hchain),
+    ?_, ?_, ?_, fun _ => Or.inl (isLam_lam' b)⟩
+  · rwa [betaRedexRank_lam']
+  · rw [height_lam', height_lam']
+    have h2 : (1 : ℕ) ≤ 2 ^ Tm.height b := Nat.one_le_two_pow
+    have h3 : 2 ^ (1 + Tm.height b) = 2 * 2 ^ Tm.height b := by rw [pow_add, pow_one]
+    omega
+  · rw [size_lam']
+    omega
 
 end OneLambda
 
