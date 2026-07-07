@@ -1,4 +1,5 @@
 import GebLean.Ramified.Soundness.BarRep
+import GebLean.Ramified.Definability.Bounds
 import GebLean.Binding.Measures
 import GebLean.Utilities.Tower
 import Mathlib.Algebra.BigOperators.Fin
@@ -721,6 +722,20 @@ subterms and the top detectors `topBetaRank` and `topIota`. -/
   simp only [betaRedexRank_app', hasIota_app']
   cases hf : hasIota f <;> cases hx : hasIota x <;> cases ht : topIota (app' f x) <;>
     simp <;> omega
+
+/-- The aggregate redex rank of an application node is bounded by the ranks of
+its subterms together with the order of the function's arrow sort: the top
+β-detector contributes at most `RType.ord (RType.arrow σ τ)` and the top
+ι-detector at most `1`. The rank-uniformity bound of Proposition 13: applied to
+a normal argument, the rank of the application depends only on the function
+term and the sort data, not on the argument. -/
+private theorem redexRank_app'_le {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) :
+    redexRank (app' f x)
+      ≤ max (redexRank f) (max (redexRank x) (max 1 (RType.ord (RType.arrow σ τ)))) := by
+  rw [redexRank_app', topBetaRank_app']
+  split_ifs <;> omega
 
 /-- `betaRedexRank` is invariant under a context `cast`: transporting a term
 along a context equality leaves its β-rank unchanged. The `cast`-presentation
@@ -3046,5 +3061,25 @@ the recursive results supplied by the induction hypothesis. -/
       (fun e => sourceWord (children e) τ)) finZeroElim = FreeAlg.mk b children
   rw [appEval_conSpine]
   exact congrArg (FreeAlg.mk b) (funext ih)
+
+/-- The single-tower clock of `OneLambda.lemma12_clock` absorbed into one bare
+tower: the linear coefficient `q + 1` is dominated by two extra tower levels,
+`(q + 1) * tower (q + 1) x ≤ tower (2 * q + 2) x`. The coefficient is bounded by
+`2 ^ (q + 1)`, the product collected into a single exponent by `pow_add`, and
+the exponent absorbed through `Definability.add_le_tower` and `tower_comp`. The
+clock-absorption step of Proposition 13. -/
+private theorem succ_mul_tower_le_tower (q x : ℕ) :
+    (q + 1) * tower (q + 1) x ≤ tower (2 * q + 2) x :=
+  calc (q + 1) * tower (q + 1) x
+      ≤ 2 ^ (q + 1) * 2 ^ tower q x :=
+        Nat.mul_le_mul (le_two_pow_self (q + 1)) (le_of_eq (tower_succ q x))
+    _ = 2 ^ (q + 1 + tower q x) := (pow_add 2 (q + 1) (tower q x)).symm
+    _ ≤ 2 ^ tower (q + 1) (tower q x) := by
+        refine Nat.pow_le_pow_right (by omega) ?_
+        have h := Definability.add_le_tower (q + 1) (tower q x)
+        omega
+    _ = 2 ^ tower (2 * q + 1) x := by
+        rw [tower_comp, show q + 1 + q = 2 * q + 1 by omega]
+    _ = tower (2 * q + 2) x := (tower_succ (2 * q + 1) x).symm
 
 end GebLean.Ramified
