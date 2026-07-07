@@ -88,4 +88,18 @@ example :
         (fun _ => conc (natToFreeAlg 0))) = true :=
   ⟨rfl, rfl⟩
 
+/-- The concrete term of a free-algebra value is normal (task 6.3.4b): the
+constructor-headed spine `conc a` carries no redex, for every `a`. -/
+example (a : FreeAlg natAlgSig) : Normal (conc a) := normal_conc a
+
+/-- The Berarducci-Böhm representation is normal (task 6.3.4b): the abstraction
+`bbRep a σ` over the variable-headed fold carries no redex, for every value `a`
+and sort `σ`. -/
+example (a : FreeAlg natAlgSig) (σ : RType) : Normal (bbRep a σ) := normal_bbRep a σ
+
+/-- The Church numeral `bbRep (natToFreeAlg 2) (o ⟶ o)` is normal, an acceptance
+instance of `normal_bbRep`. -/
+example : Normal (bbRep (natToFreeAlg 2) (RType.arrow RType.o RType.o)) :=
+  normal_bbRep _ _
+
 end GebLean.Ramified

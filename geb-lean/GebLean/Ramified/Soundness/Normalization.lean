@@ -673,6 +673,208 @@ subterms and the top detectors `topBetaRank` and `topIota`. -/
   cases hf : hasIota f <;> cases hx : hasIota x <;> cases ht : topIota (app' f x) <;>
     simp <;> omega
 
+/-- `betaRedexRank` is invariant under a context `cast`: transporting a term
+along a context equality leaves its β-rank unchanged. The `cast`-presentation
+counterpart of `betaRedexRank_cast`, matching the transports of `lamSpine`. -/
+private theorem betaRedexRank_castCtx {Γ Γ' : Binding.Ctx RType} {s : RType}
+    (h : Γ = Γ') (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    betaRedexRank (cast (congrArg (fun c => Binding.Tm (oneLambdaSig A) c s) h) t)
+      = betaRedexRank t := by cases h; rfl
+
+/-- `hasIota` is invariant under a context `cast`. The `cast`-presentation
+counterpart of `hasIota_cast`. -/
+private theorem hasIota_castCtx {Γ Γ' : Binding.Ctx RType} {s : RType}
+    (h : Γ = Γ') (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    hasIota (cast (congrArg (fun c => Binding.Tm (oneLambdaSig A) c s) h) t) = hasIota t := by
+  cases h; rfl
+
+/-- An `Eq.mpr` transport is heterogeneously equal to its argument: it carries
+the value across a type equality without changing it. Reconciles the `Eq.mpr`
+sort transports the source of `replicateSpine` emits. -/
+private theorem eqMpr_heq {α β : Sort _} (h : α = β) (x : β) : HEq (Eq.mpr h x) x := by
+  subst h; rfl
+
+/-- `betaRedexRank` respects heterogeneous term equality at sorts identified by
+`hs`: the β-rank is a sort-agnostic natural number, so heterogeneously-equal
+terms share it. Reconciles the per-argument `Eq.mpr` sort transports of
+`replicateSpine`. -/
+private theorem betaRedexRank_heq {Γ : Binding.Ctx RType} {a b : RType}
+    (hs : a = b) {t : Binding.Tm (oneLambdaSig A) Γ a} {u : Binding.Tm (oneLambdaSig A) Γ b}
+    (h : HEq t u) : betaRedexRank t = betaRedexRank u := by cases hs; rw [eq_of_heq h]
+
+/-- `hasIota` respects heterogeneous term equality at sorts identified by `hs`. -/
+private theorem hasIota_heq {Γ : Binding.Ctx RType} {a b : RType}
+    (hs : a = b) {t : Binding.Tm (oneLambdaSig A) Γ a} {u : Binding.Tm (oneLambdaSig A) Γ b}
+    (h : HEq t u) : hasIota t = hasIota u := by cases hs; rw [eq_of_heq h]
+
+/-- The spine-safety invariant of the value forms `conc` and `bbRep` (Leivant III
+section 4.2, p. 223): a term with no β-redex and no ι-redex that is not itself an
+abstraction and whose head operation is a constructor, a variable, or an
+application (never a destructor, a case, or an abstraction). Preserved by
+application to a redex-free argument (`spineSafe_app'`), it is the property
+carried through the constructor spines of `conc` and the variable-headed fold of
+`bbRep`. Novel packaging; the substance is section 4.2's normal-form head-form. -/
+private def SpineSafe {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) : Prop :=
+  betaRedexRank t = 0 ∧ hasIota t = false ∧ isLam t = false ∧ iotaSpine t = false ∧
+    (headTag t = none ∨ (∃ b, headTag t = some (OneLambdaOp.con b)) ∨
+      ∃ σ τ, headTag t = some (OneLambdaOp.app σ τ))
+
+/-- A variable is spine-safe: it carries no redexes, is not an abstraction, and
+its head is a variable. -/
+private theorem spineSafe_var {Γ : Binding.Ctx RType} {s : RType} (x : Binding.Var Γ s) :
+    SpineSafe (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) Γ s) :=
+  ⟨betaRedexRank_var x, hasIota_var x, isLam_var x, iotaSpine_var x, Or.inl (headTag_var x)⟩
+
+/-- A constructor constant is spine-safe: it carries no redexes, is not an
+abstraction, and its head is a `con`. -/
+private theorem spineSafe_con {Γ : Binding.Ctx RType} (b : A.B) :
+    SpineSafe (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ) (OneLambdaOp.con b)
+      (fun k => k.elim0)) := by
+  refine ⟨rfl, ?_, rfl, rfl, Or.inr (Or.inl ⟨b, rfl⟩)⟩
+  rw [hasIota_op]
+  simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self, Bool.false_or]
+  rfl
+
+/-- Spine-safety is preserved by application to a redex-free argument: if `f` is
+spine-safe and `x` carries no β- or ι-redex, then `app' f x` is spine-safe. Since
+`f` is not an abstraction the node is not a β-redex, and since the head of `f` is
+a constructor, a variable, or an application (never a destructor or a case) the
+node is not an ι-redex, so both ranks stay `0`. -/
+private theorem spineSafe_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ)
+    (hf : SpineSafe f) (hxβ : betaRedexRank x = 0) (hxι : hasIota x = false) :
+    SpineSafe (app' f x) := by
+  obtain ⟨hfβ, hfι, hfL, hfS, hfH⟩ := hf
+  have hmatch : (match headTag f with
+      | some (OneLambdaOp.dstr _) => conHeaded x
+      | some OneLambdaOp.case => conHeaded x
+      | some (OneLambdaOp.app _ _) => iotaSpine f
+      | _ => false) = false := by
+    rcases hfH with h | ⟨b, h⟩ | ⟨σ', τ', h⟩ <;> simp [h, hfS]
+  refine ⟨?_, ?_, isLam_app' f x, ?_, Or.inr (Or.inr ⟨σ, τ, headTag_app' f x⟩)⟩
+  · rw [betaRedexRank_app', topBetaRank_app', hfL, hfβ, hxβ]; simp
+  · rw [hasIota_app', topIota_app', hfι, hxι, hmatch]; simp
+  · rw [iotaSpine_app', hmatch]
+
+/-- Spine-safety is preserved by an application spine over redex-free arguments:
+if `head` is spine-safe and every argument carries no β- or ι-redex, then
+`appSpine Ts head args` is spine-safe. By recursion on `Ts`, extending the head
+one application at a time through `spineSafe_app'`. -/
+private theorem spineSafe_appSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (Ts : List RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried Ts result)) →
+    (args : ∀ i : Fin Ts.length, Binding.Tm (oneLambdaSig A) Γ (Ts.get i)) →
+    SpineSafe head →
+    (∀ i, betaRedexRank (args i) = 0 ∧ hasIota (args i) = false) →
+    SpineSafe (appSpine Ts head args)
+  | [], _head, _args, hhead, _hargs => hhead
+  | _T :: Ts', head, args, hhead, hargs => by
+      rw [appSpine]
+      exact spineSafe_appSpine Ts' (app' head (args ⟨0, Nat.succ_pos _⟩))
+        (fun i => args i.succ)
+        (spineSafe_app' head (args ⟨0, Nat.succ_pos _⟩) hhead
+          (hargs ⟨0, Nat.succ_pos _⟩).1 (hargs ⟨0, Nat.succ_pos _⟩).2)
+        (fun i => hargs i.succ)
+
+/-- Spine-safety is preserved by a homogeneous application spine over redex-free
+arguments. The `replicateSpine` instance of `spineSafe_appSpine`, reconciling the
+per-index `Eq.mpr` sort transports through the heterogeneous rank lemmas
+`betaRedexRank_heq` and `hasIota_heq`. -/
+private theorem spineSafe_replicateSpine {Γ : Binding.Ctx RType} {result : RType}
+    (n : Nat) (base : RType)
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result))
+    (args : Fin n → Binding.Tm (oneLambdaSig A) Γ base)
+    (hhead : SpineSafe head)
+    (hargs : ∀ i, betaRedexRank (args i) = 0 ∧ hasIota (args i) = false) :
+    SpineSafe (replicateSpine n base head args) := by
+  rw [replicateSpine]
+  refine spineSafe_appSpine (List.replicate n base) head _ hhead (fun idx => ?_)
+  have hs : (List.replicate n base).get idx = base := by
+    rw [List.get_eq_getElem, List.getElem_replicate]
+  refine ⟨(betaRedexRank_heq hs ?_).trans (hargs (idx.cast List.length_replicate)).1,
+    (hasIota_heq hs ?_).trans (hargs (idx.cast List.length_replicate)).2⟩ <;>
+    exact (eqMpr_heq _ _).trans (eqMpr_heq _ _)
+
+/-- The concrete term of a free-algebra value is normal (Leivant III section 4.2,
+p. 223): `conc a` is a constructor-headed application spine, carrying no β-redex
+and no ι-redex. By recurrence-structural induction on `a`, the constructor spine
+at each node is spine-safe (`spineSafe_replicateSpine` over the constructor head
+`spineSafe_con`). Anchors Proposition 13's uniform rank constant on the concrete
+side. Transcription of section 4.2's normality of the concrete representation. -/
+theorem normal_conc (a : FreeAlg A) : Normal (conc a) := by
+  rw [normal_iff]
+  have h : SpineSafe (conc a) := by
+    refine PolyFix.ind (P := A.polyEndo) (motive := fun {_} a => SpineSafe (conc a))
+      (fun b children ih => ?_) a
+    change SpineSafe (conc (FreeAlg.mk b children))
+    rw [conc_mk]
+    exact spineSafe_replicateSpine (A.ar b) RType.o _ _ (spineSafe_con b)
+      (fun i => ⟨(ih i).1, (ih i).2.1⟩)
+  exact ⟨h.1, h.2.1⟩
+
+/-- The β-rank ignores the iterated abstraction `lamSpine`: a `lam` head
+contributes no β-rank, so `betaRedexRank (lamSpine Δ body) = betaRedexRank body`.
+By recursion on `Δ`, peeling one `lam'` at a time (`betaRedexRank_lam'`) and
+discharging the binder-associativity transports by `betaRedexRank_castCtx`. -/
+private theorem betaRedexRank_lamSpine :
+    {Γ : Binding.Ctx RType} → (Δ : List RType) → {τ : RType} →
+    (body : Binding.Tm (oneLambdaSig A) (Γ ++ Δ) τ) →
+    betaRedexRank (lamSpine Δ body) = betaRedexRank body
+  | Γ, [], _τ, body => by
+      rw [lamSpine]; exact betaRedexRank_castCtx (List.append_nil Γ) body
+  | Γ, σ :: Δ', _τ, body => by
+      rw [lamSpine]
+      exact (betaRedexRank_lam' _).trans ((betaRedexRank_lamSpine Δ' _).trans
+        (betaRedexRank_castCtx (List.append_assoc Γ [σ] Δ').symm body))
+
+/-- The ι-redex indicator ignores the iterated abstraction `lamSpine`: a `lam`
+head is not an ι-redex, so `hasIota (lamSpine Δ body) = hasIota body`. By
+recursion on `Δ` as for `betaRedexRank_lamSpine`. -/
+private theorem hasIota_lamSpine :
+    {Γ : Binding.Ctx RType} → (Δ : List RType) → {τ : RType} →
+    (body : Binding.Tm (oneLambdaSig A) (Γ ++ Δ) τ) →
+    hasIota (lamSpine Δ body) = hasIota body
+  | Γ, [], _τ, body => by
+      rw [lamSpine]; exact hasIota_castCtx (List.append_nil Γ) body
+  | Γ, σ :: Δ', _τ, body => by
+      rw [lamSpine]
+      exact (hasIota_lam' _).trans ((hasIota_lamSpine Δ' _).trans
+        (hasIota_castCtx (List.append_assoc Γ [σ] Δ').symm body))
+
+/-- The Berarducci-Böhm representation of a free-algebra value is normal (Leivant
+III section 4.2, p. 223): `bbRep a σ` abstracts the constructor variables `c̄`
+over a variable-headed application spine, carrying no β-redex and no ι-redex. The
+inner fold is spine-safe (`spineSafe_replicateSpine` over the variable head
+`spineSafe_var`, by recurrence-structural induction on `a`), and the outer
+`lamSpine` contributes no redex (`betaRedexRank_lamSpine`, `hasIota_lamSpine`).
+Anchors Proposition 13's uniform rank constant on the abstract side.
+Transcription of section 4.2's normality of the abstract representation. -/
+theorem normal_bbRep (a : FreeAlg natAlgSig) (σ : RType) : Normal (bbRep a σ) := by
+  rw [normal_iff]
+  have hinner : SpineSafe (FreeAlg.recurse (A := natAlgSig) (P := Unit)
+      (C := Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ)
+      (fun b _ _sub rec =>
+        replicateSpine (natAlgSig.ar b) σ (Binding.Tm.var (ctorVar b)) rec) () a) := by
+    refine PolyFix.ind (P := natAlgSig.polyEndo)
+      (motive := fun {_} a => SpineSafe (FreeAlg.recurse (A := natAlgSig) (P := Unit)
+        (C := Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ)
+        (fun b _ _sub rec =>
+          replicateSpine (natAlgSig.ar b) σ (Binding.Tm.var (ctorVar b)) rec) () a))
+      (fun b children ih => ?_) a
+    change SpineSafe (FreeAlg.recurse (A := natAlgSig) (P := Unit)
+      (C := Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ)
+      (fun b _ _sub rec =>
+        replicateSpine (natAlgSig.ar b) σ (Binding.Tm.var (ctorVar b)) rec) ()
+        (FreeAlg.mk b children))
+    rw [FreeAlg.recurse_mk]
+    exact spineSafe_replicateSpine (natAlgSig.ar b) σ _ _ (spineSafe_var (ctorVar b))
+      (fun i => ⟨(ih i).1, (ih i).2.1⟩)
+  unfold bbRep
+  exact ⟨(betaRedexRank_lamSpine _ _).trans hinner.1,
+    (hasIota_lamSpine _ _).trans hinner.2.1⟩
+
 end OneLambda
 
 end GebLean.Ramified
