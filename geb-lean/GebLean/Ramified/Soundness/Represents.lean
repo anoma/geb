@@ -3606,4 +3606,30 @@ theorem prop11_aux : ∀ {y : Binding.Ctx RType × RType}
         rw [hop]
         exact represents_case θ hθ Eσ Eσhat
 
+/-- Proposition 11 (Leivant III section 4.2, a decision-2 denotational
+reformulation; DOI `10.1016/S0168-0072(98)00040-2`): every closed term `F` of the
+applicative calculus `RλMR_o^ω` is represented by its bar image `barTm F`. The
+closed-term instance of the fundamental lemma `prop11_aux` at the empty context
+and the identity closing environments, where the two identity substitutions are
+the identity (`sub_id`) and the environment hypothesis is vacuous (there is no
+variable of the empty context). -/
+theorem prop11_represents {τ : RType} (F : Binding.Tm (rlmrOSig natAlgSig) [] τ) :
+    Represents τ F (barTm F) := by
+  have hEnv : RepresentsEnv (Γ := []) Binding.idEnv Binding.idEnv := fun x => x.1.elim0
+  have h := prop11_aux F Binding.idEnv Binding.idEnv hEnv
+  rw [Binding.sub_id F] at h
+  convert h using 2
+  exact (Binding.sub_id (barTm F)).symm
+
+/-- Acceptance instance of Proposition 11 (`prop11_represents`): the closed zero
+constructor `c^o_zero : o` of `RλMR_o^ω(natAlgSig)` is represented by its bar
+image. -/
+example :
+    Represents RType.o
+      (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o (Or.inl rfl) false)
+        (fun k => k.elim0) : Binding.Tm (rlmrOSig natAlgSig) [] RType.o)
+      (barTm (Binding.Tm.op (S := rlmrOSig natAlgSig) (RlmrOOp.con RType.o (Or.inl rfl) false)
+        (fun k => k.elim0) : Binding.Tm (rlmrOSig natAlgSig) [] RType.o)) :=
+  prop11_represents _
+
 end GebLean.Ramified
