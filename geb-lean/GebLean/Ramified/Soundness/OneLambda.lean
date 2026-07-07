@@ -289,6 +289,21 @@ theorem reduces_app'_right {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
   | refl => exact Relation.ReflTransGen.refl
   | tail _ hstep ih => exact ih.tail (OneLambdaStep.appR f hstep)
 
+/-- Reduction of the body of an abstraction lifts to a
+`Relation.ReflTransGen`-reduction of the whole abstraction: if `b ⇒* b'` in
+`Γ ++ [σ]` then `lam' b ⇒* lam' b'` in `Γ`. The abstraction-body counterpart of
+`reduces_app'_left`, off the compatible-closure constructor
+`OneLambdaStep.lamBody`. Consumed by the multi-binder η collapse
+`reduces_etaSpine`, reducing the residual spine under the peeled binder. -/
+theorem reduces_lamBody {A : AlgSig} [Fintype A.B] [LinearOrder A.B]
+    {Γ : Binding.Ctx RType} {σ τ : RType}
+    {b b' : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ}
+    (h : Relation.ReflTransGen OneLambdaStep b b') :
+    Relation.ReflTransGen OneLambdaStep (lam' b) (lam' b') := by
+  induction h with
+  | refl => exact Relation.ReflTransGen.refl
+  | tail _ hstep ih => exact ih.tail (OneLambdaStep.lamBody hstep)
+
 /-- Reduction of the head of an application spine lifts to a
 `Relation.ReflTransGen`-reduction of the whole spine: if `f ⇒* f'` then
 `appSpine Ts f args ⇒* appSpine Ts f' args`. By induction on `Ts` from
