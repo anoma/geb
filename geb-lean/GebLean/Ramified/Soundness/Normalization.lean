@@ -2473,6 +2473,103 @@ theorem beta_cycle [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
       (IsLam t' → IsLam t ∨ RType.ord s ≤ q) :=
   beta_cycle_aux (Tm.size t) hq t le_rfl ht hM
 
+/-- The cycle-ceiling discharge: the hybrid bound `Tm.size t + 2 ^ (2 ^ Tm.height t)`
+of one rank-elimination cycle is absorbed by a height-`2` tower over any height
+ceiling `H + 1` with `Tm.height t ≤ H`. Combines `size_le_two_pow_height` with the
+doubling `2 ^ H + 2 ^ (2 ^ H) ≤ 2 ^ (2 ^ (H + 1))`. -/
+private theorem hyb_le_tower_two {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) {H : ℕ} (hH : Tm.height t ≤ H) :
+    Tm.size t + 2 ^ (2 ^ Tm.height t) ≤ tower 2 (H + 1) := by
+  have hsize : Tm.size t ≤ 2 ^ H :=
+    le_trans (size_le_two_pow_height t) (Nat.pow_le_pow_right (by omega) hH)
+  have hpow : 2 ^ (2 ^ Tm.height t) ≤ 2 ^ (2 ^ H) :=
+    Nat.pow_le_pow_right (by omega) (Nat.pow_le_pow_right (by omega) hH)
+  have hcore : 2 ^ H + 2 ^ (2 ^ H) ≤ tower 2 (H + 1) := by
+    have h1 : (2 : ℕ) ^ H ≤ 2 ^ (2 ^ H) := le_two_pow_self (2 ^ H)
+    have h2 : (2 : ℕ) ^ H + 1 ≤ 2 ^ (H + 1) := by
+      have := Nat.one_le_two_pow (n := H)
+      rw [pow_succ]; omega
+    calc 2 ^ H + 2 ^ (2 ^ H)
+        ≤ 2 ^ (2 ^ H) + 2 ^ (2 ^ H) := Nat.add_le_add_right h1 _
+      _ = 2 ^ (2 ^ H + 1) := by rw [← two_mul, ← pow_succ']
+      _ ≤ 2 ^ (2 ^ (H + 1)) := Nat.pow_le_pow_right (by omega) h2
+      _ = tower 2 (H + 1) := rfl
+  calc Tm.size t + 2 ^ (2 ^ Tm.height t)
+      ≤ 2 ^ H + 2 ^ (2 ^ H) := Nat.add_le_add hsize hpow
+    _ ≤ tower 2 (H + 1) := hcore
+
+/-- β-normalization by downward induction on the rank budget `q` (Leivant III
+section 5, proof paragraph (ii), p. 226, DOI `10.1016/S0168-0072(98)00040-2`;
+note N4): a term of β-rank at most `q` and height at most `H` reduces, by a
+counted `stepWithin (tower (q + 1) (H + 1))` chain of at most `q * tower q H`
+steps, to a β-normal term of height at most `tower q H`. Each of the `q` cycles
+starts one tower level higher than the previous, so heights compose through
+`tower_comp` and the per-cycle step count `≤ tower (q + 1) H` telescopes into
+`q * tower q H`. The uniform ceiling absorbs every cycle's hybrid bound via
+`hyb_le_tower_two` and `tower_mono_left`. -/
+private theorem beta_normalize_aux [LinearOrder A.B] {Γ : Binding.Ctx RType}
+    {s : RType} (q : ℕ) :
+    ∀ (t : Binding.Tm (oneLambdaSig A) Γ s) (H : ℕ),
+      betaRedexRank t ≤ q → Tm.height t ≤ H →
+      ∃ (t' : Binding.Tm (oneLambdaSig A) Γ s) (k : ℕ),
+        Relation.RelatesInSteps (stepWithin (tower (q + 1) (H + 1))) t t' k ∧
+        betaRedexRank t' = 0 ∧
+        Tm.height t' ≤ tower q H ∧
+        k ≤ q * tower q H := by
+  induction q with
+  | zero =>
+      intro t H ht hH
+      exact ⟨t, 0, Relation.RelatesInSteps.refl t, Nat.le_zero.mp ht, by simpa using hH, by simp⟩
+  | succ q ih =>
+      intro t H ht hH
+      obtain ⟨t', k₁, hchain₁, hrank₁, hheight₁, hk₁, -⟩ :=
+        beta_cycle (q + 1) (by omega) t ht (M := tower (q + 1 + 1) (H + 1))
+          (le_trans (hyb_le_tower_two t hH) (tower_mono_left (by omega) (H + 1)))
+      have hrank' : betaRedexRank t' ≤ q := by omega
+      have hheight' : Tm.height t' ≤ 2 ^ H :=
+        le_trans hheight₁ (Nat.pow_le_pow_right (by omega) hH)
+      obtain ⟨t'', k', hchain', hrank'', hheight'', hk'⟩ := ih t' (2 ^ H) hrank' hheight'
+      have htower : tower q (2 ^ H) = tower (q + 1) H := by
+        rw [show (2 : ℕ) ^ H = tower 1 H from rfl, tower_comp]
+      refine ⟨t'', k₁ + k', ?_, hrank'', ?_, ?_⟩
+      · refine Relation.RelatesInSteps.trans hchain₁ ?_
+        refine relatesInSteps_mono (fun _ _ h => stepWithin_mono ?_ h) hchain'
+        have h2 : (2 : ℕ) ^ H + 1 ≤ 2 ^ (H + 1) := by
+          have := Nat.one_le_two_pow (n := H)
+          rw [pow_succ]; omega
+        calc tower (q + 1) (2 ^ H + 1)
+            ≤ tower (q + 1) (2 ^ (H + 1)) := tower_mono_right _ h2
+          _ = tower (q + 1 + 1) (H + 1) := by
+              rw [show (2 : ℕ) ^ (H + 1) = tower 1 (H + 1) from rfl, tower_comp]
+      · rw [← htower]; exact hheight''
+      · have hk₁' : k₁ ≤ tower (q + 1) H :=
+          calc k₁ ≤ Tm.size t := hk₁
+            _ ≤ 2 ^ Tm.height t := size_le_two_pow_height t
+            _ ≤ 2 ^ H := Nat.pow_le_pow_right (by omega) hH
+            _ = tower 1 H := rfl
+            _ ≤ tower (q + 1) H := tower_mono_left (by omega) H
+        have hk'' : k' ≤ q * tower (q + 1) H := by rw [← htower]; exact hk'
+        calc k₁ + k' ≤ tower (q + 1) H + q * tower (q + 1) H := Nat.add_le_add hk₁' hk''
+          _ = (q + 1) * tower (q + 1) H := by rw [Nat.succ_mul]; omega
+
+/-- β-normalization (Leivant III section 5, proof paragraph (ii), p. 226,
+DOI `10.1016/S0168-0072(98)00040-2`; note N4): every term of the calculus
+`1λ(A)` reduces, by a counted `stepWithin` chain within the uniform ceiling
+`tower (betaRedexRank t + 1) (Tm.height t + 1)`, to a β-normal term
+(`betaRedexRank t' = 0`) whose height is bounded by `tower (betaRedexRank t)
+(Tm.height t)` and in a number of steps bounded by `betaRedexRank t *
+tower (betaRedexRank t) (Tm.height t)`. The instance of `beta_normalize_aux` at
+the term's own β-rank and height bounds. -/
+theorem beta_normalize [LinearOrder A.B] {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    ∃ (t' : Binding.Tm (oneLambdaSig A) Γ s) (k : ℕ),
+      Relation.RelatesInSteps
+        (stepWithin (tower (betaRedexRank t + 1) (Tm.height t + 1))) t t' k ∧
+      betaRedexRank t' = 0 ∧
+      Tm.height t' ≤ tower (betaRedexRank t) (Tm.height t) ∧
+      k ≤ betaRedexRank t * tower (betaRedexRank t) (Tm.height t) :=
+  beta_normalize_aux (betaRedexRank t) t (Tm.height t) le_rfl le_rfl
+
 end OneLambda
 
 end GebLean.Ramified

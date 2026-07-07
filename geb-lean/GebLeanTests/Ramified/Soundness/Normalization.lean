@@ -139,6 +139,24 @@ example :
       (by decide) (M := 260) (by decide)
   exact ⟨t', k, hchain, by omega⟩
 
+/-- β-normalization on the identity β-redex `(λx:o. x) c₀` (note N4): the public
+`beta_normalize` yields a β-normal reduct of height at most `tower 1 3 = 8`, in at
+most `1 * tower 1 3 = 8` steps, within the tower ceiling `tower 2 4`. The concrete
+measures (`betaRedexRank = 1`, `Tm.height = 3`) are substituted by kernel
+computation on the closed term. -/
+example :
+    ∃ (t' : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o) (k : ℕ),
+      Relation.RelatesInSteps (stepWithin (tower 2 4))
+        (OneLambda.app'
+          (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+          (conc (natToFreeAlg 0))) t' k ∧
+      betaRedexRank t' = 0 ∧ Tm.height t' ≤ 8 ∧ k ≤ 8 := by
+  obtain ⟨t', k, hchain, hrank, hheight, hk⟩ := beta_normalize (A := natAlgSig)
+    (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))
+  exact ⟨t', k, hchain, hrank, hheight, hk⟩
+
 /-- Note N2 on a small instance: instantiating the identity body `x` (the sole
 bound variable) by the zero word `N` yields `N`, whose β-rank `0` is within the
 bound `max (betaRedexRank b) (max (betaRedexRank N) (RType.ord o))`. -/
