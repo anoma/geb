@@ -3289,7 +3289,7 @@ position up to the context length (`Var.transport_val`, `appendRight_val`,
 theorem barVar_appendRight {Γ : Binding.Ctx RType} {σ s : RType} (y : Binding.Var [σ] s) :
     (map_barTy_snoc Γ σ ▸ barVar (Binding.Var.appendRight Γ y)
       : Binding.Var (Γ.map barTy ++ [barTy σ]) (barTy s))
-      = Binding.Var.appendRight (Γ.map barTy) (barVar y) := by
+      = Binding.Var.appendRight (Γ.map barTy) (barVar y : Binding.Var [barTy σ] (barTy s)) := by
   apply Subtype.ext
   apply Fin.ext
   rw [Binding.Var.transport_val]
@@ -3297,5 +3297,72 @@ theorem barVar_appendRight {Γ : Binding.Ctx RType} {σ s : RType} (y : Binding.
     = (Binding.Var.appendRight (Γ.map barTy) (barVar y)).1.val
   rw [appendRight_val, appendRight_val, List.length_map]
   rfl
+
+/-- The dependent append-variable eliminator: a property of a variable of `Γ ++ Ξ`
+holds when it holds on every suffix embedding `weakAppend.app v` of a prefix
+variable and every suffix inclusion `appendRight Γ y` of a suffix variable. The
+`Prop`-valued dependent companion of `Var.appendCases`, reconstructing the split
+variable through `weakAppend_app_val`/`appendRight_val`. -/
+theorem Binding.Var.appendCases_dep {Γ Ξ : Binding.Ctx RType} {s : RType}
+    {motive : Binding.Var (Γ ++ Ξ) s → Prop}
+    (fromΓ : ∀ v : Binding.Var Γ s, motive (Binding.Thinning.weakAppend.app v))
+    (fromΞ : ∀ y : Binding.Var Ξ s, motive (Binding.Var.appendRight Γ y))
+    (x : Binding.Var (Γ ++ Ξ) s) : motive x := by
+  by_cases h : x.1.val < Γ.length
+  · have hsv : Γ.get ⟨x.1.val, h⟩ = s := (get_append_lt Γ Ξ x.1 h).symm.trans x.2
+    have hwx : Binding.Thinning.weakAppend.app (⟨⟨x.1.val, h⟩, hsv⟩ : Binding.Var Γ s) = x := by
+      apply Subtype.ext; apply Fin.ext
+      rw [weakAppend_app_val]
+    exact hwx ▸ fromΓ ⟨⟨x.1.val, h⟩, hsv⟩
+  · have hb : x.1.val - Γ.length < Ξ.length := by
+      have hk : x.1.val < Γ.length + Ξ.length := Nat.lt_of_lt_of_eq x.1.isLt List.length_append
+      omega
+    have hsy : Ξ.get ⟨x.1.val - Γ.length, hb⟩ = s := (get_append_ge Γ Ξ x.1 h).symm.trans x.2
+    have hax : Binding.Var.appendRight Γ
+        (⟨⟨x.1.val - Γ.length, hb⟩, hsy⟩ : Binding.Var Ξ s) = x := by
+      apply Subtype.ext; apply Fin.ext
+      rw [appendRight_val]
+      change Γ.length + (x.1.val - Γ.length) = x.1.val
+      omega
+    exact hax ▸ fromΞ ⟨⟨x.1.val - Γ.length, hb⟩, hsy⟩
+
+/-- The representation relation is closed under a represented environment extension
+(Leivant III section 4.2, Proposition 11's abstraction case): extending
+`RepresentsEnv`-related closing environments by a represented pair `Represents σ G
+Ghat` for a freshly bound source variable of sort `σ` keeps them
+`RepresentsEnv`-related over the snoc-extended context. Dispatched pointwise by the
+dependent append eliminator `Var.appendCases_dep`: at an old variable both sides
+read the original environments (`extendEnv_weakAppend`, `barVar_weakAppend`), closed
+by the ambient hypothesis; at the freshly bound variable both sides read the
+extension (`extendEnv_appendRight`, `barVar_appendRight`), closed by the represented
+pair. The target environment carries the `map_barTy_snoc` context transport, read
+through `Env.transport_dom_apply`. Novel packaging of section 4.2. -/
+theorem representsEnv_extend {Γ : Binding.Ctx RType} {σ : RType}
+    (Eσ : Binding.Env (Binding.Tm (rlmrOSig natAlgSig)) Γ [])
+    (Eσhat : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) (Γ.map barTy) [])
+    (G : Binding.Tm (rlmrOSig natAlgSig) [] σ)
+    (Ghat : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy σ))
+    (hEnv : RepresentsEnv Eσ Eσhat) (hG : Represents σ G Ghat) :
+    RepresentsEnv (Binding.extendEnv Eσ (Binding.metaOne G))
+      ((map_barTy_snoc Γ σ).symm ▸ Binding.extendEnv Eσhat (Binding.metaOne Ghat)) := by
+  intro s x
+  rw [Binding.Env.transport_dom_apply (map_barTy_snoc Γ σ)]
+  refine Binding.Var.appendCases_dep
+    (motive := fun x => Represents s (Binding.extendEnv Eσ (Binding.metaOne G) s x)
+      (Binding.extendEnv Eσhat (Binding.metaOne Ghat) (barTy s)
+        (map_barTy_snoc Γ σ ▸ barVar x)))
+    (fun v => ?_) (fun y => ?_) x
+  · dsimp only
+    rw [Binding.extendEnv_weakAppend, barVar_weakAppend, Binding.extendEnv_weakAppend]
+    exact hEnv v
+  · dsimp only
+    rw [Binding.extendEnv_appendRight, barVar_appendRight]
+    simp only [List.map_cons, List.map_nil]
+    rw [Binding.extendEnv_appendRight]
+    obtain ⟨yfin, hys⟩ := y
+    revert hys
+    induction yfin using Fin.cases with
+    | zero => intro hys; subst hys; exact hG
+    | succ k => intro _; exact k.elim0
 
 end GebLean.Ramified
