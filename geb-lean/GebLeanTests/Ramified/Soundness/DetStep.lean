@@ -68,4 +68,20 @@ example : OneLambdaStep
   obtain ⟨hβ, -⟩ := (normal_iff _).mp hnorm
   exact one_ne_zero (hrank.symm.trans hβ)
 
+/-- Rank non-increase of the β worker (task 6.4.3): on the rank-`1` identity
+redex `(λx:o. x) c₀`, the worker `detStepAt 1` keeps the β-rank at most `1`, via
+`betaRedexRank_detStepAt_le` and the rank node equations. -/
+example : betaRedexRank (detStepAt 1 (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))) ≤ 1 := by
+  set f : Binding.Tm (oneLambdaSig natAlgSig) [] (RType.arrow RType.o RType.o) :=
+    OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))) with hf
+  set x : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o := conc (natToFreeAlg 0) with hx
+  have hbf : betaRedexRank f = 0 := by rw [hf, betaRedexRank_lam', betaRedexRank_var]
+  have hbx : betaRedexRank x = 0 := rfl
+  have hrank : betaRedexRank (OneLambda.app' f x) = 1 := by
+    rw [betaRedexRank_app', topBetaRank_app', hbf, hbx, hf, isLam_lam']
+    simp [RType.ord_arrow, RType.ord_o]
+  exact betaRedexRank_detStepAt_le 1 _ (le_of_eq hrank)
+
 end GebLean.Ramified

@@ -1182,6 +1182,199 @@ theorem detStepAt_sound {Γ : Binding.Ctx RType} {s : RType}
     (hrank : betaRedexRank t = q) : OneLambdaStep t (detStepAt q t) :=
   detStepAt_sound_aux q hq (Tm.size t) t le_rfl hrank
 
+/-! ### Measure of the β worker
+
+The rank half of the deterministic step's measure accounting (spec §8.3): the β
+worker `detStepAt q` does not raise the β-rank above `q`. The congruence regimes
+are inductions over the node equations; the root-contraction regime consumes the
+substitution bound `betaRedexRank_instantiate₁_le` (note N2) with the arrow-order
+bookkeeping `RType.ord σ < RType.ord (RType.arrow σ τ) = q`. The chain-decomposition
+lemmas are the iterate-level counterparts of the 6.4.1 congruence node equations,
+consumed by `det_cycle`'s structural induction (Task 6.4.4). -/
+
+omit [LinearOrder A.B] in
+/-- The combined measure invariant behind `betaRedexRank_detStepAt_le`, by strong
+induction on the term size: the β worker `detStepAt q` does not raise the β-rank
+above `q`, and it exposes an abstraction head only where the original term is
+already an abstraction or its sort has order at most `q`. The head clause feeds the
+`app'`-congruence β-rank bookkeeping, where a stepped function subterm turning into
+an abstraction would otherwise create an uncontrolled top β-redex. -/
+private theorem detStepAt_measure_aux (q : ℕ) :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
+    Tm.size t ≤ N → betaRedexRank t ≤ q →
+    betaRedexRank (detStepAt q t) ≤ q ∧
+      (isLam (detStepAt q t) = true → isLam t = true ∨ RType.ord s ≤ q)
+  | 0, _, _, t, hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN, hrank => by
+      rcases tm_cases t with ⟨x0, ht⟩ | ⟨o, hs0, args, ht⟩
+      · subst ht
+        exact ⟨by rw [detStepAt_var, betaRedexRank_var]; omega,
+          fun h => by rw [detStepAt_var, isLam_var] at h; exact absurd h (by simp)⟩
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args := ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            have hf1 := Tm.one_le_size f
+            have hx1 := Tm.one_le_size x
+            have hrank2 := hrank
+            rw [betaRedexRank_app'] at hrank2
+            have hrf : betaRedexRank f ≤ q := by omega
+            have hrx : betaRedexRank x ≤ q := by omega
+            have htb : topBetaRank (app' f x) ≤ q := by omega
+            rw [detStepAt_app']
+            split_ifs with hf hx hguard
+            · have ihf := detStepAt_measure_aux q N f (by omega) hrf
+              refine ⟨?_, fun h => by rw [isLam_app'] at h; exact absurd h (by simp)⟩
+              rw [betaRedexRank_app']
+              refine max_le ?_ (max_le ihf.1 hrx)
+              rw [topBetaRank_app']
+              split_ifs with hlam
+              · rcases ihf.2 hlam with hLf | hord
+                · have hval : topBetaRank (app' f x) = RType.ord (RType.arrow σ τ) := by
+                    simp [topBetaRank_app', hLf]
+                  rw [hval] at htb; exact htb
+                · exact hord
+              · exact Nat.zero_le q
+            · have ihx := detStepAt_measure_aux q N x (by omega) hrx
+              refine ⟨?_, fun h => by rw [isLam_app'] at h; exact absurd h (by simp)⟩
+              rw [betaRedexRank_app']
+              refine max_le ?_ (max_le hrf ihx.1)
+              rw [topBetaRank_app']
+              have h2 := htb
+              rw [topBetaRank_app'] at h2
+              exact h2
+            · obtain ⟨hLf, hordq⟩ := hguard
+              obtain ⟨b, rfl⟩ := exists_lam'_of_isLam hLf
+              rw [appReduct_lam']
+              rw [RType.ord_arrow] at hordq
+              refine ⟨?_, fun _ => Or.inr (by omega)⟩
+              have hbound := betaRedexRank_instantiate₁_le x b
+              have hbb : betaRedexRank b ≤ q := by
+                rw [← betaRedexRank_lam' (σ := σ)]; exact hrf
+              omega
+            · exact ⟨by rw [betaRedexRank_app']; omega,
+                fun h => by rw [isLam_app'] at h; exact absurd h (by simp)⟩
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args := ht
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht
+            subst ht
+            rw [size_lam'] at hN
+            have hrb : betaRedexRank b ≤ q := by rw [betaRedexRank_lam'] at hrank; exact hrank
+            rw [detStepAt_lam']
+            split_ifs with hbq
+            · exact ⟨by
+                rw [betaRedexRank_lam']
+                exact (detStepAt_measure_aux q N b (by omega) hrb).1,
+                fun _ => Or.inl (isLam_lam' _)⟩
+            · exact ⟨by rw [betaRedexRank_lam']; exact hrb, fun _ => Or.inl (isLam_lam' b)⟩
+        | con i =>
+            have hs1 : RType.curried (List.replicate (A.ar i) RType.o) RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args := ht
+            subst ht
+            refine ⟨hrank, fun h => ?_⟩
+            have h' : isLam (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args)
+                = true := h
+            simp [isLam, headTag_op] at h'
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args := ht
+            subst ht
+            refine ⟨hrank, fun h => ?_⟩
+            have h' : isLam (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args)
+                = true := h
+            simp [isLam, headTag_op] at h'
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate A.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args := ht
+            subst ht
+            refine ⟨hrank, fun h => ?_⟩
+            have h' : isLam (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args)
+                = true := h
+            simp [isLam, headTag_op] at h'
+
+omit [LinearOrder A.B] in
+/-- Rank non-increase of the β worker (spec §8.3, note N2): the β worker
+`detStepAt q` does not raise the β-rank above `q`. The congruence regimes are
+inductions over the node equations; the root-contraction regime consumes
+`betaRedexRank_instantiate₁_le` with `RType.ord σ < RType.ord (RType.arrow σ τ)
+= q`. Consumed by `det_cycle`'s rank-invariant (Task 6.4.4). -/
+theorem betaRedexRank_detStepAt_le (q : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) (ht : betaRedexRank t ≤ q) :
+    betaRedexRank (detStepAt q t) ≤ q :=
+  (detStepAt_measure_aux q (Tm.size t) t le_rfl ht).1
+
+omit [LinearOrder A.B] in
+/-- Iterate-level chain decomposition at the `app'` function position (N1 item 2):
+while the function subterm carries a rank-`q` redex along its own `detStepAt q`
+chain, iterating the worker on the application equals the congruence image of
+iterating on the function subterm. The `appL` counterpart of `detStepAt_app'`,
+consumed by `det_cycle`'s structural induction (Task 6.4.4). -/
+theorem detStepAt_iterate_appL (q : ℕ) {Γ : Binding.Ctx RType} {σ τ : RType} :
+    (n : ℕ) → (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)) →
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) →
+    (∀ k, k < n → betaRedexRank ((detStepAt q)^[k] f) = q) →
+    (detStepAt q)^[n] (OneLambda.app' f x) = OneLambda.app' ((detStepAt q)^[n] f) x
+  | 0, _f, _x, _ => rfl
+  | n + 1, f, x, hchain => by
+      simp only [Function.iterate_succ_apply]
+      have h0 : betaRedexRank f = q := hchain 0 (Nat.succ_pos n)
+      rw [detStepAt_app', if_pos h0]
+      exact detStepAt_iterate_appL q n (detStepAt q f) x
+        (fun k hk => by
+          rw [← Function.iterate_succ_apply]; exact hchain (k + 1) (Nat.succ_lt_succ hk))
+
+omit [LinearOrder A.B] in
+/-- Iterate-level chain decomposition at the `app'` argument position (N1 item 2):
+while the function subterm carries no rank-`q` redex and the argument subterm
+carries one along its own `detStepAt q` chain, iterating the worker on the
+application equals the congruence image of iterating on the argument subterm. The
+`appR` counterpart of `detStepAt_app'`, consumed by `det_cycle`'s structural
+induction (Task 6.4.4). -/
+theorem detStepAt_iterate_appR (q : ℕ) {Γ : Binding.Ctx RType} {σ τ : RType} :
+    (n : ℕ) → (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)) →
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) → betaRedexRank f ≠ q →
+    (∀ k, k < n → betaRedexRank ((detStepAt q)^[k] x) = q) →
+    (detStepAt q)^[n] (OneLambda.app' f x) = OneLambda.app' f ((detStepAt q)^[n] x)
+  | 0, _f, _x, _, _ => rfl
+  | n + 1, f, x, hf, hchain => by
+      simp only [Function.iterate_succ_apply]
+      have h0 : betaRedexRank x = q := hchain 0 (Nat.succ_pos n)
+      rw [detStepAt_app', if_neg hf, if_pos h0]
+      exact detStepAt_iterate_appR q n f (detStepAt q x) hf
+        (fun k hk => by
+          rw [← Function.iterate_succ_apply]; exact hchain (k + 1) (Nat.succ_lt_succ hk))
+
+omit [LinearOrder A.B] in
+/-- Iterate-level chain decomposition at the `lam'` body position (N1 item 2):
+while the body carries a rank-`q` redex along its own `detStepAt q` chain,
+iterating the worker on the abstraction equals the congruence image of iterating
+on the body. The `lamBody` counterpart of `detStepAt_lam'`, consumed by
+`det_cycle`'s structural induction (Task 6.4.4). -/
+theorem detStepAt_iterate_lamBody (q : ℕ) {Γ : Binding.Ctx RType} {σ τ : RType} :
+    (n : ℕ) → (b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) →
+    (∀ k, k < n → betaRedexRank ((detStepAt q)^[k] b) = q) →
+    (detStepAt q)^[n] (OneLambda.lam' b) = OneLambda.lam' ((detStepAt q)^[n] b)
+  | 0, _b, _ => rfl
+  | n + 1, b, hchain => by
+      simp only [Function.iterate_succ_apply]
+      have h0 : betaRedexRank b = q := hchain 0 (Nat.succ_pos n)
+      rw [detStepAt_lam', if_pos h0]
+      exact detStepAt_iterate_lamBody q n (detStepAt q b)
+        (fun k hk => by
+          rw [← Function.iterate_succ_apply]; exact hchain (k + 1) (Nat.succ_lt_succ hk))
+
 /-! ### Soundness of the ι worker
 
 The ι half of the deterministic step's soundness (spec §8.2): at a term with an
