@@ -261,6 +261,145 @@ theorem detStepAt_lam' (q : ℕ) {Γ : Binding.Ctx RType} {σ τ : RType}
       = (if betaRedexRank b = q then OneLambda.lam' (detStepAt q b)
          else OneLambda.lam' b) := rfl
 
+/-! ### Head-form inversions
+
+Local re-derivations of the head-form case principle and the `app'`/`lam'`
+η-expansions, which are private to `Normalization.lean`; the soundness proofs
+below invert the worker guards through them. -/
+
+/-- Transporting a term along a context equality and back along its inverse is
+the identity. -/
+private theorem eqRec_symm_eqRec {Γ Γ' : Binding.Ctx RType} {s : RType} (h : Γ = Γ')
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    h.symm ▸ (h ▸ t : Binding.Tm (oneLambdaSig A) Γ' s) = t := by cases h; rfl
+
+/-- Every application node is an `app'`: the η-expansion of `Tm.op` at an `app`
+operation. -/
+private theorem op_app_eta {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).2) :
+    Binding.Tm.op (OneLambdaOp.app σ τ) args
+      = OneLambda.app' (List.append_nil Γ ▸ (args ⟨0, Nat.succ_pos 1⟩ :
+            Binding.Tm (oneLambdaSig A) (Γ ++ []) (RType.arrow σ τ)))
+          (List.append_nil Γ ▸ (args ⟨1, Nat.one_lt_two⟩ :
+            Binding.Tm (oneLambdaSig A) (Γ ++ []) σ)) := by
+  unfold OneLambda.app'
+  congr 1
+  funext j
+  match j with
+  | ⟨0, _⟩ => exact (eqRec_symm_eqRec (List.append_nil Γ) _).symm
+  | ⟨1, _⟩ => exact (eqRec_symm_eqRec (List.append_nil Γ) _).symm
+
+/-- Every abstraction node is a `lam'`: the η-expansion of `Tm.op` at a `lam`
+operation. -/
+private theorem op_lam_eta {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).2) :
+    Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args
+      = OneLambda.lam' (σ := σ) (τ := τ)
+          (args ⟨0, Nat.one_pos⟩ : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ) := by
+  unfold OneLambda.lam'
+  congr 1
+  funext j
+  match j with
+  | ⟨0, _⟩ => rfl
+
+/-- Every application node is an `app'` of some function and argument at the
+node's own context: the existential packaging of `op_app_eta`. -/
+private theorem op_app_inv {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).2) :
+    ∃ (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+      (x : Binding.Tm (oneLambdaSig A) Γ σ),
+      Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args = OneLambda.app' f x :=
+  ⟨_, _, op_app_eta args⟩
+
+/-- Every abstraction node is a `lam'` of some body at the binder-extended
+context: the existential packaging of `op_lam_eta`. -/
+private theorem op_lam_inv {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).2) :
+    ∃ b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ,
+      Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args = OneLambda.lam' b :=
+  ⟨_, op_lam_eta args⟩
+
+/-- The head-form cases of a term of `1λ(A)`: a variable, or an operation node
+whose result sort transports to the term's sort. -/
+private theorem tm_cases {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    (∃ x : Binding.Var Γ s, t = Binding.Tm.var x) ∨
+    ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = s)
+      (args : ∀ j : Fin (((oneLambdaSig A).args o).length),
+        Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args o).get j).1)
+          (((oneLambdaSig A).args o).get j).2),
+      t = (hs ▸ Binding.Tm.op (S := oneLambdaSig A) o args
+            : Binding.Tm (oneLambdaSig A) Γ s) := by
+  suffices haux : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig A).polyEndo) y),
+      (∃ x : Binding.Var y.1 y.2,
+        t = (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) y.1 y.2)) ∨
+      ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = y.2)
+        (args : ∀ j : Fin (((oneLambdaSig A).args o).length),
+          Binding.Tm (oneLambdaSig A) (y.1 ++ (((oneLambdaSig A).args o).get j).1)
+            (((oneLambdaSig A).args o).get j).2),
+        t = (hs ▸ Binding.Tm.op (S := oneLambdaSig A) o args
+              : Binding.Tm (oneLambdaSig A) y.1 y.2) from haux t
+  intro y t
+  cases t with
+  | mk y idx children =>
+    cases idx with
+    | inl a =>
+      refine Or.inl ⟨Binding.leafVar a, ?_⟩
+      obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+      congr 1
+      funext e
+      exact e.elim
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : OneLambdaOp A // (oneLambdaSig A).result o = s' } at p
+      revert children
+      obtain ⟨o, rfl⟩ := p
+      intro children
+      exact Or.inr ⟨o, rfl, fun j => children ⟨j⟩, rfl⟩
+
+/-- The abstraction behind the `isLam` flag: an arrow-sorted term whose `isLam`
+detector is set is an abstraction node `lam' b`. The inversion consumed by the
+β worker's root-contraction regime, exposing the body that `appReduct`
+instantiates. -/
+private theorem exists_lam'_of_isLam {Γ : Binding.Ctx RType} {σ τ : RType}
+    {f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)} (h : isLam f = true) :
+    ∃ b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ, f = OneLambda.lam' b := by
+  rcases tm_cases f with ⟨x, rfl⟩ | ⟨o, hs, args, rfl⟩
+  · rw [isLam_var] at h
+    exact Bool.noConfusion h
+  · have h' : isLam (Binding.Tm.op (S := oneLambdaSig A) o args) = true :=
+      (isLam_cast rfl hs (Binding.Tm.op (S := oneLambdaSig A) o args)).symm.trans h
+    cases o with
+    | lam σ' τ' =>
+        have hs' : RType.arrow σ' τ' = RType.arrow σ τ := hs
+        rw [RType.arrow_eq_arrow] at hs'
+        obtain ⟨hσ, hτ⟩ := hs'
+        subst hσ
+        subst hτ
+        obtain ⟨b, hb⟩ := op_lam_inv args
+        exact ⟨b, hb⟩
+    | app σ' τ' =>
+        replace h' : false = true := h'
+        exact Bool.noConfusion h'
+    | con i =>
+        replace h' : false = true := h'
+        exact Bool.noConfusion h'
+    | dstr j =>
+        replace h' : false = true := h'
+        exact Bool.noConfusion h'
+    | case =>
+        replace h' : false = true := h'
+        exact Bool.noConfusion h'
+
 variable [LinearOrder A.B]
 
 /-- Operation dispatch of the application-spine decomposition. At an application
