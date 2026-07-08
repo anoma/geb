@@ -6,5 +6,5 @@ ported import once `geb-lean` consumes curated content directly. -/
 
 example (dom : Type) (F : SliceDomPFunctor dom) {X : Type} (p : X → dom)
     (a : F.A) (v : F.B a → X) :
-    F.Compatible p a v ↔ ∀ b, p (v b) = F.s ⟨a, b⟩ :=
+    F.Compatible p a v ↔ ∀ b, p (v b) = F.r ⟨a, b⟩ :=
   F.compatible_iff p a v
