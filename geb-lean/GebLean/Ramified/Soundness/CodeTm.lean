@@ -149,6 +149,98 @@ theorem codCode_codeRType_arrow (σ τ : RType) :
     codCode (codeRType (RType.arrow σ τ)) = codeRType τ := by
   simp [codCode, argCode, Nat.unpair_pair]
 
+/-- The strict pairing step past the shape tag `1`: `p < Nat.pair 1 p`. On the
+`p ≤ 1` branch `Nat.pair 1 p = p + 2`; on the `1 < p` branch `Nat.pair 1 p =
+p * p + 1 > p`. Bounds the arrow recursion of `ordCode`. -/
+theorem self_lt_pair_one (p : ℕ) : p < Nat.pair 1 p := by
+  rw [Nat.pair]
+  split_ifs with h
+  · have hp : p ≤ p * p := Nat.le_mul_of_pos_left p (by omega)
+    omega
+  · omega
+
+/-- The strict pairing step past the shape tag `2`: `p < Nat.pair 2 p`. On the
+`p ≤ 2` branch `Nat.pair 2 p = p + 6`; on the `2 < p` branch `Nat.pair 2 p =
+p * p + 2 > p`. Bounds the `Ω` recursion of `ordCode`. -/
+theorem self_lt_pair_two (p : ℕ) : p < Nat.pair 2 p := by
+  rw [Nat.pair]
+  split_ifs with h
+  · have hp : p ≤ p * p := Nat.le_mul_of_pos_left p (by omega)
+    omega
+  · omega
+
+/-- The type order read off a code (Leivant III section 2.2, p. 213): dispatch on
+the shape tag `shapeCode n` and recurse into the child codes, mirroring
+`RType.ord`. Shape `1` (arrow) reads `max (ordCode (domCode n) + 1) (ordCode
+(codCode n))`; shape `2` (`Ω`) reads `ordCode (argCode n)`; every other tag reads
+`0`. Well-founded on the code value: `self_lt_pair_one` and `self_lt_pair_two`
+place the child codes strictly below the composite. Novel realization. -/
+def ordCode (n : ℕ) : ℕ :=
+  match h : (Nat.unpair n).1 with
+  | 1 =>
+    max (ordCode (Nat.unpair (Nat.unpair n).2).1 + 1)
+      (ordCode (Nat.unpair (Nat.unpair n).2).2)
+  | 2 => ordCode (Nat.unpair n).2
+  | _ => 0
+  termination_by n
+  decreasing_by
+    · have hlt : (Nat.unpair n).2 < n := by
+        conv_rhs => rw [← Nat.pair_unpair n, h]
+        exact self_lt_pair_one _
+      exact Nat.lt_of_le_of_lt (Nat.unpair_left_le _) hlt
+    · have hlt : (Nat.unpair n).2 < n := by
+        conv_rhs => rw [← Nat.pair_unpair n, h]
+        exact self_lt_pair_one _
+      exact Nat.lt_of_le_of_lt (Nat.unpair_right_le _) hlt
+    · conv_rhs => rw [← Nat.pair_unpair n, h]
+      exact self_lt_pair_two _
+
+/-- The dispatch unfolding of `ordCode` at a base-sort code `Nat.pair 0 0`. -/
+theorem ordCode_pair_zero : ordCode (Nat.pair 0 0) = 0 := by
+  rw [ordCode]
+  split <;> simp_all [Nat.unpair_pair]
+
+/-- The dispatch unfolding of `ordCode` at an arrow code `Nat.pair 1 (Nat.pair a
+b)`: the shape-`1` branch reads the two child orders. -/
+theorem ordCode_pair_one (a b : ℕ) :
+    ordCode (Nat.pair 1 (Nat.pair a b)) = max (ordCode a + 1) (ordCode b) := by
+  rw [ordCode]
+  split <;> simp_all [Nat.unpair_pair]
+
+/-- The dispatch unfolding of `ordCode` at an `Ω` code `Nat.pair 2 a`: the
+shape-`2` branch reads the single child order. -/
+theorem ordCode_pair_two (a : ℕ) : ordCode (Nat.pair 2 a) = ordCode a := by
+  rw [ordCode]
+  split <;> simp_all [Nat.unpair_pair]
+
+/-- The mirror theorem (Leivant III section 2.2, p. 213): reading the type order
+off a code agrees with computing it on the type, `ordCode (codeRType σ) =
+RType.ord σ`. By structural induction on the r-type via `PolyFix.ind`, the node
+equations of `codeRType` and `RType.ord` feeding the `ordCode` dispatch
+unfoldings. Novel realization. -/
+theorem ordCode_codeRType (σ : RType) : ordCode (codeRType σ) = RType.ord σ :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => ordCode (codeRType t) = RType.ord t)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => ordCode_pair_zero
+      | RTypeShape.arrow, childx, ih => by
+        change ordCode (Nat.pair 1
+            (Nat.pair (codeRType (childx (⟨0, by decide⟩ : Fin (rTypeSig.ar
+                RTypeShape.arrow))))
+              (codeRType (childx (⟨1, by decide⟩ : Fin (rTypeSig.ar
+                RTypeShape.arrow)))))) = _
+        rw [ordCode_pair_one,
+          ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)),
+          ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow))]
+        rfl
+      | RTypeShape.omega, childx, ih => by
+        change ordCode (Nat.pair 2 (codeRType (childx (⟨0, by decide⟩ :
+            Fin (rTypeSig.ar RTypeShape.omega))))) = _
+        rw [ordCode_pair_two,
+          ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega))]
+        rfl) σ
+
 end OneLambda
 
 end GebLean.Ramified

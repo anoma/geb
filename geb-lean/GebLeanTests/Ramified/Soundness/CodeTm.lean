@@ -5,7 +5,9 @@ import GebLean.Ramified.Soundness.CodeTm
 
 Acceptance examples for the Gödel coding of the ramified types (task 6.4.5): the
 node equations of `codeRType` on small literal sorts, the shape-tag reads of
-`shapeCode`, and the child-code reads of `argCode`, `domCode`, and `codCode`.
+`shapeCode`, and the child-code reads of `argCode`, `domCode`, and `codCode`;
+and the mirror theorem `ordCode_codeRType` on small sorts, asserting that
+reading the type order off a code agrees with computing it on the type.
 -/
 
 namespace GebLean.Ramified
@@ -48,5 +50,26 @@ example :
     ∧ codCode (codeRType (RType.arrow RType.o (RType.omega RType.o)))
       = codeRType (RType.omega RType.o) := by
   constructor <;> simp [domCode, codCode, argCode, Nat.unpair_pair]
+
+/-- Reading the order off the code of the arrow sort `o → o` agrees with
+`RType.ord`, the acceptance instance of the mirror theorem. -/
+example :
+    ordCode (codeRType (RType.arrow RType.o RType.o))
+      = RType.ord (RType.arrow RType.o RType.o) := ordCode_codeRType _
+
+/-- The mirror theorem holds on the order-`2` sort `(o → o) → o`, exercising a
+nested arrow recursion. -/
+example :
+    ordCode (codeRType (RType.arrow (RType.arrow RType.o RType.o) RType.o))
+      = 2 := by
+  rw [ordCode_codeRType]
+  simp [RType.ord_arrow, RType.ord_o]
+
+/-- The mirror theorem holds through an `Ω` node, which contributes no order
+shift. -/
+example :
+    ordCode (codeRType (RType.omega (RType.arrow RType.o RType.o)))
+      = RType.ord (RType.arrow RType.o RType.o) := by
+  rw [ordCode_codeRType, RType.ord_omega]
 
 end GebLean.Ramified
