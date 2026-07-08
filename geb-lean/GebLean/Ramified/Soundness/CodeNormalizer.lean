@@ -44,6 +44,11 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   `OneLambda.shiftCode_const` — the node equations of `shiftCode`.
 * `OneLambda.subCode_var`, `OneLambda.subCode_app`, `OneLambda.subCode_lam`,
   `OneLambda.subCode_const` — the node equations of `subCode`.
+* `OneLambda.codeTm_ren_shift`, `OneLambda.codeTm_ren_weakAppend` — the fusion of
+  the append-at-end weakening with the code-level shift: renaming along a
+  single-insertion thinning shifts the term code at the insertion level.
+* `OneLambda.codeTm_ren_of_levels_eq`, `OneLambda.codeTm_ren_weakAppend_nil` —
+  the term code is invariant under position-preserving renamings.
 
 ## Implementation notes
 
@@ -220,6 +225,190 @@ least `2`): the code is unchanged. -/
 theorem subCode_const (j e op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     subCode j e (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The children pack of a binary node: `List.foldr Nat.pair 0` over a
+two-element tuple is the right-nested pair closed by the terminator. -/
+private theorem foldrPack_two (f : Fin 2 → ℕ) :
+    List.foldr Nat.pair 0 (List.ofFn f) = Nat.pair (f 0) (Nat.pair (f 1) 0) := rfl
+
+/-- The children pack of a unary node: `List.foldr Nat.pair 0` over a
+one-element tuple is the sole entry closed by the terminator. -/
+private theorem foldrPack_one (f : Fin 1 → ℕ) :
+    List.foldr Nat.pair 0 (List.ofFn f) = Nat.pair (f 0) 0 := rfl
+
+/-- The term code is invariant under renaming along a position-preserving
+thinning: if `ρ` sends every variable to a variable at the same numeric
+position — so the target is a same-length resorting of the context, in
+practice the `Γ ++ [] = Γ` reassociation embeddings — the code, which records
+positions and not sort proofs, is unchanged. The environment-generalized
+induction of `tmOpMax_ren`, the position action threaded to the under-binder
+thinnings by `Thinning.appendId_app_val`. Novel realization. -/
+theorem codeTm_ren_of_levels_eq {Γ Δ : Binding.Ctx RType} {s : RType}
+    (ρ : Binding.Thinning Γ Δ) (hlen : Δ.length = Γ.length)
+    (hρ : ∀ {u : RType} (x : Binding.Var Γ u), (ρ.app x).1.val = x.1.val)
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm (Binding.ren ρ t) = codeTm t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y)
+      {Δ : Binding.Ctx RType} (ρ : Binding.Thinning y.1 Δ),
+      Δ.length = y.1.length →
+      (∀ {u : RType} (x : Binding.Var y.1 u), (ρ.app x).1.val = x.1.val) →
+      codeTm (Γ := Δ) (Binding.traverse (Binding.varKit _) (Binding.renEnv ρ) t)
+        = codeTm (Γ := y.1) (s := y.2) t from h t ρ hlen hρ
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ ρ hlen hρ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      simp only [Binding.traverse_var, Binding.varKit, Binding.renEnv, codeTm_var]
+      exact congrArg (Nat.pair 0) (hρ (Binding.leafVar a))
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      replace hlen : List.length Δ = List.length Γ' := hlen
+      replace hρ : ∀ {u : RType} (x : Binding.Var Γ' u), (ρ.app x).1.val = x.1.val :=
+        fun x => hρ x
+      have hlen' : ∀ Ξc : Binding.Ctx RType, (Δ ++ Ξc).length = (Γ' ++ Ξc).length :=
+        fun Ξc => by simp only [List.length_append, hlen]
+      rw [Binding.traverse_op, codeTm_op, codeTm_op]
+      refine congrArg (fun q => Nat.pair 1 (Nat.pair (codeOp o)
+        (List.foldr Nat.pair 0 (List.ofFn q)))) (funext fun i => ?_)
+      rw [Binding.underBinder_renEnv]
+      refine ih ⟨i⟩ (Binding.Thinning.appendId ρ _) (hlen' _) (fun x => ?_)
+      have hx := Binding.Thinning.appendId_app_val (L := 0) (d := 0) ρ (Nat.zero_le _)
+        (by omega) (fun v => by rw [hρ v, if_neg (Nat.not_lt_zero _)]; omega) x
+      simpa using hx
+
+/-- The term code of a renaming along a single-insertion thinning is the code
+shifted at the insertion level: if `ρ` inserts one entry at position
+`L ≤ Γ.length` — its action on variable positions is the identity below `L`
+and the successor at or above `L` — then `codeTm (ren ρ t) = shiftCode L
+(codeTm t)`. The environment-generalized induction of `tmOpMax_ren`: the
+binder case rewrites the under-binder environment to the parallel append
+`Thinning.appendId ρ Ξ`, which inserts at the same position by
+`Thinning.appendId_app_val`, and fires the `shiftCode` node equations through
+the operation kind bits. Novel realization. -/
+theorem codeTm_ren_shift {Γ Δ : Binding.Ctx RType} {s : RType} (L : ℕ)
+    (ρ : Binding.Thinning Γ Δ) (hlen : Δ.length = Γ.length + 1) (hL : L ≤ Γ.length)
+    (hρ : ∀ {u : RType} (x : Binding.Var Γ u),
+      (ρ.app x).1.val = if x.1.val < L then x.1.val else x.1.val + 1)
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm (Binding.ren ρ t) = shiftCode L (codeTm t) := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y)
+      {Δ : Binding.Ctx RType} (ρ : Binding.Thinning y.1 Δ),
+      Δ.length = y.1.length + 1 → L ≤ y.1.length →
+      (∀ {u : RType} (x : Binding.Var y.1 u),
+        (ρ.app x).1.val = if x.1.val < L then x.1.val else x.1.val + 1) →
+      codeTm (Γ := Δ) (Binding.traverse (Binding.varKit _) (Binding.renEnv ρ) t)
+        = shiftCode L (codeTm (Γ := y.1) (s := y.2) t) from h t ρ hlen hL hρ
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ ρ hlen hL hρ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      simp only [Binding.traverse_var, Binding.varKit, Binding.renEnv, codeTm_var]
+      rw [hρ (Binding.leafVar a), shiftCode_var]
+      split_ifs <;> rfl
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      replace hlen : List.length Δ = List.length Γ' + 1 := hlen
+      replace hL : L ≤ List.length Γ' := hL
+      replace hρ : ∀ {u : RType} (x : Binding.Var Γ' u),
+          (ρ.app x).1.val = if x.1.val < L then x.1.val else x.1.val + 1 :=
+        fun x => hρ x
+      rw [Binding.traverse_op, codeTm_op, codeTm_op]
+      simp only [Binding.underBinder_renEnv]
+      have hlen' : ∀ Ξc : Binding.Ctx RType, (Δ ++ Ξc).length = (Γ' ++ Ξc).length + 1 :=
+        fun Ξc => by simp only [List.length_append, hlen]; omega
+      have hL' : ∀ Ξc : Binding.Ctx RType, L ≤ (Γ' ++ Ξc).length :=
+        fun Ξc => by simp only [List.length_append]; omega
+      have hact : ∀ (Ξc : Binding.Ctx RType) {u : RType} (x : Binding.Var (Γ' ++ Ξc) u),
+          ((Binding.Thinning.appendId ρ Ξc).app x).1.val
+            = if x.1.val < L then x.1.val else x.1.val + 1 :=
+        fun Ξc {u} x => Binding.Thinning.appendId_app_val ρ hL hlen hρ x
+      cases o with
+      | app σa τa =>
+          have h0 := ih ⟨(0 : Fin 2)⟩ (Binding.Thinning.appendId ρ _) (hlen' _) (hL' _)
+            (hact _)
+          have h1 := ih ⟨(1 : Fin 2)⟩ (Binding.Thinning.appendId ρ _) (hlen' _) (hL' _)
+            (hact _)
+          refine Eq.trans (congrArg (fun q => Nat.pair 1
+              (Nat.pair (codeOp (OneLambdaOp.app σa τa)) q))
+              (congrArg₂ Nat.pair h0 (congrArg₂ Nat.pair h1 rfl)))
+            (shiftCode_app L (codeOp (OneLambdaOp.app σa τa)) _ _
+              (by simp [codeOp, Nat.unpair_pair])).symm
+      | lam σa τa =>
+          have h0 := ih ⟨(0 : Fin 1)⟩ (Binding.Thinning.appendId ρ _) (hlen' _) (hL' _)
+            (hact _)
+          refine Eq.trans (congrArg (fun q => Nat.pair 1
+              (Nat.pair (codeOp (OneLambdaOp.lam σa τa)) q))
+              (congrArg₂ Nat.pair h0 rfl))
+            (shiftCode_lam L (codeOp (OneLambdaOp.lam σa τa)) _
+              (by simp [codeOp, Nat.unpair_pair])).symm
+      | con b =>
+          exact (shiftCode_const L (codeOp (OneLambdaOp.con b)) _
+            (by simp [codeOp, Nat.unpair_pair])).symm
+      | dstr i =>
+          exact (shiftCode_const L (codeOp (OneLambdaOp.dstr i)) _
+            (by simp [codeOp, Nat.unpair_pair])).symm
+      | case =>
+          exact (shiftCode_const L (codeOp OneLambdaOp.case) _
+            (by simp [codeOp, Nat.unpair_pair])).symm
+
+/-- The fusion of the append-at-end weakening with the code-level shift:
+renaming along the singleton suffix embedding `Thinning.weakAppend` — the
+weakening `Binding.instantiate₁` applies to its substituend under each binder —
+shifts the term code at the ambient context length. The `codeTm_ren_shift`
+instance at the suffix embedding, whose position action is the identity, with
+every position of `Δ` below the insertion level `Δ.length`. -/
+theorem codeTm_ren_weakAppend {Δ : Binding.Ctx RType} {b s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Δ s) :
+    codeTm (Binding.ren (Binding.Thinning.weakAppend (Ξ := [b])) t)
+      = shiftCode Δ.length (codeTm t) :=
+  codeTm_ren_shift Δ.length Binding.Thinning.weakAppend (by simp) le_rfl
+    (fun x => by rw [Binding.Thinning.weakAppend_app_val, if_pos x.1.isLt]) t
+
+/-- The append-at-end weakening by an empty suffix leaves the term code
+unchanged: the `codeTm_ren_of_levels_eq` instance at the suffix embedding
+`Thinning.weakAppend` with suffix `[]`, whose position action is the
+identity. -/
+theorem codeTm_ren_weakAppend_nil {Δ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Δ s) :
+    codeTm (Binding.ren (Binding.Thinning.weakAppend (Ξ := [])) t) = codeTm t :=
+  codeTm_ren_of_levels_eq Binding.Thinning.weakAppend (by simp)
+    (fun x => Binding.Thinning.weakAppend_app_val x) t
 
 end OneLambda
 
