@@ -77,4 +77,17 @@ example :
       = codeTm (Binding.instantiate₁ (conc (natToFreeAlg 0)) redexBody) :=
   subCode_codeTm (conc (natToFreeAlg 0)) redexBody
 
+/-- The β-rank mirror on the closed normal value `conc 0`: reading the β-rank off
+the code agrees with the term-level β-rank, through the mirror lemma (no kernel
+reduction on the `codeTm` fold). -/
+example : betaRankCode (codeTm (conc (natToFreeAlg 0)))
+    = betaRedexRank (conc (natToFreeAlg 0)) :=
+  betaRankCode_codeTm (conc (natToFreeAlg 0))
+
+/-- The normality mirror on the binder-carrying substituend `λ(:o). x`: the
+code-level normality detector agrees with the term-level `Normal` predicate,
+through the mirror lemma. -/
+example : normalCode (codeTm eBinder) = true ↔ Normal eBinder :=
+  normalCode_codeTm eBinder
+
 end GebLean.Ramified.OneLambda

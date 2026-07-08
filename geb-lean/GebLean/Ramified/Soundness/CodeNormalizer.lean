@@ -3,12 +3,18 @@ import GebLean.Ramified.Soundness.CodeTm
 /-!
 # Ramified recurrence: code-level substitution
 
-The code-level image of single-variable substitution on the terms of the
-simply-typed calculus `1λ(natAlgSig)` (Leivant III section 4.2), opening the
-realization layer of the deterministic normalizer. `subCode j e` is the numeric
-shadow of `Binding.instantiate₁`: it rewrites the Gödel code `codeTm d` of a
-body into the code of the reduct `codeTm (instantiate₁ e d)`, working purely on
-the `Nat.pair` numerals with `codeTm e` supplied as the substituend code.
+The code-level realization layer of the deterministic normalizer of the
+simply-typed calculus `1λ(natAlgSig)` (Leivant III section 4.2): the numeric
+image of single-variable substitution together with the numeric images of the
+redex detectors of `GebLean/Ramified/Soundness/Normalization.lean`. `subCode j e`
+is the numeric shadow of `Binding.instantiate₁`: it rewrites the Gödel code
+`codeTm d` of a body into the code of the reduct `codeTm (instantiate₁ e d)`,
+working purely on the `Nat.pair` numerals with `codeTm e` supplied as the
+substituend code. The detectors `betaRankCode`, `hasIotaCode`, `normalCode` and
+their supporting reads recompute the redex measures of `Normalization.lean` on
+the Gödel code, each proved to agree with its term-level counterpart under
+`codeTm` (the mirror theorems); their dispatch on the operation kind bit reads
+the operation-node structure rather than the term's index data.
 
 `shiftCode j` is the code-level image of the append-at-end weakening
 `ren Thinning.weakAppend`: because `codeTm` records de Bruijn *levels* (the
@@ -37,6 +43,12 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   variable leaf of level at least `j` by one.
 * `OneLambda.subCode` — the code-level single-variable substitution: rewrite a
   body code against a substituted level `j` and a substituend code `e`.
+* `OneLambda.isLamCode`, `OneLambda.conHeadedCode`, `OneLambda.topBetaRankCode`,
+  `OneLambda.iotaSpineCode`, `OneLambda.resultShapeCode`, `OneLambda.topIotaCode`,
+  `OneLambda.betaRankCode`, `OneLambda.hasIotaCode`, `OneLambda.normalCode` — the
+  code-level images of the term-level redex detectors of `Normalization.lean`
+  (`isLam`, `conHeaded`, `topBetaRank`, `iotaSpine`, the result-sort gate,
+  `topIota`, `betaRedexRank`, `hasIota`, `Normal`).
 
 ## Main statements
 
@@ -56,6 +68,17 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   code-level substitution with the kit substitution.
 * `OneLambda.subCode_codeTm` — the mirror theorem: `subCode Γ.length (codeTm e)
   (codeTm d) = codeTm (Binding.instantiate₁ e d)`.
+* `OneLambda.isLamCode_codeTm`, `OneLambda.conHeadedCode_codeTm`,
+  `OneLambda.topBetaRankCode_codeTm`, `OneLambda.iotaSpineCode_codeTm`,
+  `OneLambda.topIotaCode_codeTm`, `OneLambda.betaRankCode_codeTm`,
+  `OneLambda.hasIotaCode_codeTm` — the detector mirrors: reading each detector off
+  a term code agrees with the term-level detector on the term.
+* `OneLambda.normalCode_codeTm` — the normal-form mirror: `normalCode (codeTm t) =
+  true ↔ Normal t`.
+* `OneLambda.codeTm_headForm` — the transport-free bridge between a term code's
+  kind and operation-kind reads and the term-level `headTag`.
+* `OneLambda.shapeCode_codeRType_zero_iff` — reading the shape off a type code
+  detects the base sort `o`.
 
 ## Implementation notes
 
@@ -92,7 +115,7 @@ convention transcribes the append-at-end de Bruijn presentation of
 ## Tags
 
 ramified recurrence, Gödel numbering, de Bruijn level, substitution, weakening,
-well-founded recursion, term code
+well-founded recursion, term code, redex, redex rank, normal form, normalization
 -/
 
 namespace GebLean.Ramified
@@ -694,6 +717,836 @@ theorem subCode_codeTm {Γ : Binding.Ctx RType} {a s : RType}
   exact (Binding.Var.appendCases_natural codeTm _ Γ _ x).trans
     (Binding.Var.appendCases_val _ Γ
       (fun n => subCode Γ.length (codeTm e) (Nat.pair 0 n)) _ hold hnew x)
+
+/-- The code-level image of the abstraction detector `isLam`: a code is a `lam`
+node when its top kind bit is `1` (an operation node) and its operation kind bit
+is `1` (the abstraction operation). Non-recursive read of the top node. Novel
+realization. -/
+def isLamCode (c : ℕ) : Bool :=
+  (Nat.unpair c).1 == 1 && (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 == 1
+
+/-- The node equation of `isLamCode` at a variable leaf `Nat.pair 0 i`: a
+variable is never an abstraction. -/
+theorem isLamCode_var (i : ℕ) : isLamCode (Nat.pair 0 i) = false := by
+  simp [isLamCode, Nat.unpair_pair]
+
+/-- The node equation of `isLamCode` at an operation node `Nat.pair 1 (Nat.pair
+op pack)`: the node is an abstraction exactly when the operation kind bit is
+`1`. -/
+theorem isLamCode_op (op pack : ℕ) :
+    isLamCode (Nat.pair 1 (Nat.pair op pack)) = ((Nat.unpair op).1 == 1) := by
+  simp [isLamCode, Nat.unpair_pair]
+
+/-- The abstraction-detector mirror: reading `isLamCode` off a term code agrees
+with the term-level abstraction detector `isLam`. By cases on the top node, the
+operation kind bits of `codeOp` selecting the `lam` operation. -/
+theorem isLamCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    isLamCode (codeTm t) = isLam t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y),
+      isLamCode (codeTm (Γ := y.1) (s := y.2) t) = isLam (Γ := y.1) (s := y.2) t from h t
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [codeTm_var, isLamCode_var, isLam_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      rw [codeTm_op, isLamCode_op]
+      cases o <;> simp [codeOp, Nat.unpair_pair, isLam, headTag_op]
+
+set_option linter.unusedVariables false in
+/-- The operation dispatch of `conHeadedCode`: the code-level image of `conHeaded`
+descending the function child of an application. Strong recursion on the code
+value: an application node (operation kind bit `0`) recurses into its function
+child code; a constructor node (kind bit `2`) is `true`; every other node is
+`false`. Novel realization. The `linter.unusedVariables` disable covers the
+`match`-bound discriminant equation, referenced only in the termination proof of
+this single-recursive-call definition. -/
+def conHeadedCode (c : ℕ) : Bool :=
+  match h : (Nat.unpair c).1, (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 with
+  | 1, 0 => conHeadedCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1
+  | 1, 2 => true
+  | _, _ => false
+  termination_by c
+  decreasing_by
+    have key : (Nat.unpair c).2 < c := by
+      conv_rhs => rw [← Nat.pair_unpair c, h]
+      exact self_lt_pair_one _
+    exact Nat.lt_of_le_of_lt
+      (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) key
+
+/-- The node equation of `conHeadedCode` at a variable leaf `Nat.pair 0 i`: a
+variable is not `con`-headed. -/
+theorem conHeadedCode_var (i : ℕ) : conHeadedCode (Nat.pair 0 i) = false := by
+  rw [conHeadedCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `conHeadedCode` at an application node (operation kind
+bit `0`): the spine descends into the function child code. -/
+theorem conHeadedCode_app (op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    conHeadedCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = conHeadedCode c0 := by
+  rw [conHeadedCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `conHeadedCode` at a constructor node (operation kind
+bit `2`): the head is a constructor. -/
+theorem conHeadedCode_con (op pack : ℕ) (hop : (Nat.unpair op).1 = 2) :
+    conHeadedCode (Nat.pair 1 (Nat.pair op pack)) = true := by
+  rw [conHeadedCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `conHeadedCode` at an operation node whose kind bit is
+neither `0` (application) nor `2` (constructor): the head is not a
+constructor. -/
+theorem conHeadedCode_op_false (op pack : ℕ)
+    (hop0 : (Nat.unpair op).1 ≠ 0) (hop2 : (Nat.unpair op).1 ≠ 2) :
+    conHeadedCode (Nat.pair 1 (Nat.pair op pack)) = false := by
+  rw [conHeadedCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The `con`-headedness mirror: reading `conHeadedCode` off a term code agrees
+with the term-level spine detector `conHeaded`. Structural induction on the term
+via `PolyFix.ind`, the operation kind bits of `codeOp` feeding the code node
+equations, and the induction hypothesis on the function child at an
+application. -/
+theorem conHeadedCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    conHeadedCode (codeTm t) = conHeaded t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y),
+      conHeadedCode (codeTm (Γ := y.1) (s := y.2) t) = conHeaded (Γ := y.1) (s := y.2) t from h t
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [codeTm_var, conHeadedCode_var, conHeaded_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      rw [codeTm_op, conHeaded_op]
+      cases o with
+      | app σ τ =>
+          exact Eq.trans
+            (conHeadedCode_app (codeOp (OneLambdaOp.app σ τ)) (codeTm (children ⟨(0 : Fin 2)⟩))
+              (codeTm (children ⟨(1 : Fin 2)⟩)) (by simp [codeOp, Nat.unpair_pair]))
+            (ih ⟨(0 : Fin 2)⟩)
+      | lam σ τ =>
+          rw [conHeadedCode_op_false _ _ (by simp [codeOp, Nat.unpair_pair])
+            (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | con b =>
+          rw [conHeadedCode_con _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | dstr j =>
+          rw [conHeadedCode_op_false _ _ (by simp [codeOp, Nat.unpair_pair])
+            (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | case =>
+          rw [conHeadedCode_op_false _ _ (by simp [codeOp, Nat.unpair_pair])
+            (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+
+/-- The code-level image of the top β-rank `topBetaRank`: a non-recursive read of
+the top node. At an application node (operation kind bit `0`) whose function
+child code is a `lam` node, the order read off the applied arrow-sort code
+(rebuilt as `Nat.pair 1` over the application tag's domain/codomain pair);
+otherwise `0`. Novel realization. -/
+def topBetaRankCode (c : ℕ) : ℕ :=
+  match (Nat.unpair c).1, (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 with
+  | 1, 0 =>
+      if isLamCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 then
+        ordCode (Nat.pair 1 (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2)
+      else 0
+  | _, _ => 0
+
+/-- The node equation of `topBetaRankCode` at a variable leaf `Nat.pair 0 i`: a
+variable contributes no top β-rank. -/
+theorem topBetaRankCode_var (i : ℕ) : topBetaRankCode (Nat.pair 0 i) = 0 := by
+  rw [topBetaRankCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `topBetaRankCode` at an application node (operation kind
+bit `0`): the top β-rank is the order read off the applied arrow-sort code when
+the function child is a `lam`, and `0` otherwise. -/
+theorem topBetaRankCode_app (op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    topBetaRankCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = if isLamCode c0 then ordCode (Nat.pair 1 (Nat.unpair op).2) else 0 := by
+  rw [topBetaRankCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `topBetaRankCode` at an operation node whose kind bit is
+not `0`: no such node is an application, so the top β-rank is `0`. -/
+theorem topBetaRankCode_op_ne_app (op pack : ℕ) (hop : (Nat.unpair op).1 ≠ 0) :
+    topBetaRankCode (Nat.pair 1 (Nat.pair op pack)) = 0 := by
+  rw [topBetaRankCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The top-β-rank mirror: reading `topBetaRankCode` off a term code agrees with
+the term-level top β-rank `topBetaRank`. By cases on the top node; at an
+application the applied arrow-sort code rebuilds `codeRType (arrow σ τ)`, whose
+`ordCode` is `RType.ord (arrow σ τ)` by `ordCode_codeRType`, and the function
+child's abstraction status transfers by `isLamCode_codeTm`. -/
+theorem topBetaRankCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    topBetaRankCode (codeTm t) = topBetaRank t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y),
+      topBetaRankCode (codeTm (Γ := y.1) (s := y.2) t)
+        = topBetaRank (Γ := y.1) (s := y.2) t from h t
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [codeTm_var, topBetaRankCode_var, topBetaRank_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      rw [codeTm_op, topBetaRank_op]
+      cases o with
+      | app σ τ =>
+          have hord : ordCode (Nat.pair 1 (Nat.unpair (codeOp (OneLambdaOp.app σ τ))).2)
+              = RType.ord (RType.arrow σ τ) := by
+            rw [show (Nat.unpair (codeOp (OneLambdaOp.app σ τ))).2
+                = Nat.pair (codeRType σ) (codeRType τ) from by simp [codeOp, Nat.unpair_pair],
+              ← codeRType_arrow, ordCode_codeRType]
+          refine Eq.trans (topBetaRankCode_app (codeOp (OneLambdaOp.app σ τ))
+            (codeTm (children ⟨(0 : Fin 2)⟩)) (codeTm (children ⟨(1 : Fin 2)⟩))
+            (by simp [codeOp, Nat.unpair_pair])) ?_
+          rw [isLamCode_codeTm, hord]
+          rfl
+      | lam σ τ =>
+          rw [topBetaRankCode_op_ne_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | con b =>
+          rw [topBetaRankCode_op_ne_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | dstr j =>
+          rw [topBetaRankCode_op_ne_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | case =>
+          rw [topBetaRankCode_op_ne_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+
+set_option linter.unusedVariables false in
+/-- The code-level image of the spine detector `iotaSpine`: strong recursion on
+the code descending the function child of an application spine. At an application
+node (operation kind bit `0`) it inspects the function child code: a destructor
+head (kind bit `3`) or a case head (kind bit `4`) bottoms the spine at the
+`con`-headedness of the argument child; a further application head (kind bit `0`)
+continues the descent into the function child; every other head is `false`.
+Non-application nodes are `false`. Novel realization. The `linter.unusedVariables`
+disable covers the `match`-bound discriminant equation, referenced only in the
+termination proof. -/
+def iotaSpineCode (c : ℕ) : Bool :=
+  match h : (Nat.unpair c).1, (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1,
+      (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1).1,
+      (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1).2).1).1
+      with
+  | 1, 0, 1, 3 => conHeadedCode (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+  | 1, 0, 1, 4 => conHeadedCode (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+  | 1, 0, 1, 0 => iotaSpineCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1
+  | _, _, _, _ => false
+  termination_by c
+  decreasing_by
+    have key : (Nat.unpair c).2 < c := by
+      conv_rhs => rw [← Nat.pair_unpair c, h]
+      exact self_lt_pair_one _
+    exact Nat.lt_of_le_of_lt
+      (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) key
+
+/-- The node equation of `iotaSpineCode` at a variable leaf `Nat.pair 0 i`: a
+variable does not bottom an ι-spine. -/
+theorem iotaSpineCode_var (i : ℕ) : iotaSpineCode (Nat.pair 0 i) = false := by
+  rw [iotaSpineCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `iotaSpineCode` at an operation node whose kind bit is
+not `0`: no such node is an application, so it does not bottom an ι-spine. -/
+theorem iotaSpineCode_op_ne_app (op pack : ℕ) (hop : (Nat.unpair op).1 ≠ 0) :
+    iotaSpineCode (Nat.pair 1 (Nat.pair op pack)) = false := by
+  rw [iotaSpineCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `iotaSpineCode` at an application node (operation kind
+bit `0`) with function child code `c0` and argument child code `c1`: the spine
+dispatches on the function child's head kind bits. -/
+theorem iotaSpineCode_app (op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    iotaSpineCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = (match (Nat.unpair c0).1, (Nat.unpair (Nat.unpair (Nat.unpair c0).2).1).1 with
+         | 1, 3 => conHeadedCode c1
+         | 1, 4 => conHeadedCode c1
+         | 1, 0 => iotaSpineCode c0
+         | _, _ => false) := by
+  rw [iotaSpineCode]
+  split <;> simp_all [Nat.unpair_pair]
+
+/-- The head-form reads of a term code: either the top kind bit is `0` and the
+head operation is absent (a variable), or the top kind bit is `1`, the operation
+kind bit reads the operation's `codeOp` kind, and the head operation is that
+operation. The transport-free bridge between the code reads that `iotaSpineCode`
+dispatches on and the term-level `headTag`. -/
+theorem codeTm_headForm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    ((Nat.unpair (codeTm t)).1 = 0 ∧ headTag t = none) ∨
+    ∃ o : OneLambdaOp natAlgSig, (Nat.unpair (codeTm t)).1 = 1 ∧
+      (Nat.unpair (Nat.unpair (Nat.unpair (codeTm t)).2).1).1 = (Nat.unpair (codeOp o)).1 ∧
+      headTag t = some o := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y),
+      ((Nat.unpair (codeTm (Γ := y.1) (s := y.2) t)).1 = 0
+          ∧ headTag (Γ := y.1) (s := y.2) t = none) ∨
+      ∃ o : OneLambdaOp natAlgSig, (Nat.unpair (codeTm (Γ := y.1) (s := y.2) t)).1 = 1 ∧
+        (Nat.unpair (Nat.unpair (Nat.unpair (codeTm (Γ := y.1) (s := y.2) t)).2).1).1
+          = (Nat.unpair (codeOp o)).1 ∧
+        headTag (Γ := y.1) (s := y.2) t = some o from h t
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      exact Or.inl ⟨by rw [codeTm_var, Nat.unpair_pair], headTag_var _⟩
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      refine Or.inr ⟨o, ?_, ?_, headTag_op _ _⟩
+      · simp only [codeTm_op, Nat.unpair_pair]
+      · simp only [codeTm_op, Nat.unpair_pair]
+
+/-- The spine-detector mirror: reading `iotaSpineCode` off a term code agrees
+with the term-level spine detector `iotaSpine`. Structural induction on the term;
+at an application the function child's head is read off its code by
+`codeTm_headForm`, dispatching to `conHeadedCode_codeTm` at a destructor or case
+head and to the induction hypothesis at a further application. -/
+theorem iotaSpineCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    iotaSpineCode (codeTm t) = iotaSpine t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y),
+      iotaSpineCode (codeTm (Γ := y.1) (s := y.2) t)
+        = iotaSpine (Γ := y.1) (s := y.2) t from h t
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [codeTm_var, iotaSpineCode_var, iotaSpine_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      rw [codeTm_op, iotaSpine_op]
+      cases o with
+      | app σ τ =>
+          refine Eq.trans (iotaSpineCode_app (codeOp (OneLambdaOp.app σ τ))
+            (codeTm (children ⟨⟨0, Nat.succ_pos 1⟩⟩)) (codeTm (children ⟨⟨1, Nat.one_lt_two⟩⟩))
+            (by simp [codeOp, Nat.unpair_pair])) ?_
+          simp only [iotaSpineOp]
+          rcases codeTm_headForm (children ⟨⟨0, Nat.succ_pos 1⟩⟩) with
+            ⟨hk, hht⟩ | ⟨o', hk, hfop, hht⟩
+          · simp [hk, hht]
+          · simp only [hk, hfop, hht]
+            cases o' with
+            | app σ' τ' => simpa [codeOp, Nat.unpair_pair] using ih ⟨⟨0, Nat.succ_pos 1⟩⟩
+            | lam σ' τ' => simp [codeOp, Nat.unpair_pair]
+            | con b => simp [codeOp, Nat.unpair_pair]
+            | dstr j =>
+                simp only [codeOp, Nat.unpair_pair]
+                exact conHeadedCode_codeTm (children ⟨⟨1, Nat.one_lt_two⟩⟩)
+            | case =>
+                simp only [codeOp, Nat.unpair_pair]
+                exact conHeadedCode_codeTm (children ⟨⟨1, Nat.one_lt_two⟩⟩)
+      | lam σ τ =>
+          rw [iotaSpineCode_op_ne_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | con b =>
+          rw [iotaSpineCode_op_ne_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | dstr j =>
+          rw [iotaSpineCode_op_ne_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+      | case =>
+          rw [iotaSpineCode_op_ne_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+          rfl
+
+/-- The result-sort shape read off an operation-node code: the numeric shape of
+the node's result sort, computed from the operation tag. At an application
+(operation kind bit `0`) it is the shape of the codomain sort code carried in the
+tag; abstractions, destructors, and the case combinator have arrow result sorts
+(shape `1`); the constructor and variable readings are don't-care (default `0`),
+where the spine detector already vanishes. Novel realization; the plan's named
+helper (`resultShapeCode`). -/
+def resultShapeCode (c : ℕ) : ℕ :=
+  match (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 with
+  | 0 => shapeCode (codCode (Nat.unpair (Nat.unpair c).2).1)
+  | 1 => 1
+  | 3 => 1
+  | 4 => 1
+  | _ => 0
+
+/-- The node equation of `resultShapeCode` at an application node (operation kind
+bit `0`): the result shape is the shape of the codomain sort code read off the
+operation tag. -/
+theorem resultShapeCode_app (op pack : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    resultShapeCode (Nat.pair 1 (Nat.pair op pack)) = shapeCode (codCode op) := by
+  rw [resultShapeCode]
+  simp only [Nat.unpair_pair, hop]
+
+/-- Reading the shape off a type code detects the base sort `o`: `shapeCode
+(codeRType τ)` is `0` exactly when `τ` has base shape. By structural induction on
+the r-type through the `codeRType` node tags. -/
+theorem shapeCode_codeRType_zero_iff (τ : RType) :
+    shapeCode (codeRType τ) = 0 ↔ RType.shape τ = RTypeShape.o :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => shapeCode (codeRType t) = 0 ↔ RType.shape t = RTypeShape.o)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => by
+          change (Nat.unpair (Nat.pair 0 0)).1 = 0 ↔ _
+          simp [Nat.unpair_pair, RType.shape, PolyFix.index]
+      | RTypeShape.arrow, childx, _ => by
+          change (Nat.unpair (Nat.pair 1 _)).1 = 0 ↔ _
+          simp [Nat.unpair_pair, RType.shape, PolyFix.index]
+      | RTypeShape.omega, childx, _ => by
+          change (Nat.unpair (Nat.pair 2 _)).1 = 0 ↔ _
+          simp [Nat.unpair_pair, RType.shape, PolyFix.index]) τ
+
+/-- The code-level image of the sort-gated ι-redex detector `topIota`: the spine
+detector `iotaSpineCode` restricted to codes whose result-sort shape is the base
+sort `o` (`resultShapeCode c = 0`). Novel realization. -/
+def topIotaCode (c : ℕ) : Bool :=
+  if resultShapeCode c = 0 then iotaSpineCode c else false
+
+/-- The node equation of `topIotaCode` at a variable leaf `Nat.pair 0 i`: a
+variable is not a top ι-redex. -/
+theorem topIotaCode_var (i : ℕ) : topIotaCode (Nat.pair 0 i) = false := by
+  simp only [topIotaCode, iotaSpineCode_var, ite_self]
+
+/-- The top-ι mirror: reading `topIotaCode` off a term code agrees with the
+term-level sort-gated ι-redex detector `topIota`. The spine content transfers by
+`iotaSpineCode_codeTm`; at an application the result-shape gate reads the codomain
+sort shape, agreeing with the term's result-sort gate by
+`shapeCode_codeRType_zero_iff`, and at every other node the spine content already
+vanishes. -/
+theorem topIotaCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    topIotaCode (codeTm t) = topIota t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y),
+      topIotaCode (codeTm (Γ := y.1) (s := y.2) t)
+        = topIota (Γ := y.1) (s := y.2) t from h t
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [codeTm_var, topIotaCode_var, topIota_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      cases o with
+      | app σ τ =>
+          have hshape : resultShapeCode (codeTm
+              (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.app σ τ)
+                (fun j => children ⟨j⟩))) = shapeCode (codeRType τ) := by
+            rw [codeTm_op, resultShapeCode_app _ _ (by simp [codeOp, Nat.unpair_pair])]
+            simp [codeOp, codCode, argCode, Nat.unpair_pair]
+          change (if resultShapeCode (codeTm
+              (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.app σ τ)
+                (fun j => children ⟨j⟩))) = 0
+              then iotaSpineCode (codeTm
+                (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.app σ τ)
+                  (fun j => children ⟨j⟩)))
+              else false)
+            = (if τ.shape = RTypeShape.o
+              then iotaSpine (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.app σ τ)
+                (fun j => children ⟨j⟩))
+              else false)
+          rw [hshape, iotaSpineCode_codeTm]
+          by_cases hτ : τ.shape = RTypeShape.o
+          · rw [if_pos ((shapeCode_codeRType_zero_iff τ).mpr hτ), if_pos hτ]
+          · rw [if_neg (fun h => hτ ((shapeCode_codeRType_zero_iff τ).mp h)), if_neg hτ]
+      | lam σ τ =>
+          simp only [topIotaCode, topIota, iotaSpineCode_codeTm, iotaSpine_op,
+            iotaSpineOp, ite_self]
+      | con b =>
+          simp only [topIotaCode, topIota, iotaSpineCode_codeTm, iotaSpine_op,
+            iotaSpineOp, ite_self]
+      | dstr j =>
+          simp only [topIotaCode, topIota, iotaSpineCode_codeTm, iotaSpine_op,
+            iotaSpineOp, ite_self]
+      | case =>
+          simp only [topIotaCode, topIota, iotaSpineCode_codeTm, iotaSpine_op,
+            iotaSpineOp, ite_self]
+
+set_option linter.unusedVariables false in
+/-- The code-level image of the β-rank measure `betaRedexRank`: strong recursion
+on the code taking the maximum of the top β-rank `topBetaRankCode` with the
+β-ranks of the child codes. An application node (operation kind bit `0`) maxes the
+top rank over both children; an abstraction node (kind bit `1`) recurses into its
+body child; every other node is `0`. Novel realization. The
+`linter.unusedVariables` disable covers the `match`-bound discriminant equation,
+referenced only in the termination proof. -/
+def betaRankCode (c : ℕ) : ℕ :=
+  match h : (Nat.unpair c).1, (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 with
+  | 1, 0 =>
+      max (topBetaRankCode c)
+        (max (betaRankCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1)
+          (betaRankCode (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1))
+  | 1, 1 => betaRankCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1
+  | _, _ => 0
+  termination_by c
+  decreasing_by
+    all_goals
+      have key : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h]
+        exact self_lt_pair_one _
+      first
+      | exact Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) key
+      | exact Nat.lt_of_le_of_lt
+          (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.unpair_right_le _)) key
+
+/-- The node equation of `betaRankCode` at a variable leaf `Nat.pair 0 i`. -/
+theorem betaRankCode_var (i : ℕ) : betaRankCode (Nat.pair 0 i) = 0 := by
+  rw [betaRankCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `betaRankCode` at an application node (operation kind bit
+`0`): the maximum of the top β-rank and the β-ranks of the two children. -/
+theorem betaRankCode_app (op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    betaRankCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = max (topBetaRankCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0)))))
+          (max (betaRankCode c0) (betaRankCode c1)) := by
+  rw [betaRankCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `betaRankCode` at an abstraction node (operation kind bit
+`1`): the β-rank of the body child (an abstraction contributes no top β-rank). -/
+theorem betaRankCode_lam (op c0 : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    betaRankCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 0))) = betaRankCode c0 := by
+  rw [betaRankCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `betaRankCode` at an operation node whose kind bit is at
+least `2` (a nullary constant): no β-rank. -/
+theorem betaRankCode_op_ge_two (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
+    betaRankCode (Nat.pair 1 (Nat.pair op pack)) = 0 := by
+  rw [betaRankCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The β-rank mirror: reading `betaRankCode` off a term code agrees with the
+term-level β-rank `betaRedexRank`. Structural induction on the term; the top β-rank
+transfers by `topBetaRankCode_codeTm` and the child ranks by the induction
+hypothesis, with the children maximum reconciled with the term-level `Finset.sup`. -/
+theorem betaRankCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    betaRankCode (codeTm t) = betaRedexRank t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y),
+      betaRankCode (codeTm (Γ := y.1) (s := y.2) t)
+        = betaRedexRank (Γ := y.1) (s := y.2) t from h t
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [codeTm_var, betaRankCode_var, betaRedexRank_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      cases o with
+      | app σ τ =>
+          rw [betaRedexRank_op]
+          refine Eq.trans (betaRankCode_app (codeOp (OneLambdaOp.app σ τ))
+            (codeTm (children ⟨(0 : Fin 2)⟩)) (codeTm (children ⟨(1 : Fin 2)⟩))
+            (by simp [codeOp, Nat.unpair_pair])) ?_
+          congr 1
+          · exact topBetaRankCode_codeTm (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.app σ τ) (fun j => children ⟨j⟩))
+          · change max (betaRankCode (codeTm (children ⟨(0 : Fin 2)⟩)))
+                (betaRankCode (codeTm (children ⟨(1 : Fin 2)⟩)))
+              = (Finset.univ : Finset (Fin 2)).sup (fun j => betaRedexRank (children ⟨j⟩))
+            rw [show (Finset.univ : Finset (Fin 2)) = {0, 1} from rfl,
+              Finset.sup_insert, Finset.sup_singleton]
+            exact congrArg₂ max (ih ⟨(0 : Fin 2)⟩) (ih ⟨(1 : Fin 2)⟩)
+      | lam σ τ =>
+          rw [betaRedexRank_op,
+            show topBetaRank (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.lam σ τ) (fun j => children ⟨j⟩)) = 0 from by rw [topBetaRank_op]; rfl]
+          refine Eq.trans (betaRankCode_lam (codeOp (OneLambdaOp.lam σ τ))
+            (codeTm (children ⟨(0 : Fin 1)⟩)) (by simp [codeOp, Nat.unpair_pair])) ?_
+          change betaRankCode (codeTm (children ⟨(0 : Fin 1)⟩))
+            = max 0 ((Finset.univ : Finset (Fin 1)).sup (fun j => betaRedexRank (children ⟨j⟩)))
+          rw [show (Finset.univ : Finset (Fin 1)) = {0} from rfl, Finset.sup_singleton,
+            Nat.zero_max]
+          exact ih ⟨(0 : Fin 1)⟩
+      | con b =>
+          rw [codeTm_op, betaRankCode_op_ge_two _ _ (by simp [codeOp, Nat.unpair_pair]),
+            betaRedexRank_op,
+            show topBetaRank (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.con b) (fun j => children ⟨j⟩)) = 0 from by rw [topBetaRank_op]; rfl]
+          change (0 : ℕ) = max 0 ((Finset.univ : Finset (Fin 0)).sup _)
+          simp [Finset.univ_eq_empty]
+      | dstr j =>
+          rw [codeTm_op, betaRankCode_op_ge_two _ _ (by simp [codeOp, Nat.unpair_pair]),
+            betaRedexRank_op,
+            show topBetaRank (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.dstr j) (fun k => children ⟨k⟩)) = 0 from by rw [topBetaRank_op]; rfl]
+          change (0 : ℕ) = max 0 ((Finset.univ : Finset (Fin 0)).sup _)
+          simp [Finset.univ_eq_empty]
+      | case =>
+          rw [codeTm_op, betaRankCode_op_ge_two _ _ (by simp [codeOp, Nat.unpair_pair]),
+            betaRedexRank_op,
+            show topBetaRank (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              OneLambdaOp.case (fun j => children ⟨j⟩)) = 0 from by rw [topBetaRank_op]; rfl]
+          change (0 : ℕ) = max 0 ((Finset.univ : Finset (Fin 0)).sup _)
+          simp [Finset.univ_eq_empty]
+
+set_option linter.unusedVariables false in
+/-- The code-level image of the ι-redex census `hasIota`: strong recursion on the
+code disjoining the top ι-redex detector `topIotaCode` with the ι-redex census of
+the child codes. An application node (operation kind bit `0`) disjoins over both
+children; an abstraction node (kind bit `1`) recurses into its body child; every
+other node is `false`. Novel realization. The `linter.unusedVariables` disable
+covers the `match`-bound discriminant equation, referenced only in the termination
+proof. -/
+def hasIotaCode (c : ℕ) : Bool :=
+  match h : (Nat.unpair c).1, (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 with
+  | 1, 0 =>
+      topIotaCode c || hasIotaCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1
+        || hasIotaCode (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+  | 1, 1 => hasIotaCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1
+  | _, _ => false
+  termination_by c
+  decreasing_by
+    all_goals
+      have key : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h]
+        exact self_lt_pair_one _
+      first
+      | exact Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) key
+      | exact Nat.lt_of_le_of_lt
+          (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.unpair_right_le _)) key
+
+/-- The node equation of `hasIotaCode` at a variable leaf `Nat.pair 0 i`. -/
+theorem hasIotaCode_var (i : ℕ) : hasIotaCode (Nat.pair 0 i) = false := by
+  rw [hasIotaCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `hasIotaCode` at an application node (operation kind bit
+`0`): the top ι-redex detector disjoined with the census of both children. -/
+theorem hasIotaCode_app (op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    hasIotaCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = (topIotaCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+          || hasIotaCode c0 || hasIotaCode c1) := by
+  rw [hasIotaCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `hasIotaCode` at an abstraction node (operation kind bit
+`1`): the census of the body child (an abstraction is not an ι-redex). -/
+theorem hasIotaCode_lam (op c0 : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    hasIotaCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 0))) = hasIotaCode c0 := by
+  rw [hasIotaCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `hasIotaCode` at an operation node whose kind bit is at
+least `2` (a nullary constant): no ι-redex. -/
+theorem hasIotaCode_op_ge_two (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
+    hasIotaCode (Nat.pair 1 (Nat.pair op pack)) = false := by
+  rw [hasIotaCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The ι-census mirror: reading `hasIotaCode` off a term code agrees with the
+term-level ι-redex census `hasIota`. Structural induction on the term; the top
+ι-redex detector transfers by `topIotaCode_codeTm` and the child censuses by the
+induction hypothesis. -/
+theorem hasIotaCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    hasIotaCode (codeTm t) = hasIota t := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y),
+      hasIotaCode (codeTm (Γ := y.1) (s := y.2) t)
+        = hasIota (Γ := y.1) (s := y.2) t from h t
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [codeTm_var, hasIotaCode_var, hasIota_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j => children ⟨j⟩)
+            from rfl]
+      cases o with
+      | app σ τ =>
+          have hsup : (Finset.univ.sup (fun j => hasIota (children ⟨j⟩)) : Bool)
+              = (hasIota (children ⟨(0 : Fin 2)⟩) || hasIota (children ⟨(1 : Fin 2)⟩)) := by
+            change (Finset.univ : Finset (Fin 2)).sup _ = _
+            rw [show (Finset.univ : Finset (Fin 2)) = {0, 1} from rfl,
+              Finset.sup_insert, Finset.sup_singleton]
+            rfl
+          rw [hasIota_op, hsup]
+          refine Eq.trans (hasIotaCode_app (codeOp (OneLambdaOp.app σ τ))
+            (codeTm (children ⟨(0 : Fin 2)⟩)) (codeTm (children ⟨(1 : Fin 2)⟩))
+            (by simp [codeOp, Nat.unpair_pair])) ?_
+          rw [Bool.or_assoc]
+          exact congrArg₂ (· || ·)
+            (topIotaCode_codeTm (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.app σ τ) (fun j => children ⟨j⟩)))
+            (congrArg₂ (· || ·) (ih ⟨(0 : Fin 2)⟩) (ih ⟨(1 : Fin 2)⟩))
+      | lam σ τ =>
+          have hsup : (Finset.univ.sup (fun j => hasIota (children ⟨j⟩)) : Bool)
+              = hasIota (children ⟨(0 : Fin 1)⟩) := by
+            change (Finset.univ : Finset (Fin 1)).sup _ = _
+            rw [show (Finset.univ : Finset (Fin 1)) = {0} from rfl, Finset.sup_singleton]
+          rw [hasIota_op, hsup,
+            show topIota (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.lam σ τ) (fun j => children ⟨j⟩)) = false from by
+                simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self],
+            Bool.false_or]
+          refine Eq.trans (hasIotaCode_lam (codeOp (OneLambdaOp.lam σ τ))
+            (codeTm (children ⟨(0 : Fin 1)⟩)) (by simp [codeOp, Nat.unpair_pair])) ?_
+          exact ih ⟨(0 : Fin 1)⟩
+      | con b =>
+          rw [codeTm_op, hasIotaCode_op_ge_two _ _ (by simp [codeOp, Nat.unpair_pair]),
+            hasIota_op,
+            show topIota (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.con b) (fun j => children ⟨j⟩)) = false from by
+                simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self]]
+          change (false : Bool) = (false || (Finset.univ : Finset (Fin 0)).sup _)
+          simp [Finset.univ_eq_empty]
+      | dstr j =>
+          rw [codeTm_op, hasIotaCode_op_ge_two _ _ (by simp [codeOp, Nat.unpair_pair]),
+            hasIota_op,
+            show topIota (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.dstr j) (fun k => children ⟨k⟩)) = false from by
+                simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self]]
+          change (false : Bool) = (false || (Finset.univ : Finset (Fin 0)).sup _)
+          simp [Finset.univ_eq_empty]
+      | case =>
+          rw [codeTm_op, hasIotaCode_op_ge_two _ _ (by simp [codeOp, Nat.unpair_pair]),
+            hasIota_op,
+            show topIota (Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              OneLambdaOp.case (fun j => children ⟨j⟩)) = false from by
+                simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self]]
+          change (false : Bool) = (false || (Finset.univ : Finset (Fin 0)).sup _)
+          simp [Finset.univ_eq_empty]
+
+/-- The code-level image of the normal-form predicate `Normal`: a code is normal
+when its β-rank is `0` and it carries no ι-redex. Novel realization. -/
+def normalCode (c : ℕ) : Bool := (betaRankCode c == 0) && !hasIotaCode c
+
+/-- The normality mirror: the code-level normal-form detector holds exactly when
+the term is `Normal`. By the β-rank and ι-census mirrors together with
+`normal_iff`. -/
+theorem normalCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    normalCode (codeTm t) = true ↔ Normal t := by
+  rw [normalCode, Bool.and_eq_true, Bool.not_eq_true', beq_iff_eq,
+    betaRankCode_codeTm, hasIotaCode_codeTm, normal_iff]
 
 end OneLambda
 
