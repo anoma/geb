@@ -178,4 +178,16 @@ example :
     decodeWord (codeTm (conc (natToFreeAlg 2))) = freeAlgToNat (natToFreeAlg 2) :=
   decodeWord_codeTm_conc (natToFreeAlg 2)
 
+/-- The numeric fold `codeBbRep` agrees with the code of the Berarducci-Böhm
+representation at the base sort `o` and the zero numeral (task 6.4.7), through
+`codeBbRep_codeTm`. -/
+example : codeBbRep RType.o 0 = codeTm (bbRep (natToFreeAlg 0) (barTy RType.o)) :=
+  codeBbRep_codeTm RType.o 0
+
+/-- The numeric fold `codeBbRep` agrees with the code of the Berarducci-Böhm
+representation at the base sort `o` and the numeral `2`, exercising the spine
+recursion twice under the fixed abstraction wrapper. -/
+example : codeBbRep RType.o 2 = codeTm (bbRep (natToFreeAlg 2) (barTy RType.o)) :=
+  codeBbRep_codeTm RType.o 2
+
 end GebLean.Ramified

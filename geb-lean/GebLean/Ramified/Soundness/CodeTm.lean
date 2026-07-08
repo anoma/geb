@@ -59,6 +59,12 @@ normalizer tasks.
   `Nat.rec` fold shadowing `codeTm ∘ conc ∘ natToFreeAlg`.
 * `OneLambda.decodeWord` — the decoder reading a natural number back off the code
   of a constructor word by strong recursion on the code value.
+* `OneLambda.codeLamWrap` — the numeric abstraction wrapper of
+  `OneLambda.lamSpine`: a fold over the binder suffix layering `lam` nodes.
+* `OneLambda.codeBbInner` — the Gödel code of the variable-headed spine of the
+  Berarducci-Böhm representation of a numeral: a `Nat.rec` fold.
+* `OneLambda.codeBbRep` — the Gödel code of the Berarducci-Böhm representation of a
+  numeral: the fixed `codeLamWrap` prefix over `codeBbInner`.
 
 ## Main statements
 
@@ -90,6 +96,11 @@ normalizer tasks.
 * `OneLambda.decodeWord_codeTm_conc`, `OneLambda.decodeWord_codeConc` — the
   decoder inverts the constructor-word code: `decodeWord (codeTm (conc a)) =
   freeAlgToNat a` and `decodeWord (codeConc n) = n`.
+* `OneLambda.codeTm_lamSpine` — the code of an iterated abstraction is
+  `codeLamWrap` applied to the body code.
+* `OneLambda.codeBbInner_codeTm`, `OneLambda.codeBbRep_codeTm` — the numeric folds
+  agree with the codes: `codeBbInner τ n = codeTm (bbSpine (barTy τ) (natToFreeAlg
+  n))` and `codeBbRep τ n = codeTm (bbRep (natToFreeAlg n) (barTy τ))`.
 
 ## Implementation notes
 
@@ -114,6 +125,18 @@ combinators `app'`/`lam'` transport their arguments across `Γ ++ [] = Γ`; the
 node equations discharge that transport by `codeTm_appendNil`, the
 single-transport specialization of `codeTm_cast`, matching the house pattern of
 the `Normalization.lean` detector folds.
+
+The word codes `codeConc`, `codeBbInner`, and `codeBbRep` are numeric `Nat.rec`
+folds on the numeral, each proved to agree with its term code by induction on the
+numeral through the landed node equations rather than by kernel reduction of the
+`PolyFix` folds. `codeConc` and `codeBbInner` recurse on the numeral directly.
+`codeBbRep` factors as the fixed abstraction wrapper `codeLamWrap` (a fold over
+the constructor step types, depending on `τ` alone) over the numeral-recursive
+spine code `codeBbInner`: the `lamSpine` prefix of `bbRep` is constant across the
+numeral, so the recursion lives entirely in the variable-headed spine core, and
+`codeTm_lamSpine` bridges the wrapper to `codeTm`. `decodeWord` is the strong
+recursion inverting the constructor-word code, terminating by the same pairing
+bounds and strict step `self_lt_pair_one` that guard `ordCode`.
 
 ## References
 
@@ -583,6 +606,102 @@ theorem decodeWord_codeConc (n : ℕ) : decodeWord (codeConc n) = n := by
         (Nat.pair (Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con true)) 0))
           (Nat.pair (codeConc n) 0)))) = n + 1
     rw [decodeWord_app _ _ _ (by simp [codeOp, Nat.unpair_pair]), ih]
+
+/-- The code is invariant under a context transport realized as `cast` of a
+`congrArg` on the term type, the form the iterated abstraction `lamSpine` emits.
+The `cast`-shaped counterpart of `codeTm_cast`. -/
+private theorem codeTm_castCtx {Γ Γ' : Binding.Ctx RType} {τ : RType} (h : Γ = Γ')
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ τ) :
+    codeTm (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ) h) t)
+      = codeTm t := by
+  cases h; rfl
+
+/-- The Gödel code of an iterated abstraction over a binder suffix `Δ` at result
+sort `result`, as a fold over `Δ` wrapping the code of a body: each context sort
+`ξ` contributes one `lam`-node layer `Nat.pair 1 (Nat.pair (codeOp (lam ξ (curried
+Δ' result))) (Nat.pair · 0))`, the empty suffix passing the body code through. The
+numeric wrapper of `OneLambda.lamSpine`, computed by `codeTm_lamSpine`. -/
+def codeLamWrap (result : RType) : List RType → ℕ → ℕ
+  | [], c => c
+  | ξ :: Δ', c =>
+      Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.lam ξ (RType.curried Δ' result)))
+        (Nat.pair (codeLamWrap result Δ' c) 0))
+
+/-- The code of an iterated abstraction is the wrapper `codeLamWrap` applied to the
+code of the body: `codeTm (lamSpine Δ body) = codeLamWrap result Δ (codeTm body)`.
+By induction on the binder suffix `Δ`, peeling one `lam'` layer at a time
+(`codeTm_lam'`) and discharging the binder-associativity transports by
+`codeTm_castCtx`. -/
+theorem codeTm_lamSpine :
+    {Γ : Binding.Ctx RType} → {result : RType} → (Δ : List RType) →
+    (body : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ Δ) result) →
+    codeTm (OneLambda.lamSpine Δ body) = codeLamWrap result Δ (codeTm body)
+  | Γ, _result, [], body => by
+      rw [OneLambda.lamSpine]; exact codeTm_castCtx (List.append_nil Γ) body
+  | Γ, result, ξ :: Δ', body => by
+      refine (codeTm_lam' (Γ := Γ) (σ := ξ) (τ := RType.curried Δ' result) _).trans ?_
+      rw [codeTm_lamSpine Δ', codeTm_castCtx (List.append_assoc Γ [ξ] Δ').symm body]; rfl
+
+/-- The variable-headed application spine inside the Berarducci-Böhm
+representation (Leivant III section 4.2): the free-algebra fold of `bbRep` at sort
+`σ` before the outer `lamSpine`, replacing each constructor node by the bound
+constructor variable `ctorVar b` saturated along the arity spine. Definitionally
+the body that `bbRep a σ` abstracts. -/
+private def bbSpine (σ : RType) (a : FreeAlg natAlgSig) :
+    Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ :=
+  FreeAlg.recurse (A := natAlgSig) (P := Unit)
+    (C := Binding.Tm (oneLambdaSig natAlgSig) (stepTypes natAlgSig σ σ) σ)
+    (fun b _ _sub rec =>
+      OneLambda.replicateSpine (natAlgSig.ar b) σ (Binding.Tm.var (ctorVar b)) rec) () a
+
+/-- The Gödel code of the variable-headed spine `bbSpine (barTy τ)` of a numeral: a
+`Nat.rec` fold shadowing `codeTm ∘ bbSpine (barTy τ) ∘ natToFreeAlg`. The zero
+numeral codes to the bound constructor variable `ctorVar false`
+(`Nat.pair 0 (ctorIdx false).val`); the successor numeral codes to one
+`app`-of-`ctorVar true` layer over the predecessor code, matching `codeTm_app'`
+and `codeTm_var`. Novel realization. -/
+def codeBbInner (τ : RType) : ℕ → ℕ
+  | 0 => Nat.pair 0 (ctorIdx false).val
+  | m + 1 =>
+      Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app (barTy τ) (barTy τ)))
+        (Nat.pair (Nat.pair 0 (ctorIdx true).val) (Nat.pair (codeBbInner τ m) 0)))
+
+/-- The numeric fold `codeBbInner` agrees with the code of the variable-headed
+spine: `codeBbInner τ n = codeTm (bbSpine (barTy τ) (natToFreeAlg n))`. By
+induction on `n`, the `bbSpine` reductions feeding `codeTm_var` at the base and
+`codeTm_app'` at the successor. Novel realization. -/
+theorem codeBbInner_codeTm (τ : RType) (n : ℕ) :
+    codeBbInner τ n = codeTm (bbSpine (barTy τ) (natToFreeAlg n)) := by
+  induction n with
+  | zero =>
+    change codeBbInner τ 0 = codeTm (Binding.Tm.var (ctorVar (σ := barTy τ) false))
+    rw [codeTm_var]; rfl
+  | succ m ih =>
+    have h := codeTm_app' (Γ := stepTypes natAlgSig (barTy τ) (barTy τ))
+      (Binding.Tm.var (ctorVar (σ := barTy τ) true))
+      (bbSpine (barTy τ) (natToFreeAlg m))
+    rw [codeTm_var, ← ih] at h
+    exact h.symm
+
+/-- The Gödel code of the Berarducci-Böhm representation of a numeral at the barred
+sort `barTy τ` (Leivant III section 4.2): the fixed abstraction wrapper
+`codeLamWrap` over the constructor step types applied to the numeric spine code
+`codeBbInner τ n`. The lambda-spine prefix is a function of `τ` alone, so the
+recursion in `n` lives entirely in the variable-headed spine core. Novel
+realization. -/
+def codeBbRep (τ : RType) (n : ℕ) : ℕ :=
+  codeLamWrap (barTy τ) (stepTypes natAlgSig (barTy τ) (barTy τ)) (codeBbInner τ n)
+
+/-- The numeric fold `codeBbRep` agrees with the code of the Berarducci-Böhm
+representation (Leivant III section 4.2): `codeBbRep τ n = codeTm (bbRep
+(natToFreeAlg n) (barTy τ))`. The spine agreement `codeBbInner_codeTm` supplies the
+body code, which `codeTm_lamSpine` wraps through the constructor abstraction of
+`bbRep`. Novel realization. -/
+theorem codeBbRep_codeTm (τ : RType) (n : ℕ) :
+    codeBbRep τ n = codeTm (bbRep (natToFreeAlg n) (barTy τ)) := by
+  rw [codeBbRep, codeBbInner_codeTm]
+  exact (codeTm_lamSpine (Γ := []) (stepTypes natAlgSig (barTy τ) (barTy τ))
+    (bbSpine (barTy τ) (natToFreeAlg n))).symm
 
 end OneLambda
 
