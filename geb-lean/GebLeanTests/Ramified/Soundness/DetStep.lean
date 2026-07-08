@@ -34,4 +34,14 @@ example : detStep (OneLambda.app'
     if_pos (by rw [hf]; exact ⟨isLam_lam' _, by simp [RType.ord_arrow, RType.ord_o]⟩),
     hf, appReduct_lam']
 
+/-- The deterministic step is the identity on the concrete term of any free-algebra
+value (a `Normal` term), via `detStep_normal`. -/
+example (a : FreeAlg natAlgSig) : detStep (conc a) = conc a :=
+  detStep_normal (normal_conc a)
+
+/-- The deterministic step is the identity on the concrete term of the zero word,
+an acceptance instance of the normal-form fixpoint. -/
+example : detStep (conc (natToFreeAlg 0)) = conc (natToFreeAlg 0) :=
+  detStep_normal (normal_conc _)
+
 end GebLean.Ramified

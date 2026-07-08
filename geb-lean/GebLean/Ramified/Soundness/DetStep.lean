@@ -46,6 +46,7 @@ contraction reads the destructor- or case-redex off the application spine throug
   `OneLambda.detIotaStep_lam'` — the ι-worker node equations in the same shape.
 * `OneLambda.appReduct_lam'` — the β-contraction node equation.
 * `OneLambda.detStep_eq` — the dispatch unfolding of `detStep`.
+* `OneLambda.detStep_normal` — `detStep` is the identity on `Normal` terms.
 
 ## References
 
@@ -491,6 +492,14 @@ theorem detStep_eq {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig A) Γ s) :
     detStep t = (if 0 < betaRedexRank t then detStepAt (betaRedexRank t) t
       else if hasIota t = true then detIotaStep t else t) := rfl
+
+/-- `detStep` is the identity on `Normal` terms: a normal term has β-rank `0` and
+no ι-redex, so both dispatch guards fail. -/
+theorem detStep_normal {Γ : Binding.Ctx RType} {s : RType}
+    {t : Binding.Tm (oneLambdaSig A) Γ s} (h : Normal t) : detStep t = t := by
+  obtain ⟨hb, hi⟩ := (normal_iff t).mp h
+  rw [detStep_eq, hb, hi]
+  simp
 
 end OneLambda
 
