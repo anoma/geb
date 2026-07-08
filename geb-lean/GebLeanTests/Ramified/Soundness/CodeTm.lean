@@ -164,4 +164,18 @@ example : codeConc 0 = codeTm (conc (natToFreeAlg 0)) := codeConc_codeTm 0
 numeral `2`, exercising the successor wrapper twice. -/
 example : codeConc 2 = codeTm (conc (natToFreeAlg 2)) := codeConc_codeTm 2
 
+/-- The decoder inverts `codeConc` at the zero numeral (task 6.4.7), through
+`decodeWord_codeConc`. -/
+example : decodeWord (codeConc 0) = 0 := decodeWord_codeConc 0
+
+/-- The decoder inverts `codeConc` at the numeral `2`, reading back the two
+successor layers of the constructor word. -/
+example : decodeWord (codeConc 2) = 2 := decodeWord_codeConc 2
+
+/-- The decoder inverts the code of the concrete term, reading `freeAlgToNat` back
+off the constructor-word code, at the numeral `2`. -/
+example :
+    decodeWord (codeTm (conc (natToFreeAlg 2))) = freeAlgToNat (natToFreeAlg 2) :=
+  decodeWord_codeTm_conc (natToFreeAlg 2)
+
 end GebLean.Ramified

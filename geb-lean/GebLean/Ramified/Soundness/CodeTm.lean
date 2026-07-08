@@ -57,6 +57,8 @@ normalizer tasks.
   the packed child codes.
 * `OneLambda.codeConc` — the Gödel code of the concrete `o`-term of a numeral: a
   `Nat.rec` fold shadowing `codeTm ∘ conc ∘ natToFreeAlg`.
+* `OneLambda.decodeWord` — the decoder reading a natural number back off the code
+  of a constructor word by strong recursion on the code value.
 
 ## Main statements
 
@@ -85,6 +87,9 @@ normalizer tasks.
   recursions on codes of the downstream normalizer tasks.
 * `OneLambda.codeConc_codeTm` — the numeric fold `codeConc` agrees with the code
   of the concrete term: `codeConc n = codeTm (conc (natToFreeAlg n))`.
+* `OneLambda.decodeWord_codeTm_conc`, `OneLambda.decodeWord_codeConc` — the
+  decoder inverts the constructor-word code: `decodeWord (codeTm (conc a)) =
+  freeAlgToNat a` and `decodeWord (codeConc n) = n`.
 
 ## Implementation notes
 
@@ -494,6 +499,90 @@ theorem codeConc_codeTm (n : ℕ) : codeConc n = codeTm (conc (natToFreeAlg n)) 
       (conc (natToFreeAlg n))
     rw [← ih] at h
     exact h.symm
+
+/-- Reading a natural number back off the code of a constructor word (Leivant III
+section 4.2): strong recursion on the code value. A code `Nat.pair 1 (Nat.pair op
+pack)` is an operation node; when `op` codes an application (`(Nat.unpair op).1 =
+0`) the word is a successor and the recursion reads the argument child, the second
+entry of the binary pack, adding one; every other operation head — in a
+well-formed constructor word, the nullary `con false` — is the zero word.
+Don't-care on non-word codes. Well-founded on the code value: the argument child
+sits strictly below the node through the pairing bounds
+`Nat.unpair_left_le`/`Nat.unpair_right_le` and the strict step `self_lt_pair_one`
+past the outer kind bit. Novel realization. -/
+def decodeWord (n : ℕ) : ℕ :=
+  match h : (Nat.unpair n).1, (Nat.unpair (Nat.unpair (Nat.unpair n).2).1).1 with
+  | 1, 0 => decodeWord (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair n).2).2).2).1 + 1
+  | _, _ => 0
+  termination_by n
+  decreasing_by
+    have hlt : (Nat.unpair n).2 < n := by
+      conv_rhs => rw [← Nat.pair_unpair n, h]
+      exact self_lt_pair_one _
+    exact Nat.lt_of_le_of_lt
+      (le_trans (Nat.unpair_left_le _)
+        (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _))) hlt
+
+/-- The dispatch unfolding of `decodeWord` at an operation node whose operation
+head is not an application (`(Nat.unpair op).1 ≠ 0`): the zero word. Covers the
+`con`-headed node of a constructor word. -/
+theorem decodeWord_nonApp (op pack : ℕ) (hop : (Nat.unpair op).1 ≠ 0) :
+    decodeWord (Nat.pair 1 (Nat.pair op pack)) = 0 := by
+  rw [decodeWord]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The dispatch unfolding of `decodeWord` at an application node
+(`(Nat.unpair op).1 = 0`): one more than the decoding of the argument child, the
+second entry of the binary children pack. -/
+theorem decodeWord_app (op head child : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    decodeWord (Nat.pair 1 (Nat.pair op (Nat.pair head (Nat.pair child 0))))
+      = decodeWord child + 1 := by
+  rw [decodeWord]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The decoder inverts the code of the concrete term (Leivant III section 4.2):
+`decodeWord (codeTm (conc a)) = freeAlgToNat a`. By recurrence-structural
+induction on `a` via `PolyFix.ind`: at a `false` node the concrete term is the
+nullary `con false`, decoded to `0`; at a `true` node it is `con true` applied to
+the predecessor's concrete term, decoded to one more than the child's decoding
+(the induction hypothesis), matching `freeAlgToNat`'s node reductions. Novel
+realization. -/
+theorem decodeWord_codeTm_conc (a : FreeAlg natAlgSig) :
+    decodeWord (codeTm (conc a)) = freeAlgToNat a := by
+  refine PolyFix.ind (P := natAlgSig.polyEndo)
+    (motive := fun {_} a => decodeWord (codeTm (conc a)) = freeAlgToNat a)
+    (fun b children ih => ?_) a
+  change decodeWord (codeTm (conc (FreeAlg.mk b children)))
+    = freeAlgToNat (FreeAlg.mk b children)
+  cases b with
+  | false =>
+    exact decodeWord_nonApp (codeOp (OneLambdaOp.con false)) 0
+      (by simp [codeOp, Nat.unpair_pair])
+  | true =>
+    have h := codeTm_app' (Γ := [])
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true) (fun k => k.elim0))
+      (conc (children ⟨0, Nat.zero_lt_one⟩))
+    have hcode : codeTm (conc (FreeAlg.mk (A := natAlgSig) true children))
+        = codeTm (app'
+            (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true)
+              (fun k => k.elim0))
+            (conc (children ⟨0, Nat.zero_lt_one⟩))) := rfl
+    rw [hcode, h, decodeWord_app _ _ _ (by simp [codeOp, Nat.unpair_pair]),
+      ih ⟨0, Nat.zero_lt_one⟩]
+    rfl
+
+/-- The decoder inverts the numeric fold `codeConc`: `decodeWord (codeConc n) =
+n`. By induction on `n`, the zero code decoded through `decodeWord_nonApp` and the
+successor code through `decodeWord_app`, the child being the predecessor code
+resolved by the induction hypothesis. Novel realization. -/
+theorem decodeWord_codeConc (n : ℕ) : decodeWord (codeConc n) = n := by
+  induction n with
+  | zero =>
+    exact decodeWord_nonApp (codeOp (OneLambdaOp.con false)) 0
+      (by simp [codeOp, Nat.unpair_pair])
+  | succ n ih =>
+    change decodeWord (Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app RType.o RType.o))
+        (Nat.pair (Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con true)) 0))
+          (Nat.pair (codeConc n) 0)))) = n + 1
+    rw [decodeWord_app _ _ _ (by simp [codeOp, Nat.unpair_pair]), ih]
 
 end OneLambda
 
