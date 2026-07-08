@@ -57,11 +57,62 @@ theorem Var.appendRight_cons {Ξ : Ctx Ty} {s : Ty} (a : Ty) (Δ : Ctx Ty)
     (y : Var Ξ s) :
     Var.appendRight (a :: Δ) y = Var.succ a (Var.appendRight Δ y) := rfl
 
+/-- Positional evaluation of the append-variable eliminator: when the prefix
+branch reads a position map `F` at the variable's numeric position and the
+suffix branch reads `F` at the prefix-displaced position, the eliminator reads
+`F` at the position of the appended variable. Recursion on the prefix `Γ`,
+mirroring `Var.appendCases`. -/
+theorem Var.appendCases_val {Ξ : Ctx Ty} {s : Ty} {motive : Sort v}
+    (fromΞ : Var Ξ s → motive) :
+    (Γ : Ctx Ty) → (F : ℕ → motive) → (fromΓ : Var Γ s → motive) →
+    (∀ v : Var Γ s, fromΓ v = F v.1.val) →
+    (∀ y : Var Ξ s, fromΞ y = F (Γ.length + y.1.val)) →
+    (x : Var (Γ ++ Ξ) s) → Var.appendCases fromΞ Γ fromΓ x = F x.1.val
+  | [], F, _, _, hΞ, x => (hΞ x).trans (congrArg F (Nat.zero_add _))
+  | a :: Γ, F, fromΓ, hΓ, hΞ, ⟨i, hi⟩ => by
+      cases i using Fin.cases with
+      | zero => exact hΓ ⟨0, hi⟩
+      | succ i' =>
+          exact Var.appendCases_val fromΞ Γ (fun n => F (n + 1))
+            (fun v => fromΓ (Var.succ a v)) (fun v => hΓ (Var.succ a v))
+            (fun y => (hΞ y).trans (congrArg F (Nat.succ_add Γ.length y.1.val)))
+            ⟨i', hi⟩
+
+/-- The suffix inclusion `Var.appendRight` displaces a variable's numeric
+position by the prefix length. Recursion on the prefix `Δ`, mirroring
+`Var.appendRight`. -/
+theorem Var.appendRight_val {Ξ : Ctx Ty} {s : Ty} :
+    (Δ : Ctx Ty) → (y : Var Ξ s) →
+      (Var.appendRight Δ y).1.val = Δ.length + y.1.val
+  | [], _ => (Nat.zero_add _).symm
+  | a :: Δ, y => by
+      rw [Var.appendRight_cons]
+      change (Var.appendRight Δ y).1.val + 1 = (a :: Δ).length + y.1.val
+      rw [Var.appendRight_val Δ y]
+      simp only [List.length_cons]
+      omega
+
 /-- The suffix embedding `Thinning.weakAppend` at a cons prefix commutes with the
 head shift `Var.succ a`. -/
 theorem Thinning.weakAppend_app_succ {Γ Ξ : Ctx Ty} {s : Ty} (a : Ty) (v : Var Γ s) :
     (Thinning.weakAppend (Γ := a :: Γ) (Ξ := Ξ)).app (Var.succ a v)
       = Var.succ a ((Thinning.weakAppend (Γ := Γ) (Ξ := Ξ)).app v) := rfl
+
+/-- The suffix embedding `Thinning.weakAppend` preserves a variable's numeric
+position: every entry of the prefix is kept, so a prefix variable's position in
+`Γ ++ Ξ` is unchanged. Recursion on the prefix `Γ`, mirroring
+`Thinning.weakAppend`. -/
+theorem Thinning.weakAppend_app_val {Ξ : Ctx Ty} :
+    {Γ : Ctx Ty} → {s : Ty} → (v : Var Γ s) →
+      ((Thinning.weakAppend (Ξ := Ξ)).app v).1.val = v.1.val
+  | [], _, v => v.1.elim0
+  | _ :: Γ, _, ⟨i, hi⟩ => by
+      cases i using Fin.cases with
+      | zero => rfl
+      | succ i' =>
+          change ((Thinning.weakAppend (Γ := Γ) (Ξ := Ξ)).app ⟨i', hi⟩).1.val + 1
+              = i'.val + 1
+          rw [Thinning.weakAppend_app_val ⟨i', hi⟩]
 
 /-- `Var.appendCases` at a cons prefix on a shifted index peels the head entry,
 recursing on the tail prefix with the head-shifted `Γ`-branch. -/
@@ -122,6 +173,32 @@ theorem Thinning.appendId_app {Ξ : Ctx Ty} {s : Ty} {Γ Δ : Ctx Ty}
         Thinning.weakAppend_app_succ]
       exact (congrArg (Var.succ a) (ih x)).trans
         (Var.appendCases_natural (Var.succ a) _ _ _ x)
+
+/-- The numeric position action of the parallel append `Thinning.appendId ρ Ξ`:
+if `ρ` acts on positions as the identity below `L` and as the displacement by
+`d` at or above `L` — the action of a thinning inserting `d` entries at
+position `L ≤ Γ.length` — then the parallel append acts by the same position
+map on the extended context. The suffix variables lie at positions at least
+`Γ.length`, where the two branches of `Thinning.appendId_app` displace by the
+length difference `d`; the prefix variables inherit `ρ`'s action through the
+position-preserving suffix embedding. -/
+theorem Thinning.appendId_app_val {Γ Δ Ξ : Ctx Ty} {s : Ty} {L d : ℕ}
+    (ρ : Thinning Γ Δ) (hL : L ≤ Γ.length) (hlen : Δ.length = Γ.length + d)
+    (hρ : ∀ {u : Ty} (v : Var Γ u),
+      (ρ.app v).1.val = if v.1.val < L then v.1.val else v.1.val + d)
+    (x : Var (Γ ++ Ξ) s) :
+    ((Thinning.appendId ρ Ξ).app x).1.val
+      = if x.1.val < L then x.1.val else x.1.val + d := by
+  refine (congrArg (fun w : Var (Δ ++ Ξ) s => w.1.val)
+      (Thinning.appendId_app ρ x)).trans
+    ((Var.appendCases_natural (fun w : Var (Δ ++ Ξ) s => w.1.val) _ Γ _ x).trans ?_)
+  exact Var.appendCases_val _ Γ (fun n => if n < L then n else n + d) _
+    (fun v => (Thinning.weakAppend_app_val (ρ.app v)).trans (hρ v))
+    (fun y => by
+      simp only [Var.appendRight_val]
+      rw [if_neg (by omega)]
+      omega)
+    x
 
 /-- Right identity for thinning composition. -/
 theorem Thinning.comp_id {Γ Δ : Ctx Ty} (ρ : Thinning Γ Δ) :

@@ -4,6 +4,9 @@ import GebLean.Ramified.Soundness.BarRep
 import GebLean.Ramified.Soundness.Represents
 import GebLean.Ramified.Soundness.Normalization
 import GebLean.Ramified.Soundness.OneLambdaEval
+import GebLean.Ramified.Soundness.DetStep
+import GebLean.Ramified.Soundness.CodeTm
+import GebLean.Ramified.Soundness.CodeNormalizer
 
 /-!
 # Ramified recurrence: soundness
@@ -21,7 +24,12 @@ signature over the ramified types, with its congruence-closed reduction
 `1λ(A)`, starting from the type-order measure `RType.ord` (`Normalization`). The
 final module gives the standard simple-type evaluator `oneEval` of `1λ(A)` over
 the standard word algebra, with its renaming- and substitution-fusion laws
-(`OneLambdaEval`).
+(`OneLambdaEval`). A further module realizes the reduction strategy of Lemma 12
+as the total computable deterministic step `detStep` on `1λ(A)` terms
+(`DetStep`). A further module opens the code-normalizer realization layer with the
+code-level single-variable substitution `subCode` and its supporting code-level
+weakening `shiftCode`, the numeric images of `Binding.instantiate₁` and
+`ren Thinning.weakAppend` under `codeTm` (`CodeNormalizer`).
 
 ## References
 
