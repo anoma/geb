@@ -77,6 +77,10 @@ normalizer tasks.
 * `OneLambda.codeTm_app'`, `OneLambda.codeTm_lam'`, `OneLambda.codeTm_con`,
   `OneLambda.codeTm_dstr`, `OneLambda.codeTm_case` — the operation-node equations
   through the `1λ(natAlgSig)` combinators and constant formers.
+* `OneLambda.codeTm_child_lt_app'_left`, `OneLambda.codeTm_child_lt_app'_right`,
+  `OneLambda.codeTm_child_lt_lam'` — the strictness cluster: each subterm's code
+  is strictly below its node's code, the termination measure for the strong
+  recursions on codes of the downstream normalizer tasks.
 
 ## Implementation notes
 
@@ -398,6 +402,44 @@ code, and the nullary children pack `0`. -/
     codeTm (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) OneLambdaOp.case
         (fun k => k.elim0))
       = Nat.pair 1 (Nat.pair (codeOp OneLambdaOp.case) 0) := rfl
+
+/-- The function child code sits strictly below the application-node code:
+`codeTm f < codeTm (app' f x)`. The child links are the non-strict pairing
+bounds `Nat.left_le_pair`/`Nat.right_le_pair` through the pack, and the strict
+step is `self_lt_pair_one` at the kind bit `1`. The termination measure for a
+strong recursion on codes descending into an application's function subterm. -/
+theorem codeTm_child_lt_app'_left {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) :
+    codeTm f < codeTm (app' f x) := by
+  rw [codeTm_app']
+  refine lt_of_le_of_lt (Nat.left_le_pair (codeTm f) (Nat.pair (codeTm x) 0)) ?_
+  refine lt_of_le_of_lt (Nat.right_le_pair (codeOp (OneLambdaOp.app σ τ)) _) ?_
+  exact self_lt_pair_one _
+
+/-- The argument child code sits strictly below the application-node code:
+`codeTm x < codeTm (app' f x)`. The termination measure for a strong recursion
+on codes descending into an application's argument subterm. -/
+theorem codeTm_child_lt_app'_right {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) :
+    codeTm x < codeTm (app' f x) := by
+  rw [codeTm_app']
+  refine lt_of_le_of_lt (Nat.left_le_pair (codeTm x) 0) ?_
+  refine lt_of_le_of_lt (Nat.right_le_pair (codeTm f) (Nat.pair (codeTm x) 0)) ?_
+  refine lt_of_le_of_lt (Nat.right_le_pair (codeOp (OneLambdaOp.app σ τ)) _) ?_
+  exact self_lt_pair_one _
+
+/-- The body child code sits strictly below the abstraction-node code:
+`codeTm b < codeTm (lam' b)`. The termination measure for a strong recursion on
+codes descending into an abstraction's body subterm. -/
+theorem codeTm_child_lt_lam' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (b : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [σ]) τ) :
+    codeTm b < codeTm (lam' b) := by
+  rw [codeTm_lam']
+  refine lt_of_le_of_lt (Nat.left_le_pair (codeTm b) 0) ?_
+  refine lt_of_le_of_lt (Nat.right_le_pair (codeOp (OneLambdaOp.lam σ τ)) _) ?_
+  exact self_lt_pair_one _
 
 end OneLambda
 

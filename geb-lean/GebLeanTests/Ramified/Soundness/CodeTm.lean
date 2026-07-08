@@ -1,13 +1,18 @@
 import GebLean.Ramified.Soundness.CodeTm
 
 /-!
-# Tests for the sort codes
+# Tests for the sort and term codes
 
 Acceptance examples for the Gödel coding of the ramified types (task 6.4.5): the
 node equations of `codeRType` on small literal sorts, the shape-tag reads of
 `shapeCode`, and the child-code reads of `argCode`, `domCode`, and `codCode`;
 and the mirror theorem `ordCode_codeRType` on small sorts, asserting that
 reading the type order off a code agrees with computing it on the type.
+
+Acceptance examples for the Gödel coding of the terms (task 6.4.6): the node
+equations of `codeOp` and `codeTm` on the identity β-redex `(λx:o. x) c₀` (the
+task 6.4.1 acceptance term) and its subterms, and the strictness cluster placing
+each subterm's code strictly below its node's code.
 -/
 
 namespace GebLean.Ramified
@@ -124,5 +129,31 @@ example :
         (OneLambdaOp.con true) (fun k => k.elim0))
       = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con true)) 0) := by
   rw [codeTm_con]
+
+/-- The function child of the identity β-redex `(λx:o. x) c₀` codes strictly
+below the application node (task 6.4.6 strictness cluster), via
+`codeTm_child_lt_app'_left`. -/
+example :
+    codeTm (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      < codeTm (OneLambda.app'
+          (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+          (conc (natToFreeAlg 0))) :=
+  codeTm_child_lt_app'_left _ _
+
+/-- The argument child of the identity β-redex `(λx:o. x) c₀` codes strictly
+below the application node, via `codeTm_child_lt_app'_right`. -/
+example :
+    codeTm (conc (natToFreeAlg 0))
+      < codeTm (OneLambda.app'
+          (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+          (conc (natToFreeAlg 0))) :=
+  codeTm_child_lt_app'_right _ _
+
+/-- The body child of the identity abstraction `λx:o. x` codes strictly below the
+abstraction node, via `codeTm_child_lt_lam'`. -/
+example :
+    codeTm (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))
+      < codeTm (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))) :=
+  codeTm_child_lt_lam' _
 
 end GebLean.Ramified
