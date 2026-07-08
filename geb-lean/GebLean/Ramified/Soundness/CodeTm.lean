@@ -2,7 +2,7 @@ import GebLean.Ramified.Soundness.DetStep
 import Mathlib.Data.Nat.Pairing
 
 /-!
-# Ramified recurrence: sort codes
+# Ramified recurrence: sort and term codes
 
 The Gödel coding of the ramified types (Leivant III section 2.3) as natural
 numbers, opening the coding layer of the deterministic normalizer. `codeRType`
@@ -23,6 +23,21 @@ shape tag and recurses into the child codes, which the pairing inequalities
 below the composite code. The mirror theorem `ordCode_codeRType` proves the two
 routes agree: reading the order off the code equals computing it on the type.
 
+The term layer codes the terms of the simply-typed calculus `1λ(natAlgSig)`
+(Leivant III section 4.2). `codeOp` codes an operation as a kind bit `0`-`4`
+paired with its payload (the domain and codomain sort codes of an `app` or
+`lam`, the `Bool` label of a `con`, the position index of a `dstr`, or `0` for
+`case`). `codeTm` folds a term to a `Nat.pair` numeral: a variable leaf codes to
+`Nat.pair 0 x.1.val` (the de Bruijn index; the sort proof is not encoded) and an
+operation node to `Nat.pair 1 (Nat.pair (codeOp o) childrenPack)`. The children
+pack by `List.foldr Nat.pair 0` over `List.ofFn`, closed by a trailing `0`, so a
+node's child codes are recoverable position-by-position by iterated
+`Nat.unpair`. Each child code sits strictly below its node code: the child links
+are the non-strict pairing bounds `Nat.left_le_pair`/`Nat.right_le_pair` through
+the pack, and the strict step is `self_lt_pair_one` at the kind bit `1`. This is
+the termination measure for the strong recursions on codes of the downstream
+normalizer tasks.
+
 ## Main definitions
 
 * `OneLambda.codeRType` — the Gödel code of an r-type: a shape-tagged
@@ -35,6 +50,11 @@ routes agree: reading the order off the code equals computing it on the type.
   of an arrow code.
 * `OneLambda.ordCode` — the type order read off a code by strong recursion,
   mirroring `RType.ord`.
+* `OneLambda.codeOp` — the Gödel code of an operation of `1λ(natAlgSig)`: a kind
+  bit paired with the operation's payload.
+* `OneLambda.codeTm` — the Gödel code of a term of `1λ(natAlgSig)`: a `Nat.pair`
+  fold tagging variables by de Bruijn index and operation nodes by `codeOp` with
+  the packed child codes.
 
 ## Main statements
 
@@ -52,6 +72,11 @@ routes agree: reading the order off the code equals computing it on the type.
   code shape.
 * `OneLambda.ordCode_codeRType` — the mirror theorem: `ordCode (codeRType σ) =
   RType.ord σ`.
+* `OneLambda.codeTm_var`, `OneLambda.codeTm_op` — the leaf and generic
+  operation-node equations of the code fold.
+* `OneLambda.codeTm_app'`, `OneLambda.codeTm_lam'`, `OneLambda.codeTm_con`,
+  `OneLambda.codeTm_dstr`, `OneLambda.codeTm_case` — the operation-node equations
+  through the `1λ(natAlgSig)` combinators and constant formers.
 
 ## Implementation notes
 
@@ -64,19 +89,34 @@ code value; its child recursions are guarded by `self_lt_pair_one` and
 (`Nat.pair_unpair`) and step strictly past the payload. This project's coding
 layer pins the algebra signature at `natAlgSig`.
 
+`codeTm` folds over the variable-augmented endofunctor
+`polyTranslate varOver (oneLambdaSig natAlgSig).polyEndo`, following the
+`PolyFix.ind` fold pattern of `Tm.size` (`GebLean/Binding/Measures.lean`). The
+`childrenPack` convention is `List.foldr Nat.pair 0` over `List.ofFn` of the
+child codes, one recorded realization of the brief's nullary-`0`, unary-`Nat.pair
+c₀ 0`, binary-`Nat.pair c₀ (Nat.pair c₁ 0)` scheme: the trailing `0` terminator
+makes every arity a right-nested `Nat.pair` list, so `codeTm_op`'s generic pack
+specializes to each operation's node equation definitionally. The subterm
+combinators `app'`/`lam'` transport their arguments across `Γ ++ [] = Γ`; the
+node equations discharge that transport by `codeTm_appendNil`, the
+single-transport specialization of `codeTm_cast`, matching the house pattern of
+the `Normalization.lean` detector folds.
+
 ## References
 
 D. Leivant, "Ramified recurrence and computational complexity III: Higher
 type recurrence and elementary complexity", Annals of Pure and Applied Logic 96
 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`, section 2.2 (p. 213): the
-order of a simple type; section 2.3: the ramified types. The Gödel coding of
-the r-types as `Nat.pair` numerals and the order read `ordCode` are a novel
-realization; the underlying type conventions transcribe Leivant III section 2.3.
+order of a simple type; section 2.3: the ramified types; section 4.2 (p. 223):
+the operations and terms of the simply-typed calculus `1λ(A)`. The Gödel coding
+of the r-types and the terms as `Nat.pair` numerals and the order read `ordCode`
+are a novel realization; the underlying type and term conventions transcribe
+Leivant III sections 2.3 and 4.2.
 
 ## Tags
 
 ramified recurrence, ramified type, Gödel numbering, pairing function, type
-order, well-founded recursion
+order, well-founded recursion, term code
 -/
 
 namespace GebLean.Ramified
@@ -240,6 +280,124 @@ theorem ordCode_codeRType (σ : RType) : ordCode (codeRType σ) = RType.ord σ :
         rw [ordCode_pair_two,
           ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.omega))]
         rfl) σ
+
+/-- The Gödel code of an operation of `1λ(natAlgSig)` (Leivant III section 4.2):
+a kind bit `0`-`4` paired with the operation's payload. An application `app σ τ`
+codes to `Nat.pair 0 (Nat.pair (codeRType σ) (codeRType τ))` and an abstraction
+`lam σ τ` to `Nat.pair 1 (Nat.pair (codeRType σ) (codeRType τ))`, carrying the
+domain and codomain sort codes; a constructor constant `con b` codes to
+`Nat.pair 2 (cond b 1 0)` (the `natAlgSig` label type is `Bool`); a destructor
+`dstr j` to `Nat.pair 3 j.val` (the enumeration index of the destructed
+position); and the case combinator to `Nat.pair 4 0`. `OneLambdaOp natAlgSig` is
+a finite native enumeration, so a plain `match` suffices. Novel realization. -/
+def codeOp : OneLambdaOp natAlgSig → ℕ
+  | .app σ τ => Nat.pair 0 (Nat.pair (codeRType σ) (codeRType τ))
+  | .lam σ τ => Nat.pair 1 (Nat.pair (codeRType σ) (codeRType τ))
+  | .con b => Nat.pair 2 (cond b 1 0)
+  | .dstr j => Nat.pair 3 j.val
+  | .case => Nat.pair 4 0
+
+/-- The Gödel code of a term of `1λ(natAlgSig)` (Leivant III section 4.2): a
+variable leaf `x` codes to `Nat.pair 0 x.1.val`, tagging kind bit `0` with the de
+Bruijn index (the variable's sort proof is not encoded); an operation node codes
+to `Nat.pair 1 (Nat.pair (codeOp o) childrenPack)`, tagging kind bit `1` with the
+operation code and the packed child codes. The children pack by
+`List.foldr Nat.pair 0` over `List.ofFn`, so a nullary node packs to `0`, a unary
+node with child code `c₀` to `Nat.pair c₀ 0`, and a binary node with child codes
+`c₀, c₁` to `Nat.pair c₀ (Nat.pair c₁ 0)`. Realized by the dependent eliminator
+`PolyFix.ind` (decision 8) over the variable-augmented endofunctor
+`polyTranslate varOver (oneLambdaSig natAlgSig).polyEndo`, following the fold
+pattern of `Tm.size` (`GebLean/Binding/Measures.lean`). Novel realization. -/
+def codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) : ℕ :=
+  PolyFix.ind (P := polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo)
+    (motive := fun {_} _ => ℕ)
+    (fun i children ih =>
+      match i, children, ih with
+      | Sum.inl a, _, _ => Nat.pair 0 (Binding.leafVar a).1.val
+      | Sum.inr p, _, ih =>
+        Nat.pair 1 (Nat.pair (codeOp p.val)
+          (List.foldr Nat.pair 0
+            (List.ofFn (fun j : Fin ((oneLambdaSig natAlgSig).args p.val).length => ih ⟨j⟩))))) t
+
+/-- The code of a variable term is the kind bit `0` paired with the de Bruijn
+index. -/
+@[simp] theorem codeTm_var {Γ : Binding.Ctx RType} {s : RType} (x : Binding.Var Γ s) :
+    codeTm (Binding.Tm.var x) = Nat.pair 0 x.1.val := by
+  obtain ⟨i, hi⟩ := x; subst hi; rfl
+
+/-- The code of an operation node is the kind bit `1` paired with the operation
+code and the children pack `List.foldr Nat.pair 0` over the fold's child codes.
+The generic node equation the per-operation combinator equations specialize. -/
+theorem codeTm_op {Γ : Binding.Ctx RType} (o : OneLambdaOp natAlgSig)
+    (args : ∀ j : Fin ((oneLambdaSig natAlgSig).args o).length,
+      Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ (((oneLambdaSig natAlgSig).args o).get j).1)
+        (((oneLambdaSig natAlgSig).args o).get j).2) :
+    codeTm (Binding.Tm.op o args)
+      = Nat.pair 1 (Nat.pair (codeOp o)
+          (List.foldr Nat.pair 0 (List.ofFn (fun j => codeTm (args j))))) := rfl
+
+/-- The code is invariant under transport of the context and sort indices. -/
+theorem codeTm_cast {Γ Γ' : Binding.Ctx RType} {s s' : RType}
+    (hΓ : Γ = Γ') (hs : s = s') (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm (hs ▸ hΓ ▸ t) = codeTm t := by subst hΓ; subst hs; rfl
+
+/-- The code ignores the `Γ ++ [] = Γ` transport that `app'` applies to its
+subterms. -/
+private theorem codeTm_appendNil {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm ((List.append_nil Γ).symm ▸ t) = codeTm t :=
+  codeTm_cast (List.append_nil Γ).symm rfl t
+
+/-- The code of an application node `app' f x`: the kind bit `1`, the `app`
+operation code, and the two child codes packed binary (`codeTm f` then
+`codeTm x`), discharging the `Γ ++ [] = Γ` transports of `app'` by
+`codeTm_appendNil`. -/
+@[simp] theorem codeTm_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) :
+    codeTm (app' f x)
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app σ τ))
+          (Nat.pair (codeTm f) (Nat.pair (codeTm x) 0))) := by
+  refine (codeTm_op (Γ := Γ) (OneLambdaOp.app σ τ)
+    (fun j => Fin.cases ((List.append_nil Γ).symm ▸ f)
+      (fun k => Fin.cases ((List.append_nil Γ).symm ▸ x) (fun l => l.elim0) k) j)).trans ?_
+  change Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app σ τ))
+    (Nat.pair (codeTm ((List.append_nil Γ).symm ▸ f))
+      (Nat.pair (codeTm ((List.append_nil Γ).symm ▸ x)) 0))) = _
+  rw [codeTm_appendNil, codeTm_appendNil]
+
+/-- The code of an abstraction node `lam' b`: the kind bit `1`, the `lam`
+operation code, and the sole body child code packed unary (`codeTm b`). The
+body lives in `Γ ++ [σ]`, so no transport is required. -/
+@[simp] theorem codeTm_lam' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (b : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [σ]) τ) :
+    codeTm (lam' b)
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.lam σ τ)) (Nat.pair (codeTm b) 0)) := by
+  refine (codeTm_op (Γ := Γ) (OneLambdaOp.lam σ τ)
+    (fun j => Fin.cases b (fun k => k.elim0) j)).trans ?_
+  rfl
+
+/-- The code of a constructor constant `con b`: the kind bit `1`, the `con`
+operation code, and the nullary children pack `0`. -/
+@[simp] theorem codeTm_con {Γ : Binding.Ctx RType} (b : Bool) :
+    codeTm (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.con b)
+        (fun k => k.elim0))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con b)) 0) := rfl
+
+/-- The code of a destructor `dstr j`: the kind bit `1`, the `dstr` operation
+code, and the nullary children pack `0`. -/
+@[simp] theorem codeTm_dstr {Γ : Binding.Ctx RType} (j : Fin natAlgSig.maxArity) :
+    codeTm (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.dstr j)
+        (fun k => k.elim0))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.dstr j)) 0) := rfl
+
+/-- The code of the case combinator: the kind bit `1`, the `case` operation
+code, and the nullary children pack `0`. -/
+@[simp] theorem codeTm_case {Γ : Binding.Ctx RType} :
+    codeTm (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) OneLambdaOp.case
+        (fun k => k.elim0))
+      = Nat.pair 1 (Nat.pair (codeOp OneLambdaOp.case) 0) := rfl
 
 end OneLambda
 

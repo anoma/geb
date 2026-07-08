@@ -72,4 +72,57 @@ example :
       = RType.ord (RType.arrow RType.o RType.o) := by
   rw [ordCode_codeRType, RType.ord_omega]
 
+/-- The operation code of an application `app o o`: kind bit `0` with the domain
+and codomain sort codes, through `codeOp` and the `codeRType` node equation. -/
+example :
+    codeOp (OneLambdaOp.app RType.o RType.o)
+      = Nat.pair 0 (Nat.pair (Nat.pair 0 0) (Nat.pair 0 0)) := by simp [codeOp]
+
+/-- The operation codes of the two constructor constants of `natAlgSig`: kind bit
+`2` with the `Bool` label read `cond b 1 0`. -/
+example :
+    codeOp (OneLambdaOp.con true) = Nat.pair 2 1
+    ∧ codeOp (OneLambdaOp.con false) = Nat.pair 2 0 := ⟨rfl, rfl⟩
+
+/-- The operation codes of a destructor and the case combinator: kind bits `3`
+and `4` with the position index and `0`. -/
+example :
+    codeOp (OneLambdaOp.dstr ⟨0, by decide⟩) = Nat.pair 3 0
+    ∧ codeOp OneLambdaOp.case = Nat.pair 4 0 := ⟨rfl, rfl⟩
+
+/-- A bound variable codes to kind bit `0` with its de Bruijn index `0`, through
+`codeTm_var` (task 6.4.6). -/
+example : codeTm (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))) = Nat.pair 0 0 := by
+  rw [codeTm_var]; rfl
+
+/-- The identity abstraction `λx:o. x` codes through `codeTm_lam'` and
+`codeTm_var` to its kind-`1` node with the `lam` operation code and the unary
+body pack. -/
+example :
+    codeTm (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.lam RType.o RType.o))
+          (Nat.pair (Nat.pair 0 0) 0)) := by
+  rw [codeTm_lam', codeTm_var]; rfl
+
+/-- The identity β-redex `(λx:o. x) c₀` (the task 6.4.1 acceptance term) codes
+through `codeTm_app'` to its kind-`1` node with the `app` operation code and the
+binary child pack of the function and argument codes. -/
+example :
+    codeTm (OneLambda.app'
+        (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+        (conc (natToFreeAlg 0)))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app RType.o RType.o))
+          (Nat.pair
+            (codeTm (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))))
+            (Nat.pair (codeTm (conc (natToFreeAlg 0))) 0))) := by
+  rw [codeTm_app']
+
+/-- A constructor constant `con true` codes through `codeTm_con` to its kind-`1`
+node with the nullary children pack `0`. -/
+example :
+    codeTm (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := [])
+        (OneLambdaOp.con true) (fun k => k.elim0))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con true)) 0) := by
+  rw [codeTm_con]
+
 end GebLean.Ramified
