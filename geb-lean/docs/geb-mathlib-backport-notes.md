@@ -8,6 +8,7 @@
   - [1. `GebMeta` not vendored](#1-gebmeta-not-vendored)
   - [2. `linter.checkUnivs` configuration absent in v4.29](#2-lintercheckunivs-configuration-absent-in-v429)
   - [3. `ConcreteCategory` redesign (mathlib pull request 34741)](#3-concretecategory-redesign-mathlib-pull-request-34741)
+  - [4. `WType.rec` motive left as an unreduced beta-redex](#4-wtyperec-motive-left-as-an-unreduced-beta-redex)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [The hard wall](#the-hard-wall)
@@ -41,6 +42,12 @@ genuinely new (decide the adaptation, add a category here).
   fires on the structures, and `nolint` is the v4.29-compatible
   suppression). The deletions span `Slice/Basic.lean` (two lines) and
   `Presheaf/Basic.lean` (four lines).
+- Prose adaptation: `Presheaf/Basic.lean`'s module docstring describes
+  the suppression as "The `linter.checkUnivs false` option and
+  `@[nolint checkUnivs]` suppress the ...". Because the option line is
+  deleted, the vendored copy no longer uses it; reword to "The
+  `@[nolint checkUnivs]` attribute suppresses the ..." so the docstring
+  describes the code as it stands in v4.29.
 
 ### 3. `ConcreteCategory` redesign (mathlib pull request 34741)
 
@@ -59,6 +66,28 @@ genuinely new (decide the adaptation, add a category here).
   Replace both tactics with `exact FunctorToTypes.naturality _ _ α f.op _`,
   the `Type`-valued naturality lemma whose statement is the goal
   (`α.app Y (Z.map f x) = Z'.map f (α.app X x)`).
+- Adaptation in `Presheaf/W.lean` (`value_wRestrTree`): the same
+  `ConcreteCategory.comp_apply` gap appears in a naturality step written
+  `rw [← ConcreteCategory.comp_apply, ← α.naturality f.op,
+  ConcreteCategory.comp_apply]`. Replace with
+  `exact (FunctorToTypes.naturality _ _ α f.op _).symm`; the `.symm` is
+  needed because this goal is the naturality equation with sides
+  reversed.
+
+### 4. `WType.rec` motive left as an unreduced beta-redex
+
+- Upstream cause: `Slice/W.lean`'s `elimData_valid` proves an `↔` by
+  applying the dependent recursor `WType.rec` with an explicit `motive`,
+  entering the minor premise via `fun a f ih => by ...`.
+- v4.29 symptom: the goal is `(fun w => ...) (WType.mk a f)` — the motive
+  lambda is not beta-reduced at the constructor — so the opening
+  `rw [F.wValid_mk, elimData_valid_mk]` reports "Did not find an
+  occurrence of the pattern" (the `F.WValid (WType.mk a f)` subterm is
+  hidden inside the unapplied lambda). Later mathlib elaborates the
+  recursor's motive application in reduced form, so upstream needs no
+  such step.
+- Adaptation: prepend `beta_reduce` as the first tactic of the minor
+  premise, exposing `F.WValid (WType.mk a f)` for the existing rewrite.
 
 ## Updating the patch for a new upstream
 

@@ -6,6 +6,7 @@ Authors: The geb-mathlib contributors
 module
 
 public import Geb.Mathlib.Data
+public import Geb.Mathlib.CategoryTheory
 
 /-!
 # Geb.Mathlib — upstream-eligible content for mathlib4

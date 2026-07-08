@@ -5,10 +5,8 @@ Authors: The geb-mathlib contributors
 -/
 module
 
-public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
-public import Geb.Mathlib.Data.PFunctor.Presheaf.Functor
-public import Geb.Mathlib.Data.PFunctor.Presheaf.W
+public import Geb.Mathlib.CategoryTheory.Grothendieck
 
 /-!
-# Presheaf — index
+# CategoryTheory — index
 -/

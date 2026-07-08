@@ -36,7 +36,7 @@ the object map of mathlib's `Classical.choice`-dependent
 
 * `PresheafPFunctor.functor_obj` / `functor_map` — the categorical functor's
   object map is the core `objPresheaf`, and its morphism map is the
-  dom `map` retagged onto the `t`-tagged fibre.
+  dom `map` restricted to the `q`-indexed fibre.
 * `PresheafDomPFunctorData.elemMap_eq_categoryOfElements_map` — the core's
   choice-free `elemMap` is the object map of mathlib's
   `Classical.choice`-dependent `CategoryOfElements.map`, across `toElements`.
@@ -53,9 +53,9 @@ shortcut: the codomain is a plain type category, not an `Over` category.
 `functor` assembles directly: its object map is `objPresheaf`, and its morphism
 map is the core `mapPresheaf` — the natural transformation a
 functor-category hom `α` induces, whose component is the dom `map α` restricted
-to the `t`-tagged fibre (the dom map preserves the tag, so it restricts), with
-naturality `map_objRestr`. The outer functor laws come from the dom
-`map_id` / `map_comp`. There is no `Functor.toOver`
+to the `q`-indexed fibre (the dom map preserves the output index, so it
+restricts), with naturality `map_objRestr`. The outer functor laws come from
+the dom `map_id` / `map_comp`. There is no `Functor.toOver`
 analogue for presheaf codomains. The morphism universes of `I` and `J` are
 named (`vI`, `vJ`) so the input presheaf's value universe `uZ` and the
 `PresheafPFunctor` arity universes `uA` / `uB` pin the output presheaf's value
@@ -139,9 +139,9 @@ theorem functor_obj {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ}
     F.functor.obj Z = F.objPresheaf Z :=
   rfl
 
-/-- `functor.map`'s component over `j`, applied to a `t`-tagged fibre element,
-retags the dom `map` of the underlying element: its underlying dom value is the
-dom `map α` of the input's. -/
+/-- `functor.map`'s component over `j`, applied to a `q`-indexed fibre element,
+applies the dom `map` to the underlying element: its underlying dom value is
+the dom `map α` of the input's. -/
 theorem functor_map {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ} J]
     (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) {Z Z' : Iᵒᵖ ⥤ Type uZ}
     (α : Z ⟶ Z') (X : Jᵒᵖ) (w : (F.functor.obj Z).obj X) :
