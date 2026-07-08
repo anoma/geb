@@ -72,6 +72,10 @@ normalizer tasks.
   `app`/`lam` node's `max (codeRType σ) (codeRType τ)`, and `0` otherwise.
 * `OneLambda.sortPayload` — the maximal sort-code payload in a term's op tags:
   `tmOpMax opPayload`.
+* `OneLambda.detClock` — the deterministic Lemma-12 clock, the iteration count at
+  which `detIter` reaches a `Normal` term.
+* `OneLambda.codeCeil` — the deterministic-chain ceiling, a monotone tower
+  expression in `Tm.size t`, `Tm.height t`, `sortPayload t`, and `Γ.length`.
 
 ## Main statements
 
@@ -117,6 +121,10 @@ normalizer tasks.
   and pairing bounds feeding the envelope.
 * `OneLambda.codeTm_le_envelope` — the tower envelope: `codeTm t ≤
   tower 2 (6 * (2 * Tm.size t + sortPayload t + Γ.length + 1))`.
+* `OneLambda.size_step_le`, `OneLambda.size_detIter_le_ceil` — the per-step size
+  squaring and the `k`-uniform chain size ceiling.
+* `OneLambda.codeTm_detIter_le_codeCeil` — the chain ceiling: `codeTm
+  (detIter k t) ≤ codeCeil t`.
 
 ## Implementation notes
 
@@ -1417,6 +1425,210 @@ theorem codeTm_le_envelope {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
     codeTm t ≤ tower 2 (6 * (2 * Tm.size t + sortPayload t + Γ.length + 1)) :=
   codeTm_le_envelope_aux (Tm.size t) t le_rfl
+
+/-! ### The deterministic chain ceiling
+
+Every code on the deterministic chain from `t` is below a single monotone
+tower-shaped ceiling `codeCeil t`. The sort payload is stable along the chain
+(`sortPayload_detStep_le`); the size is bounded by iterating the per-step
+squaring `size_detStep_sq` and absorbing overshoot past the deterministic clock;
+`codeCeil` instantiates the envelope at those two ceilings. -/
+
+/-- `n ≤ n ^ 2`. -/
+private theorem self_le_sq (n : ℕ) : n ≤ n ^ 2 := by
+  rw [pow_two]
+  rcases Nat.eq_zero_or_pos n with h | h
+  · simp [h]
+  · exact Nat.le_mul_of_pos_left n h
+
+/-- `x ^ 2 + b ≤ (x + b) ^ 2`. -/
+private theorem sq_add_le (x b : ℕ) : x ^ 2 + b ≤ (x + b) ^ 2 := by
+  rw [pow_two, pow_two]
+  have h1 : x * x ≤ (x + b) * x := Nat.mul_le_mul_right x (Nat.le_add_right x b)
+  have h2 : b ≤ (x + b) * b := by
+    rcases Nat.eq_zero_or_pos b with hb | hb
+    · simp [hb]
+    · calc b = 1 * b := (Nat.one_mul b).symm
+        _ ≤ (x + b) * b := Nat.mul_le_mul_right b (by omega)
+  calc x * x + b ≤ (x + b) * x + (x + b) * b := by omega
+    _ = (x + b) * (x + b) := by rw [← Nat.mul_add]
+
+/-- `c + d ^ 2 ≤ (c + d) ^ 2`. -/
+private theorem add_sq_le (c d : ℕ) : c + d ^ 2 ≤ (c + d) ^ 2 := by
+  rw [pow_two, pow_two]
+  have h1 : c ≤ (c + d) * c := by
+    rcases Nat.eq_zero_or_pos c with hc | hc
+    · simp [hc]
+    · calc c = 1 * c := (Nat.one_mul c).symm
+        _ ≤ (c + d) * c := Nat.mul_le_mul_right c (by omega)
+  have h2 : d * d ≤ (c + d) * d := Nat.mul_le_mul_right d (Nat.le_add_left d c)
+  calc c + d * d ≤ (c + d) * c + (c + d) * d := by omega
+    _ = (c + d) * (c + d) := by rw [← Nat.mul_add]
+
+/-- `1 + a ^ 2 ≤ (1 + a) ^ 2`. -/
+private theorem one_add_sq_le (a : ℕ) : 1 + a ^ 2 ≤ (1 + a) ^ 2 := by
+  rw [Nat.add_comm 1 a, Nat.add_comm 1 (a ^ 2)]; exact sq_add_le a 1
+
+/-- `1 + a ^ 2 + b ≤ (1 + a + b) ^ 2`. -/
+private theorem one_add_sq_add_le (a b : ℕ) : 1 + a ^ 2 + b ≤ (1 + a + b) ^ 2 :=
+  le_trans (by have := one_add_sq_le a; omega) (sq_add_le (1 + a) b)
+
+/-- `a * b ≤ (a + b) ^ 2`. -/
+private theorem mul_le_add_sq (a b : ℕ) : a * b ≤ (a + b) ^ 2 := by
+  rw [pow_two]
+  exact Nat.mul_le_mul (Nat.le_add_right a b) (Nat.le_add_left b a)
+
+/-- The function subterm's size is at most the application node's. -/
+private theorem size_le_app'_left {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) : Tm.size f ≤ Tm.size (app' f x) := by
+  rw [size_app']; omega
+
+/-- The argument subterm's size is at most the application node's. -/
+private theorem size_le_app'_right {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) : Tm.size x ≤ Tm.size (app' f x) := by
+  rw [size_app']; omega
+
+/-- The head of a homogeneous spine has size at most the spine's. -/
+private theorem size_head_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig natAlgSig) Γ base) →
+    Tm.size head ≤ Tm.size (replicateSpine n base head a)
+  | 0, _base, _head, _a => le_refl _
+  | n + 1, base, head, a => by
+      rw [replicateSpineCons]
+      exact le_trans (size_le_app'_left head (a ⟨0, n.succ_pos⟩))
+        (size_head_le_replicateSpine n base _ _)
+
+/-- Every argument of a homogeneous spine has size at most the spine's. -/
+private theorem size_arg_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig natAlgSig) Γ base) → (i : Fin n) →
+    Tm.size (a i) ≤ Tm.size (replicateSpine n base head a)
+  | n + 1, base, head, a, ⟨0, _⟩ => by
+      rw [replicateSpineCons]
+      exact le_trans (size_le_app'_right head (a ⟨0, n.succ_pos⟩))
+        (size_head_le_replicateSpine n base _ _)
+  | n + 1, base, head, a, ⟨iv + 1, hi⟩ => by
+      rw [replicateSpineCons]
+      exact size_arg_le_replicateSpine n base _ (fun i => a i.succ)
+        ⟨iv, Nat.lt_of_succ_lt_succ hi⟩
+
+/-- A single reduction step at most squares the size: substitution multiplies the
+size, and every other reduct is a subterm. By induction on the step; the β case
+uses `Tm.size_instantiate₁_le`, the ι cases spine subterm monotonicity, and the
+congruence cases the inductive hypothesis with the square-completion lemmas. -/
+theorem size_step_le {Γ : Binding.Ctx RType} {s : RType}
+    {t t' : Binding.Tm (oneLambdaSig natAlgSig) Γ s} (h : OneLambdaStep t t') :
+    Tm.size t' ≤ Tm.size t ^ 2 := by
+  induction h with
+  | beta b N =>
+      rw [size_app', size_lam']
+      refine le_trans (Tm.size_instantiate₁_le N b) (le_trans (mul_le_add_sq _ _) ?_)
+      exact Nat.pow_le_pow_left (by omega) 2
+  | eta M =>
+      refine le_trans ?_ (self_le_sq _)
+      rw [size_lam', size_app', Tm.size_ren, Tm.size_var]; omega
+  | dstrHit j hh a =>
+      refine le_trans ?_ (self_le_sq _)
+      exact le_trans (size_arg_le_replicateSpine _ _ _ _ ⟨j.val, hh⟩)
+        (size_le_app'_right _ _)
+  | dstrMiss j hh a =>
+      exact le_trans (size_le_app'_right _ _) (self_le_sq _)
+  | case idx a b =>
+      refine le_trans ?_ (self_le_sq _)
+      exact size_arg_le_replicateSpine _ _ _ _ idx
+  | appL x h ih =>
+      rw [size_app', size_app']
+      exact le_trans (Nat.add_le_add_right (Nat.add_le_add_left ih 1) (Tm.size x))
+        (one_add_sq_add_le _ _)
+  | appR f h ih =>
+      rw [size_app', size_app']
+      exact le_trans (Nat.add_le_add_left ih (1 + Tm.size f))
+        (add_sq_le (1 + Tm.size f) (Tm.size _))
+  | lamBody h ih =>
+      rw [size_lam', size_lam']
+      exact le_trans (Nat.add_le_add_left ih 1) (one_add_sq_le _)
+
+/-- The deterministic step at most squares the size: on a non-normal term it
+performs a genuine `OneLambdaStep` (`size_step_le`); on a normal term it is the
+identity. -/
+theorem size_detStep_sq {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) : Tm.size (detStep t) ≤ Tm.size t ^ 2 := by
+  by_cases h : Normal t
+  · rw [detStep_normal h]; exact self_le_sq _
+  · exact size_step_le (detStep_sound t h)
+
+/-- The size of a deterministic iterate is bounded by the size raised to a
+`k`-fold squaring: `Tm.size (detIter k t) ≤ Tm.size t ^ (2 ^ k)`. By induction on
+`k`, each step squaring by `size_detStep_sq`. -/
+theorem size_detIter_le_pow (k : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    Tm.size (detIter k t) ≤ Tm.size t ^ (2 ^ k) := by
+  induction k with
+  | zero => rw [detIter_zero, show (2 : ℕ) ^ 0 = 1 from rfl, pow_one]
+  | succ k ih =>
+    rw [detIter_succ']
+    calc Tm.size (detStep (detIter k t))
+        ≤ Tm.size (detIter k t) ^ 2 := size_detStep_sq _
+      _ ≤ (Tm.size t ^ (2 ^ k)) ^ 2 := Nat.pow_le_pow_left ih 2
+      _ = Tm.size t ^ (2 ^ (k + 1)) := by rw [← pow_mul, ← pow_succ]
+
+/-- The sort payload of a deterministic iterate is bounded by the sort payload of
+`t`: iterating `sortPayload_detStep_le`. -/
+theorem sortPayload_detIter_le (k : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    sortPayload (detIter k t) ≤ sortPayload t := by
+  induction k with
+  | zero => exact (congrArg sortPayload (detIter_zero t)).le
+  | succ k ih => rw [detIter_succ']; exact le_trans (sortPayload_detStep_le _) ih
+
+/-- The deterministic clock (Leivant III Lemma 12): the iteration count at which
+`detIter` reaches a `Normal` term, `(redexRank t + 1) · 2_(redexRank t + 1)
+(Tm.height t)`. -/
+def detClock {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) : ℕ :=
+  (redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)
+
+/-- A `k`-uniform size ceiling for the deterministic chain: every iterate's size
+is bounded by `Tm.size t` raised to `2 ^ detClock t`. Below the clock the iterate
+squaring bound applies directly; past the clock the term is `Normal`
+(`detIter_normal`) and overshoot is absorbed (`detIter_eq_of_normal`). -/
+theorem size_detIter_le_ceil (k : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    Tm.size (detIter k t) ≤ Tm.size t ^ (2 ^ detClock t) := by
+  rcases Nat.lt_or_ge k (detClock t) with hk | hk
+  · refine le_trans (size_detIter_le_pow k t)
+      (Nat.pow_le_pow_right (Tm.one_le_size t) (Nat.pow_le_pow_right (by omega) (le_of_lt hk)))
+  · rw [detIter_eq_of_normal hk (detIter_normal t)]
+    exact size_detIter_le_pow (detClock t) t
+
+/-- The deterministic chain ceiling (spec §5.4; consumed by Tasks 6.4.12-6.4.13):
+a single monotone tower-shaped bound on every code of the deterministic chain,
+`codeCeil t = tower 2 (6 · (2 · Tm.size t ^ (2 ^ detClock t) + sortPayload t +
+Γ.length + 1))`. Instantiates the envelope at the chain's uniform size ceiling
+`size_detIter_le_ceil`, the stable sort payload `sortPayload_detIter_le`, and the
+context length preserved along the chain. Novel realization. -/
+def codeCeil {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) : ℕ :=
+  tower 2 (6 * (2 * Tm.size t ^ (2 ^ detClock t) + sortPayload t + Γ.length + 1))
+
+/-- Every code on the deterministic chain from `t` sits below the monotone
+ceiling `codeCeil t`: `codeTm (detIter k t) ≤ codeCeil t`. The envelope at
+`detIter k t` composes with the uniform size ceiling and the stable sort payload,
+the context length being preserved by `detStep`. -/
+theorem codeTm_detIter_le_codeCeil (k : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm (detIter k t) ≤ codeCeil t := by
+  refine le_trans (codeTm_le_envelope (detIter k t)) ?_
+  unfold codeCeil
+  apply tower_mono_right
+  have hs := size_detIter_le_ceil k t
+  have hp := sortPayload_detIter_le k t
+  omega
 
 end OneLambda
 

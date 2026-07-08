@@ -13,6 +13,12 @@ Acceptance examples for the Gödel coding of the terms (task 6.4.6): the node
 equations of `codeOp` and `codeTm` on the identity β-redex `(λx:o. x) c₀` (the
 task 6.4.1 acceptance term) and its subterms, and the strictness cluster placing
 each subterm's code strictly below its node's code.
+
+Acceptance examples for the code-size cluster (task 6.4.8): the node equations of
+`sortPayload`, the stability of the sort payload under instantiation and the
+deterministic step, the tower envelope `codeTm_le_envelope`, and the
+deterministic-chain ceiling `codeTm_detIter_le_codeCeil`, all as statement-shape
+instances applied to small terms.
 -/
 
 namespace GebLean.Ramified
@@ -189,5 +195,46 @@ representation at the base sort `o` and the numeral `2`, exercising the spine
 recursion twice under the fixed abstraction wrapper. -/
 example : codeBbRep RType.o 2 = codeTm (bbRep (natToFreeAlg 2) (barTy RType.o)) :=
   codeBbRep_codeTm RType.o 2
+
+/-- The sort payload of a variable is `0` (task 6.4.8), via `sortPayload_var`. -/
+example : sortPayload (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))) = 0 :=
+  sortPayload_var _
+
+/-- The sort payload of the identity abstraction reads its `lam` node payload
+above the body's, via the `sortPayload_lam'` node equation. -/
+example :
+    sortPayload (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      = max (opPayload (OneLambdaOp.lam RType.o RType.o))
+          (sortPayload (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))) :=
+  sortPayload_lam' _
+
+/-- Instantiation does not raise the sort payload above the max of the two terms',
+via `sortPayload_instantiate₁_le`. -/
+example {Γ : Binding.Ctx RType} {a s : RType}
+    (e : Binding.Tm (oneLambdaSig natAlgSig) Γ a)
+    (d : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [a]) s) :
+    sortPayload (Binding.instantiate₁ e d) ≤ max (sortPayload e) (sortPayload d) :=
+  sortPayload_instantiate₁_le e d
+
+/-- The deterministic step does not raise the sort payload, via
+`sortPayload_detStep_le`. -/
+example {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    sortPayload (detStep t) ≤ sortPayload t :=
+  sortPayload_detStep_le t
+
+/-- The term code sits below the height-2 tower envelope, via
+`codeTm_le_envelope`. -/
+example {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm t ≤ tower 2 (6 * (2 * Binding.Tm.size t + sortPayload t + Γ.length + 1)) :=
+  codeTm_le_envelope t
+
+/-- Every code on the deterministic chain from `t` sits below the monotone
+ceiling `codeCeil t`, via `codeTm_detIter_le_codeCeil`. -/
+example {Γ : Binding.Ctx RType} {s : RType} (k : ℕ)
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm (detIter k t) ≤ codeCeil t :=
+  codeTm_detIter_le_codeCeil k t
 
 end GebLean.Ramified
