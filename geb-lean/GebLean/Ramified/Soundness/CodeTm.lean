@@ -65,6 +65,12 @@ normalizer tasks.
   Berarducci-Böhm representation of a numeral: a `Nat.rec` fold.
 * `OneLambda.codeBbRep` — the Gödel code of the Berarducci-Böhm representation of a
   numeral: the fixed `codeLamWrap` prefix over `codeBbInner`.
+* `OneLambda.tmOpMax` — the signature-generic maximal operation weight of a term
+  under a per-operation weight `w`.
+* `OneLambda.opPayload` — the sort-code payload of a single operation: an
+  `app`/`lam` node's `max (codeRType σ) (codeRType τ)`, and `0` otherwise.
+* `OneLambda.sortPayload` — the maximal sort-code payload in a term's op tags:
+  `tmOpMax opPayload`.
 
 ## Main statements
 
@@ -101,6 +107,11 @@ normalizer tasks.
 * `OneLambda.codeBbInner_codeTm`, `OneLambda.codeBbRep_codeTm` — the numeric folds
   agree with the codes: `codeBbInner τ n = codeTm (bbSpine (barTy τ) (natToFreeAlg
   n))` and `codeBbRep τ n = codeTm (bbRep (natToFreeAlg n) (barTy τ))`.
+* `OneLambda.sortPayload_instantiate₁_le` — instantiation raises the sort payload
+  by at most the substituted term's: `sortPayload (instantiate₁ e d) ≤
+  max (sortPayload e) (sortPayload d)`.
+* `OneLambda.sortPayload_detStep_le` — the deterministic step does not increase
+  the sort payload: `sortPayload (detStep t) ≤ sortPayload t`.
 
 ## Implementation notes
 
@@ -156,6 +167,8 @@ order, well-founded recursion, term code
 -/
 
 namespace GebLean.Ramified
+
+open GebLean.Binding
 
 namespace OneLambda
 
@@ -702,6 +715,365 @@ theorem codeBbRep_codeTm (τ : RType) (n : ℕ) :
   rw [codeBbRep, codeBbInner_codeTm]
   exact (codeTm_lamSpine (Γ := []) (stepTypes natAlgSig (barTy τ) (barTy τ))
     (bbSpine (barTy τ) (natToFreeAlg n))).symm
+
+/-! ### Sort-code payloads
+
+The maximal `codeRType` payload carried by a term's operation tags, and its
+stability along instantiation and the deterministic reduction step. The term
+code `codeTm` embeds each `app`/`lam` node's domain and codomain sort codes;
+`sortPayload` records the largest such code, so that the envelope bound
+`codeTm_le_envelope` reads the sort contribution off a single measure. -/
+
+/-- The maximal operation weight occurring in a term's operation tags, for an
+arbitrary per-operation weight `w`: a variable leaf contributes `0`, and an
+operation node contributes the maximum of its own weight `w o` and the weights of
+its subterms. A signature-generic fold by the dependent eliminator `PolyFix.ind`
+following the `max`-over-children pattern of `Tm.height`. -/
+def tmOpMax {Ty : Type} {S : Binding.BinderSig Ty} (w : S.Op → ℕ) {Γ : Binding.Ctx Ty}
+    {s : Ty} (t : Binding.Tm S Γ s) : ℕ :=
+  PolyFix.ind (P := polyTranslate Binding.varOver S.polyEndo) (motive := fun {_} _ => ℕ)
+    (fun i children ih =>
+      match i, children, ih with
+      | Sum.inl _, _, _ => 0
+      | Sum.inr p, _, ih =>
+        max (w p.val) (Finset.univ.sup fun j : Fin (S.args p.val).length => ih ⟨j⟩)) t
+
+/-- The weight-max of a variable term is `0`. -/
+@[simp] theorem tmOpMax_var {Ty : Type} {S : Binding.BinderSig Ty} (w : S.Op → ℕ)
+    {Γ : Binding.Ctx Ty} {s : Ty} (x : Binding.Var Γ s) :
+    tmOpMax w (Binding.Tm.var x) = 0 := by
+  obtain ⟨i, hi⟩ := x; subst hi; rfl
+
+/-- The weight-max of an operation node is the maximum of its own weight and the
+weight-maxes of its subterms. -/
+theorem tmOpMax_op {Ty : Type} {S : Binding.BinderSig Ty} (w : S.Op → ℕ) {Γ : Binding.Ctx Ty}
+    (o : S.Op)
+    (args : ∀ j : Fin (S.args o).length,
+      Binding.Tm S (Γ ++ ((S.args o).get j).1) ((S.args o).get j).2) :
+    tmOpMax w (Binding.Tm.op o args)
+      = max (w o) (Finset.univ.sup fun j => tmOpMax w (args j)) := rfl
+
+/-- The weight-max is invariant under transport of the context and sort
+indices. -/
+theorem tmOpMax_cast {Ty : Type} {S : Binding.BinderSig Ty} (w : S.Op → ℕ)
+    {Γ Γ' : Binding.Ctx Ty} {s s' : Ty} (hΓ : Γ = Γ') (hs : s = s') (t : Binding.Tm S Γ s) :
+    tmOpMax w (hs ▸ hΓ ▸ t) = tmOpMax w t := by subst hΓ; subst hs; rfl
+
+/-- Renaming preserves the weight-max: a renaming is structure-preserving on the
+operation tree. Signature-generic, following the `Tm.size_ren` induction. -/
+@[simp] theorem tmOpMax_ren {Ty : Type} {S : Binding.BinderSig Ty} (w : S.Op → ℕ)
+    {Γ Δ : Binding.Ctx Ty} {s : Ty} (ρ : Binding.Thinning Γ Δ) (t : Binding.Tm S Γ s) :
+    tmOpMax w (Binding.ren ρ t) = tmOpMax w t := by
+  suffices h : ∀ {y : Binding.Ctx Ty × Ty}
+      (t : PolyFix (polyTranslate Binding.varOver S.polyEndo) y)
+      {Δ : Binding.Ctx Ty} (ρ : Binding.Thinning y.1 Δ),
+      tmOpMax w (Γ := Δ) (Binding.traverse (Binding.varKit S) (Binding.renEnv ρ) t)
+        = tmOpMax w (Γ := y.1) (s := y.2) t from h t ρ
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ ρ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Binding.Tm S y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      simp only [Binding.traverse_var, Binding.varKit, Binding.renEnv, tmOpMax_var]
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : S.Op // S.result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', S.result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm S Γ' (S.result o))
+            = Binding.Tm.op o (fun j => children ⟨j⟩) from rfl]
+      rw [Binding.traverse_op, tmOpMax_op, tmOpMax_op]
+      congr 1
+      refine Finset.sup_congr rfl fun j _ => ?_
+      rw [Binding.underBinder_renEnv]
+      exact ih ⟨j⟩ (Binding.Thinning.appendId ρ _)
+
+/-- The substitution bound on the weight-max: substituting along an environment
+`σ` whose images all have weight-max at most `P` bounds it by `max (tmOpMax w t) P`.
+Signature-generic, following the `Tm.size_sub_le` induction; the binder case's
+fresh images are variables (weight-max `0`) and old images are renamings
+(weight-max preserved). -/
+theorem tmOpMax_sub_le {Ty : Type} {S : Binding.BinderSig Ty} (w : S.Op → ℕ)
+    {Γ Δ : Binding.Ctx Ty} {s : Ty} (σ : Binding.Env (Binding.Tm S) Γ Δ) (t : Binding.Tm S Γ s)
+    {P : ℕ} (hσ : ∀ u (x : Binding.Var Γ u), tmOpMax w (σ u x) ≤ P) :
+    tmOpMax w (Binding.sub σ t) ≤ max (tmOpMax w t) P := by
+  suffices h : ∀ {y : Binding.Ctx Ty × Ty}
+      (t : PolyFix (polyTranslate Binding.varOver S.polyEndo) y)
+      {Δ : Binding.Ctx Ty} (σ : Binding.Env (Binding.Tm S) y.1 Δ),
+      (∀ u (x : Binding.Var y.1 u), tmOpMax w (σ u x) ≤ P) →
+      tmOpMax w (Γ := Δ) (Binding.traverse (Binding.subKit S) σ t)
+        ≤ max (tmOpMax w (Γ := y.1) (s := y.2) t) P from h t σ hσ
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ σ hσ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children : Binding.Tm S y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e
+              exact e.elim]
+      rw [Binding.traverse_var, tmOpMax_var]
+      simp only [Binding.subKit, id]
+      exact le_trans (hσ y.2 (Binding.leafVar a)) (le_max_right _ _)
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : S.Op // S.result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      rw [show (PolyFix.mk (Γ', S.result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm S Γ' (S.result o))
+            = Binding.Tm.op o (fun j => children ⟨j⟩) from rfl]
+      simp only [Binding.traverse_op, tmOpMax_op]
+      have hbound : ∀ j : Fin (S.args o).length,
+          tmOpMax w (Binding.traverse (Binding.subKit S)
+              (Binding.Env.underBinder (Binding.subKit S) σ) (children ⟨j⟩))
+            ≤ max (tmOpMax w (children ⟨j⟩)) P := by
+        intro j
+        apply ih ⟨j⟩
+        intro u x
+        simp only [Binding.Env.underBinder, Binding.subKit]
+        rw [Binding.Var.appendCases_natural (tmOpMax w)]
+        apply Binding.Var.appendCases_le
+        · intro y; rw [tmOpMax_var]; exact Nat.zero_le P
+        · intro v; rw [tmOpMax_ren]; exact hσ u v
+      refine max_le (le_max_of_le_left (le_max_left _ _)) (Finset.sup_le fun j _ => ?_)
+      exact le_trans (hbound j)
+        (max_le_max (le_trans
+          (Finset.le_sup (f := fun k => tmOpMax w (children ⟨k⟩)) (Finset.mem_univ j))
+          (le_max_right _ _)) (le_refl P))
+
+/-- The sort-code payload of a single operation of `1λ(natAlgSig)`: an
+application `app σ τ` or abstraction `lam σ τ` contributes the larger of its
+domain and codomain sort codes `max (codeRType σ) (codeRType τ)`; the constructor
+constants, destructors, and the case combinator carry no `codeRType` in their
+tags and contribute `0`. -/
+def opPayload : OneLambdaOp natAlgSig → ℕ
+  | .app σ τ => max (codeRType σ) (codeRType τ)
+  | .lam σ τ => max (codeRType σ) (codeRType τ)
+  | _ => 0
+
+/-- The maximal sort-code payload occurring in a term's operation tags: the
+weight-max `tmOpMax` at the operation payload `opPayload`. A variable leaf
+contributes `0`, and an operation node the maximum of its `opPayload` and the
+payloads of its subterms. Novel realization. -/
+def sortPayload {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) : ℕ :=
+  tmOpMax opPayload t
+
+/-- The sort payload of a variable term is `0`. -/
+@[simp] theorem sortPayload_var {Γ : Binding.Ctx RType} {s : RType} (x : Binding.Var Γ s) :
+    sortPayload (Binding.Tm.var x) = 0 := tmOpMax_var _ _
+
+/-- The sort payload of an operation node is the maximum of its own `opPayload`
+and the payloads of its subterms. -/
+theorem sortPayload_op {Γ : Binding.Ctx RType} (o : OneLambdaOp natAlgSig)
+    (args : ∀ j : Fin ((oneLambdaSig natAlgSig).args o).length,
+      Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ (((oneLambdaSig natAlgSig).args o).get j).1)
+        (((oneLambdaSig natAlgSig).args o).get j).2) :
+    sortPayload (Binding.Tm.op o args)
+      = max (opPayload o) (Finset.univ.sup fun j => sortPayload (args j)) := rfl
+
+/-- The sort payload is invariant under transport of the context and sort
+indices. -/
+theorem sortPayload_cast {Γ Γ' : Binding.Ctx RType} {s s' : RType}
+    (hΓ : Γ = Γ') (hs : s = s') (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    sortPayload (hs ▸ hΓ ▸ t) = sortPayload t := tmOpMax_cast _ hΓ hs t
+
+/-- The sort payload ignores the `Γ ++ [] = Γ` transport that `app'` applies to
+its subterms. -/
+private theorem sortPayload_appendNil {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    sortPayload ((List.append_nil Γ).symm ▸ t) = sortPayload t :=
+  sortPayload_cast (List.append_nil Γ).symm rfl t
+
+/-- The sort payload of an application node: the maximum of the `app` operation
+payload and the payloads of the function and argument subterms. -/
+@[simp] theorem sortPayload_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) :
+    sortPayload (app' f x)
+      = max (opPayload (OneLambdaOp.app σ τ)) (max (sortPayload f) (sortPayload x)) := by
+  refine (sortPayload_op (Γ := Γ) (OneLambdaOp.app σ τ)
+    (fun j => Fin.cases ((List.append_nil Γ).symm ▸ f)
+      (fun k => Fin.cases ((List.append_nil Γ).symm ▸ x) (fun l => l.elim0) k) j)).trans ?_
+  change max (opPayload (OneLambdaOp.app σ τ)) ((Finset.univ : Finset (Fin 2)).sup _) = _
+  rw [show (Finset.univ : Finset (Fin 2)) = {0, 1} from rfl, Finset.sup_insert,
+    Finset.sup_singleton]
+  change max (opPayload (OneLambdaOp.app σ τ))
+    (sortPayload ((List.append_nil Γ).symm ▸ f) ⊔ sortPayload ((List.append_nil Γ).symm ▸ x)) = _
+  rw [sortPayload_appendNil, sortPayload_appendNil]
+
+/-- The sort payload of an abstraction node: the maximum of the `lam` operation
+payload and the body subterm's payload. -/
+@[simp] theorem sortPayload_lam' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (b : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [σ]) τ) :
+    sortPayload (lam' b) = max (opPayload (OneLambdaOp.lam σ τ)) (sortPayload b) := by
+  refine (sortPayload_op (Γ := Γ) (OneLambdaOp.lam σ τ)
+    (fun j => Fin.cases b (fun k => k.elim0) j)).trans ?_
+  change max (opPayload (OneLambdaOp.lam σ τ)) ((Finset.univ : Finset (Fin 1)).sup _) = _
+  rw [show (Finset.univ : Finset (Fin 1)) = {0} from rfl, Finset.sup_singleton]
+  rfl
+
+/-- The function subterm's payload is bounded by the application node's
+payload. -/
+theorem sortPayload_le_app'_left {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) :
+    sortPayload f ≤ sortPayload (app' f x) := by
+  rw [sortPayload_app']; exact le_max_of_le_right (le_max_left _ _)
+
+/-- The argument subterm's payload is bounded by the application node's
+payload. -/
+theorem sortPayload_le_app'_right {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) :
+    sortPayload x ≤ sortPayload (app' f x) := by
+  rw [sortPayload_app']; exact le_max_of_le_right (le_max_right _ _)
+
+/-- The body subterm's payload is bounded by the abstraction node's payload. -/
+theorem sortPayload_le_lam' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (b : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [σ]) τ) :
+    sortPayload b ≤ sortPayload (lam' b) := by
+  rw [sortPayload_lam']; exact le_max_right _ _
+
+/-- Renaming along a thinning preserves the sort payload: a renaming is
+structure-preserving on the operation tree, and `codeRType` reads only the sort
+tags, not the variables. The `tmOpMax_ren` specialization at `opPayload`. -/
+@[simp] theorem sortPayload_ren {Γ Δ : Binding.Ctx RType} {s : RType}
+    (ρ : Binding.Thinning Γ Δ) (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    sortPayload (Binding.ren ρ t) = sortPayload t := tmOpMax_ren _ ρ t
+
+/-- The substitution bound on the sort payload: substituting along an environment
+`σ` whose images all have payload at most `P` bounds the payload by
+`max (sortPayload t) P`. The `tmOpMax_sub_le` specialization at `opPayload`. -/
+theorem sortPayload_sub_le {Γ Δ : Binding.Ctx RType} {s : RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ)
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) {P : ℕ}
+    (hσ : ∀ u (x : Binding.Var Γ u), sortPayload (σ u x) ≤ P) :
+    sortPayload (Binding.sub σ t) ≤ max (sortPayload t) P := tmOpMax_sub_le _ σ t hσ
+
+/-- The single-variable substitution bound on the sort payload: instantiating the
+sole bound variable of a body `d` by a term `e` bounds the payload by
+`max (sortPayload e) (sortPayload d)`. The corollary of `sortPayload_sub_le` at
+the instantiating environment, whose new image is `e` (payload `sortPayload e`)
+and whose old images are variables (payload `0`). -/
+theorem sortPayload_instantiate₁_le {Γ : Binding.Ctx RType} {a s : RType}
+    (e : Binding.Tm (oneLambdaSig natAlgSig) Γ a)
+    (d : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [a]) s) :
+    sortPayload (Binding.instantiate₁ e d) ≤ max (sortPayload e) (sortPayload d) := by
+  unfold Binding.instantiate₁ Binding.instantiate
+  refine le_trans (sortPayload_sub_le _ d (P := sortPayload e) ?_)
+    (le_of_eq (max_comm (sortPayload d) (sortPayload e)))
+  intro u x
+  rw [Binding.extendEnv_apply, Binding.Var.appendCases_natural sortPayload]
+  apply Binding.Var.appendCases_le
+  · intro w
+    obtain ⟨i, hi⟩ := w
+    cases i using Fin.cases with
+    | zero => exact le_of_eq (sortPayload_cast rfl hi e)
+    | succ j => exact j.elim0
+  · intro v
+    simp only [Binding.idEnv, sortPayload_var]
+    exact Nat.zero_le _
+
+/-- Peeling the first argument of a homogeneous spine, the definitional
+successor equation `replicateSpine (n + 1) = replicateSpine n` over the head
+applied to the first argument. -/
+private theorem replicateSpineCons {Γ : Binding.Ctx RType} {result : RType} (n : ℕ)
+    (base : RType)
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ
+      (RType.curried (List.replicate (n + 1) base) result))
+    (a : Fin (n + 1) → Binding.Tm (oneLambdaSig natAlgSig) Γ base) :
+    replicateSpine (n + 1) base head a
+      = replicateSpine n base
+          (app' (σ := base) (τ := RType.curried (List.replicate n base) result) head
+            (a ⟨0, n.succ_pos⟩))
+          (fun i => a i.succ) := rfl
+
+/-- The head of a homogeneous spine has payload bounded by the spine's. -/
+private theorem sortPayload_head_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig natAlgSig) Γ base) →
+    sortPayload head ≤ sortPayload (replicateSpine n base head a)
+  | 0, _base, _head, _a => le_refl _
+  | n + 1, base, head, a => by
+      rw [replicateSpineCons]
+      exact le_trans (sortPayload_le_app'_left head (a ⟨0, n.succ_pos⟩))
+        (sortPayload_head_le_replicateSpine n base _ _)
+
+/-- Every argument of a homogeneous spine has payload bounded by the spine's. -/
+private theorem sortPayload_arg_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig natAlgSig) Γ base) → (i : Fin n) →
+    sortPayload (a i) ≤ sortPayload (replicateSpine n base head a)
+  | n + 1, base, head, a, ⟨0, _⟩ => by
+      rw [replicateSpineCons]
+      exact le_trans (sortPayload_le_app'_right head (a ⟨0, n.succ_pos⟩))
+        (sortPayload_head_le_replicateSpine n base _ _)
+  | n + 1, base, head, a, ⟨iv + 1, hi⟩ => by
+      rw [replicateSpineCons]
+      exact sortPayload_arg_le_replicateSpine n base _ (fun i => a i.succ)
+        ⟨iv, Nat.lt_of_succ_lt_succ hi⟩
+
+/-- A single reduction step does not increase the sort payload: every
+`OneLambdaStep` reduct's tags are drawn from the redex's subterms, whose payloads
+are bounded by the redex's. By induction on the step; the β case reduces to
+`sortPayload_instantiate₁_le`, the ι cases to spine subterm monotonicity, and the
+congruence cases to the inductive hypothesis. -/
+theorem sortPayload_step_le {Γ : Binding.Ctx RType} {s : RType}
+    {t t' : Binding.Tm (oneLambdaSig natAlgSig) Γ s} (h : OneLambdaStep t t') :
+    sortPayload t' ≤ sortPayload t := by
+  induction h with
+  | beta b N =>
+      exact le_trans (sortPayload_instantiate₁_le N b)
+        (max_le (sortPayload_le_app'_right _ _)
+          (le_trans (sortPayload_le_lam' b) (sortPayload_le_app'_left _ _)))
+  | eta M =>
+      calc sortPayload M
+          = sortPayload (Binding.ren (Binding.Thinning.weakAppend (Ξ := [_])) M) :=
+            (sortPayload_ren _ _).symm
+        _ ≤ sortPayload (app' (Binding.ren (Binding.Thinning.weakAppend (Ξ := [_])) M)
+              (Binding.Tm.var boundVar)) := sortPayload_le_app'_left _ _
+        _ ≤ sortPayload (lam' _) := sortPayload_le_lam' _
+  | dstrHit j hh a =>
+      exact le_trans (sortPayload_arg_le_replicateSpine _ _ _ _ _)
+        (sortPayload_le_app'_right _ _)
+  | dstrMiss j hh a => exact sortPayload_le_app'_right _ _
+  | case idx a b => exact sortPayload_arg_le_replicateSpine _ _ _ _ _
+  | appL x h ih =>
+      rw [sortPayload_app', sortPayload_app']
+      exact max_le_max (le_refl _) (max_le_max ih (le_refl _))
+  | appR f h ih =>
+      rw [sortPayload_app', sortPayload_app']
+      exact max_le_max (le_refl _) (max_le_max (le_refl _) ih)
+  | lamBody h ih =>
+      rw [sortPayload_lam', sortPayload_lam']
+      exact max_le_max (le_refl _) ih
+
+/-- The deterministic step does not increase the sort payload: on a non-normal
+term it performs a genuine `OneLambdaStep` (`detStep_sound`), bounded by
+`sortPayload_step_le`; on a normal term it is the identity (`detStep_normal`). -/
+theorem sortPayload_detStep_le {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    sortPayload (detStep t) ≤ sortPayload t := by
+  by_cases h : Normal t
+  · rw [detStep_normal h]
+  · exact sortPayload_step_le (detStep_sound t h)
 
 end OneLambda
 
