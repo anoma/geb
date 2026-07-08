@@ -1817,6 +1817,115 @@ theorem iotaStepCode_const (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     iotaStepCode (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [iotaStepCode]; split <;> simp_all [Nat.unpair_pair]
 
+/-- The strong-induction shell of the β-worker commutation, on the term size:
+reading the β worker off a term code at the ambient context length agrees with
+the code of the `detStepAt` image. The guards transfer by the detector mirrors
+(`betaRankCode_codeTm`, `isLamCode_codeTm`, `ordCode_codeRType` on the applied
+arrow-sort code); the congruence arms rebuild the pack over the inductive
+hypothesis (at level `j + 1` under an abstraction node); the root-contraction
+arm exposes the abstraction body by `exists_lam'_of_isLam` and lands on
+`subCode_codeTm`. -/
+private theorem betaStepCode_codeTm_aux (q : ℕ) :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType}
+      (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s), Tm.size t ≤ N →
+      betaStepCode q Γ.length (codeTm t) = codeTm (detStepAt q t)
+  | 0, _, _, t, hN => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN => by
+      rcases tm_cases t with ⟨x0, rfl⟩ | ⟨o, hs0, args, ht⟩
+      · rw [codeTm_var, betaStepCode_var, detStepAt_var, codeTm_var]
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.app σ τ) args := ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            have hf1 := Tm.one_le_size f
+            have hx1 := Tm.one_le_size x
+            have hord : ordCode (Nat.pair 1 (Nat.unpair (codeOp (OneLambdaOp.app σ τ))).2)
+                = RType.ord (RType.arrow σ τ) := by
+              rw [show (Nat.unpair (codeOp (OneLambdaOp.app σ τ))).2
+                  = Nat.pair (codeRType σ) (codeRType τ) from by
+                    simp [codeOp, Nat.unpair_pair],
+                ← codeRType_arrow, ordCode_codeRType]
+            rw [codeTm_app', betaStepCode_app q Γ.length _ _ _
+              (by simp [codeOp, Nat.unpair_pair])]
+            simp only [betaRankCode_codeTm, isLamCode_codeTm, hord]
+            rw [detStepAt_app']
+            simp only [apply_ite codeTm]
+            split_ifs with h1 h2 h3
+            · rw [codeTm_app', betaStepCode_codeTm_aux q N f (by omega)]
+            · rw [codeTm_app', betaStepCode_codeTm_aux q N x (by omega)]
+            · obtain ⟨b, rfl⟩ := exists_lam'_of_isLam h3.1
+              rw [appReduct_lam', codeTm_lam']
+              rw [show (Nat.unpair (Nat.unpair (Nat.unpair (Nat.pair 1
+                  (Nat.pair (codeOp (OneLambdaOp.lam σ τ)) (Nat.pair (codeTm b) 0)))).2).2).1
+                  = codeTm b from by simp [Nat.unpair_pair]]
+              exact subCode_codeTm x b
+            · rw [codeTm_app']
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.lam σ τ) args := ht
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht
+            subst ht
+            rw [size_lam'] at hN
+            rw [codeTm_lam', betaStepCode_lam q Γ.length _ _
+              (by simp [codeOp, Nat.unpair_pair])]
+            simp only [betaRankCode_codeTm]
+            rw [detStepAt_lam']
+            simp only [apply_ite codeTm]
+            split_ifs with h1
+            · rw [codeTm_lam']
+              have hih := betaStepCode_codeTm_aux q N b (by omega)
+              rw [show (Γ ++ [σ]).length = Γ.length + 1 from by simp] at hih
+              rw [hih]
+            · rfl
+        | con i =>
+            have hs1 : RType.curried (List.replicate (natAlgSig.ar i) RType.o) RType.o = s :=
+              hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.con i) args := ht
+            subst ht
+            refine Eq.trans (congrArg (betaStepCode q Γ.length) (codeTm_op _ args)) ?_
+            rw [betaStepCode_const _ _ _ _ (by simp [codeOp, Nat.unpair_pair])]
+            rfl
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.dstr j) args := ht
+            subst ht
+            refine Eq.trans (congrArg (betaStepCode q Γ.length) (codeTm_op _ args)) ?_
+            rw [betaStepCode_const _ _ _ _ (by simp [codeOp, Nat.unpair_pair])]
+            rfl
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate natAlgSig.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              OneLambdaOp.case args := ht
+            subst ht
+            refine Eq.trans (congrArg (betaStepCode q Γ.length) (codeTm_op _ args)) ?_
+            rw [betaStepCode_const _ _ _ _ (by simp [codeOp, Nat.unpair_pair])]
+            rfl
+
+/-- The β-worker commutation: reading the β worker off a term code at the
+ambient context length computes the code of the `detStepAt` image,
+`betaStepCode q Γ.length (codeTm t) = codeTm (detStepAt q t)`. The threaded
+level `Γ.length` is the de Bruijn level of the next binder, incremented along
+the descent under abstraction nodes. Novel realization. -/
+theorem betaStepCode_codeTm (q : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    betaStepCode q Γ.length (codeTm t) = codeTm (detStepAt q t) :=
+  betaStepCode_codeTm_aux q (Tm.size t) t le_rfl
+
 /-- The deterministic step on codes at ambient substitution level `j`: the
 numeric image of `detStep`, dispatching exactly as its rank read — the β worker
 `betaStepCode` at the positive β-rank of the code, else the ι worker
