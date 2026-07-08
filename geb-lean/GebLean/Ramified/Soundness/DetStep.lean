@@ -59,6 +59,9 @@ contraction reads the destructor- or case-redex off the application spine throug
   sequence under `Relation.ReflTransGen OneLambdaStep`.
 * `OneLambda.detIter_normal_stable` — a `Normal` term is a fixpoint of the
   deterministic iteration.
+* `OneLambda.det_cycle` — one deterministic rank-elimination cycle: at most
+  `Tm.size t` iterations reach a term of β-rank below `q`, with `beta_cycle`'s
+  height bound and shape invariant.
 
 ## References
 
@@ -2084,6 +2087,340 @@ theorem detStep_eq_detIotaStep {Γ : Binding.Ctx RType} {s : RType}
     {t : Binding.Tm (oneLambdaSig A) Γ s} (hβ : betaRedexRank t = 0)
     (hι : hasIota t = true) : detStep t = detIotaStep t := by
   rw [detStep_eq, hβ, if_neg (lt_irrefl 0), if_pos hι]
+
+/-! ### The deterministic rank-elimination cycle
+
+The deterministic realization of the 6.3 rank-elimination cycle `beta_cycle`
+(spec §4.3, note N1): from a term of β-rank at most `q ≥ 1`, at most `Tm.size t`
+iterations of the deterministic step reach a term of β-rank at most `q - 1`,
+with `beta_cycle`'s height bound and shape invariant. The interior induction is
+structural: the worker's child-priority descent makes the orbit at an operation
+node the concatenation of its children's orbits (the Task 6.4.3
+iterate-congruence lemmas) followed by at most one root contraction. A
+contraction whose reduct is an abstraction can uncover a rank-`q` redex at the
+parent node; that firing happens at the parent's own induction level, which is
+what the `IsLam` shape clause licenses. -/
+
+omit [LinearOrder A.B] in
+/-- The β worker's rank bound along the whole orbit: iterating `detStepAt q` on
+a term of β-rank at most `q` never raises the β-rank above `q`. The iterate
+closure of `betaRedexRank_detStepAt_le`, bounding every element of the
+deterministic orbit at once. -/
+theorem betaRedexRank_detStepAt_iterate_le (q n : ℕ) {Γ : Binding.Ctx RType}
+    {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s) (ht : betaRedexRank t ≤ q) :
+    betaRedexRank ((detStepAt q)^[n] t) ≤ q := by
+  induction n with
+  | zero => exact ht
+  | succ n ih =>
+      rw [Function.iterate_succ_apply']
+      exact betaRedexRank_detStepAt_le q _ ih
+
+omit [LinearOrder A.B] in
+/-- The conclusion of one deterministic rank-elimination cycle at rank budget
+`q` (note N1): an orbit prefix of at most `Tm.size t` steps of `detStepAt q`
+whose proper prefix stays at β-rank exactly `q` and whose endpoint has β-rank
+below `q`, height at most `2 ^ Tm.height t`, and the shape invariant — an
+abstraction endpoint forces an abstraction start or a sort of order at most
+`q`. The rank-exactness of the prefix both feeds the iterate-congruence lemmas
+at the parent node and bridges the `detStep` orbit to the `detStepAt q` orbit.
+The motive of the `det_cycle` induction, packaged so its per-node case lemmas
+share one statement. -/
+private def DetCycle (q : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) : Prop :=
+  ∃ k, k ≤ Tm.size t ∧
+    (∀ j, j < k → betaRedexRank ((detStepAt q)^[j] t) = q) ∧
+    betaRedexRank ((detStepAt q)^[k] t) ≤ q - 1 ∧
+    Tm.height ((detStepAt q)^[k] t) ≤ 2 ^ Tm.height t ∧
+    (IsLam ((detStepAt q)^[k] t) → IsLam t ∨ RType.ord s ≤ q)
+
+omit [LinearOrder A.B] in
+/-- The short cycle: a term whose β-rank is already below `q` satisfies the
+cycle conclusion with the empty orbit. Discharges the variable and constant
+leaves of the `det_cycle` induction and every below-budget node. -/
+private theorem detCycle_of_rank_lt {q : ℕ} {Γ : Binding.Ctx RType} {s : RType}
+    {t : Binding.Tm (oneLambdaSig A) Γ s} (ht : betaRedexRank t ≤ q - 1) :
+    DetCycle q t :=
+  ⟨0, Nat.zero_le _, fun j hj => absurd hj (Nat.not_lt_zero j), ht,
+    Nat.lt_two_pow_self.le, fun h => Or.inl h⟩
+
+omit [LinearOrder A.B] in
+/-- The abstraction case of the deterministic rank-elimination cycle (note N1
+item 2): the body's orbit lifts through `detStepAt_iterate_lamBody`, the
+abstraction node adding one to the size budget and the height. The endpoint is
+an abstraction, but so is the start — the shape invariant's left disjunct. -/
+private theorem detCycle_lam' {q : ℕ} {Γ : Binding.Ctx RType} {σ τ : RType}
+    {b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ}
+    (hb : DetCycle q b) : DetCycle q (OneLambda.lam' b) := by
+  obtain ⟨k, hk, hchain, hrank, hheight, -⟩ := hb
+  have hiter : ∀ n, n ≤ k → (detStepAt q)^[n] (OneLambda.lam' b)
+      = OneLambda.lam' ((detStepAt q)^[n] b) := fun n hn =>
+    detStepAt_iterate_lamBody q n b fun i hi => hchain i (lt_of_lt_of_le hi hn)
+  refine ⟨k, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [size_lam']
+    omega
+  · intro j hj
+    rw [hiter j (le_of_lt hj), betaRedexRank_lam']
+    exact hchain j hj
+  · rw [hiter k le_rfl, betaRedexRank_lam']
+    exact hrank
+  · rw [hiter k le_rfl, height_lam', height_lam']
+    have h1 : (1 : ℕ) ≤ 2 ^ Tm.height b := Nat.one_le_two_pow
+    have h2 : 2 ^ (1 + Tm.height b) = 2 * 2 ^ Tm.height b := by rw [pow_add, pow_one]
+    omega
+  · intro _
+    exact Or.inl (isLam_lam' b)
+
+omit [LinearOrder A.B] in
+/-- The application case of the deterministic rank-elimination cycle (note N1
+item 2): the function subterm's orbit lifts through `detStepAt_iterate_appL`,
+the argument subterm's through `detStepAt_iterate_appR` once the function has
+left rank `q`, and the orbit closes with at most one root contraction. When the
+reduced function is an abstraction at arrow order exactly `q`, the root β-redex
+fires, its contractum bounded by `betaRedexRank_instantiate₁_le` and
+`Tm.height_instantiate₁_le` and its sort of order at most `q` — the shape
+invariant's right disjunct; otherwise the shape clause of the function's own
+cycle bounds the top rank below `q` and the reduced application closes the
+cycle. -/
+private theorem detCycle_app' {q : ℕ} (hq : 1 ≤ q) {Γ : Binding.Ctx RType}
+    {σ τ : RType} {f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)}
+    {x : Binding.Tm (oneLambdaSig A) Γ σ}
+    (ht : betaRedexRank (OneLambda.app' f x) ≤ q)
+    (hf : DetCycle q f) (hx : DetCycle q x) : DetCycle q (OneLambda.app' f x) := by
+  obtain ⟨kf, hkf, hchainf, hrankf, hheightf, hshapef⟩ := hf
+  obtain ⟨kx, hkx, hchainx, hrankx, hheightx, -⟩ := hx
+  have hfne : betaRedexRank ((detStepAt q)^[kf] f) ≠ q := by omega
+  have hxne : betaRedexRank ((detStepAt q)^[kx] x) ≠ q := by omega
+  -- the function orbit lifted through the application
+  have hiterL : ∀ n, n ≤ kf → (detStepAt q)^[n] (OneLambda.app' f x)
+      = OneLambda.app' ((detStepAt q)^[n] f) x := fun n hn =>
+    detStepAt_iterate_appL q n f x fun i hi => hchainf i (lt_of_lt_of_le hi hn)
+  -- the argument orbit lifted after the function orbit
+  have hmid : ∀ n, n ≤ kx → (detStepAt q)^[kf + n] (OneLambda.app' f x)
+      = OneLambda.app' ((detStepAt q)^[kf] f) ((detStepAt q)^[n] x) := fun n hn => by
+    rw [Nat.add_comm kf n, Function.iterate_add_apply, hiterL kf le_rfl]
+    exact detStepAt_iterate_appR q n _ x hfne fun i hi => hchainx i (lt_of_lt_of_le hi hn)
+  have hend : (detStepAt q)^[kf + kx] (OneLambda.app' f x)
+      = OneLambda.app' ((detStepAt q)^[kf] f) ((detStepAt q)^[kx] x) := hmid kx le_rfl
+  -- the whole-orbit rank bound
+  have hall : ∀ j, betaRedexRank ((detStepAt q)^[j] (OneLambda.app' f x)) ≤ q :=
+    fun j => betaRedexRank_detStepAt_iterate_le q j _ ht
+  -- the orbit elements up to the argument-orbit end have rank exactly `q`
+  have hprefix : ∀ j, j < kf + kx →
+      betaRedexRank ((detStepAt q)^[j] (OneLambda.app' f x)) = q := by
+    intro j hj
+    refine le_antisymm (hall j) ?_
+    rcases Nat.lt_or_ge j kf with hjf | hjf
+    · rw [hiterL j (le_of_lt hjf)]
+      exact le_trans (le_of_eq (hchainf j hjf).symm)
+        (betaRedexRank_le_betaRedexRank_app' _ x)
+    · obtain ⟨i, rfl⟩ := Nat.exists_eq_add_of_le hjf
+      have hi : i < kx := by omega
+      rw [hmid i (le_of_lt hi)]
+      exact le_trans (le_of_eq (hchainx i hi).symm)
+        (betaRedexRank_arg_le_betaRedexRank_app' _ _)
+  by_cases hguard : isLam ((detStepAt q)^[kf] f) = true
+      ∧ RType.ord (RType.arrow σ τ) = q
+  · -- the root β-redex fires: one further contraction step closes the orbit
+    obtain ⟨b, hb⟩ := exists_lam'_of_isLam hguard.1
+    have hstep : (detStepAt q)^[kf + kx + 1] (OneLambda.app' f x)
+        = Binding.instantiate₁ ((detStepAt q)^[kx] x) b := by
+      rw [Function.iterate_succ_apply', hend, detStepAt_app', if_neg hfne, if_neg hxne,
+        if_pos hguard, hb, appReduct_lam']
+    have hord : RType.ord σ + 1 ≤ q ∧ RType.ord τ ≤ q := by
+      have h2 := hguard.2
+      rw [RType.ord_arrow] at h2
+      omega
+    rw [hb, betaRedexRank_lam'] at hrankf
+    rw [hb, height_lam'] at hheightf
+    refine ⟨kf + kx + 1, ?_, ?_, ?_, ?_, ?_⟩
+    · rw [size_app']
+      omega
+    · intro j hj
+      rcases Nat.lt_or_ge j (kf + kx) with hjlt | hjge
+      · exact hprefix j hjlt
+      · have hje : j = kf + kx := by omega
+        subst hje
+        refine le_antisymm (hall _) ?_
+        rw [hend]
+        calc q = topBetaRank (OneLambda.app' ((detStepAt q)^[kf] f)
+              ((detStepAt q)^[kx] x)) := by
+              rw [topBetaRank_app', if_pos hguard.1, hguard.2]
+          _ ≤ _ := by rw [betaRedexRank_app']; exact le_max_left _ _
+    · rw [hstep]
+      have hN2 := betaRedexRank_instantiate₁_le ((detStepAt q)^[kx] x) b
+      omega
+    · rw [hstep, height_app']
+      have hinst := Tm.height_instantiate₁_le ((detStepAt q)^[kx] x) b
+      have hpf : 2 ^ Tm.height f ≤ 2 ^ max (Tm.height f) (Tm.height x) :=
+        Nat.pow_le_pow_right (by omega) (le_max_left _ _)
+      have hpx : 2 ^ Tm.height x ≤ 2 ^ max (Tm.height f) (Tm.height x) :=
+        Nat.pow_le_pow_right (by omega) (le_max_right _ _)
+      have htwo : 2 ^ (1 + max (Tm.height f) (Tm.height x))
+          = 2 * 2 ^ max (Tm.height f) (Tm.height x) := by rw [pow_add, pow_one]
+      omega
+    · intro _
+      exact Or.inr hord.2
+  · -- no root contraction: the orbit ends at the reduced application
+    have htop : topBetaRank (OneLambda.app' ((detStepAt q)^[kf] f)
+        ((detStepAt q)^[kx] x)) ≤ q - 1 := by
+      rw [topBetaRank_app']
+      split_ifs with hL
+      · have hne : RType.ord (RType.arrow σ τ) ≠ q := fun h => hguard ⟨hL, h⟩
+        have hle : RType.ord (RType.arrow σ τ) ≤ q := by
+          rcases hshapef hL with hLf | hord
+          · have hLf' : isLam f = true := hLf
+            have h1 : topBetaRank (OneLambda.app' f x)
+                = RType.ord (RType.arrow σ τ) := by
+              rw [topBetaRank_app', if_pos hLf']
+            have h2 := betaRedexRank_app' f x
+            omega
+          · exact hord
+        omega
+      · omega
+    refine ⟨kf + kx, ?_, hprefix, ?_, ?_, ?_⟩
+    · rw [size_app']
+      omega
+    · rw [hend, betaRedexRank_app']
+      omega
+    · rw [hend, height_app', height_app']
+      have hpf : 2 ^ Tm.height f ≤ 2 ^ max (Tm.height f) (Tm.height x) :=
+        Nat.pow_le_pow_right (by omega) (le_max_left _ _)
+      have hpx : 2 ^ Tm.height x ≤ 2 ^ max (Tm.height f) (Tm.height x) :=
+        Nat.pow_le_pow_right (by omega) (le_max_right _ _)
+      have htwo : 2 ^ (1 + max (Tm.height f) (Tm.height x))
+          = 2 * 2 ^ max (Tm.height f) (Tm.height x) := by rw [pow_add, pow_one]
+      have hone : (1 : ℕ) ≤ 2 ^ max (Tm.height f) (Tm.height x) := Nat.one_le_two_pow
+      omega
+    · rw [hend]
+      intro habs
+      have hfalse : isLam (OneLambda.app' ((detStepAt q)^[kf] f)
+          ((detStepAt q)^[kx] x)) = true := habs
+      rw [isLam_app'] at hfalse
+      exact Bool.noConfusion hfalse
+
+omit [LinearOrder A.B] in
+/-- The structural-induction shell of the deterministic rank-elimination cycle
+(note N1): strong induction on `Tm.size`, dispatching each head form to its
+case lemma — below-budget nodes (including variables and the nullary constants)
+to the short cycle, abstractions to the body's cycle, applications to the
+orbit-concatenation dispatcher. -/
+private theorem det_cycle_aux :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} {q : ℕ}, 1 ≤ q →
+      ∀ (t : Binding.Tm (oneLambdaSig A) Γ s), Tm.size t ≤ N → betaRedexRank t ≤ q →
+      DetCycle q t
+  | 0, _, _, _, _, t, hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, q, hq, t, hN, ht => by
+      rcases Nat.lt_or_ge (betaRedexRank t) q with hlt | hge
+      · exact detCycle_of_rank_lt (by omega)
+      · rcases tm_cases t with ⟨x0, rfl⟩ | ⟨o, hs0, args, ht_eq⟩
+        · exact detCycle_of_rank_lt (by rw [betaRedexRank_var]; omega)
+        · cases o with
+          | app σ τ =>
+              have hs1 : τ = s := hs0
+              subst hs1
+              replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A)
+                (OneLambdaOp.app σ τ) args := ht_eq
+              obtain ⟨f, x, hfx⟩ := op_app_inv args
+              rw [hfx] at ht_eq
+              subst ht_eq
+              rw [size_app'] at hN
+              have hf1 := Tm.one_le_size f
+              have hx1 := Tm.one_le_size x
+              exact detCycle_app' hq ht
+                (det_cycle_aux N hq f (by omega)
+                  (le_trans (betaRedexRank_le_betaRedexRank_app' f x) ht))
+                (det_cycle_aux N hq x (by omega)
+                  (le_trans (betaRedexRank_arg_le_betaRedexRank_app' f x) ht))
+          | lam σ τ =>
+              have hs1 : RType.arrow σ τ = s := hs0
+              subst hs1
+              replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A)
+                (OneLambdaOp.lam σ τ) args := ht_eq
+              obtain ⟨b, hb⟩ := op_lam_inv args
+              rw [hb] at ht_eq
+              subst ht_eq
+              rw [size_lam'] at hN
+              rw [betaRedexRank_lam'] at ht
+              exact detCycle_lam' (det_cycle_aux N hq b (by omega) ht)
+          | con i =>
+              have hs1 : RType.curried (List.replicate (A.ar i) RType.o) RType.o = s :=
+                hs0
+              subst hs1
+              replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A)
+                (OneLambdaOp.con i) args := ht_eq
+              subst ht_eq
+              have h0 : betaRedexRank (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                  (OneLambdaOp.con i) args) = 0 := by
+                rw [betaRedexRank_op]
+                change max 0 ((Finset.univ : Finset (Fin 0)).sup _) = 0
+                simp
+              exact detCycle_of_rank_lt (le_trans (le_of_eq h0) (Nat.zero_le _))
+          | dstr j =>
+              have hs1 : RType.arrow RType.o RType.o = s := hs0
+              subst hs1
+              replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A)
+                (OneLambdaOp.dstr j) args := ht_eq
+              subst ht_eq
+              have h0 : betaRedexRank (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                  (OneLambdaOp.dstr j) args) = 0 := by
+                rw [betaRedexRank_op]
+                change max 0 ((Finset.univ : Finset (Fin 0)).sup _) = 0
+                simp
+              exact detCycle_of_rank_lt (le_trans (le_of_eq h0) (Nat.zero_le _))
+          | case =>
+              have hs1 : RType.arrow RType.o
+                  (RType.curried (List.replicate A.numCtors RType.o) RType.o) = s := hs0
+              subst hs1
+              replace ht_eq : t = Binding.Tm.op (S := oneLambdaSig A)
+                OneLambdaOp.case args := ht_eq
+              subst ht_eq
+              have h0 : betaRedexRank (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                  OneLambdaOp.case args) = 0 := by
+                rw [betaRedexRank_op]
+                change max 0 ((Finset.univ : Finset (Fin 0)).sup _) = 0
+                simp
+              exact detCycle_of_rank_lt (le_trans (le_of_eq h0) (Nat.zero_le _))
+
+/-- The `detStep`-to-`detStepAt` orbit bridge: while every proper prefix of the
+`detStepAt q` orbit stays at β-rank exactly `q > 0`, the `detIter` orbit
+coincides with it — each prefix step dispatches through
+`detStep_eq_detStepAt`. -/
+private theorem detIter_eq_iterate_detStepAt {q : ℕ} (hq : 0 < q) :
+    (k : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType}
+      (t : Binding.Tm (oneLambdaSig A) Γ s),
+      (∀ j, j < k → betaRedexRank ((detStepAt q)^[j] t) = q) →
+      detIter k t = (detStepAt q)^[k] t
+  | 0, _, _, _, _ => rfl
+  | k + 1, Γ, s, t, hchain => by
+      have h0 : betaRedexRank t = q := hchain 0 (Nat.succ_pos k)
+      rw [detIter_succ, Function.iterate_succ_apply, detStep_eq_detStepAt hq h0]
+      exact detIter_eq_iterate_detStepAt hq k (detStepAt q t) fun j hj => by
+        rw [← Function.iterate_succ_apply]
+        exact hchain (j + 1) (Nat.succ_lt_succ hj)
+
+/-- One deterministic rank-elimination cycle (Leivant III section 5, proof
+paragraph (ii), p. 226, DOI `10.1016/S0168-0072(98)00040-2`; spec §4.3, note
+N1): from a term of β-rank at most `q ≥ 1`, at most `Tm.size t` iterations of
+the deterministic step reach a term of β-rank at most `q - 1` whose height is
+at most `2 ^ Tm.height t`. The final clause is the shape invariant the
+uncovering phenomenon requires, mirroring 6.3's `beta_cycle`: an abstraction
+endpoint forces an abstraction start or a sort of order at most `q`, licensing
+the parent-level firing of an uncovered redex. The deterministic strengthening
+of `beta_cycle`, with the existential chain replaced by the `detIter` orbit. -/
+theorem det_cycle (q : ℕ) (hq : 1 ≤ q) {Γ s}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) (ht : betaRedexRank t ≤ q) :
+    ∃ k ≤ Tm.size t,
+      betaRedexRank (detIter k t) ≤ q - 1 ∧
+      Tm.height (detIter k t) ≤ 2 ^ Tm.height t ∧
+      (IsLam (detIter k t) → IsLam t ∨ RType.ord s ≤ q) := by
+  obtain ⟨k, hk, hchain, hrank, hheight, hshape⟩ :=
+    det_cycle_aux (Tm.size t) hq t le_rfl ht
+  have hbridge : detIter k t = (detStepAt q)^[k] t :=
+    detIter_eq_iterate_detStepAt hq k t hchain
+  refine ⟨k, hk, ?_, ?_, ?_⟩ <;> rw [hbridge]
+  · exact hrank
+  · exact hheight
+  · exact hshape
 
 end OneLambda
 
