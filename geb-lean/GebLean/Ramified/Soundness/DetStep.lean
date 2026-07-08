@@ -47,6 +47,8 @@ contraction reads the destructor- or case-redex off the application spine throug
 * `OneLambda.appReduct_lam'` — the β-contraction node equation.
 * `OneLambda.detStep_eq` — the dispatch unfolding of `detStep`.
 * `OneLambda.detStep_normal` — `detStep` is the identity on `Normal` terms.
+* `OneLambda.detStepAt_sound` — the β worker performs one genuine `OneLambdaStep`
+  at every term of positive β-rank `q`.
 
 ## References
 
@@ -639,6 +641,118 @@ theorem detStep_normal {Γ : Binding.Ctx RType} {s : RType}
   obtain ⟨hb, hi⟩ := (normal_iff t).mp h
   rw [detStep_eq, hb, hi]
   simp
+
+/-! ### Soundness of the β worker
+
+The β half of the deterministic step's soundness (spec §8.2): at a term of
+positive β-rank `q`, the worker `detStepAt q` performs one genuine
+`OneLambdaStep`. The congruence regimes lift the descent by
+`OneLambdaStep.appL`/`appR`/`lamBody`; the root-contraction regime is
+`OneLambdaStep.beta`, with the abstraction body exposed by
+`exists_lam'_of_isLam`; descent totality — some regime always applies at a
+rank-`q` node — comes from the `betaRedexRank_app'` decomposition. -/
+
+/-- The descent induction behind `detStepAt_sound`, by strong induction on the
+term size: at every node of β-rank `q > 0`, one of the `detStepAtOp` guard
+regimes applies and yields a `OneLambdaStep` onto the worker's image. -/
+private theorem detStepAt_sound_aux (q : ℕ) (hq : 0 < q) :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
+    Tm.size t ≤ N → betaRedexRank t = q → OneLambdaStep t (detStepAt q t)
+  | 0, _, _, t, hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN, hrank => by
+      rcases tm_cases t with ⟨x0, ht⟩ | ⟨o, hs0, args, ht⟩
+      · subst ht
+        rw [betaRedexRank_var] at hrank
+        omega
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args :=
+              ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            rw [betaRedexRank_app'] at hrank
+            have hf1 := Tm.one_le_size f
+            have hx1 := Tm.one_le_size x
+            rw [detStepAt_app']
+            split_ifs with hf hx hguard
+            · exact OneLambdaStep.appL x (detStepAt_sound_aux q hq N f (by omega) hf)
+            · exact OneLambdaStep.appR f (detStepAt_sound_aux q hq N x (by omega) hx)
+            · obtain ⟨hL, _⟩ := hguard
+              obtain ⟨b, rfl⟩ := exists_lam'_of_isLam hL
+              rw [appReduct_lam']
+              exact OneLambdaStep.beta b x
+            · exfalso
+              rw [topBetaRank_app'] at hrank
+              have htb : ¬ (if isLam f then RType.ord (RType.arrow σ τ) else 0) = q := by
+                cases hL : isLam f with
+                | false => simp only [Bool.false_eq_true, if_false]; omega
+                | true =>
+                    simp only [if_true]
+                    exact fun hord => hguard ⟨hL, hord⟩
+              omega
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args :=
+              ht
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht
+            subst ht
+            rw [size_lam'] at hN
+            rw [betaRedexRank_lam'] at hrank
+            rw [detStepAt_lam', if_pos hrank]
+            exact OneLambdaStep.lamBody (detStepAt_sound_aux q hq N b (by omega) hrank)
+        | con i =>
+            have hs1 : RType.curried (List.replicate (A.ar i) RType.o) RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args :=
+              ht
+            subst ht
+            have h0 : betaRedexRank (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                (OneLambdaOp.con i) args) = 0 := by
+              rw [betaRedexRank_op]
+              change max 0 ((Finset.univ : Finset (Fin 0)).sup _) = 0
+              simp
+            exact absurd (h0.symm.trans hrank) (Nat.ne_of_lt hq)
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args :=
+              ht
+            subst ht
+            have h0 : betaRedexRank (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                (OneLambdaOp.dstr j) args) = 0 := by
+              rw [betaRedexRank_op]
+              change max 0 ((Finset.univ : Finset (Fin 0)).sup _) = 0
+              simp
+            exact absurd (h0.symm.trans hrank) (Nat.ne_of_lt hq)
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate A.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args := ht
+            subst ht
+            have h0 : betaRedexRank (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                OneLambdaOp.case args) = 0 := by
+              rw [betaRedexRank_op]
+              change max 0 ((Finset.univ : Finset (Fin 0)).sup _) = 0
+              simp
+            exact absurd (h0.symm.trans hrank) (Nat.ne_of_lt hq)
+
+/-- The β worker is sound (spec §8.2): at a term of positive β-rank `q`, the
+worker `detStepAt q` performs one genuine `OneLambdaStep` — the congruence
+regimes lift the descent by `OneLambdaStep.appL`/`appR`/`lamBody`, and the
+root-contraction regime is `OneLambdaStep.beta`. The deterministic
+strengthening of Lemma 12's β-step existence (Leivant III section 5, proof
+paragraph (ii), p. 226). -/
+theorem detStepAt_sound {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) {q : ℕ} (hq : 0 < q)
+    (hrank : betaRedexRank t = q) : OneLambdaStep t (detStepAt q t) :=
+  detStepAt_sound_aux q hq (Tm.size t) t le_rfl hrank
 
 end OneLambda
 
