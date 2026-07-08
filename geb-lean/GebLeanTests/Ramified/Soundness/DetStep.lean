@@ -6,7 +6,10 @@ import GebLean.Ramified.Soundness.DetStep
 Acceptance examples for `detStep` (task 6.4.1): the deterministic step contracts a
 rank-1 β-redex to its `instantiate₁` reduct, and is the identity on the normal
 concrete word terms. Acceptance example for `detStep_sound` (task 6.4.2): the
-step on a non-normal redex is a genuine `OneLambdaStep`.
+step on a non-normal redex is a genuine `OneLambdaStep`. Acceptance examples for
+`detIter` and the deterministic clock (task 6.4.4): the iteration is a reduction
+sequence, fixes normal terms, and normalizes a small term within its
+`lemma12_clock` value.
 -/
 
 namespace GebLean.Ramified
@@ -83,6 +86,71 @@ example : betaRedexRank (detStepAt 1 (OneLambda.app'
     rw [betaRedexRank_app', topBetaRank_app', hbf, hbx, hf, isLam_lam']
     simp [RType.ord_arrow, RType.ord_o]
   exact betaRedexRank_detStepAt_le 1 _ (le_of_eq hrank)
+
+/-- The deterministic iteration is a reduction sequence (task 6.4.4): the
+identity β-redex `(λx:o. x) c₀` reduces to its two-fold `detStep` image, via
+`detIter_reduces`. -/
+example : Relation.ReflTransGen OneLambdaStep
+    (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))
+    (detIter 2 (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))) :=
+  detIter_reduces 2 _
+
+/-- A normal term is a fixpoint of the deterministic iteration at every count
+(task 6.4.4): the concrete term of any free-algebra value is unchanged by
+`detIter`, via `detIter_normal_stable`. -/
+example (n : ℕ) (a : FreeAlg natAlgSig) : detIter n (conc a) = conc a :=
+  detIter_normal_stable n (normal_conc a)
+
+/-- One deterministic rank-elimination cycle (task 6.4.4): from the rank-1
+identity β-redex `(λx:o. x) c₀`, at most `Tm.size` iterations of the
+deterministic step reach a β-normal term within the height bound, via
+`det_cycle` and the rank node equations. -/
+example : ∃ k ≤ Tm.size (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0))),
+    betaRedexRank (detIter k (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))) = 0 ∧
+    Tm.height (detIter k (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0))))
+      ≤ 2 ^ Tm.height (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0))) := by
+  set f : Binding.Tm (oneLambdaSig natAlgSig) [] (RType.arrow RType.o RType.o) :=
+    OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))) with hf
+  set x : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o := conc (natToFreeAlg 0) with hx
+  have hbf : betaRedexRank f = 0 := by rw [hf, betaRedexRank_lam', betaRedexRank_var]
+  have hbx : betaRedexRank x = 0 := rfl
+  have hrank : betaRedexRank (OneLambda.app' f x) = 1 := by
+    rw [betaRedexRank_app', topBetaRank_app', hbf, hbx, hf, isLam_lam']
+    simp [RType.ord_arrow, RType.ord_o]
+  obtain ⟨k, hk, hrank', hheight, -⟩ :=
+    det_cycle 1 le_rfl (OneLambda.app' f x) (le_of_eq hrank)
+  exact ⟨k, hk, by omega, hheight⟩
+
+/-- The deterministic clock (task 6.4.4): the identity β-redex `(λx:o. x) c₀`
+normalizes within its `lemma12_clock` value
+`(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)`, the instance of
+`detIter_normal` — asserted through the lemmas, not kernel reduction. -/
+example : Normal (detIter
+    ((redexRank (OneLambda.app'
+        (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+        (conc (natToFreeAlg 0))) + 1)
+      * tower (redexRank (OneLambda.app'
+          (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+          (conc (natToFreeAlg 0))) + 1)
+        (Tm.height (OneLambda.app'
+          (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+          (conc (natToFreeAlg 0)))))
+    (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))) :=
+  detIter_normal _
 
 /-- β-normality preservation of the ι worker (task 6.4.3): on the β-normal
 saturated destructor redex `dstr₀ c₀`, the ι worker `detIotaStep` keeps the

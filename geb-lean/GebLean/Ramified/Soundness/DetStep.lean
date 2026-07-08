@@ -62,6 +62,9 @@ contraction reads the destructor- or case-redex off the application spine throug
 * `OneLambda.det_cycle` — one deterministic rank-elimination cycle: at most
   `Tm.size t` iterations reach a term of β-rank below `q`, with `beta_cycle`'s
   height bound and shape invariant.
+* `OneLambda.detIter_normal` — the deterministic Lemma 12 clock: iterating the
+  deterministic step `(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)`
+  times reaches a `Normal` term.
 
 ## References
 
@@ -2421,6 +2424,118 @@ theorem det_cycle (q : ℕ) (hq : 1 ≤ q) {Γ s}
   · exact hrank
   · exact hheight
   · exact hshape
+
+/-! ### The deterministic clock
+
+The deterministic Lemma 12 clock (spec §4.3): cycles compose downward over the
+rank budgets `q, q - 1, …, 1` (the `beta_normalize` shape), the ι phase runs
+within the β-normal junction's size ceiling, and overshoot past normality is
+absorbed by `detIter_eq_of_normal`, landing the `lemma12_clock` value
+`(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)`. -/
+
+/-- The β phase of the deterministic clock, by downward induction on the rank
+budget `q` (the `beta_normalize_aux` shape): a term of β-rank at most `q` and
+height at most `H` reaches a β-normal term of height at most `tower q H` within
+`q * tower q H` iterations of the deterministic step. At budget `q`, the
+current cycle's step count is bounded by the term's size, in turn bounded by
+`2 ^ H ≤ tower q H`, and the recursive tail at budget `q - 1` contributes the
+remaining `(q - 1) * tower q H`; heights compose through `tower_comp`. -/
+private theorem detIter_beta_normalize_aux (q : ℕ) :
+    ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s)
+      (H : ℕ), betaRedexRank t ≤ q → Tm.height t ≤ H →
+      ∃ k, betaRedexRank (detIter k t) = 0 ∧
+        Tm.height (detIter k t) ≤ tower q H ∧ k ≤ q * tower q H := by
+  induction q with
+  | zero =>
+      intro Γ s t H ht hH
+      exact ⟨0, Nat.le_zero.mp ht, by simpa using hH, by simp⟩
+  | succ q ih =>
+      intro Γ s t H ht hH
+      obtain ⟨k₁, hk₁, hrank₁, hheight₁, -⟩ := det_cycle (q + 1) (by omega) t ht
+      have hrank' : betaRedexRank (detIter k₁ t) ≤ q := by omega
+      have hheight' : Tm.height (detIter k₁ t) ≤ 2 ^ H :=
+        le_trans hheight₁ (Nat.pow_le_pow_right (by omega) hH)
+      obtain ⟨k₂, hrank'', hheight'', hk₂⟩ := ih (detIter k₁ t) (2 ^ H) hrank' hheight'
+      have htower : tower q (2 ^ H) = tower (q + 1) H := by
+        rw [show (2 : ℕ) ^ H = tower 1 H from rfl, tower_comp]
+      refine ⟨k₂ + k₁, ?_, ?_, ?_⟩
+      · rw [detIter_add]
+        exact hrank''
+      · rw [detIter_add, ← htower]
+        exact hheight''
+      · have hk₁' : k₁ ≤ tower (q + 1) H :=
+          calc k₁ ≤ Tm.size t := hk₁
+            _ ≤ 2 ^ Tm.height t := size_le_two_pow_height t
+            _ ≤ 2 ^ H := Nat.pow_le_pow_right (by omega) hH
+            _ = tower 1 H := rfl
+            _ ≤ tower (q + 1) H := tower_mono_left (by omega) H
+        have hk₂' : k₂ ≤ q * tower (q + 1) H := by
+          rw [← htower]
+          exact hk₂
+        calc k₂ + k₁ ≤ q * tower (q + 1) H + tower (q + 1) H :=
+              Nat.add_le_add hk₂' hk₁'
+          _ = (q + 1) * tower (q + 1) H := (Nat.succ_mul _ _).symm
+
+/-- The ι phase of the deterministic clock, by strong induction on the term
+size (the `iota_normalize_aux` shape): a β-normal term reaches a `Normal` term
+within `Tm.size t` iterations of the deterministic step. Each iteration
+dispatches through `detStep_eq_detIotaStep`; the ι worker's strict size
+decrease `size_detIotaStep_lt` drives the induction and its β-normality
+preservation `betaRedexRank_detIotaStep` maintains the dispatch guard. -/
+private theorem detIter_iota_normalize_aux :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType}
+      (t : Binding.Tm (oneLambdaSig A) Γ s), Tm.size t ≤ N → betaRedexRank t = 0 →
+      ∃ k, k ≤ Tm.size t ∧ Normal (detIter k t)
+  | 0, _, _, t, hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN, hβ => by
+      cases hio : hasIota t with
+      | false => exact ⟨0, Nat.zero_le _, (normal_iff t).mpr ⟨hβ, hio⟩⟩
+      | true =>
+          have hsz : Tm.size (detIotaStep t) < Tm.size t := size_detIotaStep_lt t hβ hio
+          obtain ⟨k, hk, hnorm⟩ := detIter_iota_normalize_aux N (detIotaStep t)
+            (by omega) (betaRedexRank_detIotaStep t hβ)
+          refine ⟨k + 1, by omega, ?_⟩
+          rw [detIter_succ, detStep_eq_detIotaStep hβ hio]
+          exact hnorm
+
+/-- The deterministic Lemma 12 clock (Leivant III section 5, p. 226, DOI
+`10.1016/S0168-0072(98)00040-2`; spec §4.3): iterating the deterministic step
+`(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)` times — the
+`lemma12_clock` step bound — reaches a `Normal` term. The β phase lands within
+`redexRank t * tower (redexRank t + 1) (Tm.height t)` iterations, the ι phase
+within the β-normal junction's size `tower (redexRank t + 1) (Tm.height t)`
+(via `size_le_two_pow_height`), and the overshoot up to the clock value is
+absorbed by `detIter_eq_of_normal`. -/
+theorem detIter_normal {Γ s} (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    Normal (detIter
+      ((redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)) t) := by
+  obtain ⟨k₁, hβ₁, hheight₁, hk₁⟩ :=
+    detIter_beta_normalize_aux (betaRedexRank t) t (Tm.height t) le_rfl le_rfl
+  obtain ⟨k₂, hk₂, hnorm⟩ :=
+    detIter_iota_normalize_aux (Tm.size (detIter k₁ t)) (detIter k₁ t) le_rfl hβ₁
+  rw [← detIter_add] at hnorm
+  have hq₀ : betaRedexRank t ≤ redexRank t := betaRedexRank_le_redexRank t
+  have hk₁' : k₁ ≤ redexRank t * tower (redexRank t + 1) (Tm.height t) :=
+    calc k₁ ≤ betaRedexRank t * tower (betaRedexRank t) (Tm.height t) := hk₁
+      _ ≤ redexRank t * tower (redexRank t + 1) (Tm.height t) :=
+          Nat.mul_le_mul hq₀ (tower_mono_left (by omega) _)
+  have hk₂' : k₂ ≤ tower (redexRank t + 1) (Tm.height t) :=
+    calc k₂ ≤ Tm.size (detIter k₁ t) := hk₂
+      _ ≤ 2 ^ Tm.height (detIter k₁ t) := size_le_two_pow_height _
+      _ ≤ 2 ^ tower (betaRedexRank t) (Tm.height t) :=
+          Nat.pow_le_pow_right (by omega) hheight₁
+      _ = tower (betaRedexRank t + 1) (Tm.height t) := rfl
+      _ ≤ tower (redexRank t + 1) (Tm.height t) := tower_mono_left (by omega) _
+  have hK : k₂ + k₁ ≤ (redexRank t + 1) * tower (redexRank t + 1) (Tm.height t) := by
+    calc k₂ + k₁
+        ≤ tower (redexRank t + 1) (Tm.height t)
+            + redexRank t * tower (redexRank t + 1) (Tm.height t) :=
+          Nat.add_le_add hk₂' hk₁'
+      _ = (redexRank t + 1) * tower (redexRank t + 1) (Tm.height t) := by
+          rw [Nat.succ_mul]
+          omega
+  rw [detIter_eq_of_normal hK hnorm]
+  exact hnorm
 
 end OneLambda
 
