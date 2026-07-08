@@ -84,4 +84,26 @@ example : betaRedexRank (detStepAt 1 (OneLambda.app'
     simp [RType.ord_arrow, RType.ord_o]
   exact betaRedexRank_detStepAt_le 1 _ (le_of_eq hrank)
 
+/-- β-normality preservation of the ι worker (task 6.4.3): on the β-normal
+saturated destructor redex `dstr₀ c₀`, the ι worker `detIotaStep` keeps the
+β-rank at `0`, via `betaRedexRank_detIotaStep`. -/
+example : betaRedexRank (detIotaStep (OneLambda.app'
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := [])
+        (OneLambdaOp.dstr ⟨0, by decide⟩) (fun k => k.elim0))
+      (conc (natToFreeAlg 0)))) = 0 :=
+  betaRedexRank_detIotaStep _ rfl
+
+/-- Strict size decrease of the ι worker (task 6.4.3): on the β-normal saturated
+destructor redex `dstr₀ c₀` (carrying an ι-redex), the ι worker `detIotaStep`
+strictly decreases the size, via `size_detIotaStep_lt` and the rank/ι detectors. -/
+example : Tm.size (detIotaStep (OneLambda.app'
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := [])
+        (OneLambdaOp.dstr ⟨0, by decide⟩) (fun k => k.elim0))
+      (conc (natToFreeAlg 0))))
+    < Tm.size (OneLambda.app'
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := [])
+        (OneLambdaOp.dstr ⟨0, by decide⟩) (fun k => k.elim0))
+      (conc (natToFreeAlg 0))) :=
+  size_detIotaStep_lt _ rfl (by rw [hasIota_app']; rfl)
+
 end GebLean.Ramified

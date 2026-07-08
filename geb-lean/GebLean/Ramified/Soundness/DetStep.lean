@@ -1480,13 +1480,108 @@ private theorem idxOf_ctorAt (idx : Fin A.numCtors) :
   rw [hget]
   exact (Finset.sort_nodup _ _).idxOf_getElem idx.val _
 
-/-- The ι-contraction is a genuine `OneLambdaStep` at every saturated ι-redex:
-the inversion of `topIota` exposes the destructor- or case-redex shape, on
-which `iotaContract` computes the matching
-`OneLambdaStep.dstrHit`/`dstrMiss`/`case` reduct. -/
-private theorem step_iotaContract_of_topIota {Γ : Binding.Ctx RType} {s : RType}
+omit [LinearOrder A.B] in
+/-- The function subterm of an application is no larger than the application. -/
+private theorem size_le_size_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) : Tm.size f ≤ Tm.size (app' f x) := by
+  rw [size_app']; omega
+
+omit [LinearOrder A.B] in
+/-- The argument subterm of an application is strictly smaller than the
+application. -/
+private theorem size_arg_lt_size_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) : Tm.size x < Tm.size (app' f x) := by
+  rw [size_app']; have := Tm.one_le_size f; omega
+
+omit [LinearOrder A.B] in
+/-- The head of a homogeneous spine is no larger than the spine. -/
+private theorem size_head_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) →
+    Tm.size head ≤ Tm.size (replicateSpine n base head a)
+  | 0, _base, _head, _a => le_refl _
+  | n + 1, base, head, a => by
+      rw [replicateSpine_cons]
+      exact le_trans (size_le_size_app' head (a ⟨0, n.succ_pos⟩))
+        (size_head_le_replicateSpine n base _ _)
+
+omit [LinearOrder A.B] in
+/-- Every argument of a homogeneous spine is strictly smaller than the spine. -/
+private theorem size_arg_lt_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) → (i : Fin n) →
+    Tm.size (a i) < Tm.size (replicateSpine n base head a)
+  | n + 1, base, head, a, ⟨0, _⟩ => by
+      rw [replicateSpine_cons]
+      exact lt_of_lt_of_le (size_arg_lt_size_app' head (a ⟨0, n.succ_pos⟩))
+        (size_head_le_replicateSpine n base _ _)
+  | n + 1, base, head, a, ⟨iv + 1, hi⟩ => by
+      rw [replicateSpine_cons]
+      exact size_arg_lt_replicateSpine n base _ (fun i => a i.succ)
+        ⟨iv, Nat.lt_of_succ_lt_succ hi⟩
+
+omit [LinearOrder A.B] in
+/-- The β-rank of the function subterm of an application is bounded by the
+application's β-rank. -/
+private theorem betaRedexRank_le_betaRedexRank_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) :
+    betaRedexRank f ≤ betaRedexRank (app' f x) := by
+  rw [betaRedexRank_app']; omega
+
+omit [LinearOrder A.B] in
+/-- The β-rank of the argument subterm of an application is bounded by the
+application's β-rank. -/
+private theorem betaRedexRank_arg_le_betaRedexRank_app' {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig A) Γ σ) :
+    betaRedexRank x ≤ betaRedexRank (app' f x) := by
+  rw [betaRedexRank_app']; omega
+
+omit [LinearOrder A.B] in
+/-- The β-rank of the head of a homogeneous spine is bounded by the spine's
+β-rank. -/
+private theorem betaRedexRank_head_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) →
+    betaRedexRank head ≤ betaRedexRank (replicateSpine n base head a)
+  | 0, _base, _head, _a => le_refl _
+  | n + 1, base, head, a => by
+      rw [replicateSpine_cons]
+      exact le_trans (betaRedexRank_le_betaRedexRank_app' head (a ⟨0, n.succ_pos⟩))
+        (betaRedexRank_head_le_replicateSpine n base _ _)
+
+omit [LinearOrder A.B] in
+/-- The β-rank of every argument of a homogeneous spine is bounded by the
+spine's β-rank. -/
+private theorem betaRedexRank_arg_le_replicateSpine {Γ : Binding.Ctx RType} {result : RType} :
+    (n : ℕ) → (base : RType) →
+    (head : Binding.Tm (oneLambdaSig A) Γ (RType.curried (List.replicate n base) result)) →
+    (a : Fin n → Binding.Tm (oneLambdaSig A) Γ base) → (i : Fin n) →
+    betaRedexRank (a i) ≤ betaRedexRank (replicateSpine n base head a)
+  | n + 1, base, head, a, ⟨0, _⟩ => by
+      rw [replicateSpine_cons]
+      exact le_trans (betaRedexRank_arg_le_betaRedexRank_app' head (a ⟨0, n.succ_pos⟩))
+        (betaRedexRank_head_le_replicateSpine n base _ _)
+  | n + 1, base, head, a, ⟨iv + 1, hi⟩ => by
+      rw [replicateSpine_cons]
+      exact betaRedexRank_arg_le_replicateSpine n base _ (fun i => a i.succ)
+        ⟨iv, Nat.lt_of_succ_lt_succ hi⟩
+
+/-- The ι-contraction at a saturated ι-redex is a genuine `OneLambdaStep` that
+strictly decreases the size and does not raise the β-rank: the inversion of
+`topIota` exposes the destructor- or case-redex shape, on which `iotaContract`
+computes the matching `OneLambdaStep.dstrHit`/`dstrMiss`/`case` reduct — a proper
+constituent of the redex, hence smaller and of no greater β-rank. -/
+private theorem iotaContract_measures_of_topIota {Γ : Binding.Ctx RType} {s : RType}
     {t : Binding.Tm (oneLambdaSig A) Γ s} (htop : topIota t = true) :
-    OneLambdaStep t (iotaContract t) := by
+    OneLambdaStep t (iotaContract t) ∧ Tm.size (iotaContract t) < Tm.size t ∧
+      betaRedexRank (iotaContract t) ≤ betaRedexRank t := by
   have hsh : s.shape = RTypeShape.o := by
     by_contra hcon
     unfold topIota at htop
@@ -1536,7 +1631,11 @@ private theorem step_iotaContract_of_topIota {Γ : Binding.Ctx RType} {s : RType
         simp only [hscoll, List.getElem?_ofFn]
         rw [dif_pos hj]
       rw [hred]
-      exact OneLambdaStep.dstrHit j hj a
+      refine ⟨OneLambdaStep.dstrHit j hj a, ?_, ?_⟩
+      · exact lt_trans (size_arg_lt_replicateSpine (A.ar i) RType.o _ a ⟨j.val, hj⟩)
+          (size_arg_lt_size_app' _ _)
+      · exact le_trans (betaRedexRank_arg_le_replicateSpine (A.ar i) RType.o _ a ⟨j.val, hj⟩)
+          (betaRedexRank_arg_le_betaRedexRank_app' _ _)
     · have hred : dstrReduct j (replicateSpine (A.ar i) RType.o
           (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a)
           = replicateSpine (A.ar i) RType.o
@@ -1545,7 +1644,9 @@ private theorem step_iotaContract_of_topIota {Γ : Binding.Ctx RType} {s : RType
         simp only [hscoll, List.getElem?_ofFn]
         rw [dif_neg (by omega)]
       rw [hred]
-      exact OneLambdaStep.dstrMiss j hj a
+      refine ⟨OneLambdaStep.dstrMiss j hj a, ?_, ?_⟩
+      · exact size_arg_lt_size_app' _ _
+      · exact betaRedexRank_arg_le_betaRedexRank_app' _ _
   · -- case redex
     have hk : k = 0 := eq_zero_of_o_eq_curried hsB
     subst hk
@@ -1606,7 +1707,9 @@ private theorem step_iotaContract_of_topIota {Γ : Binding.Ctx RType} {s : RType
       simp only [hscoll, idxOf_ctorAt, List.getElem?_ofFn]
       rw [dif_pos idx.isLt]
     rw [hcontr, hred]
-    exact OneLambdaStep.case idx a b
+    refine ⟨OneLambdaStep.case idx a b, ?_, ?_⟩
+    · exact size_arg_lt_replicateSpine A.numCtors RType.o _ b idx
+    · exact betaRedexRank_arg_le_replicateSpine A.numCtors RType.o _ b idx
 
 /-- The descent induction behind `detIotaStep_sound`, by strong induction on
 the term size: at every node carrying an ι-redex, one of the `detIotaStepOp`
@@ -1637,7 +1740,7 @@ private theorem detIotaStep_sound_aux :
             split_ifs with hf hx htop
             · exact OneLambdaStep.appL x (detIotaStep_sound_aux N f (by omega) hf)
             · exact OneLambdaStep.appR f (detIotaStep_sound_aux N x (by omega) hx)
-            · exact step_iotaContract_of_topIota htop
+            · exact (iotaContract_measures_of_topIota htop).1
             · exfalso
               rw [Bool.or_eq_true, Bool.or_eq_true] at h
               rcases h with (h1 | h2) | h3
@@ -1722,6 +1825,168 @@ theorem detStep_sound {Γ s} (t : Binding.Tm (oneLambdaSig A) Γ s)
       exact h ((normal_iff t).mpr ⟨by omega, by simpa using hcon⟩)
     rw [if_pos hi]
     exact detIotaStep_sound hi
+
+/-! ### Measure of the ι worker
+
+The measure accounting for the ι worker (spec §8.3): on a β-normal term the worker
+`detIotaStep` preserves β-normality, and on a β-normal term carrying an ι-redex it
+strictly decreases the size. The congruence regimes are inductions over the node
+equations; the root-contraction regime consumes `iotaContract_measures_of_topIota`.
+The β-normality-preservation content mirrors the `exists_iota_step_of_hasIota`
+layer of `Normalization.lean`; the deterministic reduct is bounded by the local
+`iotaContract_measures_of_topIota` variant. -/
+
+/-- The combined measure invariant behind `betaRedexRank_detIotaStep` and
+`size_detIotaStep_lt`, by strong induction on the term size: on a β-normal term the
+ι worker preserves β-normality, keeps the abstraction head where the sort is not
+the base object sort, and strictly decreases the size whenever an ι-redex is
+present. The head clause feeds the `app'`-congruence β-rank bookkeeping. -/
+private theorem detIotaStep_measure_aux :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType} (t : Binding.Tm (oneLambdaSig A) Γ s),
+    Tm.size t ≤ N → betaRedexRank t = 0 →
+    betaRedexRank (detIotaStep t) = 0 ∧
+      (s.shape ≠ RTypeShape.o → isLam (detIotaStep t) = isLam t) ∧
+      (hasIota t = true → Tm.size (detIotaStep t) < Tm.size t)
+  | 0, _, _, t, hN, _ => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN, hβ => by
+      rcases tm_cases t with ⟨x0, ht⟩ | ⟨o, hs0, args, ht⟩
+      · subst ht
+        exact ⟨by rw [detIotaStep_var, betaRedexRank_var],
+          fun _ => by rw [detIotaStep_var],
+          fun h => by rw [hasIota_var] at h; exact absurd h (by simp)⟩
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args := ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            have hf1 := Tm.one_le_size f
+            have hx1 := Tm.one_le_size x
+            have hβ2 := hβ
+            rw [betaRedexRank_app'] at hβ2
+            have hrf : betaRedexRank f = 0 := by omega
+            have hrx : betaRedexRank x = 0 := by omega
+            have htbf : topBetaRank (app' f x) = 0 := by omega
+            have hLf : isLam f = false := by
+              cases hh : isLam f with
+              | false => rfl
+              | true =>
+                  rw [topBetaRank_app', hh, if_pos rfl] at htbf
+                  have := RType.one_le_ord_arrow σ τ
+                  omega
+            rw [detIotaStep_app']
+            split_ifs with hif hix htop
+            · have ihf := detIotaStep_measure_aux N f (by omega) hrf
+              have hLf' : isLam (detIotaStep f) = false := (ihf.2.1 (by simp)).trans hLf
+              refine ⟨?_, fun _ => rfl, fun _ => ?_⟩
+              · have h1 : topBetaRank (app' (detIotaStep f) x) = 0 := by
+                  simp [topBetaRank_app', hLf']
+                rw [betaRedexRank_app', h1, ihf.1, hrx]; simp
+              · rw [size_app', size_app']
+                have := ihf.2.2 hif
+                omega
+            · have ihx := detIotaStep_measure_aux N x (by omega) hrx
+              refine ⟨?_, fun _ => rfl, fun _ => ?_⟩
+              · have h1 : topBetaRank (app' f (detIotaStep x)) = 0 := by
+                  simp [topBetaRank_app', hLf]
+                rw [betaRedexRank_app', h1, ihx.1, hrf]; simp
+              · rw [size_app', size_app']
+                have := ihx.2.2 hix
+                omega
+            · have hshape : τ.shape = RTypeShape.o := by
+                by_contra hc
+                unfold topIota at htop
+                rw [if_neg hc] at htop
+                exact Bool.noConfusion htop
+              have hmeas := iotaContract_measures_of_topIota htop
+              refine ⟨?_, fun hcon => absurd hshape hcon, fun _ => hmeas.2.1⟩
+              have := hmeas.2.2
+              rw [hβ] at this
+              exact Nat.le_zero.mp this
+            · refine ⟨hβ, fun _ => rfl, fun hh => ?_⟩
+              rw [hasIota_app', Bool.or_eq_true, Bool.or_eq_true] at hh
+              rcases hh with (hh | hh) | hh
+              · exact absurd hh htop
+              · exact absurd hh hif
+              · exact absurd hh hix
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args := ht
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht
+            subst ht
+            rw [size_lam'] at hN
+            have hrb : betaRedexRank b = 0 := by rw [betaRedexRank_lam'] at hβ; exact hβ
+            rw [detIotaStep_lam']
+            split_ifs with hib
+            · have ihb := detIotaStep_measure_aux N b (by omega) hrb
+              refine ⟨by rw [betaRedexRank_lam']; exact ihb.1, fun _ => rfl, fun _ => ?_⟩
+              rw [size_lam', size_lam']
+              exact Nat.add_lt_add_left (ihb.2.2 hib) 1
+            · refine ⟨by rw [betaRedexRank_lam']; exact hrb, fun _ => rfl, fun hh => ?_⟩
+              rw [hasIota_lam'] at hh
+              exact absurd hh hib
+        | con i =>
+            have hs1 : RType.curried (List.replicate (A.ar i) RType.o) RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) args := ht
+            subst ht
+            refine ⟨hβ, fun _ => rfl, fun hh => ?_⟩
+            have hfalse : hasIota (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                (OneLambdaOp.con i) args) = false := by
+              rw [hasIota_op]
+              simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self, Bool.false_or]
+              rfl
+            exact absurd (hfalse.symm.trans hh) (by simp)
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) args := ht
+            subst ht
+            refine ⟨hβ, fun _ => rfl, fun hh => ?_⟩
+            have hfalse : hasIota (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                (OneLambdaOp.dstr j) args) = false := by
+              rw [hasIota_op]
+              simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self, Bool.false_or]
+              rfl
+            exact absurd (hfalse.symm.trans hh) (by simp)
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate A.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case args := ht
+            subst ht
+            refine ⟨hβ, fun _ => rfl, fun hh => ?_⟩
+            have hfalse : hasIota (Binding.Tm.op (S := oneLambdaSig A) (Γ := Γ)
+                OneLambdaOp.case args) = false := by
+              rw [hasIota_op]
+              simp only [topIota, iotaSpine_op, iotaSpineOp, ite_self, Bool.false_or]
+              rfl
+            exact absurd (hfalse.symm.trans hh) (by simp)
+
+/-- β-normality preservation of the ι worker (spec §8.3): the ι worker
+`detIotaStep` keeps a β-normal term (β-rank `0`) β-normal. The congruence regimes
+are inductions over the node equations; the root-contraction regime consumes
+`iotaContract_measures_of_topIota`. Consumed by `det_cycle`'s ι-phase invariant
+(Task 6.4.4). -/
+theorem betaRedexRank_detIotaStep {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) (h : betaRedexRank t = 0) :
+    betaRedexRank (detIotaStep t) = 0 :=
+  (detIotaStep_measure_aux (Tm.size t) t le_rfl h).1
+
+/-- Strict size decrease of the ι worker (spec §8.3): on a β-normal term carrying
+an ι-redex, the ι worker `detIotaStep` strictly decreases the size. Each ι reduct
+is a proper constituent of its redex (`dstrHit`, `case`) or drops the destructor
+node (`dstrMiss`), so the size strictly falls. Consumed by `det_cycle`'s ι-phase
+termination (Task 6.4.4). -/
+theorem size_detIotaStep_lt {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) (h : betaRedexRank t = 0)
+    (hi : hasIota t = true) : Tm.size (detIotaStep t) < Tm.size t :=
+  (detIotaStep_measure_aux (Tm.size t) t le_rfl h).2.2 hi
 
 end OneLambda
 
