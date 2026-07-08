@@ -156,4 +156,12 @@ example :
       < codeTm (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o)))) :=
   codeTm_child_lt_lam' _
 
+/-- The numeric fold `codeConc` agrees with the code of the concrete term at the
+zero numeral (task 6.4.7), through `codeConc_codeTm`. -/
+example : codeConc 0 = codeTm (conc (natToFreeAlg 0)) := codeConc_codeTm 0
+
+/-- The numeric fold `codeConc` agrees with the code of the concrete term at the
+numeral `2`, exercising the successor wrapper twice. -/
+example : codeConc 2 = codeTm (conc (natToFreeAlg 2)) := codeConc_codeTm 2
+
 end GebLean.Ramified

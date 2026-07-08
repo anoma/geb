@@ -55,6 +55,8 @@ normalizer tasks.
 * `OneLambda.codeTm` — the Gödel code of a term of `1λ(natAlgSig)`: a `Nat.pair`
   fold tagging variables by de Bruijn index and operation nodes by `codeOp` with
   the packed child codes.
+* `OneLambda.codeConc` — the Gödel code of the concrete `o`-term of a numeral: a
+  `Nat.rec` fold shadowing `codeTm ∘ conc ∘ natToFreeAlg`.
 
 ## Main statements
 
@@ -81,6 +83,8 @@ normalizer tasks.
   `OneLambda.codeTm_child_lt_lam'` — the strictness cluster: each subterm's code
   is strictly below its node's code, the termination measure for the strong
   recursions on codes of the downstream normalizer tasks.
+* `OneLambda.codeConc_codeTm` — the numeric fold `codeConc` agrees with the code
+  of the concrete term: `codeConc n = codeTm (conc (natToFreeAlg n))`.
 
 ## Implementation notes
 
@@ -440,6 +444,56 @@ theorem codeTm_child_lt_lam' {Γ : Binding.Ctx RType} {σ τ : RType}
   refine lt_of_le_of_lt (Nat.left_le_pair (codeTm b) 0) ?_
   refine lt_of_le_of_lt (Nat.right_le_pair (codeOp (OneLambdaOp.lam σ τ)) _) ?_
   exact self_lt_pair_one _
+
+/-- The concrete `o`-term of the zero numeral is the nullary constructor constant
+`con false`: `natToFreeAlg 0` is the `false`-node, whose concrete fold is the
+constant with an empty spine. Holds definitionally through `conc_mk` and the
+`replicateSpine` at arity `0`. -/
+theorem conc_natToFreeAlg_zero :
+    conc (natToFreeAlg 0)
+      = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con false)
+          (fun k => k.elim0) := rfl
+
+/-- The concrete `o`-term of the successor numeral wraps the predecessor's
+concrete term in one application of the unary constructor constant `con true`:
+`natToFreeAlg (n + 1)` is the `true`-node over `natToFreeAlg n`, whose concrete
+fold applies `con true` along the arity-`1` spine. Holds definitionally through
+`conc_mk` and the `replicateSpine` at arity `1`. -/
+theorem conc_natToFreeAlg_succ (n : ℕ) :
+    conc (natToFreeAlg (n + 1))
+      = app'
+          (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true)
+            (fun k => k.elim0))
+          (conc (natToFreeAlg n)) := rfl
+
+/-- The Gödel code of the concrete `o`-term of a numeral (Leivant III section 4.2):
+a plain `Nat.rec` fold on `n` mirroring the constructor-word structure of
+`conc (natToFreeAlg n)`. The zero numeral codes to the `con false` node
+`Nat.pair 1 (Nat.pair (codeOp (con false)) 0)`; the successor numeral codes to
+one `app`-of-`con true` layer over the predecessor code, matching `codeTm_app'`
+and `codeTm_con`. The numeric shadow of `codeTm ∘ conc ∘ natToFreeAlg`. Novel
+realization. -/
+def codeConc : ℕ → ℕ
+  | 0 => Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con false)) 0)
+  | n + 1 =>
+      Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app RType.o RType.o))
+        (Nat.pair (Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con true)) 0))
+          (Nat.pair (codeConc n) 0)))
+
+/-- The numeric fold `codeConc` agrees with the code of the concrete term
+(Leivant III section 4.2): `codeConc n = codeTm (conc (natToFreeAlg n))`. By
+induction on `n`, the constructor-word reductions `conc_natToFreeAlg_zero` and
+`conc_natToFreeAlg_succ` feeding the node equations `codeTm_con` and
+`codeTm_app'`. Novel realization. -/
+theorem codeConc_codeTm (n : ℕ) : codeConc n = codeTm (conc (natToFreeAlg n)) := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    have h := codeTm_app' (Γ := [])
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true) (fun k => k.elim0))
+      (conc (natToFreeAlg n))
+    rw [← ih] at h
+    exact h.symm
 
 end OneLambda
 
