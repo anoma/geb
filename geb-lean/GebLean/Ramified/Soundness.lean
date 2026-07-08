@@ -5,6 +5,7 @@ import GebLean.Ramified.Soundness.Represents
 import GebLean.Ramified.Soundness.Normalization
 import GebLean.Ramified.Soundness.OneLambdaEval
 import GebLean.Ramified.Soundness.DetStep
+import GebLean.Ramified.Soundness.CodeTm
 
 /-!
 # Ramified recurrence: soundness

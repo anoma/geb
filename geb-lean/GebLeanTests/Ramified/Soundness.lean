@@ -5,6 +5,7 @@ import GebLeanTests.Ramified.Soundness.Represents
 import GebLeanTests.Ramified.Soundness.Normalization
 import GebLeanTests.Ramified.Soundness.OneLambdaEval
 import GebLeanTests.Ramified.Soundness.DetStep
+import GebLeanTests.Ramified.Soundness.CodeTm
 
 /-!
 # Ramified-recurrence soundness test index
