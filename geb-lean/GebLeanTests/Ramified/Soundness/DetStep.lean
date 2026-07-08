@@ -5,7 +5,8 @@ import GebLean.Ramified.Soundness.DetStep
 
 Acceptance examples for `detStep` (task 6.4.1): the deterministic step contracts a
 rank-1 β-redex to its `instantiate₁` reduct, and is the identity on the normal
-concrete word terms.
+concrete word terms. Acceptance example for `detStep_sound` (task 6.4.2): the
+step on a non-normal redex is a genuine `OneLambdaStep`.
 -/
 
 namespace GebLean.Ramified
@@ -43,5 +44,28 @@ example (a : FreeAlg natAlgSig) : detStep (conc a) = conc a :=
 an acceptance instance of the normal-form fixpoint. -/
 example : detStep (conc (natToFreeAlg 0)) = conc (natToFreeAlg 0) :=
   detStep_normal (normal_conc _)
+
+/-- The deterministic step performs one genuine `OneLambdaStep` on the non-normal
+identity β-redex `(λx:o. x) c₀` (β-rank `1`), through `detStep_sound` and the rank
+lemmas rather than kernel reduction. -/
+example : OneLambdaStep
+    (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))
+    (detStep (OneLambda.app'
+      (OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))))
+      (conc (natToFreeAlg 0)))) := by
+  set f : Binding.Tm (oneLambdaSig natAlgSig) [] (RType.arrow RType.o RType.o) :=
+    OneLambda.lam' (Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))) with hf
+  set x : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o := conc (natToFreeAlg 0) with hx
+  have hbf : betaRedexRank f = 0 := by
+    rw [hf, betaRedexRank_lam', betaRedexRank_var]
+  have hbx : betaRedexRank x = 0 := rfl
+  have hrank : betaRedexRank (OneLambda.app' f x) = 1 := by
+    rw [betaRedexRank_app', topBetaRank_app', hbf, hbx, hf, isLam_lam']
+    simp [RType.ord_arrow, RType.ord_o]
+  refine detStep_sound (OneLambda.app' f x) fun hnorm => ?_
+  obtain ⟨hβ, -⟩ := (normal_iff _).mp hnorm
+  exact one_ne_zero (hrank.symm.trans hβ)
 
 end GebLean.Ramified
