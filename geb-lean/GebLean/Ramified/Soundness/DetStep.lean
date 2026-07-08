@@ -36,6 +36,8 @@ contraction reads the destructor- or case-redex off the application spine throug
 * `OneLambda.detIotaStep` — the ι worker: child-priority descent contracting the
   first ι-redex.
 * `OneLambda.detStep` — the deterministic step (plan decision P2).
+* `OneLambda.detIter` — the `n`-fold iteration of the deterministic step (plan
+  decision P6).
 
 ## Main statements
 
@@ -53,6 +55,10 @@ contraction reads the destructor- or case-redex off the application spine throug
   `OneLambdaStep` at every term carrying an ι-redex.
 * `OneLambda.detStep_sound` — the deterministic step performs one genuine
   `OneLambdaStep` at every non-`Normal` term.
+* `OneLambda.detIter_reduces` — the deterministic iteration is a reduction
+  sequence under `Relation.ReflTransGen OneLambdaStep`.
+* `OneLambda.detIter_normal_stable` — a `Normal` term is a fixpoint of the
+  deterministic iteration.
 
 ## References
 
@@ -1987,6 +1993,97 @@ theorem size_detIotaStep_lt {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig A) Γ s) (h : betaRedexRank t = 0)
     (hi : hasIota t = true) : Tm.size (detIotaStep t) < Tm.size t :=
   (detIotaStep_measure_aux (Tm.size t) t le_rfl h).2.2 hi
+
+/-! ### The deterministic iteration
+
+The `n`-fold iterate of `detStep` (spec §4.3; plan decision P6): every prefix of
+the iteration is a genuine reduction sequence (`detIter_reduces`), a `Normal`
+term is a fixpoint (`detIter_normal_stable`), and iterating past a normal point
+is absorbed (`detIter_eq_of_normal`). The dispatch bridges expose which worker a
+`detStep` application runs: `detStepAt` at positive β-rank, `detIotaStep` at
+β-rank `0` with an ι-redex. -/
+
+/-- `n`-fold iteration of `detStep` (spec §4.3; plan decision P6). -/
+def detIter (n : ℕ) {Γ s} :
+    Binding.Tm (oneLambdaSig A) Γ s → Binding.Tm (oneLambdaSig A) Γ s :=
+  detStep^[n]
+
+/-- `detIter` at count `0` is the identity. -/
+@[simp]
+theorem detIter_zero {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) : detIter 0 t = t := rfl
+
+/-- Peeling the first step of the iteration: `detIter (n + 1)` runs one `detStep`
+and then iterates on its image. -/
+theorem detIter_succ (n : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    detIter (n + 1) t = detIter n (detStep t) :=
+  Function.iterate_succ_apply detStep n t
+
+/-- Peeling the last step of the iteration: `detIter (n + 1)` iterates and then
+runs one further `detStep`. -/
+theorem detIter_succ' (n : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    detIter (n + 1) t = detStep (detIter n t) :=
+  Function.iterate_succ_apply' detStep n t
+
+/-- Splitting the iteration count: `detIter (m + n)` iterates `n` times and then
+`m` further times. -/
+theorem detIter_add (m n : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    detIter (m + n) t = detIter m (detIter n t) :=
+  Function.iterate_add_apply detStep m n t
+
+/-- The deterministic iteration is a reduction sequence (spec §4.3): every term
+reduces, under `Relation.ReflTransGen OneLambdaStep`, to its `n`-fold `detStep`
+image. Each iteration step either performs a genuine `OneLambdaStep`
+(`detStep_sound`) or fixes an already-`Normal` term (`detStep_normal`). -/
+theorem detIter_reduces (n : ℕ) {Γ s}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    Relation.ReflTransGen OneLambdaStep t (detIter n t) := by
+  induction n with
+  | zero => exact Relation.ReflTransGen.refl
+  | succ n ih =>
+      rw [detIter_succ']
+      by_cases h : Normal (detIter n t)
+      · rw [detStep_normal h]
+        exact ih
+      · exact ih.tail (detStep_sound _ h)
+
+/-- A `Normal` term is a fixpoint of the deterministic iteration at every
+count. -/
+theorem detIter_normal_stable (n : ℕ) {Γ s}
+    {t : Binding.Tm (oneLambdaSig A) Γ s} (h : Normal t) : detIter n t = t := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [detIter_succ', ih, detStep_normal h]
+
+/-- Overshoot absorption: once the iteration reaches a `Normal` term at count
+`k`, every larger count `n` returns the same term. Splits `n = (n - k) + k` by
+`detIter_add` and fixes the tail by `detIter_normal_stable`. -/
+theorem detIter_eq_of_normal {k n : ℕ} (hkn : k ≤ n) {Γ : Binding.Ctx RType}
+    {s : RType} {t : Binding.Tm (oneLambdaSig A) Γ s}
+    (h : Normal (detIter k t)) : detIter n t = detIter k t := by
+  obtain ⟨m, rfl⟩ := Nat.exists_eq_add_of_le hkn
+  rw [Nat.add_comm k m, detIter_add]
+  exact detIter_normal_stable m h
+
+/-- The β dispatch bridge: at a term of positive β-rank `q`, the deterministic
+step is the β worker `detStepAt q`. The dispatch unfolding consumed by
+`det_cycle`, connecting the `detIter` orbit to the `detStepAt` iterates of the
+Task 6.4.3 chain-decomposition lemmas. -/
+theorem detStep_eq_detStepAt {Γ : Binding.Ctx RType} {s : RType}
+    {t : Binding.Tm (oneLambdaSig A) Γ s} {q : ℕ} (hq : 0 < q)
+    (hrank : betaRedexRank t = q) : detStep t = detStepAt q t := by
+  rw [detStep_eq, hrank, if_pos hq]
+
+/-- The ι dispatch bridge: at a β-normal term carrying an ι-redex, the
+deterministic step is the ι worker `detIotaStep`. The rank-`0` dispatch
+unfolding consumed by `detIter_normal`'s ι phase. -/
+theorem detStep_eq_detIotaStep {Γ : Binding.Ctx RType} {s : RType}
+    {t : Binding.Tm (oneLambdaSig A) Γ s} (hβ : betaRedexRank t = 0)
+    (hι : hasIota t = true) : detStep t = detIotaStep t := by
+  rw [detStep_eq, hβ, if_neg (lt_irrefl 0), if_pos hι]
 
 end OneLambda
 
