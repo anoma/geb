@@ -87,6 +87,16 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   kind and operation-kind reads and the term-level `headTag`.
 * `OneLambda.shapeCode_codeRType_zero_iff` — reading the shape off a type code
   detects the base sort `o`.
+* `OneLambda.betaStepCode_codeTm`, `OneLambda.iotaStepCode_codeTm`,
+  `OneLambda.stepCodeAt_codeTm` — the worker and dispatcher commutations:
+  reading each step off a term code at the ambient context length computes the
+  code of the corresponding deterministic image.
+* `OneLambda.stepCode_codeTm` — the closed-term commutation: `stepCode
+  (codeTm t) = codeTm (detStep t)` for closed `t`.
+* `OneLambda.stepCode_le_stepBound`, `OneLambda.stepBound_mono` — the majorant
+  pair of the reference step on codes.
+* `OneLambda.size_le_codeTm_succ`, `OneLambda.sortPayload_le_codeTm` — the
+  code-side reads of the term measures feeding the majorant chain.
 
 ## Implementation notes
 
@@ -2217,6 +2227,259 @@ Task 6.4.12 realization is unconditionally bounded). On the code of a closed
 term the clamp is inactive — the reduct's code sits below the majorant — so
 `stepCode` computes the code of the deterministic reduct. -/
 def stepCode (c : ℕ) : ℕ := min (stepCodeAt 0 c) (stepBound c)
+
+
+/-- The dispatcher commutation (spec §6.1; the plan-P5 mirror at the threaded
+ambient level): reading the deterministic step off a term code at the ambient
+context length computes the code of the `detStep` image, `stepCodeAt Γ.length
+(codeTm t) = codeTm (detStep t)`. The dispatch guards transfer by the β-rank
+and ι-census mirrors, and the arms by the worker commutations. -/
+theorem stepCodeAt_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    stepCodeAt Γ.length (codeTm t) = codeTm (detStep t) := by
+  rw [stepCodeAt, detStep_eq, betaRankCode_codeTm, hasIotaCode_codeTm]
+  simp only [apply_ite codeTm]
+  split_ifs with h1 h2
+  · exact betaStepCode_codeTm _ t
+  · exact iotaStepCode_codeTm t
+  · rfl
+
+/-- One further pairing bound: the sum of the components is below the pair,
+`a + b ≤ Nat.pair a b`. -/
+theorem add_le_pair (a b : ℕ) : a + b ≤ Nat.pair a b := by
+  rw [Nat.pair]
+  split_ifs with h
+  · have hb : b ≤ b * b := Nat.le_mul_of_pos_left b (by omega)
+    omega
+  · omega
+
+/-- The strict pairing step past the kind bit `1`, strengthened by one:
+`p + 2 ≤ Nat.pair 1 p`. -/
+theorem add_two_le_pair_one (p : ℕ) : p + 2 ≤ Nat.pair 1 p := by
+  rw [Nat.pair]
+  split_ifs with h
+  · have hpp : 2 * p ≤ p * p := Nat.mul_le_mul_right p (by omega)
+    omega
+  · omega
+
+/-- The term size is bounded by one more than the term code: every node of the
+term contributes at least one to its code through the pairing bounds. By
+strong induction on the size through the head-form cases. -/
+theorem size_le_codeTm_succ {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) : Tm.size t ≤ codeTm t + 1 := by
+  suffices haux : ∀ (N : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+      (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s), Tm.size t ≤ N →
+      Tm.size t ≤ codeTm t + 1 from haux (Tm.size t) t le_rfl
+  intro N
+  induction N with
+  | zero => exact fun t hN => absurd (Tm.one_le_size t) (by omega)
+  | succ N ih =>
+      intro Γ s t hN
+      rcases tm_cases t with ⟨x0, rfl⟩ | ⟨o, hs0, args, ht⟩
+      · rw [codeTm_var, Tm.size_var]
+        omega
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.app σ τ) args := ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN ⊢
+            have hf1 := Tm.one_le_size f
+            have hx1 := Tm.one_le_size x
+            have ihf := ih f (by omega)
+            have ihx := ih x (by omega)
+            rw [codeTm_app']
+            have h1 : codeTm x ≤ Nat.pair (codeTm x) 0 := Nat.left_le_pair _ _
+            have h2 : codeTm f + Nat.pair (codeTm x) 0
+                ≤ Nat.pair (codeTm f) (Nat.pair (codeTm x) 0) := add_le_pair _ _
+            have h3 : Nat.pair (codeTm f) (Nat.pair (codeTm x) 0)
+                ≤ Nat.pair (codeOp (OneLambdaOp.app σ τ))
+                    (Nat.pair (codeTm f) (Nat.pair (codeTm x) 0)) := Nat.right_le_pair _ _
+            have h4 := add_two_le_pair_one (Nat.pair (codeOp (OneLambdaOp.app σ τ))
+              (Nat.pair (codeTm f) (Nat.pair (codeTm x) 0)))
+            omega
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.lam σ τ) args := ht
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht
+            subst ht
+            rw [size_lam'] at hN ⊢
+            have hb1 := Tm.one_le_size b
+            have ihb := ih b (by omega)
+            rw [codeTm_lam']
+            have h1 : codeTm b ≤ Nat.pair (codeTm b) 0 := Nat.left_le_pair _ _
+            have h2 : Nat.pair (codeTm b) 0
+                ≤ Nat.pair (codeOp (OneLambdaOp.lam σ τ)) (Nat.pair (codeTm b) 0) :=
+              Nat.right_le_pair _ _
+            have h3 := add_two_le_pair_one (Nat.pair (codeOp (OneLambdaOp.lam σ τ))
+              (Nat.pair (codeTm b) 0))
+            omega
+        | con i =>
+            subst hs0
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.con i) args := ht
+            subst ht
+            rw [Tm.size_op, Finset.sum_eq_zero fun j _ => j.elim0]
+            omega
+        | dstr j =>
+            subst hs0
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.dstr j) args := ht
+            subst ht
+            rw [Tm.size_op, Finset.sum_eq_zero fun j _ => j.elim0]
+            omega
+        | case =>
+            subst hs0
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              OneLambdaOp.case args := ht
+            subst ht
+            rw [Tm.size_op, Finset.sum_eq_zero fun j _ => j.elim0]
+            omega
+
+/-- The sort payload is bounded by the term code: every `app`/`lam` tag embeds
+its domain and codomain sort codes into the term code through the pairing
+bounds. By strong induction on the size through the head-form cases. -/
+theorem sortPayload_le_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) : sortPayload t ≤ codeTm t := by
+  suffices haux : ∀ (N : ℕ) {Γ : Binding.Ctx RType} {s : RType}
+      (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s), Tm.size t ≤ N →
+      sortPayload t ≤ codeTm t from haux (Tm.size t) t le_rfl
+  intro N
+  induction N with
+  | zero => exact fun t hN => absurd (Tm.one_le_size t) (by omega)
+  | succ N ih =>
+      intro Γ s t hN
+      rcases tm_cases t with ⟨x0, rfl⟩ | ⟨o, hs0, args, ht⟩
+      · rw [codeTm_var, sortPayload_var]
+        omega
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.app σ τ) args := ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            have hf1 := Tm.one_le_size f
+            have hx1 := Tm.one_le_size x
+            have ihf := ih f (by omega)
+            have ihx := ih x (by omega)
+            rw [sortPayload_app', codeTm_app']
+            set P1 := Nat.pair (codeTm f) (Nat.pair (codeTm x) 0) with hP1
+            have hopP : opPayload (OneLambdaOp.app σ τ) ≤ codeOp (OneLambdaOp.app σ τ) := by
+              rw [show codeOp (OneLambdaOp.app σ τ)
+                  = Nat.pair 0 (Nat.pair (codeRType σ) (codeRType τ)) from rfl]
+              refine max_le ?_ ?_
+              · exact le_trans (Nat.left_le_pair _ _) (Nat.right_le_pair _ _)
+              · exact le_trans (Nat.right_le_pair _ _) (Nat.right_le_pair _ _)
+            have hop : codeOp (OneLambdaOp.app σ τ)
+                ≤ Nat.pair (codeOp (OneLambdaOp.app σ τ)) P1 := Nat.left_le_pair _ _
+            have hf2 : codeTm f ≤ P1 := Nat.left_le_pair _ _
+            have hx2 : codeTm x ≤ P1 :=
+              le_trans (Nat.left_le_pair _ _) (Nat.right_le_pair _ _)
+            have hP1le : P1 ≤ Nat.pair (codeOp (OneLambdaOp.app σ τ)) P1 :=
+              Nat.right_le_pair _ _
+            have htop := add_two_le_pair_one (Nat.pair (codeOp (OneLambdaOp.app σ τ)) P1)
+            omega
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.lam σ τ) args := ht
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht
+            subst ht
+            rw [size_lam'] at hN
+            have ihb := ih b (by omega)
+            rw [sortPayload_lam', codeTm_lam']
+            set P1 := Nat.pair (codeTm b) 0 with hP1
+            have hopP : opPayload (OneLambdaOp.lam σ τ) ≤ codeOp (OneLambdaOp.lam σ τ) := by
+              rw [show codeOp (OneLambdaOp.lam σ τ)
+                  = Nat.pair 1 (Nat.pair (codeRType σ) (codeRType τ)) from rfl]
+              refine max_le ?_ ?_
+              · exact le_trans (Nat.left_le_pair _ _) (Nat.right_le_pair _ _)
+              · exact le_trans (Nat.right_le_pair _ _) (Nat.right_le_pair _ _)
+            have hop : codeOp (OneLambdaOp.lam σ τ)
+                ≤ Nat.pair (codeOp (OneLambdaOp.lam σ τ)) P1 := Nat.left_le_pair _ _
+            have hb2 : codeTm b ≤ P1 := Nat.left_le_pair _ _
+            have hP1le : P1 ≤ Nat.pair (codeOp (OneLambdaOp.lam σ τ)) P1 :=
+              Nat.right_le_pair _ _
+            have htop := add_two_le_pair_one (Nat.pair (codeOp (OneLambdaOp.lam σ τ)) P1)
+            omega
+        | con i =>
+            subst hs0
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.con i) args := ht
+            subst ht
+            rw [sortPayload_op]
+            exact max_le (Nat.zero_le _) (Finset.sup_le fun j _ => j.elim0)
+        | dstr j =>
+            subst hs0
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.dstr j) args := ht
+            subst ht
+            rw [sortPayload_op]
+            exact max_le (Nat.zero_le _) (Finset.sup_le fun j _ => j.elim0)
+        | case =>
+            subst hs0
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              OneLambdaOp.case args := ht
+            subst ht
+            rw [sortPayload_op]
+            exact max_le (Nat.zero_le _) (Finset.sup_le fun j _ => j.elim0)
+
+/-- The majorant chain on closed terms: the code of the deterministic reduct
+sits below the majorant of the code, `codeTm (detStep t) ≤ stepBound
+(codeTm t)`. The envelope of the reduct at the empty context composes with the
+per-step size squaring `size_detStep_sq`, the payload stability
+`sortPayload_detStep_le`, and the code-side reads `size_le_codeTm_succ` and
+`sortPayload_le_codeTm`. -/
+theorem codeTm_detStep_le_stepBound {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) [] s) :
+    codeTm (detStep t) ≤ stepBound (codeTm t) := by
+  refine le_trans (codeTm_le_envelope (detStep t)) ?_
+  rw [stepBound]
+  apply tower_mono_right
+  have h1 : Tm.size (detStep t) ≤ Tm.size t ^ 2 := size_detStep_sq t
+  have h2 : sortPayload (detStep t) ≤ sortPayload t := sortPayload_detStep_le t
+  have h3 : Tm.size t ≤ codeTm t + 1 := size_le_codeTm_succ t
+  have h4 : sortPayload t ≤ codeTm t := sortPayload_le_codeTm t
+  have h5 : Tm.size t ^ 2 ≤ (codeTm t + 1) ^ 2 := Nat.pow_le_pow_left h3 2
+  simp only [List.length_nil]
+  omega
+
+/-- The closed-term commutation (spec §6.1): on the code of a closed term the
+reference step computes the code of the deterministic reduct, `stepCode
+(codeTm t) = codeTm (detStep t)`. The dispatcher commutation at the empty
+context, the clamp discharged by the majorant chain. -/
+theorem stepCode_codeTm {s : RType} (t : Binding.Tm (oneLambdaSig natAlgSig) [] s) :
+    stepCode (codeTm t) = codeTm (detStep t) := by
+  rw [stepCode, show (0 : ℕ) = ([] : Binding.Ctx RType).length from rfl,
+    stepCodeAt_codeTm t]
+  exact min_eq_left (codeTm_detStep_le_stepBound t)
+
+/-- The reference step on codes is dominated by its majorant (spec §6.1):
+`stepCode n ≤ stepBound n` for every input, by the clamp. Consumed by the Task
+6.4.12 trace bounds. -/
+theorem stepCode_le_stepBound (n : ℕ) : stepCode n ≤ stepBound n := min_le_right _ _
+
+/-- The majorant of the reference step on codes is monotone (spec §6.1): the
+height-2 tower over a monotone polynomial. Consumed by the Task 6.4.12 trace
+bounds. -/
+theorem stepBound_mono : Monotone stepBound := by
+  intro m n hmn
+  apply tower_mono_right
+  have h1 : (m + 1) ^ 2 ≤ (n + 1) ^ 2 := Nat.pow_le_pow_left (by omega) 2
+  omega
 
 end OneLambda
 

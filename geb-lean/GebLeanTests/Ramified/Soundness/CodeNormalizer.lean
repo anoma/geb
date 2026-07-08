@@ -11,7 +11,10 @@ weakening) through the node equations alone; the remaining examples are
 instances of the commutation theorem `subCode_codeTm`, one on the redex body and
 one on a substituend that carries its own binder with a body referencing the
 substituted variable underneath a binder — the path on which `subCode` applies
-the `shiftCode` weakening under an abstraction node.
+the `shiftCode` weakening under an abstraction node. The step examples exercise
+the reference deterministic step on codes: `stepCode` contracts the identity
+β-redex code to the reduct's code and fixes a normal code, and the
+threaded-level dispatcher `stepCodeAt` mirrors `detStep` on an open term.
 
 ## References
 
@@ -118,5 +121,25 @@ private theorem detStep_idRedex : detStep idRedex = conc (natToFreeAlg 0) := by
     rw [redexBody, Binding.instantiate₁, Binding.instantiate, Binding.sub_var, boundVar,
       Binding.extendEnv_appendRight]
     rfl]
+
+/-- The reference step on codes contracts the identity β-redex code to the
+reduct's code: the closed-term commutation lemma composed with the term-level
+contraction, through the lemmas (no kernel reduction on the `codeTm` fold). -/
+example : stepCode (codeTm idRedex) = codeTm (conc (natToFreeAlg 0)) := by
+  rw [stepCode_codeTm idRedex, detStep_idRedex]
+
+/-- The reference step on codes fixes the code of a normal term: the
+closed-term commutation lemma composed with `detStep_normal` on the concrete
+zero word. -/
+example : stepCode (codeTm (conc (natToFreeAlg 0))) = codeTm (conc (natToFreeAlg 0)) := by
+  rw [stepCode_codeTm, detStep_normal (normal_conc _)]
+
+/-- The threaded-level dispatcher mirrors the deterministic step on an open
+term: the `stepCodeAt` commutation at the singleton ambient context of the
+binder-carrying substituend's body. -/
+example : stepCodeAt ([] ++ [RType.arrow RType.o RType.o] : Binding.Ctx RType).length
+      (codeTm dUnderBinder)
+    = codeTm (detStep dUnderBinder) :=
+  stepCodeAt_codeTm dUnderBinder
 
 end GebLean.Ramified.OneLambda
