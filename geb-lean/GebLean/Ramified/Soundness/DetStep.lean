@@ -55,6 +55,9 @@ contraction reads the destructor- or case-redex off the application spine throug
   `OneLambdaStep` at every term carrying an ι-redex.
 * `OneLambda.detStep_sound` — the deterministic step performs one genuine
   `OneLambdaStep` at every non-`Normal` term.
+* `OneLambda.iotaContract_cases_of_topIota` — the shape-and-value inversion of
+  the ι-contraction at a saturated ι-redex: the destructor or case redex shape
+  together with the selected reduct.
 * `OneLambda.detIter_reduces` — the deterministic iteration is a reduction
   sequence under `Relation.ReflTransGen OneLambdaStep`.
 * `OneLambda.detIter_normal_stable` — a `Normal` term is a fixpoint of the
@@ -326,7 +329,7 @@ private theorem op_lam_eta {Γ : Binding.Ctx RType} {σ τ : RType}
 
 /-- Every application node is an `app'` of some function and argument at the
 node's own context: the existential packaging of `op_app_eta`. -/
-private theorem op_app_inv {Γ : Binding.Ctx RType} {σ τ : RType}
+theorem op_app_inv {Γ : Binding.Ctx RType} {σ τ : RType}
     (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).length),
       Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).1)
         (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).2) :
@@ -337,7 +340,7 @@ private theorem op_app_inv {Γ : Binding.Ctx RType} {σ τ : RType}
 
 /-- Every abstraction node is a `lam'` of some body at the binder-extended
 context: the existential packaging of `op_lam_eta`. -/
-private theorem op_lam_inv {Γ : Binding.Ctx RType} {σ τ : RType}
+theorem op_lam_inv {Γ : Binding.Ctx RType} {σ τ : RType}
     (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).length),
       Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).1)
         (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).2) :
@@ -347,7 +350,7 @@ private theorem op_lam_inv {Γ : Binding.Ctx RType} {σ τ : RType}
 
 /-- The head-form cases of a term of `1λ(A)`: a variable, or an operation node
 whose result sort transports to the term's sort. -/
-private theorem tm_cases {Γ : Binding.Ctx RType} {s : RType}
+theorem tm_cases {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig A) Γ s) :
     (∃ x : Binding.Var Γ s, t = Binding.Tm.var x) ∨
     ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = s)
@@ -388,7 +391,7 @@ private theorem tm_cases {Γ : Binding.Ctx RType} {s : RType}
 detector is set is an abstraction node `lam' b`. The inversion consumed by the
 β worker's root-contraction regime, exposing the body that `appReduct`
 instantiates. -/
-private theorem exists_lam'_of_isLam {Γ : Binding.Ctx RType} {σ τ : RType}
+theorem exists_lam'_of_isLam {Γ : Binding.Ctx RType} {σ τ : RType}
     {f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ)} (h : isLam f = true) :
     ∃ b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ, f = OneLambda.lam' b := by
   rcases tm_cases f with ⟨x, rfl⟩ | ⟨o, hs, args, rfl⟩
@@ -448,7 +451,7 @@ private theorem exists_op_of_headTag {Γ : Binding.Ctx RType} {s : RType}
 
 /-- An r-type of shape `o` is the base type `o`: the nullary shape determines
 the node. -/
-private theorem eq_o_of_shape_o {s : RType} (h : s.shape = RTypeShape.o) : s = RType.o := by
+theorem eq_o_of_shape_o {s : RType} (h : s.shape = RTypeShape.o) : s = RType.o := by
   rcases s with ⟨_, i, children⟩
   have hi : i = RTypeShape.o := h
   subst hi
@@ -1722,6 +1725,153 @@ private theorem iotaContract_measures_of_topIota {Γ : Binding.Ctx RType} {s : R
     refine ⟨OneLambdaStep.case idx a b, ?_, ?_⟩
     · exact size_arg_lt_replicateSpine A.numCtors RType.o _ b idx
     · exact betaRedexRank_arg_le_replicateSpine A.numCtors RType.o _ b idx
+
+omit [LinearOrder A.B] in
+/-- A term whose sort-gated ι-redex detector `topIota` is set has the base
+object sort `o`: the detector's result-sort gate forces the nullary shape,
+which determines the sort. -/
+theorem eq_o_of_topIota {Γ : Binding.Ctx RType} {s : RType}
+    {t : Binding.Tm (oneLambdaSig A) Γ s} (htop : topIota t = true) : s = RType.o := by
+  refine eq_o_of_shape_o ?_
+  by_contra hcon
+  unfold topIota at htop
+  rw [if_neg hcon] at htop
+  exact Bool.noConfusion htop
+
+/-- The ι-contraction cases at a saturated ι-redex (Leivant III section 4.2,
+p. 223): a base-sorted term whose sort-gated ι-redex detector `topIota` is set
+is either a destructor redex — a destructor applied to a constructor word —
+with `iotaContract` selecting the hit argument (or returning the scrutinee on a
+miss), or a saturated case redex with `iotaContract` selecting the branch at
+the scrutinee constructor's enumeration position. The shape-and-value
+inversion of `iotaContract` consumed by the code-normalizer mirror of the ι
+worker; the shape halves re-package `iotaSpine_inv_aux` and `conHeaded_o_inv`,
+and the value halves evaluate `iotaContract` on the exposed spine through the
+`collectSpine` computation lemmas. -/
+theorem iotaContract_cases_of_topIota {Γ : Binding.Ctx RType}
+    {t : Binding.Tm (oneLambdaSig A) Γ RType.o} (htop : topIota t = true) :
+    (∃ (j : Fin A.maxArity) (i : A.B)
+      (a : Fin (A.ar i) → Binding.Tm (oneLambdaSig A) Γ RType.o),
+      t = OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) (fun l => l.elim0))
+          (replicateSpine (A.ar i) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a) ∧
+      iotaContract t = (if h : j.val < A.ar i then a ⟨j.val, h⟩
+        else replicateSpine (A.ar i) RType.o
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a)) ∨
+    (∃ (idx : Fin A.numCtors)
+      (a : Fin (A.ar (ctorAt idx)) → Binding.Tm (oneLambdaSig A) Γ RType.o)
+      (b : Fin A.numCtors → Binding.Tm (oneLambdaSig A) Γ RType.o),
+      t = replicateSpine A.numCtors RType.o
+          (OneLambda.app'
+            (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case (fun l => l.elim0))
+            (replicateSpine (A.ar (ctorAt idx)) RType.o
+              (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+                (fun l => l.elim0)) a)) b ∧
+      iotaContract t = b idx) := by
+  have hio : iotaSpine t = true := by
+    unfold topIota at htop
+    rwa [if_pos (show RType.o.shape = RTypeShape.o from rfl)] at htop
+  rcases iotaSpine_inv_aux (Tm.size t) t le_rfl hio with
+    ⟨j, w, _, hcw, htEq⟩ | ⟨n, k, hnk, hsB, _, scrut, b, hcs, htEq⟩
+  · -- destructor redex
+    replace htEq : t = OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) (fun l => l.elim0)) w := htEq
+    obtain ⟨i, a, hwEq⟩ := conHeaded_o_inv hcw
+    rw [hwEq] at htEq
+    refine Or.inl ⟨j, i, a, htEq, ?_⟩
+    subst htEq
+    rw [iotaContract_o]
+    have hscoll : collectSpine (replicateSpine (A.ar i) RType.o
+        (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a)
+        = some (OneLambdaOp.con i, List.ofFn a) := by
+      rw [collectSpine_replicateSpine]
+      rfl
+    have hcoll : collectSpine (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) (fun l => l.elim0))
+        (replicateSpine (A.ar i) RType.o
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a))
+        = some (OneLambdaOp.dstr j, [replicateSpine (A.ar i) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a]) := by
+      rw [collectSpine_app'_o]
+      rfl
+    have hcontr : iotaContractO (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.dstr j) (fun l => l.elim0))
+        (replicateSpine (A.ar i) RType.o
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a))
+        = dstrReduct j (replicateSpine (A.ar i) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con i) (fun l => l.elim0)) a) := by
+      unfold iotaContractO
+      rw [hcoll]
+    rw [hcontr]
+    rcases Nat.lt_or_ge j.val (A.ar i) with hj | hj
+    · rw [dif_pos hj]
+      unfold dstrReduct
+      simp only [hscoll, List.getElem?_ofFn]
+      rw [dif_pos hj]
+    · rw [dif_neg (by omega)]
+      unfold dstrReduct
+      simp only [hscoll, List.getElem?_ofFn]
+      rw [dif_neg (by omega)]
+  · -- case redex
+    have hk : k = 0 := eq_zero_of_o_eq_curried hsB
+    subst hk
+    have hn : A.numCtors = n := hnk
+    subst hn
+    replace htEq : t = replicateSpine A.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case (fun l => l.elim0)) scrut)
+        b := htEq
+    obtain ⟨i, a, hscrEq⟩ := conHeaded_o_inv hcs
+    obtain ⟨idx, rfl⟩ := exists_ctorAt_eq i
+    rw [hscrEq] at htEq
+    refine Or.inr ⟨idx, a, b, htEq, ?_⟩
+    subst htEq
+    rw [iotaContract_o]
+    have hscoll : collectSpine (replicateSpine (A.ar (ctorAt idx)) RType.o
+        (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+          (fun l => l.elim0)) a)
+        = some (OneLambdaOp.con (ctorAt idx), List.ofFn a) := by
+      rw [collectSpine_replicateSpine]
+      rfl
+    have hc1 : collectSpine (OneLambda.app'
+        (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case (fun l => l.elim0))
+        (replicateSpine (A.ar (ctorAt idx)) RType.o
+          (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+            (fun l => l.elim0)) a))
+        = some (OneLambdaOp.case, [replicateSpine (A.ar (ctorAt idx)) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+              (fun l => l.elim0)) a]) := by
+      rw [collectSpine_app'_o]
+      rfl
+    have hc2 : collectSpine (replicateSpine A.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case (fun l => l.elim0))
+          (replicateSpine (A.ar (ctorAt idx)) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+              (fun l => l.elim0)) a))
+        b)
+        = some (OneLambdaOp.case, replicateSpine (A.ar (ctorAt idx)) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+              (fun l => l.elim0)) a :: List.ofFn b) := by
+      rw [collectSpine_replicateSpine, hc1]
+      rfl
+    have hcontr : iotaContractO (replicateSpine A.numCtors RType.o
+        (OneLambda.app'
+          (Binding.Tm.op (S := oneLambdaSig A) OneLambdaOp.case (fun l => l.elim0))
+          (replicateSpine (A.ar (ctorAt idx)) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+              (fun l => l.elim0)) a))
+        b)
+        = caseReduct (replicateSpine (A.ar (ctorAt idx)) RType.o
+            (Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.con (ctorAt idx))
+              (fun l => l.elim0)) a) (List.ofFn b) := by
+      unfold iotaContractO
+      rw [hc2]
+    rw [hcontr]
+    unfold caseReduct
+    simp only [hscoll, idxOf_ctorAt, List.getElem?_ofFn]
+    rw [dif_pos idx.isLt]
 
 /-- The descent induction behind `detIotaStep_sound`, by strong induction on
 the term size: at every node carrying an ι-redex, one of the `detIotaStepOp`
