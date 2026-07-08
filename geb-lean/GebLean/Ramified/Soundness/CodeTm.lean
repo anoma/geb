@@ -1,4 +1,5 @@
 import GebLean.Ramified.Soundness.DetStep
+import GebLean.Utilities.ComputationalComplexity
 import Mathlib.Data.Nat.Pairing
 
 /-!
@@ -112,6 +113,10 @@ normalizer tasks.
   max (sortPayload e) (sortPayload d)`.
 * `OneLambda.sortPayload_detStep_le` — the deterministic step does not increase
   the sort payload: `sortPayload (detStep t) ≤ sortPayload t`.
+* `OneLambda.codeOp_le_tower`, `OneLambda.pair_le_tower_two` — the operation-code
+  and pairing bounds feeding the envelope.
+* `OneLambda.codeTm_le_envelope` — the tower envelope: `codeTm t ≤
+  tower 2 (6 * (2 * Tm.size t + sortPayload t + Γ.length + 1))`.
 
 ## Implementation notes
 
@@ -1074,6 +1079,344 @@ theorem sortPayload_detStep_le {Γ : Binding.Ctx RType} {s : RType}
   by_cases h : Normal t
   · rw [detStep_normal h]
   · exact sortPayload_step_le (detStep_sound t h)
+
+/-! ### The tower envelope
+
+A single tower-of-height-2 bound on the term code, read off the term's size, its
+sort payload, and its context length. The de Bruijn index of a variable leaf is
+bounded by its context length (`Var Γ s = {i : Fin Γ.length // …}`), so the
+context length `Γ.length` enters the envelope alongside `Tm.size` and
+`sortPayload`; on a closed term (`Γ = []`) it contributes `0`. The proof nests
+`Nat.pair_le_sq` up the tree: each pairing squares the payload sum, and squaring
+telescopes into the height-2 tower through the exact identity
+`(tower 2 y) ^ (2 ^ k) = tower 2 (y + k)`. -/
+
+/-- Squaring a height-2 tower raises its argument by one:
+`(tower 2 y) ^ 2 = tower 2 (y + 1)`, since `(2 ^ 2 ^ y) ^ 2 = 2 ^ (2 · 2 ^ y) =
+2 ^ 2 ^ (y + 1)`. -/
+theorem tower_two_sq (y : ℕ) : (tower 2 y) ^ 2 = tower 2 (y + 1) := by
+  simp only [tower_succ, tower_zero]
+  rw [← pow_mul, pow_succ]
+
+/-- Raising a height-2 tower to the fourth power raises its argument by two:
+`(tower 2 y) ^ 4 = tower 2 (y + 2)`. -/
+theorem tower_two_pow_four (y : ℕ) : (tower 2 y) ^ 4 = tower 2 (y + 2) := by
+  rw [show (4 : ℕ) = 2 * 2 from rfl, pow_mul, tower_two_sq, tower_two_sq]
+
+/-- A square is bounded by a height-2 tower one above its base: `n ^ 2 ≤
+tower 2 (n + 1)`, since `n ^ 2 ≤ (2 ^ n) ^ 2 = 2 ^ (n · 2) ≤ 2 ^ 2 ^ (n + 1)`. -/
+theorem sq_le_tower_two (n : ℕ) : n ^ 2 ≤ tower 2 (n + 1) := by
+  have hexp : n * 2 ≤ 2 ^ (n + 1) := by
+    rw [pow_succ]
+    have := le_two_pow_self n
+    omega
+  calc n ^ 2 ≤ (2 ^ n) ^ 2 := Nat.pow_le_pow_left (le_two_pow_self n) 2
+    _ = 2 ^ (n * 2) := by rw [← pow_mul]
+    _ ≤ 2 ^ (2 ^ (n + 1)) := Nat.pow_le_pow_right (by decide) hexp
+    _ = tower 2 (n + 1) := by simp only [tower_succ, tower_zero]
+
+/-- A pairing of two values under a common height-2 tower bound is bounded by the
+tower two above: `Nat.pair a b ≤ tower 2 (y + 2)` when `a, b ≤ tower 2 y` and
+`1 ≤ y`. From `Nat.pair_le_sq` and `tower_two_pow_four`, using
+`3 ≤ tower 2 y`. -/
+theorem pair_le_tower_two {y a b : ℕ} (hy : 1 ≤ y) (ha : a ≤ tower 2 y)
+    (hb : b ≤ tower 2 y) : Nat.pair a b ≤ tower 2 (y + 2) := by
+  set T := tower 2 y with hT
+  have hT3 : 3 ≤ T := by
+    calc (3 : ℕ) ≤ 4 := by decide
+      _ = tower 2 1 := by decide
+      _ ≤ T := tower_mono_right 2 hy
+  have hT9 : 9 ≤ T ^ 2 := by rw [pow_two]; exact Nat.mul_le_mul hT3 hT3
+  calc Nat.pair a b ≤ (a + b + 1) ^ 2 := Nat.pair_le_sq a b
+    _ ≤ (T + T + 1) ^ 2 := Nat.pow_le_pow_left (by omega) 2
+    _ ≤ (3 * T) ^ 2 := Nat.pow_le_pow_left (by omega) 2
+    _ = 3 ^ 2 * T ^ 2 := Nat.mul_pow 3 T 2
+    _ ≤ T ^ 2 * T ^ 2 := Nat.mul_le_mul hT9 (le_refl _)
+    _ = T ^ 4 := by rw [← pow_add]
+    _ = tower 2 (y + 2) := tower_two_pow_four y
+
+/-- The operation code is bounded by a height-2 tower five above its sort
+payload: `codeOp o ≤ tower 2 (opPayload o + 5)`. For `app`/`lam` the two
+`codeRType` children pass through two `pair_le_tower_two` layers; the nullary
+constants code to fixed values below `tower 2 4`. -/
+theorem codeOp_le_tower (o : OneLambdaOp natAlgSig) : codeOp o ≤ tower 2 (opPayload o + 5) := by
+  have hnat_maxArity : natAlgSig.maxArity = 1 := by decide
+  cases o with
+  | app σ τ =>
+    simp only [codeOp, opPayload]
+    set P := max (codeRType σ) (codeRType τ) with hP
+    have hσ : codeRType σ ≤ tower 2 (P + 1) :=
+      le_trans (le_max_left _ _) (le_trans (self_le_tower 2 P) (tower_mono_right 2 (by omega)))
+    have hτ : codeRType τ ≤ tower 2 (P + 1) :=
+      le_trans (le_max_right _ _) (le_trans (self_le_tower 2 P) (tower_mono_right 2 (by omega)))
+    have h1 : Nat.pair (codeRType σ) (codeRType τ) ≤ tower 2 (P + 3) :=
+      pair_le_tower_two (by omega) hσ hτ
+    apply pair_le_tower_two (y := P + 3) (a := 0) (by omega) (Nat.zero_le _) h1
+  | lam σ τ =>
+    simp only [codeOp, opPayload]
+    set P := max (codeRType σ) (codeRType τ) with hP
+    have hσ : codeRType σ ≤ tower 2 (P + 1) :=
+      le_trans (le_max_left _ _) (le_trans (self_le_tower 2 P) (tower_mono_right 2 (by omega)))
+    have hτ : codeRType τ ≤ tower 2 (P + 1) :=
+      le_trans (le_max_right _ _) (le_trans (self_le_tower 2 P) (tower_mono_right 2 (by omega)))
+    have h1 : Nat.pair (codeRType σ) (codeRType τ) ≤ tower 2 (P + 3) :=
+      pair_le_tower_two (by omega) hσ hτ
+    apply pair_le_tower_two (y := P + 3) (a := 1) (by omega)
+      (one_le_tower_of_one_le 2 (P + 3) (by omega)) h1
+  | con b =>
+    simp only [codeOp, opPayload]
+    have h : Nat.pair 2 (cond b 1 0) ≤ 16 := by cases b <;> decide
+    exact le_trans h (le_trans (by decide : (16 : ℕ) ≤ tower 2 4)
+      (tower_mono_right 2 (by omega)))
+  | dstr j =>
+    simp only [codeOp, opPayload]
+    have hj : j.val = 0 := by have := j.2; omega
+    rw [hj]
+    exact le_trans (by decide : Nat.pair 3 0 ≤ tower 2 4) (tower_mono_right 2 (by omega))
+  | case =>
+    simp only [codeOp, opPayload]
+    exact le_trans (by decide : Nat.pair 4 0 ≤ tower 2 4) (tower_mono_right 2 (by omega))
+
+/-- A two-deep right-nested pairing terminated by `0` is bounded by the tower four
+above the common bound: one `pair_le_tower_two` layer per pairing. -/
+theorem pair2_le_tower {z c0 c1 : ℕ} (hz : 1 ≤ z) (h0 : c0 ≤ tower 2 z)
+    (h1 : c1 ≤ tower 2 z) : Nat.pair c0 (Nat.pair c1 0) ≤ tower 2 (z + 4) := by
+  have p1 : Nat.pair c1 0 ≤ tower 2 (z + 2) := pair_le_tower_two hz h1 (Nat.zero_le _)
+  exact pair_le_tower_two (by omega) (le_trans h0 (tower_mono_right 2 (by omega))) p1
+
+/-- A three-deep right-nested pairing terminated by `0` is bounded by the tower
+six above the common bound. -/
+theorem pair3_le_tower {z c0 c1 c2 : ℕ} (hz : 1 ≤ z) (h0 : c0 ≤ tower 2 z)
+    (h1 : c1 ≤ tower 2 z) (h2 : c2 ≤ tower 2 z) :
+    Nat.pair c0 (Nat.pair c1 (Nat.pair c2 0)) ≤ tower 2 (z + 6) := by
+  have p2 : Nat.pair c1 (Nat.pair c2 0) ≤ tower 2 (z + 4) := pair2_le_tower hz h1 h2
+  exact pair_le_tower_two (by omega) (le_trans h0 (tower_mono_right 2 (by omega))) p2
+
+/-- A four-deep right-nested pairing terminated by `0` is bounded by the tower
+eight above the common bound. -/
+theorem pair4_le_tower {z c0 c1 c2 c3 : ℕ} (hz : 1 ≤ z) (h0 : c0 ≤ tower 2 z)
+    (h1 : c1 ≤ tower 2 z) (h2 : c2 ≤ tower 2 z) (h3 : c3 ≤ tower 2 z) :
+    Nat.pair c0 (Nat.pair c1 (Nat.pair c2 (Nat.pair c3 0))) ≤ tower 2 (z + 8) := by
+  have p3 : Nat.pair c1 (Nat.pair c2 (Nat.pair c3 0)) ≤ tower 2 (z + 6) :=
+    pair3_le_tower hz h1 h2 h3
+  exact pair_le_tower_two (by omega) (le_trans h0 (tower_mono_right 2 (by omega))) p3
+
+/-! Head-form inversions (local re-derivations of the private `Normalization`/
+`DetStep` case principle), used by the envelope induction to expose the
+`app'`/`lam'`/nullary node structure. -/
+
+/-- Transporting a term along a context equality and back is the identity. -/
+private theorem env_eqRec_symm {A : AlgSig} [Fintype A.B] {Γ Γ' : Binding.Ctx RType}
+    {s : RType} (h : Γ = Γ') (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    h.symm ▸ (h ▸ t : Binding.Tm (oneLambdaSig A) Γ' s) = t := by cases h; rfl
+
+/-- Every application node is an `app'` of a function and argument. -/
+private theorem env_op_app_inv {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.app σ τ)).get j).2) :
+    ∃ (f : Binding.Tm (oneLambdaSig A) Γ (RType.arrow σ τ))
+      (x : Binding.Tm (oneLambdaSig A) Γ σ),
+      Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.app σ τ) args = OneLambda.app' f x := by
+  refine ⟨List.append_nil Γ ▸ (args ⟨0, Nat.succ_pos 1⟩ :
+      Binding.Tm (oneLambdaSig A) (Γ ++ []) (RType.arrow σ τ)),
+    List.append_nil Γ ▸ (args ⟨1, Nat.one_lt_two⟩ :
+      Binding.Tm (oneLambdaSig A) (Γ ++ []) σ), ?_⟩
+  unfold OneLambda.app'
+  congr 1
+  funext j
+  match j with
+  | ⟨0, _⟩ => exact (env_eqRec_symm (List.append_nil Γ) _).symm
+  | ⟨1, _⟩ => exact (env_eqRec_symm (List.append_nil Γ) _).symm
+
+/-- Every abstraction node is a `lam'` of a body. -/
+private theorem env_op_lam_inv {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RType} {σ τ : RType}
+    (args : ∀ j : Fin (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).length),
+      Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).1)
+        (((oneLambdaSig A).args (OneLambdaOp.lam σ τ)).get j).2) :
+    ∃ b : Binding.Tm (oneLambdaSig A) (Γ ++ [σ]) τ,
+      Binding.Tm.op (S := oneLambdaSig A) (OneLambdaOp.lam σ τ) args = OneLambda.lam' b := by
+  refine ⟨args ⟨0, Nat.one_pos⟩, ?_⟩
+  unfold OneLambda.lam'
+  congr 1
+  funext j
+  match j with
+  | ⟨0, _⟩ => rfl
+
+/-- The head-form cases of a term: a variable, or an operation node whose result
+sort transports to the term's sort. -/
+private theorem env_tm_cases {A : AlgSig} [Fintype A.B] {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig A) Γ s) :
+    (∃ x : Binding.Var Γ s, t = Binding.Tm.var x) ∨
+    ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = s)
+      (args : ∀ j : Fin (((oneLambdaSig A).args o).length),
+        Binding.Tm (oneLambdaSig A) (Γ ++ (((oneLambdaSig A).args o).get j).1)
+          (((oneLambdaSig A).args o).get j).2),
+      t = (hs ▸ Binding.Tm.op (S := oneLambdaSig A) o args
+            : Binding.Tm (oneLambdaSig A) Γ s) := by
+  suffices haux : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig A).polyEndo) y),
+      (∃ x : Binding.Var y.1 y.2,
+        t = (Binding.Tm.var x : Binding.Tm (oneLambdaSig A) y.1 y.2)) ∨
+      ∃ (o : OneLambdaOp A) (hs : (oneLambdaSig A).result o = y.2)
+        (args : ∀ j : Fin (((oneLambdaSig A).args o).length),
+          Binding.Tm (oneLambdaSig A) (y.1 ++ (((oneLambdaSig A).args o).get j).1)
+            (((oneLambdaSig A).args o).get j).2),
+        t = (hs ▸ Binding.Tm.op (S := oneLambdaSig A) o args
+              : Binding.Tm (oneLambdaSig A) y.1 y.2) from haux t
+  intro y t
+  cases t with
+  | mk y idx children =>
+    cases idx with
+    | inl a =>
+      refine Or.inl ⟨Binding.leafVar a, ?_⟩
+      obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+      congr 1
+      funext e
+      exact e.elim
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : OneLambdaOp A // (oneLambdaSig A).result o = s' } at p
+      revert children
+      obtain ⟨o, rfl⟩ := p
+      intro children
+      exact Or.inr ⟨o, rfl, fun j => children ⟨j⟩, rfl⟩
+
+/-- The code of a nullary operation node is bounded by the tower-9 of `0`,
+independent of the node: two pairing layers over `codeOp_le_tower` at payload
+`0`. -/
+private theorem codeTm_nullary_le {o : OneLambdaOp natAlgSig} {Γ : Binding.Ctx RType}
+    (hpay : opPayload o = 0)
+    (args : ∀ j : Fin ((oneLambdaSig natAlgSig).args o).length,
+      Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ (((oneLambdaSig natAlgSig).args o).get j).1)
+        (((oneLambdaSig natAlgSig).args o).get j).2)
+    (hlen : ((oneLambdaSig natAlgSig).args o).length = 0) :
+    codeTm (Binding.Tm.op (S := oneLambdaSig natAlgSig) o args) ≤ tower 2 9 := by
+  rw [codeTm_op]
+  have hofn : List.ofFn (fun j => codeTm (args j)) = [] := by
+    rw [List.ofFn_eq_nil_iff]; exact hlen
+  rw [hofn, List.foldr_nil]
+  have hco : codeOp o ≤ tower 2 5 := by
+    have h := codeOp_le_tower o; rw [hpay] at h; exact h
+  exact pair2_le_tower (z := 5) (by omega) (one_le_tower_of_one_le 2 5 (by omega)) hco
+
+/-- The strong-induction shell of the tower envelope: on a term of size at most
+`N`, the code is bounded by the height-2 tower of `6 · (2 · size + payload +
+Γ.length + 1)`. -/
+private theorem codeTm_le_envelope_aux :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType}
+      (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s), Tm.size t ≤ N →
+      codeTm t ≤ tower 2 (6 * (2 * Tm.size t + sortPayload t + Γ.length + 1))
+  | 0, _, _, t, hN => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN => by
+    rcases env_tm_cases t with ⟨x, rfl⟩ | ⟨o, hs, args, ht⟩
+    · rw [codeTm_var, Tm.size_var, sortPayload_var]
+      have hidx : x.1.val < Γ.length := x.1.2
+      calc Nat.pair 0 x.1.val ≤ (0 + x.1.val + 1) ^ 2 := Nat.pair_le_sq 0 x.1.val
+        _ = (x.1.val + 1) ^ 2 := by rw [Nat.zero_add]
+        _ ≤ Γ.length ^ 2 := Nat.pow_le_pow_left (by omega) 2
+        _ ≤ tower 2 (Γ.length + 1) := sq_le_tower_two _
+        _ ≤ tower 2 (6 * (2 * 1 + 0 + Γ.length + 1)) := tower_mono_right 2 (by omega)
+    · cases o with
+      | app σ τ =>
+        have hs1 : τ = s := hs
+        subst hs1
+        replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.app σ τ) args :=
+          ht
+        obtain ⟨f, x, hfx⟩ := env_op_app_inv args
+        rw [hfx] at ht
+        subst ht
+        rw [size_app'] at hN
+        have hf1 := Tm.one_le_size f
+        have hx1 := Tm.one_le_size x
+        have ihf := codeTm_le_envelope_aux N f (by omega)
+        have ihx := codeTm_le_envelope_aux N x (by omega)
+        rw [codeTm_app']
+        set z := max (max (6 * (2 * Tm.size f + sortPayload f + Γ.length + 1))
+          (6 * (2 * Tm.size x + sortPayload x + Γ.length + 1)))
+          (sortPayload (app' f x) + 5) with hz_def
+        have hz1 : 1 ≤ z := by rw [hz_def]; omega
+        have hple : opPayload (OneLambdaOp.app σ τ) ≤ sortPayload (app' f x) := by
+          rw [sortPayload_app']; exact le_max_left _ _
+        have hco : codeOp (OneLambdaOp.app σ τ) ≤ tower 2 z :=
+          le_trans (codeOp_le_tower _) (tower_mono_right 2 (by rw [hz_def]; omega))
+        have hf : codeTm f ≤ tower 2 z :=
+          le_trans ihf (tower_mono_right 2 (le_max_of_le_left (le_max_left _ _)))
+        have hx : codeTm x ≤ tower 2 z :=
+          le_trans ihx (tower_mono_right 2 (le_max_of_le_left (le_max_right _ _)))
+        refine le_trans (pair4_le_tower hz1 (one_le_tower_of_one_le 2 z hz1) hco hf hx)
+          (tower_mono_right 2 ?_)
+        rw [hz_def, size_app', sortPayload_app']
+        omega
+      | lam σ τ =>
+        have hs1 : RType.arrow σ τ = s := hs
+        subst hs1
+        replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.lam σ τ) args :=
+          ht
+        obtain ⟨b, hb⟩ := env_op_lam_inv args
+        rw [hb] at ht
+        subst ht
+        rw [size_lam'] at hN
+        have hb1 := Tm.one_le_size b
+        have ihb := codeTm_le_envelope_aux N b (by omega)
+        have hlb : (Γ ++ [σ]).length = Γ.length + 1 := by simp
+        rw [hlb] at ihb
+        rw [codeTm_lam']
+        set z := max (6 * (2 * Tm.size b + sortPayload b + (Γ.length + 1) + 1))
+          (sortPayload (lam' b) + 5) with hz_def
+        have hz1 : 1 ≤ z := by rw [hz_def]; omega
+        have hple : opPayload (OneLambdaOp.lam σ τ) ≤ sortPayload (lam' b) := by
+          rw [sortPayload_lam']; exact le_max_left _ _
+        have hco : codeOp (OneLambdaOp.lam σ τ) ≤ tower 2 z :=
+          le_trans (codeOp_le_tower _) (tower_mono_right 2 (by rw [hz_def]; omega))
+        have hcb : codeTm b ≤ tower 2 z :=
+          le_trans ihb (tower_mono_right 2 (le_max_left _ _))
+        refine le_trans (pair3_le_tower hz1 (one_le_tower_of_one_le 2 z hz1) hco hcb)
+          (tower_mono_right 2 ?_)
+        rw [hz_def, size_lam', sortPayload_lam']
+        omega
+      | con i =>
+        have hs1 : RType.curried (List.replicate (natAlgSig.ar i) RType.o) RType.o = s := hs
+        subst hs1
+        replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con i) args := ht
+        have hone : 1 ≤ Tm.size t := Tm.one_le_size t
+        refine le_trans ?_ (tower_mono_right 2
+          (show (9 : ℕ) ≤ 6 * (2 * Tm.size t + sortPayload t + Γ.length + 1) from by omega))
+        rw [ht]
+        exact codeTm_nullary_le rfl args rfl
+      | dstr j =>
+        have hs1 : RType.arrow RType.o RType.o = s := hs
+        subst hs1
+        replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) args := ht
+        have hone : 1 ≤ Tm.size t := Tm.one_le_size t
+        refine le_trans ?_ (tower_mono_right 2
+          (show (9 : ℕ) ≤ 6 * (2 * Tm.size t + sortPayload t + Γ.length + 1) from by omega))
+        rw [ht]
+        exact codeTm_nullary_le rfl args rfl
+      | case =>
+        have hs1 : RType.arrow RType.o
+            (RType.curried (List.replicate natAlgSig.numCtors RType.o) RType.o) = s := hs
+        subst hs1
+        replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case args := ht
+        have hone : 1 ≤ Tm.size t := Tm.one_le_size t
+        refine le_trans ?_ (tower_mono_right 2
+          (show (9 : ℕ) ≤ 6 * (2 * Tm.size t + sortPayload t + Γ.length + 1) from by omega))
+        rw [ht]
+        exact codeTm_nullary_le rfl args rfl
+
+/-- The tower envelope (spec §5.4): the term code sits below a single height-2
+tower whose argument is linear in the term's size, its sort payload, and its
+context length, `codeTm t ≤ tower 2 (6 · (2 · Tm.size t + sortPayload t +
+Γ.length + 1))`. The `Γ.length` term bounds the de Bruijn index of a variable
+leaf, which the term's size and payload do not; it vanishes on a closed term.
+The concrete constant `6`, the `2 · Tm.size` weight, and the `Γ.length` summand
+are fixed by the proof; the height-2 tower shape is the interface. Nesting
+`Nat.pair_le_sq` up the tree telescopes into the tower through
+`(tower 2 y) ^ (2 ^ k) = tower 2 (y + k)`. -/
+theorem codeTm_le_envelope {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm t ≤ tower 2 (6 * (2 * Tm.size t + sortPayload t + Γ.length + 1)) :=
+  codeTm_le_envelope_aux (Tm.size t) t le_rfl
 
 end OneLambda
 
