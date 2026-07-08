@@ -90,4 +90,33 @@ through the mirror lemma. -/
 example : normalCode (codeTm eBinder) = true ↔ Normal eBinder :=
   normalCode_codeTm eBinder
 
+/-- The task 6.4.1 identity β-redex `(λ(:o). x) 0̄`: the abstraction over the
+redex body applied to the concrete zero word. -/
+private def idRedex : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
+  OneLambda.app' (OneLambda.lam' redexBody) (conc (natToFreeAlg 0))
+
+/-- The deterministic step contracts the identity β-redex to its argument: the
+β worker fires the root contraction, whose reduct instantiates the sole bound
+variable by the argument. Through the node equations (no kernel reduction). -/
+private theorem detStep_idRedex : detStep idRedex = conc (natToFreeAlg 0) := by
+  have hb : betaRedexRank redexBody = 0 := betaRedexRank_var _
+  have hf : betaRedexRank (OneLambda.lam' redexBody) = 0 := by
+    rw [betaRedexRank_lam', hb]
+  have hx : betaRedexRank (conc (natToFreeAlg 0)) = 0 := by
+    have := (normal_iff (conc (natToFreeAlg 0))).mp (normal_conc _)
+    exact this.1
+  have htop : topBetaRank idRedex = 1 := by
+    rw [idRedex, topBetaRank_app', if_pos (isLam_lam' redexBody)]
+    rfl
+  have hrank : betaRedexRank idRedex = 1 := by
+    rw [idRedex, betaRedexRank_app', ← idRedex, htop, hf, hx]
+    omega
+  have hstep : detStep idRedex = detStepAt 1 idRedex := detStep_eq_detStepAt one_pos hrank
+  rw [hstep, idRedex, detStepAt_app', if_neg (by rw [hf]; omega), if_neg (by rw [hx]; omega),
+    if_pos ⟨isLam_lam' redexBody, by simp⟩, appReduct_lam']
+  rw [show Binding.instantiate₁ (conc (natToFreeAlg 0)) redexBody = conc (natToFreeAlg 0) from by
+    rw [redexBody, Binding.instantiate₁, Binding.instantiate, Binding.sub_var, boundVar,
+      Binding.extendEnv_appendRight]
+    rfl]
+
 end GebLean.Ramified.OneLambda

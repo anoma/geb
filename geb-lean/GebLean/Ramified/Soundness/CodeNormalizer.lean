@@ -49,6 +49,14 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   code-level images of the term-level redex detectors of `Normalization.lean`
   (`isLam`, `conHeaded`, `topBetaRank`, `iotaSpine`, the result-sort gate,
   `topIota`, `betaRedexRank`, `hasIota`, `Normal`).
+* `OneLambda.betaStepCode`, `OneLambda.iotaContractCode`,
+  `OneLambda.iotaStepCode`, `OneLambda.stepCodeAt` — the code-level images of
+  the deterministic normalizer of `DetStep.lean` (`detStepAt`, `iotaContract`,
+  `detIotaStep`, `detStep`), threading the ambient de Bruijn substitution
+  level through the β descent.
+* `OneLambda.stepCode` — the reference deterministic step on codes: the
+  closed-term dispatcher clamped below the monotone majorant
+  `OneLambda.stepBound`.
 
 ## Main statements
 
@@ -1547,6 +1555,292 @@ theorem normalCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
     normalCode (codeTm t) = true ↔ Normal t := by
   rw [normalCode, Bool.and_eq_true, Bool.not_eq_true', beq_iff_eq,
     betaRankCode_codeTm, hasIotaCode_codeTm, normal_iff]
+
+/-! ### The reference deterministic step on codes
+
+The code-level realization of `detStep`: the β worker `betaStepCode` mirrors
+`detStepAt` (child-priority descent contracting an innermost redex of the
+dispatched rank), the ι worker `iotaStepCode` mirrors `detIotaStep`, and the
+dispatcher `stepCodeAt` mirrors `detStep`'s rank read; `stepCode` is the
+closed-term entry point, clamped below the monotone majorant `stepBound`.
+
+The substitution level: `codeTm` records de Bruijn levels, so the β contraction
+at a redex under `d` abstraction nodes inside a term over an ambient context
+`Γ` substitutes at level `Γ.length + d`. The workers therefore thread the
+ambient level `j` explicitly, incrementing it under each abstraction node, and
+the commutation theorems hold at `j = Γ.length`. The level is genuinely an
+input: the same term code arises in contexts of different lengths with
+different contraction levels (a level-`1` variable leaf under the redex binder
+is bound at `Γ.length = 1` and free at `Γ.length = 2`, with distinct reducts),
+so no level-free function on codes mirrors `detStep` at every context.
+`stepCode` fixes the closed-term level `j = 0`. -/
+
+/-- The first child code of an operation node `Nat.pair 1 (Nat.pair op (Nat.pair
+c₀ …))`: the read at the first pack position. -/
+def child0Code (c : ℕ) : ℕ := (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1
+
+/-- The second child code of an operation node `Nat.pair 1 (Nat.pair op
+(Nat.pair c₀ (Nat.pair c₁ …)))`: the read at the second pack position. -/
+def child1Code (c : ℕ) : ℕ :=
+  (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+
+/-- The operation kind bit of an operation node `Nat.pair 1 (Nat.pair op pack)`:
+the leading component of the operation tag `op`. -/
+def opKindCode (c : ℕ) : ℕ := (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1
+
+/-- The operation payload of an operation node `Nat.pair 1 (Nat.pair op pack)`:
+the trailing component of the operation tag `op`. -/
+def opPayloadCode (c : ℕ) : ℕ := (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2
+
+/-- The child reads on a canonically packed binary node. -/
+@[simp] theorem child0Code_pair (op c0 rest : ℕ) :
+    child0Code (Nat.pair 1 (Nat.pair op (Nat.pair c0 rest))) = c0 := by
+  simp [child0Code, Nat.unpair_pair]
+
+/-- The second-child read on a canonically packed binary node. -/
+@[simp] theorem child1Code_pair (op c0 c1 rest : ℕ) :
+    child1Code (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 rest)))) = c1 := by
+  simp [child1Code, Nat.unpair_pair]
+
+/-- The operation kind read on an operation node. -/
+@[simp] theorem opKindCode_pair (op pack : ℕ) :
+    opKindCode (Nat.pair 1 (Nat.pair op pack)) = (Nat.unpair op).1 := by
+  simp [opKindCode, Nat.unpair_pair]
+
+/-- The operation payload read on an operation node. -/
+@[simp] theorem opPayloadCode_pair (op pack : ℕ) :
+    opPayloadCode (Nat.pair 1 (Nat.pair op pack)) = (Nat.unpair op).2 := by
+  simp [opPayloadCode, Nat.unpair_pair]
+
+/-- The constructor label of a `con`-headed scrutinee code of `1λ(natAlgSig)`:
+the operation payload of the node itself when it is a constructor constant
+(operation kind bit `2`), and of its function child otherwise (the saturated
+unary constructor, an application node). Over `natAlgSig` every constructor has
+arity at most `1`, so a `con`-headed base-sorted scrutinee is one of exactly
+these two shapes. Novel realization. -/
+def conLabelCode (c : ℕ) : ℕ :=
+  if opKindCode c = 2 then opPayloadCode c else opPayloadCode (child0Code c)
+
+/-- The ι-contraction on codes (Leivant III section 4.2, p. 223): the numeric
+image of `iotaContract` on the code of a saturated ι-redex of `1λ(natAlgSig)`.
+At a destructor redex (function child a destructor constant, kind bit `3`) the
+sole destructor `dstr 0` selects the scrutinee's argument on a hit (the
+scrutinee is an application node, the saturated unary constructor) and the
+scrutinee itself on a miss; at a saturated case redex (function child an
+application whose iterated function child is the case combinator, kind bit `4`)
+the branch at the scrutinee constructor's enumeration position is selected —
+`natAlgSig` enumerates `false` before `true`, so label `0` selects the first
+branch. Off the ι-redex shapes the code is unchanged (don't-care; the ι worker
+consults it only under `topIotaCode`). Novel realization. -/
+def iotaContractCode (c : ℕ) : ℕ :=
+  match (Nat.unpair (child0Code c)).1, opKindCode (child0Code c) with
+  | 1, 3 =>
+      if (Nat.unpair (child1Code c)).1 = 1 ∧ opKindCode (child1Code c) = 0 then
+        child1Code (child1Code c)
+      else child1Code c
+  | 1, 0 =>
+      if (Nat.unpair (child0Code (child0Code (child0Code c)))).1 = 1
+          ∧ opKindCode (child0Code (child0Code (child0Code c))) = 4 then
+        if conLabelCode (child1Code (child0Code (child0Code c))) = 0 then
+          child1Code (child0Code c)
+        else child1Code c
+      else c
+  | _, _ => c
+
+set_option linter.unusedVariables false in
+/-- The β worker on codes (Leivant III section 4.2, p. 224): the numeric image
+of `detStepAt q`, by strong recursion on the code value, threading the ambient
+substitution level `j`. At an application node (operation kind bit `0`) the
+descent enters the first child whose β-rank equals `q` (function first, then
+argument); if neither qualifies and the node is a rank-`q` root β-redex (the
+function child an abstraction node, the applied arrow-sort code of order `q`),
+the contraction substitutes the argument child's code into the abstraction's
+body code at level `j` by `subCode`; otherwise the identity. At an abstraction
+node (kind bit `1`) the descent enters the body at level `j + 1` when it
+carries a rank-`q` redex. Every other code is unchanged. Novel realization.
+The `linter.unusedVariables` disable covers the `match`-bound discriminant
+equation, referenced only in the termination proof. -/
+def betaStepCode (q j : ℕ) (c : ℕ) : ℕ :=
+  match h : (Nat.unpair c).1, (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 with
+  | 1, 0 =>
+      if betaRankCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 = q then
+        Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.pair (betaStepCode q j (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1)
+            (Nat.pair (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 0)))
+      else if betaRankCode (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+          = q then
+        Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.pair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1
+            (Nat.pair (betaStepCode q j
+              (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1) 0)))
+      else if isLamCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 = true
+          ∧ ordCode (Nat.pair 1 (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2) = q then
+        subCode j (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+          (Nat.unpair (Nat.unpair
+            (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1).2).2).1
+      else c
+  | 1, 1 =>
+      if betaRankCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 = q then
+        Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.pair (betaStepCode q (j + 1) (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1) 0))
+      else c
+  | _, _ => c
+  termination_by c
+  decreasing_by
+    all_goals
+      have key : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h]
+        exact self_lt_pair_one _
+      first
+      | exact Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) key
+      | exact Nat.lt_of_le_of_lt
+          (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.unpair_right_le _)) key
+
+/-- The node equation of `betaStepCode` at a variable leaf `Nat.pair 0 i`: no
+redex to contract. -/
+theorem betaStepCode_var (q j i : ℕ) :
+    betaStepCode q j (Nat.pair 0 i) = Nat.pair 0 i := by
+  rw [betaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `betaStepCode` at an application node (operation kind
+bit `0`), in the four guard regimes of `detStepAt`: descend into the function
+child when it carries a rank-`q` redex; else into the argument child; else
+contract the rank-`q` root β-redex by `subCode` at the threaded level; else the
+identity. -/
+theorem betaStepCode_app (q j op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    betaStepCode q j (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = (if betaRankCode c0 = q then
+          Nat.pair 1 (Nat.pair op (Nat.pair (betaStepCode q j c0) (Nat.pair c1 0)))
+        else if betaRankCode c1 = q then
+          Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair (betaStepCode q j c1) 0)))
+        else if isLamCode c0 = true ∧ ordCode (Nat.pair 1 (Nat.unpair op).2) = q then
+          subCode j c1 (Nat.unpair (Nat.unpair (Nat.unpair c0).2).2).1
+        else Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0)))) := by
+  rw [betaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `betaStepCode` at an abstraction node (operation kind
+bit `1`): descend into the body child at level `j + 1` when it carries a
+rank-`q` redex, else the identity. -/
+theorem betaStepCode_lam (q j op c0 : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    betaStepCode q j (Nat.pair 1 (Nat.pair op (Nat.pair c0 0)))
+      = (if betaRankCode c0 = q then
+          Nat.pair 1 (Nat.pair op (Nat.pair (betaStepCode q (j + 1) c0) 0))
+        else Nat.pair 1 (Nat.pair op (Nat.pair c0 0))) := by
+  rw [betaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `betaStepCode` at a nullary constant node (operation
+kind bit at least `2`): the code is unchanged. -/
+theorem betaStepCode_const (q j op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
+    betaStepCode q j (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
+  rw [betaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+set_option linter.unusedVariables false in
+/-- The ι worker on codes (Leivant III section 4.2, p. 224): the numeric image
+of `detIotaStep`, by strong recursion on the code value. At an application node
+(operation kind bit `0`) the descent enters the first child carrying an ι-redex
+(function first, then argument); if neither does and the node is a saturated
+ι-redex (`topIotaCode`), the contraction `iotaContractCode` selects the reduct;
+otherwise the identity. At an abstraction node (kind bit `1`) the descent
+enters the body when it carries an ι-redex. Every other code is unchanged.
+Novel realization. The `linter.unusedVariables` disable covers the
+`match`-bound discriminant equation, referenced only in the termination
+proof. -/
+def iotaStepCode (c : ℕ) : ℕ :=
+  match h : (Nat.unpair c).1, (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 with
+  | 1, 0 =>
+      if hasIotaCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 = true then
+        Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.pair (iotaStepCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1)
+            (Nat.pair (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 0)))
+      else if hasIotaCode (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+          = true then
+        Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.pair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1
+            (Nat.pair (iotaStepCode
+              (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1) 0)))
+      else if topIotaCode c = true then iotaContractCode c
+      else c
+  | 1, 1 =>
+      if hasIotaCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 = true then
+        Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.pair (iotaStepCode (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1) 0))
+      else c
+  | _, _ => c
+  termination_by c
+  decreasing_by
+    all_goals
+      have key : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h]
+        exact self_lt_pair_one _
+      first
+      | exact Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) key
+      | exact Nat.lt_of_le_of_lt
+          (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.unpair_right_le _)) key
+
+/-- The node equation of `iotaStepCode` at a variable leaf `Nat.pair 0 i`: no
+redex to contract. -/
+theorem iotaStepCode_var (i : ℕ) : iotaStepCode (Nat.pair 0 i) = Nat.pair 0 i := by
+  rw [iotaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `iotaStepCode` at an application node (operation kind
+bit `0`), in the four guard regimes of `detIotaStep`: descend into the function
+child when it carries an ι-redex; else into the argument child; else contract
+the saturated root ι-redex by `iotaContractCode`; else the identity. -/
+theorem iotaStepCode_app (op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    iotaStepCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = (if hasIotaCode c0 = true then
+          Nat.pair 1 (Nat.pair op (Nat.pair (iotaStepCode c0) (Nat.pair c1 0)))
+        else if hasIotaCode c1 = true then
+          Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair (iotaStepCode c1) 0)))
+        else if topIotaCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0)))) = true then
+          iotaContractCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+        else Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0)))) := by
+  rw [iotaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `iotaStepCode` at an abstraction node (operation kind
+bit `1`): descend into the body child when it carries an ι-redex, else the
+identity. -/
+theorem iotaStepCode_lam (op c0 : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    iotaStepCode (Nat.pair 1 (Nat.pair op (Nat.pair c0 0)))
+      = (if hasIotaCode c0 = true then
+          Nat.pair 1 (Nat.pair op (Nat.pair (iotaStepCode c0) 0))
+        else Nat.pair 1 (Nat.pair op (Nat.pair c0 0))) := by
+  rw [iotaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `iotaStepCode` at a nullary constant node (operation
+kind bit at least `2`): the code is unchanged. -/
+theorem iotaStepCode_const (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
+    iotaStepCode (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
+  rw [iotaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The deterministic step on codes at ambient substitution level `j`: the
+numeric image of `detStep`, dispatching exactly as its rank read — the β worker
+`betaStepCode` at the positive β-rank of the code, else the ι worker
+`iotaStepCode` when the code carries an ι-redex, else the identity. Novel
+realization. -/
+def stepCodeAt (j c : ℕ) : ℕ :=
+  if 0 < betaRankCode c then betaStepCode (betaRankCode c) j c
+  else if hasIotaCode c = true then iotaStepCode c
+  else c
+
+/-- The explicit monotone majorant of the reference step on codes (spec §6.1):
+a height-2 tower over a quadratic polynomial of the input, dominating the
+envelope of the deterministic reduct of any closed term (the step at most
+squares the size, preserves the sort payload, and the size and payload of a
+term are bounded by its code). Consumed by the Task 6.4.12 trace bounds. -/
+def stepBound (n : ℕ) : ℕ := tower 2 (6 * (2 * (n + 1) ^ 2 + n + 1))
+
+/-- The reference deterministic step on codes (spec §6.1; plan decisions P1,
+P5): the closed-term dispatcher `stepCodeAt 0` clamped below the monotone
+majorant `stepBound` (the `min`-clamp pattern of `ERMor1.foldBTLOnCode`, whose
+Task 6.4.12 realization is unconditionally bounded). On the code of a closed
+term the clamp is inactive — the reduct's code sits below the majorant — so
+`stepCode` computes the code of the deterministic reduct. -/
+def stepCode (c : ℕ) : ℕ := min (stepCodeAt 0 c) (stepBound c)
 
 end OneLambda
 
