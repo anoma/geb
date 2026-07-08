@@ -2,6 +2,8 @@ import GebLean.Ramified.Soundness.Applicative
 import GebLean.Ramified.Soundness.OneLambda
 import GebLean.Ramified.Soundness.BarRep
 import GebLean.Ramified.Soundness.Represents
+import GebLean.Ramified.Soundness.Normalization
+import GebLean.Ramified.Soundness.OneLambdaEval
 
 /-!
 # Ramified recurrence: soundness
@@ -15,7 +17,11 @@ Proposition 7's soundness arm `(1)⟹(4)` — the translation of every ramified
 identifier to a term of that calculus (`Applicative`). The second module
 realizes the simply-typed calculus `1λ(A)` of section 4.2 as a second binding
 signature over the ramified types, with its congruence-closed reduction
-(`OneLambda`).
+(`OneLambda`). A further module develops Lemma 12's normalization bound for
+`1λ(A)`, starting from the type-order measure `RType.ord` (`Normalization`). The
+final module gives the standard simple-type evaluator `oneEval` of `1λ(A)` over
+the standard word algebra, with its renaming- and substitution-fusion laws
+(`OneLambdaEval`).
 
 ## References
 
