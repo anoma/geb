@@ -3,14 +3,15 @@ import GebLean.Ramified.Soundness.CodeNormalizer
 /-!
 # Ramified-recurrence soundness: code-normalizer tests
 
-Acceptance examples for the code-level substitution `subCode` (task 6.4.9): the
-code-level substitution rewrites the code of a body into the code of its
-`Binding.instantiate₁` reduct. The first example is the identity β-redex body of
-task 6.4.1 (a closed substituend, no weakening); the second exercises the
-substituend-weakening path with a substituend that carries its own binder and a
-body that references the substituted variable underneath a binder, so the
-`shiftCode` weakening that `subCode` applies under an abstraction node is
-exercised against the genuine `Binding.instantiate₁`.
+Acceptance examples for the code-level substitution `subCode` and its
+commutation theorem `subCode_codeTm`: the code-level substitution rewrites the
+code of a body into the code of its `Binding.instantiate₁` reduct. The first
+example closes the identity β-redex body of task 6.4.1 (a closed substituend, no
+weakening) through the node equations alone; the remaining examples are
+instances of the commutation theorem `subCode_codeTm`, one on the redex body and
+one on a substituend that carries its own binder with a body referencing the
+substituted variable underneath a binder — the path on which `subCode` applies
+the `shiftCode` weakening under an abstraction node.
 
 ## References
 
@@ -60,11 +61,20 @@ private def dUnderBinder : Binding.Tm (oneLambdaSig natAlgSig)
     (⟨⟨0, by decide⟩, rfl⟩ :
       Binding.Var [RType.arrow RType.o RType.o, RType.o] (RType.arrow RType.o RType.o)))
 
--- The full substitution, weakening included, matches `instantiate₁` on the code.
-#guard subCode ([] : Binding.Ctx RType).length (codeTm eBinder) (codeTm dUnderBinder)
-  = codeTm (Binding.instantiate₁ eBinder dUnderBinder)
--- The redex-body case matches `instantiate₁` on the code numerically as well.
-#guard subCode ([] : Binding.Ctx RType).length (codeTm (conc (natToFreeAlg 0))) (codeTm redexBody)
-  = codeTm (Binding.instantiate₁ (conc (natToFreeAlg 0)) redexBody)
+/-- The full substitution, weakening included, matches `instantiate₁` on the
+code: the `subCode_codeTm` instance at the binder-carrying substituend, whose
+under-binder occurrence exercises the `shiftCode` path. -/
+example :
+    subCode ([] : Binding.Ctx RType).length (codeTm eBinder) (codeTm dUnderBinder)
+      = codeTm (Binding.instantiate₁ eBinder dUnderBinder) :=
+  subCode_codeTm eBinder dUnderBinder
+
+/-- The redex-body case is the `subCode_codeTm` instance at the task 6.4.1
+identity β-redex body. -/
+example :
+    subCode ([] : Binding.Ctx RType).length (codeTm (conc (natToFreeAlg 0)))
+        (codeTm redexBody)
+      = codeTm (Binding.instantiate₁ (conc (natToFreeAlg 0)) redexBody) :=
+  subCode_codeTm (conc (natToFreeAlg 0)) redexBody
 
 end GebLean.Ramified.OneLambda

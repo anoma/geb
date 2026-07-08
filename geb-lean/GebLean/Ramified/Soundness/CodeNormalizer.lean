@@ -49,6 +49,13 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   single-insertion thinning shifts the term code at the insertion level.
 * `OneLambda.codeTm_ren_of_levels_eq`, `OneLambda.codeTm_ren_weakAppend_nil` —
   the term code is invariant under position-preserving renamings.
+* `OneLambda.shiftCode_shiftCode` — the degeneracy identity of the code-level
+  shifts: `shiftCode (L + 1) ∘ shiftCode j = shiftCode j ∘ shiftCode L` for
+  `j ≤ L`.
+* `OneLambda.codeTm_sub` — the environment-generalized commutation of the
+  code-level substitution with the kit substitution.
+* `OneLambda.subCode_codeTm` — the mirror theorem: `subCode Γ.length (codeTm e)
+  (codeTm d) = codeTm (Binding.instantiate₁ e d)`.
 
 ## Implementation notes
 
@@ -156,6 +163,100 @@ least `2`): the code is unchanged. -/
 theorem shiftCode_const (j op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     shiftCode j (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [shiftCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `shiftCode` at an application node with an arbitrary
+children pack: the recursion reads the two child codes at the fixed unpacking
+depths and rebuilds the pack with the terminator `0`. The `shiftCode_app`
+generalization consumed by the strong induction of `shiftCode_shiftCode`. -/
+theorem shiftCode_app_pack (j op pack : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    shiftCode j (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op (Nat.pair (shiftCode j (Nat.unpair pack).1)
+          (Nat.pair (shiftCode j (Nat.unpair (Nat.unpair pack).2).1) 0))) := by
+  rw [shiftCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `shiftCode` at an abstraction node with an arbitrary
+children pack: the recursion reads the sole body child code at the fixed
+unpacking depth and rebuilds the pack with the terminator `0`. The
+`shiftCode_lam` generalization consumed by the strong induction of
+`shiftCode_shiftCode`. -/
+theorem shiftCode_lam_pack (j op pack : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    shiftCode j (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op (Nat.pair (shiftCode j (Nat.unpair pack).1) 0)) := by
+  rw [shiftCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The dispatch unfolding of `shiftCode` at a code whose top tag is at least
+`2`: no such code is a variable leaf or an operation node, so the code is
+unchanged. -/
+theorem shiftCode_pair_of_two_le (j tag p : ℕ) (htag : 2 ≤ tag) :
+    shiftCode j (Nat.pair tag p) = Nat.pair tag p := by
+  rw [shiftCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The unpacked form of `shiftCode_pair_of_two_le`: a code whose top tag is at
+least `2` is unchanged by the shift. -/
+theorem shiftCode_of_two_le (j : ℕ) {c : ℕ} (h : 2 ≤ (Nat.unpair c).1) :
+    shiftCode j c = c := by
+  conv_lhs => rw [← Nat.pair_unpair c]
+  rw [shiftCode_pair_of_two_le _ _ _ h]
+  exact Nat.pair_unpair c
+
+/-- The degeneracy identity of the code-level shifts, the de Bruijn analogue of
+the simplicial identity `σ_{L+1} ∘ σ_j = σ_j ∘ σ_L` for `j ≤ L`: inserting at
+level `j` and then at level `L + 1` equals inserting at level `L` and then at
+level `j`. By strong recursion on the code value through the node equations; at
+a variable leaf the identity is the three-way position arithmetic. Consumed by
+`codeTm_sub`'s binder case, reconciling the fixed-level substituend weakening
+`shiftCode j` of `subCode_lam` with the ambient-level weakening that
+`Binding.instantiate₁` applies under a binder. Novel realization. -/
+theorem shiftCode_shiftCode {j L : ℕ} (hjL : j ≤ L) (c : ℕ) :
+    shiftCode (L + 1) (shiftCode j c) = shiftCode j (shiftCode L c) := by
+  induction c using Nat.strong_induction_on with
+  | _ c ih =>
+    rcases Nat.lt_trichotomy (Nat.unpair c).1 1 with h1 | h1 | h1
+    · -- variable leaf: three-way position arithmetic
+      have h0 : (Nat.unpair c).1 = 0 := by omega
+      have hc : c = Nat.pair 0 (Nat.unpair c).2 := by
+        conv_lhs => rw [← Nat.pair_unpair c, h0]
+      rw [hc, shiftCode_var, shiftCode_var]
+      split_ifs <;> rw [shiftCode_var, shiftCode_var] <;> split_ifs <;>
+        first
+          | rfl
+          | (exfalso; omega)
+    · -- operation node: dispatch on the operation kind bit
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hc : c = Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.unpair (Nat.unpair c).2).2) := by
+        conv_lhs => rw [← Nat.pair_unpair c, h1, ← Nat.pair_unpair (Nat.unpair c).2]
+      rcases Nat.lt_trichotomy (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 1
+        with h2 | h2 | h2
+      · -- application: recurse into the two children
+        have h2' : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 = 0 := by omega
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+              (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, shiftCode_app_pack _ _ _ h2', shiftCode_app _ _ _ _ h2']
+        conv_rhs => rw [hc, shiftCode_app_pack _ _ _ h2', shiftCode_app _ _ _ _ h2']
+        rw [ih _ hc0, ih _ hc1]
+      · -- abstraction: recurse into the sole body child
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, shiftCode_lam_pack _ _ _ h2, shiftCode_lam _ _ _ h2]
+        conv_rhs => rw [hc, shiftCode_lam_pack _ _ _ h2, shiftCode_lam _ _ _ h2]
+        rw [ih _ hc0]
+      · -- nullary constant: both shifts are the identity
+        have h2' : 2 ≤ (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 := by omega
+        conv_lhs => rw [hc, shiftCode_const _ _ _ h2', shiftCode_const _ _ _ h2']
+        conv_rhs => rw [hc, shiftCode_const _ _ _ h2', shiftCode_const _ _ _ h2']
+    · -- top tag at least `2`: all four shifts are the identity
+      have h1' : 2 ≤ (Nat.unpair c).1 := by omega
+      rw [shiftCode_of_two_le j h1', shiftCode_of_two_le (L + 1) h1',
+        shiftCode_of_two_le L h1', shiftCode_of_two_le j h1']
 
 /-- The code-level single-variable substitution: rewrite a body code against a
 substituted level `j` and a substituend code `e`, the numeric image of
@@ -409,6 +510,200 @@ theorem codeTm_ren_weakAppend_nil {Δ : Binding.Ctx RType} {s : RType}
     codeTm (Binding.ren (Binding.Thinning.weakAppend (Ξ := [])) t) = codeTm t :=
   codeTm_ren_of_levels_eq Binding.Thinning.weakAppend (by simp)
     (fun x => Binding.Thinning.weakAppend_app_val x) t
+
+/-- The environment-generalized commutation of the code-level substitution with
+the kit substitution: if every image of the environment `σ` carries the code
+that `subCode j e` assigns to its source variable's code — with the source
+context one entry longer than the target (invariant of the substituted entry),
+the substituted level `j` at most the target length, and the substituend code
+`e` shifted equally at the target length and at `j` — then substitution along
+`σ` commutes with `subCode j e` on term codes. The induction skeleton of
+`tmOpMax_sub_le`. The binder case re-establishes the pointwise hypothesis for
+`Env.underBinder`: the fresh suffix variable maps to the vacated position by
+`subCode_var`, and the old images weaken by `codeTm_ren_weakAppend`
+(`codeTm_ren_weakAppend_nil` at the binder-free arguments), reconciled at the
+substituted level through the shift invariant and the degeneracy identity
+`shiftCode_shiftCode`. Novel realization. -/
+theorem codeTm_sub (j : ℕ) {Γ Δ : Binding.Ctx RType} {s : RType}
+    (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) Γ Δ) (e : ℕ)
+    (hlen : Γ.length = Δ.length + 1) (hj : j ≤ Δ.length)
+    (he : shiftCode Δ.length e = shiftCode j e)
+    (hσ : ∀ (u : RType) (x : Binding.Var Γ u),
+      codeTm (σ u x) = subCode j e (Nat.pair 0 x.1.val))
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    codeTm (Binding.sub σ t) = subCode j e (codeTm t) := by
+  suffices h : ∀ {y : Binding.Ctx RType × RType}
+      (t : PolyFix (polyTranslate Binding.varOver (oneLambdaSig natAlgSig).polyEndo) y)
+      {Δ : Binding.Ctx RType}
+      (σ : Binding.Env (Binding.Tm (oneLambdaSig natAlgSig)) y.1 Δ) (e : ℕ),
+      y.1.length = Δ.length + 1 → j ≤ Δ.length →
+      shiftCode Δ.length e = shiftCode j e →
+      (∀ (u : RType) (x : Binding.Var y.1 u),
+        codeTm (σ u x) = subCode j e (Nat.pair 0 x.1.val)) →
+      codeTm (Γ := Δ) (Binding.traverse (Binding.subKit _) σ t)
+        = subCode j e (codeTm (Γ := y.1) (s := y.2) t) from h t σ e hlen hj he hσ
+  intro y t
+  induction t with
+  | mk y idx children ih =>
+    intro Δ σ e hlen hj he hσ
+    cases idx with
+    | inl a =>
+      rw [show (PolyFix.mk y (Sum.inl a) children
+            : Binding.Tm (oneLambdaSig natAlgSig) y.1 y.2)
+            = Binding.Tm.var (Binding.leafVar a) from by
+              obtain ⟨⟨Γ', i'⟩, rfl⟩ := a
+              congr 1
+              funext e'
+              exact e'.elim]
+      rw [Binding.traverse_var, codeTm_var]
+      simp only [Binding.subKit, id]
+      exact hσ y.2 (Binding.leafVar a)
+    | inr p =>
+      obtain ⟨Γ', s'⟩ := y
+      change { o : (oneLambdaSig natAlgSig).Op // (oneLambdaSig natAlgSig).result o = s' } at p
+      revert children ih
+      obtain ⟨o, rfl⟩ := p
+      intro children ih
+      replace hlen : List.length Γ' = List.length Δ + 1 := hlen
+      replace hσ : ∀ (u : RType) (x : Binding.Var Γ' u),
+          codeTm (σ u x) = subCode j e (Nat.pair 0 x.1.val) := fun u x => hσ u x
+      rw [show (PolyFix.mk (Γ', (oneLambdaSig natAlgSig).result o) (Sum.inr ⟨o, rfl⟩) children
+            : Binding.Tm (oneLambdaSig natAlgSig) Γ' ((oneLambdaSig natAlgSig).result o))
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) o (fun j' => children ⟨j'⟩)
+            from rfl]
+      rw [Binding.traverse_op, codeTm_op, codeTm_op]
+      -- the pointwise hypothesis under a binder-free argument
+      have hσnil : ∀ (u : RType) (x : Binding.Var (Γ' ++ ([] : Binding.Ctx RType)) u),
+          codeTm (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+              (Ξ := ([] : Binding.Ctx RType)) σ u x)
+            = subCode j e (Nat.pair 0 x.1.val) := by
+        intro u x
+        simp only [Binding.Env.underBinder, Binding.subKit]
+        have hold : ∀ v : Binding.Var Γ' u,
+            codeTm (Binding.ren (Binding.Thinning.weakAppend (Ξ := [])) (σ u v))
+              = subCode j e (Nat.pair 0 v.1.val) :=
+          fun v => (codeTm_ren_weakAppend_nil (σ u v)).trans (hσ u v)
+        exact (Binding.Var.appendCases_natural codeTm _ Γ' _ x).trans
+          (Binding.Var.appendCases_val _ Γ' (fun n => subCode j e (Nat.pair 0 n)) _
+            hold (fun (w : Binding.Var ([] : Binding.Ctx RType) u) => w.1.elim0) x)
+      -- the pointwise hypothesis under a single binder, at the shifted substituend
+      have hσone : ∀ (b : RType) (u : RType) (x : Binding.Var (Γ' ++ [b]) u),
+          codeTm (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+              (Ξ := [b]) σ u x)
+            = subCode j (shiftCode j e) (Nat.pair 0 x.1.val) := by
+        intro b u x
+        simp only [Binding.Env.underBinder, Binding.subKit]
+        have hold : ∀ v : Binding.Var Γ' u,
+            codeTm (Binding.ren (Binding.Thinning.weakAppend (Ξ := [b])) (σ u v))
+              = subCode j (shiftCode j e) (Nat.pair 0 v.1.val) := by
+          intro v
+          rw [codeTm_ren_weakAppend, hσ u v]
+          have hv : v.1.val < Δ.length + 1 := hlen ▸ v.1.isLt
+          rcases Nat.lt_trichotomy v.1.val j with h1 | h1 | h1
+          · rw [subCode_var, if_pos h1, subCode_var, if_pos h1, shiftCode_var,
+              if_pos (by omega)]
+          · rw [subCode_var, if_neg (by omega), if_pos h1, subCode_var,
+              if_neg (by omega), if_pos h1]
+            exact he
+          · rw [subCode_var, if_neg (by omega), if_neg (by omega), subCode_var,
+              if_neg (by omega), if_neg (by omega), shiftCode_var, if_pos (by omega)]
+        have hnew : ∀ w : Binding.Var [b] u,
+            codeTm (Binding.Tm.var (S := oneLambdaSig natAlgSig)
+                (Binding.Var.appendRight Δ w))
+              = subCode j (shiftCode j e) (Nat.pair 0 (Γ'.length + w.1.val)) := by
+          intro w
+          rw [codeTm_var, Binding.Var.appendRight_val, subCode_var,
+            if_neg (by omega), if_neg (by omega)]
+          exact congrArg (Nat.pair 0) (by omega)
+        exact (Binding.Var.appendCases_natural codeTm _ Γ' _ x).trans
+          (Binding.Var.appendCases_val _ Γ'
+            (fun n => subCode j (shiftCode j e) (Nat.pair 0 n)) _ hold hnew x)
+      cases o with
+      | app σa τa =>
+          have hlennil : (Γ' ++ ([] : Binding.Ctx RType)).length
+              = (Δ ++ ([] : Binding.Ctx RType)).length + 1 := by
+            simp only [List.append_nil]; exact hlen
+          have hjnil : j ≤ (Δ ++ ([] : Binding.Ctx RType)).length := by
+            simp only [List.append_nil]; exact hj
+          have henil : shiftCode (Δ ++ ([] : Binding.Ctx RType)).length e
+              = shiftCode j e := by
+            simp only [List.append_nil]; exact he
+          have h0 := ih ⟨(0 : Fin 2)⟩
+            (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+              (Ξ := ([] : Binding.Ctx RType)) σ) e hlennil hjnil henil hσnil
+          have h1 := ih ⟨(1 : Fin 2)⟩
+            (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+              (Ξ := ([] : Binding.Ctx RType)) σ) e hlennil hjnil henil hσnil
+          refine Eq.trans (congrArg (fun q => Nat.pair 1
+              (Nat.pair (codeOp (OneLambdaOp.app σa τa)) q))
+              (congrArg₂ Nat.pair h0 (congrArg₂ Nat.pair h1 rfl)))
+            (subCode_app j e (codeOp (OneLambdaOp.app σa τa)) _ _
+              (by simp [codeOp, Nat.unpair_pair])).symm
+      | lam σa τa =>
+          have hlenone : (Γ' ++ [σa]).length = (Δ ++ [σa]).length + 1 := by
+            simp only [List.length_append, List.length_cons, List.length_nil]
+            omega
+          have hjone : j ≤ (Δ ++ [σa]).length := by
+            simp only [List.length_append]
+            omega
+          have heone : shiftCode (Δ ++ [σa]).length (shiftCode j e)
+              = shiftCode j (shiftCode j e) := by
+            have hlist : (Δ ++ [σa]).length = Δ.length + 1 := by simp
+            rw [hlist, shiftCode_shiftCode hj e, he]
+          have h0 := ih ⟨(0 : Fin 1)⟩
+            (Binding.Env.underBinder (Binding.subKit (oneLambdaSig natAlgSig))
+              (Ξ := [σa]) σ) (shiftCode j e) hlenone hjone heone (hσone σa)
+          refine Eq.trans (congrArg (fun q => Nat.pair 1
+              (Nat.pair (codeOp (OneLambdaOp.lam σa τa)) q))
+              (congrArg₂ Nat.pair h0 rfl))
+            (subCode_lam j e (codeOp (OneLambdaOp.lam σa τa)) _
+              (by simp [codeOp, Nat.unpair_pair])).symm
+      | con b =>
+          exact (subCode_const j e (codeOp (OneLambdaOp.con b)) _
+            (by simp [codeOp, Nat.unpair_pair])).symm
+      | dstr i =>
+          exact (subCode_const j e (codeOp (OneLambdaOp.dstr i)) _
+            (by simp [codeOp, Nat.unpair_pair])).symm
+      | case =>
+          exact (subCode_const j e (codeOp OneLambdaOp.case) _
+            (by simp [codeOp, Nat.unpair_pair])).symm
+
+/-- The commutation of the code-level substitution with single-variable
+instantiation (the mirror theorem of the code-normalizer's substitution layer):
+rewriting the code of a body `d` by `subCode` at the substituted level
+`Γ.length` with the substituend code `codeTm e` computes the code of the
+genuine reduct `Binding.instantiate₁ e d`. The `codeTm_sub` corollary at the
+instantiating environment, whose fresh image is `e` (the `i = j` branch of
+`subCode_var`) and whose old images are variables below the substituted level
+(the `i < j` branch). Novel realization. -/
+theorem subCode_codeTm {Γ : Binding.Ctx RType} {a s : RType}
+    (e : Binding.Tm (oneLambdaSig natAlgSig) Γ a)
+    (d : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ [a]) s) :
+    subCode Γ.length (codeTm e) (codeTm d) = codeTm (Binding.instantiate₁ e d) := by
+  unfold Binding.instantiate₁ Binding.instantiate
+  refine (codeTm_sub Γ.length _ (codeTm e) (by simp) le_rfl rfl ?_ d).symm
+  intro u x
+  rw [Binding.extendEnv_apply]
+  have hold : ∀ v : Binding.Var Γ u,
+      codeTm (Binding.idEnv (S := oneLambdaSig natAlgSig) u v)
+        = subCode Γ.length (codeTm e) (Nat.pair 0 v.1.val) := by
+    intro v
+    simp only [Binding.idEnv, codeTm_var]
+    rw [subCode_var, if_pos v.1.isLt]
+  have hnew : ∀ w : Binding.Var [a] u,
+      codeTm (Binding.metaOne (S := oneLambdaSig natAlgSig) e u w)
+        = subCode Γ.length (codeTm e) (Nat.pair 0 (Γ.length + w.1.val)) := by
+    intro w
+    obtain ⟨i, hi⟩ := w
+    cases i using Fin.cases with
+    | zero =>
+        refine (codeTm_cast rfl hi e).trans ?_
+        rw [subCode_var, if_neg (by simp), if_pos (by simp)]
+        rfl
+    | succ k => exact k.elim0
+  exact (Binding.Var.appendCases_natural codeTm _ Γ _ x).trans
+    (Binding.Var.appendCases_val _ Γ
+      (fun n => subCode Γ.length (codeTm e) (Nat.pair 0 n)) _ hold hnew x)
 
 end OneLambda
 
