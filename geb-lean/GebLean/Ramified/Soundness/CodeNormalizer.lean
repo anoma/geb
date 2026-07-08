@@ -1647,6 +1647,34 @@ def iotaContractCode (c : ℕ) : ℕ :=
       else c
   | _, _ => c
 
+/-- The evaluation of `iotaContractCode` at a destructor-redex code: an
+application node whose function child is an operation node of kind bit `3`
+selects the scrutinee's argument child when the scrutinee is an application
+node, and the scrutinee itself otherwise. -/
+theorem iotaContractCode_dstr (opA dj pk c1 : ℕ) (hdj : (Nat.unpair dj).1 = 3) :
+    iotaContractCode (Nat.pair 1 (Nat.pair opA
+        (Nat.pair (Nat.pair 1 (Nat.pair dj pk)) (Nat.pair c1 0))))
+      = (if (Nat.unpair c1).1 = 1 ∧ opKindCode c1 = 0 then child1Code c1 else c1) := by
+  unfold iotaContractCode
+  split <;> simp_all [child0Code, child1Code, opKindCode, Nat.unpair_pair]
+
+/-- The evaluation of `iotaContractCode` at a saturated case-redex code of
+`1λ(natAlgSig)`: an application node whose function child is itself an
+application (kind bit `0`) whose iterated function child bottoms at the case
+combinator (kind bit `4`) selects the first branch when the scrutinee's
+constructor label reads `0` and the second branch otherwise. -/
+theorem iotaContractCode_case (opA opA' opA'' cs pk w d0 d1 : ℕ)
+    (hA' : (Nat.unpair opA').1 = 0) (hcs : (Nat.unpair cs).1 = 4) :
+    iotaContractCode (Nat.pair 1 (Nat.pair opA
+        (Nat.pair (Nat.pair 1 (Nat.pair opA'
+          (Nat.pair (Nat.pair 1 (Nat.pair opA''
+            (Nat.pair (Nat.pair 1 (Nat.pair cs pk)) (Nat.pair w 0))))
+            (Nat.pair d0 0))))
+          (Nat.pair d1 0))))
+      = (if conLabelCode w = 0 then d0 else d1) := by
+  unfold iotaContractCode
+  split <;> simp_all [child0Code, child1Code, opKindCode, Nat.unpair_pair]
+
 set_option linter.unusedVariables false in
 /-- The β worker on codes (Leivant III section 4.2, p. 224): the numeric image
 of `detStepAt q`, by strong recursion on the code value, threading the ambient
@@ -1816,6 +1844,245 @@ kind bit at least `2`): the code is unchanged. -/
 theorem iotaStepCode_const (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     iotaStepCode (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [iotaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The constructor enumeration of `natAlgSig` lists `false` before `true`: the
+sorted enumeration of the two-element label set is determined by its length,
+its members, and the pairwise order. -/
+private theorem ctorList_natAlgSig : ctorList natAlgSig = [false, true] := by
+  have hlen : (ctorList natAlgSig).length = 2 := ctorList_length
+  have hmemf := mem_ctorList (A := natAlgSig) false
+  have hmemt := mem_ctorList (A := natAlgSig) true
+  have hpw := ctorList_pairwise (A := natAlgSig)
+  rcases hl : ctorList natAlgSig with _ | ⟨a, _ | ⟨b, _ | ⟨c, l⟩⟩⟩ <;>
+    rw [hl] at hlen <;> simp at hlen
+  rw [hl] at hmemf hmemt hpw
+  have hab : a ≤ b := (List.pairwise_cons.mp hpw).1 b (List.mem_singleton.mpr rfl)
+  cases a <;> cases b
+  · simp at hmemt
+  · rfl
+  · exact absurd hab (by decide)
+  · simp at hmemf
+
+/-- The enumeration positions of `natAlgSig`: the label at position `0` is
+`false` and the label at position `1` is `true`. -/
+private theorem ctorAt_natAlgSig (idx : Fin natAlgSig.numCtors) :
+    (ctorAt idx = false ∧ idx.val = 0) ∨ (ctorAt idx = true ∧ idx.val = 1) := by
+  rcases idx with ⟨v, hv⟩
+  have h2 : v < 2 := hv
+  rcases v with _ | _ | v
+  · left
+    refine ⟨?_, rfl⟩
+    rw [ctorAt, List.get_eq_getElem]
+    simp only [ctorList_natAlgSig]
+    rfl
+  · right
+    refine ⟨?_, rfl⟩
+    rw [ctorAt, List.get_eq_getElem]
+    simp only [ctorList_natAlgSig]
+    rfl
+  · omega
+
+/-- The ι-contraction mirror: under the sort-gated ι-redex detector, reading the
+code-level contraction off a term code computes the code of the `iotaContract`
+reduct. The redex shape and reduct value are exposed by
+`iotaContract_cases_of_topIota`; over `natAlgSig` the scrutinee is the zero
+word (the nullary constructor node — a destructor miss and the first case
+branch) or a successor word (the saturated unary constructor — a destructor hit
+and the second case branch), and the code-level reads select accordingly. -/
+private theorem iotaContractCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    {t : Binding.Tm (oneLambdaSig natAlgSig) Γ s} (htop : topIota t = true) :
+    iotaContractCode (codeTm t) = codeTm (iotaContract t) := by
+  have hso : s = RType.o := eq_o_of_topIota htop
+  subst hso
+  -- the nullary node equations pinned at the reduced sorts of the redex shapes
+  have hcd : ∀ j : Fin natAlgSig.maxArity,
+      codeTm (Γ := Γ) (s := RType.arrow RType.o RType.o)
+        (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.dstr j) (fun k => k.elim0))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.dstr j)) 0) := fun j => codeTm_dstr j
+  have hc0 : codeTm (Γ := Γ) (s := RType.o)
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con false) (fun k => k.elim0))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con false)) 0) := codeTm_con false
+  have hc1 : codeTm (Γ := Γ) (s := RType.arrow RType.o RType.o)
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) (OneLambdaOp.con true) (fun k => k.elim0))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con true)) 0) := codeTm_con true
+  have hcase : codeTm (Γ := Γ)
+      (s := RType.arrow RType.o (RType.arrow RType.o (RType.arrow RType.o RType.o)))
+      (Binding.Tm.op (S := oneLambdaSig natAlgSig) OneLambdaOp.case (fun k => k.elim0))
+      = Nat.pair 1 (Nat.pair (codeOp OneLambdaOp.case) 0) := codeTm_case
+  rcases iotaContract_cases_of_topIota htop with
+    ⟨j, i, a, htEq, hred⟩ | ⟨idx, a, b, htEq, hred⟩
+  · -- destructor redex
+    have hmax : natAlgSig.maxArity = 1 := by decide
+    cases i with
+    | false =>
+        -- arity 0: the scrutinee is the nullary constructor node; the destructor misses
+        replace htEq : t = OneLambda.app' (σ := RType.o) (τ := RType.o)
+            (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.dstr j)
+              (fun k => k.elim0))
+            (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.con false)
+              (fun k => k.elim0)) := htEq
+        rw [dif_neg (show ¬ j.val < natAlgSig.ar false from Nat.not_lt_zero j.val)] at hred
+        replace hred : iotaContract t
+            = Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.con false)
+                (fun k => k.elim0) := hred
+        rw [hred, htEq, codeTm_app', hcd, hc0,
+          iotaContractCode_dstr _ _ _ _ (by simp [codeOp, Nat.unpair_pair]),
+          if_neg (by simp [codeOp, Nat.unpair_pair])]
+    | true =>
+        -- arity 1: the scrutinee is the saturated unary constructor; the destructor hits
+        have hjv : j.val = 0 := by
+          have h1 := j.isLt
+          omega
+        have hhit : j.val < natAlgSig.ar true := by
+          change j.val < 1
+          omega
+        replace htEq : t = OneLambda.app' (σ := RType.o) (τ := RType.o)
+            (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.dstr j)
+              (fun k => k.elim0))
+            (OneLambda.app' (σ := RType.o) (τ := RType.o)
+              (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.con true)
+                (fun k => k.elim0))
+              (a ⟨0, Nat.one_pos⟩)) := htEq
+        rw [dif_pos hhit,
+          show (⟨j.val, hhit⟩ : Fin (natAlgSig.ar true)) = ⟨0, Nat.one_pos⟩ from
+            Fin.ext hjv] at hred
+        rw [hred, htEq, codeTm_app', hcd, codeTm_app', hc1,
+          iotaContractCode_dstr _ _ _ _ (by simp [codeOp, Nat.unpair_pair]),
+          if_pos ⟨by simp [Nat.unpair_pair], by simp [codeOp, Nat.unpair_pair]⟩,
+          child1Code_pair]
+  · -- case redex
+    rcases ctorAt_natAlgSig idx with ⟨hci, hv⟩ | ⟨hci, hv⟩
+    · -- the scrutinee constructor is `false`: the first branch is selected
+      rw [show idx = ⟨0, by decide⟩ from Fin.ext hv] at hred
+      revert a
+      rw [hci]
+      intro a htEq
+      replace htEq : t = OneLambda.app' (σ := RType.o) (τ := RType.o)
+          (OneLambda.app' (σ := RType.o) (τ := RType.arrow RType.o RType.o)
+            (OneLambda.app' (σ := RType.o)
+              (τ := RType.arrow RType.o (RType.arrow RType.o RType.o))
+              (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) OneLambdaOp.case
+                (fun k => k.elim0))
+              (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.con false)
+                (fun k => k.elim0)))
+            (b ⟨0, by decide⟩))
+          (b ⟨1, by decide⟩) := htEq
+      rw [hred, htEq, codeTm_app', codeTm_app', codeTm_app', hcase, hc0,
+        iotaContractCode_case _ _ _ _ _ _ _ _ (by simp [codeOp, Nat.unpair_pair])
+          (by simp [codeOp, Nat.unpair_pair]),
+        if_pos (by simp [conLabelCode, codeOp, Nat.unpair_pair])]
+    · -- the scrutinee constructor is `true`: the second branch is selected
+      rw [show idx = ⟨1, by decide⟩ from Fin.ext hv] at hred
+      revert a
+      rw [hci]
+      intro a htEq
+      replace htEq : t = OneLambda.app' (σ := RType.o) (τ := RType.o)
+          (OneLambda.app' (σ := RType.o) (τ := RType.arrow RType.o RType.o)
+            (OneLambda.app' (σ := RType.o)
+              (τ := RType.arrow RType.o (RType.arrow RType.o RType.o))
+              (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) OneLambdaOp.case
+                (fun k => k.elim0))
+              (OneLambda.app' (σ := RType.o) (τ := RType.o)
+                (Binding.Tm.op (S := oneLambdaSig natAlgSig) (Γ := Γ) (OneLambdaOp.con true)
+                  (fun k => k.elim0))
+                (a ⟨0, Nat.one_pos⟩)))
+            (b ⟨0, by decide⟩))
+          (b ⟨1, by decide⟩) := htEq
+      rw [hred, htEq, codeTm_app', codeTm_app', codeTm_app', hcase, codeTm_app', hc1,
+        iotaContractCode_case _ _ _ _ _ _ _ _ (by simp [codeOp, Nat.unpair_pair])
+          (by simp [codeOp, Nat.unpair_pair]),
+        if_neg (by simp [conLabelCode, codeOp, Nat.unpair_pair])]
+
+/-- The strong-induction shell of the ι-worker commutation, on the term size:
+reading the ι worker off a term code agrees with the code of the `detIotaStep`
+image. The guards transfer by the detector mirrors (`hasIotaCode_codeTm`,
+`topIotaCode_codeTm`); the congruence arms rebuild the pack over the inductive
+hypothesis; the root-contraction arm is the ι-contraction mirror
+`iotaContractCode_codeTm`. -/
+private theorem iotaStepCode_codeTm_aux :
+    (N : ℕ) → ∀ {Γ : Binding.Ctx RType} {s : RType}
+      (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s), Tm.size t ≤ N →
+      iotaStepCode (codeTm t) = codeTm (detIotaStep t)
+  | 0, _, _, t, hN => absurd (Tm.one_le_size t) (by omega)
+  | N + 1, Γ, s, t, hN => by
+      rcases tm_cases t with ⟨x0, rfl⟩ | ⟨o, hs0, args, ht⟩
+      · rw [codeTm_var, iotaStepCode_var, detIotaStep_var, codeTm_var]
+      · cases o with
+        | app σ τ =>
+            have hs1 : τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.app σ τ) args := ht
+            obtain ⟨f, x, hfx⟩ := op_app_inv args
+            rw [hfx] at ht
+            subst ht
+            rw [size_app'] at hN
+            have hf1 := Tm.one_le_size f
+            have hx1 := Tm.one_le_size x
+            rw [codeTm_app', iotaStepCode_app _ _ _ (by simp [codeOp, Nat.unpair_pair]),
+              ← codeTm_app' f x]
+            simp only [hasIotaCode_codeTm, topIotaCode_codeTm]
+            rw [detIotaStep_app']
+            simp only [apply_ite codeTm]
+            split_ifs with h1 h2 h3
+            · rw [codeTm_app', iotaStepCode_codeTm_aux N f (by omega)]
+            · rw [codeTm_app', iotaStepCode_codeTm_aux N x (by omega)]
+            · exact iotaContractCode_codeTm h3
+            · rfl
+        | lam σ τ =>
+            have hs1 : RType.arrow σ τ = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.lam σ τ) args := ht
+            obtain ⟨b, hb⟩ := op_lam_inv args
+            rw [hb] at ht
+            subst ht
+            rw [size_lam'] at hN
+            rw [codeTm_lam', iotaStepCode_lam _ _ (by simp [codeOp, Nat.unpair_pair])]
+            simp only [hasIotaCode_codeTm]
+            rw [detIotaStep_lam']
+            simp only [apply_ite codeTm]
+            split_ifs with h1
+            · rw [codeTm_lam', iotaStepCode_codeTm_aux N b (by omega)]
+            · rfl
+        | con i =>
+            have hs1 : RType.curried (List.replicate (natAlgSig.ar i) RType.o) RType.o = s :=
+              hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.con i) args := ht
+            subst ht
+            refine Eq.trans (congrArg iotaStepCode (codeTm_op _ args)) ?_
+            rw [iotaStepCode_const _ _ (by simp [codeOp, Nat.unpair_pair])]
+            rfl
+        | dstr j =>
+            have hs1 : RType.arrow RType.o RType.o = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              (OneLambdaOp.dstr j) args := ht
+            subst ht
+            refine Eq.trans (congrArg iotaStepCode (codeTm_op _ args)) ?_
+            rw [iotaStepCode_const _ _ (by simp [codeOp, Nat.unpair_pair])]
+            rfl
+        | case =>
+            have hs1 : RType.arrow RType.o
+                (RType.curried (List.replicate natAlgSig.numCtors RType.o) RType.o) = s := hs0
+            subst hs1
+            replace ht : t = Binding.Tm.op (S := oneLambdaSig natAlgSig)
+              OneLambdaOp.case args := ht
+            subst ht
+            refine Eq.trans (congrArg iotaStepCode (codeTm_op _ args)) ?_
+            rw [iotaStepCode_const _ _ (by simp [codeOp, Nat.unpair_pair])]
+            rfl
+
+/-- The ι-worker commutation: reading the ι worker off a term code computes the
+code of the `detIotaStep` image, `iotaStepCode (codeTm t) = codeTm (detIotaStep
+t)`. No substitution level is threaded: the ι contraction selects spine
+components without substituting. Novel realization. -/
+theorem iotaStepCode_codeTm {Γ : Binding.Ctx RType} {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
+    iotaStepCode (codeTm t) = codeTm (detIotaStep t) :=
+  iotaStepCode_codeTm_aux (Tm.size t) t le_rfl
 
 /-- The strong-induction shell of the β-worker commutation, on the term size:
 reading the β worker off a term code at the ambient context length agrees with

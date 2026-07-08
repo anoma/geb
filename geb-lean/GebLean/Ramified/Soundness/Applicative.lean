@@ -69,6 +69,8 @@ operations that carry subterm arguments; `lam σ τ` binds one variable of sort
 ## Main statements
 
 * `ctorList_length` — the constructor enumeration has length `A.numCtors`.
+* `mem_ctorList`, `ctorList_pairwise` — the constructor enumeration contains
+  every label and is pairwise ordered by the label order.
 * `ctorList_get_ctorIdx` — `ctorIdx` is a right inverse of the enumeration
   read-off.
 * `appEval_var`, `appEval_op`, `appEval_congr_ctx` — the fold's base and
@@ -302,6 +304,18 @@ theorem ctorList_length {A : AlgSig} [Fintype A.B] [LinearOrder A.B] :
   unfold ctorList AlgSig.numCtors
   rw [Finset.length_sort]
   exact Finset.card_univ
+
+/-- Every constructor label occurs in the enumeration: `ctorList A` sorts the
+full label set `Finset.univ`. -/
+theorem mem_ctorList {A : AlgSig} [Fintype A.B] [LinearOrder A.B] (i : A.B) :
+    i ∈ ctorList A := by
+  rw [ctorList]
+  exact (Finset.mem_sort _).mpr (Finset.mem_univ i)
+
+/-- The enumeration `ctorList A` is pairwise ordered by the label order. -/
+theorem ctorList_pairwise {A : AlgSig} [Fintype A.B] [LinearOrder A.B] :
+    List.Pairwise (· ≤ ·) (ctorList A) :=
+  Finset.pairwise_sort Finset.univ _
 
 /-- The constructor label at enumeration position `idx : Fin A.numCtors`: the
 `idx`-th entry of `ctorList A`, indexing through `ctorList_length`. Names the
