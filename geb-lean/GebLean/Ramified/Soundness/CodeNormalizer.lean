@@ -327,16 +327,6 @@ theorem subCode_const (j e op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     subCode j e (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [subCode]; split <;> simp_all [Nat.unpair_pair]
 
-/-- The children pack of a binary node: `List.foldr Nat.pair 0` over a
-two-element tuple is the right-nested pair closed by the terminator. -/
-private theorem foldrPack_two (f : Fin 2 → ℕ) :
-    List.foldr Nat.pair 0 (List.ofFn f) = Nat.pair (f 0) (Nat.pair (f 1) 0) := rfl
-
-/-- The children pack of a unary node: `List.foldr Nat.pair 0` over a
-one-element tuple is the sole entry closed by the terminator. -/
-private theorem foldrPack_one (f : Fin 1 → ℕ) :
-    List.foldr Nat.pair 0 (List.ofFn f) = Nat.pair (f 0) 0 := rfl
-
 /-- The term code is invariant under renaming along a position-preserving
 thinning: if `ρ` sends every variable to a variable at the same numeric
 position — so the target is a same-length resorting of the context, in
