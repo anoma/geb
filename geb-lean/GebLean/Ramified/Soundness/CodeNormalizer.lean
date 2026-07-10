@@ -93,6 +93,21 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   code of the corresponding deterministic image.
 * `OneLambda.stepCode_codeTm` — the closed-term commutation: `stepCode
   (codeTm t) = codeTm (detStep t)` for closed `t`.
+* `OneLambda.iotaStepCode_le_tower` — the height-2 tower majorant of the ι
+  worker: `iotaStepCode m ≤ tower 2 (9 * m + 9)`, the value bound of the ι-worker
+  fold's elementary-recursive realization.
+* `OneLambda.shiftCode_le_tower`, `OneLambda.shiftCode_iterate_le_tower` — the
+  height-2 tower majorants of the code-level weakening and its iterate:
+  `shiftCode j m ≤ tower 2 (9 * m + 9)` and `(shiftCode j)^[d] m ≤
+  tower 2 (9 * m + 9 * d + 9)`, the value bounds of the weakening fold and its
+  bounded-recursion iterate.
+* `OneLambda.subCode_shift_iterate_le_tower` — the height-2 tower majorant of
+  the code-level substitution over an iterated weakening:
+  `subCode j ((shiftCode j)^[d] e) m ≤ tower 2 (18 * m + 9 * e + 9 * d + 18)`,
+  the value bound of the substitution fold's elementary-recursive realization.
+* `OneLambda.betaStepCode_le_tower` — the height-2 tower majorant of the β
+  worker: `betaStepCode q d m ≤ tower 2 (27 * m + 9 * d + 18)`, the value bound
+  of the β-worker fold's elementary-recursive realization.
 * `OneLambda.stepCode_le_stepBound`, `OneLambda.stepBound_mono` — the majorant
   pair of the reference step on codes.
 * `OneLambda.size_le_codeTm_succ`, `OneLambda.sortPayload_le_codeTm` — the
@@ -367,6 +382,43 @@ least `2`): the code is unchanged. -/
 theorem subCode_const (j e op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     subCode j e (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `subCode` at an application node with an arbitrary
+children pack: the recursion reads the two child codes at the fixed unpacking
+depths and rebuilds the pack with the terminator `0`. The `subCode_app`
+generalization consumed by the strong induction of
+`subCode_shift_iterate_le_tower`. -/
+theorem subCode_app_pack (j e op pack : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    subCode j e (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op (Nat.pair (subCode j e (Nat.unpair pack).1)
+          (Nat.pair (subCode j e (Nat.unpair (Nat.unpair pack).2).1) 0))) := by
+  rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `subCode` at an abstraction node with an arbitrary
+children pack: the recursion reads the sole body child code at the fixed
+unpacking depth, weakens the substituend by `shiftCode j`, and rebuilds the
+pack with the terminator `0`. The `subCode_lam` generalization consumed by the
+strong induction of `subCode_shift_iterate_le_tower`. -/
+theorem subCode_lam_pack (j e op pack : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    subCode j e (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op
+          (Nat.pair (subCode j (shiftCode j e) (Nat.unpair pack).1) 0)) := by
+  rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The dispatch unfolding of `subCode` at a code whose top tag is at least
+`2`: no such code is a variable leaf or an operation node, so the code is
+unchanged. -/
+theorem subCode_pair_of_two_le (j e tag p : ℕ) (htag : 2 ≤ tag) :
+    subCode j e (Nat.pair tag p) = Nat.pair tag p := by
+  rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The unpacked form of `subCode_pair_of_two_le`: a code whose top tag is at
+least `2` is unchanged by the substitution. -/
+theorem subCode_of_two_le (j e : ℕ) {c : ℕ} (h : 2 ≤ (Nat.unpair c).1) :
+    subCode j e c = c := by
+  conv_lhs => rw [← Nat.pair_unpair c]
+  rw [subCode_pair_of_two_le _ _ _ _ h]
+  exact Nat.pair_unpair c
 
 /-- The term code is invariant under renaming along a position-preserving
 thinning: if `ρ` sends every variable to a variable at the same numeric
@@ -926,6 +978,38 @@ theorem topBetaRankCode_op_ne_app (op pack : ℕ) (hop : (Nat.unpair op).1 ≠ 0
     topBetaRankCode (Nat.pair 1 (Nat.pair op pack)) = 0 := by
   rw [topBetaRankCode]; split <;> simp_all [Nat.unpair_pair]
 
+/-- The top β-rank read off a code never exceeds the code's successor,
+`topBetaRankCode c ≤ c + 1`. The non-zero branch reads `ordCode (Nat.pair 1 p)`
+with `p = opPayloadCode c` sitting at or below `argCode c = (Nat.unpair c).2`
+(two `Nat.unpair` descents), so `Nat.pair 1 p ≤ Nat.pair 1 (argCode c) = c` by
+right-monotonicity of `Nat.pair`; `ordCode_le_self` then bounds the read by `c`.
+This universal majorant is the value bound of the top-β-rank assembly. -/
+theorem topBetaRankCode_le_succ (c : ℕ) : topBetaRankCode c ≤ c + 1 := by
+  rw [topBetaRankCode]
+  split
+  · rename_i h1 h2
+    split
+    · have hp : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2 ≤ (Nat.unpair c).2 :=
+        le_trans (Nat.unpair_right_le _) (Nat.unpair_left_le _)
+      have hpair :
+          Nat.pair 1 (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2 ≤ c := by
+        have hmono :
+            Nat.pair 1 (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2
+              ≤ Nat.pair 1 (Nat.unpair c).2 := by
+          rcases Nat.lt_or_ge (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2
+              (Nat.unpair c).2 with hlt | hge
+          · exact le_of_lt (Nat.pair_lt_pair_right 1 hlt)
+          · have heq : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2 = (Nat.unpair c).2 :=
+              le_antisymm hp hge
+            rw [heq]
+        have hc : Nat.pair 1 (Nat.unpair c).2 = c := by
+          conv_rhs => rw [← Nat.pair_unpair c]
+          rw [h1]
+        omega
+      exact le_trans (ordCode_le_self _) (le_trans hpair (Nat.le_succ c))
+    · exact Nat.zero_le _
+  · exact Nat.zero_le _
+
 /-- The top-β-rank mirror: reading `topBetaRankCode` off a term code agrees with
 the term-level top β-rank `topBetaRank`. By cases on the top node; at an
 application the applied arrow-sort code rebuilds `codeRType (arrow σ τ)`, whose
@@ -1329,6 +1413,45 @@ least `2` (a nullary constant): no β-rank. -/
 theorem betaRankCode_op_ge_two (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     betaRankCode (Nat.pair 1 (Nat.pair op pack)) = 0 := by
   rw [betaRankCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The β-rank read off a code never exceeds the code's successor,
+`betaRankCode c ≤ c + 1`. Strong recursion on the code through the node equations:
+at an application node the top β-rank is bounded by `topBetaRankCode_le_succ` and
+each child β-rank by the induction hypothesis, with the two children strictly below
+the code (two, resp. three, `Nat.unpair` descents below the argument code, itself
+below the code by `self_lt_pair_one`); the abstraction node recurses into its
+strictly smaller body child; every other node reads `0`. This universal majorant is
+the value bound of the β-rank fold. -/
+theorem betaRankCode_le_succ (c : ℕ) : betaRankCode c ≤ c + 1 := by
+  induction c using Nat.strong_induction_on with
+  | _ c ih =>
+    rw [betaRankCode]
+    split
+    · rename_i h1 _
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+      have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.unpair_right_le _)) hp
+      have ht := topBetaRankCode_le_succ c
+      have hr0 := ih _ hc0
+      have hr1 := ih _ hc1
+      omega
+    · rename_i h1 _
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+      have hr0 := ih _ hc0
+      omega
+    · exact Nat.zero_le _
 
 /-- The β-rank mirror: reading `betaRankCode` off a term code agrees with the
 term-level β-rank `betaRedexRank`. Structural induction on the term; the top β-rank
@@ -1854,6 +1977,535 @@ kind bit at least `2`): the code is unchanged. -/
 theorem iotaStepCode_const (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     iotaStepCode (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [iotaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The first child code sits at or below the code: `child0Code c ≤ c`. Three
+`Nat.unpair` components, each bounded by `Nat.unpair_left_le`/`Nat.unpair_right_le`. -/
+private theorem child0Code_le_self (c : ℕ) : child0Code c ≤ c := by
+  unfold child0Code
+  exact le_trans (Nat.unpair_left_le _)
+    (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _))
+
+/-- The second child code sits at or below the code: `child1Code c ≤ c`. Four
+`Nat.unpair` components, each bounded by `Nat.unpair_left_le`/`Nat.unpair_right_le`. -/
+private theorem child1Code_le_self (c : ℕ) : child1Code c ≤ c := by
+  unfold child1Code
+  exact le_trans (Nat.unpair_left_le _)
+    (le_trans (Nat.unpair_right_le _)
+      (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _)))
+
+/-- The ι-contraction never enlarges the code: `iotaContractCode c ≤ c`. Every arm
+returns a nested child read of the input or the input itself, each bounded by
+`child0Code_le_self`/`child1Code_le_self`. Feeds the ι-worker majorant's
+contraction arm. -/
+private theorem iotaContractCode_le_self (c : ℕ) : iotaContractCode c ≤ c := by
+  have h0 := child0Code_le_self c
+  have h1 := child1Code_le_self c
+  unfold iotaContractCode
+  split
+  · split_ifs
+    · exact le_trans (child1Code_le_self _) h1
+    · exact h1
+  · split_ifs
+    · exact le_trans (child1Code_le_self _) h0
+    · exact h1
+    · exact le_refl _
+  · exact le_refl _
+
+/-- Under shape tag `1` the trailing pack sits strictly below the code:
+`(Nat.unpair c).2 < c`, since `c = Nat.pair 1 (Nat.unpair c).2` and
+`self_lt_pair_one`. -/
+private theorem unpair_snd_lt_of_shape_one (c : ℕ) (hs : (Nat.unpair c).1 = 1) :
+    (Nat.unpair c).2 < c := by
+  conv_rhs => rw [← Nat.pair_unpair c, hs]
+  exact self_lt_pair_one _
+
+/-- The first child of a shape-`1` code sits strictly below it: `child0Code c < c`,
+chaining `Nat.unpair` components below `unpair_snd_lt_of_shape_one`. -/
+private theorem child0Code_lt_of_shape_one (c : ℕ) (hs : (Nat.unpair c).1 = 1) :
+    child0Code c < c := by
+  unfold child0Code
+  exact Nat.lt_of_le_of_lt
+    (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+    (unpair_snd_lt_of_shape_one c hs)
+
+/-- The second child of a shape-`1` code sits strictly below it: `child1Code c < c`. -/
+private theorem child1Code_lt_of_shape_one (c : ℕ) (hs : (Nat.unpair c).1 = 1) :
+    child1Code c < c := by
+  unfold child1Code
+  exact Nat.lt_of_le_of_lt
+    (le_trans (Nat.unpair_left_le _)
+      (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _)))
+    (unpair_snd_lt_of_shape_one c hs)
+
+/-- A code below `c` is below the height-2 tower at `9 * c`:
+`x ≤ c → x ≤ tower 2 (9 * c)`, by `self_le_tower`. -/
+private theorem le_tower_two_nine_mul (x c : ℕ) (h : x ≤ c) :
+    x ≤ tower 2 (9 * c) :=
+  le_trans h (le_trans (by omega : c ≤ 9 * c) (self_le_tower 2 (9 * c)))
+
+/-- The application-node rebuild bound: a canonical binary node whose operation tag
+is below `c` and whose two child positions are below `tower 2 (9 * c)` is bounded by
+`tower 2 (9 * c + 9)`. Four `pair_le_tower_two` pairings (`pair4_le_tower`, `+8`)
+absorbed by the `+9` budget. -/
+private theorem iotaStep_node4_le_tower (c op x y : ℕ) (hc : 1 ≤ c)
+    (hop : op ≤ c) (hx : x ≤ tower 2 (9 * c)) (hy : y ≤ tower 2 (9 * c)) :
+    Nat.pair 1 (Nat.pair op (Nat.pair x (Nat.pair y 0))) ≤ tower 2 (9 * c + 9) := by
+  have hz : 1 ≤ 9 * c := by omega
+  have h1 : (1 : ℕ) ≤ tower 2 (9 * c) := one_le_tower_of_one_le 2 (9 * c) (by omega)
+  refine le_trans (pair4_le_tower hz h1 (le_tower_two_nine_mul op c hop) hx hy) ?_
+  exact tower_mono_right 2 (by omega)
+
+/-- The abstraction-node rebuild bound: a canonical unary node whose operation tag
+is below `c` and whose child position is below `tower 2 (9 * c)` is bounded by
+`tower 2 (9 * c + 9)`. Three `pair_le_tower_two` pairings (`pair3_le_tower`,
+`+6`). -/
+private theorem iotaStep_node3_le_tower (c op x : ℕ) (hc : 1 ≤ c)
+    (hop : op ≤ c) (hx : x ≤ tower 2 (9 * c)) :
+    Nat.pair 1 (Nat.pair op (Nat.pair x 0)) ≤ tower 2 (9 * c + 9) := by
+  have hz : 1 ≤ 9 * c := by omega
+  have h1 : (1 : ℕ) ≤ tower 2 (9 * c) := one_le_tower_of_one_le 2 (9 * c) (by omega)
+  refine le_trans (pair3_le_tower hz h1 (le_tower_two_nine_mul op c hop) hx) ?_
+  exact tower_mono_right 2 (by omega)
+
+/-- The recursive-child bound of the ι-worker majorant: a child strictly below the
+node whose own tower budget holds sits below `tower 2 (9 * c)`, since
+`9 * k + 9 ≤ 9 * c` for `k < c`. Isolating the arithmetic keeps the child position
+abstract, so `omega` need not identify the code read with `child0Code`/`child1Code`. -/
+private theorem ih_step_le (k c : ℕ) (hih : iotaStepCode k ≤ tower 2 (9 * k + 9))
+    (hlt : k < c) : iotaStepCode k ≤ tower 2 (9 * c) :=
+  le_trans hih (tower_mono_right 2 (by omega))
+
+/-- The height-2 tower majorant of the ι worker (Leivant III section 4.2,
+pp. 223-224; the machine-model absorption of footnote 10, p. 226):
+`iotaStepCode m ≤ tower 2 (9 * m + 9)`. Strong induction on the code through the
+node equations: each descent rebuilds the node with four (application) or three
+(abstraction) `pair_le_tower_two` pairings, paid for by the recursive child sitting
+strictly below the node so its `+9` tower budget dominates the `+8` rebuild cost;
+the contraction arm consumes `iotaContractCode`, whose reads only select subterms of
+the input (`iotaContractCode_le_self`). Value bound of the ι-worker fold's
+elementary-recursive realization. Novel realization. -/
+theorem iotaStepCode_le_tower (m : ℕ) : iotaStepCode m ≤ tower 2 (9 * m + 9) := by
+  induction m using Nat.strong_induction_on with
+  | _ c ih =>
+    rw [iotaStepCode]
+    split
+    · -- application node (shape `1`, kind `0`)
+      rename_i hs _
+      split_ifs
+      · -- descend into the function child
+        exact iotaStep_node4_le_tower c _ _ _
+          (by have := unpair_snd_lt_of_shape_one c hs; omega)
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+          (ih_step_le _ c (ih _ (child0Code_lt_of_shape_one c hs))
+            (child0Code_lt_of_shape_one c hs))
+          (le_tower_two_nine_mul _ c (child1Code_le_self c))
+      · -- descend into the argument child
+        exact iotaStep_node4_le_tower c _ _ _
+          (by have := unpair_snd_lt_of_shape_one c hs; omega)
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+          (le_tower_two_nine_mul _ c (child0Code_le_self c))
+          (ih_step_le _ c (ih _ (child1Code_lt_of_shape_one c hs))
+            (child1Code_lt_of_shape_one c hs))
+      · -- contract at the root
+        exact le_trans (iotaContractCode_le_self c)
+          (le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _))
+      · -- identity
+        exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+    · -- abstraction node (shape `1`, kind `1`)
+      rename_i hs _
+      split_ifs
+      · -- descend into the body child
+        exact iotaStep_node3_le_tower c _ _
+          (by have := unpair_snd_lt_of_shape_one c hs; omega)
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+          (ih_step_le _ c (ih _ (child0Code_lt_of_shape_one c hs))
+            (child0Code_lt_of_shape_one c hs))
+      · -- identity
+        exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+    · -- every other node is unchanged
+      exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+
+/-- A variable-leaf code is bounded by any height-2 tower two above its level:
+`Nat.pair 0 k ≤ tower 2 z` when `k + 2 ≤ z`. The leaf is majorized by
+`(k + 1) ^ 2 ≤ tower 2 (k + 2)` (`sq_le_tower_two`). -/
+private theorem shift_leaf_le_tower (z k : ℕ) (hk : k + 2 ≤ z) :
+    Nat.pair 0 k ≤ tower 2 z := by
+  calc Nat.pair 0 k ≤ (0 + k + 1) ^ 2 := Nat.pair_le_sq 0 k
+    _ = (k + 1) ^ 2 := by ring
+    _ ≤ tower 2 (k + 2) := sq_le_tower_two (k + 1)
+    _ ≤ tower 2 z := tower_mono_right 2 hk
+
+/-- The application-node rebuild bound at an arbitrary tower argument: a canonical
+binary node whose operation tag and two child positions sit below `tower 2 z` is
+bounded by `tower 2 (z + 9)`. Four `pair_le_tower_two` pairings (`pair4_le_tower`,
+`+8`) absorbed by the `+9` budget. -/
+private theorem shift_node4_le_tower {z op x y : ℕ} (hz : 1 ≤ z)
+    (hop : op ≤ tower 2 z) (hx : x ≤ tower 2 z) (hy : y ≤ tower 2 z) :
+    Nat.pair 1 (Nat.pair op (Nat.pair x (Nat.pair y 0))) ≤ tower 2 (z + 9) :=
+  le_trans (pair4_le_tower hz (one_le_tower_of_one_le 2 z hz) hop hx hy)
+    (tower_mono_right 2 (by omega))
+
+/-- The abstraction-node rebuild bound at an arbitrary tower argument: a canonical
+unary node whose operation tag and child position sit below `tower 2 z` is bounded
+by `tower 2 (z + 9)`. Three `pair_le_tower_two` pairings (`pair3_le_tower`, `+6`). -/
+private theorem shift_node3_le_tower {z op x : ℕ} (hz : 1 ≤ z)
+    (hop : op ≤ tower 2 z) (hx : x ≤ tower 2 z) :
+    Nat.pair 1 (Nat.pair op (Nat.pair x 0)) ≤ tower 2 (z + 9) :=
+  le_trans (pair3_le_tower hz (one_le_tower_of_one_le 2 z hz) hop hx)
+    (tower_mono_right 2 (by omega))
+
+/-- The height-2 tower majorant of the code-level weakening (Leivant III section 4.2,
+pp. 223-224; the machine-model absorption of footnote 10, p. 226):
+`shiftCode j m ≤ tower 2 (9 * m + 9)`. Strong induction on the code through the node
+equations: a variable leaf rises to level at most one above its own, bounded by
+`shift_leaf_le_tower`; each operation descent rebuilds the node with four
+(application) or three (abstraction) `pair_le_tower_two` pairings, paid for by the
+recursive child sitting strictly below the node so its `+9` tower budget dominates
+the `+8` rebuild cost. Value bound of the weakening fold's elementary-recursive
+realization. Novel realization. -/
+theorem shiftCode_le_tower (j m : ℕ) : shiftCode j m ≤ tower 2 (9 * m + 9) := by
+  induction m using Nat.strong_induction_on with
+  | _ c ih =>
+    rcases Nat.lt_trichotomy (Nat.unpair c).1 1 with h1 | h1 | h1
+    · -- variable leaf
+      have h0 : (Nat.unpair c).1 = 0 := by omega
+      have hi : (Nat.unpair c).2 ≤ c := Nat.unpair_right_le c
+      have hc : c = Nat.pair 0 (Nat.unpair c).2 := by
+        conv_lhs => rw [← Nat.pair_unpair c, h0]
+      conv_lhs => rw [hc]
+      rw [shiftCode_var]
+      split
+      · exact shift_leaf_le_tower _ _ (by omega)
+      · exact shift_leaf_le_tower _ _ (by omega)
+    · -- operation node
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hcpos : 1 ≤ c := by omega
+      have hc : c = Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.unpair (Nat.unpair c).2).2) := by
+        conv_lhs => rw [← Nat.pair_unpair c, h1, ← Nat.pair_unpair (Nat.unpair c).2]
+      have hop_le : (Nat.unpair (Nat.unpair c).2).1 ≤ tower 2 (9 * c) :=
+        le_tower_two_nine_mul _ c (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+      rcases Nat.lt_trichotomy (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 1
+        with h2 | h2 | h2
+      · -- application
+        have h2' : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 = 0 := by omega
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+              (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, shiftCode_app_pack _ _ _ h2']
+        exact shift_node4_le_tower (z := 9 * c) (by omega) hop_le
+          (le_trans (ih _ hc0) (tower_mono_right 2 (by omega)))
+          (le_trans (ih _ hc1) (tower_mono_right 2 (by omega)))
+      · -- abstraction
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, shiftCode_lam_pack _ _ _ h2]
+        exact shift_node3_le_tower (z := 9 * c) (by omega) hop_le
+          (le_trans (ih _ hc0) (tower_mono_right 2 (by omega)))
+      · -- nullary constant: identity
+        have h2' : 2 ≤ (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 := by omega
+        have hid : shiftCode j c = c := by
+          conv_lhs => rw [hc]
+          rw [shiftCode_const _ _ _ h2', ← hc]
+        rw [hid]
+        exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+    · -- top tag at least 2: the shift is the identity
+      have h1' : 2 ≤ (Nat.unpair c).1 := by omega
+      rw [shiftCode_of_two_le j h1']
+      exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+
+/-- The iterate of `shiftCode` on a variable leaf stays a variable leaf whose level
+rises by at most the iteration count: `∃ k ≤ d, (shiftCode j)^[d] (Nat.pair 0 i) =
+Nat.pair 0 (i + k)`. Each application bumps the level by `0` or `1`. -/
+private theorem shiftCode_iterate_var (j d i : ℕ) :
+    ∃ k, k ≤ d ∧ (shiftCode j)^[d] (Nat.pair 0 i) = Nat.pair 0 (i + k) := by
+  induction d with
+  | zero => exact ⟨0, le_refl 0, by rw [Function.iterate_zero_apply, Nat.add_zero]⟩
+  | succ m ih =>
+    obtain ⟨k, hk, hrec⟩ := ih
+    by_cases hlt : i + k < j
+    · exact ⟨k, by omega, by
+        rw [Function.iterate_succ_apply', hrec, shiftCode_var, if_pos hlt]⟩
+    · exact ⟨k + 1, by omega, by
+        rw [Function.iterate_succ_apply', hrec, shiftCode_var, if_neg hlt, Nat.add_assoc]⟩
+
+/-- The iterate of `shiftCode` distributes over a canonical application node: the two
+child codes carry the iterate while the operation tag is unchanged. -/
+private theorem shiftCode_iterate_app (j d op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    (shiftCode j)^[d] (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = Nat.pair 1 (Nat.pair op
+          (Nat.pair ((shiftCode j)^[d] c0) (Nat.pair ((shiftCode j)^[d] c1) 0))) := by
+  induction d with
+  | zero => simp only [Function.iterate_zero_apply]
+  | succ m ih =>
+    rw [Function.iterate_succ_apply', ih, shiftCode_app _ _ _ _ hop,
+      Function.iterate_succ_apply' (shiftCode j) m c0,
+      Function.iterate_succ_apply' (shiftCode j) m c1]
+
+/-- The iterate of `shiftCode` distributes over a canonical abstraction node: the sole
+child code carries the iterate while the operation tag is unchanged. -/
+private theorem shiftCode_iterate_lam (j d op c0 : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    (shiftCode j)^[d] (Nat.pair 1 (Nat.pair op (Nat.pair c0 0)))
+      = Nat.pair 1 (Nat.pair op (Nat.pair ((shiftCode j)^[d] c0) 0)) := by
+  induction d with
+  | zero => simp only [Function.iterate_zero_apply]
+  | succ m ih =>
+    rw [Function.iterate_succ_apply', ih, shiftCode_lam _ _ _ hop,
+      Function.iterate_succ_apply' (shiftCode j) m c0]
+
+/-- The iterate of `shiftCode` over an application node at an arbitrary children pack,
+one step performed: after a first shift the pack is canonical, so the remaining iterate
+distributes over the two child codes read at the fixed unpacking depths. -/
+private theorem shiftCode_iterate_app_step (j d op pack : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    (shiftCode j)^[d + 1] (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op
+          (Nat.pair ((shiftCode j)^[d + 1] (Nat.unpair pack).1)
+            (Nat.pair ((shiftCode j)^[d + 1] (Nat.unpair (Nat.unpair pack).2).1) 0))) := by
+  rw [Function.iterate_succ_apply, shiftCode_app_pack _ _ _ hop,
+    shiftCode_iterate_app _ _ _ _ _ hop,
+    ← Function.iterate_succ_apply, ← Function.iterate_succ_apply]
+
+/-- The iterate of `shiftCode` over an abstraction node at an arbitrary children pack,
+one step performed: after a first shift the pack is canonical, so the remaining iterate
+distributes over the sole child code read at the fixed unpacking depth. -/
+private theorem shiftCode_iterate_lam_step (j d op pack : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    (shiftCode j)^[d + 1] (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op (Nat.pair ((shiftCode j)^[d + 1] (Nat.unpair pack).1) 0)) := by
+  rw [Function.iterate_succ_apply, shiftCode_lam_pack _ _ _ hop,
+    shiftCode_iterate_lam _ _ _ _ hop, ← Function.iterate_succ_apply]
+
+/-- The height-2 tower majorant of the iterated code-level weakening (Leivant III
+section 4.2, pp. 223-224; the machine-model absorption of footnote 10, p. 226):
+`(shiftCode j)^[d] m ≤ tower 2 (9 * m + 9 * d + 9)`. Strong induction on the code
+after fixing the iteration count: a variable leaf rises to level at most `d` above its
+own (`shiftCode_iterate_var`); each operation descent distributes the iterate over the
+children (`shiftCode_iterate_app_step`, `shiftCode_iterate_lam_step`) and rebuilds the
+node with `pair_le_tower_two` pairings, paid for by the recursive child sitting strictly
+below the node. Dominance and monotonicity inputs of the iterate's `boundedRec`
+realization. Novel realization. -/
+theorem shiftCode_iterate_le_tower (j d m : ℕ) :
+    (shiftCode j)^[d] m ≤ tower 2 (9 * m + 9 * d + 9) := by
+  rcases Nat.eq_zero_or_pos d with rfl | hd
+  · rw [Function.iterate_zero_apply]
+    exact le_trans (by omega : m ≤ 9 * m + 9 * 0 + 9) (self_le_tower 2 _)
+  · obtain ⟨e, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hd)
+    induction m using Nat.strong_induction_on with
+    | _ c ih =>
+      rcases Nat.lt_trichotomy (Nat.unpair c).1 1 with h1 | h1 | h1
+      · -- variable leaf
+        have h0 : (Nat.unpair c).1 = 0 := by omega
+        have hi : (Nat.unpair c).2 ≤ c := Nat.unpair_right_le c
+        have hc : c = Nat.pair 0 (Nat.unpair c).2 := by
+          conv_lhs => rw [← Nat.pair_unpair c, h0]
+        obtain ⟨kk, hkk, hval⟩ := shiftCode_iterate_var j (e + 1) (Nat.unpair c).2
+        conv_lhs => rw [hc, hval]
+        exact shift_leaf_le_tower _ _ (by omega)
+      · -- operation node
+        have hp : (Nat.unpair c).2 < c := by
+          conv_rhs => rw [← Nat.pair_unpair c, h1]
+          exact self_lt_pair_one _
+        have hcpos : 1 ≤ c := by omega
+        have hc : c = Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+            (Nat.unpair (Nat.unpair c).2).2) := by
+          conv_lhs => rw [← Nat.pair_unpair c, h1, ← Nat.pair_unpair (Nat.unpair c).2]
+        have hop_le : (Nat.unpair (Nat.unpair c).2).1 ≤ tower 2 (9 * c + 9 * (e + 1)) :=
+          le_trans (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+            (le_trans (by omega : c ≤ 9 * c + 9 * (e + 1)) (self_le_tower 2 _))
+        rcases Nat.lt_trichotomy (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 1
+          with h2 | h2 | h2
+        · -- application
+          have h2' : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 = 0 := by omega
+          have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+            Nat.lt_of_le_of_lt
+              (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+          have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+            Nat.lt_of_le_of_lt
+              (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+                (Nat.unpair_right_le _)) hp
+          conv_lhs => rw [hc, shiftCode_iterate_app_step _ _ _ _ h2']
+          refine le_trans (shift_node4_le_tower (z := 9 * c + 9 * (e + 1)) (by omega)
+            hop_le ?_ ?_) (tower_mono_right 2 (by omega))
+          · exact le_trans (ih _ hc0) (tower_mono_right 2 (by omega))
+          · exact le_trans (ih _ hc1) (tower_mono_right 2 (by omega))
+        · -- abstraction
+          have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+            Nat.lt_of_le_of_lt
+              (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+          conv_lhs => rw [hc, shiftCode_iterate_lam_step _ _ _ _ h2]
+          refine le_trans (shift_node3_le_tower (z := 9 * c + 9 * (e + 1)) (by omega)
+            hop_le ?_) (tower_mono_right 2 (by omega))
+          · exact le_trans (ih _ hc0) (tower_mono_right 2 (by omega))
+        · -- nullary constant: identity
+          have h2' : 2 ≤ (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 := by omega
+          have hid : shiftCode j c = c := by
+            conv_lhs => rw [hc]
+            rw [shiftCode_const _ _ _ h2', ← hc]
+          rw [Function.iterate_fixed hid]
+          exact le_trans (by omega : c ≤ 9 * c + 9 * (e + 1) + 9) (self_le_tower 2 _)
+      · -- top tag at least 2: the shift is the identity
+        have h1' : 2 ≤ (Nat.unpair c).1 := by omega
+        rw [Function.iterate_fixed (shiftCode_of_two_le j h1')]
+        exact le_trans (by omega : c ≤ 9 * c + 9 * (e + 1) + 9) (self_le_tower 2 _)
+
+/-- The height-2 tower majorant of the code-level substitution over an iterated
+weakening (Leivant III section 4.2, pp. 223-224; the machine-model absorption of
+footnote 10, p. 226): `subCode j ((shiftCode j)^[d] e) m ≤
+tower 2 (18 * m + 9 * e + 9 * d + 18)`. Strong induction on the code with the
+weakening depth universally quantified: a variable leaf either rebuilds a leaf
+at most one level below its own or lands the iterated substituend
+(`shiftCode_iterate_le_tower`); an application descent rebuilds the node with
+four `pair_le_tower_two` pairings, paid for by the children sitting strictly
+below the node; the abstraction descent trades one unit of the code for one
+unit of the depth (`Function.iterate_succ_apply'`), the code coefficient `18`
+exceeding the depth coefficient `9` by the node-rebuild budget. Value bound of
+the substitution fold's elementary-recursive realization. Novel realization. -/
+theorem subCode_shift_iterate_le_tower (j d e m : ℕ) :
+    subCode j ((shiftCode j)^[d] e) m ≤ tower 2 (18 * m + 9 * e + 9 * d + 18) := by
+  induction m using Nat.strong_induction_on generalizing d with
+  | _ c ih =>
+    rcases Nat.lt_trichotomy (Nat.unpair c).1 1 with h1 | h1 | h1
+    · -- variable leaf: the three-way level comparison
+      have h0 : (Nat.unpair c).1 = 0 := by omega
+      have hi : (Nat.unpair c).2 ≤ c := Nat.unpair_right_le c
+      have hc : c = Nat.pair 0 (Nat.unpair c).2 := by
+        conv_lhs => rw [← Nat.pair_unpair c, h0]
+      conv_lhs => rw [hc]
+      rw [subCode_var]
+      split
+      · exact shift_leaf_le_tower _ _ (by omega)
+      · split
+        · exact le_trans (shiftCode_iterate_le_tower j d e)
+            (tower_mono_right 2 (by omega))
+        · exact shift_leaf_le_tower _ _ (by omega)
+    · -- operation node: dispatch on the operation kind bit
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hc : c = Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.unpair (Nat.unpair c).2).2) := by
+        conv_lhs => rw [← Nat.pair_unpair c, h1, ← Nat.pair_unpair (Nat.unpair c).2]
+      have hop_le : (Nat.unpair (Nat.unpair c).2).1
+          ≤ tower 2 (18 * c + 9 * e + 9 * d + 9) :=
+        le_trans (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+          (le_trans (by omega : c ≤ 18 * c + 9 * e + 9 * d + 9) (self_le_tower 2 _))
+      rcases Nat.lt_trichotomy (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 1
+        with h2 | h2 | h2
+      · -- application: recurse into the two children at the same depth
+        have h2' : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 = 0 := by omega
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+              (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, subCode_app_pack _ _ _ _ h2']
+        refine le_trans (shift_node4_le_tower (z := 18 * c + 9 * e + 9 * d + 9)
+          (by omega) hop_le ?_ ?_) (tower_mono_right 2 (by omega))
+        · exact le_trans (ih _ hc0 d) (tower_mono_right 2 (by omega))
+        · exact le_trans (ih _ hc1 d) (tower_mono_right 2 (by omega))
+      · -- abstraction: trade one unit of the code for one unit of the depth
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, subCode_lam_pack _ _ _ _ h2,
+          ← Function.iterate_succ_apply' (shiftCode j) d e]
+        refine le_trans (shift_node3_le_tower (z := 18 * c + 9 * e + 9 * d + 9)
+          (by omega) hop_le ?_) (tower_mono_right 2 (by omega))
+        exact le_trans (ih _ hc0 (d + 1)) (tower_mono_right 2 (by omega))
+      · -- nullary constant: the substitution is the identity
+        have h2' : 2 ≤ (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 := by omega
+        have hid : subCode j ((shiftCode j)^[d] e) c = c := by
+          conv_lhs => rw [hc]
+          rw [subCode_const _ _ _ _ h2', ← hc]
+        rw [hid]
+        exact le_trans (by omega : c ≤ 18 * c + 9 * e + 9 * d + 18) (self_le_tower 2 _)
+    · -- top tag at least 2: the substitution is the identity
+      have h1' : 2 ≤ (Nat.unpair c).1 := by omega
+      rw [subCode_of_two_le _ _ h1']
+      exact le_trans (by omega : c ≤ 18 * c + 9 * e + 9 * d + 18) (self_le_tower 2 _)
+
+/-- The height-2 tower majorant of the β worker (Leivant III section 4.2, p. 224;
+the machine-model absorption of footnote 10, p. 226):
+`betaStepCode q d m ≤ tower 2 (27 * m + 9 * d + 18)`. Strong induction on the
+code with the substitution level universally quantified: each descent rebuilds
+one node with `pair_le_tower_two` pairings, paid for by the recursive child
+sitting strictly below the node; the abstraction descent also pays the level
+increment, the code coefficient `27` exceeding the level coefficient `9` by the
+node-rebuild budget; the contraction arm lands the substitution majorant
+`subCode_shift_iterate_le_tower` at weakening depth `0`, with substituend and
+body both strictly below the node. Value bound of the β-worker fold's
+elementary-recursive realization. Novel realization. -/
+theorem betaStepCode_le_tower (q d m : ℕ) :
+    betaStepCode q d m ≤ tower 2 (27 * m + 9 * d + 18) := by
+  induction m using Nat.strong_induction_on generalizing d with
+  | _ c ih =>
+    rw [betaStepCode]
+    split
+    · -- application node (shape `1`, kind `0`)
+      rename_i hs _
+      have hp : (Nat.unpair c).2 < c := unpair_snd_lt_of_shape_one c hs
+      have hop_le : (Nat.unpair (Nat.unpair c).2).1 ≤ tower 2 (27 * c + 9 * d + 9) :=
+        le_trans (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+          (le_trans (by omega : c ≤ 27 * c + 9 * d + 9) (self_le_tower 2 _))
+      have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+      have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.unpair_right_le _)) hp
+      split_ifs
+      · -- descend into the function child
+        refine le_trans (shift_node4_le_tower (z := 27 * c + 9 * d + 9) (by omega)
+          hop_le ?_ ?_) (tower_mono_right 2 (by omega))
+        · exact le_trans (ih _ hc0 d) (tower_mono_right 2 (by omega))
+        · exact le_trans (le_of_lt hc1)
+            (le_trans (by omega : c ≤ 27 * c + 9 * d + 9) (self_le_tower 2 _))
+      · -- descend into the argument child
+        refine le_trans (shift_node4_le_tower (z := 27 * c + 9 * d + 9) (by omega)
+          hop_le ?_ ?_) (tower_mono_right 2 (by omega))
+        · exact le_trans (le_of_lt hc0)
+            (le_trans (by omega : c ≤ 27 * c + 9 * d + 9) (self_le_tower 2 _))
+        · exact le_trans (ih _ hc1 d) (tower_mono_right 2 (by omega))
+      · -- contract the root β-redex at weakening depth `0`
+        have hbody : (Nat.unpair (Nat.unpair
+            (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.lt_of_le_of_lt (Nat.unpair_right_le _) hc0)
+        have hstep := subCode_shift_iterate_le_tower d 0
+          (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+          (Nat.unpair (Nat.unpair
+            (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1).2).2).1
+        rw [Function.iterate_zero_apply] at hstep
+        exact le_trans hstep (tower_mono_right 2 (by omega))
+      · -- identity
+        exact le_trans (by omega : c ≤ 27 * c + 9 * d + 18) (self_le_tower 2 _)
+    · -- abstraction node (shape `1`, kind `1`)
+      rename_i hs _
+      have hp : (Nat.unpair c).2 < c := unpair_snd_lt_of_shape_one c hs
+      have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+      split_ifs
+      · -- descend into the body child at the incremented level
+        refine le_trans (shift_node3_le_tower (z := 27 * c + 9 * d + 9) (by omega)
+          (le_trans (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+            (le_trans (by omega : c ≤ 27 * c + 9 * d + 9) (self_le_tower 2 _))) ?_)
+          (tower_mono_right 2 (by omega))
+        exact le_trans (ih _ hc0 (d + 1)) (tower_mono_right 2 (by omega))
+      · -- identity
+        exact le_trans (by omega : c ≤ 27 * c + 9 * d + 18) (self_le_tower 2 _)
+    · -- every other node is unchanged
+      exact le_trans (by omega : c ≤ 27 * c + 9 * d + 18) (self_le_tower 2 _)
 
 /-- The constructor enumeration of `natAlgSig` lists `false` before `true`: the
 sorted enumeration of the two-element label set is determined by its length,

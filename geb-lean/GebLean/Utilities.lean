@@ -9,6 +9,7 @@ import GebLean.Utilities.DistributiveLaw
 import GebLean.Utilities.LambdaBialgebra
 import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
+import GebLean.Utilities.ERCourseOfValues
 import GebLean.Utilities.EraBoundedSum
 import GebLean.Utilities.EraDiophantine
 import GebLean.Utilities.EraHypercube

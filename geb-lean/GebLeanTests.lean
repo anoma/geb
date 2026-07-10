@@ -32,6 +32,7 @@ import GebLeanTests.PLang.BTPair
 import GebLeanTests.Ramified
 import GebLeanTests.Utilities.ERAMajorants
 import GebLeanTests.Utilities.ERArith
+import GebLeanTests.Utilities.ERCourseOfValues
 import GebLeanTests.Utilities.ERPackedBound
 import GebLeanTests.Utilities.ERSimultaneousBoundedRec
 import GebLeanTests.Utilities.ERTreeArith
