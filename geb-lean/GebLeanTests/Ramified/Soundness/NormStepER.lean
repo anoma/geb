@@ -1,7 +1,7 @@
 import GebLean.Ramified.Soundness.NormStepER
 
 /-!
-# Ramified-recurrence soundness: code-reads ER-realization tests
+# Ramified-recurrence soundness: normalizer-step ER-realization tests
 
 Acceptance examples for the elementary-recursive realization of the non-recursive
 code reads of `NormStepER.lean`: each read's interpretation, evaluated on a

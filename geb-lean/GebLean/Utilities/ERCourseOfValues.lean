@@ -212,11 +212,11 @@ theorem ERMor1.cvRecPred_eq_one_iff_trace {k : ℕ}
 /-- Generic ER course-of-values table search.  At outer arity `k + 1` with
 slot `0` the code and slots `1..k` the parameter context, returns
 `min (β(a, b, code)) valBound`, where `(a, b) = Nat.unpair` of the least
-`cand` satisfying `cvRecPred node = 1` below
-`boundedRecRange valBound`.  The outer `minN` makes the output
-unconditionally bounded by `valBound`.  Correctness against a reference
-table holds under the node-faithfulness hypothesis of
-`ERMor1.interp_cvRec_of_bounded`. -/
+`cand` below `boundedRecRange valBound` satisfying `cvRecPred node = 1`
+when such a candidate exists, and of the range bound itself otherwise.  The
+outer `minN` makes the output unconditionally bounded by `valBound`.
+Correctness against a reference table holds under the node-faithfulness
+hypothesis of `ERMor1.interp_cvRec_of_bounded`. -/
 def ERMor1.cvRec {k : ℕ} (node : ERMor1 (k + 3))
     (valBound : ERMor1 (k + 1)) : ERMor1 (k + 1) :=
   let search : ERMor1 (k + 1) :=
@@ -717,8 +717,9 @@ def ERMor1.cvRecGatedRange {k : ℕ}
 /-- Gated ER course-of-values table search.  At outer arity `k + 1` with
 slot `0` the code and slots `1..k` the parameter context, returns
 `min (β(a, b, extractAt)) valBound`, where `(a, b) = Nat.unpair` of the
-least `cand` satisfying `cvRecGatedPred node sane idxBound = 1` below
-`cvRecGatedRange idxBound valBound`.  The outer `minN` makes the output
+least `cand` below `cvRecGatedRange idxBound valBound` satisfying
+`cvRecGatedPred node sane idxBound = 1` when such a candidate exists, and of
+the range bound itself otherwise.  The outer `minN` makes the output
 unconditionally bounded by `valBound`.  Correctness against a reference
 table holds under the hypotheses of `ERMor1.interp_cvRecGated_eq`. -/
 def ERMor1.cvRecGated {k : ℕ} (node : ERMor1 (k + 3))

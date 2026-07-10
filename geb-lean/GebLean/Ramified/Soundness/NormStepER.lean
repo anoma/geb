@@ -3,7 +3,7 @@ import GebLean.Utilities.ERCourseOfValues
 import GebLean.LawvereERBoundComputable
 
 /-!
-# Ramified recurrence: the code reads as ER morphisms
+# Ramified recurrence: the deterministic normalizer step as an ER morphism
 
 The elementary-recursive realization layer of the deterministic code normalizer
 of the simply-typed calculus `1λ(natAlgSig)` (Leivant III section 4.2,
@@ -17,24 +17,23 @@ construction's interpretation equals the mirrored ℕ-level function of
 `CodeNormalizer.lean`. Each read is a plain composition of the elementary-recursive
 Gödel-arithmetic generators (`ERMor1.natUnpairFst`, `ERMor1.natUnpairSnd`,
 `ERMor1.natN`, `ERMor1.proj`, `ERMor1.condN`, `ERMor1.boolEqNat`,
-`ERMor1.boolAnd`). The
-type-order fold `OneLambda.ordER` — the first `ERMor1.cvRec` instantiation — and
-the non-recursive top-β-rank read `OneLambda.topBetaRankER` composed from it are
-realized here, together with the `con`-headedness and ι-spine detector folds
-`OneLambda.conHeadedER`, `OneLambda.iotaSpineER`, the non-recursive sort-gated
-ι-redex read `OneLambda.topIotaER`, the β-rank and ι-census folds
-`OneLambda.betaRankER`, `OneLambda.hasIotaER`, and the ι worker
-`OneLambda.iotaStepER` — the first fold that rebuilds nodes and carries a tower-2
-majorant — are realized here, together with the weakening worker `OneLambda.shiftER`,
-its iterate `OneLambda.shiftIterER`, and the code-level substitution `OneLambda.subER`
-— the first gated two-dimensional fold (`ERMor1.cvRecGated`), keyed by the pair of a
-weakening depth and a code — together with the β worker `OneLambda.betaStepER`, the
-second gated two-dimensional fold, keyed by the pair of a substitution level and a
-code; the step majorant `OneLambda.stepBoundER`, the closed-term dispatch
-`OneLambda.stepCodeAtZeroER`, and the assembled step `OneLambda.normStep` are
-realized here. Carrying the code reads into the elementary-recursive theory is the
-formal payment of the machine-model absorption Leivant III leaves to a footnote
-(footnote 10, p. 226). Novel realization.
+`ERMor1.boolAnd`).
+
+The generators compose in dependency order: the type-order fold
+`OneLambda.ordER` (the first `ERMor1.cvRec` instantiation) and the top-β-rank read
+`OneLambda.topBetaRankER`; the `con`-headedness and ι-spine detector folds
+`OneLambda.conHeadedER`, `OneLambda.iotaSpineER` and the sort-gated ι-redex read
+`OneLambda.topIotaER`; the β-rank and ι-census folds `OneLambda.betaRankER`,
+`OneLambda.hasIotaER`; the ι worker `OneLambda.iotaStepER` (the first fold that
+rebuilds nodes under a tower-2 majorant); the weakening worker `OneLambda.shiftER`
+and its iterate `OneLambda.shiftIterER`; the code-level substitution
+`OneLambda.subER` (the first gated two-dimensional fold `ERMor1.cvRecGated`, keyed by
+a weakening depth and a code) and the β worker `OneLambda.betaStepER` (the second,
+keyed by a substitution level and a code); and the step majorant
+`OneLambda.stepBoundER`, the closed-term dispatch `OneLambda.stepCodeAtZeroER`, and
+the assembled step `OneLambda.normStep`. Carrying the deterministic step into the
+elementary-recursive theory is the formal payment of the machine-model absorption
+Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 
 ## Main definitions
 
@@ -155,6 +154,8 @@ namespace GebLean.Ramified
 
 namespace OneLambda
 
+/-! ### Arithmetic and dispatch helpers -/
+
 /-- A constant `Fin 1 → ℕ` context equals the singleton vector: the identity used
 to feed an arity-1 read into a composition. -/
 private theorem cons_fin_one (v : ℕ) : (fun _ : Fin 1 => v) = ![v] := by
@@ -207,6 +208,8 @@ private def condEqER {n : ℕ} (a b t f : ERMor1 n) : ERMor1 n :=
   simp only [condEqER, ERMor1.interp_comp, ERMor1.interp_condN, ERMor1.interp_boolEqNat]
   simp only [eqNat_val]
   by_cases h : a.interp ctx = b.interp ctx <;> simp [h]
+
+/-! ### The non-recursive reads -/
 
 /-- The shape-tag read: the leading `Nat.pair` component of a type code, mirroring
 `shapeCode`. Novel realization. -/
@@ -411,6 +414,8 @@ def iotaContractER : ERMor1 1 :=
   rw [iotaContractCode_eq_ite]
   rfl
 
+/-! ### The type-order fold -/
+
 /-- ER-derived maximum of two naturals: `maxN.interp ![a, b] = max a b`. Realized
 as `condN` over the `leN` comparison: when `a ≤ b` returns `b`, otherwise `a`. -/
 private def maxN : ERMor1 2 :=
@@ -476,7 +481,7 @@ index (`domCode_lt_of_shape_one`, `codCode_lt_of_shape_one`,
 `argCode_lt_of_shape_two`). -/
 @[simp] theorem ordER_interp (n : ℕ) : ordER.interp ![n] = ordCode n := by
   refine ERMor1.interp_cvRec_of_bounded ordNode (ERMor1.proj 0) n ![] ordCode
-    (fun j _ => ?_) (fun j hj => ?_) (fun i hi cand htrace => ?_)
+    (fun j _ => ?_) (fun j hj => ?_) (fun i _ cand htrace => ?_)
   · exact ordCode_le_self j
   · exact hj
   · rw [ordNode_interp i cand n]
@@ -553,6 +558,8 @@ def topBetaRankER : ERMor1 1 :=
     · cases hb : isLamCode (child0Code c) <;> simp [h1, h2]
     · simp [h1, h2]
   · simp [h1]
+
+/-! ### The head and spine detector folds -/
 
 /-- The first child code of a shape-`1` code sits strictly below it:
 `child0Code n < n`. Two `Nat.unpair` descents below the argument code, itself
@@ -782,6 +789,8 @@ detector `topIotaCode`, unconditionally on every code. -/
   · rw [if_pos h, if_pos h]
   · rw [if_neg h, if_neg h]; rfl
 
+/-! ### The rank and iota-census folds -/
+
 /-- `Bool.toNat` carries Boolean disjunction to the maximum of the truth values. -/
 private theorem toNat_or (x y : Bool) : (x || y).toNat = max x.toNat y.toNat := by
   cases x <;> cases y <;> rfl
@@ -972,6 +981,8 @@ carried to the maximum by `toNat_or`. -/
         · rw [if_neg h1', if_neg h1']; rfl
     · rw [if_neg h1, if_neg h1]; rfl
 
+/-! ### The iota worker -/
+
 /-- Binary Gödel pairing of two reads at arity `n`: `pairER a b` interprets to the
 pairing `Nat.pair (a.interp ctx) (b.interp ctx)`, the node-rebuild constructor of
 the ι worker. -/
@@ -993,11 +1004,13 @@ private def pairER {n : ℕ} (a b : ERMor1 n) : ERMor1 n :=
     | ⟨1, _⟩ => rfl
   rw [key, ERMor1.interp_natPair]
 
+-- ℕ-level sibling beside `iotaStepCode` in `CodeNormalizer.lean`; a private bridge input here.
 /-- The operation-tag read on a code: the operation tag of an operation node
 `Nat.pair 1 (Nat.pair op pack)`, the pairing of its kind bit and payload. The node
 rebuild of the ι worker reuses it unchanged. -/
 private def opTagCode (c : ℕ) : ℕ := (Nat.unpair (Nat.unpair c).2).1
 
+-- ℕ-level sibling beside `iotaStepCode` in `CodeNormalizer.lean`; a private bridge input here.
 /-- The ι-worker recursion of `iotaStepCode` as a nested conditional on the shape
 tag and operation kind bit of the code: an application node (shape `1`, kind `0`)
 descends into the function child when it carries an ι-redex, else the argument child,
@@ -1176,6 +1189,8 @@ every code. Discharges the hypotheses of `ERMor1.interp_cvRec_of_bounded` with
           · rw [if_neg hI0, if_neg hI0]
         · rw [if_neg h1k, if_neg h1k]
     · rw [if_neg h1, if_neg h1]
+
+/-! ### The code shift and its iterate -/
 
 /-- The operation-tag read at arity `1`: the operation tag `opTagCode c` of the fold
 slot, two `Nat.unpair` components. The node-rebuild operation tag of the weakening
@@ -1421,6 +1436,8 @@ the linearity of the tower argument in the depth. -/
     exact tower_mono_right 2 (by omega)
   · rw [shiftIter_rec_eq]
 
+/-! ### The code substitution -/
+
 /-- The code-level substitution `subCode j e` as a nested conditional on the shape tag
 and operation kind bit of the code: a variable leaf (shape `0`) rewrites by the
 three-way comparison of its level against the substituted level `j`; an application
@@ -1533,6 +1550,7 @@ private def subSaneER : ERMor1 4 :=
 private theorem subSaneER_interp (i c j e : ℕ) :
     subSaneER.interp (Fin.cons i (Fin.cons c ![j, e]))
       = if (Nat.unpair i).1 + (Nat.unpair i).2 ≤ c then 1 else 0 := by
+  -- The plain simp route does not apply: the comp-argument context shape is not simp-normal.
   have hunf : subSaneER.interp (Fin.cons i (Fin.cons c ![j, e]))
       = ERMor1.leN.interp ![(Nat.unpair i).1 + (Nat.unpair i).2, c] := by
     change ERMor1.leN.interp _ = ERMor1.leN.interp _
@@ -1846,6 +1864,8 @@ descent pays its depth increment with `child0Code m < m`. The extraction at
   rw [subExtractER_interp, subTable_pair_of_le c j e 0 c (by omega),
     Function.iterate_zero_apply] at key
   exact key
+
+/-! ### The beta worker -/
 
 /-- The β worker `betaStepCode q j` as a nested conditional on the shape tag and
 operation kind bit of the code, in the four guard regimes of the application arm:
@@ -2298,6 +2318,8 @@ the code component, and the abstraction descent pays its depth increment with
   rw [betaExtractER_interp, betaTable_pair_of_le c q 0 c (by omega)] at key
   exact key
 
+/-! ### The step dispatch and majorant -/
+
 /-- The step majorant as an `ERMor1 1` term: the `towerER 2` composite over the
 quadratic polynomial `6 * (2 * (n + 1) ^ 2 + n + 1)`, the elementary-recursive
 realization of the reference majorant `stepBound` (spec §6.1). The square is a `powN`
@@ -2390,6 +2412,8 @@ theorem stepCodeAtZeroER_interp (c : ℕ) :
         rw [h2]; rfl
       rw [hg2]
       simp only [zero_mul, Nat.sub_zero, one_mul, zero_add]
+
+/-! ### The assembled step -/
 
 /-- The deterministic normalizer step as an elementary-recursive morphism (spec
 §6.1; M6): the closed-term dispatch `stepCodeAtZeroER` clamped below the step

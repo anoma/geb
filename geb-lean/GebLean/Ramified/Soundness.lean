@@ -30,10 +30,10 @@ as the total computable deterministic step `detStep` on `1λ(A)` terms
 (`DetStep`). A further module opens the code-normalizer realization layer with the
 code-level single-variable substitution `subCode` and its supporting code-level
 weakening `shiftCode`, the numeric images of `Binding.instantiate₁` and
-`ren Thinning.weakAppend` under `codeTm` (`CodeNormalizer`). A further module opens
-the elementary-recursive realization of that code-normalizer layer with the
-non-recursive code reads as `ERMor1` morphisms whose interpretation equals the
-mirrored ℕ-level function (`NormStepER`).
+`ren Thinning.weakAppend` under `codeTm` (`CodeNormalizer`). A further module
+realizes the deterministic normalizer step `normStep` — the numeric image of
+`detStep` — as an `ERMor1` morphism, together with every read, fold, and worker it
+composes, each interpreting to the mirrored ℕ-level function (`NormStepER`).
 
 ## References
 
