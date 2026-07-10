@@ -101,6 +101,10 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   `shiftCode j m ≤ tower 2 (9 * m + 9)` and `(shiftCode j)^[d] m ≤
   tower 2 (9 * m + 9 * d + 9)`, the value bounds of the weakening fold and its
   bounded-recursion iterate.
+* `OneLambda.subCode_shift_iterate_le_tower` — the height-2 tower majorant of
+  the code-level substitution over an iterated weakening:
+  `subCode j ((shiftCode j)^[d] e) m ≤ tower 2 (18 * m + 9 * e + 9 * d + 18)`,
+  the value bound of the substitution fold's elementary-recursive realization.
 * `OneLambda.stepCode_le_stepBound`, `OneLambda.stepBound_mono` — the majorant
   pair of the reference step on codes.
 * `OneLambda.size_le_codeTm_succ`, `OneLambda.sortPayload_le_codeTm` — the
@@ -375,6 +379,43 @@ least `2`): the code is unchanged. -/
 theorem subCode_const (j e op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     subCode j e (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `subCode` at an application node with an arbitrary
+children pack: the recursion reads the two child codes at the fixed unpacking
+depths and rebuilds the pack with the terminator `0`. The `subCode_app`
+generalization consumed by the strong induction of
+`subCode_shift_iterate_le_tower`. -/
+theorem subCode_app_pack (j e op pack : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    subCode j e (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op (Nat.pair (subCode j e (Nat.unpair pack).1)
+          (Nat.pair (subCode j e (Nat.unpair (Nat.unpair pack).2).1) 0))) := by
+  rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The node equation of `subCode` at an abstraction node with an arbitrary
+children pack: the recursion reads the sole body child code at the fixed
+unpacking depth, weakens the substituend by `shiftCode j`, and rebuilds the
+pack with the terminator `0`. The `subCode_lam` generalization consumed by the
+strong induction of `subCode_shift_iterate_le_tower`. -/
+theorem subCode_lam_pack (j e op pack : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    subCode j e (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op
+          (Nat.pair (subCode j (shiftCode j e) (Nat.unpair pack).1) 0)) := by
+  rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The dispatch unfolding of `subCode` at a code whose top tag is at least
+`2`: no such code is a variable leaf or an operation node, so the code is
+unchanged. -/
+theorem subCode_pair_of_two_le (j e tag p : ℕ) (htag : 2 ≤ tag) :
+    subCode j e (Nat.pair tag p) = Nat.pair tag p := by
+  rw [subCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The unpacked form of `subCode_pair_of_two_le`: a code whose top tag is at
+least `2` is unchanged by the substitution. -/
+theorem subCode_of_two_le (j e : ℕ) {c : ℕ} (h : 2 ≤ (Nat.unpair c).1) :
+    subCode j e c = c := by
+  conv_lhs => rw [← Nat.pair_unpair c]
+  rw [subCode_pair_of_two_le _ _ _ _ h]
+  exact Nat.pair_unpair c
 
 /-- The term code is invariant under renaming along a position-preserving
 thinning: if `ρ` sends every variable to a variable at the same numeric
@@ -2309,6 +2350,84 @@ theorem shiftCode_iterate_le_tower (j d m : ℕ) :
         have h1' : 2 ≤ (Nat.unpair c).1 := by omega
         rw [Function.iterate_fixed (shiftCode_of_two_le j h1')]
         exact le_trans (by omega : c ≤ 9 * c + 9 * (e + 1) + 9) (self_le_tower 2 _)
+
+/-- The height-2 tower majorant of the code-level substitution over an iterated
+weakening (Leivant III section 4.2, pp. 223-224; the machine-model absorption of
+footnote 10, p. 226): `subCode j ((shiftCode j)^[d] e) m ≤
+tower 2 (18 * m + 9 * e + 9 * d + 18)`. Strong induction on the code with the
+weakening depth universally quantified: a variable leaf either rebuilds a leaf
+at most one level below its own or lands the iterated substituend
+(`shiftCode_iterate_le_tower`); an application descent rebuilds the node with
+four `pair_le_tower_two` pairings, paid for by the children sitting strictly
+below the node; the abstraction descent trades one unit of the code for one
+unit of the depth (`Function.iterate_succ_apply'`), the code coefficient `18`
+exceeding the depth coefficient `9` by the node-rebuild budget. Value bound of
+the substitution fold's elementary-recursive realization. Novel realization. -/
+theorem subCode_shift_iterate_le_tower (j d e m : ℕ) :
+    subCode j ((shiftCode j)^[d] e) m ≤ tower 2 (18 * m + 9 * e + 9 * d + 18) := by
+  induction m using Nat.strong_induction_on generalizing d with
+  | _ c ih =>
+    rcases Nat.lt_trichotomy (Nat.unpair c).1 1 with h1 | h1 | h1
+    · -- variable leaf: the three-way level comparison
+      have h0 : (Nat.unpair c).1 = 0 := by omega
+      have hi : (Nat.unpair c).2 ≤ c := Nat.unpair_right_le c
+      have hc : c = Nat.pair 0 (Nat.unpair c).2 := by
+        conv_lhs => rw [← Nat.pair_unpair c, h0]
+      conv_lhs => rw [hc]
+      rw [subCode_var]
+      split
+      · exact shift_leaf_le_tower _ _ (by omega)
+      · split
+        · exact le_trans (shiftCode_iterate_le_tower j d e)
+            (tower_mono_right 2 (by omega))
+        · exact shift_leaf_le_tower _ _ (by omega)
+    · -- operation node: dispatch on the operation kind bit
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hc : c = Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.unpair (Nat.unpair c).2).2) := by
+        conv_lhs => rw [← Nat.pair_unpair c, h1, ← Nat.pair_unpair (Nat.unpair c).2]
+      have hop_le : (Nat.unpair (Nat.unpair c).2).1
+          ≤ tower 2 (18 * c + 9 * e + 9 * d + 9) :=
+        le_trans (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+          (le_trans (by omega : c ≤ 18 * c + 9 * e + 9 * d + 9) (self_le_tower 2 _))
+      rcases Nat.lt_trichotomy (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 1
+        with h2 | h2 | h2
+      · -- application: recurse into the two children at the same depth
+        have h2' : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 = 0 := by omega
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+              (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, subCode_app_pack _ _ _ _ h2']
+        refine le_trans (shift_node4_le_tower (z := 18 * c + 9 * e + 9 * d + 9)
+          (by omega) hop_le ?_ ?_) (tower_mono_right 2 (by omega))
+        · exact le_trans (ih _ hc0 d) (tower_mono_right 2 (by omega))
+        · exact le_trans (ih _ hc1 d) (tower_mono_right 2 (by omega))
+      · -- abstraction: trade one unit of the code for one unit of the depth
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, subCode_lam_pack _ _ _ _ h2,
+          ← Function.iterate_succ_apply' (shiftCode j) d e]
+        refine le_trans (shift_node3_le_tower (z := 18 * c + 9 * e + 9 * d + 9)
+          (by omega) hop_le ?_) (tower_mono_right 2 (by omega))
+        exact le_trans (ih _ hc0 (d + 1)) (tower_mono_right 2 (by omega))
+      · -- nullary constant: the substitution is the identity
+        have h2' : 2 ≤ (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 := by omega
+        have hid : subCode j ((shiftCode j)^[d] e) c = c := by
+          conv_lhs => rw [hc]
+          rw [subCode_const _ _ _ _ h2', ← hc]
+        rw [hid]
+        exact le_trans (by omega : c ≤ 18 * c + 9 * e + 9 * d + 18) (self_le_tower 2 _)
+    · -- top tag at least 2: the substitution is the identity
+      have h1' : 2 ≤ (Nat.unpair c).1 := by omega
+      rw [subCode_of_two_le _ _ h1']
+      exact le_trans (by omega : c ≤ 18 * c + 9 * e + 9 * d + 18) (self_le_tower 2 _)
 
 /-- The constructor enumeration of `natAlgSig` lists `false` before `true`: the
 sorted enumeration of the two-element label set is determined by its length,
