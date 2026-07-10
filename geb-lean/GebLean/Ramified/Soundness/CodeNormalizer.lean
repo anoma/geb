@@ -926,6 +926,38 @@ theorem topBetaRankCode_op_ne_app (op pack : ℕ) (hop : (Nat.unpair op).1 ≠ 0
     topBetaRankCode (Nat.pair 1 (Nat.pair op pack)) = 0 := by
   rw [topBetaRankCode]; split <;> simp_all [Nat.unpair_pair]
 
+/-- The top β-rank read off a code never exceeds the code's successor,
+`topBetaRankCode c ≤ c + 1`. The non-zero branch reads `ordCode (Nat.pair 1 p)`
+with `p = opPayloadCode c` sitting at or below `argCode c = (Nat.unpair c).2`
+(two `Nat.unpair` descents), so `Nat.pair 1 p ≤ Nat.pair 1 (argCode c) = c` by
+right-monotonicity of `Nat.pair`; `ordCode_le_self` then bounds the read by `c`.
+This universal majorant is the value bound of the top-β-rank assembly. -/
+theorem topBetaRankCode_le_succ (c : ℕ) : topBetaRankCode c ≤ c + 1 := by
+  rw [topBetaRankCode]
+  split
+  · rename_i h1 h2
+    split
+    · have hp : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2 ≤ (Nat.unpair c).2 :=
+        le_trans (Nat.unpair_right_le _) (Nat.unpair_left_le _)
+      have hpair :
+          Nat.pair 1 (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2 ≤ c := by
+        have hmono :
+            Nat.pair 1 (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2
+              ≤ Nat.pair 1 (Nat.unpair c).2 := by
+          rcases Nat.lt_or_ge (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2
+              (Nat.unpair c).2 with hlt | hge
+          · exact le_of_lt (Nat.pair_lt_pair_right 1 hlt)
+          · have heq : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).2 = (Nat.unpair c).2 :=
+              le_antisymm hp hge
+            rw [heq]
+        have hc : Nat.pair 1 (Nat.unpair c).2 = c := by
+          conv_rhs => rw [← Nat.pair_unpair c]
+          rw [h1]
+        omega
+      exact le_trans (ordCode_le_self _) (le_trans hpair (Nat.le_succ c))
+    · exact Nat.zero_le _
+  · exact Nat.zero_le _
+
 /-- The top-β-rank mirror: reading `topBetaRankCode` off a term code agrees with
 the term-level top β-rank `topBetaRank`. By cases on the top node; at an
 application the applied arrow-sort code rebuilds `codeRType (arrow σ τ)`, whose

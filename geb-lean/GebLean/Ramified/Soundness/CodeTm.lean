@@ -315,6 +315,37 @@ theorem ordCode_pair_two (a : ℕ) : ordCode (Nat.pair 2 a) = ordCode a := by
   rw [ordCode]
   split <;> simp_all [Nat.unpair_pair]
 
+/-- The type order read off a code never exceeds the code itself, `ordCode n ≤ n`.
+Strong induction on the code value through the shape dispatch: at an arrow
+(shape `1`) or `Ω` (shape `2`) node the child codes sit strictly below the
+composite (`self_lt_pair_one`, `self_lt_pair_two` chained below
+`Nat.unpair_left_le`/`Nat.unpair_right_le`), so each recursive order is bounded
+by its child code, itself below `n`; every other tag reads `0`. This universal
+majorant is the value bound of the `ordCode` course-of-values fold. -/
+theorem ordCode_le_self (n : ℕ) : ordCode n ≤ n := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    rw [ordCode]
+    split
+    · rename_i h
+      have harg : (Nat.unpair n).2 < n := by
+        conv_rhs => rw [← Nat.pair_unpair n, h]
+        exact self_lt_pair_one _
+      have hd : (Nat.unpair (Nat.unpair n).2).1 < n :=
+        Nat.lt_of_le_of_lt (Nat.unpair_left_le _) harg
+      have hc : (Nat.unpair (Nat.unpair n).2).2 < n :=
+        Nat.lt_of_le_of_lt (Nat.unpair_right_le _) harg
+      have ihd := ih _ hd
+      have ihc := ih _ hc
+      omega
+    · rename_i h
+      have harg : (Nat.unpair n).2 < n := by
+        conv_rhs => rw [← Nat.pair_unpair n, h]
+        exact self_lt_pair_two _
+      have ih2 := ih _ harg
+      omega
+    · exact Nat.zero_le n
+
 /-- The mirror theorem (Leivant III section 2.2, p. 213): reading the type order
 off a code agrees with computing it on the type, `ordCode (codeRType σ) =
 RType.ord σ`. By structural induction on the r-type via `PolyFix.ind`, the node
