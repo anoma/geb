@@ -29,9 +29,10 @@ rebuilds nodes under a tower-2 majorant); the weakening worker `OneLambda.shiftE
 and its iterate `OneLambda.shiftIterER`; the code-level substitution
 `OneLambda.subER` (the first gated two-dimensional fold `ERMor1.cvRecGated`, keyed by
 a weakening depth and a code) and the β worker `OneLambda.betaStepER` (the second,
-keyed by a substitution level and a code); and the step majorant
+keyed by a substitution level and a code); the step majorant
 `OneLambda.stepBoundER`, the closed-term dispatch `OneLambda.stepCodeAtZeroER`, and
-the assembled step `OneLambda.normStep`. Carrying the deterministic step into the
+the assembled step `OneLambda.normStep`; and the clocked iteration
+`OneLambda.normRun`. Carrying the deterministic step into the
 elementary-recursive theory is the formal payment of the machine-model absorption
 Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 
@@ -90,6 +91,10 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.normStep` — the assembled deterministic normalizer step, the closed-term
   dispatch `stepCodeAtZeroER` clamped below the step majorant `stepBoundER` by
   `ERMor1.minN`, realizing `stepCode`.
+- `OneLambda.normRun` — the clocked iteration of the step, `ERMor1.boundedRec` over
+  `normStep` at slots clock, code, budget, with the budget slot as value bound; the
+  budget input carries the per-instance trace ceiling, since no elementary function of
+  the clock and the code alone dominates every trace.
 
 ## Main statements
 
@@ -130,6 +135,8 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.normStep_interp` — the assembled step interprets to `stepCode n`,
   unconditionally on every code, composing `interp_minN` with the closed-term
   dispatch and step-majorant interpretation lemmas.
+- `OneLambda.normRun_interp_of_le` — under a budget dominating every trace value up to
+  the clock, the clocked iteration interprets to the iterate `stepCode^[k] n`.
 
 ## Implementation notes
 
@@ -2444,6 +2451,78 @@ theorem normStep_interp (n : ℕ) : normStep.interp ![n] = stepCode n := by
     | ⟨1, _⟩ => exact stepBoundER_interp n
   rw [normStep, ERMor1.interp_comp, harg, ERMor1.interp_minN]
   simp only [Matrix.cons_val_zero, Matrix.cons_val_one, stepCode]
+
+/-! ### The clocked iteration -/
+
+/-- The budget read of the clocked iteration evaluates to the budget slot: at slots
+`(j, n, b)` the value bound is `b`, constant in the recursion counter. -/
+private theorem normRun_bound_eval (j n b : ℕ) :
+    (ERMor1.proj (k := 3) 2).interp (Fin.cons j (Fin.cons n (Fin.cons b Fin.elim0))) = b := by
+  rw [ERMor1.interp_proj]
+  rfl
+
+/-- The step term of the clocked iteration evaluates to a single deterministic step of the
+running value: at slots `(i, prev, n, b)` it computes `stepCode prev` by a full call of
+`normStep`. -/
+private theorem normRun_step_eval (n b i prev : ℕ) :
+    (ERMor1.comp normStep (fun _ : Fin 1 => ERMor1.proj (k := 4) 1)).interp
+      (Fin.cons i (Fin.cons prev (Fin.cons n (Fin.cons b Fin.elim0)))) = stepCode prev := by
+  have hg : (fun _ : Fin 1 => (ERMor1.proj (k := 4) 1).interp
+      (Fin.cons i (Fin.cons prev (Fin.cons n (Fin.cons b Fin.elim0))))) = ![prev] := by
+    funext s
+    match s with
+    | ⟨0, _⟩ => rfl
+  rw [ERMor1.interp_comp, hg, normStep_interp]
+
+/-- The raw `Nat.rec` trace of the clocked-iteration step at counter `k` equals the
+`Function.iterate` of `stepCode` on the code `n`. -/
+private theorem normRun_rec_eq (n b k : ℕ) :
+    (Nat.rec ((ERMor1.proj (k := 2) 0).interp (Fin.cons n (Fin.cons b Fin.elim0)))
+      (fun i prev => (ERMor1.comp normStep (fun _ : Fin 1 => ERMor1.proj (k := 4) 1)).interp
+        (Fin.cons i (Fin.cons prev (Fin.cons n (Fin.cons b Fin.elim0))))) k : ℕ)
+      = stepCode^[k] n := by
+  induction k with
+  | zero => rfl
+  | succ m ih =>
+    rw [Function.iterate_succ_apply', ← ih]
+    exact normRun_step_eval n b m _
+
+/-- The clocked iteration of the deterministic normalizer step as an elementary-recursive
+morphism (spec §6.2; plan decision P6): `ERMor1.boundedRec` over `normStep` at slots
+`(k, n, b)` — clock, code, budget — with base the code, step a full call of `normStep` on
+the running value, and value bound the budget slot. The budget is a genuine input:
+`stepCode` raises the magnitude of an arbitrary code by a fixed-height tower, so no
+elementary function of the clock and the code alone dominates every trace — uniform
+elementary iteration is impossible at unbounded redex rank, matching the per-fixed-`F`
+framing of Leivant III Proposition 13 (section 5, p. 226), where the normalization clock
+and its elementary majorant are constants of the fixed term. The budget slot carries the
+per-instance ceiling (`codeCeil` at a closed term's code), under which the iteration is
+exact (Lemma 12, section 5, p. 226; the machine-model absorption of footnote 10, p. 226).
+Novel realization. -/
+def normRun : ERMor1 3 :=
+  ERMor1.boundedRec
+    (ERMor1.proj (k := 2) 0)
+    (ERMor1.comp normStep (fun _ : Fin 1 => ERMor1.proj (k := 4) 1))
+    (ERMor1.proj (k := 3) 2)
+
+/-- Interpretation of `normRun` under a trace budget: when the budget `b` dominates every
+value of the iterate up to the clock `k`, the clocked iteration computes the `k`-fold
+iterate of the reference step, `stepCode^[k] n`. Discharges the hypotheses of
+`ERMor1.boundedRec_eq_natRec_of_bounded`: the trace equals the iterate
+(`normRun_rec_eq`), the dominance is the budget hypothesis, and the monotonicity is the
+budget's constancy in the counter. -/
+theorem normRun_interp_of_le (k n b : ℕ)
+    (hb : ∀ j, j ≤ k → stepCode^[j] n ≤ b) :
+    normRun.interp ![k, n, b] = stepCode^[k] n := by
+  change normRun.interp (Fin.cons k (Fin.cons n (Fin.cons b Fin.elim0))) = stepCode^[k] n
+  unfold normRun
+  refine (ERMor1.boundedRec_eq_natRec_of_bounded _ _ _ _ _ ?_ ?_).trans ?_
+  · intro j hj
+    rw [normRun_rec_eq, normRun_bound_eval]
+    exact hb j hj
+  · intro j _hj
+    rw [normRun_bound_eval, normRun_bound_eval]
+  · rw [normRun_rec_eq]
 
 end OneLambda
 
