@@ -93,6 +93,8 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   code of the corresponding deterministic image.
 * `OneLambda.stepCode_codeTm` — the closed-term commutation: `stepCode
   (codeTm t) = codeTm (detStep t)` for closed `t`.
+* `OneLambda.stepCode_iterate_codeTm` — the iterated closed-term commutation:
+  `stepCode^[k] (codeTm t) = codeTm (detIter k t)` for closed `t`.
 * `OneLambda.iotaStepCode_le_tower` — the height-2 tower majorant of the ι
   worker: `iotaStepCode m ≤ tower 2 (9 * m + 9)`, the value bound of the ι-worker
   fold's elementary-recursive realization.
@@ -3118,6 +3120,19 @@ theorem stepCode_codeTm {s : RType} (t : Binding.Tm (oneLambdaSig natAlgSig) [] 
   rw [stepCode, show (0 : ℕ) = ([] : Binding.Ctx RType).length from rfl,
     stepCodeAt_codeTm t]
   exact min_eq_left (codeTm_detStep_le_stepBound t)
+
+/-- The iterated closed-term commutation (spec §6.2): on the code of a closed term the
+`k`-fold iterate of the reference step computes the code of the `k`-fold deterministic
+iterate, `stepCode^[k] (codeTm t) = codeTm (detIter k t)`. Induction on `k` through the
+single-step commutation `stepCode_codeTm`, closedness preserved along the chain. -/
+theorem stepCode_iterate_codeTm (k : ℕ) {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) [] s) :
+    stepCode^[k] (codeTm t) = codeTm (detIter k t) := by
+  induction k with
+  | zero => rfl
+  | succ m ih =>
+    rw [Function.iterate_succ_apply', ih, detIter_succ']
+    exact stepCode_codeTm (detIter m t)
 
 /-- The reference step on codes is dominated by its majorant (spec §6.1):
 `stepCode n ≤ stepBound n` for every input, by the clamp. Consumed by the Task

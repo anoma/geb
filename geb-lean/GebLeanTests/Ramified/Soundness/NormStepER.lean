@@ -26,7 +26,10 @@ its dispatched rank, and on the nullary constant, where it is the identity. The
 closed-term dispatch is exercised on the β-redex, where the positive β-rank routes to
 the β worker, on the ι-spine redex, where the zero β-rank and the ι-census route to
 the ι worker, and on the nullary constant, where both guards fail and the step is the
-identity.
+identity. The clocked iteration is exercised on the identity β-redex at budget
+`codeCeil`, at clock `0`, where it is the identity on the code, and at clock `1`, where
+it computes the code of the one-step deterministic reduct, through the closed-term
+commutation `normRun_codeTm`.
 
 ## References
 
@@ -460,5 +463,18 @@ example : normStep.interp ![conNode] = conNode := by
     generalize (conNode + 1) ^ 2 = X
     omega
   rw [normStep_interp, stepCode, hstep, min_eq_left hle]
+
+/-- The clocked iteration at clock `0` is the identity on the code of the Task 6.4.1
+identity β-redex: `normRun_codeTm` at `k = 0`, where `detIter 0` is the identity. -/
+example : normRun.interp ![0, codeTm idBetaRedex, codeCeil idBetaRedex]
+    = codeTm idBetaRedex := by
+  rw [normRun_codeTm 0 idBetaRedex, detIter_zero]
+
+/-- The clocked iteration at clock `1` computes the code of the one-step deterministic
+reduct of the Task 6.4.1 identity β-redex: `normRun_codeTm` at `k = 1` and budget
+`codeCeil idBetaRedex`. -/
+example : normRun.interp ![1, codeTm idBetaRedex, codeCeil idBetaRedex]
+    = codeTm (detIter 1 idBetaRedex) :=
+  normRun_codeTm 1 idBetaRedex
 
 end GebLean.Ramified.OneLambda

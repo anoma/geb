@@ -137,6 +137,10 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
   dispatch and step-majorant interpretation lemmas.
 - `OneLambda.normRun_interp_of_le` — under a budget dominating every trace value up to
   the clock, the clocked iteration interprets to the iterate `stepCode^[k] n`.
+- `OneLambda.normRun_codeTm` — at closed terms the iteration at budget `codeCeil t`
+  computes the code of the deterministic iterate, `codeTm (detIter k t)`.
+- `OneLambda.normRun_normal` — the normalizer clock: at the Lemma 12 clock value the
+  deterministic iterate of a closed term is normal and the ER iteration lands its code.
 
 ## Implementation notes
 
@@ -158,6 +162,8 @@ ramified recurrence, elementary recursion, Gödel numbering, normalizer
 -/
 
 namespace GebLean.Ramified
+
+open GebLean.Binding
 
 namespace OneLambda
 
@@ -2523,6 +2529,33 @@ theorem normRun_interp_of_le (k n b : ℕ)
   · intro j _hj
     rw [normRun_bound_eval, normRun_bound_eval]
   · rw [normRun_rec_eq]
+
+/-- The clocked-iteration commutation at closed terms (spec §6.2): at budget `codeCeil t`
+the ER iteration on the code of a closed term computes the code of the deterministic
+iterate, `codeTm (detIter k t)`. The budget hypothesis of `normRun_interp_of_le` is
+discharged by the iterated closed-term commutation `stepCode_iterate_codeTm` and the
+chain ceiling `codeTm_detIter_le_codeCeil`. -/
+theorem normRun_codeTm (k : ℕ) {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) [] s) :
+    normRun.interp ![k, codeTm t, codeCeil t] = codeTm (detIter k t) := by
+  have hb : ∀ j, j ≤ k → stepCode^[j] (codeTm t) ≤ codeCeil t := by
+    intro j _hj
+    rw [stepCode_iterate_codeTm j t]
+    exact codeTm_detIter_le_codeCeil j t
+  rw [normRun_interp_of_le k (codeTm t) (codeCeil t) hb, stepCode_iterate_codeTm k t]
+
+/-- The normalizer clock in ER (spec §3; plan decision P6): at the Lemma 12 clock value
+`(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)` (Leivant III section 5,
+p. 226) the deterministic iterate of a closed term is normal, and the ER iteration at
+budget `codeCeil t` lands its code. Conjoins the deterministic clock `detIter_normal`
+with the closed-term commutation `normRun_codeTm` at the clock value. -/
+theorem normRun_normal {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) [] s) :
+    Normal (detIter ((redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)) t) ∧
+      normRun.interp ![(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t), codeTm t,
+          codeCeil t]
+        = codeTm (detIter ((redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)) t) :=
+  ⟨detIter_normal t, normRun_codeTm _ t⟩
 
 end OneLambda
 
