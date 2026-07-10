@@ -14,8 +14,11 @@ elementary-recursive Gödel-arithmetic generators (`ERMor1.natUnpairFst`,
 `ERMor1.natUnpairSnd`, `ERMor1.condN`, `ERMor1.boolEqNat`, `ERMor1.boolAnd`). The
 type-order fold `OneLambda.ordER` — the first `ERMor1.cvRec` instantiation — and
 the non-recursive top-β-rank read `OneLambda.topBetaRankER` composed from it are
-realized here; the remaining folds, the iterate, the dispatch, and the assembled
-`normStep` are realized in later commits. Carrying the code reads into the
+realized here, together with the `con`-headedness and ι-spine detector folds
+`OneLambda.conHeadedER`, `OneLambda.iotaSpineER` and the non-recursive sort-gated
+ι-redex read `OneLambda.topIotaER`; the remaining folds, the iterate, the dispatch,
+and the assembled `normStep` are realized in later commits. Carrying the code reads
+into the
 elementary-recursive theory is
 the formal payment of the machine-model absorption Leivant III leaves to a
 footnote (footnote 10, p. 226). Novel realization.
@@ -33,6 +36,11 @@ footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.ordER` — the type-order course-of-values fold, `ERMor1.cvRec` at the
   code-valued node `ordNode`; `OneLambda.topBetaRankER` — the top-β-rank read
   composing the top-node reads and `ordER`.
+- `OneLambda.conHeadedER`, `OneLambda.iotaSpineER` — the `con`-headedness and
+  ι-spine detector folds, `ERMor1.cvRec` at the `Bool.toNat`-valued nodes
+  `conHeadedNode`, `iotaSpineNode` with constant value bound `1`; `OneLambda.topIotaER`
+  — the non-recursive sort-gated ι-redex read composing `resultShapeER` and
+  `iotaSpineER`.
 
 ## Main statements
 
@@ -43,6 +51,10 @@ footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.ordER_interp`, `OneLambda.topBetaRankER_interp` — the type-order
   fold and top-β-rank read interpret to `ordCode` and `topBetaRankCode`,
   unconditionally on every code.
+- `OneLambda.conHeadedER_interp`, `OneLambda.iotaSpineER_interp`,
+  `OneLambda.topIotaER_interp` — the `con`-headedness, ι-spine, and sort-gated
+  ι-redex detectors interpret to the `Bool.toNat` of `conHeadedCode`,
+  `iotaSpineCode`, `topIotaCode`, unconditionally on every code.
 
 ## Implementation notes
 
@@ -465,6 +477,223 @@ def topBetaRankER : ERMor1 1 :=
     · cases hb : isLamCode (child0Code c) <;> simp [h1, h2]
     · simp [h1, h2]
   · simp [h1]
+
+/-- The first child code of a shape-`1` code sits strictly below it:
+`child0Code n < n`. Two `Nat.unpair` descents below the argument code, itself
+strictly below `n` by `argCode_lt_of_shape_one`. Descent input shared by the
+`con`-headedness and ι-spine folds. -/
+private theorem child0Code_lt_of_shape_one (n : ℕ) (h : shapeCode n = 1) :
+    child0Code n < n :=
+  Nat.lt_of_le_of_lt
+    (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+    (argCode_lt_of_shape_one n h)
+
+/-- The `con`-headedness recursion of `conHeadedCode` as a nested conditional on
+the shape tag and operation kind bit of the code: an application node (shape `1`,
+kind `0`) descends into the function child code; a constructor node (kind `2`) is
+`true`; every other node is `false`. -/
+private theorem conHeadedCode_eq_ite (c : ℕ) :
+    conHeadedCode c =
+      (if shapeCode c = 1 then
+        (if opKindCode c = 0 then conHeadedCode (child0Code c)
+         else if opKindCode c = 2 then true else false)
+      else false) := by
+  rw [conHeadedCode]
+  split <;> simp_all [shapeCode, opKindCode, child0Code]
+
+/-- The node of the `conHeadedCode` course-of-values fold at slots
+`(i, cand, code)`: dispatch on the shape tag and operation kind bit of the index
+`i`. At an application node (shape `1`, kind `0`) it reads the child `con`-status
+off the β-table at `child0Code i`; a constructor node (kind `2`) returns `1`; every
+other node returns `0`. Novel realization. -/
+private def conHeadedNode : ERMor1 3 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+    (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 0)
+      (ERMor1.betaOnCandFold (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+      (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 2)
+        (ERMor1.natN 3 1) (ERMor1.natN 3 0)))
+    (ERMor1.natN 3 0)
+
+/-- The node value of `conHeadedNode` at `(i, cand, code)` as a nested conditional
+on the shape tag and operation kind bit of `i`, with the child `con`-status read
+off the candidate β-table. -/
+private theorem conHeadedNode_interp (i cand code : ℕ) :
+    conHeadedNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      if shapeCode i = 1 then
+        (if opKindCode i = 0 then cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2)
+         else if opKindCode i = 2 then 1 else 0)
+      else 0 := by
+  simp only [conHeadedNode, condEqER_interp, ERMor1.interp_comp,
+    ERMor1.interp_betaOnCandFold, ERMor1.interp_natN, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, shapeER_interp, opKindER_interp, child0ER_interp]
+
+/-- The `con`-headedness detector as an elementary-recursive course-of-values fold:
+`ERMor1.cvRec` at fold slot the code and node `conHeadedNode`, with constant value
+bound `1` (Decision Q3, `Bool.toNat`-valued). Realizes the strong recursion of
+`conHeadedCode` (Leivant III section 4.2, pp. 223-224) as a single bounded
+β-witness search. Novel realization. -/
+def conHeadedER : ERMor1 1 := ERMor1.cvRec conHeadedNode (ERMor1.oneN 1)
+
+/-- Interpretation of `conHeadedER`: the `Bool.toNat` of the `con`-headedness
+detector `conHeadedCode`, unconditionally on every code. Discharges the hypotheses
+of `ERMor1.interp_cvRec_of_bounded` with `f := fun j => (conHeadedCode j).toNat`:
+the value bound is the constant `1` (`Bool.toNat` is at most `1`), its monotonicity
+immediate, and node faithfulness from `conHeadedCode_eq_ite` with the function child
+strictly below the index (`child0Code_lt_of_shape_one`). -/
+@[simp] theorem conHeadedER_interp (c : ℕ) :
+    conHeadedER.interp ![c] = (conHeadedCode c).toNat := by
+  refine ERMor1.interp_cvRec_of_bounded conHeadedNode (ERMor1.oneN 1) c ![]
+    (fun j => (conHeadedCode j).toNat) (fun j _ => ?_) (fun j _ => ?_)
+    (fun i _ cand htrace => ?_)
+  · cases h : conHeadedCode j <;> simp [h]
+  · simp
+  · have htrace' : ∀ p, p < i →
+        cand.unpair.1 % (1 + (p + 1) * cand.unpair.2) = (conHeadedCode p).toNat := htrace
+    change conHeadedNode.interp _ = (conHeadedCode i).toNat
+    rw [conHeadedNode_interp i cand c, conHeadedCode_eq_ite i]
+    by_cases h1 : shapeCode i = 1
+    · rw [if_pos h1, if_pos h1]
+      by_cases h0 : opKindCode i = 0
+      · rw [if_pos h0, if_pos h0, htrace' (child0Code i) (child0Code_lt_of_shape_one i h1)]
+      · rw [if_neg h0, if_neg h0]
+        by_cases h2 : opKindCode i = 2
+        · rw [if_pos h2, if_pos h2]; rfl
+        · rw [if_neg h2, if_neg h2]; rfl
+    · rw [if_neg h1, if_neg h1]; rfl
+
+/-- The ι-spine recursion of `iotaSpineCode` as a nested conditional on the shape
+tags and operation kind bits of the code and its function child: at an application
+node (shape `1`, kind `0`) whose function child has shape `1`, a destructor head
+(kind `3`) or a case head (kind `4`) bottoms the spine at the `con`-headedness of
+the argument child; a further application head (kind `0`) descends into the
+function child; every other reading is `false`. -/
+private theorem iotaSpineCode_eq_ite (c : ℕ) :
+    iotaSpineCode c =
+      (if shapeCode c = 1 then
+        (if opKindCode c = 0 then
+          (if shapeCode (child0Code c) = 1 then
+            (if opKindCode (child0Code c) = 3 then conHeadedCode (child1Code c)
+             else if opKindCode (child0Code c) = 4 then conHeadedCode (child1Code c)
+             else if opKindCode (child0Code c) = 0 then iotaSpineCode (child0Code c)
+             else false)
+          else false)
+        else false)
+      else false) := by
+  rw [iotaSpineCode]
+  split <;> simp_all [shapeCode, opKindCode, child0Code, child1Code]
+
+/-- The node of the `iotaSpineCode` course-of-values fold at slots `(i, cand, code)`:
+dispatch on the shape tags and operation kind bits of the index `i` and its function
+child `child0Code i`. At a destructor or case head the argument child's
+`con`-status is read by a full call of `conHeadedER`; at a further application head
+the spine descends off the β-table at `child0Code i`. Same-function recursion goes
+through the β-table; the `con`-headedness helper is composed as an ordinary full
+call. Novel realization. -/
+private def iotaSpineNode : ERMor1 3 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+    (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 0)
+      (condEqER (ERMor1.comp shapeER (fun _ : Fin 1 =>
+            ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0))) (ERMor1.natN 3 1)
+        (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 =>
+              ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0))) (ERMor1.natN 3 3)
+          (ERMor1.comp conHeadedER (fun _ : Fin 1 =>
+            ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0)))
+          (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 =>
+                ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0))) (ERMor1.natN 3 4)
+            (ERMor1.comp conHeadedER (fun _ : Fin 1 =>
+              ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0)))
+            (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 =>
+                  ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0))) (ERMor1.natN 3 0)
+              (ERMor1.betaOnCandFold (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+              (ERMor1.natN 3 0))))
+        (ERMor1.natN 3 0))
+      (ERMor1.natN 3 0))
+    (ERMor1.natN 3 0)
+
+/-- The node value of `iotaSpineNode` at `(i, cand, code)` as a nested conditional
+on the shape tags and operation kind bits of `i` and `child0Code i`, with the
+`con`-status by a full `conHeadedCode` call and the spine descent off the candidate
+β-table. -/
+private theorem iotaSpineNode_interp (i cand code : ℕ) :
+    iotaSpineNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      if shapeCode i = 1 then
+        (if opKindCode i = 0 then
+          (if shapeCode (child0Code i) = 1 then
+            (if opKindCode (child0Code i) = 3 then (conHeadedCode (child1Code i)).toNat
+             else if opKindCode (child0Code i) = 4 then (conHeadedCode (child1Code i)).toNat
+             else if opKindCode (child0Code i) = 0 then
+               cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2)
+             else 0)
+          else 0)
+        else 0)
+      else 0 := by
+  simp only [iotaSpineNode, condEqER_interp, ERMor1.interp_comp,
+    ERMor1.interp_betaOnCandFold, ERMor1.interp_natN, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, shapeER_interp, opKindER_interp, child0ER_interp, child1ER_interp,
+    conHeadedER_interp]
+
+/-- The ι-spine detector as an elementary-recursive course-of-values fold:
+`ERMor1.cvRec` at fold slot the code and node `iotaSpineNode`, with constant value
+bound `1` (Decision Q3, `Bool.toNat`-valued). The node composes `conHeadedER` as an
+ordinary full call; only the same-function descent goes through the β-table.
+Realizes the strong recursion of `iotaSpineCode` (Leivant III section 4.2,
+pp. 223-224) as a single bounded β-witness search. Novel realization. -/
+def iotaSpineER : ERMor1 1 := ERMor1.cvRec iotaSpineNode (ERMor1.oneN 1)
+
+/-- Interpretation of `iotaSpineER`: the `Bool.toNat` of the ι-spine detector
+`iotaSpineCode`, unconditionally on every code. Discharges the hypotheses of
+`ERMor1.interp_cvRec_of_bounded` with `f := fun j => (iotaSpineCode j).toNat`: the
+constant value bound `1`, its monotonicity, and node faithfulness from
+`iotaSpineCode_eq_ite` with the function child strictly below the index
+(`child0Code_lt_of_shape_one`). -/
+@[simp] theorem iotaSpineER_interp (c : ℕ) :
+    iotaSpineER.interp ![c] = (iotaSpineCode c).toNat := by
+  refine ERMor1.interp_cvRec_of_bounded iotaSpineNode (ERMor1.oneN 1) c ![]
+    (fun j => (iotaSpineCode j).toNat) (fun j _ => ?_) (fun j _ => ?_)
+    (fun i _ cand htrace => ?_)
+  · cases h : iotaSpineCode j <;> simp [h]
+  · simp
+  · have htrace' : ∀ p, p < i →
+        cand.unpair.1 % (1 + (p + 1) * cand.unpair.2) = (iotaSpineCode p).toNat := htrace
+    change iotaSpineNode.interp _ = (iotaSpineCode i).toNat
+    rw [iotaSpineNode_interp i cand c, iotaSpineCode_eq_ite i]
+    by_cases h1 : shapeCode i = 1
+    · rw [if_pos h1, if_pos h1]
+      by_cases h0 : opKindCode i = 0
+      · rw [if_pos h0, if_pos h0]
+        by_cases hs0 : shapeCode (child0Code i) = 1
+        · rw [if_pos hs0, if_pos hs0]
+          by_cases hk3 : opKindCode (child0Code i) = 3
+          · rw [if_pos hk3, if_pos hk3]
+          · rw [if_neg hk3, if_neg hk3]
+            by_cases hk4 : opKindCode (child0Code i) = 4
+            · rw [if_pos hk4, if_pos hk4]
+            · rw [if_neg hk4, if_neg hk4]
+              by_cases hk0 : opKindCode (child0Code i) = 0
+              · rw [if_pos hk0, if_pos hk0,
+                  htrace' (child0Code i) (child0Code_lt_of_shape_one i h1)]
+              · rw [if_neg hk0, if_neg hk0]; rfl
+        · rw [if_neg hs0, if_neg hs0]; rfl
+      · rw [if_neg h0, if_neg h0]; rfl
+    · rw [if_neg h1, if_neg h1]; rfl
+
+/-- The sort-gated ι-redex detector as an elementary-recursive read: the
+equality-guarded selection composing the result-shape read `resultShapeER` and the
+ι-spine fold `iotaSpineER`, mirroring `topIotaCode`. Non-recursive; the spine
+content is a full call of `iotaSpineER`. Novel realization. -/
+def topIotaER : ERMor1 1 :=
+  condEqER resultShapeER (ERMor1.natN 1 0) iotaSpineER (ERMor1.natN 1 0)
+
+/-- Interpretation of `topIotaER`: the `Bool.toNat` of the sort-gated ι-redex
+detector `topIotaCode`, unconditionally on every code. -/
+@[simp] theorem topIotaER_interp (c : ℕ) :
+    topIotaER.interp ![c] = (topIotaCode c).toNat := by
+  simp only [topIotaER, condEqER_interp, resultShapeER_interp, ERMor1.interp_natN,
+    iotaSpineER_interp]
+  rw [topIotaCode]
+  by_cases h : resultShapeCode c = 0
+  · rw [if_pos h, if_pos h]
+  · rw [if_neg h, if_neg h]; rfl
 
 end OneLambda
 

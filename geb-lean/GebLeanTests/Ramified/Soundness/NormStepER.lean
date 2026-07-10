@@ -126,4 +126,53 @@ example : topBetaRankER.interp ![dstrRedex] = 0 := by
     topBetaRankCode_app _ _ _ (by decide),
     if_neg (by rw [isLamCode_op]; simp [Nat.unpair_pair])]
 
+/-- An ι-spine redex: an application node (kind `0`) whose function child is a
+destructor head (kind `3`) and whose argument child is the constructor node
+`conNode`, so the ι-spine bottoms at a `con`-headed argument. -/
+private def iotaSpineRedex : ℕ :=
+  Nat.pair 1 (Nat.pair (Nat.pair 0 0)
+    (Nat.pair (Nat.pair 1 (Nat.pair (Nat.pair 3 0) 0)) (Nat.pair conNode 0)))
+
+/-- The `con`-headedness fold on the constructor-constant node reads `1`: a
+constructor node is `con`-headed (Decision Q3). -/
+example : conHeadedER.interp ![conNode] = 1 := by
+  rw [conHeadedER_interp, conNode, conHeadedCode_con _ _ (by simp [Nat.unpair_pair])]
+  rfl
+
+/-- The `con`-headedness fold on the abstraction node reads `0`: an abstraction node
+(kind `1`) is neither an application nor a constructor. -/
+example : conHeadedER.interp ![lamNode] = 0 := by
+  rw [conHeadedER_interp, lamNode,
+    conHeadedCode_op_false _ _ (by simp [Nat.unpair_pair]) (by simp [Nat.unpair_pair])]
+  rfl
+
+/-- The ι-spine fold on the ι-spine redex reads `1`: the destructor-headed spine
+bottoms at the `con`-headed argument `conNode`. -/
+example : iotaSpineER.interp ![iotaSpineRedex] = 1 := by
+  have hspine : iotaSpineCode iotaSpineRedex = true := by
+    rw [iotaSpineRedex, iotaSpineCode_app _ _ _ (by simp [Nat.unpair_pair])]
+    simp only [Nat.unpair_pair]
+    rw [conNode, conHeadedCode_con _ _ (by simp [Nat.unpair_pair])]
+  rw [iotaSpineER_interp, hspine]
+  rfl
+
+/-- The ι-spine fold on the abstraction node reads `0`: an abstraction node is not
+an application and bottoms no spine. -/
+example : iotaSpineER.interp ![lamNode] = 0 := by
+  rw [iotaSpineER_interp, lamNode, iotaSpineCode_op_ne_app _ _ (by simp [Nat.unpair_pair])]
+  rfl
+
+/-- The sort-gated ι-redex read on the ι-spine redex reads `1`: the result-sort
+shape is the base sort and the spine detector holds. -/
+example : topIotaER.interp ![iotaSpineRedex] = 1 := by
+  have hspine : iotaSpineCode iotaSpineRedex = true := by
+    rw [iotaSpineRedex, iotaSpineCode_app _ _ _ (by simp [Nat.unpair_pair])]
+    simp only [Nat.unpair_pair]
+    rw [conNode, conHeadedCode_con _ _ (by simp [Nat.unpair_pair])]
+  have hgate : resultShapeCode iotaSpineRedex = 0 := by
+    rw [iotaSpineRedex, resultShapeCode_app _ _ (by simp [Nat.unpair_pair])]
+    simp [codCode, argCode, shapeCode, Nat.unpair_pair]
+  rw [topIotaER_interp, topIotaCode, if_pos hgate, hspine]
+  rfl
+
 end GebLean.Ramified.OneLambda
