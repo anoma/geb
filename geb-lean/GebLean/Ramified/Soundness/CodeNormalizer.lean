@@ -93,6 +93,9 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   code of the corresponding deterministic image.
 * `OneLambda.stepCode_codeTm` — the closed-term commutation: `stepCode
   (codeTm t) = codeTm (detStep t)` for closed `t`.
+* `OneLambda.iotaStepCode_le_tower` — the height-2 tower majorant of the ι
+  worker: `iotaStepCode m ≤ tower 2 (9 * m + 9)`, the value bound of the ι-worker
+  fold's elementary-recursive realization.
 * `OneLambda.stepCode_le_stepBound`, `OneLambda.stepBound_mono` — the majorant
   pair of the reference step on codes.
 * `OneLambda.size_le_codeTm_succ`, `OneLambda.sortPayload_le_codeTm` — the
@@ -1925,6 +1928,153 @@ kind bit at least `2`): the code is unchanged. -/
 theorem iotaStepCode_const (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     iotaStepCode (Nat.pair 1 (Nat.pair op pack)) = Nat.pair 1 (Nat.pair op pack) := by
   rw [iotaStepCode]; split <;> simp_all [Nat.unpair_pair]
+
+/-- The first child code sits at or below the code: `child0Code c ≤ c`. Three
+`Nat.unpair` components, each bounded by `Nat.unpair_left_le`/`Nat.unpair_right_le`. -/
+private theorem child0Code_le_self (c : ℕ) : child0Code c ≤ c := by
+  unfold child0Code
+  exact le_trans (Nat.unpair_left_le _)
+    (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _))
+
+/-- The second child code sits at or below the code: `child1Code c ≤ c`. Four
+`Nat.unpair` components, each bounded by `Nat.unpair_left_le`/`Nat.unpair_right_le`. -/
+private theorem child1Code_le_self (c : ℕ) : child1Code c ≤ c := by
+  unfold child1Code
+  exact le_trans (Nat.unpair_left_le _)
+    (le_trans (Nat.unpair_right_le _)
+      (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _)))
+
+/-- The ι-contraction never enlarges the code: `iotaContractCode c ≤ c`. Every arm
+returns a nested child read of the input or the input itself, each bounded by
+`child0Code_le_self`/`child1Code_le_self`. Feeds the ι-worker majorant's
+contraction arm. -/
+private theorem iotaContractCode_le_self (c : ℕ) : iotaContractCode c ≤ c := by
+  have h0 := child0Code_le_self c
+  have h1 := child1Code_le_self c
+  unfold iotaContractCode
+  split
+  · split_ifs
+    · exact le_trans (child1Code_le_self _) h1
+    · exact h1
+  · split_ifs
+    · exact le_trans (child1Code_le_self _) h0
+    · exact h1
+    · exact le_refl _
+  · exact le_refl _
+
+/-- Under shape tag `1` the trailing pack sits strictly below the code:
+`(Nat.unpair c).2 < c`, since `c = Nat.pair 1 (Nat.unpair c).2` and
+`self_lt_pair_one`. -/
+private theorem unpair_snd_lt_of_shape_one (c : ℕ) (hs : (Nat.unpair c).1 = 1) :
+    (Nat.unpair c).2 < c := by
+  conv_rhs => rw [← Nat.pair_unpair c, hs]
+  exact self_lt_pair_one _
+
+/-- The first child of a shape-`1` code sits strictly below it: `child0Code c < c`,
+chaining `Nat.unpair` components below `unpair_snd_lt_of_shape_one`. -/
+private theorem child0Code_lt_of_shape_one (c : ℕ) (hs : (Nat.unpair c).1 = 1) :
+    child0Code c < c := by
+  unfold child0Code
+  exact Nat.lt_of_le_of_lt
+    (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+    (unpair_snd_lt_of_shape_one c hs)
+
+/-- The second child of a shape-`1` code sits strictly below it: `child1Code c < c`. -/
+private theorem child1Code_lt_of_shape_one (c : ℕ) (hs : (Nat.unpair c).1 = 1) :
+    child1Code c < c := by
+  unfold child1Code
+  exact Nat.lt_of_le_of_lt
+    (le_trans (Nat.unpair_left_le _)
+      (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _)))
+    (unpair_snd_lt_of_shape_one c hs)
+
+/-- A code below `c` is below the height-2 tower at `9 * c`:
+`x ≤ c → x ≤ tower 2 (9 * c)`, by `self_le_tower`. -/
+private theorem le_tower_two_nine_mul (x c : ℕ) (h : x ≤ c) :
+    x ≤ tower 2 (9 * c) :=
+  le_trans h (le_trans (by omega : c ≤ 9 * c) (self_le_tower 2 (9 * c)))
+
+/-- The application-node rebuild bound: a canonical binary node whose operation tag
+is below `c` and whose two child positions are below `tower 2 (9 * c)` is bounded by
+`tower 2 (9 * c + 9)`. Four `pair_le_tower_two` pairings (`pair4_le_tower`, `+8`)
+absorbed by the `+9` budget. -/
+private theorem iotaStep_node4_le_tower (c op x y : ℕ) (hc : 1 ≤ c)
+    (hop : op ≤ c) (hx : x ≤ tower 2 (9 * c)) (hy : y ≤ tower 2 (9 * c)) :
+    Nat.pair 1 (Nat.pair op (Nat.pair x (Nat.pair y 0))) ≤ tower 2 (9 * c + 9) := by
+  have hz : 1 ≤ 9 * c := by omega
+  have h1 : (1 : ℕ) ≤ tower 2 (9 * c) := one_le_tower_of_one_le 2 (9 * c) (by omega)
+  refine le_trans (pair4_le_tower hz h1 (le_tower_two_nine_mul op c hop) hx hy) ?_
+  exact tower_mono_right 2 (by omega)
+
+/-- The abstraction-node rebuild bound: a canonical unary node whose operation tag
+is below `c` and whose child position is below `tower 2 (9 * c)` is bounded by
+`tower 2 (9 * c + 9)`. Three `pair_le_tower_two` pairings (`pair3_le_tower`,
+`+6`). -/
+private theorem iotaStep_node3_le_tower (c op x : ℕ) (hc : 1 ≤ c)
+    (hop : op ≤ c) (hx : x ≤ tower 2 (9 * c)) :
+    Nat.pair 1 (Nat.pair op (Nat.pair x 0)) ≤ tower 2 (9 * c + 9) := by
+  have hz : 1 ≤ 9 * c := by omega
+  have h1 : (1 : ℕ) ≤ tower 2 (9 * c) := one_le_tower_of_one_le 2 (9 * c) (by omega)
+  refine le_trans (pair3_le_tower hz h1 (le_tower_two_nine_mul op c hop) hx) ?_
+  exact tower_mono_right 2 (by omega)
+
+/-- The recursive-child bound of the ι-worker majorant: a child strictly below the
+node whose own tower budget holds sits below `tower 2 (9 * c)`, since
+`9 * k + 9 ≤ 9 * c` for `k < c`. Isolating the arithmetic keeps the child position
+abstract, so `omega` need not identify the code read with `child0Code`/`child1Code`. -/
+private theorem ih_step_le (k c : ℕ) (hih : iotaStepCode k ≤ tower 2 (9 * k + 9))
+    (hlt : k < c) : iotaStepCode k ≤ tower 2 (9 * c) :=
+  le_trans hih (tower_mono_right 2 (by omega))
+
+/-- The height-2 tower majorant of the ι worker (Leivant III section 4.2,
+pp. 223-224; the machine-model absorption of footnote 10, p. 226):
+`iotaStepCode m ≤ tower 2 (9 * m + 9)`. Strong induction on the code through the
+node equations: each descent rebuilds the node with four (application) or three
+(abstraction) `pair_le_tower_two` pairings, paid for by the recursive child sitting
+strictly below the node so its `+9` tower budget dominates the `+8` rebuild cost;
+the contraction arm consumes `iotaContractCode`, whose reads only select subterms of
+the input (`iotaContractCode_le_self`). Value bound of the ι-worker fold's
+elementary-recursive realization. Novel realization. -/
+theorem iotaStepCode_le_tower (m : ℕ) : iotaStepCode m ≤ tower 2 (9 * m + 9) := by
+  induction m using Nat.strong_induction_on with
+  | _ c ih =>
+    rw [iotaStepCode]
+    split
+    · -- application node (shape `1`, kind `0`)
+      rename_i hs _
+      split_ifs
+      · -- descend into the function child
+        exact iotaStep_node4_le_tower c _ _ _
+          (by have := unpair_snd_lt_of_shape_one c hs; omega)
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+          (ih_step_le _ c (ih _ (child0Code_lt_of_shape_one c hs))
+            (child0Code_lt_of_shape_one c hs))
+          (le_tower_two_nine_mul _ c (child1Code_le_self c))
+      · -- descend into the argument child
+        exact iotaStep_node4_le_tower c _ _ _
+          (by have := unpair_snd_lt_of_shape_one c hs; omega)
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+          (le_tower_two_nine_mul _ c (child0Code_le_self c))
+          (ih_step_le _ c (ih _ (child1Code_lt_of_shape_one c hs))
+            (child1Code_lt_of_shape_one c hs))
+      · -- contract at the root
+        exact le_trans (iotaContractCode_le_self c)
+          (le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _))
+      · -- identity
+        exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+    · -- abstraction node (shape `1`, kind `1`)
+      rename_i hs _
+      split_ifs
+      · -- descend into the body child
+        exact iotaStep_node3_le_tower c _ _
+          (by have := unpair_snd_lt_of_shape_one c hs; omega)
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+          (ih_step_le _ c (ih _ (child0Code_lt_of_shape_one c hs))
+            (child0Code_lt_of_shape_one c hs))
+      · -- identity
+        exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+    · -- every other node is unchanged
+      exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
 
 /-- The constructor enumeration of `natAlgSig` lists `false` before `true`: the
 sorted enumeration of the two-element label set is determined by its length,
