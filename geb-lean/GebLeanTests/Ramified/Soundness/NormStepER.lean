@@ -14,7 +14,10 @@ the reads). The β-rank and ι-census folds are exercised on a β-redex (rank `1
 an ι-spine redex (census `1`), and on a nullary constant (rank and census `0`),
 through the fold interpretation lemmas and the code-level node equations. The ι
 worker is exercised on the ι-spine redex, where it contracts the root destructor
-miss to the scrutinee, and on the nullary constant, where it is the identity.
+miss to the scrutinee, and on the nullary constant, where it is the identity. The
+weakening worker is exercised on variable leaves below and at the insertion level,
+and its two-fold iterate on a variable leaf bumped twice, through the fold and
+bounded-recursion interpretation lemmas and the `shiftCode` node equations.
 
 ## References
 
@@ -269,5 +272,21 @@ example : iotaStepER.interp ![iotaSpineRedex] = conNode := by
 carries no ι-redex to contract. -/
 example : iotaStepER.interp ![conNode] = conNode := by
   rw [iotaStepER_interp, conNode, iotaStepCode_const _ _ (by simp [Nat.unpair_pair])]
+
+/-- The weakening worker on a variable leaf below the insertion level is the identity:
+a level `2` variable stays fixed under insertion at level `5`. -/
+example : shiftER.interp ![Nat.pair 0 2, 5] = Nat.pair 0 2 := by
+  rw [shiftER_interp, shiftCode_var, if_pos (by omega)]
+
+/-- The weakening worker on a variable leaf at the insertion level bumps it: a level `5`
+variable rises to level `6` under insertion at level `5`. -/
+example : shiftER.interp ![Nat.pair 0 5, 5] = Nat.pair 0 6 := by
+  rw [shiftER_interp, shiftCode_var, if_neg (by omega)]
+
+/-- The two-fold iterated weakening on a variable leaf bumps its level twice: a level `3`
+variable rises to level `5` under two insertions at level `0`. -/
+example : shiftIterER.interp ![2, 0, Nat.pair 0 3] = Nat.pair 0 5 := by
+  rw [shiftIterER_interp, show (2 : ℕ) = 1 + 1 from rfl, Function.iterate_succ_apply,
+    Function.iterate_one, shiftCode_var, if_neg (by omega), shiftCode_var, if_neg (by omega)]
 
 end GebLean.Ramified.OneLambda

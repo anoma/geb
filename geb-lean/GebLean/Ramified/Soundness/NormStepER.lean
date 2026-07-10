@@ -54,6 +54,11 @@ footnote (footnote 10, p. 226). Novel realization.
   application and abstraction nodes with `natPair`, composing `hasIotaER`,
   `topIotaER`, `iotaContractER` as full calls and β-reading the child positions for
   the same-function descent.
+- `OneLambda.shiftER` — the code-level weakening worker, `ERMor1.cvRec` at `k = 1` with the
+  insertion level in the parameter slot and node `shiftNode`; the node bumps a variable leaf
+  read against the level via `ltN`/`condN` and rebuilds operation nodes with `natPair`.
+- `OneLambda.shiftIterER` — the iterated weakening, `ERMor1.boundedRec` over `shiftER`
+  (Decision Q7), one weakening step per depth increment.
 
 ## Main statements
 
@@ -74,6 +79,10 @@ footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.iotaStepER_interp` — the ι worker interprets to `iotaStepCode`,
   unconditionally on every code, its fold table bounded by the tower-2 majorant
   `iotaStepCode_le_tower`.
+- `OneLambda.shiftER_interp`, `OneLambda.shiftIterER_interp` — the code-level weakening and
+  its iterate interpret to `shiftCode j m` and `(shiftCode j)^[d] e`, unconditionally on
+  every code, level, depth, and substituend, bounded by the tower-2 majorants
+  `shiftCode_le_tower` and `shiftCode_iterate_le_tower`.
 
 ## Implementation notes
 
@@ -1119,6 +1128,250 @@ every code. Discharges the hypotheses of `ERMor1.interp_cvRec_of_bounded` with
           · rw [if_neg hI0, if_neg hI0]
         · rw [if_neg h1k, if_neg h1k]
     · rw [if_neg h1, if_neg h1]
+
+/-- The operation-tag read at arity `1`: the operation tag `opTagCode c` of the fold
+slot, two `Nat.unpair` components. The node-rebuild operation tag of the weakening
+worker. -/
+private def opTagER : ERMor1 1 :=
+  ERMor1.comp ERMor1.natUnpairFst (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.natUnpairSnd (fun _ : Fin 1 => ERMor1.proj 0))
+
+/-- Interpretation of `opTagER`: the operation tag `opTagCode c`. -/
+@[simp] private theorem opTagER_interp (n : ℕ) : opTagER.interp ![n] = opTagCode n := by
+  simp only [opTagER, ERMor1.interp_comp, ERMor1.interp_natUnpairFst,
+    ERMor1.interp_natUnpairSnd, cons_fin_one, ERMor1.interp_proj, Matrix.cons_val_zero, opTagCode]
+
+/-- The code-level weakening `shiftCode j` as a nested conditional on the shape tag and
+operation kind bit of the code: a variable leaf (shape `0`) bumps its level when it lies
+at or beyond the insertion level `j`; an application node (shape `1`, kind `0`) rebuilds
+with the two child codes weakened; an abstraction node (kind `1`) rebuilds with the sole
+body child weakened; every other node is unchanged. -/
+private theorem shiftCode_eq_ite (j c : ℕ) :
+    shiftCode j c =
+      (if shapeCode c = 0 then
+        (if argCode c < j then Nat.pair 0 (argCode c) else Nat.pair 0 (argCode c + 1))
+      else if shapeCode c = 1 then
+        (if opKindCode c = 0 then
+          Nat.pair 1 (Nat.pair (opTagCode c)
+            (Nat.pair (shiftCode j (child0Code c)) (Nat.pair (shiftCode j (child1Code c)) 0)))
+         else if opKindCode c = 1 then
+          Nat.pair 1 (Nat.pair (opTagCode c) (Nat.pair (shiftCode j (child0Code c)) 0))
+         else c)
+      else c) := by
+  rw [shiftCode]
+  split <;> simp_all [shapeCode, opKindCode, argCode, opTagCode, child0Code, child1Code]
+
+/-- The context selector `Fin.cons i (Fin.cons cand (Fin.cons code ![jp]))` reads the
+insertion level `jp` at slot `3`. -/
+private theorem shiftNode_ctx_j (i cand code jp : ℕ) :
+    (Fin.cons i (Fin.cons cand (Fin.cons code ![jp])) : Fin 4 → ℕ) 3 = jp := rfl
+
+/-- The node of the `shiftCode j` course-of-values fold at slots `(i, cand, code, j)`:
+dispatch on the shape tag and operation kind bit of the index `i`, reading the insertion
+level `j` from the parameter slot. A variable leaf compares the level `argCode i` against
+`j` via `ltN`/`condN`; an application or abstraction node rebuilds with `natPair`, reading
+the weakened children off the β-table; every other node is unchanged. Novel realization. -/
+private def shiftNode : ERMor1 4 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 4 0)
+    (ERMor1.comp ERMor1.condN (fun t => match t with
+      | ⟨0, _⟩ => ERMor1.comp ERMor1.ltN (fun s => match s with
+          | ⟨0, _⟩ => ERMor1.comp argER (fun _ : Fin 1 => ERMor1.proj 0)
+          | ⟨1, _⟩ => ERMor1.proj 3)
+      | ⟨1, _⟩ => pairER (ERMor1.natN 4 0) (ERMor1.comp argER (fun _ : Fin 1 => ERMor1.proj 0))
+      | ⟨2, _⟩ => pairER (ERMor1.natN 4 0)
+          (ERMor1.comp ERMor1.succ (fun _ : Fin 1 =>
+            ERMor1.comp argER (fun _ : Fin 1 => ERMor1.proj 0)))))
+    (condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 4 1)
+      (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 4 0)
+        (pairER (ERMor1.natN 4 1)
+          (pairER (ERMor1.comp opTagER (fun _ : Fin 1 => ERMor1.proj 0))
+            (pairER (ERMor1.betaOnCandFold (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+              (pairER (ERMor1.betaOnCandFold
+                  (ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0)))
+                (ERMor1.natN 4 0)))))
+        (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 4 1)
+          (pairER (ERMor1.natN 4 1)
+            (pairER (ERMor1.comp opTagER (fun _ : Fin 1 => ERMor1.proj 0))
+              (pairER (ERMor1.betaOnCandFold
+                  (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+                (ERMor1.natN 4 0))))
+          (ERMor1.proj 0)))
+      (ERMor1.proj 0))
+
+/-- The node value of `shiftNode` at `(i, cand, code, jp)` as a nested conditional on the
+shape tag and operation kind bit of `i`, with the weakened children read off the candidate
+β-table. -/
+private theorem shiftNode_interp (i cand code jp : ℕ) :
+    shiftNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code ![jp]))) =
+      if shapeCode i = 0 then
+        (if argCode i < jp then Nat.pair 0 (argCode i) else Nat.pair 0 (argCode i + 1))
+      else if shapeCode i = 1 then
+        (if opKindCode i = 0 then
+          Nat.pair 1 (Nat.pair (opTagCode i)
+            (Nat.pair (cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2))
+              (Nat.pair (cand.unpair.1 % (1 + (child1Code i + 1) * cand.unpair.2)) 0)))
+         else if opKindCode i = 1 then
+          Nat.pair 1 (Nat.pair (opTagCode i)
+            (Nat.pair (cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2)) 0))
+         else i)
+      else i := by
+  simp only [shiftNode, condEqER_interp, pairER_interp, ERMor1.interp_comp,
+    ERMor1.interp_condN, ERMor1.interp_ltN, ERMor1.interp_betaOnCandFold,
+    ERMor1.interp_natN, ERMor1.interp_succ, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, shapeER_interp, argER_interp, opKindER_interp, opTagER_interp,
+    child0ER_interp, child1ER_interp, shiftNode_ctx_j, Matrix.cons_val_zero]
+  by_cases hv : shapeCode i = 0
+  · rw [if_pos hv, if_pos hv]
+    by_cases hlt : argCode i < jp <;> simp [hlt]
+  · rw [if_neg hv, if_neg hv]
+
+/-- The height-2 tower value bound of the weakening worker as an `ERMor1 2` term: the
+`towerER 2` composite over the polynomial `9 * c + 9`, the elementary-recursive
+realization of the majorant `shiftCode_le_tower`. -/
+private def shiftBoundER : ERMor1 2 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.addN (fun j => match j with
+      | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun k => match k with
+          | ⟨0, _⟩ => ERMor1.natN 2 9
+          | ⟨1, _⟩ => ERMor1.proj 0)
+      | ⟨1, _⟩ => ERMor1.natN 2 9))
+
+/-- Interpretation of `shiftBoundER`: the height-2 tower at `9 * c + 9`. -/
+@[simp] private theorem shiftBoundER_interp (ctx : Fin 2 → ℕ) :
+    shiftBoundER.interp ctx = tower 2 (9 * ctx 0 + 9) := by
+  simp only [shiftBoundER, ERMor1.interp_comp, ERMor1.interp_towerER,
+    ERMor1.interp_addN, ERMor1.interp_mulN, ERMor1.interp_natN, ERMor1.interp_proj]
+
+/-- The code-level weakening as an elementary-recursive course-of-values fold:
+`ERMor1.cvRec` at `k = 1` with fold slot the code, parameter slot the insertion level `j`,
+and node `shiftNode`, with value bound the height-2 tower composite `shiftBoundER` over
+`9 * c + 9`. The node reads the level from the parameter slot and rebuilds application and
+abstraction nodes with `natPair`, β-reading the child positions for the same-function
+descent. Realizes the strong recursion of `shiftCode` (Leivant III section 4.2, p. 223)
+as a single bounded β-witness search. Novel realization. -/
+def shiftER : ERMor1 2 := ERMor1.cvRec shiftNode shiftBoundER
+
+/-- Interpretation of `shiftER`: the code-level weakening `shiftCode j m`, unconditionally
+on every code and level. Discharges the hypotheses of `ERMor1.interp_cvRec_of_bounded` with
+`f := shiftCode j`: the value bound `shiftCode_le_tower`, its monotonicity from
+`tower_mono_right` on `9 * i + 9 ≤ 9 * m + 9`, and node faithfulness from `shiftCode_eq_ite`
+with the recursed children strictly below the index (`child0Code_lt_of_shape_one`,
+`child1Code_lt_of_shape_one`). -/
+@[simp] theorem shiftER_interp (m j : ℕ) : shiftER.interp ![m, j] = shiftCode j m := by
+  refine ERMor1.interp_cvRec_of_bounded shiftNode shiftBoundER m ![j] (shiftCode j)
+    (fun i _ => ?_) (fun i hi => ?_) (fun i _ cand htrace => ?_)
+  · simp only [shiftBoundER_interp, Fin.cons_zero]
+    exact shiftCode_le_tower j i
+  · simp only [shiftBoundER_interp, Fin.cons_zero]
+    exact tower_mono_right 2 (by omega)
+  · rw [shiftNode_interp i cand m j, shiftCode_eq_ite j i]
+    by_cases hv : shapeCode i = 0
+    · rw [if_pos hv, if_pos hv]
+    · rw [if_neg hv, if_neg hv]
+      by_cases hs1 : shapeCode i = 1
+      · rw [if_pos hs1, if_pos hs1]
+        by_cases hk0 : opKindCode i = 0
+        · rw [if_pos hk0, if_pos hk0,
+            htrace (child0Code i) (child0Code_lt_of_shape_one i hs1),
+            htrace (child1Code i) (child1Code_lt_of_shape_one i hs1)]
+        · rw [if_neg hk0, if_neg hk0]
+          by_cases hk1 : opKindCode i = 1
+          · rw [if_pos hk1, if_pos hk1,
+              htrace (child0Code i) (child0Code_lt_of_shape_one i hs1)]
+          · rw [if_neg hk1, if_neg hk1]
+      · rw [if_neg hs1, if_neg hs1]
+
+/-- The height-2 tower value bound of the iterated weakening as an `ERMor1 3` term: the
+`towerER 2` composite over the polynomial `9 * e + 9 * d + 9`, the elementary-recursive
+realization of the majorant `shiftCode_iterate_le_tower`. -/
+private def shiftIterBoundER : ERMor1 3 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.addN (fun i => match i with
+      | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun j => match j with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun k => match k with
+              | ⟨0, _⟩ => ERMor1.natN 3 9
+              | ⟨1, _⟩ => ERMor1.proj 2)
+          | ⟨1, _⟩ => ERMor1.comp ERMor1.mulN (fun k => match k with
+              | ⟨0, _⟩ => ERMor1.natN 3 9
+              | ⟨1, _⟩ => ERMor1.proj 0))
+      | ⟨1, _⟩ => ERMor1.natN 3 9))
+
+/-- Interpretation of `shiftIterBoundER`: the height-2 tower at `9 * e + 9 * d + 9`, reading
+the depth `d` at slot `0` and the substituend `e` at slot `2`. -/
+@[simp] private theorem shiftIterBoundER_interp (d j e : ℕ) :
+    shiftIterBoundER.interp (Fin.cons d (Fin.cons j (Fin.cons e Fin.elim0)))
+      = tower 2 (9 * e + 9 * d + 9) := by
+  simp only [shiftIterBoundER, ERMor1.interp_comp, ERMor1.interp_towerER,
+    ERMor1.interp_addN, ERMor1.interp_mulN, ERMor1.interp_natN, ERMor1.interp_proj]
+  rfl
+
+/-- The step term of the iterated weakening evaluates to a single weakening of the running
+value: at slots `(i, prev, j, e)` it computes `shiftCode j prev` by a full call of
+`shiftER`. -/
+private theorem shiftIter_step_eval (j e i prev : ℕ) :
+    (ERMor1.comp shiftER (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.proj (k := 4) 1
+      | ⟨1, _⟩ => ERMor1.proj (k := 4) 2)).interp
+      (Fin.cons i (Fin.cons prev (Fin.cons j (Fin.cons e Fin.elim0)))) = shiftCode j prev := by
+  have hg : (fun s : Fin 2 => ((match s with
+      | ⟨0, _⟩ => ERMor1.proj (k := 4) 1
+      | ⟨1, _⟩ => ERMor1.proj (k := 4) 2) : ERMor1 4).interp
+      (Fin.cons i (Fin.cons prev (Fin.cons j (Fin.cons e Fin.elim0))))) = ![prev, j] := by
+    funext s
+    match s with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+  rw [ERMor1.interp_comp, hg, shiftER_interp]
+
+/-- The raw `Nat.rec` trace of the iterated-weakening step at counter `n` equals the
+`Function.iterate` of `shiftCode j` on the substituend `e`. -/
+private theorem shiftIter_rec_eq (j e n : ℕ) :
+    (Nat.rec ((ERMor1.proj (k := 2) 1).interp (Fin.cons j (Fin.cons e Fin.elim0)))
+      (fun i prev => (ERMor1.comp shiftER (fun s => match s with
+        | ⟨0, _⟩ => ERMor1.proj (k := 4) 1
+        | ⟨1, _⟩ => ERMor1.proj (k := 4) 2)).interp
+        (Fin.cons i (Fin.cons prev (Fin.cons j (Fin.cons e Fin.elim0))))) n : ℕ)
+      = (shiftCode j)^[n] e := by
+  induction n with
+  | zero => rfl
+  | succ m ih =>
+    rw [Function.iterate_succ_apply', ← ih]
+    exact shiftIter_step_eval j e m _
+
+/-- The iterated code-level weakening as an elementary-recursive bounded recursion:
+`ERMor1.boundedRec` over `shiftER`, one weakening step per depth increment (Decision Q7),
+with base the substituend `e`, step a full call of `shiftER`, and value bound the height-2
+tower composite `shiftIterBoundER` over `9 * e + 9 * d + 9`. Realizes the substituend
+weakening tower of `subCode`'s abstraction descent (Leivant III section 4.2, pp. 223-224).
+Novel realization. -/
+def shiftIterER : ERMor1 3 :=
+  ERMor1.boundedRec
+    (ERMor1.proj (k := 2) 1)
+    (ERMor1.comp shiftER (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.proj (k := 4) 1
+      | ⟨1, _⟩ => ERMor1.proj (k := 4) 2))
+    shiftIterBoundER
+
+set_option maxHeartbeats 400000 in
+-- `boundedRec_eq_natRec_of_bounded` unification is heavy
+/-- Interpretation of `shiftIterER`: the iterate `(shiftCode j)^[d] e`, unconditionally on
+every depth, level, and substituend. Discharges the hypotheses of
+`ERMor1.boundedRec_eq_natRec_of_bounded`: the trace equals the iterate (`shiftIter_rec_eq`),
+the dominance is the iterate majorant `shiftCode_iterate_le_tower`, and the monotonicity is
+the linearity of the tower argument in the depth. -/
+@[simp] theorem shiftIterER_interp (d j e : ℕ) :
+    shiftIterER.interp ![d, j, e] = (shiftCode j)^[d] e := by
+  change shiftIterER.interp (Fin.cons d (Fin.cons j (Fin.cons e Fin.elim0)))
+      = (shiftCode j)^[d] e
+  unfold shiftIterER
+  refine (ERMor1.boundedRec_eq_natRec_of_bounded _ _ _ _ _ ?_ ?_).trans ?_
+  · intro t _ht
+    rw [shiftIter_rec_eq, shiftIterBoundER_interp]
+    exact shiftCode_iterate_le_tower j t e
+  · intro t ht
+    rw [shiftIterBoundER_interp, shiftIterBoundER_interp]
+    exact tower_mono_right 2 (by omega)
+  · rw [shiftIter_rec_eq]
 
 end OneLambda
 
