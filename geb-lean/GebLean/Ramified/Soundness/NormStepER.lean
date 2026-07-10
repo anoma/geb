@@ -23,7 +23,9 @@ realized here, together with the `con`-headedness and ι-spine detector folds
 majorant — are realized here, together with the weakening worker `OneLambda.shiftER`,
 its iterate `OneLambda.shiftIterER`, and the code-level substitution `OneLambda.subER`
 — the first gated two-dimensional fold (`ERMor1.cvRecGated`), keyed by the pair of a
-weakening depth and a code; the remaining folds, the
+weakening depth and a code — together with the β worker `OneLambda.betaStepER`, the
+second gated two-dimensional fold, keyed by the pair of a substitution level and a
+code; the remaining folds, the
 dispatch, and the assembled `normStep` are realized in later commits. Carrying the code reads
 into the
 elementary-recursive theory is
@@ -69,6 +71,13 @@ footnote (footnote 10, p. 226). Novel realization.
   the node mirrors the `subCode` arms, composing `shiftIterER` as a full call at the
   variable-hit leaf and absorbing the abstraction descent's substituend shift into the
   depth component of the index.
+- `OneLambda.betaStepER` — the β worker at slots `(c, q)`, the second gated
+  two-dimensional fold: `ERMor1.cvRecGated` at index `Nat.pair d m` (substitution
+  level, code) with gate `d + m ≤ c`, index bound `Nat.pair c c`, extraction at
+  `Nat.pair 0 c`, and value bound the `towerER 2` composite over `36 * c + 18`; the
+  node mirrors the four guard regimes of the `betaStepCode` application arm, composing
+  `betaRankER`, `isLamER`, `ordER`, and `subER` as full calls and absorbing the
+  abstraction descent's level increment into the depth component of the index.
 
 ## Main statements
 
@@ -97,6 +106,11 @@ footnote (footnote 10, p. 226). Novel realization.
   unconditionally on every code, level, and substituend, its gated table bounded by the
   tower-2 majorant `subCode_shift_iterate_le_tower` and its determinacy hypothesis
   (Decision Q6) discharged by strong induction on the code component of the index.
+- `OneLambda.betaStepER_interp` — the β-worker fold interprets to
+  `betaStepCode q 0 c`, unconditionally on every code and rank, its gated table
+  bounded by the tower-2 majorant `betaStepCode_le_tower` and its determinacy
+  hypothesis (Decision Q6) discharged by strong induction on the code component of
+  the index.
 
 ## Implementation notes
 
@@ -1811,6 +1825,457 @@ descent pays its depth increment with `child0Code m < m`. The extraction at
     subBoundER c ![j, e] (subTable c j e) h_sane hval h_node h_det h_ext
   rw [subExtractER_interp, subTable_pair_of_le c j e 0 c (by omega),
     Function.iterate_zero_apply] at key
+  exact key
+
+/-- The β worker `betaStepCode q j` as a nested conditional on the shape tag and
+operation kind bit of the code, in the four guard regimes of the application arm:
+descend into the function child when it carries a rank-`q` redex; else into the
+argument child; else contract the rank-`q` root β-redex by `subCode` at the
+threaded level; else the identity. An abstraction node descends into its body
+child at level `j + 1`; every other node is unchanged. -/
+private theorem betaStepCode_eq_ite (q j c : ℕ) :
+    betaStepCode q j c =
+      if shapeCode c = 1 then
+        (if opKindCode c = 0 then
+          (if betaRankCode (child0Code c) = q then
+            Nat.pair 1 (Nat.pair (opTagCode c)
+              (Nat.pair (betaStepCode q j (child0Code c)) (Nat.pair (child1Code c) 0)))
+          else if betaRankCode (child1Code c) = q then
+            Nat.pair 1 (Nat.pair (opTagCode c)
+              (Nat.pair (child0Code c) (Nat.pair (betaStepCode q j (child1Code c)) 0)))
+          else if isLamCode (child0Code c) = true
+              ∧ ordCode (Nat.pair 1 (opPayloadCode c)) = q then
+            subCode j (child1Code c) (child0Code (child0Code c))
+          else c)
+        else if opKindCode c = 1 then
+          (if betaRankCode (child0Code c) = q then
+            Nat.pair 1 (Nat.pair (opTagCode c)
+              (Nat.pair (betaStepCode q (j + 1) (child0Code c)) 0))
+          else c)
+        else c)
+      else c := by
+  rw [betaStepCode]
+  split <;>
+    simp_all [shapeCode, opKindCode, opTagCode, opPayloadCode, child0Code, child1Code]
+
+/-- The depth read of the β-worker fold at arity `4`: the leading `Nat.unpair`
+component of the index slot, the substitution level `d` of the 2-D key
+`Nat.pair d m` (Decision Q8). -/
+private def betaIdxDepthER : ERMor1 4 :=
+  ERMor1.comp ERMor1.natUnpairFst (fun _ : Fin 1 => ERMor1.proj 0)
+
+/-- Interpretation of `betaIdxDepthER`: the depth component of the index. -/
+private theorem betaIdxDepthER_interp (i cand c q : ℕ) :
+    betaIdxDepthER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![q])))
+      = (Nat.unpair i).1 := by
+  simp only [betaIdxDepthER, ERMor1.interp_comp, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, ERMor1.interp_natUnpairFst]
+
+/-- The code read of the β-worker fold at arity `4`: the trailing `Nat.unpair`
+component of the index slot, the code `m` of the 2-D key `Nat.pair d m`
+(Decision Q8). -/
+private def betaIdxCodeER : ERMor1 4 :=
+  ERMor1.comp ERMor1.natUnpairSnd (fun _ : Fin 1 => ERMor1.proj 0)
+
+/-- Interpretation of `betaIdxCodeER`: the code component of the index. -/
+private theorem betaIdxCodeER_interp (i cand c q : ℕ) :
+    betaIdxCodeER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![q])))
+      = (Nat.unpair i).2 := by
+  simp only [betaIdxCodeER, ERMor1.interp_comp, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, ERMor1.interp_natUnpairSnd]
+
+/-- The context selector `Fin.cons i (Fin.cons cand (Fin.cons c ![q]))` reads the
+dispatched rank `q` at slot `3`. -/
+private theorem betaNode_ctx_q (i cand c q : ℕ) :
+    (Fin.cons i (Fin.cons cand (Fin.cons c ![q])) : Fin 4 → ℕ) 3 = q := rfl
+
+/-- The contraction arm of the β-worker fold: the substitution `subER` composed as
+an ordinary full call at the body of the function child, the depth read of the
+index, and the argument child — the rank-`q` root β-redex contraction of
+`betaStepCode`. -/
+private def betaContractER : ERMor1 4 :=
+  ERMor1.comp subER (fun s => match s with
+    | ⟨0, _⟩ => ERMor1.comp child0ER (fun _ : Fin 1 =>
+        ERMor1.comp child0ER (fun _ : Fin 1 => betaIdxCodeER))
+    | ⟨1, _⟩ => betaIdxDepthER
+    | ⟨2, _⟩ => ERMor1.comp child1ER (fun _ : Fin 1 => betaIdxCodeER))
+
+/-- Interpretation of `betaContractER`: the contraction
+`subCode d (child1Code m) (child0Code (child0Code m))` at the index components
+`d` and `m`. -/
+private theorem betaContractER_interp (i cand c q : ℕ) :
+    betaContractER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![q])))
+      = subCode (Nat.unpair i).1 (child1Code (Nat.unpair i).2)
+          (child0Code (child0Code (Nat.unpair i).2)) := by
+  have harg : (fun s : Fin 3 => ((match s with
+      | ⟨0, _⟩ => ERMor1.comp child0ER (fun _ : Fin 1 =>
+          ERMor1.comp child0ER (fun _ : Fin 1 => betaIdxCodeER))
+      | ⟨1, _⟩ => betaIdxDepthER
+      | ⟨2, _⟩ => ERMor1.comp child1ER (fun _ : Fin 1 => betaIdxCodeER)) : ERMor1 4).interp
+        (Fin.cons i (Fin.cons cand (Fin.cons c ![q]))))
+      = ![child0Code (child0Code (Nat.unpair i).2), (Nat.unpair i).1,
+          child1Code (Nat.unpair i).2] := by
+    funext s
+    match s with
+    | ⟨0, _⟩ =>
+      simp only [ERMor1.interp_comp, betaIdxCodeER_interp, cons_fin_one, child0ER_interp]
+      rfl
+    | ⟨1, _⟩ => exact betaIdxDepthER_interp i cand c q
+    | ⟨2, _⟩ =>
+      simp only [ERMor1.interp_comp, betaIdxCodeER_interp, cons_fin_one, child1ER_interp]
+      rfl
+  rw [betaContractER, ERMor1.interp_comp, harg, subER_interp]
+
+/-- The gate of the β-worker fold at slots `(i, c, q)`: the `0/1` indicator of
+`d + m ≤ c` for the index `i = Nat.pair d m`, a `leN` composition over the `addN`
+of the two `Nat.unpair` reads of the index against the code slot (Decision Q8). -/
+private def betaSaneER : ERMor1 3 :=
+  ERMor1.comp ERMor1.leN (fun s => match s with
+    | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+        | ⟨0, _⟩ => ERMor1.comp ERMor1.natUnpairFst (fun _ : Fin 1 => ERMor1.proj 0)
+        | ⟨1, _⟩ => ERMor1.comp ERMor1.natUnpairSnd (fun _ : Fin 1 => ERMor1.proj 0))
+    | ⟨1, _⟩ => ERMor1.proj 1)
+
+/-- Interpretation of `betaSaneER`: the `0/1` indicator of the gate `d + m ≤ c`. -/
+private theorem betaSaneER_interp (i c q : ℕ) :
+    betaSaneER.interp (Fin.cons i (Fin.cons c ![q]))
+      = if (Nat.unpair i).1 + (Nat.unpair i).2 ≤ c then 1 else 0 := by
+  have hunf : betaSaneER.interp (Fin.cons i (Fin.cons c ![q]))
+      = ERMor1.leN.interp ![(Nat.unpair i).1 + (Nat.unpair i).2, c] := by
+    change ERMor1.leN.interp _ = ERMor1.leN.interp _
+    congr 1
+    funext s
+    match s with
+    | ⟨0, _⟩ =>
+      change ERMor1.addN.interp _ = _
+      have harg : (fun t : Fin 2 => ((match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.natUnpairFst (fun _ : Fin 1 => ERMor1.proj 0)
+          | ⟨1, _⟩ => ERMor1.comp ERMor1.natUnpairSnd
+              (fun _ : Fin 1 => ERMor1.proj 0)) : ERMor1 3).interp
+            (Fin.cons i (Fin.cons c ![q])))
+          = ![(Nat.unpair i).1, (Nat.unpair i).2] := by
+        funext t
+        match t with
+        | ⟨0, _⟩ =>
+          change ERMor1.natUnpairFst.interp (fun _ : Fin 1 => i) = _
+          rw [cons_fin_one, ERMor1.interp_natUnpairFst]
+          rfl
+        | ⟨1, _⟩ =>
+          change ERMor1.natUnpairSnd.interp (fun _ : Fin 1 => i) = _
+          rw [cons_fin_one, ERMor1.interp_natUnpairSnd]
+          rfl
+      rw [harg, ERMor1.interp_addN]
+      rfl
+    | ⟨1, _⟩ => rfl
+  rw [hunf, ERMor1.interp_leN]
+  rfl
+
+/-- The index bound of the β-worker fold: `Nat.pair c c` over the code slot,
+dominating every gated index `Nat.pair d m` with `d + m ≤ c` (Decision Q8). -/
+private def betaIdxBoundER : ERMor1 2 := pairER (ERMor1.proj 0) (ERMor1.proj 0)
+
+/-- Interpretation of `betaIdxBoundER`: the index bound `Nat.pair c c`. -/
+private theorem betaIdxBoundER_interp (c q : ℕ) :
+    betaIdxBoundER.interp (Fin.cons c ![q]) = Nat.pair c c := by
+  simp only [betaIdxBoundER, pairER_interp, ERMor1.interp_proj, Fin.cons_zero]
+
+/-- The extraction position of the β-worker fold: `Nat.pair 0 c`, the input code
+at substitution level `0` — the closed-term level of the `stepCodeAt 0`
+consumer (Decision Q8). -/
+private def betaExtractER : ERMor1 2 := pairER (ERMor1.natN 2 0) (ERMor1.proj 0)
+
+/-- Interpretation of `betaExtractER`: the extraction position `Nat.pair 0 c`. -/
+private theorem betaExtractER_interp (c q : ℕ) :
+    betaExtractER.interp (Fin.cons c ![q]) = Nat.pair 0 c := by
+  simp only [betaExtractER, pairER_interp, ERMor1.interp_natN, ERMor1.interp_proj,
+    Fin.cons_zero]
+
+/-- The height-2 tower value bound of the β-worker fold as an `ERMor1 2` term: the
+`towerER 2` composite over the polynomial `36 * c + 18`, dominating the gated
+table entries through `betaStepCode_le_tower` (`d, m ≤ c` gives
+`27 * m + 9 * d ≤ 36 * c`). -/
+private def betaStepBoundER : ERMor1 2 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.addN (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun u => match u with
+          | ⟨0, _⟩ => ERMor1.natN 2 36
+          | ⟨1, _⟩ => ERMor1.proj 0)
+      | ⟨1, _⟩ => ERMor1.natN 2 18))
+
+/-- Interpretation of `betaStepBoundER`: the height-2 tower at `36 * c + 18`. -/
+private theorem betaStepBoundER_interp (c q : ℕ) :
+    betaStepBoundER.interp (Fin.cons c ![q]) = tower 2 (36 * c + 18) := by
+  simp only [betaStepBoundER, ERMor1.interp_comp, ERMor1.interp_towerER,
+    ERMor1.interp_addN, ERMor1.interp_mulN, ERMor1.interp_natN, ERMor1.interp_proj]
+  rfl
+
+/-- The reference table of the β-worker fold at input code `c` and rank `q`
+(Decision Q8): at an index `Nat.pair d m` inside the gate `d + m ≤ c`, the β
+worker `betaStepCode q d m` at substitution level `d`; `0` off the gate. -/
+private def betaTable (c q i : ℕ) : ℕ :=
+  if (Nat.unpair i).1 + (Nat.unpair i).2 ≤ c then
+    betaStepCode q (Nat.unpair i).1 (Nat.unpair i).2
+  else 0
+
+/-- The gated entry of `betaTable`: at an index `Nat.pair d m` with `d + m ≤ c`,
+the table stores `betaStepCode q d m`. -/
+private theorem betaTable_pair_of_le (c q d m : ℕ) (h : d + m ≤ c) :
+    betaTable c q (Nat.pair d m) = betaStepCode q d m := by
+  unfold betaTable
+  simp only [Nat.unpair_pair]
+  rw [if_pos h]
+
+/-- The node of the β-worker fold at slots `(i, cand, c, q)`: unpair the index `i`
+into the substitution level `d` and the code `m` and dispatch on the shape tag and
+operation kind bit of `m`, mirroring the four guard regimes of the `betaStepCode`
+application arm. The child β-ranks are full calls of `betaRankER`; a rank-`q`
+function or argument child is read substituted off the β-table at
+`Nat.pair d (child0Code m)` or `Nat.pair d (child1Code m)` and the node rebuilt;
+the root-contraction guard composes `isLamER` on the function child and `ordER` on
+the applied arrow-sort code (full calls), and its arm is the full `subER` call
+`betaContractER`; an abstraction node reads its body child at
+`Nat.pair (d + 1) (child0Code m)` — the level increment of `betaStepCode_lam`
+absorbed into the depth component (Decision Q8); every other node returns the code
+component `m` unchanged. Novel realization. -/
+private def betaStepNodeER : ERMor1 4 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => betaIdxCodeER)) (ERMor1.natN 4 1)
+    (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => betaIdxCodeER)) (ERMor1.natN 4 0)
+      (condEqER (ERMor1.comp betaRankER (fun _ : Fin 1 =>
+            ERMor1.comp child0ER (fun _ : Fin 1 => betaIdxCodeER))) (ERMor1.proj 3)
+        (pairER (ERMor1.natN 4 1)
+          (pairER (ERMor1.comp opTagER (fun _ : Fin 1 => betaIdxCodeER))
+            (pairER (ERMor1.betaOnCandFold (pairER betaIdxDepthER
+                (ERMor1.comp child0ER (fun _ : Fin 1 => betaIdxCodeER))))
+              (pairER (ERMor1.comp child1ER (fun _ : Fin 1 => betaIdxCodeER))
+                (ERMor1.natN 4 0)))))
+        (condEqER (ERMor1.comp betaRankER (fun _ : Fin 1 =>
+              ERMor1.comp child1ER (fun _ : Fin 1 => betaIdxCodeER))) (ERMor1.proj 3)
+          (pairER (ERMor1.natN 4 1)
+            (pairER (ERMor1.comp opTagER (fun _ : Fin 1 => betaIdxCodeER))
+              (pairER (ERMor1.comp child0ER (fun _ : Fin 1 => betaIdxCodeER))
+                (pairER (ERMor1.betaOnCandFold (pairER betaIdxDepthER
+                    (ERMor1.comp child1ER (fun _ : Fin 1 => betaIdxCodeER))))
+                  (ERMor1.natN 4 0)))))
+          (condEqER (ERMor1.comp isLamER (fun _ : Fin 1 =>
+                ERMor1.comp child0ER (fun _ : Fin 1 => betaIdxCodeER))) (ERMor1.natN 4 1)
+            (condEqER (ERMor1.comp ordER (fun _ : Fin 1 =>
+                  ERMor1.comp appliedArrowER (fun _ : Fin 1 => betaIdxCodeER)))
+                (ERMor1.proj 3)
+              betaContractER
+              betaIdxCodeER)
+            betaIdxCodeER)))
+      (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => betaIdxCodeER)) (ERMor1.natN 4 1)
+        (condEqER (ERMor1.comp betaRankER (fun _ : Fin 1 =>
+              ERMor1.comp child0ER (fun _ : Fin 1 => betaIdxCodeER))) (ERMor1.proj 3)
+          (pairER (ERMor1.natN 4 1)
+            (pairER (ERMor1.comp opTagER (fun _ : Fin 1 => betaIdxCodeER))
+              (pairER (ERMor1.betaOnCandFold (pairER
+                  (ERMor1.comp ERMor1.succ (fun _ : Fin 1 => betaIdxDepthER))
+                  (ERMor1.comp child0ER (fun _ : Fin 1 => betaIdxCodeER))))
+                (ERMor1.natN 4 0))))
+          betaIdxCodeER)
+        betaIdxCodeER))
+    betaIdxCodeER
+
+/-- The node value of `betaStepNodeER` at index `Nat.pair d m` as a nested
+conditional on the shape tag and operation kind bit of the code component `m`, with
+the child β-ranks by full `betaRankCode` calls, the substituted children read off
+the candidate β-table at the depth-keyed positions, the contraction guard by full
+`isLamCode` and `ordCode` calls, and the contraction by a full `subCode` call. -/
+private theorem betaStepNodeER_interp (d m cand c q : ℕ) :
+    betaStepNodeER.interp (Fin.cons (Nat.pair d m) (Fin.cons cand (Fin.cons c ![q]))) =
+      if shapeCode m = 1 then
+        (if opKindCode m = 0 then
+          (if betaRankCode (child0Code m) = q then
+            Nat.pair 1 (Nat.pair (opTagCode m)
+              (Nat.pair (cand.unpair.1 % (1 + (Nat.pair d (child0Code m) + 1) * cand.unpair.2))
+                (Nat.pair (child1Code m) 0)))
+          else if betaRankCode (child1Code m) = q then
+            Nat.pair 1 (Nat.pair (opTagCode m)
+              (Nat.pair (child0Code m)
+                (Nat.pair (cand.unpair.1 % (1 + (Nat.pair d (child1Code m) + 1) * cand.unpair.2))
+                  0)))
+          else if isLamCode (child0Code m) = true then
+            (if ordCode (Nat.pair 1 (opPayloadCode m)) = q then
+              subCode d (child1Code m) (child0Code (child0Code m))
+            else m)
+          else m)
+        else if opKindCode m = 1 then
+          (if betaRankCode (child0Code m) = q then
+            Nat.pair 1 (Nat.pair (opTagCode m)
+              (Nat.pair (cand.unpair.1 %
+                (1 + (Nat.pair (d + 1) (child0Code m) + 1) * cand.unpair.2)) 0))
+          else m)
+        else m)
+      else m := by
+  simp only [betaStepNodeER, condEqER_interp, pairER_interp, betaContractER_interp,
+    betaIdxDepthER_interp, betaIdxCodeER_interp, ERMor1.interp_comp,
+    ERMor1.interp_betaOnCandFold, ERMor1.interp_natN, ERMor1.interp_succ,
+    ERMor1.interp_proj, cons_fin_one, shapeER_interp, opKindER_interp, opTagER_interp,
+    child0ER_interp, child1ER_interp, betaRankER_interp, isLamER_interp, ordER_interp,
+    appliedArrowER_interp, betaNode_ctx_q, Nat.unpair_pair, Bool.toNat_eq_one,
+    Matrix.cons_val_zero]
+
+/-- The node value of the β-worker fold equals the reference recursion: at index
+`Nat.pair d m`, a candidate whose β-reads agree with the β worker at exactly the
+positions the node reads — the two application children at depth `d` and the
+abstraction body at depth `d + 1` — makes the node compute `betaStepCode q d m`.
+The contraction arm needs no read: `subER` is complete, so the full call computes
+the contraction outright. Shared arm-by-arm case analysis of the node-faithfulness
+and determinacy inputs of `betaStepER_interp`. -/
+private theorem betaStepNode_val_eq_betaStepCode (c q d m cand : ℕ)
+    (h0 : shapeCode m = 1 → opKindCode m = 0 →
+      cand.unpair.1 % (1 + (Nat.pair d (child0Code m) + 1) * cand.unpair.2)
+          = betaStepCode q d (child0Code m)
+        ∧ cand.unpair.1 % (1 + (Nat.pair d (child1Code m) + 1) * cand.unpair.2)
+          = betaStepCode q d (child1Code m))
+    (h1 : shapeCode m = 1 → opKindCode m = 1 →
+      cand.unpair.1 % (1 + (Nat.pair (d + 1) (child0Code m) + 1) * cand.unpair.2)
+        = betaStepCode q (d + 1) (child0Code m)) :
+    betaStepNodeER.interp (Fin.cons (Nat.pair d m) (Fin.cons cand (Fin.cons c ![q])))
+      = betaStepCode q d m := by
+  rw [betaStepNodeER_interp, betaStepCode_eq_ite q d m]
+  by_cases hs : shapeCode m = 1
+  · rw [if_pos hs, if_pos hs]
+    by_cases hk0 : opKindCode m = 0
+    · rw [if_pos hk0, if_pos hk0]
+      by_cases hr0 : betaRankCode (child0Code m) = q
+      · rw [if_pos hr0, if_pos hr0, (h0 hs hk0).1]
+      · rw [if_neg hr0, if_neg hr0]
+        by_cases hr1 : betaRankCode (child1Code m) = q
+        · rw [if_pos hr1, if_pos hr1, (h0 hs hk0).2]
+        · rw [if_neg hr1, if_neg hr1]
+          by_cases hL : isLamCode (child0Code m) = true
+          · rw [if_pos hL]
+            by_cases hOrd : ordCode (Nat.pair 1 (opPayloadCode m)) = q
+            · rw [if_pos hOrd, if_pos ⟨hL, hOrd⟩]
+            · rw [if_neg hOrd, if_neg (fun h => hOrd h.2)]
+          · rw [if_neg hL, if_neg (fun h => hL h.1)]
+    · rw [if_neg hk0, if_neg hk0]
+      by_cases hk1 : opKindCode m = 1
+      · rw [if_pos hk1, if_pos hk1]
+        by_cases hr0 : betaRankCode (child0Code m) = q
+        · rw [if_pos hr0, if_pos hr0, h1 hs hk1]
+        · rw [if_neg hr0, if_neg hr0]
+      · rw [if_neg hk1, if_neg hk1]
+  · rw [if_neg hs, if_neg hs]
+
+/-- The β worker as a gated elementary-recursive course-of-values fold:
+`ERMor1.cvRecGated` at `k = 1` with slots `(c, q)` — the code and the dispatched
+rank — and the two-dimensional index `i = Nat.pair d m` keying the substitution
+level and the code (Decision Q8). The gate `betaSaneER` confines the imposed
+equations to `d + m ≤ c`, the index bound is `Nat.pair c c`, the extraction reads
+`Nat.pair 0 c` (the input code at the closed-term level `0`), and the value bound
+is the height-2 tower composite `betaStepBoundER` over `36 * c + 18`. The node
+mirrors the `betaStepCode` arms, composing `betaRankER`, `isLamER`, `ordER`, and
+`subER` as ordinary full calls; only the same-function descent goes through the
+β-table. Realizes the parameter-varying strong recursion of `betaStepCode`
+(Leivant III section 4.2, p. 224; the machine-model absorption of footnote 10,
+p. 226) as a single bounded β-witness search. Novel realization. -/
+def betaStepER : ERMor1 2 :=
+  ERMor1.cvRecGated betaStepNodeER betaSaneER betaIdxBoundER betaExtractER betaStepBoundER
+
+/-- Interpretation of `betaStepER`: the β worker `betaStepCode q 0 c` at the
+closed-term level, unconditionally on every code and rank. Discharges the
+hypotheses of `ERMor1.interp_cvRecGated_eq` against the reference table
+`betaTable` (Decision Q8): the gate is `0/1`-valued, the gated entries are bounded
+by the tower-2 majorant `betaStepCode_le_tower` (off-gate entries are `0`), node
+faithfulness holds at gated indices through `betaStepNode_val_eq_betaStepCode`
+with every read position gated and below the index bound (`pair_le_pair`), and
+determinacy (Decision Q6) is discharged by strong induction on the code component
+of the index with the depth universally quantified — children sit strictly below
+the code component, and the abstraction descent pays its depth increment with
+`child0Code m < m`. The extraction at `Nat.pair 0 c` is gated and stores
+`betaStepCode q 0 c` directly. -/
+@[simp] theorem betaStepER_interp (c q : ℕ) :
+    betaStepER.interp ![c, q] = betaStepCode q 0 c := by
+  have h_sane : ∀ i, i ≤ betaIdxBoundER.interp (Fin.cons c ![q]) →
+      betaSaneER.interp (Fin.cons i (Fin.cons c ![q])) ≤ 1 := by
+    intro i _
+    rw [betaSaneER_interp]
+    split
+    · exact le_refl 1
+    · exact Nat.zero_le 1
+  have hval : ∀ i, i ≤ betaIdxBoundER.interp (Fin.cons c ![q]) →
+      betaTable c q i ≤ betaStepBoundER.interp (Fin.cons c ![q]) := by
+    intro i _
+    rw [betaStepBoundER_interp]
+    unfold betaTable
+    split
+    · rename_i hgate
+      exact le_trans (betaStepCode_le_tower q (Nat.unpair i).1 (Nat.unpair i).2)
+        (tower_mono_right 2 (by omega))
+    · exact Nat.zero_le _
+  have h_node : ∀ i, i ≤ betaIdxBoundER.interp (Fin.cons c ![q]) →
+      betaSaneER.interp (Fin.cons i (Fin.cons c ![q])) = 1 → ∀ cand,
+      (∀ p, p ≤ betaIdxBoundER.interp (Fin.cons c ![q]) →
+        cand.unpair.1 % (1 + (p + 1) * cand.unpair.2) = betaTable c q p) →
+      betaStepNodeER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![q])))
+        = betaTable c q i := by
+    intro i _ hSi cand hreads
+    obtain ⟨d, m, rfl⟩ : ∃ d m, i = Nat.pair d m :=
+      ⟨(Nat.unpair i).1, (Nat.unpair i).2, (Nat.pair_unpair i).symm⟩
+    have hdm : d + m ≤ c := by
+      rw [betaSaneER_interp] at hSi
+      simp only [Nat.unpair_pair] at hSi
+      by_contra hn
+      rw [if_neg hn] at hSi
+      omega
+    rw [betaTable_pair_of_le c q d m hdm]
+    refine betaStepNode_val_eq_betaStepCode c q d m cand (fun hs hk0 => ?_)
+      (fun hs hk1 => ?_)
+    · have hc0 := child0Code_lt_of_shape_one m hs
+      have hc1 := child1Code_lt_of_shape_one m hs
+      constructor
+      · rw [hreads (Nat.pair d (child0Code m))
+            (by rw [betaIdxBoundER_interp]; exact pair_le_pair (by omega) (by omega)),
+          betaTable_pair_of_le c q d (child0Code m) (by omega)]
+      · rw [hreads (Nat.pair d (child1Code m))
+            (by rw [betaIdxBoundER_interp]; exact pair_le_pair (by omega) (by omega)),
+          betaTable_pair_of_le c q d (child1Code m) (by omega)]
+    · have hc0 := child0Code_lt_of_shape_one m hs
+      rw [hreads (Nat.pair (d + 1) (child0Code m))
+          (by rw [betaIdxBoundER_interp]; exact pair_le_pair (by omega) (by omega)),
+        betaTable_pair_of_le c q (d + 1) (child0Code m) (by omega)]
+  have h_det : ∀ cand,
+      (∀ i, i ≤ betaIdxBoundER.interp (Fin.cons c ![q]) →
+        betaSaneER.interp (Fin.cons i (Fin.cons c ![q])) = 1 →
+        cand.unpair.1 % (1 + (i + 1) * cand.unpair.2) =
+          betaStepNodeER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![q])))) →
+      cand.unpair.1 %
+          (1 + (betaExtractER.interp (Fin.cons c ![q]) + 1) * cand.unpair.2) =
+        betaTable c q (betaExtractER.interp (Fin.cons c ![q])) := by
+    intro cand hcand
+    rw [betaExtractER_interp, betaTable_pair_of_le c q 0 c (by omega)]
+    suffices hmain : ∀ m d, d + m ≤ c →
+        cand.unpair.1 % (1 + (Nat.pair d m + 1) * cand.unpair.2)
+          = betaStepCode q d m from hmain c 0 (by omega)
+    intro m
+    induction m using Nat.strong_induction_on with
+    | _ m ih =>
+      intro d hdm
+      have hle : Nat.pair d m ≤ betaIdxBoundER.interp (Fin.cons c ![q]) := by
+        rw [betaIdxBoundER_interp]
+        exact pair_le_pair (by omega) (by omega)
+      have hS : betaSaneER.interp (Fin.cons (Nat.pair d m) (Fin.cons c ![q])) = 1 := by
+        rw [betaSaneER_interp]
+        simp only [Nat.unpair_pair]
+        rw [if_pos hdm]
+      rw [hcand (Nat.pair d m) hle hS]
+      refine betaStepNode_val_eq_betaStepCode c q d m cand (fun hs hk0 => ?_)
+        (fun hs hk1 => ?_)
+      · have hc0 := child0Code_lt_of_shape_one m hs
+        have hc1 := child1Code_lt_of_shape_one m hs
+        exact ⟨ih _ hc0 d (by omega), ih _ hc1 d (by omega)⟩
+      · have hc0 := child0Code_lt_of_shape_one m hs
+        exact ih _ hc0 (d + 1) (by omega)
+  have h_ext : betaExtractER.interp (Fin.cons c ![q]) ≤
+      betaIdxBoundER.interp (Fin.cons c ![q]) := by
+    rw [betaExtractER_interp, betaIdxBoundER_interp]
+    exact pair_le_pair (Nat.zero_le c) (le_refl c)
+  have key := ERMor1.interp_cvRecGated_eq betaStepNodeER betaSaneER betaIdxBoundER
+    betaExtractER betaStepBoundER c ![q] (betaTable c q) h_sane hval h_node h_det h_ext
+  rw [betaExtractER_interp, betaTable_pair_of_le c q 0 c (by omega)] at key
   exact key
 
 end OneLambda

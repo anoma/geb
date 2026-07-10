@@ -20,7 +20,9 @@ and its two-fold iterate on a variable leaf bumped twice, through the fold and
 bounded-recursion interpretation lemmas and the `shiftCode` node equations. The
 substitution fold is exercised on the Task 6.4.1 redex body, restating the
 `subCode_codeTm` redex-body instance through `subER_interp`, and on a variable leaf
-at the substituted level, where it lands the substituend.
+at the substituted level, where it lands the substituend. The β-worker fold is
+exercised on the Task 6.4.1 identity β-redex, which contracts to its argument at
+its dispatched rank, and on the nullary constant, where it is the identity.
 
 ## References
 
@@ -314,5 +316,34 @@ example :
       = codeTm (Binding.instantiate₁ (conc (natToFreeAlg 0)) redexBody) := by
   rw [subER_interp]
   exact subCode_codeTm (conc (natToFreeAlg 0)) redexBody
+
+/-- The β worker on the Task 6.4.1 identity β-redex at its dispatched rank `1`
+contracts to the argument: neither child carries a rank-`1` redex, the function
+child is an abstraction of arrow sort `o → o` (order `1`), and the contraction
+substitutes the level-`1` variable argument for the abstraction's level-`0` body
+variable. -/
+example : betaStepER.interp ![betaRedex, 1] = Nat.pair 0 1 := by
+  have hlam : isLamCode betaLamChild = true := by
+    rw [betaLamChild, isLamCode_op]; simp [Nat.unpair_pair]
+  have hc0 : betaRankCode betaLamChild = 0 := by
+    rw [betaLamChild, betaRankCode_lam _ _ (by simp [Nat.unpair_pair]), betaRankCode_var]
+  have hord : ordCode (Nat.pair 1
+      (Nat.pair (codeRType RType.o) (codeRType RType.o))) = 1 := by
+    rw [show Nat.pair 1 (Nat.pair (codeRType RType.o) (codeRType RType.o))
+        = codeRType (RType.arrow RType.o RType.o) from rfl, ordCode_codeRType]
+    simp
+  have hstep : betaStepCode 1 0 betaRedex = Nat.pair 0 1 := by
+    rw [betaRedex, betaStepCode_app _ _ _ _ _ (by simp [Nat.unpair_pair])]
+    simp only [Nat.unpair_pair]
+    rw [if_neg (by rw [hc0]; omega), if_neg (by rw [betaRankCode_var]; omega),
+      if_pos ⟨hlam, hord⟩, betaLamChild]
+    simp only [Nat.unpair_pair]
+    rw [subCode_var, if_neg (by omega), if_pos rfl]
+  rw [betaStepER_interp, hstep]
+
+/-- The β worker on the constructor-constant node is the identity: a nullary
+constant carries no β-redex to contract. -/
+example : betaStepER.interp ![conNode, 0] = conNode := by
+  rw [betaStepER_interp, conNode, betaStepCode_const _ _ _ _ (by simp [Nat.unpair_pair])]
 
 end GebLean.Ramified.OneLambda
