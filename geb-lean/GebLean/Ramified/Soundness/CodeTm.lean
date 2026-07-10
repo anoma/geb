@@ -346,6 +346,54 @@ theorem ordCode_le_self (n : ℕ) : ordCode n ≤ n := by
       omega
     · exact Nat.zero_le n
 
+/-- The shape-`1` (arrow) node equation of `ordCode` at an arbitrary code with
+shape tag `1`: the order is `max (ordCode (domCode n) + 1) (ordCode (codCode n))`,
+reading the two child codes off the argument code. -/
+theorem ordCode_shape_one (n : ℕ) (h : shapeCode n = 1) :
+    ordCode n = max (ordCode (domCode n) + 1) (ordCode (codCode n)) := by
+  rw [shapeCode] at h
+  rw [ordCode]
+  split <;> simp_all [domCode, codCode, argCode]
+
+/-- The shape-`2` (`Ω`) node equation of `ordCode` at an arbitrary code with shape
+tag `2`: the order is `ordCode (argCode n)`, reading the single child code. -/
+theorem ordCode_shape_two (n : ℕ) (h : shapeCode n = 2) : ordCode n = ordCode (argCode n) := by
+  rw [shapeCode] at h
+  rw [ordCode]
+  split <;> simp_all [argCode]
+
+/-- The argument code of a shape-`1` code sits strictly below it: `argCode n < n`.
+The composite `n = Nat.pair 1 (argCode n)` strictly dominates its second component
+by `self_lt_pair_one`. -/
+theorem argCode_lt_of_shape_one (n : ℕ) (h : shapeCode n = 1) : argCode n < n := by
+  have hp : Nat.pair 1 (argCode n) = n := by
+    rw [argCode]
+    conv_rhs => rw [← Nat.pair_unpair n]
+    rw [show (Nat.unpair n).1 = 1 from h]
+  conv_rhs => rw [← hp]
+  exact self_lt_pair_one _
+
+/-- The argument code of a shape-`2` code sits strictly below it: `argCode n < n`.
+The composite `n = Nat.pair 2 (argCode n)` strictly dominates its second component
+by `self_lt_pair_two`. -/
+theorem argCode_lt_of_shape_two (n : ℕ) (h : shapeCode n = 2) : argCode n < n := by
+  have hp : Nat.pair 2 (argCode n) = n := by
+    rw [argCode]
+    conv_rhs => rw [← Nat.pair_unpair n]
+    rw [show (Nat.unpair n).1 = 2 from h]
+  conv_rhs => rw [← hp]
+  exact self_lt_pair_two _
+
+/-- The domain code of a shape-`1` code sits strictly below it: `domCode n < n`,
+chaining `Nat.unpair_left_le` below `argCode_lt_of_shape_one`. -/
+theorem domCode_lt_of_shape_one (n : ℕ) (h : shapeCode n = 1) : domCode n < n :=
+  Nat.lt_of_le_of_lt (Nat.unpair_left_le _) (argCode_lt_of_shape_one n h)
+
+/-- The codomain code of a shape-`1` code sits strictly below it: `codCode n < n`,
+chaining `Nat.unpair_right_le` below `argCode_lt_of_shape_one`. -/
+theorem codCode_lt_of_shape_one (n : ℕ) (h : shapeCode n = 1) : codCode n < n :=
+  Nat.lt_of_le_of_lt (Nat.unpair_right_le _) (argCode_lt_of_shape_one n h)
+
 /-- The mirror theorem (Leivant III section 2.2, p. 213): reading the type order
 off a code agrees with computing it on the type, `ordCode (codeRType σ) =
 RType.ord σ`. By structural induction on the r-type via `PolyFix.ind`, the node

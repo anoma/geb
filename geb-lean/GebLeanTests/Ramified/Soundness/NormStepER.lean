@@ -99,4 +99,31 @@ example : iotaContractER.interp ![dstrRedex] = 9 := by
     iotaContractCode_dstr _ _ _ _ (by simp [Nat.unpair_pair]), dstrScrut]
   simp [opKindCode, child1Code, Nat.unpair_pair]
 
+/-- The type-order fold on the base sort code `o` reads order `RType.ord o = 0`,
+through `ordCode_codeRType`. -/
+example : ordER.interp ![codeRType RType.o] = 0 := by
+  rw [ordER_interp, ordCode_codeRType]; simp
+
+/-- The type-order fold on the `Ω o` code reads order `RType.ord (Ω o) = 0`. -/
+example : ordER.interp ![codeRType (RType.omega RType.o)] = 0 := by
+  rw [ordER_interp, ordCode_codeRType]; simp
+
+/-- The type-order fold on the arrow code `o → o` reads order
+`RType.ord (o → o) = 1`. -/
+example : ordER.interp ![arrowCode] = 1 := by
+  rw [arrowCode, ordER_interp, ordCode_codeRType]; simp
+
+/-- The top-β-rank read on the abstraction node is `0`: an abstraction node is not
+an application. -/
+example : topBetaRankER.interp ![lamNode] = 0 := by
+  rw [topBetaRankER_interp, lamNode,
+    topBetaRankCode_op_ne_app _ _ (by simp [Nat.unpair_pair])]
+
+/-- The top-β-rank read on the destructor redex is `0`: the application's function
+child is a destructor head, not an abstraction. -/
+example : topBetaRankER.interp ![dstrRedex] = 0 := by
+  rw [topBetaRankER_interp, dstrRedex,
+    topBetaRankCode_app _ _ _ (by decide),
+    if_neg (by rw [isLamCode_op]; simp [Nat.unpair_pair])]
+
 end GebLean.Ramified.OneLambda

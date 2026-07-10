@@ -11,9 +11,12 @@ pp. 223-224). This module realizes the non-recursive reads of
 the operation-node structure reads — as `ERMor1` morphisms whose interpretation
 equals the mirrored ℕ-level function. Each read is a plain composition of the
 elementary-recursive Gödel-arithmetic generators (`ERMor1.natUnpairFst`,
-`ERMor1.natUnpairSnd`, `ERMor1.condN`, `ERMor1.boolEqNat`, `ERMor1.boolAnd`); the
-folds, the iterate, the dispatch, and the assembled `normStep` are realized in
-later commits. Carrying the code reads into the elementary-recursive theory is
+`ERMor1.natUnpairSnd`, `ERMor1.condN`, `ERMor1.boolEqNat`, `ERMor1.boolAnd`). The
+type-order fold `OneLambda.ordER` — the first `ERMor1.cvRec` instantiation — and
+the non-recursive top-β-rank read `OneLambda.topBetaRankER` composed from it are
+realized here; the remaining folds, the iterate, the dispatch, and the assembled
+`normStep` are realized in later commits. Carrying the code reads into the
+elementary-recursive theory is
 the formal payment of the machine-model absorption Leivant III leaves to a
 footnote (footnote 10, p. 226). Novel realization.
 
@@ -27,6 +30,9 @@ footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.conLabelER`, `OneLambda.isLamER`, `OneLambda.resultShapeER`,
   `OneLambda.iotaContractER` — the derived reads: the constructor label, the
   abstraction detector, the result-sort shape, and the ι-contraction image.
+- `OneLambda.ordER` — the type-order course-of-values fold, `ERMor1.cvRec` at the
+  code-valued node `ordNode`; `OneLambda.topBetaRankER` — the top-β-rank read
+  composing the top-node reads and `ordER`.
 
 ## Main statements
 
@@ -34,6 +40,9 @@ footnote (footnote 10, p. 226). Novel realization.
   read's interpretation equals the mirrored ℕ-level function of
   `CodeNormalizer.lean`, `Bool.toNat`-valued for the Boolean-valued detector
   `isLamER`.
+- `OneLambda.ordER_interp`, `OneLambda.topBetaRankER_interp` — the type-order
+  fold and top-β-rank read interpret to `ordCode` and `topBetaRankCode`,
+  unconditionally on every code.
 
 ## Implementation notes
 
@@ -313,6 +322,149 @@ def iotaContractER : ERMor1 1 :=
     ERMor1.interp_natN, ERMor1.interp_proj, cons_fin_one, Matrix.cons_val_zero]
   rw [iotaContractCode_eq_ite]
   rfl
+
+/-- ER-derived maximum of two naturals: `maxN.interp ![a, b] = max a b`. Realized
+as `condN` over the `leN` comparison: when `a ≤ b` returns `b`, otherwise `a`. -/
+private def maxN : ERMor1 2 :=
+  ERMor1.comp ERMor1.condN (fun i => match i with
+    | ⟨0, _⟩ => ERMor1.leN
+    | ⟨1, _⟩ => ERMor1.proj 1
+    | ⟨2, _⟩ => ERMor1.proj 0)
+
+/-- Interpretation of `maxN`: the maximum of the two slots. -/
+@[simp] private theorem maxN_interp (ctx : Fin 2 → ℕ) :
+    maxN.interp ctx = max (ctx 0) (ctx 1) := by
+  rw [maxN, ERMor1.interp_comp, ERMor1.interp_condN]
+  change ERMor1.leN.interp ctx * ctx 1 + (1 - ERMor1.leN.interp ctx) * ctx 0
+      = max (ctx 0) (ctx 1)
+  rw [ERMor1.interp_leN]
+  split_ifs <;> omega
+
+/-- The node of the `ordCode` course-of-values fold at slots `(i, cand, code)`:
+dispatch on the shape tag of the index `i`. Shape `1` (arrow) reads the two child
+orders off the β-table at `domCode i` and `codCode i` and returns
+`max (first + 1) second`; shape `2` (`Ω`) reads the single child order at
+`argCode i`; every other tag returns `0`. β-reads use `betaOnCandFold` at the
+child positions computed from the index. Novel realization. -/
+private def ordNode : ERMor1 3 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+    (ERMor1.comp maxN (fun i => match i with
+      | ⟨0, _⟩ => ERMor1.comp ERMor1.succ (fun _ : Fin 1 =>
+          ERMor1.betaOnCandFold (ERMor1.comp domER (fun _ : Fin 1 => ERMor1.proj 0)))
+      | ⟨1, _⟩ =>
+          ERMor1.betaOnCandFold (ERMor1.comp codER (fun _ : Fin 1 => ERMor1.proj 0))))
+    (condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 2)
+      (ERMor1.betaOnCandFold (ERMor1.comp argER (fun _ : Fin 1 => ERMor1.proj 0)))
+      (ERMor1.natN 3 0))
+
+/-- The node value of `ordNode` at `(i, cand, code)` as a nested conditional on the
+shape tag of `i`, with the child orders read off the candidate β-table. -/
+private theorem ordNode_interp (i cand code : ℕ) :
+    ordNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      if shapeCode i = 1 then
+        max (cand.unpair.1 % (1 + (domCode i + 1) * cand.unpair.2) + 1)
+          (cand.unpair.1 % (1 + (codCode i + 1) * cand.unpair.2))
+      else if shapeCode i = 2 then
+        cand.unpair.1 % (1 + (argCode i + 1) * cand.unpair.2)
+      else 0 := by
+  simp only [ordNode, condEqER_interp, maxN_interp, ERMor1.interp_comp,
+    ERMor1.interp_betaOnCandFold, ERMor1.interp_succ, ERMor1.interp_natN,
+    ERMor1.interp_proj, Fin.cons_zero, cons_fin_one, shapeER_interp, domER_interp,
+    codER_interp, argER_interp, Matrix.cons_val_zero]
+
+/-- The type-order read as an elementary-recursive course-of-values fold: the first
+instantiation of `ERMor1.cvRec`, at fold slot the code and node `ordNode`, with
+value bound the code itself (`ordCode_le_self`). Realizes the well-founded
+recursion of `ordCode` (Leivant III section 2.2, p. 213) as a single bounded
+β-witness search. Novel realization. -/
+def ordER : ERMor1 1 := ERMor1.cvRec ordNode (ERMor1.proj 0)
+
+/-- Interpretation of `ordER`: the type order `ordCode`, unconditionally on every
+code. Discharges the hypotheses of `ERMor1.interp_cvRec_of_bounded` with
+`f := ordCode`: the value bound `ordCode_le_self`, its monotonicity immediate from
+the fold slot, and node faithfulness from the `ordCode` shape node equations
+(`ordCode_shape_one`, `ordCode_shape_two`) with the child codes strictly below the
+index (`domCode_lt_of_shape_one`, `codCode_lt_of_shape_one`,
+`argCode_lt_of_shape_two`). -/
+@[simp] theorem ordER_interp (n : ℕ) : ordER.interp ![n] = ordCode n := by
+  refine ERMor1.interp_cvRec_of_bounded ordNode (ERMor1.proj 0) n ![] ordCode
+    (fun j _ => ?_) (fun j hj => ?_) (fun i hi cand htrace => ?_)
+  · exact ordCode_le_self j
+  · exact hj
+  · rw [ordNode_interp i cand n]
+    by_cases h1 : shapeCode i = 1
+    · rw [if_pos h1, htrace (domCode i) (domCode_lt_of_shape_one i h1),
+        htrace (codCode i) (codCode_lt_of_shape_one i h1), ordCode_shape_one i h1]
+    · rw [if_neg h1]
+      by_cases h2 : shapeCode i = 2
+      · rw [if_pos h2, htrace (argCode i) (argCode_lt_of_shape_two i h2),
+          ordCode_shape_two i h2]
+      · rw [if_neg h2]
+        symm
+        rw [ordCode]
+        split <;> simp_all [shapeCode]
+
+/-- The applied arrow-sort code read for the top β-rank: `Nat.pair 1` over the
+operation payload of the application tag, mirroring the `ordCode` argument of
+`topBetaRankCode`. Novel realization. -/
+private def appliedArrowER : ERMor1 1 :=
+  ERMor1.comp ERMor1.natPair (fun j => match j with
+    | ⟨0, _⟩ => ERMor1.natN 1 1
+    | ⟨1, _⟩ => opPayloadER)
+
+/-- Interpretation of `appliedArrowER`: the arrow-sort code `Nat.pair 1
+(opPayloadCode c)`. -/
+@[simp] private theorem appliedArrowER_interp (c : ℕ) :
+    appliedArrowER.interp ![c] = Nat.pair 1 (opPayloadCode c) := by
+  have key : appliedArrowER.interp ![c] = ERMor1.natPair.interp ![1, opPayloadCode c] := by
+    rw [appliedArrowER]
+    simp only [ERMor1.interp_comp]
+    congr 1
+    funext j
+    match j with
+    | ⟨0, _⟩ => simp
+    | ⟨1, _⟩ => simp [opPayloadER_interp]
+  rw [key, ERMor1.interp_natPair]
+
+/-- The top β-rank read of `topBetaRankCode` as a nested conditional on the shape
+tag, the operation kind bit, and the abstraction status of the function child:
+at an application node (shape `1`, kind `0`) whose function child is a `lam`, the
+order read off the applied arrow-sort code; otherwise `0`. -/
+private theorem topBetaRankCode_eq_ite (c : ℕ) :
+    topBetaRankCode c =
+      (if shapeCode c = 1 then
+        (if opKindCode c = 0 then
+          (if isLamCode (child0Code c) then
+            ordCode (Nat.pair 1 (opPayloadCode c)) else 0)
+          else 0)
+        else 0) := by
+  rw [topBetaRankCode]
+  split <;> simp_all [shapeCode, opKindCode, child0Code, opPayloadCode]
+
+/-- The top β-rank read: the nested `condEqER` dispatch on the top node realizing
+`topBetaRankCode`, composing the reads and `ordER` (no recursion). Novel
+realization. -/
+def topBetaRankER : ERMor1 1 :=
+  condEqER shapeER (ERMor1.natN 1 1)
+    (condEqER opKindER (ERMor1.natN 1 0)
+      (condEqER (ERMor1.comp isLamER (fun _ : Fin 1 => child0ER)) (ERMor1.natN 1 1)
+        (ERMor1.comp ordER (fun _ : Fin 1 => appliedArrowER))
+        (ERMor1.natN 1 0))
+      (ERMor1.natN 1 0))
+    (ERMor1.natN 1 0)
+
+/-- Interpretation of `topBetaRankER`: the top β-rank `topBetaRankCode`. -/
+@[simp] theorem topBetaRankER_interp (c : ℕ) :
+    topBetaRankER.interp ![c] = topBetaRankCode c := by
+  rw [topBetaRankCode_eq_ite]
+  simp only [topBetaRankER, condEqER_interp, shapeER_interp, opKindER_interp,
+    ERMor1.interp_natN, ERMor1.interp_comp, isLamER_interp, child0ER_interp,
+    ordER_interp, appliedArrowER_interp, cons_fin_one]
+  by_cases h1 : shapeCode c = 1
+  · by_cases h2 : opKindCode c = 0
+    · cases hb : isLamCode (child0Code c) <;> simp [h1, h2]
+    · simp [h1, h2]
+  · simp [h1]
 
 end OneLambda
 
