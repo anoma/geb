@@ -20,7 +20,10 @@ realized here, together with the `con`-headedness and ι-spine detector folds
 ι-redex read `OneLambda.topIotaER`, the β-rank and ι-census folds
 `OneLambda.betaRankER`, `OneLambda.hasIotaER`, and the ι worker
 `OneLambda.iotaStepER` — the first fold that rebuilds nodes and carries a tower-2
-majorant — are realized here; the remaining folds, the iterate, the
+majorant — are realized here, together with the weakening worker `OneLambda.shiftER`,
+its iterate `OneLambda.shiftIterER`, and the code-level substitution `OneLambda.subER`
+— the first gated two-dimensional fold (`ERMor1.cvRecGated`), keyed by the pair of a
+weakening depth and a code; the remaining folds, the
 dispatch, and the assembled `normStep` are realized in later commits. Carrying the code reads
 into the
 elementary-recursive theory is
@@ -59,6 +62,13 @@ footnote (footnote 10, p. 226). Novel realization.
   read against the level via `ltN`/`condN` and rebuilds operation nodes with `natPair`.
 - `OneLambda.shiftIterER` — the iterated weakening, `ERMor1.boundedRec` over `shiftER`
   (Decision Q7), one weakening step per depth increment.
+- `OneLambda.subER` — the code-level substitution at slots `(c, j, e)`, the first gated
+  two-dimensional fold: `ERMor1.cvRecGated` at index `Nat.pair d m` (weakening depth,
+  code) with gate `d + m ≤ c`, index bound `Nat.pair c c`, extraction at `Nat.pair 0 c`,
+  and value bound the `towerER 2` composite over `27 * c + 9 * e + 18` (Decision Q8);
+  the node mirrors the `subCode` arms, composing `shiftIterER` as a full call at the
+  variable-hit leaf and absorbing the abstraction descent's substituend shift into the
+  depth component of the index.
 
 ## Main statements
 
@@ -83,6 +93,10 @@ footnote (footnote 10, p. 226). Novel realization.
   its iterate interpret to `shiftCode j m` and `(shiftCode j)^[d] e`, unconditionally on
   every code, level, depth, and substituend, bounded by the tower-2 majorants
   `shiftCode_le_tower` and `shiftCode_iterate_le_tower`.
+- `OneLambda.subER_interp` — the substitution fold interprets to `subCode j e c`,
+  unconditionally on every code, level, and substituend, its gated table bounded by the
+  tower-2 majorant `subCode_shift_iterate_le_tower` and its determinacy hypothesis
+  (Decision Q6) discharged by strong induction on the code component of the index.
 
 ## Implementation notes
 
@@ -1372,6 +1386,432 @@ the linearity of the tower argument in the depth. -/
     rw [shiftIterBoundER_interp, shiftIterBoundER_interp]
     exact tower_mono_right 2 (by omega)
   · rw [shiftIter_rec_eq]
+
+/-- The code-level substitution `subCode j e` as a nested conditional on the shape tag
+and operation kind bit of the code: a variable leaf (shape `0`) rewrites by the
+three-way comparison of its level against the substituted level `j`; an application
+node (shape `1`, kind `0`) rebuilds with the two child codes substituted; an
+abstraction node (kind `1`) rebuilds with the sole body child substituted against the
+substituend weakened by `shiftCode j`; every other node is unchanged. -/
+private theorem subCode_eq_ite (j e c : ℕ) :
+    subCode j e c =
+      if shapeCode c = 0 then
+        (if argCode c < j then Nat.pair 0 (argCode c)
+         else if argCode c = j then e
+         else Nat.pair 0 (argCode c - 1))
+      else if shapeCode c = 1 then
+        (if opKindCode c = 0 then
+          Nat.pair 1 (Nat.pair (opTagCode c)
+            (Nat.pair (subCode j e (child0Code c)) (Nat.pair (subCode j e (child1Code c)) 0)))
+         else if opKindCode c = 1 then
+          Nat.pair 1 (Nat.pair (opTagCode c)
+            (Nat.pair (subCode j (shiftCode j e) (child0Code c)) 0))
+         else c)
+      else c := by
+  rw [subCode]
+  split <;> simp_all [shapeCode, opKindCode, argCode, opTagCode, child0Code, child1Code]
+
+/-- `Nat.pair` is monotone in both arguments, the ≤-corollary of the mathlib strict
+monotonicities `Nat.pair_lt_pair_left` and `Nat.pair_lt_pair_right`. Carries the
+gated-index containment of the substitution fold: every gated index `Nat.pair d m`
+with `d, m ≤ c` sits at or below the index bound `Nat.pair c c`. -/
+private theorem pair_le_pair {a b x y : ℕ} (hax : a ≤ x) (hby : b ≤ y) :
+    Nat.pair a b ≤ Nat.pair x y := by
+  have h1 : Nat.pair a b ≤ Nat.pair x b := by
+    rcases Nat.eq_or_lt_of_le hax with rfl | h
+    · exact le_refl _
+    · exact le_of_lt (Nat.pair_lt_pair_left b h)
+  have h2 : Nat.pair x b ≤ Nat.pair x y := by
+    rcases Nat.eq_or_lt_of_le hby with rfl | h
+    · exact le_refl _
+    · exact le_of_lt (Nat.pair_lt_pair_right x h)
+  exact le_trans h1 h2
+
+/-- The depth read of the substitution fold at arity `5`: the leading `Nat.unpair`
+component of the index slot, the weakening depth `d` of the 2-D key `Nat.pair d m`
+(Decision Q8). -/
+private def subIdxDepthER : ERMor1 5 :=
+  ERMor1.comp ERMor1.natUnpairFst (fun _ : Fin 1 => ERMor1.proj 0)
+
+/-- Interpretation of `subIdxDepthER`: the depth component of the index. -/
+private theorem subIdxDepthER_interp (i cand c j e : ℕ) :
+    subIdxDepthER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![j, e])))
+      = (Nat.unpair i).1 := by
+  simp only [subIdxDepthER, ERMor1.interp_comp, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, ERMor1.interp_natUnpairFst]
+
+/-- The code read of the substitution fold at arity `5`: the trailing `Nat.unpair`
+component of the index slot, the code `m` of the 2-D key `Nat.pair d m`
+(Decision Q8). -/
+private def subIdxCodeER : ERMor1 5 :=
+  ERMor1.comp ERMor1.natUnpairSnd (fun _ : Fin 1 => ERMor1.proj 0)
+
+/-- Interpretation of `subIdxCodeER`: the code component of the index. -/
+private theorem subIdxCodeER_interp (i cand c j e : ℕ) :
+    subIdxCodeER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![j, e])))
+      = (Nat.unpair i).2 := by
+  simp only [subIdxCodeER, ERMor1.interp_comp, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, ERMor1.interp_natUnpairSnd]
+
+/-- The context selector `Fin.cons i (Fin.cons cand (Fin.cons c ![j, e]))` reads the
+substituted level `j` at slot `3`. -/
+private theorem subNode_ctx_j (i cand c j e : ℕ) :
+    (Fin.cons i (Fin.cons cand (Fin.cons c ![j, e])) : Fin 5 → ℕ) 3 = j := rfl
+
+/-- The variable-hit arm of the substitution fold: the iterated weakening
+`shiftIterER` composed as an ordinary full call at the depth read of the index and
+the level and substituend parameter slots (Decision Q7). -/
+private def subHitER : ERMor1 5 :=
+  ERMor1.comp shiftIterER (fun s => match s with
+    | ⟨0, _⟩ => subIdxDepthER
+    | ⟨1, _⟩ => ERMor1.proj 3
+    | ⟨2, _⟩ => ERMor1.proj 4)
+
+/-- Interpretation of `subHitER`: the iterated weakening `(shiftCode j)^[d] e` at the
+depth component `d` of the index. -/
+private theorem subHitER_interp (i cand c j e : ℕ) :
+    subHitER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![j, e])))
+      = (shiftCode j)^[(Nat.unpair i).1] e := by
+  have harg : (fun s : Fin 3 => ((match s with
+      | ⟨0, _⟩ => subIdxDepthER
+      | ⟨1, _⟩ => ERMor1.proj 3
+      | ⟨2, _⟩ => ERMor1.proj 4) : ERMor1 5).interp
+        (Fin.cons i (Fin.cons cand (Fin.cons c ![j, e]))))
+      = ![(Nat.unpair i).1, j, e] := by
+    funext s
+    match s with
+    | ⟨0, _⟩ => exact subIdxDepthER_interp i cand c j e
+    | ⟨1, _⟩ => rfl
+    | ⟨2, _⟩ => rfl
+  rw [subHitER, ERMor1.interp_comp, harg, shiftIterER_interp]
+
+/-- The gate of the substitution fold at slots `(i, c, j, e)`: the `0/1` indicator of
+`d + m ≤ c` for the index `i = Nat.pair d m`, a `leN` composition over the `addN` of
+the two `Nat.unpair` reads of the index against the code slot (Decision Q8). -/
+private def subSaneER : ERMor1 4 :=
+  ERMor1.comp ERMor1.leN (fun s => match s with
+    | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+        | ⟨0, _⟩ => ERMor1.comp ERMor1.natUnpairFst (fun _ : Fin 1 => ERMor1.proj 0)
+        | ⟨1, _⟩ => ERMor1.comp ERMor1.natUnpairSnd (fun _ : Fin 1 => ERMor1.proj 0))
+    | ⟨1, _⟩ => ERMor1.proj 1)
+
+/-- Interpretation of `subSaneER`: the `0/1` indicator of the gate `d + m ≤ c`. -/
+private theorem subSaneER_interp (i c j e : ℕ) :
+    subSaneER.interp (Fin.cons i (Fin.cons c ![j, e]))
+      = if (Nat.unpair i).1 + (Nat.unpair i).2 ≤ c then 1 else 0 := by
+  have hunf : subSaneER.interp (Fin.cons i (Fin.cons c ![j, e]))
+      = ERMor1.leN.interp ![(Nat.unpair i).1 + (Nat.unpair i).2, c] := by
+    change ERMor1.leN.interp _ = ERMor1.leN.interp _
+    congr 1
+    funext s
+    match s with
+    | ⟨0, _⟩ =>
+      change ERMor1.addN.interp _ = _
+      have harg : (fun t : Fin 2 => ((match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.natUnpairFst (fun _ : Fin 1 => ERMor1.proj 0)
+          | ⟨1, _⟩ => ERMor1.comp ERMor1.natUnpairSnd
+              (fun _ : Fin 1 => ERMor1.proj 0)) : ERMor1 4).interp
+            (Fin.cons i (Fin.cons c ![j, e])))
+          = ![(Nat.unpair i).1, (Nat.unpair i).2] := by
+        funext t
+        match t with
+        | ⟨0, _⟩ =>
+          change ERMor1.natUnpairFst.interp (fun _ : Fin 1 => i) = _
+          rw [cons_fin_one, ERMor1.interp_natUnpairFst]
+          rfl
+        | ⟨1, _⟩ =>
+          change ERMor1.natUnpairSnd.interp (fun _ : Fin 1 => i) = _
+          rw [cons_fin_one, ERMor1.interp_natUnpairSnd]
+          rfl
+      rw [harg, ERMor1.interp_addN]
+      rfl
+    | ⟨1, _⟩ => rfl
+  rw [hunf, ERMor1.interp_leN]
+  rfl
+
+/-- The index bound of the substitution fold: `Nat.pair c c` over the code slot,
+dominating every gated index `Nat.pair d m` with `d + m ≤ c` (Decision Q8). -/
+private def subIdxBoundER : ERMor1 3 := pairER (ERMor1.proj 0) (ERMor1.proj 0)
+
+/-- Interpretation of `subIdxBoundER`: the index bound `Nat.pair c c`. -/
+private theorem subIdxBoundER_interp (c j e : ℕ) :
+    subIdxBoundER.interp (Fin.cons c ![j, e]) = Nat.pair c c := by
+  simp only [subIdxBoundER, pairER_interp, ERMor1.interp_proj, Fin.cons_zero]
+
+/-- The extraction position of the substitution fold: `Nat.pair 0 c`, the input code
+at weakening depth `0` (Decision Q8). -/
+private def subExtractER : ERMor1 3 := pairER (ERMor1.natN 3 0) (ERMor1.proj 0)
+
+/-- Interpretation of `subExtractER`: the extraction position `Nat.pair 0 c`. -/
+private theorem subExtractER_interp (c j e : ℕ) :
+    subExtractER.interp (Fin.cons c ![j, e]) = Nat.pair 0 c := by
+  simp only [subExtractER, pairER_interp, ERMor1.interp_natN, ERMor1.interp_proj,
+    Fin.cons_zero]
+
+/-- The height-2 tower value bound of the substitution fold as an `ERMor1 3` term: the
+`towerER 2` composite over the polynomial `27 * c + 9 * e + 18`, dominating the gated
+table entries through `subCode_shift_iterate_le_tower` (`d, m ≤ c` gives
+`18 * m + 9 * d ≤ 27 * c`). -/
+private def subBoundER : ERMor1 3 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.addN (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun u => match u with
+              | ⟨0, _⟩ => ERMor1.natN 3 27
+              | ⟨1, _⟩ => ERMor1.proj 0)
+          | ⟨1, _⟩ => ERMor1.comp ERMor1.mulN (fun u => match u with
+              | ⟨0, _⟩ => ERMor1.natN 3 9
+              | ⟨1, _⟩ => ERMor1.proj 2))
+      | ⟨1, _⟩ => ERMor1.natN 3 18))
+
+/-- Interpretation of `subBoundER`: the height-2 tower at `27 * c + 9 * e + 18`. -/
+private theorem subBoundER_interp (c j e : ℕ) :
+    subBoundER.interp (Fin.cons c ![j, e]) = tower 2 (27 * c + 9 * e + 18) := by
+  simp only [subBoundER, ERMor1.interp_comp, ERMor1.interp_towerER, ERMor1.interp_addN,
+    ERMor1.interp_mulN, ERMor1.interp_natN, ERMor1.interp_proj]
+  rfl
+
+/-- The reference table of the substitution fold at input code `c`, level `j`, and
+substituend `e` (Decision Q8): at an index `Nat.pair d m` inside the gate
+`d + m ≤ c`, the substitution `subCode j ((shiftCode j)^[d] e) m` against the
+`d`-fold weakened substituend; `0` off the gate. -/
+private def subTable (c j e i : ℕ) : ℕ :=
+  if (Nat.unpair i).1 + (Nat.unpair i).2 ≤ c then
+    subCode j ((shiftCode j)^[(Nat.unpair i).1] e) (Nat.unpair i).2
+  else 0
+
+/-- The gated entry of `subTable`: at an index `Nat.pair d m` with `d + m ≤ c`, the
+table stores `subCode j ((shiftCode j)^[d] e) m`. -/
+private theorem subTable_pair_of_le (c j e d m : ℕ) (h : d + m ≤ c) :
+    subTable c j e (Nat.pair d m) = subCode j ((shiftCode j)^[d] e) m := by
+  unfold subTable
+  simp only [Nat.unpair_pair]
+  rw [if_pos h]
+
+/-- The node of the substitution fold at slots `(i, cand, c, j, e)`: unpair the index
+`i` into the weakening depth `d` and the code `m` and dispatch on the shape tag and
+operation kind bit of `m`, mirroring the `subCode` arms. A variable leaf compares its
+level against the level slot `j`: below, the leaf is rebuilt; at the level, the
+iterated substituend is a full call of `shiftIterER` at depth `d` (the `subHitER`
+arm); above, the level drops by one. An application node rebuilds with the two child
+codes read off the β-table at `Nat.pair d (child0Code m)` and
+`Nat.pair d (child1Code m)`; an abstraction node reads its sole body child at
+`Nat.pair (d + 1) (child0Code m)` — the substituend shift of `subCode_lam` is
+absorbed into the depth component (Decision Q8); every other node returns the code
+component `m` unchanged. Novel realization. -/
+private def subNodeER : ERMor1 5 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => subIdxCodeER)) (ERMor1.natN 5 0)
+    (ERMor1.comp ERMor1.condN (fun t => match t with
+      | ⟨0, _⟩ => ERMor1.comp ERMor1.ltN (fun s => match s with
+          | ⟨0, _⟩ => ERMor1.comp argER (fun _ : Fin 1 => subIdxCodeER)
+          | ⟨1, _⟩ => ERMor1.proj 3)
+      | ⟨1, _⟩ => pairER (ERMor1.natN 5 0) (ERMor1.comp argER (fun _ : Fin 1 => subIdxCodeER))
+      | ⟨2, _⟩ => condEqER (ERMor1.comp argER (fun _ : Fin 1 => subIdxCodeER))
+          (ERMor1.proj 3) subHitER
+          (pairER (ERMor1.natN 5 0)
+            (ERMor1.comp ERMor1.pred (fun _ : Fin 1 =>
+              ERMor1.comp argER (fun _ : Fin 1 => subIdxCodeER))))))
+    (condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => subIdxCodeER)) (ERMor1.natN 5 1)
+      (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => subIdxCodeER)) (ERMor1.natN 5 0)
+        (pairER (ERMor1.natN 5 1)
+          (pairER (ERMor1.comp opTagER (fun _ : Fin 1 => subIdxCodeER))
+            (pairER (ERMor1.betaOnCandFold (pairER subIdxDepthER
+                (ERMor1.comp child0ER (fun _ : Fin 1 => subIdxCodeER))))
+              (pairER (ERMor1.betaOnCandFold (pairER subIdxDepthER
+                  (ERMor1.comp child1ER (fun _ : Fin 1 => subIdxCodeER))))
+                (ERMor1.natN 5 0)))))
+        (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => subIdxCodeER)) (ERMor1.natN 5 1)
+          (pairER (ERMor1.natN 5 1)
+            (pairER (ERMor1.comp opTagER (fun _ : Fin 1 => subIdxCodeER))
+              (pairER (ERMor1.betaOnCandFold (pairER
+                  (ERMor1.comp ERMor1.succ (fun _ : Fin 1 => subIdxDepthER))
+                  (ERMor1.comp child0ER (fun _ : Fin 1 => subIdxCodeER))))
+                (ERMor1.natN 5 0))))
+          subIdxCodeER))
+      subIdxCodeER)
+
+/-- The node value of `subNodeER` at index `Nat.pair d m` as a nested conditional on
+the shape tag and operation kind bit of the code component `m`, with the iterated
+substituend by a full `(shiftCode j)^[d]` call and the substituted children read off
+the candidate β-table at the depth-keyed positions. -/
+private theorem subNodeER_interp (d m cand c j e : ℕ) :
+    subNodeER.interp (Fin.cons (Nat.pair d m) (Fin.cons cand (Fin.cons c ![j, e]))) =
+      if shapeCode m = 0 then
+        (if argCode m < j then Nat.pair 0 (argCode m)
+         else if argCode m = j then (shiftCode j)^[d] e
+         else Nat.pair 0 (argCode m - 1))
+      else if shapeCode m = 1 then
+        (if opKindCode m = 0 then
+          Nat.pair 1 (Nat.pair (opTagCode m)
+            (Nat.pair (cand.unpair.1 % (1 + (Nat.pair d (child0Code m) + 1) * cand.unpair.2))
+              (Nat.pair (cand.unpair.1 % (1 + (Nat.pair d (child1Code m) + 1) * cand.unpair.2))
+                0)))
+         else if opKindCode m = 1 then
+          Nat.pair 1 (Nat.pair (opTagCode m)
+            (Nat.pair (cand.unpair.1 %
+              (1 + (Nat.pair (d + 1) (child0Code m) + 1) * cand.unpair.2)) 0))
+         else m)
+      else m := by
+  simp only [subNodeER, condEqER_interp, pairER_interp, subHitER_interp,
+    subIdxDepthER_interp, subIdxCodeER_interp, ERMor1.interp_comp, ERMor1.interp_condN,
+    ERMor1.interp_ltN, ERMor1.interp_betaOnCandFold, ERMor1.interp_natN, ERMor1.interp_succ,
+    ERMor1.interp_pred, ERMor1.interp_proj, cons_fin_one, shapeER_interp,
+    argER_interp, opKindER_interp, opTagER_interp, child0ER_interp, child1ER_interp,
+    subNode_ctx_j, Nat.unpair_pair, Nat.pred_eq_sub_one, Matrix.cons_val_zero]
+  by_cases hv : shapeCode m = 0
+  · rw [if_pos hv, if_pos hv]
+    by_cases hlt : argCode m < j <;> simp [hlt]
+  · rw [if_neg hv, if_neg hv]
+
+/-- The node value of the substitution fold equals the reference recursion: at index
+`Nat.pair d m`, a candidate whose β-reads agree with the substitution at exactly the
+positions the node reads — the two application children at depth `d` and the
+abstraction body at depth `d + 1` — makes the node compute
+`subCode j ((shiftCode j)^[d] e) m`. The abstraction arm reconciles the depth
+increment with the substituend shift of `subCode_lam` through
+`Function.iterate_succ_apply'` (Decision Q8). Shared arm-by-arm case analysis of the
+node-faithfulness and determinacy inputs of `subER_interp`. -/
+private theorem subNode_val_eq_subCode (c j e d m cand : ℕ)
+    (h0 : shapeCode m = 1 → opKindCode m = 0 →
+      cand.unpair.1 % (1 + (Nat.pair d (child0Code m) + 1) * cand.unpair.2)
+          = subCode j ((shiftCode j)^[d] e) (child0Code m)
+        ∧ cand.unpair.1 % (1 + (Nat.pair d (child1Code m) + 1) * cand.unpair.2)
+          = subCode j ((shiftCode j)^[d] e) (child1Code m))
+    (h1 : shapeCode m = 1 → opKindCode m = 1 →
+      cand.unpair.1 % (1 + (Nat.pair (d + 1) (child0Code m) + 1) * cand.unpair.2)
+        = subCode j ((shiftCode j)^[d + 1] e) (child0Code m)) :
+    subNodeER.interp (Fin.cons (Nat.pair d m) (Fin.cons cand (Fin.cons c ![j, e])))
+      = subCode j ((shiftCode j)^[d] e) m := by
+  rw [subNodeER_interp, subCode_eq_ite j ((shiftCode j)^[d] e) m]
+  by_cases hv : shapeCode m = 0
+  · rw [if_pos hv, if_pos hv]
+  · rw [if_neg hv, if_neg hv]
+    by_cases hs : shapeCode m = 1
+    · rw [if_pos hs, if_pos hs]
+      by_cases hk0 : opKindCode m = 0
+      · rw [if_pos hk0, if_pos hk0, (h0 hs hk0).1, (h0 hs hk0).2]
+      · rw [if_neg hk0, if_neg hk0]
+        by_cases hk1 : opKindCode m = 1
+        · rw [if_pos hk1, if_pos hk1, h1 hs hk1,
+            Function.iterate_succ_apply' (shiftCode j) d e]
+        · rw [if_neg hk1, if_neg hk1]
+    · rw [if_neg hs, if_neg hs]
+
+/-- The code-level substitution as a gated elementary-recursive course-of-values
+fold: `ERMor1.cvRecGated` at `k = 2` with slots `(c, j, e)` — the code, the
+substituted level, and the substituend — and the two-dimensional index
+`i = Nat.pair d m` keying the weakening depth and the code (Decision Q8). The gate
+`subSaneER` confines the imposed equations to `d + m ≤ c`, the index bound is
+`Nat.pair c c`, the extraction reads `Nat.pair 0 c` (the input code at depth `0`),
+and the value bound is the height-2 tower composite `subBoundER` over
+`27 * c + 9 * e + 18`. The node mirrors the `subCode` arms, composing `shiftIterER`
+as an ordinary full call at the variable-hit leaf; only the same-function descent
+goes through the β-table. Realizes the parameter-varying strong recursion of
+`subCode` (Leivant III section 4.2, pp. 223-224; the machine-model absorption of
+footnote 10, p. 226) as a single bounded β-witness search. Novel realization. -/
+def subER : ERMor1 3 :=
+  ERMor1.cvRecGated subNodeER subSaneER subIdxBoundER subExtractER subBoundER
+
+/-- Interpretation of `subER`: the code-level substitution `subCode j e c`,
+unconditionally on every code, level, and substituend. Discharges the hypotheses of
+`ERMor1.interp_cvRecGated_eq` against the reference table `subTable` (Decision Q8):
+the gate is `0/1`-valued, the gated entries are bounded by the tower-2 majorant
+`subCode_shift_iterate_le_tower` (off-gate entries are `0`), node faithfulness holds
+at gated indices through `subNode_val_eq_subCode` with every read position gated and
+below the index bound (`pair_le_pair`), and determinacy (Decision Q6) is discharged
+by strong induction on the code component of the index with the depth universally
+quantified — children sit strictly below the code component, and the abstraction
+descent pays its depth increment with `child0Code m < m`. The extraction at
+`Nat.pair 0 c` is gated and stores the substitution at depth `0`, which is
+`subCode j e c` by `Function.iterate_zero_apply`. -/
+@[simp] theorem subER_interp (c j e : ℕ) : subER.interp ![c, j, e] = subCode j e c := by
+  have h_sane : ∀ i, i ≤ subIdxBoundER.interp (Fin.cons c ![j, e]) →
+      subSaneER.interp (Fin.cons i (Fin.cons c ![j, e])) ≤ 1 := by
+    intro i _
+    rw [subSaneER_interp]
+    split
+    · exact le_refl 1
+    · exact Nat.zero_le 1
+  have hval : ∀ i, i ≤ subIdxBoundER.interp (Fin.cons c ![j, e]) →
+      subTable c j e i ≤ subBoundER.interp (Fin.cons c ![j, e]) := by
+    intro i _
+    rw [subBoundER_interp]
+    unfold subTable
+    split
+    · rename_i hgate
+      exact le_trans (subCode_shift_iterate_le_tower j (Nat.unpair i).1 e (Nat.unpair i).2)
+        (tower_mono_right 2 (by omega))
+    · exact Nat.zero_le _
+  have h_node : ∀ i, i ≤ subIdxBoundER.interp (Fin.cons c ![j, e]) →
+      subSaneER.interp (Fin.cons i (Fin.cons c ![j, e])) = 1 → ∀ cand,
+      (∀ p, p ≤ subIdxBoundER.interp (Fin.cons c ![j, e]) →
+        cand.unpair.1 % (1 + (p + 1) * cand.unpair.2) = subTable c j e p) →
+      subNodeER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![j, e])))
+        = subTable c j e i := by
+    intro i _ hSi cand hreads
+    obtain ⟨d, m, rfl⟩ : ∃ d m, i = Nat.pair d m :=
+      ⟨(Nat.unpair i).1, (Nat.unpair i).2, (Nat.pair_unpair i).symm⟩
+    have hdm : d + m ≤ c := by
+      rw [subSaneER_interp] at hSi
+      simp only [Nat.unpair_pair] at hSi
+      by_contra hn
+      rw [if_neg hn] at hSi
+      omega
+    rw [subTable_pair_of_le c j e d m hdm]
+    refine subNode_val_eq_subCode c j e d m cand (fun hs hk0 => ?_) (fun hs hk1 => ?_)
+    · have hc0 := child0Code_lt_of_shape_one m hs
+      have hc1 := child1Code_lt_of_shape_one m hs
+      constructor
+      · rw [hreads (Nat.pair d (child0Code m))
+            (by rw [subIdxBoundER_interp]; exact pair_le_pair (by omega) (by omega)),
+          subTable_pair_of_le c j e d (child0Code m) (by omega)]
+      · rw [hreads (Nat.pair d (child1Code m))
+            (by rw [subIdxBoundER_interp]; exact pair_le_pair (by omega) (by omega)),
+          subTable_pair_of_le c j e d (child1Code m) (by omega)]
+    · have hc0 := child0Code_lt_of_shape_one m hs
+      rw [hreads (Nat.pair (d + 1) (child0Code m))
+          (by rw [subIdxBoundER_interp]; exact pair_le_pair (by omega) (by omega)),
+        subTable_pair_of_le c j e (d + 1) (child0Code m) (by omega)]
+  have h_det : ∀ cand,
+      (∀ i, i ≤ subIdxBoundER.interp (Fin.cons c ![j, e]) →
+        subSaneER.interp (Fin.cons i (Fin.cons c ![j, e])) = 1 →
+        cand.unpair.1 % (1 + (i + 1) * cand.unpair.2) =
+          subNodeER.interp (Fin.cons i (Fin.cons cand (Fin.cons c ![j, e])))) →
+      cand.unpair.1 %
+          (1 + (subExtractER.interp (Fin.cons c ![j, e]) + 1) * cand.unpair.2) =
+        subTable c j e (subExtractER.interp (Fin.cons c ![j, e])) := by
+    intro cand hcand
+    rw [subExtractER_interp, subTable_pair_of_le c j e 0 c (by omega)]
+    suffices hmain : ∀ m d, d + m ≤ c →
+        cand.unpair.1 % (1 + (Nat.pair d m + 1) * cand.unpair.2)
+          = subCode j ((shiftCode j)^[d] e) m from hmain c 0 (by omega)
+    intro m
+    induction m using Nat.strong_induction_on with
+    | _ m ih =>
+      intro d hdm
+      have hle : Nat.pair d m ≤ subIdxBoundER.interp (Fin.cons c ![j, e]) := by
+        rw [subIdxBoundER_interp]
+        exact pair_le_pair (by omega) (by omega)
+      have hS : subSaneER.interp (Fin.cons (Nat.pair d m) (Fin.cons c ![j, e])) = 1 := by
+        rw [subSaneER_interp]
+        simp only [Nat.unpair_pair]
+        rw [if_pos hdm]
+      rw [hcand (Nat.pair d m) hle hS]
+      refine subNode_val_eq_subCode c j e d m cand (fun hs hk0 => ?_) (fun hs hk1 => ?_)
+      · have hc0 := child0Code_lt_of_shape_one m hs
+        have hc1 := child1Code_lt_of_shape_one m hs
+        exact ⟨ih _ hc0 d (by omega), ih _ hc1 d (by omega)⟩
+      · have hc0 := child0Code_lt_of_shape_one m hs
+        exact ih _ hc0 (d + 1) (by omega)
+  have h_ext : subExtractER.interp (Fin.cons c ![j, e]) ≤
+      subIdxBoundER.interp (Fin.cons c ![j, e]) := by
+    rw [subExtractER_interp, subIdxBoundER_interp]
+    exact pair_le_pair (Nat.zero_le c) (le_refl c)
+  have key := ERMor1.interp_cvRecGated_eq subNodeER subSaneER subIdxBoundER subExtractER
+    subBoundER c ![j, e] (subTable c j e) h_sane hval h_node h_det h_ext
+  rw [subExtractER_interp, subTable_pair_of_le c j e 0 c (by omega),
+    Function.iterate_zero_apply] at key
+  exact key
 
 end OneLambda
 

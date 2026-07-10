@@ -17,7 +17,10 @@ worker is exercised on the ι-spine redex, where it contracts the root destructo
 miss to the scrutinee, and on the nullary constant, where it is the identity. The
 weakening worker is exercised on variable leaves below and at the insertion level,
 and its two-fold iterate on a variable leaf bumped twice, through the fold and
-bounded-recursion interpretation lemmas and the `shiftCode` node equations.
+bounded-recursion interpretation lemmas and the `shiftCode` node equations. The
+substitution fold is exercised on the Task 6.4.1 redex body, restating the
+`subCode_codeTm` redex-body instance through `subER_interp`, and on a variable leaf
+at the substituted level, where it lands the substituend.
 
 ## References
 
@@ -27,6 +30,8 @@ recurrence and elementary complexity", Annals of Pure and Applied Logic 96
 -/
 
 namespace GebLean.Ramified.OneLambda
+
+open GebLean.Binding
 
 /-- The arrow type code `o → o`: the sort of the Task 6.4.1 redex's abstraction. -/
 private def arrowCode : ℕ := codeRType (RType.arrow RType.o RType.o)
@@ -288,5 +293,26 @@ variable rises to level `5` under two insertions at level `0`. -/
 example : shiftIterER.interp ![2, 0, Nat.pair 0 3] = Nat.pair 0 5 := by
   rw [shiftIterER_interp, show (2 : ℕ) = 1 + 1 from rfl, Function.iterate_succ_apply,
     Function.iterate_one, shiftCode_var, if_neg (by omega), shiftCode_var, if_neg (by omega)]
+
+/-- The substitution fold on a variable leaf at the substituted level lands the
+substituend: substituting `conNode` for the level `5` variable at level `5`. -/
+example : subER.interp ![Nat.pair 0 5, 5, conNode] = conNode := by
+  rw [subER_interp, subCode_var, if_neg (by omega), if_pos rfl]
+
+/-- The substituted variable of the Task 6.4.1 identity β-redex body `x`, the sole
+bound variable of the singleton suffix `[o]`. -/
+private def redexBody : Binding.Tm (oneLambdaSig natAlgSig) ([] ++ [RType.o]) RType.o :=
+  Binding.Tm.var (boundVar (Γ := []) (σ := RType.o))
+
+/-- The substitution fold on the code of the Task 6.4.1 redex body computes the code
+of its `Binding.instantiate₁` reduct: the `subCode_codeTm` redex-body instance
+restated through `subER_interp`, substituting the concrete zero word for the sole
+bound variable of the identity β-redex body. -/
+example :
+    subER.interp ![codeTm redexBody, ([] : Binding.Ctx RType).length,
+        codeTm (conc (natToFreeAlg 0))]
+      = codeTm (Binding.instantiate₁ (conc (natToFreeAlg 0)) redexBody) := by
+  rw [subER_interp]
+  exact subCode_codeTm (conc (natToFreeAlg 0)) redexBody
 
 end GebLean.Ramified.OneLambda
