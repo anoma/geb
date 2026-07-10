@@ -429,4 +429,36 @@ example : stepCodeAtZeroER.interp ![conNode] = conNode := by
   rw [stepCodeAtZeroER_interp, stepCodeAt, hrank, if_neg (by omega),
     if_neg (by rw [hcensus]; simp)]
 
+/-- The Task 6.4.1 identity β-redex as a closed term: the identity abstraction
+`λx:o. x` applied to the zero constructor `con 0`, a closed term at the base sort
+`o`. -/
+private def idBetaRedex : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
+  app' (lam' redexBody) (conc (natToFreeAlg 0))
+
+/-- The assembled normalizer step on the code of the Task 6.4.1 identity β-redex
+computes the code of its deterministic reduct: `normStep_interp` reduces the step to
+`stepCode`, and the closed-term commutation `stepCode_codeTm` identifies it with the
+`detStep` image. -/
+example : normStep.interp ![codeTm idBetaRedex] = codeTm (detStep idBetaRedex) := by
+  rw [normStep_interp]
+  exact stepCode_codeTm idBetaRedex
+
+/-- The assembled normalizer step fixes a normal code: on the constructor-constant
+node `conNode` the closed-term dispatch is the identity (`stepCodeAt 0 conNode =
+conNode`) and the clamp is inactive (`conNode ≤ stepBound conNode`), so `normStep`
+returns `conNode`. -/
+example : normStep.interp ![conNode] = conNode := by
+  have hrank : betaRankCode conNode = 0 := by
+    rw [conNode, betaRankCode_op_ge_two _ _ (by simp [Nat.unpair_pair])]
+  have hcensus : hasIotaCode conNode = false := by
+    rw [conNode]; exact hasIotaCode_op_ge_two _ _ (by simp [Nat.unpair_pair])
+  have hstep : stepCodeAt 0 conNode = conNode := by
+    rw [stepCodeAt, hrank, if_neg (by omega), if_neg (by rw [hcensus]; simp)]
+  have hle : conNode ≤ stepBound conNode := by
+    rw [stepBound]
+    refine le_trans ?_ (self_le_tower 2 _)
+    generalize (conNode + 1) ^ 2 = X
+    omega
+  rw [normStep_interp, stepCode, hstep, min_eq_left hle]
+
 end GebLean.Ramified.OneLambda

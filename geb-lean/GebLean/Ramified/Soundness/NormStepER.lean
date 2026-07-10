@@ -7,12 +7,17 @@ import GebLean.LawvereERBoundComputable
 
 The elementary-recursive realization layer of the deterministic code normalizer
 of the simply-typed calculus `1λ(natAlgSig)` (Leivant III section 4.2,
-pp. 223-224). This module realizes the non-recursive reads of
-`GebLean/Ramified/Soundness/CodeNormalizer.lean` — the sort-code projections and
-the operation-node structure reads — as `ERMor1` morphisms whose interpretation
-equals the mirrored ℕ-level function. Each read is a plain composition of the
-elementary-recursive Gödel-arithmetic generators (`ERMor1.natUnpairFst`,
-`ERMor1.natUnpairSnd`, `ERMor1.condN`, `ERMor1.boolEqNat`, `ERMor1.boolAnd`). The
+pp. 223-224). This module realizes the deterministic step of
+`GebLean/Ramified/Soundness/CodeNormalizer.lean` as the `ERMor1` morphism
+`OneLambda.normStep`, together with every ingredient it composes: the
+non-recursive sort-code projections and operation-node structure reads, the
+course-of-values folds, the iterated weakening, the gated two-dimensional
+substitution and β workers, the closed-term dispatch, and the step majorant. Each
+construction's interpretation equals the mirrored ℕ-level function of
+`CodeNormalizer.lean`. Each read is a plain composition of the elementary-recursive
+Gödel-arithmetic generators (`ERMor1.natUnpairFst`, `ERMor1.natUnpairSnd`,
+`ERMor1.natN`, `ERMor1.proj`, `ERMor1.condN`, `ERMor1.boolEqNat`,
+`ERMor1.boolAnd`). The
 type-order fold `OneLambda.ordER` — the first `ERMor1.cvRec` instantiation — and
 the non-recursive top-β-rank read `OneLambda.topBetaRankER` composed from it are
 realized here, together with the `con`-headedness and ι-spine detector folds
@@ -25,13 +30,11 @@ its iterate `OneLambda.shiftIterER`, and the code-level substitution `OneLambda.
 — the first gated two-dimensional fold (`ERMor1.cvRecGated`), keyed by the pair of a
 weakening depth and a code — together with the β worker `OneLambda.betaStepER`, the
 second gated two-dimensional fold, keyed by the pair of a substitution level and a
-code; the step majorant `OneLambda.stepBoundER` and the closed-term dispatch
-`OneLambda.stepCodeAtZeroER` are realized here; the assembled `normStep` is realized in a
-later commit. Carrying the code reads
-into the
-elementary-recursive theory is
-the formal payment of the machine-model absorption Leivant III leaves to a
-footnote (footnote 10, p. 226). Novel realization.
+code; the step majorant `OneLambda.stepBoundER`, the closed-term dispatch
+`OneLambda.stepCodeAtZeroER`, and the assembled step `OneLambda.normStep` are
+realized here. Carrying the code reads into the elementary-recursive theory is the
+formal payment of the machine-model absorption Leivant III leaves to a footnote
+(footnote 10, p. 226). Novel realization.
 
 ## Main definitions
 
@@ -85,6 +88,9 @@ footnote (footnote 10, p. 226). Novel realization.
   `condN` dispatch of `stepCodeAt 0`: the sign of the β-rank read selects the β
   worker at the code's own rank, else the ι-census read selects the ι worker, else the
   identity.
+- `OneLambda.normStep` — the assembled deterministic normalizer step, the closed-term
+  dispatch `stepCodeAtZeroER` clamped below the step majorant `stepBoundER` by
+  `ERMor1.minN`, realizing `stepCode`.
 
 ## Main statements
 
@@ -122,6 +128,9 @@ footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.stepCodeAtZeroER_interp` — the closed-term dispatch interprets to
   `stepCodeAt 0 c`, unconditionally on every code, splitting on the same guards as
   `stepCodeAt`'s definition.
+- `OneLambda.normStep_interp` — the assembled step interprets to `stepCode n`,
+  unconditionally on every code, composing `interp_minN` with the closed-term
+  dispatch and step-majorant interpretation lemmas.
 
 ## Implementation notes
 
@@ -2381,6 +2390,36 @@ theorem stepCodeAtZeroER_interp (c : ℕ) :
         rw [h2]; rfl
       rw [hg2]
       simp only [zero_mul, Nat.sub_zero, one_mul, zero_add]
+
+/-- The deterministic normalizer step as an elementary-recursive morphism (spec
+§6.1; M6): the closed-term dispatch `stepCodeAtZeroER` clamped below the step
+majorant `stepBoundER` by `ERMor1.minN`, the literal realization of `stepCode`.
+The clamp bounds no fold table — every worker interpretation is unconditional — and
+is reproduced solely because `stepCode`'s definition carries it (Decision Q4).
+Carrying the deterministic step into the elementary-recursive theory is the formal
+payment of the machine-model absorption Leivant III leaves to a footnote (section
+4.2, p. 224; footnote 10, p. 226). Novel realization. -/
+def normStep : ERMor1 1 :=
+  ERMor1.comp ERMor1.minN (fun i => match i with
+    | ⟨0, _⟩ => stepCodeAtZeroER
+    | ⟨1, _⟩ => stepBoundER)
+
+/-- Interpretation of `normStep`: the reference deterministic step `stepCode n`,
+unconditionally on every code. Composes `ERMor1.interp_minN` with the closed-term
+dispatch lemma `stepCodeAtZeroER_interp` and the step majorant lemma
+`stepBoundER_interp` through the two `minN` slots, matching the `min` of
+`stepCodeAt 0` and `stepBound` in `stepCode`'s definition. -/
+theorem normStep_interp (n : ℕ) : normStep.interp ![n] = stepCode n := by
+  have harg : (fun i : Fin 2 => ((match i with
+      | ⟨0, _⟩ => stepCodeAtZeroER
+      | ⟨1, _⟩ => stepBoundER) : ERMor1 1).interp ![n])
+      = ![stepCodeAt 0 n, stepBound n] := by
+    funext i
+    match i with
+    | ⟨0, _⟩ => exact stepCodeAtZeroER_interp n
+    | ⟨1, _⟩ => exact stepBoundER_interp n
+  rw [normStep, ERMor1.interp_comp, harg, ERMor1.interp_minN]
+  simp only [Matrix.cons_val_zero, Matrix.cons_val_one, stepCode]
 
 end OneLambda
 
