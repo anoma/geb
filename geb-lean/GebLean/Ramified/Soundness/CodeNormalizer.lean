@@ -1362,6 +1362,45 @@ theorem betaRankCode_op_ge_two (op pack : ℕ) (hop : 2 ≤ (Nat.unpair op).1) :
     betaRankCode (Nat.pair 1 (Nat.pair op pack)) = 0 := by
   rw [betaRankCode]; split <;> simp_all [Nat.unpair_pair]
 
+/-- The β-rank read off a code never exceeds the code's successor,
+`betaRankCode c ≤ c + 1`. Strong recursion on the code through the node equations:
+at an application node the top β-rank is bounded by `topBetaRankCode_le_succ` and
+each child β-rank by the induction hypothesis, with the two children strictly below
+the code (two, resp. three, `Nat.unpair` descents below the argument code, itself
+below the code by `self_lt_pair_one`); the abstraction node recurses into its
+strictly smaller body child; every other node reads `0`. This universal majorant is
+the value bound of the β-rank fold. -/
+theorem betaRankCode_le_succ (c : ℕ) : betaRankCode c ≤ c + 1 := by
+  induction c using Nat.strong_induction_on with
+  | _ c ih =>
+    rw [betaRankCode]
+    split
+    · rename_i h1 _
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+      have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.unpair_right_le _)) hp
+      have ht := topBetaRankCode_le_succ c
+      have hr0 := ih _ hc0
+      have hr1 := ih _ hc1
+      omega
+    · rename_i h1 _
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+      have hr0 := ih _ hc0
+      omega
+    · exact Nat.zero_le _
+
 /-- The β-rank mirror: reading `betaRankCode` off a term code agrees with the
 term-level β-rank `betaRedexRank`. Structural induction on the term; the top β-rank
 transfers by `topBetaRankCode_codeTm` and the child ranks by the induction
