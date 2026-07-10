@@ -96,6 +96,11 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
 * `OneLambda.iotaStepCode_le_tower` — the height-2 tower majorant of the ι
   worker: `iotaStepCode m ≤ tower 2 (9 * m + 9)`, the value bound of the ι-worker
   fold's elementary-recursive realization.
+* `OneLambda.shiftCode_le_tower`, `OneLambda.shiftCode_iterate_le_tower` — the
+  height-2 tower majorants of the code-level weakening and its iterate:
+  `shiftCode j m ≤ tower 2 (9 * m + 9)` and `(shiftCode j)^[d] m ≤
+  tower 2 (9 * m + 9 * d + 9)`, the value bounds of the weakening fold and its
+  bounded-recursion iterate.
 * `OneLambda.stepCode_le_stepBound`, `OneLambda.stepBound_mono` — the majorant
   pair of the reference step on codes.
 * `OneLambda.size_le_codeTm_succ`, `OneLambda.sortPayload_le_codeTm` — the
@@ -2075,6 +2080,235 @@ theorem iotaStepCode_le_tower (m : ℕ) : iotaStepCode m ≤ tower 2 (9 * m + 9)
         exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
     · -- every other node is unchanged
       exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+
+/-- A variable-leaf code is bounded by any height-2 tower two above its level:
+`Nat.pair 0 k ≤ tower 2 z` when `k + 2 ≤ z`. The leaf is majorized by
+`(k + 1) ^ 2 ≤ tower 2 (k + 2)` (`sq_le_tower_two`). -/
+private theorem shift_leaf_le_tower (z k : ℕ) (hk : k + 2 ≤ z) :
+    Nat.pair 0 k ≤ tower 2 z := by
+  calc Nat.pair 0 k ≤ (0 + k + 1) ^ 2 := Nat.pair_le_sq 0 k
+    _ = (k + 1) ^ 2 := by ring
+    _ ≤ tower 2 (k + 2) := sq_le_tower_two (k + 1)
+    _ ≤ tower 2 z := tower_mono_right 2 hk
+
+/-- The application-node rebuild bound at an arbitrary tower argument: a canonical
+binary node whose operation tag and two child positions sit below `tower 2 z` is
+bounded by `tower 2 (z + 9)`. Four `pair_le_tower_two` pairings (`pair4_le_tower`,
+`+8`) absorbed by the `+9` budget. -/
+private theorem shift_node4_le_tower {z op x y : ℕ} (hz : 1 ≤ z)
+    (hop : op ≤ tower 2 z) (hx : x ≤ tower 2 z) (hy : y ≤ tower 2 z) :
+    Nat.pair 1 (Nat.pair op (Nat.pair x (Nat.pair y 0))) ≤ tower 2 (z + 9) :=
+  le_trans (pair4_le_tower hz (one_le_tower_of_one_le 2 z hz) hop hx hy)
+    (tower_mono_right 2 (by omega))
+
+/-- The abstraction-node rebuild bound at an arbitrary tower argument: a canonical
+unary node whose operation tag and child position sit below `tower 2 z` is bounded
+by `tower 2 (z + 9)`. Three `pair_le_tower_two` pairings (`pair3_le_tower`, `+6`). -/
+private theorem shift_node3_le_tower {z op x : ℕ} (hz : 1 ≤ z)
+    (hop : op ≤ tower 2 z) (hx : x ≤ tower 2 z) :
+    Nat.pair 1 (Nat.pair op (Nat.pair x 0)) ≤ tower 2 (z + 9) :=
+  le_trans (pair3_le_tower hz (one_le_tower_of_one_le 2 z hz) hop hx)
+    (tower_mono_right 2 (by omega))
+
+/-- The height-2 tower majorant of the code-level weakening (Leivant III section 4.2,
+pp. 223-224; the machine-model absorption of footnote 10, p. 226):
+`shiftCode j m ≤ tower 2 (9 * m + 9)`. Strong induction on the code through the node
+equations: a variable leaf rises to level at most one above its own, bounded by
+`shift_leaf_le_tower`; each operation descent rebuilds the node with four
+(application) or three (abstraction) `pair_le_tower_two` pairings, paid for by the
+recursive child sitting strictly below the node so its `+9` tower budget dominates
+the `+8` rebuild cost. Value bound of the weakening fold's elementary-recursive
+realization. Novel realization. -/
+theorem shiftCode_le_tower (j m : ℕ) : shiftCode j m ≤ tower 2 (9 * m + 9) := by
+  induction m using Nat.strong_induction_on with
+  | _ c ih =>
+    rcases Nat.lt_trichotomy (Nat.unpair c).1 1 with h1 | h1 | h1
+    · -- variable leaf
+      have h0 : (Nat.unpair c).1 = 0 := by omega
+      have hi : (Nat.unpair c).2 ≤ c := Nat.unpair_right_le c
+      have hc : c = Nat.pair 0 (Nat.unpair c).2 := by
+        conv_lhs => rw [← Nat.pair_unpair c, h0]
+      conv_lhs => rw [hc]
+      rw [shiftCode_var]
+      split
+      · exact shift_leaf_le_tower _ _ (by omega)
+      · exact shift_leaf_le_tower _ _ (by omega)
+    · -- operation node
+      have hp : (Nat.unpair c).2 < c := by
+        conv_rhs => rw [← Nat.pair_unpair c, h1]
+        exact self_lt_pair_one _
+      have hcpos : 1 ≤ c := by omega
+      have hc : c = Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+          (Nat.unpair (Nat.unpair c).2).2) := by
+        conv_lhs => rw [← Nat.pair_unpair c, h1, ← Nat.pair_unpair (Nat.unpair c).2]
+      have hop_le : (Nat.unpair (Nat.unpair c).2).1 ≤ tower 2 (9 * c) :=
+        le_tower_two_nine_mul _ c (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+      rcases Nat.lt_trichotomy (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 1
+        with h2 | h2 | h2
+      · -- application
+        have h2' : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 = 0 := by omega
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+              (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, shiftCode_app_pack _ _ _ h2']
+        exact shift_node4_le_tower (z := 9 * c) (by omega) hop_le
+          (le_trans (ih _ hc0) (tower_mono_right 2 (by omega)))
+          (le_trans (ih _ hc1) (tower_mono_right 2 (by omega)))
+      · -- abstraction
+        have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+        conv_lhs => rw [hc, shiftCode_lam_pack _ _ _ h2]
+        exact shift_node3_le_tower (z := 9 * c) (by omega) hop_le
+          (le_trans (ih _ hc0) (tower_mono_right 2 (by omega)))
+      · -- nullary constant: identity
+        have h2' : 2 ≤ (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 := by omega
+        have hid : shiftCode j c = c := by
+          conv_lhs => rw [hc]
+          rw [shiftCode_const _ _ _ h2', ← hc]
+        rw [hid]
+        exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+    · -- top tag at least 2: the shift is the identity
+      have h1' : 2 ≤ (Nat.unpair c).1 := by omega
+      rw [shiftCode_of_two_le j h1']
+      exact le_trans (by omega : c ≤ 9 * c + 9) (self_le_tower 2 _)
+
+/-- The iterate of `shiftCode` on a variable leaf stays a variable leaf whose level
+rises by at most the iteration count: `∃ k ≤ d, (shiftCode j)^[d] (Nat.pair 0 i) =
+Nat.pair 0 (i + k)`. Each application bumps the level by `0` or `1`. -/
+private theorem shiftCode_iterate_var (j d i : ℕ) :
+    ∃ k, k ≤ d ∧ (shiftCode j)^[d] (Nat.pair 0 i) = Nat.pair 0 (i + k) := by
+  induction d with
+  | zero => exact ⟨0, le_refl 0, by rw [Function.iterate_zero_apply, Nat.add_zero]⟩
+  | succ m ih =>
+    obtain ⟨k, hk, hrec⟩ := ih
+    by_cases hlt : i + k < j
+    · exact ⟨k, by omega, by
+        rw [Function.iterate_succ_apply', hrec, shiftCode_var, if_pos hlt]⟩
+    · exact ⟨k + 1, by omega, by
+        rw [Function.iterate_succ_apply', hrec, shiftCode_var, if_neg hlt, Nat.add_assoc]⟩
+
+/-- The iterate of `shiftCode` distributes over a canonical application node: the two
+child codes carry the iterate while the operation tag is unchanged. -/
+private theorem shiftCode_iterate_app (j d op c0 c1 : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    (shiftCode j)^[d] (Nat.pair 1 (Nat.pair op (Nat.pair c0 (Nat.pair c1 0))))
+      = Nat.pair 1 (Nat.pair op
+          (Nat.pair ((shiftCode j)^[d] c0) (Nat.pair ((shiftCode j)^[d] c1) 0))) := by
+  induction d with
+  | zero => simp only [Function.iterate_zero_apply]
+  | succ m ih =>
+    rw [Function.iterate_succ_apply', ih, shiftCode_app _ _ _ _ hop,
+      Function.iterate_succ_apply' (shiftCode j) m c0,
+      Function.iterate_succ_apply' (shiftCode j) m c1]
+
+/-- The iterate of `shiftCode` distributes over a canonical abstraction node: the sole
+child code carries the iterate while the operation tag is unchanged. -/
+private theorem shiftCode_iterate_lam (j d op c0 : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    (shiftCode j)^[d] (Nat.pair 1 (Nat.pair op (Nat.pair c0 0)))
+      = Nat.pair 1 (Nat.pair op (Nat.pair ((shiftCode j)^[d] c0) 0)) := by
+  induction d with
+  | zero => simp only [Function.iterate_zero_apply]
+  | succ m ih =>
+    rw [Function.iterate_succ_apply', ih, shiftCode_lam _ _ _ hop,
+      Function.iterate_succ_apply' (shiftCode j) m c0]
+
+/-- The iterate of `shiftCode` over an application node at an arbitrary children pack,
+one step performed: after a first shift the pack is canonical, so the remaining iterate
+distributes over the two child codes read at the fixed unpacking depths. -/
+private theorem shiftCode_iterate_app_step (j d op pack : ℕ) (hop : (Nat.unpair op).1 = 0) :
+    (shiftCode j)^[d + 1] (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op
+          (Nat.pair ((shiftCode j)^[d + 1] (Nat.unpair pack).1)
+            (Nat.pair ((shiftCode j)^[d + 1] (Nat.unpair (Nat.unpair pack).2).1) 0))) := by
+  rw [Function.iterate_succ_apply, shiftCode_app_pack _ _ _ hop,
+    shiftCode_iterate_app _ _ _ _ _ hop,
+    ← Function.iterate_succ_apply, ← Function.iterate_succ_apply]
+
+/-- The iterate of `shiftCode` over an abstraction node at an arbitrary children pack,
+one step performed: after a first shift the pack is canonical, so the remaining iterate
+distributes over the sole child code read at the fixed unpacking depth. -/
+private theorem shiftCode_iterate_lam_step (j d op pack : ℕ) (hop : (Nat.unpair op).1 = 1) :
+    (shiftCode j)^[d + 1] (Nat.pair 1 (Nat.pair op pack))
+      = Nat.pair 1 (Nat.pair op (Nat.pair ((shiftCode j)^[d + 1] (Nat.unpair pack).1) 0)) := by
+  rw [Function.iterate_succ_apply, shiftCode_lam_pack _ _ _ hop,
+    shiftCode_iterate_lam _ _ _ _ hop, ← Function.iterate_succ_apply]
+
+/-- The height-2 tower majorant of the iterated code-level weakening (Leivant III
+section 4.2, pp. 223-224; the machine-model absorption of footnote 10, p. 226):
+`(shiftCode j)^[d] m ≤ tower 2 (9 * m + 9 * d + 9)`. Strong induction on the code
+after fixing the iteration count: a variable leaf rises to level at most `d` above its
+own (`shiftCode_iterate_var`); each operation descent distributes the iterate over the
+children (`shiftCode_iterate_app_step`, `shiftCode_iterate_lam_step`) and rebuilds the
+node with `pair_le_tower_two` pairings, paid for by the recursive child sitting strictly
+below the node. Dominance and monotonicity inputs of the iterate's `boundedRec`
+realization. Novel realization. -/
+theorem shiftCode_iterate_le_tower (j d m : ℕ) :
+    (shiftCode j)^[d] m ≤ tower 2 (9 * m + 9 * d + 9) := by
+  rcases Nat.eq_zero_or_pos d with rfl | hd
+  · rw [Function.iterate_zero_apply]
+    exact le_trans (by omega : m ≤ 9 * m + 9 * 0 + 9) (self_le_tower 2 _)
+  · obtain ⟨e, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hd)
+    induction m using Nat.strong_induction_on with
+    | _ c ih =>
+      rcases Nat.lt_trichotomy (Nat.unpair c).1 1 with h1 | h1 | h1
+      · -- variable leaf
+        have h0 : (Nat.unpair c).1 = 0 := by omega
+        have hi : (Nat.unpair c).2 ≤ c := Nat.unpair_right_le c
+        have hc : c = Nat.pair 0 (Nat.unpair c).2 := by
+          conv_lhs => rw [← Nat.pair_unpair c, h0]
+        obtain ⟨kk, hkk, hval⟩ := shiftCode_iterate_var j (e + 1) (Nat.unpair c).2
+        conv_lhs => rw [hc, hval]
+        exact shift_leaf_le_tower _ _ (by omega)
+      · -- operation node
+        have hp : (Nat.unpair c).2 < c := by
+          conv_rhs => rw [← Nat.pair_unpair c, h1]
+          exact self_lt_pair_one _
+        have hcpos : 1 ≤ c := by omega
+        have hc : c = Nat.pair 1 (Nat.pair (Nat.unpair (Nat.unpair c).2).1
+            (Nat.unpair (Nat.unpair c).2).2) := by
+          conv_lhs => rw [← Nat.pair_unpair c, h1, ← Nat.pair_unpair (Nat.unpair c).2]
+        have hop_le : (Nat.unpair (Nat.unpair c).2).1 ≤ tower 2 (9 * c + 9 * (e + 1)) :=
+          le_trans (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+            (le_trans (by omega : c ≤ 9 * c + 9 * (e + 1)) (self_le_tower 2 _))
+        rcases Nat.lt_trichotomy (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 1
+          with h2 | h2 | h2
+        · -- application
+          have h2' : (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 = 0 := by omega
+          have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+            Nat.lt_of_le_of_lt
+              (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+          have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+            Nat.lt_of_le_of_lt
+              (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+                (Nat.unpair_right_le _)) hp
+          conv_lhs => rw [hc, shiftCode_iterate_app_step _ _ _ _ h2']
+          refine le_trans (shift_node4_le_tower (z := 9 * c + 9 * (e + 1)) (by omega)
+            hop_le ?_ ?_) (tower_mono_right 2 (by omega))
+          · exact le_trans (ih _ hc0) (tower_mono_right 2 (by omega))
+          · exact le_trans (ih _ hc1) (tower_mono_right 2 (by omega))
+        · -- abstraction
+          have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+            Nat.lt_of_le_of_lt
+              (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+          conv_lhs => rw [hc, shiftCode_iterate_lam_step _ _ _ _ h2]
+          refine le_trans (shift_node3_le_tower (z := 9 * c + 9 * (e + 1)) (by omega)
+            hop_le ?_) (tower_mono_right 2 (by omega))
+          · exact le_trans (ih _ hc0) (tower_mono_right 2 (by omega))
+        · -- nullary constant: identity
+          have h2' : 2 ≤ (Nat.unpair (Nat.unpair (Nat.unpair c).2).1).1 := by omega
+          have hid : shiftCode j c = c := by
+            conv_lhs => rw [hc]
+            rw [shiftCode_const _ _ _ h2', ← hc]
+          rw [Function.iterate_fixed hid]
+          exact le_trans (by omega : c ≤ 9 * c + 9 * (e + 1) + 9) (self_le_tower 2 _)
+      · -- top tag at least 2: the shift is the identity
+        have h1' : 2 ≤ (Nat.unpair c).1 := by omega
+        rw [Function.iterate_fixed (shiftCode_of_two_le j h1')]
+        exact le_trans (by omega : c ≤ 9 * c + 9 * (e + 1) + 9) (self_le_tower 2 _)
 
 /-- The constructor enumeration of `natAlgSig` lists `false` before `true`: the
 sorted enumeration of the two-element label set is determined by its length,
