@@ -22,7 +22,11 @@ substitution fold is exercised on the Task 6.4.1 redex body, restating the
 `subCode_codeTm` redex-body instance through `subER_interp`, and on a variable leaf
 at the substituted level, where it lands the substituend. The β-worker fold is
 exercised on the Task 6.4.1 identity β-redex, which contracts to its argument at
-its dispatched rank, and on the nullary constant, where it is the identity.
+its dispatched rank, and on the nullary constant, where it is the identity. The
+closed-term dispatch is exercised on the β-redex, where the positive β-rank routes to
+the β worker, on the ι-spine redex, where the zero β-rank and the ι-census route to
+the ι worker, and on the nullary constant, where both guards fail and the step is the
+identity.
 
 ## References
 
@@ -345,5 +349,84 @@ example : betaStepER.interp ![betaRedex, 1] = Nat.pair 0 1 := by
 constant carries no β-redex to contract. -/
 example : betaStepER.interp ![conNode, 0] = conNode := by
   rw [betaStepER_interp, conNode, betaStepCode_const _ _ _ _ (by simp [Nat.unpair_pair])]
+
+/-- The closed-term dispatch on the Task 6.4.1 identity β-redex routes to the β
+worker: the β-rank is positive (`1`), so the step contracts the redex to its
+argument. -/
+example : stepCodeAtZeroER.interp ![betaRedex] = Nat.pair 0 1 := by
+  have hlam : isLamCode betaLamChild = true := by
+    rw [betaLamChild, isLamCode_op]; simp [Nat.unpair_pair]
+  have htop : topBetaRankCode betaRedex = 1 := by
+    rw [betaRedex, topBetaRankCode_app _ _ _ (by simp [Nat.unpair_pair]), hlam, if_pos rfl]
+    simp only [Nat.unpair_pair]
+    rw [show Nat.pair 1 (Nat.pair (codeRType RType.o) (codeRType RType.o))
+          = codeRType (RType.arrow RType.o RType.o) from rfl, ordCode_codeRType]
+    simp
+  have hc0 : betaRankCode betaLamChild = 0 := by
+    rw [betaLamChild, betaRankCode_lam _ _ (by simp [Nat.unpair_pair]), betaRankCode_var]
+  have hrank : betaRankCode betaRedex = 1 := by
+    rw [betaRedex, betaRankCode_app _ _ _ (by simp [Nat.unpair_pair]), ← betaRedex, htop, hc0,
+      betaRankCode_var]
+    decide
+  have hord : ordCode (Nat.pair 1
+      (Nat.pair (codeRType RType.o) (codeRType RType.o))) = 1 := by
+    rw [show Nat.pair 1 (Nat.pair (codeRType RType.o) (codeRType RType.o))
+        = codeRType (RType.arrow RType.o RType.o) from rfl, ordCode_codeRType]
+    simp
+  have hstep : betaStepCode 1 0 betaRedex = Nat.pair 0 1 := by
+    rw [betaRedex, betaStepCode_app _ _ _ _ _ (by simp [Nat.unpair_pair])]
+    simp only [Nat.unpair_pair]
+    rw [if_neg (by rw [hc0]; omega), if_neg (by rw [betaRankCode_var]; omega),
+      if_pos ⟨hlam, hord⟩, betaLamChild]
+    simp only [Nat.unpair_pair]
+    rw [subCode_var, if_neg (by omega), if_pos rfl]
+  rw [stepCodeAtZeroER_interp, stepCodeAt, hrank, if_pos (by omega), hstep]
+
+/-- The closed-term dispatch on the ι-spine redex routes to the ι worker: the β-rank
+is `0` and the ι-census holds, so the step contracts the root destructor miss to the
+scrutinee `conNode`. -/
+example : stepCodeAtZeroER.interp ![iotaSpineRedex] = conNode := by
+  have hrank : betaRankCode iotaSpineRedex = 0 := by
+    rw [iotaSpineRedex, betaRankCode_app _ _ _ (by simp [Nat.unpair_pair]),
+      topBetaRankCode_app _ _ _ (by simp [Nat.unpair_pair]),
+      if_neg (by rw [isLamCode_op]; simp [Nat.unpair_pair]),
+      betaRankCode_op_ge_two _ _ (by simp [Nat.unpair_pair]),
+      conNode, betaRankCode_op_ge_two _ _ (by simp [Nat.unpair_pair])]
+    simp
+  have hc0 : hasIotaCode (Nat.pair 1 (Nat.pair (Nat.pair 3 0) 0)) = false :=
+    hasIotaCode_op_ge_two _ _ (by simp [Nat.unpair_pair])
+  have hc1 : hasIotaCode conNode = false := by
+    rw [conNode]; exact hasIotaCode_op_ge_two _ _ (by simp [Nat.unpair_pair])
+  have hgate : resultShapeCode iotaSpineRedex = 0 := by
+    rw [iotaSpineRedex, resultShapeCode_app _ _ (by simp [Nat.unpair_pair])]
+    simp [codCode, argCode, shapeCode, Nat.unpair_pair]
+  have hspine : iotaSpineCode iotaSpineRedex = true := by
+    rw [iotaSpineRedex, iotaSpineCode_app _ _ _ (by simp [Nat.unpair_pair])]
+    simp only [Nat.unpair_pair]
+    rw [conNode, conHeadedCode_con _ _ (by simp [Nat.unpair_pair])]
+  have htop : topIotaCode iotaSpineRedex = true := by
+    rw [topIotaCode, if_pos hgate, hspine]
+  have hcensus : hasIotaCode iotaSpineRedex = true := by
+    conv_lhs => rw [iotaSpineRedex]
+    rw [hasIotaCode_app _ _ _ (by simp [Nat.unpair_pair]), ← iotaSpineRedex, htop,
+      Bool.true_or, Bool.true_or]
+  have hcontract : iotaContractCode iotaSpineRedex = conNode := by
+    rw [iotaSpineRedex, iotaContractCode_dstr _ _ _ _ (by simp [Nat.unpair_pair]),
+      if_neg (by rw [conNode]; simp [opKindCode, Nat.unpair_pair])]
+  have hstep : iotaStepCode iotaSpineRedex = conNode := by
+    conv_lhs => rw [iotaSpineRedex]
+    rw [iotaStepCode_app _ _ _ (by simp [Nat.unpair_pair]), ← iotaSpineRedex,
+      if_neg (by simp [hc0]), if_neg (by simp [hc1]), if_pos htop, hcontract]
+  rw [stepCodeAtZeroER_interp, stepCodeAt, hrank, if_neg (by omega), if_pos hcensus, hstep]
+
+/-- The closed-term dispatch on the nullary constant is the identity: the β-rank is
+`0` and the ι-census fails, so both dispatch guards fall through. -/
+example : stepCodeAtZeroER.interp ![conNode] = conNode := by
+  have hrank : betaRankCode conNode = 0 := by
+    rw [conNode, betaRankCode_op_ge_two _ _ (by simp [Nat.unpair_pair])]
+  have hcensus : hasIotaCode conNode = false := by
+    rw [conNode]; exact hasIotaCode_op_ge_two _ _ (by simp [Nat.unpair_pair])
+  rw [stepCodeAtZeroER_interp, stepCodeAt, hrank, if_neg (by omega),
+    if_neg (by rw [hcensus]; simp)]
 
 end GebLean.Ramified.OneLambda

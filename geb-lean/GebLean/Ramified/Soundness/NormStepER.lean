@@ -25,8 +25,9 @@ its iterate `OneLambda.shiftIterER`, and the code-level substitution `OneLambda.
 — the first gated two-dimensional fold (`ERMor1.cvRecGated`), keyed by the pair of a
 weakening depth and a code — together with the β worker `OneLambda.betaStepER`, the
 second gated two-dimensional fold, keyed by the pair of a substitution level and a
-code; the remaining folds, the
-dispatch, and the assembled `normStep` are realized in later commits. Carrying the code reads
+code; the step majorant `OneLambda.stepBoundER` and the closed-term dispatch
+`OneLambda.stepCodeAtZeroER` are realized here; the assembled `normStep` is realized in a
+later commit. Carrying the code reads
 into the
 elementary-recursive theory is
 the formal payment of the machine-model absorption Leivant III leaves to a
@@ -78,6 +79,12 @@ footnote (footnote 10, p. 226). Novel realization.
   node mirrors the four guard regimes of the `betaStepCode` application arm, composing
   `betaRankER`, `isLamER`, `ordER`, and `subER` as full calls and absorbing the
   abstraction descent's level increment into the depth component of the index.
+- `OneLambda.stepBoundER` — the step majorant, the `towerER 2` composite over the
+  quadratic polynomial `6 * (2 * (n + 1) ^ 2 + n + 1)`, realizing `stepBound`.
+- `OneLambda.stepCodeAtZeroER` — the closed-term deterministic step, the literal
+  `condN` dispatch of `stepCodeAt 0`: the sign of the β-rank read selects the β
+  worker at the code's own rank, else the ι-census read selects the ι worker, else the
+  identity.
 
 ## Main statements
 
@@ -111,6 +118,10 @@ footnote (footnote 10, p. 226). Novel realization.
   bounded by the tower-2 majorant `betaStepCode_le_tower` and its determinacy
   hypothesis (Decision Q6) discharged by strong induction on the code component of
   the index.
+- `OneLambda.stepBoundER_interp` — the step majorant interprets to `stepBound n`.
+- `OneLambda.stepCodeAtZeroER_interp` — the closed-term dispatch interprets to
+  `stepCodeAt 0 c`, unconditionally on every code, splitting on the same guards as
+  `stepCodeAt`'s definition.
 
 ## Implementation notes
 
@@ -2277,6 +2288,99 @@ the code component, and the abstraction descent pays its depth increment with
     betaExtractER betaStepBoundER c ![q] (betaTable c q) h_sane hval h_node h_det h_ext
   rw [betaExtractER_interp, betaTable_pair_of_le c q 0 c (by omega)] at key
   exact key
+
+/-- The step majorant as an `ERMor1 1` term: the `towerER 2` composite over the
+quadratic polynomial `6 * (2 * (n + 1) ^ 2 + n + 1)`, the elementary-recursive
+realization of the reference majorant `stepBound` (spec §6.1). The square is a `powN`
+read at exponent `2`. Novel realization. -/
+def stepBoundER : ERMor1 1 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.mulN (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.natN 1 6
+      | ⟨1, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun u => match u with
+              | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun v => match v with
+                  | ⟨0, _⟩ => ERMor1.natN 1 2
+                  | ⟨1, _⟩ => ERMor1.comp ERMor1.powN (fun w => match w with
+                      | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun x => match x with
+                          | ⟨0, _⟩ => ERMor1.proj 0
+                          | ⟨1, _⟩ => ERMor1.natN 1 1)
+                      | ⟨1, _⟩ => ERMor1.natN 1 2))
+              | ⟨1, _⟩ => ERMor1.proj 0)
+          | ⟨1, _⟩ => ERMor1.natN 1 1)))
+
+/-- Interpretation of `stepBoundER`: the step majorant `stepBound n`. -/
+@[simp] theorem stepBoundER_interp (n : ℕ) : stepBoundER.interp ![n] = stepBound n := by
+  simp only [stepBoundER, ERMor1.interp_comp, ERMor1.interp_towerER, ERMor1.interp_mulN,
+    ERMor1.interp_addN, ERMor1.interp_powN, ERMor1.interp_natN, ERMor1.interp_proj,
+    Matrix.cons_val_zero, stepBound]
+
+/-- The β-dispatch arm of the closed-term step: the β worker `betaStepER` composed as
+an ordinary full call at the input code and its own β-rank `betaRankER`, mirroring the
+`betaStepCode (betaRankCode c) 0 c` arm of `stepCodeAt 0`. -/
+private def betaDispatchER : ERMor1 1 :=
+  ERMor1.comp betaStepER (fun s => match s with
+    | ⟨0, _⟩ => ERMor1.proj 0
+    | ⟨1, _⟩ => betaRankER)
+
+/-- Interpretation of `betaDispatchER`: the β worker at the code's own β-rank,
+`betaStepCode (betaRankCode c) 0 c`. -/
+private theorem betaDispatchER_interp (c : ℕ) :
+    betaDispatchER.interp ![c] = betaStepCode (betaRankCode c) 0 c := by
+  have harg : (fun s : Fin 2 => ((match s with
+      | ⟨0, _⟩ => ERMor1.proj 0
+      | ⟨1, _⟩ => betaRankER) : ERMor1 1).interp ![c]) = ![c, betaRankCode c] := by
+    funext s
+    match s with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => exact betaRankER_interp c
+  rw [betaDispatchER, ERMor1.interp_comp, harg, betaStepER_interp]
+
+/-- The closed-term deterministic step as the literal `condN` dispatch of
+`stepCodeAt 0` (spec §6.1; M6): the sign of the β-rank read `signN (betaRankER c)`
+selects the β-dispatch arm `betaDispatchER`; else the ι-census read `hasIotaER c`
+selects the ι worker `iotaStepER`; else the identity `proj 0`. Novel realization. -/
+def stepCodeAtZeroER : ERMor1 1 :=
+  ERMor1.comp ERMor1.condN (fun s => match s with
+    | ⟨0, _⟩ => ERMor1.comp ERMor1.signN (fun _ : Fin 1 => betaRankER)
+    | ⟨1, _⟩ => betaDispatchER
+    | ⟨2, _⟩ => ERMor1.comp ERMor1.condN (fun t => match t with
+        | ⟨0, _⟩ => hasIotaER
+        | ⟨1, _⟩ => iotaStepER
+        | ⟨2, _⟩ => ERMor1.proj 0))
+
+/-- Interpretation of `stepCodeAtZeroER`: the closed-term deterministic step
+`stepCodeAt 0 c`, unconditionally on every code. Splits on the same guards as
+`stepCodeAt`'s definition — the positivity of `betaRankCode c` and the ι-census — the
+sign read `1 - (1 - betaRankCode c)` matching the positivity guard and the
+`Bool.toNat` census read matching the ι guard, each arm closed by the landed worker
+interpretation lemmas. -/
+theorem stepCodeAtZeroER_interp (c : ℕ) :
+    stepCodeAtZeroER.interp ![c] = stepCodeAt 0 c := by
+  simp only [stepCodeAtZeroER, ERMor1.interp_comp, ERMor1.interp_condN,
+    ERMor1.interp_signN, betaRankER_interp, betaDispatchER_interp, hasIotaER_interp,
+    iotaStepER_interp, ERMor1.interp_proj, Matrix.cons_val_zero]
+  rw [stepCodeAt]
+  by_cases h1 : 0 < betaRankCode c
+  · rw [if_pos h1]
+    have hg0 : 1 - (1 - betaRankCode c) = 1 := by omega
+    rw [hg0]
+    simp only [one_mul, Nat.sub_self, zero_mul, add_zero]
+  · rw [if_neg h1]
+    have hg0 : 1 - (1 - betaRankCode c) = 0 := by omega
+    rw [hg0]
+    simp only [zero_mul, Nat.sub_zero, one_mul, zero_add]
+    by_cases h2 : hasIotaCode c = true
+    · rw [if_pos h2]
+      have hg2 : (hasIotaCode c).toNat = 1 := by rw [h2]; rfl
+      rw [hg2]
+      simp only [one_mul, Nat.sub_self, zero_mul, add_zero]
+    · rw [if_neg h2]
+      have hg2 : (hasIotaCode c).toNat = 0 := by
+        rw [Bool.not_eq_true] at h2
+        rw [h2]; rfl
+      rw [hg2]
+      simp only [zero_mul, Nat.sub_zero, one_mul, zero_add]
 
 end OneLambda
 
