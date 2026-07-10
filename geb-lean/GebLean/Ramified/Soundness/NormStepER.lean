@@ -1,5 +1,6 @@
 import GebLean.Ramified.Soundness.CodeNormalizer
 import GebLean.Utilities.ERCourseOfValues
+import GebLean.LawvereERBoundComputable
 
 /-!
 # Ramified recurrence: the code reads as ER morphisms
@@ -16,8 +17,10 @@ type-order fold `OneLambda.ordER` — the first `ERMor1.cvRec` instantiation —
 the non-recursive top-β-rank read `OneLambda.topBetaRankER` composed from it are
 realized here, together with the `con`-headedness and ι-spine detector folds
 `OneLambda.conHeadedER`, `OneLambda.iotaSpineER`, the non-recursive sort-gated
-ι-redex read `OneLambda.topIotaER`, and the β-rank and ι-census folds
-`OneLambda.betaRankER`, `OneLambda.hasIotaER`; the remaining folds, the iterate, the
+ι-redex read `OneLambda.topIotaER`, the β-rank and ι-census folds
+`OneLambda.betaRankER`, `OneLambda.hasIotaER`, and the ι worker
+`OneLambda.iotaStepER` — the first fold that rebuilds nodes and carries a tower-2
+majorant — are realized here; the remaining folds, the iterate, the
 dispatch, and the assembled `normStep` are realized in later commits. Carrying the code reads
 into the
 elementary-recursive theory is
@@ -46,6 +49,11 @@ footnote (footnote 10, p. 226). Novel realization.
   `ERMor1.cvRec` at the nodes `betaRankNode`, `hasIotaNode`; the β-rank fold takes the
   successor of the fold slot as value bound and composes `topBetaRankER`, the ι-census
   fold the constant bound `1` and composes `topIotaER`.
+- `OneLambda.iotaStepER` — the ι worker, `ERMor1.cvRec` at the node `iotaStepNode`
+  with value bound the `towerER 2` composite over `9 * c + 9`; the node rebuilds
+  application and abstraction nodes with `natPair`, composing `hasIotaER`,
+  `topIotaER`, `iotaContractER` as full calls and β-reading the child positions for
+  the same-function descent.
 
 ## Main statements
 
@@ -63,6 +71,9 @@ footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.betaRankER_interp`, `OneLambda.hasIotaER_interp` — the β-rank and
   ι-census folds interpret to `betaRankCode` and the `Bool.toNat` of `hasIotaCode`,
   unconditionally on every code.
+- `OneLambda.iotaStepER_interp` — the ι worker interprets to `iotaStepCode`,
+  unconditionally on every code, its fold table bounded by the tower-2 majorant
+  `iotaStepCode_le_tower`.
 
 ## Implementation notes
 
@@ -903,6 +914,211 @@ carried to the maximum by `toNat_or`. -/
         · rw [if_pos h1', if_pos h1', htrace' (child0Code i) (child0Code_lt_of_shape_one i h1)]
         · rw [if_neg h1', if_neg h1']; rfl
     · rw [if_neg h1, if_neg h1]; rfl
+
+/-- Binary Gödel pairing of two reads at arity `n`: `pairER a b` interprets to the
+pairing `Nat.pair (a.interp ctx) (b.interp ctx)`, the node-rebuild constructor of
+the ι worker. -/
+private def pairER {n : ℕ} (a b : ERMor1 n) : ERMor1 n :=
+  ERMor1.comp ERMor1.natPair (fun i => match i with
+    | ⟨0, _⟩ => a
+    | ⟨1, _⟩ => b)
+
+/-- Interpretation of `pairER`: the Gödel pairing of the two reads. -/
+@[simp] private theorem pairER_interp {n : ℕ} (a b : ERMor1 n) (ctx : Fin n → ℕ) :
+    (pairER a b).interp ctx = Nat.pair (a.interp ctx) (b.interp ctx) := by
+  have key : (pairER a b).interp ctx
+      = ERMor1.natPair.interp ![a.interp ctx, b.interp ctx] := by
+    rw [pairER, ERMor1.interp_comp]
+    congr 1
+    funext i
+    match i with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+  rw [key, ERMor1.interp_natPair]
+
+/-- The operation-tag read on a code: the operation tag of an operation node
+`Nat.pair 1 (Nat.pair op pack)`, the pairing of its kind bit and payload. The node
+rebuild of the ι worker reuses it unchanged. -/
+private def opTagCode (c : ℕ) : ℕ := (Nat.unpair (Nat.unpair c).2).1
+
+/-- The ι-worker recursion of `iotaStepCode` as a nested conditional on the shape
+tag and operation kind bit of the code: an application node (shape `1`, kind `0`)
+descends into the function child when it carries an ι-redex, else the argument child,
+else contracts a saturated root ι-redex by `iotaContractCode`, else the identity; an
+abstraction node (kind `1`) descends into the body child when it carries an ι-redex;
+every other node is unchanged. Surviving nodes carry the operation tag unchanged. -/
+private theorem iotaStepCode_eq_ite (c : ℕ) :
+    iotaStepCode c =
+      (if shapeCode c = 1 then
+        (if opKindCode c = 0 then
+          (if hasIotaCode (child0Code c) = true then
+            Nat.pair 1 (Nat.pair (opTagCode c)
+              (Nat.pair (iotaStepCode (child0Code c)) (Nat.pair (child1Code c) 0)))
+          else if hasIotaCode (child1Code c) = true then
+            Nat.pair 1 (Nat.pair (opTagCode c)
+              (Nat.pair (child0Code c) (Nat.pair (iotaStepCode (child1Code c)) 0)))
+          else if topIotaCode c = true then iotaContractCode c
+          else c)
+         else if opKindCode c = 1 then
+          (if hasIotaCode (child0Code c) = true then
+            Nat.pair 1 (Nat.pair (opTagCode c)
+              (Nat.pair (iotaStepCode (child0Code c)) 0))
+          else c)
+         else c)
+      else c) := by
+  rw [iotaStepCode]
+  split <;> simp_all [shapeCode, opKindCode, child0Code, child1Code, opTagCode]
+
+/-- The operation-tag read at arity `3`: the operation tag `opTagCode i` of the fold
+slot `i`, two `Nat.unpair` components. The node-rebuild operation tag of the ι
+worker. -/
+private def opTagER3 : ERMor1 3 :=
+  ERMor1.comp ERMor1.natUnpairFst (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.natUnpairSnd (fun _ : Fin 1 => ERMor1.proj 0))
+
+/-- The node value of `opTagER3` at `(i, cand, code)`: the operation tag `opTagCode
+i`. -/
+private theorem opTagER3_interp (i cand code : ℕ) :
+    opTagER3.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      opTagCode i := by
+  simp only [opTagER3, ERMor1.interp_comp, ERMor1.interp_natUnpairFst,
+    ERMor1.interp_natUnpairSnd, cons_fin_one, ERMor1.interp_proj, Fin.cons_zero, opTagCode]
+
+/-- The height-2 tower value bound of the ι worker as an `ERMor1 1` term: the
+`towerER 2` composite over the polynomial `9 * c + 9`, the elementary-recursive
+realization of the majorant `iotaStepCode_le_tower`. -/
+private def iotaStepBoundER : ERMor1 1 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.addN (fun j => match j with
+      | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun k => match k with
+          | ⟨0, _⟩ => ERMor1.natN 1 9
+          | ⟨1, _⟩ => ERMor1.proj 0)
+      | ⟨1, _⟩ => ERMor1.natN 1 9))
+
+/-- Interpretation of `iotaStepBoundER`: the height-2 tower at `9 * c + 9`. -/
+@[simp] private theorem iotaStepBoundER_interp (ctx : Fin 1 → ℕ) :
+    iotaStepBoundER.interp ctx = tower 2 (9 * ctx 0 + 9) := by
+  simp only [iotaStepBoundER, ERMor1.interp_comp, ERMor1.interp_towerER,
+    ERMor1.interp_addN, ERMor1.interp_mulN, ERMor1.interp_natN, ERMor1.interp_proj]
+
+/-- The node of the `iotaStepCode` course-of-values fold at slots `(i, cand, code)`:
+dispatch on the shape tag and operation kind bit of the index `i`. At an application
+node the ι-census of each child is a full call of `hasIotaER` and the top ι-redex a
+full call of `topIotaER`; the same-function descent reads the recursed child off the
+β-table, the contraction is a full call of `iotaContractER`, and the surviving nodes
+are rebuilt by `pairER` with the operation tag `opTagER3`. Novel realization. -/
+private def iotaStepNode : ERMor1 3 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+    (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 0)
+      (condEqER (ERMor1.comp hasIotaER (fun _ : Fin 1 =>
+            ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0))) (ERMor1.natN 3 1)
+        (pairER (ERMor1.natN 3 1)
+          (pairER opTagER3
+            (pairER (ERMor1.betaOnCandFold
+                (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+              (pairER (ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0))
+                (ERMor1.natN 3 0)))))
+        (condEqER (ERMor1.comp hasIotaER (fun _ : Fin 1 =>
+              ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0))) (ERMor1.natN 3 1)
+          (pairER (ERMor1.natN 3 1)
+            (pairER opTagER3
+              (pairER (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0))
+                (pairER (ERMor1.betaOnCandFold
+                    (ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0)))
+                  (ERMor1.natN 3 0)))))
+          (condEqER (ERMor1.comp topIotaER (fun _ : Fin 1 => ERMor1.proj 0))
+              (ERMor1.natN 3 1)
+            (ERMor1.comp iotaContractER (fun _ : Fin 1 => ERMor1.proj 0))
+            (ERMor1.proj 0))))
+      (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+        (condEqER (ERMor1.comp hasIotaER (fun _ : Fin 1 =>
+              ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0))) (ERMor1.natN 3 1)
+          (pairER (ERMor1.natN 3 1)
+            (pairER opTagER3
+              (pairER (ERMor1.betaOnCandFold
+                  (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+                (ERMor1.natN 3 0))))
+          (ERMor1.proj 0))
+        (ERMor1.proj 0)))
+    (ERMor1.proj 0)
+
+/-- The node value of `iotaStepNode` at `(i, cand, code)` as a nested conditional on
+the shape tag and operation kind bit of `i`, with the child ι-censuses by full
+`hasIotaCode` calls, the top ι-redex by a full `topIotaCode` call, the descent read
+off the candidate β-table, and the contraction by a full `iotaContractCode` call. -/
+private theorem iotaStepNode_interp (i cand code : ℕ) :
+    iotaStepNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      if shapeCode i = 1 then
+        (if opKindCode i = 0 then
+          (if hasIotaCode (child0Code i) = true then
+            Nat.pair 1 (Nat.pair (opTagCode i)
+              (Nat.pair (cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2))
+                (Nat.pair (child1Code i) 0)))
+          else if hasIotaCode (child1Code i) = true then
+            Nat.pair 1 (Nat.pair (opTagCode i)
+              (Nat.pair (child0Code i)
+                (Nat.pair (cand.unpair.1 % (1 + (child1Code i + 1) * cand.unpair.2)) 0)))
+          else if topIotaCode i = true then iotaContractCode i
+          else i)
+         else if opKindCode i = 1 then
+          (if hasIotaCode (child0Code i) = true then
+            Nat.pair 1 (Nat.pair (opTagCode i)
+              (Nat.pair (cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2)) 0))
+          else i)
+         else i)
+      else i := by
+  simp only [iotaStepNode, condEqER_interp, opTagER3_interp, pairER_interp,
+    ERMor1.interp_comp, ERMor1.interp_betaOnCandFold, ERMor1.interp_natN,
+    ERMor1.interp_proj, Fin.cons_zero, cons_fin_one, shapeER_interp, opKindER_interp,
+    child0ER_interp, child1ER_interp, hasIotaER_interp, topIotaER_interp,
+    iotaContractER_interp, Bool.toNat_eq_one]
+
+/-- The ι worker as an elementary-recursive course-of-values fold: `ERMor1.cvRec` at
+fold slot the code and node `iotaStepNode`, with value bound the height-2 tower
+composite `iotaStepBoundER` over `9 * c + 9` — the first fold with a tower-2
+majorant. The node composes `hasIotaER`, `topIotaER`, `iotaContractER` as ordinary
+full calls and rebuilds surviving nodes with `pairER`; only the same-function descent
+goes through the β-table. Realizes the strong recursion of `iotaStepCode` (Leivant III
+section 4.2, pp. 223-224; the machine-model absorption of footnote 10, p. 226) as a
+single bounded β-witness search. Novel realization. -/
+def iotaStepER : ERMor1 1 := ERMor1.cvRec iotaStepNode iotaStepBoundER
+
+/-- Interpretation of `iotaStepER`: the ι worker `iotaStepCode`, unconditionally on
+every code. Discharges the hypotheses of `ERMor1.interp_cvRec_of_bounded` with
+`f := iotaStepCode`: the value bound `iotaStepCode_le_tower`, its monotonicity from
+`tower_mono_right` on `9 * j + 9 ≤ 9 * code + 9`, and node faithfulness from
+`iotaStepCode_eq_ite` with the recursed children strictly below the index
+(`child0Code_lt_of_shape_one`, `child1Code_lt_of_shape_one`). -/
+@[simp] theorem iotaStepER_interp (c : ℕ) : iotaStepER.interp ![c] = iotaStepCode c := by
+  refine ERMor1.interp_cvRec_of_bounded iotaStepNode iotaStepBoundER c ![] iotaStepCode
+    (fun j _ => ?_) (fun j hj => ?_) (fun i _ cand htrace => ?_)
+  · simp only [iotaStepBoundER_interp, Fin.cons_zero]
+    exact iotaStepCode_le_tower j
+  · simp only [iotaStepBoundER_interp, Fin.cons_zero]
+    exact tower_mono_right 2 (by omega)
+  · change iotaStepNode.interp _ = iotaStepCode i
+    rw [iotaStepNode_interp i cand c, iotaStepCode_eq_ite i]
+    by_cases h1 : shapeCode i = 1
+    · rw [if_pos h1, if_pos h1]
+      by_cases h0 : opKindCode i = 0
+      · rw [if_pos h0, if_pos h0]
+        by_cases hI0 : hasIotaCode (child0Code i) = true
+        · rw [if_pos hI0, if_pos hI0,
+            htrace (child0Code i) (child0Code_lt_of_shape_one i h1)]
+        · rw [if_neg hI0, if_neg hI0]
+          by_cases hI1 : hasIotaCode (child1Code i) = true
+          · rw [if_pos hI1, if_pos hI1,
+              htrace (child1Code i) (child1Code_lt_of_shape_one i h1)]
+          · rw [if_neg hI1, if_neg hI1]
+      · rw [if_neg h0, if_neg h0]
+        by_cases h1k : opKindCode i = 1
+        · rw [if_pos h1k, if_pos h1k]
+          by_cases hI0 : hasIotaCode (child0Code i) = true
+          · rw [if_pos hI0, if_pos hI0,
+              htrace (child0Code i) (child0Code_lt_of_shape_one i h1)]
+          · rw [if_neg hI0, if_neg hI0]
+        · rw [if_neg h1k, if_neg h1k]
+    · rw [if_neg h1, if_neg h1]
 
 end OneLambda
 

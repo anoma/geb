@@ -12,7 +12,9 @@ operation-node codes and a saturated destructor redex, through the `@[simp]`
 interpretation lemmas and the code-level node equations (no kernel reduction on
 the reads). The β-rank and ι-census folds are exercised on a β-redex (rank `1`) and
 an ι-spine redex (census `1`), and on a nullary constant (rank and census `0`),
-through the fold interpretation lemmas and the code-level node equations.
+through the fold interpretation lemmas and the code-level node equations. The ι
+worker is exercised on the ι-spine redex, where it contracts the root destructor
+miss to the scrutinee, and on the nullary constant, where it is the identity.
 
 ## References
 
@@ -236,5 +238,36 @@ carries no ι-redex. -/
 example : hasIotaER.interp ![conNode] = 0 := by
   rw [hasIotaER_interp, conNode, hasIotaCode_op_ge_two _ _ (by simp [Nat.unpair_pair])]
   rfl
+
+/-- The ι worker on the ι-spine redex contracts the root destructor miss to the
+scrutinee `conNode`: neither child carries an ι-redex, the node is a saturated top
+ι-redex, and `iotaContractCode` reads the destructor miss. -/
+example : iotaStepER.interp ![iotaSpineRedex] = conNode := by
+  have hc0 : hasIotaCode (Nat.pair 1 (Nat.pair (Nat.pair 3 0) 0)) = false :=
+    hasIotaCode_op_ge_two _ _ (by simp [Nat.unpair_pair])
+  have hc1 : hasIotaCode conNode = false := by
+    rw [conNode]; exact hasIotaCode_op_ge_two _ _ (by simp [Nat.unpair_pair])
+  have hgate : resultShapeCode iotaSpineRedex = 0 := by
+    rw [iotaSpineRedex, resultShapeCode_app _ _ (by simp [Nat.unpair_pair])]
+    simp [codCode, argCode, shapeCode, Nat.unpair_pair]
+  have hspine : iotaSpineCode iotaSpineRedex = true := by
+    rw [iotaSpineRedex, iotaSpineCode_app _ _ _ (by simp [Nat.unpair_pair])]
+    simp only [Nat.unpair_pair]
+    rw [conNode, conHeadedCode_con _ _ (by simp [Nat.unpair_pair])]
+  have htop : topIotaCode iotaSpineRedex = true := by
+    rw [topIotaCode, if_pos hgate, hspine]
+  have hcontract : iotaContractCode iotaSpineRedex = conNode := by
+    rw [iotaSpineRedex, iotaContractCode_dstr _ _ _ _ (by simp [Nat.unpair_pair]),
+      if_neg (by rw [conNode]; simp [opKindCode, Nat.unpair_pair])]
+  have hstep : iotaStepCode iotaSpineRedex = conNode := by
+    conv_lhs => rw [iotaSpineRedex]
+    rw [iotaStepCode_app _ _ _ (by simp [Nat.unpair_pair]), ← iotaSpineRedex,
+      if_neg (by simp [hc0]), if_neg (by simp [hc1]), if_pos htop, hcontract]
+  rw [iotaStepER_interp, hstep]
+
+/-- The ι worker on the constructor-constant node is the identity: a nullary constant
+carries no ι-redex to contract. -/
+example : iotaStepER.interp ![conNode] = conNode := by
+  rw [iotaStepER_interp, conNode, iotaStepCode_const _ _ (by simp [Nat.unpair_pair])]
 
 end GebLean.Ramified.OneLambda
