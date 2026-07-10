@@ -105,6 +105,9 @@ term-level weakening that `Binding.instantiate₁` applies to `e` under a binder
   the code-level substitution over an iterated weakening:
   `subCode j ((shiftCode j)^[d] e) m ≤ tower 2 (18 * m + 9 * e + 9 * d + 18)`,
   the value bound of the substitution fold's elementary-recursive realization.
+* `OneLambda.betaStepCode_le_tower` — the height-2 tower majorant of the β
+  worker: `betaStepCode q d m ≤ tower 2 (27 * m + 9 * d + 18)`, the value bound
+  of the β-worker fold's elementary-recursive realization.
 * `OneLambda.stepCode_le_stepBound`, `OneLambda.stepBound_mono` — the majorant
   pair of the reference step on codes.
 * `OneLambda.size_le_codeTm_succ`, `OneLambda.sortPayload_le_codeTm` — the
@@ -2428,6 +2431,81 @@ theorem subCode_shift_iterate_le_tower (j d e m : ℕ) :
       have h1' : 2 ≤ (Nat.unpair c).1 := by omega
       rw [subCode_of_two_le _ _ h1']
       exact le_trans (by omega : c ≤ 18 * c + 9 * e + 9 * d + 18) (self_le_tower 2 _)
+
+/-- The height-2 tower majorant of the β worker (Leivant III section 4.2, p. 224;
+the machine-model absorption of footnote 10, p. 226):
+`betaStepCode q d m ≤ tower 2 (27 * m + 9 * d + 18)`. Strong induction on the
+code with the substitution level universally quantified: each descent rebuilds
+one node with `pair_le_tower_two` pairings, paid for by the recursive child
+sitting strictly below the node; the abstraction descent also pays the level
+increment, the code coefficient `27` exceeding the level coefficient `9` by the
+node-rebuild budget; the contraction arm lands the substitution majorant
+`subCode_shift_iterate_le_tower` at weakening depth `0`, with substituend and
+body both strictly below the node. Value bound of the β-worker fold's
+elementary-recursive realization. Novel realization. -/
+theorem betaStepCode_le_tower (q d m : ℕ) :
+    betaStepCode q d m ≤ tower 2 (27 * m + 9 * d + 18) := by
+  induction m using Nat.strong_induction_on generalizing d with
+  | _ c ih =>
+    rw [betaStepCode]
+    split
+    · -- application node (shape `1`, kind `0`)
+      rename_i hs _
+      have hp : (Nat.unpair c).2 < c := unpair_snd_lt_of_shape_one c hs
+      have hop_le : (Nat.unpair (Nat.unpair c).2).1 ≤ tower 2 (27 * c + 9 * d + 9) :=
+        le_trans (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+          (le_trans (by omega : c ≤ 27 * c + 9 * d + 9) (self_le_tower 2 _))
+      have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+      have hc1 : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.unpair_right_le _)) hp
+      split_ifs
+      · -- descend into the function child
+        refine le_trans (shift_node4_le_tower (z := 27 * c + 9 * d + 9) (by omega)
+          hop_le ?_ ?_) (tower_mono_right 2 (by omega))
+        · exact le_trans (ih _ hc0 d) (tower_mono_right 2 (by omega))
+        · exact le_trans (le_of_lt hc1)
+            (le_trans (by omega : c ≤ 27 * c + 9 * d + 9) (self_le_tower 2 _))
+      · -- descend into the argument child
+        refine le_trans (shift_node4_le_tower (z := 27 * c + 9 * d + 9) (by omega)
+          hop_le ?_ ?_) (tower_mono_right 2 (by omega))
+        · exact le_trans (le_of_lt hc0)
+            (le_trans (by omega : c ≤ 27 * c + 9 * d + 9) (self_le_tower 2 _))
+        · exact le_trans (ih _ hc1 d) (tower_mono_right 2 (by omega))
+      · -- contract the root β-redex at weakening depth `0`
+        have hbody : (Nat.unpair (Nat.unpair
+            (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1).2).2).1 < c :=
+          Nat.lt_of_le_of_lt
+            (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+            (Nat.lt_of_le_of_lt (Nat.unpair_right_le _) hc0)
+        have hstep := subCode_shift_iterate_le_tower d 0
+          (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).2).1
+          (Nat.unpair (Nat.unpair
+            (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1).2).2).1
+        rw [Function.iterate_zero_apply] at hstep
+        exact le_trans hstep (tower_mono_right 2 (by omega))
+      · -- identity
+        exact le_trans (by omega : c ≤ 27 * c + 9 * d + 18) (self_le_tower 2 _)
+    · -- abstraction node (shape `1`, kind `1`)
+      rename_i hs _
+      have hp : (Nat.unpair c).2 < c := unpair_snd_lt_of_shape_one c hs
+      have hc0 : (Nat.unpair (Nat.unpair (Nat.unpair c).2).2).1 < c :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _)) hp
+      split_ifs
+      · -- descend into the body child at the incremented level
+        refine le_trans (shift_node3_le_tower (z := 27 * c + 9 * d + 9) (by omega)
+          (le_trans (le_trans (Nat.unpair_left_le _) (le_of_lt hp))
+            (le_trans (by omega : c ≤ 27 * c + 9 * d + 9) (self_le_tower 2 _))) ?_)
+          (tower_mono_right 2 (by omega))
+        exact le_trans (ih _ hc0 (d + 1)) (tower_mono_right 2 (by omega))
+      · -- identity
+        exact le_trans (by omega : c ≤ 27 * c + 9 * d + 18) (self_le_tower 2 _)
+    · -- every other node is unchanged
+      exact le_trans (by omega : c ≤ 27 * c + 9 * d + 18) (self_le_tower 2 _)
 
 /-- The constructor enumeration of `natAlgSig` lists `false` before `true`: the
 sorted enumeration of the two-element label set is determined by its length,
