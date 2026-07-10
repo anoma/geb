@@ -15,9 +15,10 @@ elementary-recursive Gödel-arithmetic generators (`ERMor1.natUnpairFst`,
 type-order fold `OneLambda.ordER` — the first `ERMor1.cvRec` instantiation — and
 the non-recursive top-β-rank read `OneLambda.topBetaRankER` composed from it are
 realized here, together with the `con`-headedness and ι-spine detector folds
-`OneLambda.conHeadedER`, `OneLambda.iotaSpineER` and the non-recursive sort-gated
-ι-redex read `OneLambda.topIotaER`; the remaining folds, the iterate, the dispatch,
-and the assembled `normStep` are realized in later commits. Carrying the code reads
+`OneLambda.conHeadedER`, `OneLambda.iotaSpineER`, the non-recursive sort-gated
+ι-redex read `OneLambda.topIotaER`, and the β-rank and ι-census folds
+`OneLambda.betaRankER`, `OneLambda.hasIotaER`; the remaining folds, the iterate, the
+dispatch, and the assembled `normStep` are realized in later commits. Carrying the code reads
 into the
 elementary-recursive theory is
 the formal payment of the machine-model absorption Leivant III leaves to a
@@ -41,6 +42,10 @@ footnote (footnote 10, p. 226). Novel realization.
   `conHeadedNode`, `iotaSpineNode` with constant value bound `1`; `OneLambda.topIotaER`
   — the non-recursive sort-gated ι-redex read composing `resultShapeER` and
   `iotaSpineER`.
+- `OneLambda.betaRankER`, `OneLambda.hasIotaER` — the β-rank and ι-census folds,
+  `ERMor1.cvRec` at the nodes `betaRankNode`, `hasIotaNode`; the β-rank fold takes the
+  successor of the fold slot as value bound and composes `topBetaRankER`, the ι-census
+  fold the constant bound `1` and composes `topIotaER`.
 
 ## Main statements
 
@@ -55,6 +60,9 @@ footnote (footnote 10, p. 226). Novel realization.
   `OneLambda.topIotaER_interp` — the `con`-headedness, ι-spine, and sort-gated
   ι-redex detectors interpret to the `Bool.toNat` of `conHeadedCode`,
   `iotaSpineCode`, `topIotaCode`, unconditionally on every code.
+- `OneLambda.betaRankER_interp`, `OneLambda.hasIotaER_interp` — the β-rank and
+  ι-census folds interpret to `betaRankCode` and the `Bool.toNat` of `hasIotaCode`,
+  unconditionally on every code.
 
 ## Implementation notes
 
@@ -488,6 +496,17 @@ private theorem child0Code_lt_of_shape_one (n : ℕ) (h : shapeCode n = 1) :
     (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
     (argCode_lt_of_shape_one n h)
 
+/-- The second child code of a shape-`1` code sits strictly below it:
+`child1Code n < n`. Three `Nat.unpair` descents below the argument code, itself
+strictly below `n` by `argCode_lt_of_shape_one`. Descent input shared by the β-rank
+and ι-census folds. -/
+private theorem child1Code_lt_of_shape_one (n : ℕ) (h : shapeCode n = 1) :
+    child1Code n < n :=
+  Nat.lt_of_le_of_lt
+    (le_trans (le_trans (Nat.unpair_left_le _) (Nat.unpair_right_le _))
+      (Nat.unpair_right_le _))
+    (argCode_lt_of_shape_one n h)
+
 /-- The `con`-headedness recursion of `conHeadedCode` as a nested conditional on
 the shape tag and operation kind bit of the code: an application node (shape `1`,
 kind `0`) descends into the function child code; a constructor node (kind `2`) is
@@ -694,6 +713,196 @@ detector `topIotaCode`, unconditionally on every code. -/
   by_cases h : resultShapeCode c = 0
   · rw [if_pos h, if_pos h]
   · rw [if_neg h, if_neg h]; rfl
+
+/-- `Bool.toNat` carries Boolean disjunction to the maximum of the truth values. -/
+private theorem toNat_or (x y : Bool) : (x || y).toNat = max x.toNat y.toNat := by
+  cases x <;> cases y <;> rfl
+
+/-- The β-rank recursion of `betaRankCode` as a nested conditional on the shape tag
+and operation kind bit of the code: an application node (shape `1`, kind `0`) maxes
+the top β-rank with the β-ranks of both children; an abstraction node (kind `1`)
+recurses into its body child; every other node is `0`. -/
+private theorem betaRankCode_eq_ite (c : ℕ) :
+    betaRankCode c =
+      (if shapeCode c = 1 then
+        (if opKindCode c = 0 then
+          max (topBetaRankCode c)
+            (max (betaRankCode (child0Code c)) (betaRankCode (child1Code c)))
+         else if opKindCode c = 1 then betaRankCode (child0Code c)
+         else 0)
+      else 0) := by
+  rw [betaRankCode]
+  split <;> simp_all [shapeCode, opKindCode, child0Code, child1Code]
+
+/-- The node of the `betaRankCode` course-of-values fold at slots `(i, cand, code)`:
+dispatch on the shape tag and operation kind bit of the index `i`. At an application
+node (shape `1`, kind `0`) it maxes the top β-rank (a full call of `topBetaRankER`)
+with the two child β-ranks read off the β-table at `child0Code i` and `child1Code i`;
+an abstraction node (kind `1`) reads the single child β-rank; every other node
+returns `0`. Same-function recursion goes through the β-table; the top-β-rank helper
+is composed as an ordinary full call. Novel realization. -/
+private def betaRankNode : ERMor1 3 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+    (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 0)
+      (ERMor1.comp maxN (fun i => match i with
+        | ⟨0, _⟩ => ERMor1.comp topBetaRankER (fun _ : Fin 1 => ERMor1.proj 0)
+        | ⟨1, _⟩ => ERMor1.comp maxN (fun j => match j with
+            | ⟨0, _⟩ =>
+                ERMor1.betaOnCandFold (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0))
+            | ⟨1, _⟩ =>
+                ERMor1.betaOnCandFold (ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0)))))
+      (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+        (ERMor1.betaOnCandFold (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+        (ERMor1.natN 3 0)))
+    (ERMor1.natN 3 0)
+
+/-- The node value of `betaRankNode` at `(i, cand, code)` as a nested conditional on
+the shape tag and operation kind bit of `i`, with the top β-rank by a full
+`topBetaRankCode` call and the child β-ranks read off the candidate β-table. -/
+private theorem betaRankNode_interp (i cand code : ℕ) :
+    betaRankNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      if shapeCode i = 1 then
+        (if opKindCode i = 0 then
+          max (topBetaRankCode i)
+            (max (cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2))
+              (cand.unpair.1 % (1 + (child1Code i + 1) * cand.unpair.2)))
+         else if opKindCode i = 1 then
+           cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2)
+         else 0)
+      else 0 := by
+  simp only [betaRankNode, condEqER_interp, maxN_interp, ERMor1.interp_comp,
+    ERMor1.interp_betaOnCandFold, ERMor1.interp_natN, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, shapeER_interp, opKindER_interp, child0ER_interp, child1ER_interp,
+    topBetaRankER_interp]
+
+/-- The β-rank measure as an elementary-recursive course-of-values fold:
+`ERMor1.cvRec` at fold slot the code and node `betaRankNode`, with value bound the
+successor of the fold slot (`betaRankCode_le_succ`). The node composes
+`topBetaRankER` as an ordinary full call; only the same-function descent goes through
+the β-table. Realizes the strong recursion of `betaRankCode` (Leivant III
+section 4.2, pp. 223-224) as a single bounded β-witness search. Novel realization. -/
+def betaRankER : ERMor1 1 :=
+  ERMor1.cvRec betaRankNode (ERMor1.comp ERMor1.succ (fun _ : Fin 1 => ERMor1.proj 0))
+
+/-- Interpretation of `betaRankER`: the β-rank measure `betaRankCode`, unconditionally
+on every code. Discharges the hypotheses of `ERMor1.interp_cvRec_of_bounded` with
+`f := betaRankCode`: the value bound `betaRankCode_le_succ`, its monotonicity from
+`j ≤ code` giving `j + 1 ≤ code + 1`, and node faithfulness from `betaRankCode_eq_ite`
+with the two children strictly below the index (`child0Code_lt_of_shape_one`,
+`child1Code_lt_of_shape_one`). -/
+@[simp] theorem betaRankER_interp (c : ℕ) : betaRankER.interp ![c] = betaRankCode c := by
+  refine ERMor1.interp_cvRec_of_bounded betaRankNode
+    (ERMor1.comp ERMor1.succ (fun _ : Fin 1 => ERMor1.proj 0)) c ![] betaRankCode
+    (fun j _ => ?_) (fun j hj => ?_) (fun i _ cand htrace => ?_)
+  · simp only [ERMor1.interp_comp, ERMor1.interp_succ, ERMor1.interp_proj, Fin.cons_zero]
+    exact betaRankCode_le_succ j
+  · simp only [ERMor1.interp_comp, ERMor1.interp_succ, ERMor1.interp_proj, Fin.cons_zero]
+    omega
+  · change betaRankNode.interp _ = betaRankCode i
+    rw [betaRankNode_interp i cand c, betaRankCode_eq_ite i]
+    by_cases h1 : shapeCode i = 1
+    · rw [if_pos h1, if_pos h1]
+      by_cases h0 : opKindCode i = 0
+      · rw [if_pos h0, if_pos h0, htrace (child0Code i) (child0Code_lt_of_shape_one i h1),
+          htrace (child1Code i) (child1Code_lt_of_shape_one i h1)]
+      · rw [if_neg h0, if_neg h0]
+        by_cases h1' : opKindCode i = 1
+        · rw [if_pos h1', if_pos h1', htrace (child0Code i) (child0Code_lt_of_shape_one i h1)]
+        · rw [if_neg h1', if_neg h1']
+    · rw [if_neg h1, if_neg h1]
+
+/-- The ι-census recursion of `hasIotaCode` as a nested conditional on the shape tag
+and operation kind bit of the code: an application node (shape `1`, kind `0`) disjoins
+the top ι-redex detector with the census of both children; an abstraction node
+(kind `1`) recurses into its body child; every other node is `false`. -/
+private theorem hasIotaCode_eq_ite (c : ℕ) :
+    hasIotaCode c =
+      (if shapeCode c = 1 then
+        (if opKindCode c = 0 then
+          (topIotaCode c || hasIotaCode (child0Code c) || hasIotaCode (child1Code c))
+         else if opKindCode c = 1 then hasIotaCode (child0Code c)
+         else false)
+      else false) := by
+  rw [hasIotaCode]
+  split <;> simp_all [shapeCode, opKindCode, child0Code, child1Code]
+
+/-- The node of the `hasIotaCode` course-of-values fold at slots `(i, cand, code)`:
+dispatch on the shape tag and operation kind bit of the index `i`. At an application
+node (shape `1`, kind `0`) it maxes the top ι-redex census (a full call of `topIotaER`)
+with the two child censuses read off the β-table at `child0Code i` and `child1Code i`;
+an abstraction node (kind `1`) reads the single child census; every other node returns
+`0`. Same-function recursion goes through the β-table; the top-ι helper is composed as
+an ordinary full call. `Bool` disjunction is the maximum of the `{0, 1}`-valued reads
+(`toNat_or`). Novel realization. -/
+private def hasIotaNode : ERMor1 3 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+    (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 0)
+      (ERMor1.comp maxN (fun i => match i with
+        | ⟨0, _⟩ => ERMor1.comp maxN (fun j => match j with
+            | ⟨0, _⟩ => ERMor1.comp topIotaER (fun _ : Fin 1 => ERMor1.proj 0)
+            | ⟨1, _⟩ =>
+                ERMor1.betaOnCandFold (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+        | ⟨1, _⟩ =>
+            ERMor1.betaOnCandFold (ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0))))
+      (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+        (ERMor1.betaOnCandFold (ERMor1.comp child0ER (fun _ : Fin 1 => ERMor1.proj 0)))
+        (ERMor1.natN 3 0)))
+    (ERMor1.natN 3 0)
+
+/-- The node value of `hasIotaNode` at `(i, cand, code)` as a nested conditional on the
+shape tag and operation kind bit of `i`, with the top census by a full `topIotaCode`
+call and the child censuses read off the candidate β-table. -/
+private theorem hasIotaNode_interp (i cand code : ℕ) :
+    hasIotaNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      if shapeCode i = 1 then
+        (if opKindCode i = 0 then
+          max (max (topIotaCode i).toNat
+            (cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2)))
+            (cand.unpair.1 % (1 + (child1Code i + 1) * cand.unpair.2))
+         else if opKindCode i = 1 then
+           cand.unpair.1 % (1 + (child0Code i + 1) * cand.unpair.2)
+         else 0)
+      else 0 := by
+  simp only [hasIotaNode, condEqER_interp, maxN_interp, ERMor1.interp_comp,
+    ERMor1.interp_betaOnCandFold, ERMor1.interp_natN, ERMor1.interp_proj, Fin.cons_zero,
+    cons_fin_one, shapeER_interp, opKindER_interp, child0ER_interp, child1ER_interp,
+    topIotaER_interp]
+
+/-- The ι-census detector as an elementary-recursive course-of-values fold:
+`ERMor1.cvRec` at fold slot the code and node `hasIotaNode`, with constant value bound
+`1` (Decision Q3, `Bool.toNat`-valued). The node composes `topIotaER` as an ordinary
+full call; only the same-function descent goes through the β-table. Realizes the strong
+recursion of `hasIotaCode` (Leivant III section 4.2, pp. 223-224) as a single bounded
+β-witness search. Novel realization. -/
+def hasIotaER : ERMor1 1 := ERMor1.cvRec hasIotaNode (ERMor1.oneN 1)
+
+/-- Interpretation of `hasIotaER`: the `Bool.toNat` of the ι-census detector
+`hasIotaCode`, unconditionally on every code. Discharges the hypotheses of
+`ERMor1.interp_cvRec_of_bounded` with `f := fun j => (hasIotaCode j).toNat`: the
+constant value bound `1`, its monotonicity, and node faithfulness from
+`hasIotaCode_eq_ite` with the two children strictly below the index
+(`child0Code_lt_of_shape_one`, `child1Code_lt_of_shape_one`), the `Bool` disjunction
+carried to the maximum by `toNat_or`. -/
+@[simp] theorem hasIotaER_interp (c : ℕ) : hasIotaER.interp ![c] = (hasIotaCode c).toNat := by
+  refine ERMor1.interp_cvRec_of_bounded hasIotaNode (ERMor1.oneN 1) c ![]
+    (fun j => (hasIotaCode j).toNat) (fun j _ => ?_) (fun j _ => ?_)
+    (fun i _ cand htrace => ?_)
+  · cases h : hasIotaCode j <;> simp [h]
+  · simp
+  · have htrace' : ∀ p, p < i →
+        cand.unpair.1 % (1 + (p + 1) * cand.unpair.2) = (hasIotaCode p).toNat := htrace
+    change hasIotaNode.interp _ = (hasIotaCode i).toNat
+    rw [hasIotaNode_interp i cand c, hasIotaCode_eq_ite i]
+    by_cases h1 : shapeCode i = 1
+    · rw [if_pos h1, if_pos h1]
+      by_cases h0 : opKindCode i = 0
+      · rw [if_pos h0, if_pos h0, htrace' (child0Code i) (child0Code_lt_of_shape_one i h1),
+          htrace' (child1Code i) (child1Code_lt_of_shape_one i h1), toNat_or, toNat_or]
+      · rw [if_neg h0, if_neg h0]
+        by_cases h1' : opKindCode i = 1
+        · rw [if_pos h1', if_pos h1', htrace' (child0Code i) (child0Code_lt_of_shape_one i h1)]
+        · rw [if_neg h1', if_neg h1']; rfl
+    · rw [if_neg h1, if_neg h1]; rfl
 
 end OneLambda
 

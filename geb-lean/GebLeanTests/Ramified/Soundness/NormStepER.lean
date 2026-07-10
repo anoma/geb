@@ -10,7 +10,9 @@ the mirrored ℕ-level function reads. The sort-code reads are exercised on the
 arrow type code `o → o`; the operation-node and derived reads on canonical
 operation-node codes and a saturated destructor redex, through the `@[simp]`
 interpretation lemmas and the code-level node equations (no kernel reduction on
-the reads).
+the reads). The β-rank and ι-census folds are exercised on a β-redex (rank `1`) and
+an ι-spine redex (census `1`), and on a nullary constant (rank and census `0`),
+through the fold interpretation lemmas and the code-level node equations.
 
 ## References
 
@@ -173,6 +175,66 @@ example : topIotaER.interp ![iotaSpineRedex] = 1 := by
     rw [iotaSpineRedex, resultShapeCode_app _ _ (by simp [Nat.unpair_pair])]
     simp [codCode, argCode, shapeCode, Nat.unpair_pair]
   rw [topIotaER_interp, topIotaCode, if_pos hgate, hspine]
+  rfl
+
+/-- The abstraction child of the β-redex: a `lam` node (kind bit `1`) of arrow sort
+`o → o` over a variable body. -/
+private def betaLamChild : ℕ :=
+  Nat.pair 1 (Nat.pair (Nat.pair 1 0) (Nat.pair (Nat.pair 0 0) 0))
+
+/-- A β-redex code: the application (kind bit `0`, arrow-sort payload `o → o`) of the
+abstraction `betaLamChild` to a variable argument. The Task 6.4.1 redex-family
+instance whose β-rank the fold reads. -/
+private def betaRedex : ℕ :=
+  Nat.pair 1 (Nat.pair (Nat.pair 0 (Nat.pair (codeRType RType.o) (codeRType RType.o)))
+    (Nat.pair betaLamChild (Nat.pair (Nat.pair 0 1) 0)))
+
+/-- The β-rank fold on the β-redex reads rank `1`: the applied abstraction has arrow
+sort `o → o` of order `1`, and neither child carries a redex. -/
+example : betaRankER.interp ![betaRedex] = 1 := by
+  have hlam : isLamCode betaLamChild = true := by
+    rw [betaLamChild, isLamCode_op]; simp [Nat.unpair_pair]
+  have htop : topBetaRankCode betaRedex = 1 := by
+    rw [betaRedex, topBetaRankCode_app _ _ _ (by simp [Nat.unpair_pair]), hlam, if_pos rfl]
+    simp only [Nat.unpair_pair]
+    rw [show Nat.pair 1 (Nat.pair (codeRType RType.o) (codeRType RType.o))
+          = codeRType (RType.arrow RType.o RType.o) from rfl, ordCode_codeRType]
+    simp
+  have hc0 : betaRankCode betaLamChild = 0 := by
+    rw [betaLamChild, betaRankCode_lam _ _ (by simp [Nat.unpair_pair]), betaRankCode_var]
+  have hrank : betaRankCode betaRedex = 1 := by
+    rw [betaRedex, betaRankCode_app _ _ _ (by simp [Nat.unpair_pair]), ← betaRedex, htop, hc0,
+      betaRankCode_var]
+    decide
+  rw [betaRankER_interp, hrank]
+
+/-- The β-rank fold on the constructor-constant node reads `0`: a nullary constant is
+no redex. -/
+example : betaRankER.interp ![conNode] = 0 := by
+  rw [betaRankER_interp, conNode, betaRankCode_op_ge_two _ _ (by simp [Nat.unpair_pair])]
+
+/-- The ι-census fold on the ι-spine redex reads `1`: the redex is itself a top
+ι-redex (Decision Q3). -/
+example : hasIotaER.interp ![iotaSpineRedex] = 1 := by
+  have hspine : iotaSpineCode iotaSpineRedex = true := by
+    rw [iotaSpineRedex, iotaSpineCode_app _ _ _ (by simp [Nat.unpair_pair])]
+    simp only [Nat.unpair_pair]
+    rw [conNode, conHeadedCode_con _ _ (by simp [Nat.unpair_pair])]
+  have hgate : resultShapeCode iotaSpineRedex = 0 := by
+    rw [iotaSpineRedex, resultShapeCode_app _ _ (by simp [Nat.unpair_pair])]
+    simp [codCode, argCode, shapeCode, Nat.unpair_pair]
+  have htop : topIotaCode iotaSpineRedex = true := by
+    rw [topIotaCode, if_pos hgate, hspine]
+  have hcensus : hasIotaCode iotaSpineRedex = true := by
+    conv_lhs => rw [iotaSpineRedex]
+    rw [hasIotaCode_app _ _ _ (by simp [Nat.unpair_pair]), ← iotaSpineRedex, htop,
+      Bool.true_or, Bool.true_or]
+  rw [hasIotaER_interp, hcensus]; rfl
+
+/-- The ι-census fold on the constructor-constant node reads `0`: a nullary constant
+carries no ι-redex. -/
+example : hasIotaER.interp ![conNode] = 0 := by
+  rw [hasIotaER_interp, conNode, hasIotaCode_op_ge_two _ _ (by simp [Nat.unpair_pair])]
   rfl
 
 end GebLean.Ramified.OneLambda
