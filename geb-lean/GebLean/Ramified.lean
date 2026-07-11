@@ -11,6 +11,7 @@ import GebLean.Ramified.Algebras
 import GebLean.Ramified.FirstOrder
 import GebLean.Ramified.Definability
 import GebLean.Ramified.Soundness
+import GebLean.Ramified.Characterization
 
 /-!
 # Ramified recurrence
@@ -46,7 +47,13 @@ identifier summands restricted to the `FirstOrder` subtype), and the inclusion
 functor `foInclusion` into the host `RMRecCat` (`FirstOrder`). Phase 5 opens the
 definability development (`Definability`): the case function `ramCase`, the destructor
 `ramDstr`, and the selector `chooseIdent`, the building blocks of Leivant III's Lemma 2
-reduction of simultaneous recurrence to plain recurrence.
+reduction of simultaneous recurrence to plain recurrence. Phase 6 packages the
+soundness direction (`Soundness`): the first-order syntactic category
+`SynCatFO` and the faithful collapse functor `collapseFunctor` into
+`LawvereERCat`. Phase 7 assembles the elementary characterization
+(`Characterization`): the definability statement `ramified_definability` over
+the collapse denotation, paired with the collapse functor's faithfulness as
+the denotational form of Leivant III's Theorem 14 items (1)-(2).
 
 ## References
 
