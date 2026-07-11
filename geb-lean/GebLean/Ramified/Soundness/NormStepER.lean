@@ -184,8 +184,16 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
   `OneLambda.size_applied_le`, `OneLambda.sortPayload_applied_le` — the per-`F`
   ceilings dominate the applied term's measures, the rank and payload uniformly
   and the height and size up to the input numeral.
+- `OneLambda.clockER_interp` — the in-system clock interprets to the Lemma 12
+  clock at the per-`F` ceilings, `(rankCeil F + 1) * tower (rankCeil F + 1)
+  (heightCeil F + n)`.
+- `OneLambda.detClock_applied_le` — the Lemma 12 clock at the per-`F` ceilings
+  dominates the deterministic `detClock` of the applied bar-image term.
 - `OneLambda.clockER_dominates` — the in-system clock dominates the deterministic
   Lemma 12 clock of the applied bar-image term at every input numeral.
+- `OneLambda.budgetER_interp` — the in-system budget interprets to the chain
+  ceiling shape at the per-`F` ceilings, a height-`2` tower over the clocked
+  polynomial-and-exponential expression in `n`.
 - `OneLambda.budgetER_dominates` — the in-system budget dominates the chain
   ceiling `codeCeil` of the applied bar-image term at every input numeral, so
   `normRun`'s budget slot can be fed in-system.
@@ -215,7 +223,7 @@ D. Leivant, "Ramified recurrence and computational complexity III: Higher type
 recurrence and elementary complexity", Annals of Pure and Applied Logic 96
 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`.
 
-Tourlakis 2018, *Topics in PR Complexity*, §0.1.0.44 (the ER-to-K^sim inclusion
+Tourlakis 2018, *Topics in PR Complexity*, Corollary 0.1.0.44 (the ER-to-K^sim inclusion
 realized by `erToKN` and consumed by `collapseER_ksim_definable`).
 
 ## Tags
@@ -2564,7 +2572,8 @@ elementary function of the clock and the code alone dominates every trace — un
 elementary iteration is impossible at unbounded redex rank, matching the per-fixed-`F`
 framing of Leivant III Proposition 13 (section 5, p. 226), where the normalization clock
 and its elementary majorant are constants of the fixed term. The budget slot carries the
-per-instance ceiling (`codeCeil` at a closed term's code), under which the iteration is
+per-instance ceiling (`codeCeil` at a closed term's code), whose clock factor `detClock`
+is a tower of height growing with `redexRank`, under which the iteration is
 exact (Lemma 12, section 5, p. 226; the machine-model absorption of footnote 10, p. 226).
 Novel realization. -/
 def normRun : ERMor1 3 :=
@@ -3037,8 +3046,9 @@ theorem clockER_dominates {τ : RType}
   rw [clockER_interp]
   exact detClock_applied_le F n
 
-/-- The in-system budget of the fixed function term `F` (ratified correction to
-Task 6.4.14: the budget slot of `normRun` is a genuine input): the
+/-- The in-system budget of the fixed function term `F` (the budget slot of
+`normRun` is a genuine input carrying the per-instance chain ceiling; see
+`normRun`): the
 elementary-recursive composite computing the chain ceiling `codeCeil` at the
 per-`F` size, payload, rank, and height ceilings — a `towerER 2` composite over
 a polynomial-and-exponential expression in `n` whose exponent is the in-system
@@ -3081,8 +3091,8 @@ the Lemma 12 clock of `clockER_interp`. -/
     clockER_interp, Matrix.cons_val_zero]
 
 /-- The in-system budget dominates the deterministic chain ceiling of the applied
-bar-image term (ratified correction to Task 6.4.14; the binding inequality of the
-budget deliverable): at every input numeral `n`, `codeCeil` of Proposition 13's
+bar-image term (the binding inequality by which `normRun`'s budget slot can be fed
+in-system): at every input numeral `n`, `codeCeil` of Proposition 13's
 applied term is at most `budgetER F` evaluated at `n`, so the budget slot of
 `normRun` can be fed in-system. Chains the per-`F` measure ceilings with
 `tower_mono_right` and power monotonicity, the exponent bounded by
@@ -3650,8 +3660,9 @@ private theorem clockERN_interp {a : ℕ} {τs : Fin a → RType}
   simp only [clockERN, ERMor1.interp_comp, ERMor1.interp_mulN, ERMor1.interp_towerER,
     ERMor1.interp_addN, ERMor1.interp_natN, ERMor1.interp_sumCtxER]
 
-/-- The in-system budget of the fixed `a`-ary function term (spec §6.3; ratified
-correction to Task 6.4.14: the budget slot of `normRun` is a genuine input): the
+/-- The in-system budget of the fixed `a`-ary function term (spec §6.3; the
+budget slot of `normRun` is a genuine input carrying the per-instance chain
+ceiling; see `normRun`): the
 elementary-recursive composite computing the chain ceiling `codeCeil` at the
 per-`F` size, payload, rank, and height ceilings over the input sum — a `towerER 2`
 composite whose exponent is the in-system clock `clockERN F`. Novel realization. -/
@@ -3813,7 +3824,7 @@ theorem collapseERN_interp {a : ℕ} {τs : Fin a → RType}
 `ERMorN 1 1` collapse morphism `collapseER F` is realized by a multi-output K^sim
 morphism, exhibited as the slotwise `erToK`-translation `erToKN (collapseER F)` and
 interp-faithful on every input by `erToKN_interp`. This states the ⊇ direction of
-the ER-to-K^sim bridge (Tourlakis 2018 §0.1.0.44, at the normalizer's output) as a
+the ER-to-K^sim bridge (Tourlakis 2018 Corollary 0.1.0.44, at the normalizer's output) as a
 corollary through `erToK`, rather than shipping a `KMor1` normalizer definition
 (spec §1.1 non-goal). Novel realization. -/
 theorem collapseER_ksim_definable {τ : RType}
