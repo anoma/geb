@@ -86,4 +86,17 @@ theorem SynCatFO.toObjCtx_toCtx (Γ : SynCatFO) : (Γ.toObjCtx.2).toCtx = Γ.obj
   simp only [SynCatFO.toObjCtx, ObjCtx.toCtx]
   exact List.ofFn_get Γ.obj
 
+/-- The bridge transport of a `SynCatFO` morphism into a morphism between the
+underlying contexts of the bridged object-sort contexts. -/
+def collapseHom {Γ Δ : SynCatFO} (g : Γ ⟶ Δ) :
+    Hom (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig))
+      (Γ.toObjCtx.2).toCtx (Δ.toObjCtx.2).toCtx :=
+  cast (by rw [Γ.toObjCtx_toCtx, Δ.toObjCtx_toCtx]; rfl) g.hom
+
+/-- The numeric denotation of a `SynCatFO` morphism: the Phase 5
+`ramifiedDenotation` read through the bridge `SynCatFO.toObjCtx`. -/
+def collapseDenotation {Γ Δ : SynCatFO} (g : Γ ⟶ Δ) :
+    (Fin (objLen Γ) → ℕ) → (Fin (objLen Δ) → ℕ) :=
+  ramifiedDenotation (collapseHom g)
+
 end GebLean.Ramified
