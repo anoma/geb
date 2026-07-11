@@ -26,7 +26,29 @@ its dispatched rank, and on the nullary constant, where it is the identity. The
 closed-term dispatch is exercised on the β-redex, where the positive β-rank routes to
 the β worker, on the ι-spine redex, where the zero β-rank and the ι-census route to
 the ι worker, and on the nullary constant, where both guards fail and the step is the
-identity.
+identity. The clocked iteration is exercised on the identity β-redex at budget
+`codeCeil`, at clock `0`, where it is the identity on the code, and at clock `1`, where
+it computes the code of the one-step deterministic reduct, through the closed-term
+commutation `normRun_codeTm`. The word decoder is exercised on the codes of small
+concrete constructor words, where it reads the numerals back, through the landed
+read-off lemmas `decodeWord_codeConc` and `decodeWord_codeTm_conc`; the
+argument-code fold at the zero numeral, through `codeBbRep_codeTm`. The code
+builder, the in-system clock, and the in-system budget are exercised on the
+constant-zero function `λx:Ω o. c₀` (the `prop13_elementary` acceptance instance):
+the builder computes the code of the applied bar-image term, and the clock and
+budget dominate the deterministic Lemma 12 clock and the chain ceiling `codeCeil`
+at concrete numerals. The collapse morphism is exercised on the same fixture:
+`collapseER_interp` lands the denotational anchor at the numeral `2`, and at the
+numeral `1` the anchor reduces through the standard-evaluator equations to the
+expected numeral `0` (no kernel reduction on the composite). The a-ary collapse
+morphism is exercised at the singleton input family, where it agrees with the
+unary collapse morphism on the same fixture, and on the binary constant-zero
+function `λx:Ω o. λy:Ω o. c₀` at the numerals `(1, 2)`, where `collapseERN_interp`
+lands the denotational anchor of the doubly-applied term and the anchor reduces
+through the standard-evaluator equations to the expected numeral `0`. The K^sim
+landing corollary is exercised on the unary constant-zero fixture, where
+`collapseER_ksim_definable` exhibits a multi-output K^sim morphism agreeing with the
+collapse morphism on every input.
 
 ## References
 
@@ -460,5 +482,146 @@ example : normStep.interp ![conNode] = conNode := by
     generalize (conNode + 1) ^ 2 = X
     omega
   rw [normStep_interp, stepCode, hstep, min_eq_left hle]
+
+/-- The clocked iteration at clock `0` is the identity on the code of the Task 6.4.1
+identity β-redex: `normRun_codeTm` at `k = 0`, where `detIter 0` is the identity. -/
+example : normRun.interp ![0, codeTm idBetaRedex, codeCeil idBetaRedex]
+    = codeTm idBetaRedex := by
+  rw [normRun_codeTm 0 idBetaRedex, detIter_zero]
+
+/-- The clocked iteration at clock `1` computes the code of the one-step deterministic
+reduct of the Task 6.4.1 identity β-redex: `normRun_codeTm` at `k = 1` and budget
+`codeCeil idBetaRedex`. -/
+example : normRun.interp ![1, codeTm idBetaRedex, codeCeil idBetaRedex]
+    = codeTm (detIter 1 idBetaRedex) :=
+  normRun_codeTm 1 idBetaRedex
+
+/-- The word decoder reads the numeral `2` off the code of its concrete
+constructor word: `decodeWordER_interp` reduces the fold to `decodeWord`, and the
+decoder inverts the numeric word code (`decodeWord_codeConc`). -/
+example : decodeWordER.interp ![codeConc 2] = 2 := by
+  rw [decodeWordER_interp, decodeWord_codeConc]
+
+/-- The word decoder reads the numeral `3` off the code of the concrete term of
+its word: `decodeWord_codeTm_conc` inverts the term code to the free-algebra
+reading, and the numeral round-trips (`freeAlgToNat_natToFreeAlg`). -/
+example : decodeWordER.interp ![codeTm (conc (natToFreeAlg 3))] = 3 := by
+  rw [decodeWordER_interp, decodeWord_codeTm_conc, freeAlgToNat_natToFreeAlg]
+
+/-- The argument-code fold at the zero numeral computes the code of the
+Berarducci-Böhm representation of `0` at the base sort: `codeBbRepER_interp`
+reduces the fold to `codeBbRep`, and the numeric fold agrees with the term code
+(`codeBbRep_codeTm`). -/
+example : (codeBbRepER RType.o).interp ![0]
+    = codeTm (bbRep (natToFreeAlg 0) (barTy RType.o)) := by
+  rw [codeBbRepER_interp, codeBbRep_codeTm]
+
+/-- The constant-zero function `λx:Ω o. c₀ : Ω o → o`, the smallest closed
+abstraction at a Proposition 13 hypothesis sort, following the acceptance
+instance of the `prop13_elementary` tests. -/
+private def constZeroF : Binding.Tm (rlmrOSig natAlgSig) []
+    (RType.arrow (RType.omega RType.o) RType.o) :=
+  Ramified.lam' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+    (RlmrOOp.con RType.o (Or.inl rfl) false) (fun k => k.elim0))
+
+/-- The code builder on the constant-zero function at the numeral `1` computes
+the code of the applied bar-image term of Proposition 13. -/
+example : (buildCode constZeroF).interp ![1]
+    = codeTm (app' (barTm constZeroF) (bbRep (natToFreeAlg 1) (barTy RType.o))) :=
+  buildCode_interp constZeroF 1
+
+/-- The in-system clock of the constant-zero function dominates the deterministic
+Lemma 12 clock of its applied bar-image term at the numeral `2`. -/
+example :
+    (redexRank (app' (barTm constZeroF) (bbRep (natToFreeAlg 2) (barTy RType.o))) + 1)
+      * tower (redexRank (app' (barTm constZeroF) (bbRep (natToFreeAlg 2) (barTy RType.o))) + 1)
+        (Tm.height (app' (barTm constZeroF) (bbRep (natToFreeAlg 2) (barTy RType.o))))
+      ≤ (clockER constZeroF).interp ![2] :=
+  clockER_dominates constZeroF 2
+
+/-- The in-system budget of the constant-zero function dominates the chain ceiling
+`codeCeil` of its applied bar-image term at the numeral `1`, the budget value at
+which `normRun`'s closed-term commutation applies. -/
+example :
+    codeCeil (app' (barTm constZeroF) (bbRep (natToFreeAlg 1) (barTy RType.o)))
+      ≤ (budgetER constZeroF).interp ![1] :=
+  budgetER_dominates constZeroF 1
+
+/-- The collapse morphism on the constant-zero function at the numeral `2` computes
+the numeric reading of the standard denotation of Proposition 13's applied term:
+`collapseER_interp` instantiated on the acceptance fixture. -/
+example : (collapseER constZeroF).interp ![2]
+    = fun _ => freeAlgToNat (appEval
+        (sourceApp constZeroF (sourceWord (natToFreeAlg 2) RType.o)) finZeroElim) :=
+  collapseER_interp constZeroF ![2]
+
+/-- The collapse morphism on the constant-zero function at the numeral `1` computes
+the expected numeral `0`: `collapseER_interp` collapses the composite to the
+denotational anchor, the application and abstraction denotations reduce the anchor
+to the zero constructor (`appEval_app'`, `appEval_lam'` — the constant body drops
+the argument denotation), and the numeral reads back
+(`freeAlgToNat_natToFreeAlg`). -/
+example : (collapseER constZeroF).interp ![1] = fun _ => 0 := by
+  have hval : appEval (sourceApp constZeroF (sourceWord (natToFreeAlg 1) RType.o))
+      finZeroElim = natToFreeAlg 0 := by
+    simp only [sourceApp, constZeroF, appEval_app', appEval_lam']
+    exact congrArg (FreeAlg.mk (A := natAlgSig) false) (funext fun k => k.elim0)
+  rw [collapseER_interp constZeroF ![1]]
+  funext i
+  simp only [Matrix.cons_val_zero, hval, freeAlgToNat_natToFreeAlg]
+
+/-- The a-ary collapse morphism at the singleton input family agrees with the unary
+collapse morphism on the acceptance fixture: both compute the denotational anchor of
+the same applied term, `sourceApps` at one argument being the single `sourceApp`. -/
+example : (collapseERN (τs := ![RType.o]) constZeroF).interp ![2]
+    = (collapseER constZeroF).interp ![2] := by
+  rw [collapseERN_interp, collapseER_interp]
+  rfl
+
+/-- The binary constant-zero function `λx:Ω o. λy:Ω o. c₀ : Ω o → Ω o → o`, the
+smallest closed abstraction at a two-input curried hypothesis sort, the a-ary
+acceptance fixture. -/
+private def constZeroF2 : Binding.Tm (rlmrOSig natAlgSig) []
+    (RType.curried
+      (List.ofFn fun i => RType.omega ((![RType.o, RType.o] : Fin 2 → RType) i))
+      RType.o) :=
+  Ramified.lam' (Ramified.lam' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+    (RlmrOOp.con RType.o (Or.inl rfl) false) (fun k => k.elim0)))
+
+/-- The a-ary collapse morphism on the binary constant-zero function at the numerals
+`(1, 2)` computes the numeric reading of the standard denotation of the doubly
+applied term: `collapseERN_interp` instantiated on the binary acceptance fixture. -/
+example : (collapseERN constZeroF2).interp ![1, 2]
+    = fun _ => freeAlgToNat (appEval
+        (sourceApps constZeroF2 (fun i => sourceWord
+          (natToFreeAlg ((![1, 2] : Fin 2 → ℕ) i))
+          ((![RType.o, RType.o] : Fin 2 → RType) i)))
+        finZeroElim) :=
+  collapseERN_interp constZeroF2 ![1, 2]
+
+/-- The a-ary collapse morphism on the binary constant-zero function at the numerals
+`(1, 2)` computes the expected numeral `0`: `collapseERN_interp` collapses the
+composite to the denotational anchor, the anchor's two-fold application spine
+reduces definitionally to iterated `sourceApp`, the application denotations drop
+both argument denotations (`appEval_app'`, the constant abstraction body
+evaluating definitionally), and the numeral reads back
+(`freeAlgToNat_natToFreeAlg`). -/
+example : (collapseERN constZeroF2).interp ![1, 2] = fun _ => 0 := by
+  have hval : appEval (sourceApps constZeroF2 (fun i => sourceWord
+      (natToFreeAlg ((![1, 2] : Fin 2 → ℕ) i))
+      ((![RType.o, RType.o] : Fin 2 → RType) i))) finZeroElim = natToFreeAlg 0 := by
+    change appEval (sourceApp (sourceApp constZeroF2 (sourceWord (natToFreeAlg 1)
+        RType.o)) (sourceWord (natToFreeAlg 2) RType.o)) finZeroElim = natToFreeAlg 0
+    simp only [sourceApp, constZeroF2, appEval_app']
+    exact congrArg (FreeAlg.mk (A := natAlgSig) false) (funext fun k => k.elim0)
+  rw [collapseERN_interp constZeroF2 ![1, 2]]
+  funext i
+  simp only [hval, freeAlgToNat_natToFreeAlg]
+
+/-- The K^sim landing corollary on the constant-zero fixture: the collapse morphism
+is realized by a multi-output K^sim morphism agreeing with it on every input,
+`collapseER_ksim_definable` instantiated on the acceptance fixture. -/
+example : ∃ g : KMorN 1 1, ∀ v, KMorN.interp g v = (collapseER constZeroF).interp v :=
+  collapseER_ksim_definable constZeroF
 
 end GebLean.Ramified.OneLambda

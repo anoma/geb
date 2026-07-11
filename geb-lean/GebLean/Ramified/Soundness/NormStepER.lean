@@ -1,6 +1,7 @@
 import GebLean.Ramified.Soundness.CodeNormalizer
 import GebLean.Utilities.ERCourseOfValues
 import GebLean.LawvereERBoundComputable
+import GebLean.LawvereERKSim.ErToKFunctor
 
 /-!
 # Ramified recurrence: the deterministic normalizer step as an ER morphism
@@ -29,9 +30,10 @@ rebuilds nodes under a tower-2 majorant); the weakening worker `OneLambda.shiftE
 and its iterate `OneLambda.shiftIterER`; the code-level substitution
 `OneLambda.subER` (the first gated two-dimensional fold `ERMor1.cvRecGated`, keyed by
 a weakening depth and a code) and the β worker `OneLambda.betaStepER` (the second,
-keyed by a substitution level and a code); and the step majorant
+keyed by a substitution level and a code); the step majorant
 `OneLambda.stepBoundER`, the closed-term dispatch `OneLambda.stepCodeAtZeroER`, and
-the assembled step `OneLambda.normStep`. Carrying the deterministic step into the
+the assembled step `OneLambda.normStep`; and the clocked iteration
+`OneLambda.normRun`. Carrying the deterministic step into the
 elementary-recursive theory is the formal payment of the machine-model absorption
 Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 
@@ -90,6 +92,40 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.normStep` — the assembled deterministic normalizer step, the closed-term
   dispatch `stepCodeAtZeroER` clamped below the step majorant `stepBoundER` by
   `ERMor1.minN`, realizing `stepCode`.
+- `OneLambda.normRun` — the clocked iteration of the step, `ERMor1.boundedRec` over
+  `normStep` at slots clock, code, budget, with the budget slot as value bound; the
+  budget input carries the per-instance trace ceiling, since no elementary function of
+  the clock and the code alone dominates every trace.
+- `OneLambda.decodeWordER` — the word decoder, `ERMor1.cvRec` at the node
+  `decodeWordNode` with the code itself as value bound; the node reads the successor
+  of the argument-child β-read at an application node and `0` elsewhere.
+- `OneLambda.codeBbRepER` — the argument code of the Berarducci-Böhm numeral
+  representation: the fixed abstraction wrapper `codeLamWrapER` (a meta-level fold
+  over the constructor step types) around the spine fold `codeBbInnerER`, an
+  `ERMor1.boundedRec` under the Task 6.4.8 envelope tower.
+- `OneLambda.buildCode` — the code of the applied bar-image term of Proposition 13
+  (plan decision P4): the `pairER` rebuild of the `app` node over the closed
+  constants of the fixed function term and the argument code `codeBbRepER`.
+- `OneLambda.rankCeil`, `OneLambda.heightCeil`, `OneLambda.sizeCeil`,
+  `OneLambda.payloadCeil` — the per-`F` constants: the uniform rank, height, size,
+  and sort-payload ceilings of the applied bar-image term.
+- `OneLambda.clockER` — the in-system clock: the Lemma 12 clock at the per-`F`
+  ceilings, a `(rankCeil F + 1)`-height `ERMor1.towerER` composite over the input
+  numeral times the constant coefficient.
+- `OneLambda.budgetER` — the in-system budget: the chain-ceiling shape `codeCeil`
+  at the per-`F` ceilings, a `towerER 2` composite whose exponent is the in-system
+  clock, feeding the budget slot of `normRun`.
+- `OneLambda.collapseER` — the atomic collapse morphism (spec §6.4; plan decision
+  P4): decode ∘ clocked normalization ∘ build, the `ERMorN 1 1` composite feeding
+  `normRun` at the in-system clock, the applied-term code, and the in-system
+  budget, read off by the word decoder.
+- `OneLambda.sourceApps` — the `a`-fold source-level application spine: the
+  `sourceApp` iterate applying a closed function term at the curried arrow sort
+  over the shifted input sorts to one closed argument per input position.
+- `OneLambda.collapseERN` — the `a`-ary collapse morphism (spec §6.4): the
+  `ERMorN a 1` composite of the same decode ∘ clocked normalization ∘ build shape,
+  with the applied-spine code, the per-`F` ceilings over the staggered input sum
+  in the in-system clock and budget.
 
 ## Main statements
 
@@ -130,6 +166,48 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.normStep_interp` — the assembled step interprets to `stepCode n`,
   unconditionally on every code, composing `interp_minN` with the closed-term
   dispatch and step-majorant interpretation lemmas.
+- `OneLambda.normRun_interp_of_le` — under a budget dominating every trace value up to
+  the clock, the clocked iteration interprets to the iterate `stepCode^[k] n`.
+- `OneLambda.normRun_codeTm` — at closed terms the iteration at budget `codeCeil t`
+  computes the code of the deterministic iterate, `codeTm (detIter k t)`.
+- `OneLambda.normRun_normal` — the normalizer clock: at the Lemma 12 clock value the
+  deterministic iterate of a closed term is normal and the ER iteration lands its code.
+- `OneLambda.decodeWordER_interp` — the word decoder interprets to `decodeWord`,
+  unconditionally on every code, its value bound `decodeWord_le_self`.
+- `OneLambda.codeBbRepER_interp` — the argument-code composite interprets to
+  `codeBbRep`, unconditionally on every numeral, its spine trace bounded by the
+  envelope tower `codeBbInner_le_tower`.
+- `OneLambda.buildCode_interp` — the code builder interprets to the code of the
+  applied bar-image term, `codeTm (app' (barTm F) (bbRep (natToFreeAlg n)
+  (barTy τ)))`, unconditionally on every numeral.
+- `OneLambda.redexRank_applied_le`, `OneLambda.height_applied_le`,
+  `OneLambda.size_applied_le`, `OneLambda.sortPayload_applied_le` — the per-`F`
+  ceilings dominate the applied term's measures, the rank and payload uniformly
+  and the height and size up to the input numeral.
+- `OneLambda.clockER_interp` — the in-system clock interprets to the Lemma 12
+  clock at the per-`F` ceilings, `(rankCeil F + 1) * tower (rankCeil F + 1)
+  (heightCeil F + n)`.
+- `OneLambda.detClock_applied_le` — the Lemma 12 clock at the per-`F` ceilings
+  dominates the deterministic `detClock` of the applied bar-image term.
+- `OneLambda.clockER_dominates` — the in-system clock dominates the deterministic
+  Lemma 12 clock of the applied bar-image term at every input numeral.
+- `OneLambda.budgetER_interp` — the in-system budget interprets to the chain
+  ceiling shape at the per-`F` ceilings, a height-`2` tower over the clocked
+  polynomial-and-exponential expression in `n`.
+- `OneLambda.budgetER_dominates` — the in-system budget dominates the chain
+  ceiling `codeCeil` of the applied bar-image term at every input numeral, so
+  `normRun`'s budget slot can be fed in-system.
+- `OneLambda.collapseER_interp` — adequacy of the collapse morphism against the
+  denotational anchor: at every input the collapse computes the numeric reading
+  of the standard denotation of Proposition 13's applied term.
+- `OneLambda.collapseERN_interp` — adequacy of the `a`-ary collapse morphism: at
+  every input tuple the collapse computes the numeric reading of the standard
+  denotation of the source-side application spine of the fixed term over the
+  constructor words of the inputs.
+- `OneLambda.collapseER_ksim_definable` — the K^sim landing of the collapse
+  morphism: the `ERMorN 1 1` collapse morphism is realized by a multi-output K^sim
+  morphism agreeing with it on every input, the ⊇ direction of the ER-to-K^sim
+  bridge stated as a corollary through `erToK`.
 
 ## Implementation notes
 
@@ -145,12 +223,17 @@ D. Leivant, "Ramified recurrence and computational complexity III: Higher type
 recurrence and elementary complexity", Annals of Pure and Applied Logic 96
 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`.
 
+Tourlakis 2018, *Topics in PR Complexity*, Corollary 0.1.0.44 (the ER-to-K^sim inclusion
+realized by `erToKN` and consumed by `collapseER_ksim_definable`).
+
 ## Tags
 
 ramified recurrence, elementary recursion, Gödel numbering, normalizer
 -/
 
 namespace GebLean.Ramified
+
+open GebLean.Binding
 
 namespace OneLambda
 
@@ -2444,6 +2527,1311 @@ theorem normStep_interp (n : ℕ) : normStep.interp ![n] = stepCode n := by
     | ⟨1, _⟩ => exact stepBoundER_interp n
   rw [normStep, ERMor1.interp_comp, harg, ERMor1.interp_minN]
   simp only [Matrix.cons_val_zero, Matrix.cons_val_one, stepCode]
+
+/-! ### The clocked iteration -/
+
+/-- The budget read of the clocked iteration evaluates to the budget slot: at slots
+`(j, n, b)` the value bound is `b`, constant in the recursion counter. -/
+private theorem normRun_bound_eval (j n b : ℕ) :
+    (ERMor1.proj (k := 3) 2).interp (Fin.cons j (Fin.cons n (Fin.cons b Fin.elim0))) = b := by
+  rw [ERMor1.interp_proj]
+  rfl
+
+/-- The step term of the clocked iteration evaluates to a single deterministic step of the
+running value: at slots `(i, prev, n, b)` it computes `stepCode prev` by a full call of
+`normStep`. -/
+private theorem normRun_step_eval (n b i prev : ℕ) :
+    (ERMor1.comp normStep (fun _ : Fin 1 => ERMor1.proj (k := 4) 1)).interp
+      (Fin.cons i (Fin.cons prev (Fin.cons n (Fin.cons b Fin.elim0)))) = stepCode prev := by
+  have hg : (fun _ : Fin 1 => (ERMor1.proj (k := 4) 1).interp
+      (Fin.cons i (Fin.cons prev (Fin.cons n (Fin.cons b Fin.elim0))))) = ![prev] := by
+    funext s
+    match s with
+    | ⟨0, _⟩ => rfl
+  rw [ERMor1.interp_comp, hg, normStep_interp]
+
+/-- The raw `Nat.rec` trace of the clocked-iteration step at counter `k` equals the
+`Function.iterate` of `stepCode` on the code `n`. -/
+private theorem normRun_rec_eq (n b k : ℕ) :
+    (Nat.rec ((ERMor1.proj (k := 2) 0).interp (Fin.cons n (Fin.cons b Fin.elim0)))
+      (fun i prev => (ERMor1.comp normStep (fun _ : Fin 1 => ERMor1.proj (k := 4) 1)).interp
+        (Fin.cons i (Fin.cons prev (Fin.cons n (Fin.cons b Fin.elim0))))) k : ℕ)
+      = stepCode^[k] n := by
+  induction k with
+  | zero => rfl
+  | succ m ih =>
+    rw [Function.iterate_succ_apply', ← ih]
+    exact normRun_step_eval n b m _
+
+/-- The clocked iteration of the deterministic normalizer step as an elementary-recursive
+morphism (spec §6.2; plan decision P6): `ERMor1.boundedRec` over `normStep` at slots
+`(k, n, b)` — clock, code, budget — with base the code, step a full call of `normStep` on
+the running value, and value bound the budget slot. The budget is a genuine input:
+`stepCode` raises the magnitude of an arbitrary code by a fixed-height tower, so no
+elementary function of the clock and the code alone dominates every trace — uniform
+elementary iteration is impossible at unbounded redex rank, matching the per-fixed-`F`
+framing of Leivant III Proposition 13 (section 5, p. 226), where the normalization clock
+and its elementary majorant are constants of the fixed term. The budget slot carries the
+per-instance ceiling (`codeCeil` at a closed term's code), whose clock factor `detClock`
+is a tower of height growing with `redexRank`, under which the iteration is
+exact (Lemma 12, section 5, p. 226; the machine-model absorption of footnote 10, p. 226).
+Novel realization. -/
+def normRun : ERMor1 3 :=
+  ERMor1.boundedRec
+    (ERMor1.proj (k := 2) 0)
+    (ERMor1.comp normStep (fun _ : Fin 1 => ERMor1.proj (k := 4) 1))
+    (ERMor1.proj (k := 3) 2)
+
+/-- Interpretation of `normRun` under a trace budget: when the budget `b` dominates every
+value of the iterate up to the clock `k`, the clocked iteration computes the `k`-fold
+iterate of the reference step, `stepCode^[k] n`. Discharges the hypotheses of
+`ERMor1.boundedRec_eq_natRec_of_bounded`: the trace equals the iterate
+(`normRun_rec_eq`), the dominance is the budget hypothesis, and the monotonicity is the
+budget's constancy in the counter. -/
+theorem normRun_interp_of_le (k n b : ℕ)
+    (hb : ∀ j, j ≤ k → stepCode^[j] n ≤ b) :
+    normRun.interp ![k, n, b] = stepCode^[k] n := by
+  change normRun.interp (Fin.cons k (Fin.cons n (Fin.cons b Fin.elim0))) = stepCode^[k] n
+  unfold normRun
+  refine (ERMor1.boundedRec_eq_natRec_of_bounded _ _ _ _ _ ?_ ?_).trans ?_
+  · intro j hj
+    rw [normRun_rec_eq, normRun_bound_eval]
+    exact hb j hj
+  · intro j _hj
+    rw [normRun_bound_eval, normRun_bound_eval]
+  · rw [normRun_rec_eq]
+
+/-- The clocked-iteration commutation at closed terms (spec §6.2): at budget `codeCeil t`
+the ER iteration on the code of a closed term computes the code of the deterministic
+iterate, `codeTm (detIter k t)`. The budget hypothesis of `normRun_interp_of_le` is
+discharged by the iterated closed-term commutation `stepCode_iterate_codeTm` and the
+chain ceiling `codeTm_detIter_le_codeCeil`. -/
+theorem normRun_codeTm (k : ℕ) {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) [] s) :
+    normRun.interp ![k, codeTm t, codeCeil t] = codeTm (detIter k t) := by
+  have hb : ∀ j, j ≤ k → stepCode^[j] (codeTm t) ≤ codeCeil t := by
+    intro j _hj
+    rw [stepCode_iterate_codeTm j t]
+    exact codeTm_detIter_le_codeCeil j t
+  rw [normRun_interp_of_le k (codeTm t) (codeCeil t) hb, stepCode_iterate_codeTm k t]
+
+/-- The normalizer clock in ER (spec §3; plan decision P6): at the Lemma 12 clock value
+`(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)` (Leivant III section 5,
+p. 226) the deterministic iterate of a closed term is normal, and the ER iteration at
+budget `codeCeil t` lands its code. Conjoins the deterministic clock `detIter_normal`
+with the closed-term commutation `normRun_codeTm` at the clock value. -/
+theorem normRun_normal {s : RType}
+    (t : Binding.Tm (oneLambdaSig natAlgSig) [] s) :
+    Normal (detIter ((redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)) t) ∧
+      normRun.interp ![(redexRank t + 1) * tower (redexRank t + 1) (Tm.height t), codeTm t,
+          codeCeil t]
+        = codeTm (detIter ((redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)) t) :=
+  ⟨detIter_normal t, normRun_codeTm _ t⟩
+
+/-! ### The word decode and argument-code folds -/
+
+/-- The dispatch of `decodeWord` as a nested conditional on the shape tag and the
+operation kind bit: at an application node (shape `1`, kind `0`) one more than the
+decoding of the argument child `child1Code`; every other reading is `0`. -/
+private theorem decodeWord_eq_ite (c : ℕ) :
+    decodeWord c
+      = if shapeCode c = 1 then
+          (if opKindCode c = 0 then decodeWord (child1Code c) + 1 else 0)
+        else 0 := by
+  rw [decodeWord]
+  split <;> rename_i h <;>
+    simp_all [shapeCode, opKindCode, child1Code]
+
+/-- The argument child of an operation node sits strictly below the node: the
+pairing bounds `Nat.unpair_left_le`/`Nat.unpair_right_le` through the pack and the
+strict step `self_lt_pair_one` past the kind bit `1`. Local re-derivation of the
+recursion guard of `decodeWord` at the code reads. -/
+private theorem child1Code_lt_of_shape (c : ℕ) (h : shapeCode c = 1) :
+    child1Code c < c := by
+  have hsnd : (Nat.unpair c).2 < c := by
+    conv_rhs => rw [← Nat.pair_unpair c, show (Nat.unpair c).1 = 1 from h]
+    exact self_lt_pair_one _
+  exact Nat.lt_of_le_of_lt
+    (le_trans (Nat.unpair_left_le _)
+      (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _))) hsnd
+
+/-- The node of the `decodeWord` course-of-values fold at slots `(i, cand, code)`:
+at an application node (shape tag `1`, operation kind bit `0`) the successor of the
+β-read at the argument child `child1Code i`; every other reading is `0`. Novel
+realization. -/
+private def decodeWordNode : ERMor1 3 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+    (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 0)
+      (ERMor1.comp ERMor1.succ (fun _ : Fin 1 =>
+        ERMor1.betaOnCandFold (ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0))))
+      (ERMor1.natN 3 0))
+    (ERMor1.natN 3 0)
+
+/-- The node value of `decodeWordNode` at `(i, cand, code)` as a nested conditional
+on the shape tag and the operation kind bit of `i`, with the argument-child decoding
+read off the candidate β-table. -/
+private theorem decodeWordNode_interp (i cand code : ℕ) :
+    decodeWordNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      if shapeCode i = 1 then
+        (if opKindCode i = 0 then
+          cand.unpair.1 % (1 + (child1Code i + 1) * cand.unpair.2) + 1
+        else 0)
+      else 0 := by
+  simp only [decodeWordNode, condEqER_interp, ERMor1.interp_comp,
+    ERMor1.interp_betaOnCandFold, ERMor1.interp_succ, ERMor1.interp_natN,
+    ERMor1.interp_proj, Fin.cons_zero, cons_fin_one, shapeER_interp, opKindER_interp,
+    child1ER_interp, Matrix.cons_val_zero, Nat.succ_eq_add_one]
+
+/-- The word decoder as an elementary-recursive course-of-values fold:
+`ERMor1.cvRec` at fold slot the code and node `decodeWordNode`, with value bound
+the code itself (`decodeWord_le_self`). Realizes the well-founded recursion of
+`decodeWord` (Leivant III section 4.2) as a single bounded β-witness search.
+Novel realization. -/
+def decodeWordER : ERMor1 1 := ERMor1.cvRec decodeWordNode (ERMor1.proj 0)
+
+/-- Interpretation of `decodeWordER`: the word decoding `decodeWord`,
+unconditionally on every code. Discharges the hypotheses of
+`ERMor1.interp_cvRec_of_bounded` with `f := decodeWord`: the value bound
+`decodeWord_le_self`, its monotonicity immediate from the fold slot, and node
+faithfulness from the dispatch unfolding `decodeWord_eq_ite` with the argument
+child strictly below the index (`child1Code_lt_of_shape`). -/
+@[simp] theorem decodeWordER_interp (n : ℕ) : decodeWordER.interp ![n] = decodeWord n := by
+  refine ERMor1.interp_cvRec_of_bounded decodeWordNode (ERMor1.proj 0) n ![] decodeWord
+    (fun j _ => ?_) (fun j hj => ?_) (fun i _ cand htrace => ?_)
+  · exact decodeWord_le_self j
+  · exact hj
+  · rw [decodeWordNode_interp i cand n]
+    by_cases h1 : shapeCode i = 1
+    · rw [if_pos h1]
+      by_cases h2 : opKindCode i = 0
+      · rw [if_pos h2, htrace (child1Code i) (child1Code_lt_of_shape i h1)]
+        symm
+        rw [decodeWord_eq_ite i, if_pos h1, if_pos h2]
+      · rw [if_neg h2]
+        symm
+        rw [decodeWord_eq_ite i, if_pos h1, if_neg h2]
+    · rw [if_neg h1]
+      symm
+      rw [decodeWord_eq_ite i, if_neg h1]
+
+/-- The step term of the `codeBbInner` recursion at slots `(i, prev)`: one
+`app`-of-constructor-variable node layer over the running spine code, the `pairER`
+rebuild of `codeBbInner`'s successor arm. Novel realization. -/
+private def codeBbInnerStepER (τ : RType) : ERMor1 2 :=
+  pairER (ERMor1.natN 2 1)
+    (pairER (ERMor1.natN 2 (codeOp (OneLambdaOp.app (barTy τ) (barTy τ))))
+      (pairER (ERMor1.natN 2 (Nat.pair 0 (ctorIdx true).val))
+        (pairER (ERMor1.proj 1) (ERMor1.natN 2 0))))
+
+/-- The step term of the `codeBbInner` recursion evaluates to the successor arm of
+`codeBbInner` on the running value. -/
+private theorem codeBbInnerStepER_eval (τ : RType) (i prev : ℕ) :
+    (codeBbInnerStepER τ).interp (Fin.cons i (Fin.cons prev (![] : Fin 0 → ℕ)))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app (barTy τ) (barTy τ)))
+          (Nat.pair (Nat.pair 0 (ctorIdx true).val) (Nat.pair prev 0))) := by
+  simp only [codeBbInnerStepER, pairER_interp, ERMor1.interp_natN, ERMor1.interp_proj,
+    Fin.cons_zero, Fin.cons_one]
+
+/-- The value bound of the `codeBbInner` recursion: the `towerER 2` composite over
+the linear polynomial of `codeBbInner_le_tower`, with the application-tag payload
+and the constructor-context length as per-`τ` constants. Novel realization. -/
+private def bbInnerBoundER (τ : RType) : ERMor1 1 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.mulN (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.natN 1 6
+      | ⟨1, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun u => match u with
+              | ⟨0, _⟩ => ERMor1.natN 1 4
+              | ⟨1, _⟩ => ERMor1.proj 0)
+          | ⟨1, _⟩ => ERMor1.natN 1 (opPayload (OneLambdaOp.app (barTy τ) (barTy τ))
+              + (stepTypes natAlgSig (barTy τ) (barTy τ)).length + 3))))
+
+/-- The value bound of the `codeBbInner` recursion evaluates to the tower of
+`codeBbInner_le_tower` at the counter slot. -/
+private theorem bbInnerBoundER_eval (τ : RType) (j : ℕ) :
+    (bbInnerBoundER τ).interp (Fin.cons j (![] : Fin 0 → ℕ))
+      = tower 2 (6 * (4 * j + (opPayload (OneLambdaOp.app (barTy τ) (barTy τ))
+          + (stepTypes natAlgSig (barTy τ) (barTy τ)).length + 3))) := by
+  simp only [bbInnerBoundER, ERMor1.interp_comp, ERMor1.interp_towerER,
+    ERMor1.interp_mulN, ERMor1.interp_addN, ERMor1.interp_natN, ERMor1.interp_proj,
+    Fin.cons_zero]
+
+/-- The Gödel code of the variable-headed numeral spine as an elementary-recursive
+morphism: `ERMor1.boundedRec` at base the constructor-variable leaf code, step
+`codeBbInnerStepER`, and value bound the envelope tower `bbInnerBoundER` (N6: one
+bounded recursion under the Task 6.4.8 envelope). Realizes `codeBbInner`. Novel
+realization. -/
+private def codeBbInnerER (τ : RType) : ERMor1 1 :=
+  ERMor1.boundedRec (ERMor1.natN 0 (Nat.pair 0 (ctorIdx false).val))
+    (codeBbInnerStepER τ) (bbInnerBoundER τ)
+
+/-- The raw `Nat.rec` trace of the `codeBbInner` recursion at counter `k` equals
+the numeric fold `codeBbInner τ k`. -/
+private theorem codeBbInnerER_rec_eq (τ : RType) (k : ℕ) :
+    (Nat.rec ((ERMor1.natN 0 (Nat.pair 0 (ctorIdx false).val)).interp (![] : Fin 0 → ℕ))
+      (fun i prev => (codeBbInnerStepER τ).interp
+        (Fin.cons i (Fin.cons prev (![] : Fin 0 → ℕ)))) k : ℕ)
+      = codeBbInner τ k := by
+  induction k with
+  | zero =>
+    rw [show (Nat.rec ((ERMor1.natN 0 (Nat.pair 0 (ctorIdx false).val)).interp
+        (![] : Fin 0 → ℕ)) _ 0 : ℕ)
+      = (ERMor1.natN 0 (Nat.pair 0 (ctorIdx false).val)).interp (![] : Fin 0 → ℕ) from rfl,
+      ERMor1.interp_natN]
+    rfl
+  | succ m ih =>
+    change (codeBbInnerStepER τ).interp (Fin.cons m (Fin.cons _ (![] : Fin 0 → ℕ)))
+      = codeBbInner τ (m + 1)
+    rw [ih, codeBbInnerStepER_eval]
+    rfl
+
+/-- Interpretation of `codeBbInnerER`: the numeric spine fold `codeBbInner`,
+unconditionally on every numeral. Discharges the hypotheses of
+`ERMor1.boundedRec_eq_natRec_of_bounded`: the trace equals the fold
+(`codeBbInnerER_rec_eq`), the dominance is the envelope tower
+`codeBbInner_le_tower`, and the monotonicity is `tower_mono_right` at the linear
+polynomial. -/
+private theorem codeBbInnerER_interp (τ : RType) (n : ℕ) :
+    (codeBbInnerER τ).interp ![n] = codeBbInner τ n := by
+  change (codeBbInnerER τ).interp (Fin.cons n (![] : Fin 0 → ℕ)) = codeBbInner τ n
+  unfold codeBbInnerER
+  refine (ERMor1.boundedRec_eq_natRec_of_bounded _ _ _ _ _ ?_ ?_).trans ?_
+  · intro j _hj
+    rw [codeBbInnerER_rec_eq, bbInnerBoundER_eval]
+    exact codeBbInner_le_tower τ j
+  · intro j hj
+    rw [bbInnerBoundER_eval, bbInnerBoundER_eval]
+    exact tower_mono_right 2 (by omega)
+  · exact codeBbInnerER_rec_eq τ n
+
+/-- The numeric abstraction wrapper `codeLamWrap` as an elementary-recursive
+composite: a meta-level fold over the binder suffix layering one `pairER` rebuild
+of a `lam` node per context sort around an inner read. Novel realization. -/
+private def codeLamWrapER (result : RType) : List RType → ERMor1 1 → ERMor1 1
+  | [], e => e
+  | ξ :: Δ', e =>
+      pairER (ERMor1.natN 1 1)
+        (pairER (ERMor1.natN 1 (codeOp (OneLambdaOp.lam ξ (RType.curried Δ' result))))
+          (pairER (codeLamWrapER result Δ' e) (ERMor1.natN 1 0)))
+
+/-- Interpretation of `codeLamWrapER`: the numeric wrapper `codeLamWrap` applied to
+the inner read's value, by induction on the binder suffix. -/
+private theorem codeLamWrapER_interp (result : RType) (Δ : List RType) (e : ERMor1 1)
+    (ctx : Fin 1 → ℕ) :
+    (codeLamWrapER result Δ e).interp ctx = codeLamWrap result Δ (e.interp ctx) := by
+  induction Δ with
+  | nil => rfl
+  | cons ξ Δ' ih =>
+    simp only [codeLamWrapER, pairER_interp, ERMor1.interp_natN, ih, codeLamWrap]
+
+/-- The Gödel code of the Berarducci-Böhm representation of a numeral as an
+elementary-recursive morphism (spec §6.3; N6): the fixed abstraction wrapper
+`codeLamWrapER` over the constructor step types around the numeral-recursive spine
+fold `codeBbInnerER`, mirroring the factorization of `codeBbRep` (Leivant III
+section 4.2). Novel realization. -/
+def codeBbRepER (τ : RType) : ERMor1 1 :=
+  codeLamWrapER (barTy τ) (stepTypes natAlgSig (barTy τ) (barTy τ)) (codeBbInnerER τ)
+
+/-- Interpretation of `codeBbRepER`: the numeric fold `codeBbRep`, unconditionally
+on every numeral, composing the wrapper interpretation `codeLamWrapER_interp` with
+the spine interpretation `codeBbInnerER_interp`. -/
+@[simp] theorem codeBbRepER_interp (τ : RType) (n : ℕ) :
+    (codeBbRepER τ).interp ![n] = codeBbRep τ n := by
+  unfold codeBbRepER
+  rw [codeLamWrapER_interp, codeBbInnerER_interp]
+  rfl
+
+/-! ### The applied-term code builder -/
+
+/-- The code of the applied bar-image term as an elementary-recursive morphism
+(spec §6.3; N6; plan decision P4): the `pairER` rebuild of the `app` node of
+`codeTm_app'` over the closed constants `codeTm (barTm F)` and the application
+operation code — closed naturals of the fixed function term `F` — and the
+numeral-recursive argument code `codeBbRepER τ`. The applied term is the shape of
+Proposition 13 (Leivant III section 5, p. 226): the bar image `barTm F` applied to
+the Berarducci-Böhm representation of the input numeral. Novel realization. -/
+def buildCode {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) :
+    ERMor1 1 :=
+  pairER (ERMor1.natN 1 1)
+    (pairER (ERMor1.natN 1 (codeOp (OneLambdaOp.app (barTy (RType.omega τ)) RType.o)))
+      (pairER (ERMor1.natN 1 (codeTm (barTm F)))
+        (pairER (codeBbRepER τ) (ERMor1.natN 1 0))))
+
+/-- Interpretation of `buildCode`: the code of the applied bar-image term,
+`codeTm (app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))`, unconditionally on
+every numeral. The argument slot lands `codeBbRep` (`codeBbRepER_interp`), the
+numeric fold agrees with the argument's term code (`codeBbRep_codeTm`), and the
+node equation `codeTm_app'` reassembles the application code. -/
+theorem buildCode_interp {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (buildCode F).interp ![n]
+      = codeTm (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) := by
+  unfold buildCode
+  simp only [pairER_interp, ERMor1.interp_natN, codeBbRepER_interp]
+  rw [codeBbRep_codeTm]
+  exact (codeTm_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))).symm
+
+/-! ### The in-system clock and budget -/
+
+/-- The aggregate redex rank of an application node is bounded by the ranks of
+its subterms together with the order of the function's arrow sort: the top
+β-detector contributes at most `RType.ord (RType.arrow σ τ)` and the top
+ι-detector at most `1`. Local re-derivation of the rank-uniformity bound of
+Proposition 13 (Leivant III section 5, p. 226). -/
+private theorem redexRank_app'_le {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) :
+    redexRank (app' f x)
+      ≤ max (redexRank f) (max (redexRank x) (max 1 (RType.ord (RType.arrow σ τ)))) := by
+  rw [redexRank_app', topBetaRank_app']
+  split_ifs <;> omega
+
+/-- The uniform rank ceiling of the fixed function term `F` (Proposition 13's
+`qF`, Leivant III section 5, p. 226): the redex rank of the bar image together
+with the order of the applied arrow sort, a constant of `F`. Applied to a normal
+argument, the rank of the application never exceeds it. -/
+def rankCeil {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) : ℕ :=
+  max (redexRank (barTm F))
+    (max 1 (RType.ord (RType.arrow (barTy (RType.omega τ)) RType.o)))
+
+/-- The rank ceiling dominates the redex rank of the applied bar-image term,
+uniformly in the argument word: the argument's rank vanishes (`normal_bbRep`),
+leaving the rank of `barTm F` and the sort data (`redexRank_app'_le`). -/
+theorem redexRank_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (a : FreeAlg natAlgSig) :
+    redexRank (OneLambda.app' (barTm F) (bbRep a (barTy τ))) ≤ rankCeil F := by
+  have happ : redexRank (OneLambda.app' (barTm F) (bbRep a (barTy τ)))
+      ≤ max (redexRank (barTm F)) (max (redexRank (bbRep a (barTy τ)))
+          (max 1 (RType.ord (RType.arrow (barTy (RType.omega τ)) RType.o)))) :=
+    redexRank_app'_le (barTm F) (bbRep a (barTy τ))
+  have h0 : redexRank (bbRep a (barTy τ)) = 0 := normal_bbRep a (barTy τ)
+  rw [h0] at happ
+  unfold rankCeil
+  omega
+
+/-- The height ceiling of the fixed function term `F`: the height of the bar
+image plus the constructor-context length plus two, a constant of `F`. Applied
+to the representation of the numeral `n`, the height of the application never
+exceeds `heightCeil F + n`. -/
+def heightCeil {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) : ℕ :=
+  Tm.height (barTm F) + ((stepTypes natAlgSig (barTy τ) (barTy τ)).length + 2)
+
+/-- The height ceiling dominates the height of the applied bar-image term up to
+the input numeral: `height_app'` splits the application, and the `bbRep` spine
+adds one level per constructor over the fixed abstraction prefix
+(`height_bbRep_le`). -/
+theorem height_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      ≤ heightCeil F + n := by
+  have happ : Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      = 1 + max (Tm.height (barTm F)) (Tm.height (bbRep (natToFreeAlg n) (barTy τ))) :=
+    height_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))
+  have hb := height_bbRep_le τ n
+  unfold heightCeil
+  omega
+
+/-- The size ceiling of the fixed function term `F`: the size of the bar image
+plus the constructor-context length plus two, a constant of `F`. Applied to the
+representation of the numeral `n`, the size of the application never exceeds
+`sizeCeil F + 2 * n`. -/
+def sizeCeil {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) : ℕ :=
+  Tm.size (barTm F) + ((stepTypes natAlgSig (barTy τ) (barTy τ)).length + 2)
+
+/-- The size ceiling dominates the size of the applied bar-image term up to
+twice the input numeral: `size_app'` splits the application, and the `bbRep`
+spine adds two nodes per constructor over the fixed abstraction prefix
+(`size_bbRep_le`). -/
+theorem size_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    Tm.size (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      ≤ sizeCeil F + 2 * n := by
+  have happ : Tm.size (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      = 1 + Tm.size (barTm F) + Tm.size (bbRep (natToFreeAlg n) (barTy τ)) :=
+    size_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))
+  have hb := size_bbRep_le τ n
+  unfold sizeCeil
+  omega
+
+/-- The sort-payload ceiling of the fixed function term `F`: the payload of the
+applied `app` tag, the payload of the bar image, and the payload wrapper of the
+argument representation, a constant of `F`. -/
+def payloadCeil {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) : ℕ :=
+  max (opPayload (OneLambdaOp.app (barTy (RType.omega τ)) RType.o))
+    (max (sortPayload (barTm F))
+      (lamWrapPayload (barTy τ) (stepTypes natAlgSig (barTy τ) (barTy τ))
+        (opPayload (OneLambdaOp.app (barTy τ) (barTy τ)))))
+
+/-- The payload ceiling dominates the sort payload of the applied bar-image term,
+uniformly in the input numeral: `sortPayload_app'` splits the application, and
+the argument representation's payload is a function of `τ` alone
+(`sortPayload_bbRep_le`). -/
+theorem sortPayload_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    sortPayload (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      ≤ payloadCeil F := by
+  have happ : sortPayload (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      = max (opPayload (OneLambdaOp.app (barTy (RType.omega τ)) RType.o))
+          (max (sortPayload (barTm F))
+            (sortPayload (bbRep (natToFreeAlg n) (barTy τ)))) :=
+    sortPayload_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))
+  have hb := sortPayload_bbRep_le τ n
+  unfold payloadCeil
+  omega
+
+/-- The in-system clock of the fixed function term `F` (spec §6.3; N6): the
+elementary-recursive composite computing
+`(rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n)`, the Lemma 12
+clock at the per-`F` rank and height ceilings — a `(rankCeil F + 1)`-height
+`ERMor1.towerER` over the successor-and-addition atoms, times the constant
+(Leivant III section 5, p. 226: the clock of Proposition 13 is a constant of
+the fixed term over the input's representation height). Novel realization. -/
+def clockER {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) :
+    ERMor1 1 :=
+  ERMor1.comp ERMor1.mulN (fun i => match i with
+    | ⟨0, _⟩ => ERMor1.natN 1 (rankCeil F + 1)
+    | ⟨1, _⟩ => ERMor1.comp (ERMor1.towerER (rankCeil F + 1)) (fun _ : Fin 1 =>
+        ERMor1.comp ERMor1.addN (fun j => match j with
+          | ⟨0, _⟩ => ERMor1.natN 1 (heightCeil F)
+          | ⟨1, _⟩ => ERMor1.proj 0)))
+
+/-- Interpretation of `clockER`: the Lemma 12 clock at the per-`F` ceilings,
+`(rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n)`. -/
+@[simp] theorem clockER_interp {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (clockER F).interp ![n]
+      = (rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n) := by
+  simp only [clockER, ERMor1.interp_comp, ERMor1.interp_mulN, ERMor1.interp_towerER,
+    ERMor1.interp_addN, ERMor1.interp_natN, ERMor1.interp_proj, Matrix.cons_val_zero]
+
+/-- The deterministic clock of the applied bar-image term is dominated by the
+Lemma 12 clock at the per-`F` ceilings: the rank ceiling enters both the
+coefficient and the tower height (`tower_mono_left`), and the height ceiling
+the tower argument (`tower_mono_right`). -/
+theorem detClock_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+      * tower (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+        (Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))))
+      ≤ (rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n) := by
+  have hr := redexRank_applied_le F (natToFreeAlg n)
+  have hh := height_applied_le F n
+  exact Nat.mul_le_mul (Nat.add_le_add_right hr 1)
+    (le_trans (tower_mono_left (Nat.add_le_add_right hr 1) _) (tower_mono_right _ hh))
+
+/-- The in-system clock dominates the deterministic Lemma 12 clock of the applied
+bar-image term (spec §6.3; the binding inequality of the clock deliverable): at
+every input numeral `n`, the `detClock` value of Proposition 13's applied term is
+at most `clockER F` evaluated at `n`. -/
+theorem clockER_dominates {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+      * tower (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+        (Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))))
+      ≤ (clockER F).interp ![n] := by
+  rw [clockER_interp]
+  exact detClock_applied_le F n
+
+/-- The in-system budget of the fixed function term `F` (the budget slot of
+`normRun` is a genuine input carrying the per-instance chain ceiling; see
+`normRun`): the
+elementary-recursive composite computing the chain ceiling `codeCeil` at the
+per-`F` size, payload, rank, and height ceilings — a `towerER 2` composite over
+a polynomial-and-exponential expression in `n` whose exponent is the in-system
+clock `clockER F`. Novel realization. -/
+def budgetER {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) :
+    ERMor1 1 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.mulN (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.natN 1 6
+      | ⟨1, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun u => match u with
+              | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun v => match v with
+                  | ⟨0, _⟩ => ERMor1.natN 1 2
+                  | ⟨1, _⟩ => ERMor1.comp ERMor1.powN (fun w => match w with
+                      | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun x => match x with
+                          | ⟨0, _⟩ => ERMor1.natN 1 (sizeCeil F)
+                          | ⟨1, _⟩ => ERMor1.comp ERMor1.mulN (fun y => match y with
+                              | ⟨0, _⟩ => ERMor1.natN 1 2
+                              | ⟨1, _⟩ => ERMor1.proj 0))
+                      | ⟨1, _⟩ => ERMor1.comp ERMor1.powN (fun z => match z with
+                          | ⟨0, _⟩ => ERMor1.natN 1 2
+                          | ⟨1, _⟩ => clockER F)))
+              | ⟨1, _⟩ => ERMor1.natN 1 (payloadCeil F))
+          | ⟨1, _⟩ => ERMor1.natN 1 1)))
+
+/-- Interpretation of `budgetER`: the chain ceiling shape at the per-`F`
+ceilings, a height-`2` tower over
+`6 * (2 * (sizeCeil F + 2 * n) ^ 2 ^ clock + payloadCeil F + 1)` with `clock`
+the Lemma 12 clock of `clockER_interp`. -/
+@[simp] theorem budgetER_interp {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (budgetER F).interp ![n]
+      = tower 2 (6 * (2 * (sizeCeil F + 2 * n)
+          ^ 2 ^ ((rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n))
+          + payloadCeil F + 1)) := by
+  simp only [budgetER, ERMor1.interp_comp, ERMor1.interp_towerER, ERMor1.interp_mulN,
+    ERMor1.interp_addN, ERMor1.interp_powN, ERMor1.interp_natN, ERMor1.interp_proj,
+    clockER_interp, Matrix.cons_val_zero]
+
+/-- The in-system budget dominates the deterministic chain ceiling of the applied
+bar-image term (the binding inequality by which `normRun`'s budget slot can be fed
+in-system): at every input numeral `n`, `codeCeil` of Proposition 13's
+applied term is at most `budgetER F` evaluated at `n`, so the budget slot of
+`normRun` can be fed in-system. Chains the per-`F` measure ceilings with
+`tower_mono_right` and power monotonicity, the exponent bounded by
+`detClock_applied_le`. -/
+theorem budgetER_dominates {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    codeCeil (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      ≤ (budgetER F).interp ![n] := by
+  rw [budgetER_interp]
+  unfold codeCeil detClock
+  refine tower_mono_right 2 ?_
+  have hs := size_applied_le F n
+  have hp := sortPayload_applied_le F n
+  have hD := detClock_applied_le F n
+  have hpow : Tm.size (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+        ^ 2 ^ ((redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+          * tower (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+            (Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))))
+      ≤ (sizeCeil F + 2 * n)
+        ^ 2 ^ ((rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n)) := by
+    refine le_trans (Nat.pow_le_pow_left hs _) (Nat.pow_le_pow_right ?_ ?_)
+    · unfold sizeCeil
+      have := Tm.one_le_size (barTm F)
+      omega
+    · exact Nat.pow_le_pow_right (by omega) hD
+  rw [show (List.map barTy ([] : Binding.Ctx RType)).length = 0 from rfl]
+  omega
+
+/-! ### The atomic collapse morphism -/
+
+/-- Interpretation of a composition over a single fed slot: the fed morphism evaluates
+once and enters as the singleton context. -/
+private theorem interp_comp_singleton {k : ℕ} (e : ERMor1 1) (g : ERMor1 k)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.comp e fun _ => g).interp ctx = e.interp ![g.interp ctx] := by
+  rw [ERMor1.interp_comp]
+  exact congrArg e.interp (cons_fin_one (g.interp ctx))
+
+/-- Interpretation of a composition over three fed slots: each fed morphism evaluates
+pointwise and enters positionally. -/
+private theorem interp_comp_three {k : ℕ} (e : ERMor1 3) (g₀ g₁ g₂ : ERMor1 k)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.comp e ![g₀, g₁, g₂]).interp ctx
+      = e.interp ![g₀.interp ctx, g₁.interp ctx, g₂.interp ctx] := by
+  rw [ERMor1.interp_comp]
+  refine congrArg e.interp (funext fun j => ?_)
+  match j with
+  | ⟨0, _⟩ => rfl
+  | ⟨1, _⟩ => rfl
+  | ⟨2, _⟩ => rfl
+
+/-- The atomic collapse morphism for a single codomain-`o` source (spec §6.4; plan
+decision P4): decode ∘ clocked normalization ∘ build. The composite feeds the clocked
+iteration `normRun` at the in-system clock `clockER F`, the applied-term code
+`buildCode F`, and the in-system budget `budgetER F`, and reads the word decoder
+`decodeWordER` off the resulting normal code — per fixed `F`, the whole of
+Proposition 13's normalization pipeline (Leivant III section 5, p. 226, DOI
+`10.1016/S0168-0072(98)00040-2`) as one elementary-recursive morphism, anchored
+denotationally by `collapseER_interp`. Novel realization. -/
+def collapseER {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.arrow (RType.omega τ) RType.o)) : ERMorN 1 1 :=
+  fun _ => ERMor1.comp decodeWordER fun _ =>
+    ERMor1.comp normRun ![clockER F, buildCode F, budgetER F]
+
+/-- Adequacy of the collapse morphism against the denotational anchor (spec §6.4; plan
+decision P4): at every input the collapse computes the numeric reading of the standard
+denotation of Proposition 13's applied term (Leivant III section 5, p. 226) —
+`freeAlgToNat` of `appEval` at the source-side application of `F` to the constructor
+word of the input. The fed code slot reduces by `buildCode_interp`; the budget
+dominance (`codeTm_detIter_le_codeCeil` chained through `budgetER_dominates`)
+discharges `normRun_interp_of_le`, landing the iterate's code by
+`stepCode_iterate_codeTm`; the clock dominance (`clockER_dominates`) absorbs the
+overshoot past the Lemma 12 normal form (`detIter_normal`, `detIter_eq_of_normal`);
+the normal reduct is identified with the value word by the Proposition 13
+identification chain (`normal_closed_o_eq_conc`, `oneEval_reduces`, `oneEval_conc`
+against `prop11_represents` through `represents_arrow` and `lemma9_omega`); and the
+word decoder reads the value off its code (`decodeWord_codeTm_conc`). -/
+theorem collapseER_interp {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.arrow (RType.omega τ) RType.o)) (v : Fin 1 → ℕ) :
+    (collapseER F).interp v = fun _ =>
+      freeAlgToNat (appEval
+        (sourceApp F (sourceWord (natToFreeAlg (v 0)) τ)) finZeroElim) := by
+  obtain ⟨n, rfl⟩ : ∃ n, v = ![n] :=
+    ⟨v 0, funext fun i => match i with | ⟨0, _⟩ => rfl⟩
+  funext i
+  simp only [Matrix.cons_val_zero]
+  set a : FreeAlg natAlgSig := natToFreeAlg n
+  set W : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
+    app' (barTm F) (bbRep a (barTy τ))
+  set L : ℕ := (redexRank W + 1) * tower (redexRank W + 1) (Tm.height W)
+  -- The fed slots: the code slot is the applied term's code, the clock slot dominates
+  -- the Lemma 12 clock, and the budget slot dominates every trace value.
+  have hcode : (buildCode F).interp ![n] = codeTm W := buildCode_interp F n
+  have hclk : L ≤ (clockER F).interp ![n] := clockER_dominates F n
+  have hbud : ∀ j, j ≤ (clockER F).interp ![n] →
+      stepCode^[j] (codeTm W) ≤ (budgetER F).interp ![n] := by
+    intro j _hj
+    rw [stepCode_iterate_codeTm j W]
+    exact le_trans (codeTm_detIter_le_codeCeil j W) (budgetER_dominates F n)
+  have hnorm : Normal (detIter L W) := detIter_normal W
+  -- The identification chain of Proposition 13: the normal reduct is the value word.
+  obtain ⟨b, hb⟩ := normal_closed_o_eq_conc (detIter L W) hnorm
+  have h9 : Represents (RType.omega τ) (sourceWord a τ) (bbRep a (barTy τ)) := by
+    have h := lemma9_omega τ (sourceWord a τ)
+    rwa [appEval_sourceWord] at h
+  have hrep : Represents RType.o (sourceApp F (sourceWord a τ)) W :=
+    (represents_arrow F (barTm F)).mp (prop11_represents F) (sourceWord a τ)
+      (bbRep a (barTy τ)) h9
+  have hred : Relation.ReflTransGen OneLambdaStep W
+      (conc (appEval (sourceApp F (sourceWord a τ)) finZeroElim)) := hrep
+  have hval : b = appEval (sourceApp F (sourceWord a τ)) finZeroElim := by
+    have h1 := oneEval_reduces (detIter_reduces L W) finZeroElim
+    have h2 := oneEval_reduces hred finZeroElim
+    rw [hb, oneEval_conc] at h1
+    rw [oneEval_conc] at h2
+    exact h1.symm.trans h2
+  -- The composite unfolds to the decode of the clocked run at the fed slots.
+  simp only [collapseER, ERMorN.interp]
+  rw [interp_comp_singleton, interp_comp_three, decodeWordER_interp, hcode,
+    normRun_interp_of_le _ _ _ hbud, stepCode_iterate_codeTm _ W,
+    detIter_eq_of_normal hclk hnorm, hb, decodeWord_codeTm_conc, hval]
+
+/-! ### The a-ary collapse morphism -/
+
+/-- The curried arrow sort `Ω τ₀ → ⋯ → Ω τ_{a-1} → o` of an indexed family of shifted
+input sorts, in structural-recursion form: the `Fin`-indexed counterpart of
+`RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o`
+(`omegaCurried_eq_curried`), exposing the head sort and the tail family
+definitionally to the spine recursions below. -/
+private def omegaCurried : {a : ℕ} → (Fin a → RType) → RType
+  | 0, _ => RType.o
+  | _ + 1, τs => RType.arrow (RType.omega (τs 0)) (omegaCurried fun i => τs i.succ)
+
+/-- The structural curried sort agrees with the list-curried spelling over
+`List.ofFn`: `omegaCurried τs = RType.curried (List.ofFn fun i => RType.omega (τs i))
+RType.o`, by induction on the arity through `List.ofFn_succ`. -/
+private theorem omegaCurried_eq_curried : ∀ {a : ℕ} (τs : Fin a → RType),
+    omegaCurried τs = RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o
+  | 0, _ => rfl
+  | _ + 1, τs => by
+      rw [List.ofFn_succ, RType.curried_cons]
+      exact congrArg (RType.arrow (RType.omega (τs 0)))
+        (omegaCurried_eq_curried fun i => τs i.succ)
+
+/-- The source-level application spine over a structurally-curried head: iterate
+`sourceApp` over the argument tuple, peeling the head sort of `omegaCurried`
+definitionally. The recursion core of `sourceApps`. -/
+private def sourceSpine : {a : ℕ} → (τs : Fin a → RType) →
+    Binding.Tm (rlmrOSig natAlgSig) [] (omegaCurried τs) →
+    (∀ i : Fin a, Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega (τs i))) →
+    Binding.Tm (rlmrOSig natAlgSig) [] RType.o
+  | 0, _, H, _ => H
+  | _ + 1, τs, H, ws =>
+      sourceSpine (fun i => τs i.succ) (sourceApp H (ws 0)) fun i => ws i.succ
+
+/-- The `a`-fold source-level application spine (spec §6.4): the `sourceApp` iterate,
+applying a closed function term at the curried arrow sort over the shifted input
+sorts `Ω (τs i)` to one closed argument term per input position — the source-side
+application shape of the `a`-ary hypothesis of Proposition 13 (Leivant III
+section 5, p. 226, DOI `10.1016/S0168-0072(98)00040-2`). The `Fin`-indexed
+counterpart of the list-indexed `Ramified.appSpine`; the head is carried across
+`omegaCurried_eq_curried` once and the iteration is structural. -/
+def sourceApps {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (ws : ∀ i : Fin a, Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega (τs i))) :
+    Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
+  sourceSpine τs ((omegaCurried_eq_curried τs).symm ▸ F) ws
+
+/-- The bar-side application spine at numeric inputs: iterate `OneLambda.app'` over
+the Berarducci-Böhm representations of the input numerals, peeling the head sort of
+`omegaCurried` through `barTy` definitionally. The `a`-ary applied bar-image term of
+Proposition 13 (Leivant III section 5, p. 226) over a generic head. -/
+private def barSpine : {a : ℕ} → (τs : Fin a → RType) →
+    Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (omegaCurried τs)) →
+    (Fin a → ℕ) → Binding.Tm (oneLambdaSig natAlgSig) [] RType.o
+  | 0, _, H, _ => H
+  | _ + 1, τs, H, v =>
+      barSpine (fun i => τs i.succ)
+        (OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))) fun i => v i.succ
+
+/-- The bar image of the fixed `a`-ary function term at the structural head sort:
+`barTm F` carried across `omegaCurried_eq_curried`. The head of the applied
+bar-image spine `barSpine` and the closed head constant of the code builder. -/
+private def barHead {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) :
+    Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (omegaCurried τs)) :=
+  (congrArg barTy (omegaCurried_eq_curried τs)).symm ▸ barTm F
+
+/-- Transport of the representation relation along a sort equality: representation
+at `τ` carries to representation of the transported terms at `τ'`. -/
+private theorem represents_cast {τ τ' : RType} (e : τ = τ')
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] τ)
+    (Fhat : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy τ))
+    (h : Represents τ F Fhat) :
+    Represents τ' (e ▸ F) ((congrArg barTy e) ▸ Fhat) := by
+  subst e
+  exact h
+
+/-- The fixed `a`-ary function term is represented by its bar image at the
+structural head sort: Proposition 11 (`prop11_represents`) carried across
+`omegaCurried_eq_curried`. -/
+private theorem represents_head {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) :
+    Represents (omegaCurried τs) ((omegaCurried_eq_curried τs).symm ▸ F) (barHead F) :=
+  represents_cast (omegaCurried_eq_curried τs).symm F (barTm F) (prop11_represents F)
+
+/-- The source spine at the constructor words of the input numerals is represented
+by the bar spine at the same numerals (Leivant III sections 4.2 and 5): fold the
+arrow clause of `Represents` over the argument positions, each argument represented
+by its Berarducci-Böhm form through `lemma9_omega` and `appEval_sourceWord`. -/
+private theorem represents_barSpine : ∀ {a : ℕ} (τs : Fin a → RType)
+    (H : Binding.Tm (rlmrOSig natAlgSig) [] (omegaCurried τs))
+    (Hhat : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (omegaCurried τs))),
+    Represents (omegaCurried τs) H Hhat → ∀ v : Fin a → ℕ,
+    Represents RType.o
+      (sourceSpine τs H fun i => sourceWord (natToFreeAlg (v i)) (τs i))
+      (barSpine τs Hhat v)
+  | 0, _, _, _, h, _ => h
+  | _ + 1, τs, H, Hhat, h, v => by
+      have h9 : Represents (RType.omega (τs 0))
+          (sourceWord (natToFreeAlg (v 0)) (τs 0))
+          (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))) := by
+        have h' := lemma9_omega (τs 0) (sourceWord (natToFreeAlg (v 0)) (τs 0))
+        rwa [appEval_sourceWord] at h'
+      exact represents_barSpine (fun i => τs i.succ)
+        (sourceApp H (sourceWord (natToFreeAlg (v 0)) (τs 0)))
+        (OneLambda.app' Hhat (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))))
+        ((represents_arrow H Hhat).mp h _ _ h9) fun i => v i.succ
+
+/-- The per-position height-and-size offset of the bar spine: one application node
+and the argument representation's fixed abstraction prefix per input position — the
+constructor-context length plus two, summed over the positions. -/
+private def spineOffset : {a : ℕ} → (Fin a → RType) → ℕ
+  | 0, _ => 0
+  | _ + 1, τs =>
+      ((stepTypes natAlgSig (barTy (τs 0)) (barTy (τs 0))).length + 2)
+        + spineOffset fun i => τs i.succ
+
+/-- The per-position sort-payload offset of the bar spine: the payload of the `app`
+tag at each application step and the payload wrapper of each argument
+representation, summed over the input positions. -/
+private def spinePayload : {a : ℕ} → (Fin a → RType) → ℕ
+  | 0, _ => 0
+  | _ + 1, τs =>
+      opPayload (OneLambdaOp.app (barTy (RType.omega (τs 0)))
+          (barTy (omegaCurried fun i => τs i.succ)))
+        + lamWrapPayload (barTy (τs 0)) (stepTypes natAlgSig (barTy (τs 0)) (barTy (τs 0)))
+            (opPayload (OneLambdaOp.app (barTy (τs 0)) (barTy (τs 0))))
+        + spinePayload fun i => τs i.succ
+
+/-- The redex rank of the bar spine is bounded by the head rank together with the
+order of the head's arrow sort, uniformly in the input numerals: each argument's
+rank vanishes (`normal_bbRep`), and the order of every suffix arrow sort is
+dominated by the order of the full arrow sort. The `a`-ary rank-uniformity bound of
+Proposition 13 (Leivant III section 5, p. 226). -/
+private theorem redexRank_barSpine_le : ∀ {a : ℕ} (τs : Fin a → RType)
+    (H : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (omegaCurried τs)))
+    (v : Fin a → ℕ),
+    redexRank (barSpine τs H v)
+      ≤ max (redexRank H) (max 1 (RType.ord (barTy (omegaCurried τs))))
+  | 0, _, _, _ => le_max_left _ _
+  | _ + 1, τs, H, v => by
+      set W0 : Binding.Tm (oneLambdaSig natAlgSig) []
+          (barTy (omegaCurried fun i => τs i.succ)) :=
+        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))
+      have hrec := redexRank_barSpine_le (fun i => τs i.succ) W0 fun i => v i.succ
+      have happ : redexRank W0
+          ≤ max (redexRank H)
+              (max (redexRank (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))))
+                (max 1 (RType.ord (RType.arrow (barTy (RType.omega (τs 0)))
+                  (barTy (omegaCurried fun i => τs i.succ)))))) :=
+        redexRank_app'_le H _
+      have h0 : redexRank (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))) = 0 :=
+        normal_bbRep (natToFreeAlg (v 0)) (barTy (τs 0))
+      have harr : RType.ord (RType.arrow (barTy (RType.omega (τs 0)))
+            (barTy (omegaCurried fun i => τs i.succ)))
+          = max (RType.ord (barTy (RType.omega (τs 0))) + 1)
+              (RType.ord (barTy (omegaCurried fun i => τs i.succ))) := rfl
+      have hord : RType.ord (barTy (omegaCurried τs))
+          = max (RType.ord (barTy (RType.omega (τs 0))) + 1)
+              (RType.ord (barTy (omegaCurried fun i => τs i.succ))) := rfl
+      have hunfold : redexRank (barSpine τs H v)
+          = redexRank (barSpine (fun i => τs i.succ) W0 fun i => v i.succ) := rfl
+      rw [hunfold]
+      omega
+
+/-- The height of the bar spine is bounded by the head height plus the spine offset
+plus the sum of the input numerals: each application step contributes one level over
+the argument representation's height (`height_bbRep_le`). -/
+private theorem height_barSpine_le : ∀ {a : ℕ} (τs : Fin a → RType)
+    (H : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (omegaCurried τs)))
+    (v : Fin a → ℕ),
+    Tm.height (barSpine τs H v) ≤ Tm.height H + spineOffset τs + ∑ i, v i
+  | 0, τs, H, v => by
+      have hsum : ∑ i, v i = 0 := by simp
+      have hunfold : Tm.height (barSpine τs H v) = Tm.height H := rfl
+      have hoff : spineOffset τs = 0 := rfl
+      rw [hunfold, hoff, hsum]
+      omega
+  | _ + 1, τs, H, v => by
+      set W0 : Binding.Tm (oneLambdaSig natAlgSig) []
+          (barTy (omegaCurried fun i => τs i.succ)) :=
+        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))
+      have hrec := height_barSpine_le (fun i => τs i.succ) W0 fun i => v i.succ
+      have happ : Tm.height W0
+          = 1 + max (Tm.height H) (Tm.height (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))) :=
+        height_app' H _
+      have hb := height_bbRep_le (τs 0) (v 0)
+      have hsum : ∑ i, v i = v 0 + ∑ i : Fin _, v i.succ := Fin.sum_univ_succ v
+      have hunfold : Tm.height (barSpine τs H v)
+          = Tm.height (barSpine (fun i => τs i.succ) W0 fun i => v i.succ) := rfl
+      have hoff : spineOffset τs
+          = ((stepTypes natAlgSig (barTy (τs 0)) (barTy (τs 0))).length + 2)
+            + spineOffset fun i => τs i.succ := rfl
+      rw [hunfold, hoff]
+      omega
+
+/-- The size of the bar spine is bounded by the head size plus the spine offset plus
+twice the sum of the input numerals: each application step contributes one node over
+the argument representation's size (`size_bbRep_le`). -/
+private theorem size_barSpine_le : ∀ {a : ℕ} (τs : Fin a → RType)
+    (H : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (omegaCurried τs)))
+    (v : Fin a → ℕ),
+    Tm.size (barSpine τs H v) ≤ Tm.size H + spineOffset τs + 2 * ∑ i, v i
+  | 0, τs, H, v => by
+      have hsum : ∑ i, v i = 0 := by simp
+      have hunfold : Tm.size (barSpine τs H v) = Tm.size H := rfl
+      have hoff : spineOffset τs = 0 := rfl
+      rw [hunfold, hoff, hsum]
+      omega
+  | _ + 1, τs, H, v => by
+      set W0 : Binding.Tm (oneLambdaSig natAlgSig) []
+          (barTy (omegaCurried fun i => τs i.succ)) :=
+        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))
+      have hrec := size_barSpine_le (fun i => τs i.succ) W0 fun i => v i.succ
+      have happ : Tm.size W0
+          = 1 + Tm.size H + Tm.size (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))) :=
+        size_app' H _
+      have hb := size_bbRep_le (τs 0) (v 0)
+      have hsum : ∑ i, v i = v 0 + ∑ i : Fin _, v i.succ := Fin.sum_univ_succ v
+      have hunfold : Tm.size (barSpine τs H v)
+          = Tm.size (barSpine (fun i => τs i.succ) W0 fun i => v i.succ) := rfl
+      have hoff : spineOffset τs
+          = ((stepTypes natAlgSig (barTy (τs 0)) (barTy (τs 0))).length + 2)
+            + spineOffset fun i => τs i.succ := rfl
+      rw [hunfold, hoff]
+      omega
+
+/-- The sort payload of the bar spine is bounded by the head payload plus the spine
+payload, uniformly in the input numerals: each argument representation's payload is
+a function of its sort alone (`sortPayload_bbRep_le`). -/
+private theorem sortPayload_barSpine_le : ∀ {a : ℕ} (τs : Fin a → RType)
+    (H : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (omegaCurried τs)))
+    (v : Fin a → ℕ),
+    sortPayload (barSpine τs H v) ≤ sortPayload H + spinePayload τs
+  | 0, τs, H, v => by
+      have hunfold : sortPayload (barSpine τs H v) = sortPayload H := rfl
+      have hoff : spinePayload τs = 0 := rfl
+      rw [hunfold, hoff]
+      omega
+  | _ + 1, τs, H, v => by
+      set W0 : Binding.Tm (oneLambdaSig natAlgSig) []
+          (barTy (omegaCurried fun i => τs i.succ)) :=
+        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))
+      have hrec := sortPayload_barSpine_le (fun i => τs i.succ) W0 fun i => v i.succ
+      have happ : sortPayload W0
+          = max (opPayload (OneLambdaOp.app (barTy (RType.omega (τs 0)))
+              (barTy (omegaCurried fun i => τs i.succ))))
+            (max (sortPayload H)
+              (sortPayload (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))))) :=
+        sortPayload_app' H _
+      have hb := sortPayload_bbRep_le (τs 0) (v 0)
+      have hunfold : sortPayload (barSpine τs H v)
+          = sortPayload (barSpine (fun i => τs i.succ) W0 fun i => v i.succ) := rfl
+      have hoff : spinePayload τs
+          = opPayload (OneLambdaOp.app (barTy (RType.omega (τs 0)))
+              (barTy (omegaCurried fun i => τs i.succ)))
+            + lamWrapPayload (barTy (τs 0))
+                (stepTypes natAlgSig (barTy (τs 0)) (barTy (τs 0)))
+                (opPayload (OneLambdaOp.app (barTy (τs 0)) (barTy (τs 0))))
+            + spinePayload fun i => τs i.succ := rfl
+      rw [hunfold, hoff]
+      omega
+
+/-- The per-step head-code rebuild of the spine code: at slots `(hd, v₀, …)` the
+`pairER` rebuild of one `app` node applying the running head code `hd` to the
+argument code `codeBbRepER σ` read at the first input slot, tagged with the `app`
+operation at the step's sorts. Novel realization. -/
+private def spineHeadER (a : ℕ) (σ ρ : RType) : ERMor1 (a + 2) :=
+  pairER (ERMor1.natN (a + 2) 1)
+    (pairER (ERMor1.natN (a + 2)
+        (codeOp (OneLambdaOp.app (barTy (RType.omega σ)) (barTy ρ))))
+      (pairER (ERMor1.proj 0)
+        (pairER (ERMor1.comp (codeBbRepER σ) fun _ : Fin 1 => ERMor1.proj (Fin.succ 0))
+          (ERMor1.natN (a + 2) 0))))
+
+/-- The head-code rebuild evaluates to the `app`-node pack of the head slot and the
+argument code `codeBbRep σ` at the first input slot. -/
+private theorem spineHeadER_interp (a : ℕ) (σ ρ : RType) (h : ℕ) (v : Fin (a + 1) → ℕ) :
+    (spineHeadER a σ ρ).interp (Fin.cons h v)
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app (barTy (RType.omega σ)) (barTy ρ)))
+          (Nat.pair h (Nat.pair (codeBbRep σ (v 0)) 0))) := by
+  simp only [spineHeadER, pairER_interp, ERMor1.interp_natN, ERMor1.interp_comp,
+    ERMor1.interp_proj, cons_fin_one, codeBbRepER_interp, Fin.cons_zero, Fin.cons_succ]
+
+/-- The spine-code fold: `ERMor1 (a + 1)` at slots `(hd, v₀, …, v_{a-1})` rebuilding
+the code of the `a`-fold left-associated application of the head coded in the first
+slot to the argument codes `codeBbRepER (τs i)` at the input slots — one
+`spineHeadER` layer per input position, by meta-level recursion on the arity
+(spec §6.4; N6). Novel realization. -/
+private def spineCodeER : {a : ℕ} → (Fin a → RType) → ERMor1 (a + 1)
+  | 0, _ => ERMor1.proj 0
+  | a + 1, τs =>
+      ERMor1.comp (spineCodeER fun i => τs i.succ)
+        (Fin.cons (spineHeadER a (τs 0) (omegaCurried fun i => τs i.succ))
+          fun j : Fin a => ERMor1.proj j.succ.succ)
+
+/-- The spine-code fold at a head code computes the code of the bar spine:
+`spineCodeER` evaluated at `(codeTm H, v)` is `codeTm (barSpine τs H v)`, each layer
+reassembled by `codeTm_app'` through `codeBbRep_codeTm`. -/
+private theorem spineCodeER_codeTm : ∀ {a : ℕ} (τs : Fin a → RType)
+    (H : Binding.Tm (oneLambdaSig natAlgSig) [] (barTy (omegaCurried τs)))
+    (v : Fin a → ℕ),
+    (spineCodeER τs).interp (Fin.cons (codeTm H) v) = codeTm (barSpine τs H v)
+  | 0, _, _, _ => rfl
+  | a + 1, τs, H, v => by
+      change (spineCodeER fun i => τs i.succ).interp
+          (fun j => ((Fin.cons (spineHeadER a (τs 0) (omegaCurried fun i => τs i.succ))
+              (fun j : Fin a => ERMor1.proj j.succ.succ) :
+                Fin (a + 1) → ERMor1 (a + 2)) j).interp
+            (Fin.cons (codeTm H) v))
+        = codeTm (barSpine τs H v)
+      have hctx : (fun j => ((Fin.cons
+              (spineHeadER a (τs 0) (omegaCurried fun i => τs i.succ))
+              (fun j : Fin a => ERMor1.proj j.succ.succ) :
+                Fin (a + 1) → ERMor1 (a + 2)) j).interp
+            (Fin.cons (codeTm H) v))
+          = Fin.cons
+              (codeTm (OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))))
+              (fun i => v i.succ) := by
+        funext j
+        refine Fin.cases ?_ (fun k => ?_) j
+        · simp only [Fin.cons_zero]
+          rw [spineHeadER_interp, codeBbRep_codeTm]
+          exact (codeTm_app' H _).symm
+        · simp only [Fin.cons_succ, ERMor1.interp_proj]
+      rw [hctx]
+      exact spineCodeER_codeTm (fun i => τs i.succ)
+        (OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))) fun i => v i.succ
+
+/-- The code of the `a`-ary applied bar-image term as an elementary-recursive
+morphism (spec §6.4; N6; plan decision P4): the spine-code fold `spineCodeER` fed
+the closed head constant `codeTm (barHead F)` and the input slots. Novel
+realization. -/
+private def buildCodeN {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) :
+    ERMor1 a :=
+  ERMor1.comp (spineCodeER τs)
+    (Fin.cons (ERMor1.natN a (codeTm (barHead F))) fun i : Fin a => ERMor1.proj i)
+
+/-- Interpretation of `buildCodeN`: the code of the `a`-ary applied bar-image term,
+`codeTm (barSpine τs (barHead F) v)`, unconditionally on every input tuple. -/
+private theorem buildCodeN_interp {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (v : Fin a → ℕ) :
+    (buildCodeN F).interp v = codeTm (barSpine τs (barHead F) v) := by
+  unfold buildCodeN
+  rw [ERMor1.interp_comp]
+  have hctx : (fun j : Fin (a + 1) =>
+        ((Fin.cons (ERMor1.natN a (codeTm (barHead F)))
+            (fun i : Fin a => ERMor1.proj i) : Fin (a + 1) → ERMor1 a) j).interp v)
+      = Fin.cons (codeTm (barHead F)) v := by
+    funext j
+    refine Fin.cases ?_ (fun k => ?_) j
+    · simp only [Fin.cons_zero, ERMor1.interp_natN]
+    · simp only [Fin.cons_succ, ERMor1.interp_proj]
+  rw [hctx, spineCodeER_codeTm]
+
+/-- The uniform rank ceiling of the fixed `a`-ary function term (Proposition 13's
+`qF` at `a` inputs, Leivant III section 5, p. 226): the redex rank of the bar-image
+head together with the order of the head's arrow sort, a constant of `F`. -/
+private def rankCeilN {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) : ℕ :=
+  max (redexRank (barHead F)) (max 1 (RType.ord (barTy (omegaCurried τs))))
+
+/-- The height ceiling of the fixed `a`-ary function term: the head height plus the
+spine offset, a constant of `F`. At input tuple `v` the spine height never exceeds
+`heightCeilN F + ∑ i, v i`. -/
+private def heightCeilN {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) : ℕ :=
+  Tm.height (barHead F) + spineOffset τs
+
+/-- The size ceiling of the fixed `a`-ary function term: the head size plus the
+spine offset, a constant of `F`. At input tuple `v` the spine size never exceeds
+`sizeCeilN F + 2 * ∑ i, v i`. -/
+private def sizeCeilN {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) : ℕ :=
+  Tm.size (barHead F) + spineOffset τs
+
+/-- The sort-payload ceiling of the fixed `a`-ary function term: the head payload
+plus the spine payload, a constant of `F` dominating the spine payload uniformly in
+the input tuple. -/
+private def payloadCeilN {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) : ℕ :=
+  sortPayload (barHead F) + spinePayload τs
+
+/-- The deterministic Lemma 12 clock of the `a`-ary bar spine is dominated by the
+Lemma 12 clock at the per-`F` ceilings, with the input sum in the tower argument
+(spec §6.3, the common-clock sum domination): the rank ceiling enters the
+coefficient and the tower height, the height ceiling and the input sum the tower
+argument. -/
+private theorem detClock_barSpine_le {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (v : Fin a → ℕ) :
+    (redexRank (barSpine τs (barHead F) v) + 1)
+      * tower (redexRank (barSpine τs (barHead F) v) + 1)
+        (Tm.height (barSpine τs (barHead F) v))
+      ≤ (rankCeilN F + 1) * tower (rankCeilN F + 1) (heightCeilN F + ∑ i, v i) := by
+  have hr : redexRank (barSpine τs (barHead F) v) ≤ rankCeilN F :=
+    redexRank_barSpine_le τs (barHead F) v
+  have hh : Tm.height (barSpine τs (barHead F) v) ≤ heightCeilN F + ∑ i, v i := by
+    have := height_barSpine_le τs (barHead F) v
+    unfold heightCeilN
+    omega
+  exact Nat.mul_le_mul (Nat.add_le_add_right hr 1)
+    (le_trans (tower_mono_left (Nat.add_le_add_right hr 1) _) (tower_mono_right _ hh))
+
+/-- The in-system clock of the fixed `a`-ary function term (spec §6.3; N6): the
+elementary-recursive composite computing
+`(rankCeilN F + 1) * tower (rankCeilN F + 1) (heightCeilN F + ∑ i, v i)`, the
+Lemma 12 clock at the per-`F` ceilings over the staggered input sum
+(`ERMor1.sumCtxER`, the sum-domination form of spec §6.3). Novel realization. -/
+private def clockERN {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) :
+    ERMor1 a :=
+  ERMor1.comp ERMor1.mulN (fun i => match i with
+    | ⟨0, _⟩ => ERMor1.natN a (rankCeilN F + 1)
+    | ⟨1, _⟩ => ERMor1.comp (ERMor1.towerER (rankCeilN F + 1)) (fun _ : Fin 1 =>
+        ERMor1.comp ERMor1.addN (fun j => match j with
+          | ⟨0, _⟩ => ERMor1.natN a (heightCeilN F)
+          | ⟨1, _⟩ => ERMor1.sumCtxER a)))
+
+/-- Interpretation of `clockERN`: the Lemma 12 clock at the per-`F` ceilings over
+the input sum, `(rankCeilN F + 1) * tower (rankCeilN F + 1) (heightCeilN F + ∑ i, v i)`. -/
+private theorem clockERN_interp {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (v : Fin a → ℕ) :
+    (clockERN F).interp v
+      = (rankCeilN F + 1) * tower (rankCeilN F + 1) (heightCeilN F + ∑ i, v i) := by
+  simp only [clockERN, ERMor1.interp_comp, ERMor1.interp_mulN, ERMor1.interp_towerER,
+    ERMor1.interp_addN, ERMor1.interp_natN, ERMor1.interp_sumCtxER]
+
+/-- The in-system budget of the fixed `a`-ary function term (spec §6.3; the
+budget slot of `normRun` is a genuine input carrying the per-instance chain
+ceiling; see `normRun`): the
+elementary-recursive composite computing the chain ceiling `codeCeil` at the
+per-`F` size, payload, rank, and height ceilings over the input sum — a `towerER 2`
+composite whose exponent is the in-system clock `clockERN F`. Novel realization. -/
+private def budgetERN {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) :
+    ERMor1 a :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.mulN (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.natN a 6
+      | ⟨1, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun u => match u with
+              | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun w => match w with
+                  | ⟨0, _⟩ => ERMor1.natN a 2
+                  | ⟨1, _⟩ => ERMor1.comp ERMor1.powN (fun x => match x with
+                      | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun y => match y with
+                          | ⟨0, _⟩ => ERMor1.natN a (sizeCeilN F)
+                          | ⟨1, _⟩ => ERMor1.comp ERMor1.mulN (fun z => match z with
+                              | ⟨0, _⟩ => ERMor1.natN a 2
+                              | ⟨1, _⟩ => ERMor1.sumCtxER a))
+                      | ⟨1, _⟩ => ERMor1.comp ERMor1.powN (fun p => match p with
+                          | ⟨0, _⟩ => ERMor1.natN a 2
+                          | ⟨1, _⟩ => clockERN F)))
+              | ⟨1, _⟩ => ERMor1.natN a (payloadCeilN F))
+          | ⟨1, _⟩ => ERMor1.natN a 1)))
+
+/-- Interpretation of `budgetERN`: the chain-ceiling shape at the per-`F` ceilings
+over the input sum, a height-`2` tower over
+`6 * (2 * (sizeCeilN F + 2 * ∑ i, v i) ^ 2 ^ clock + payloadCeilN F + 1)` with
+`clock` the Lemma 12 clock of `clockERN_interp`. -/
+private theorem budgetERN_interp {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (v : Fin a → ℕ) :
+    (budgetERN F).interp v
+      = tower 2 (6 * (2 * (sizeCeilN F + 2 * ∑ i, v i)
+          ^ 2 ^ ((rankCeilN F + 1) * tower (rankCeilN F + 1) (heightCeilN F + ∑ i, v i))
+          + payloadCeilN F + 1)) := by
+  simp only [budgetERN, ERMor1.interp_comp, ERMor1.interp_towerER, ERMor1.interp_mulN,
+    ERMor1.interp_addN, ERMor1.interp_powN, ERMor1.interp_natN, ERMor1.interp_sumCtxER,
+    clockERN_interp]
+
+/-- The in-system budget dominates the deterministic chain ceiling of the `a`-ary
+bar spine: at every input tuple `v`, `codeCeil` of the applied spine is at most
+`budgetERN F` evaluated at `v`, so the budget slot of `normRun` can be fed
+in-system. Chains the per-`F` spine ceilings with `tower_mono_right` and power
+monotonicity, the exponent bounded by `detClock_barSpine_le`. -/
+private theorem budgetERN_dominates {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (v : Fin a → ℕ) :
+    codeCeil (barSpine τs (barHead F) v) ≤ (budgetERN F).interp v := by
+  rw [budgetERN_interp]
+  unfold codeCeil detClock
+  refine tower_mono_right 2 ?_
+  have hs : Tm.size (barSpine τs (barHead F) v) ≤ sizeCeilN F + 2 * ∑ i, v i := by
+    have := size_barSpine_le τs (barHead F) v
+    unfold sizeCeilN
+    omega
+  have hp : sortPayload (barSpine τs (barHead F) v) ≤ payloadCeilN F := by
+    have := sortPayload_barSpine_le τs (barHead F) v
+    unfold payloadCeilN
+    omega
+  have hD := detClock_barSpine_le F v
+  have hpow : Tm.size (barSpine τs (barHead F) v)
+        ^ 2 ^ ((redexRank (barSpine τs (barHead F) v) + 1)
+          * tower (redexRank (barSpine τs (barHead F) v) + 1)
+            (Tm.height (barSpine τs (barHead F) v)))
+      ≤ (sizeCeilN F + 2 * ∑ i, v i)
+        ^ 2 ^ ((rankCeilN F + 1) * tower (rankCeilN F + 1) (heightCeilN F + ∑ i, v i)) := by
+    refine le_trans (Nat.pow_le_pow_left hs _) (Nat.pow_le_pow_right ?_ ?_)
+    · unfold sizeCeilN
+      have := Tm.one_le_size (barHead F)
+      omega
+    · exact Nat.pow_le_pow_right (by omega) hD
+  rw [show ([] : Binding.Ctx RType).length = 0 from rfl]
+  omega
+
+/-- The atomic collapse morphism at `a` shifted inputs (spec §6.4; plan decision
+P4): decode ∘ clocked normalization ∘ build. The composite feeds the clocked
+iteration `normRun` at the in-system clock `clockERN F`, the `a`-ary applied-term
+code `buildCodeN F`, and the in-system budget `budgetERN F`, and reads the word
+decoder `decodeWordER` off the resulting normal code — per fixed `F`, the whole of
+Proposition 13's normalization pipeline at `a` inputs (Leivant III section 5,
+p. 226, DOI `10.1016/S0168-0072(98)00040-2`) as one elementary-recursive morphism,
+anchored denotationally by `collapseERN_interp`. The atomic builder for a single
+codomain-`o` source morphism; per-component tupling into `ERMorN` morphism maps is
+downstream scope (spec §6.4). Novel realization. -/
+def collapseERN {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o)) :
+    ERMorN a 1 :=
+  fun _ => ERMor1.comp decodeWordER fun _ =>
+    ERMor1.comp normRun ![clockERN F, buildCodeN F, budgetERN F]
+
+/-- Adequacy of the `a`-ary collapse morphism against the denotational anchor
+(spec §6.4; plan decision P4): at every input tuple the collapse computes the
+numeric reading of the standard denotation of Proposition 13's `a`-ary applied term
+(Leivant III section 5, p. 226) — `freeAlgToNat` of `appEval` at the source-side
+application spine of `F` over the constructor words of the inputs. The fed code
+slot reduces by `buildCodeN_interp`; the budget dominance
+(`codeTm_detIter_le_codeCeil` chained through `budgetERN_dominates`) discharges
+`normRun_interp_of_le`, landing the iterate's code by `stepCode_iterate_codeTm`;
+the clock dominance (`detClock_barSpine_le`) absorbs the overshoot past the
+Lemma 12 normal form (`detIter_normal`, `detIter_eq_of_normal`); the normal reduct
+is identified with the value word by the Proposition 13 identification chain
+(`normal_closed_o_eq_conc`, `oneEval_reduces`, `oneEval_conc` against the folded
+arrow clause of `prop11_represents` through `represents_arrow` and `lemma9_omega`);
+and the word decoder reads the value off its code (`decodeWord_codeTm_conc`). -/
+theorem collapseERN_interp {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (v : Fin a → ℕ) :
+    (collapseERN F).interp v = fun _ =>
+      freeAlgToNat (appEval
+        (sourceApps F (fun i => sourceWord (natToFreeAlg (v i)) (τs i)))
+        finZeroElim) := by
+  funext i
+  set W : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
+    barSpine τs (barHead F) v
+  set L : ℕ := (redexRank W + 1) * tower (redexRank W + 1) (Tm.height W)
+  -- The fed slots: the code slot is the applied spine's code, the clock slot
+  -- dominates the Lemma 12 clock, and the budget slot dominates every trace value.
+  have hcode : (buildCodeN F).interp v = codeTm W := buildCodeN_interp F v
+  have hclk : L ≤ (clockERN F).interp v := by
+    rw [clockERN_interp]
+    exact detClock_barSpine_le F v
+  have hbud : ∀ j, j ≤ (clockERN F).interp v →
+      stepCode^[j] (codeTm W) ≤ (budgetERN F).interp v := by
+    intro j _hj
+    rw [stepCode_iterate_codeTm j W]
+    exact le_trans (codeTm_detIter_le_codeCeil j W) (budgetERN_dominates F v)
+  have hnorm : Normal (detIter L W) := detIter_normal W
+  -- The identification chain of Proposition 13: the normal reduct is the value word.
+  obtain ⟨b, hb⟩ := normal_closed_o_eq_conc (detIter L W) hnorm
+  have hrep : Represents RType.o
+      (sourceSpine τs ((omegaCurried_eq_curried τs).symm ▸ F)
+        fun i => sourceWord (natToFreeAlg (v i)) (τs i)) W :=
+    represents_barSpine τs _ (barHead F) (represents_head F) v
+  have hred : Relation.ReflTransGen OneLambdaStep W
+      (conc (appEval (sourceApps F fun i => sourceWord (natToFreeAlg (v i)) (τs i))
+        finZeroElim)) := hrep
+  have hval : b = appEval
+      (sourceApps F fun i => sourceWord (natToFreeAlg (v i)) (τs i)) finZeroElim := by
+    have h1 := oneEval_reduces (detIter_reduces L W) finZeroElim
+    have h2 := oneEval_reduces hred finZeroElim
+    rw [hb, oneEval_conc] at h1
+    rw [oneEval_conc] at h2
+    exact h1.symm.trans h2
+  -- The composite unfolds to the decode of the clocked run at the fed slots.
+  simp only [collapseERN, ERMorN.interp]
+  rw [interp_comp_singleton, interp_comp_three, decodeWordER_interp, hcode,
+    normRun_interp_of_le _ _ _ hbud, stepCode_iterate_codeTm _ W,
+    detIter_eq_of_normal hclk hnorm, hb, decodeWord_codeTm_conc, hval]
+
+/-! ### The K^sim landing corollary -/
+
+/-- The K^sim landing of the collapse morphism (spec §6.5; plan decision D3): the
+`ERMorN 1 1` collapse morphism `collapseER F` is realized by a multi-output K^sim
+morphism, exhibited as the slotwise `erToK`-translation `erToKN (collapseER F)` and
+interp-faithful on every input by `erToKN_interp`. This states the ⊇ direction of
+the ER-to-K^sim bridge (Tourlakis 2018 Corollary 0.1.0.44, at the normalizer's output) as a
+corollary through `erToK`, rather than shipping a `KMor1` normalizer definition
+(spec §1.1 non-goal). Novel realization. -/
+theorem collapseER_ksim_definable {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.arrow (RType.omega τ) RType.o)) :
+    ∃ g : KMorN 1 1, ∀ v, KMorN.interp g v = (collapseER F).interp v :=
+  ⟨erToKN (collapseER F), fun v => funext fun i => erToKN_interp (collapseER F) v i⟩
 
 end OneLambda
 
