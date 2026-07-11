@@ -9,6 +9,9 @@ Acceptance examples for `GebLean.Ramified.Characterization`:
 an object-sort context and a `SynCatFO` morphism whose collapse denotation
 doubles every input exist. Stated in the all-inputs denotational form through
 the interpretation lemmas, not kernel reduction on the clocked composite.
+The transferred pair is exercised likewise: `collapseKFunctor.map_injective`
+applies through the `Faithful` instance, and `ramified_definability_kSim`
+instantiates on the `K^sim` encoding of the doubling class.
 -/
 
 namespace GebLeanTests.Ramified.CharacterizationTest
@@ -44,5 +47,30 @@ example :
   refine ⟨Γ, g, hg.trans (congrArg (arityCongr _ _) ?_)⟩
   funext v j
   rw [ERMorNQuo.interp_mk, erDouble_interp]
+
+/-- The K-valued soundness functor is faithful: equal `collapseKFunctor`
+images force equal `SynCatFO` morphisms, through the `Faithful` instance. -/
+example {Γ Δ : SynCatFO} {g h : Γ ⟶ Δ}
+    (H : collapseKFunctor.map g = collapseKFunctor.map h) : g = h :=
+  collapseKFunctor.map_injective H
+
+/-- `ramified_definability_kSim` instantiates on the `K^sim` encoding of the
+doubling class: an object-sort context and a `SynCatFO` morphism whose
+collapse denotation, read along the arity identifications, doubles every
+input exist. Existence is through the theorem, not kernel reduction on the
+clocked composite. -/
+example :
+    ∃ (Γ : ObjCtx 1) (g : Γ.toSynCatFO ⟶ (oCtx 1).toSynCatFO),
+      collapseDenotation g
+        = arityCongr Γ.objLen_toSynCatFO.symm ((oCtx 1).objLen_toSynCatFO).symm
+            (fun v _ => 2 * v 0) := by
+  obtain ⟨Γ, g, hg⟩ :=
+    ramified_definability_kSim
+      (erToKFunctor.map (Quotient.mk (erMorNSetoid 1 1) erDouble))
+  refine ⟨Γ, g, hg.trans (congrArg (arityCongr _ _) ?_)⟩
+  change (erToKFunctor_map (Quotient.mk (erMorNSetoid 1 1) erDouble)).hom.interp = _
+  rw [erToKFunctor_map_interp, ERMorNQuo.interp_mk]
+  funext v j
+  rw [erDouble_interp]
 
 end GebLeanTests.Ramified.CharacterizationTest

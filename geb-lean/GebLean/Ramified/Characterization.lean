@@ -1,3 +1,4 @@
+import GebLean.LawvereERKSim.Equivalence
 import GebLean.Ramified.Soundness.Collapse
 
 /-!
@@ -13,6 +14,14 @@ The denotational form of Leivant III's Theorem 14, items (1)-(2), relative to
 * every morphism of `LawvereERCat` is ramified-definable
   (`ramified_definability`): it has an object-sort context and a `SynCatFO`
   morphism whose collapse denotation is the morphism's interpretation.
+
+Both statements transfer across the equivalence
+`erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2`: the soundness functor
+composes with the encoding `erToKFunctor` into the K-valued soundness functor
+`collapseKFunctor`, faithful as a composite of faithful functors, and
+definability restates for every morphism of `LawvereKSimDCat 2`
+(`ramified_definability_kSim`) with the `K^sim` interpretation in place of the
+ER interpretation, through the interp preservation `kToERFunctor_map_interp`.
 
 The arity bookkeeping: an object-sort context `ObjCtx n` is indexed by its
 arity, while a `SynCatFO` object carries a context list whose length equals
@@ -33,12 +42,18 @@ of `collapseFunctor`) is claimed.
 * `synCatFOHom` — the lift of a hom between underlying contexts to `SynCatFO`.
 * `arityCongr` — the congruence of numeric function spaces along arity
   equalities.
+* `collapseKFunctor` — the K-valued soundness functor
+  `SynCatFO ⥤ LawvereKSimDCat 2`.
 
 ## Main statements
 
 * `ramified_definability` — every morphism of `LawvereERCat` has an
   object-sort context and a `SynCatFO` morphism whose collapse denotation is
   the morphism's interpretation.
+* `collapseKFunctor.Faithful` — the K-valued soundness functor is faithful.
+* `ramified_definability_kSim` — every morphism of `LawvereKSimDCat 2` has an
+  object-sort context and a `SynCatFO` morphism whose collapse denotation is
+  the morphism's `K^sim` interpretation.
 
 ## References
 
@@ -153,5 +168,36 @@ theorem ramified_definability {n m : LawvereERCat} (f : n ⟶ m) :
   refine ⟨Γ, synCatFOHom g, ?_⟩
   rw [collapseDenotation_synCatFOHom, hg, ERMorNQuo.interp_mk]
   rfl
+
+/-- The K-valued soundness functor: the soundness functor `collapseFunctor`
+followed by the encoding `erToKFunctor` of the equivalence
+`erKSimEquiv : LawvereERCat ≌ LawvereKSimDCat 2`, landing the first-order
+syntactic category in the depth-2 `K^sim` Lawvere theory. -/
+def collapseKFunctor : SynCatFO ⥤ LawvereKSimDCat 2 :=
+  collapseFunctor ⋙ erToKFunctor
+
+/-- The K-valued soundness functor is faithful: a composite of the faithful
+`collapseFunctor` with `erToKFunctor`, faithful as the functor of the
+equivalence `erKSimEquiv`. -/
+instance : collapseKFunctor.Faithful :=
+  inferInstanceAs (collapseFunctor ⋙ erToKFunctor).Faithful
+
+/-- Definability transferred to the depth-2 `K^sim` Lawvere theory across
+`erKSimEquiv` (Leivant III Theorem 14 (1) ⇒ (2), section 6.1, DOI
+`10.1016/S0168-0072(98)00040-2`, with Tourlakis 2018 Corollary 0.1.0.44 at
+`n = 2` supplying the equivalence): every morphism of `LawvereKSimDCat 2` has
+an object-sort context and a `SynCatFO` morphism whose collapse denotation,
+read along the arity identifications `objLen_toSynCatFO`, is the morphism's
+`K^sim` interpretation. As on the ER side, the statement is an existential,
+not fullness of `collapseKFunctor`. The witnesses are those of
+`ramified_definability` at `kToERFunctor.map f`, whose ER interpretation is
+the `K^sim` interpretation of `f` by `kToERFunctor_map_interp`. -/
+theorem ramified_definability_kSim {n m : LawvereKSimDCat 2} (f : n ⟶ m) :
+    ∃ (Γ : ObjCtx n) (g : Γ.toSynCatFO ⟶ (oCtx m).toSynCatFO),
+      collapseDenotation g
+        = arityCongr Γ.objLen_toSynCatFO.symm ((oCtx m).objLen_toSynCatFO).symm
+            f.hom.interp := by
+  obtain ⟨Γ, g, hg⟩ := ramified_definability (kToERFunctor.map f)
+  exact ⟨Γ, g, hg.trans (congrArg (arityCongr _ _) (kToERFunctor_map_interp f))⟩
 
 end GebLean.Ramified
