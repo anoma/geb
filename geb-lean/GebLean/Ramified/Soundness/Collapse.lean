@@ -99,4 +99,106 @@ def collapseDenotation {Γ Δ : SynCatFO} (g : Γ ⟶ Δ) :
     (Fin (objLen Γ) → ℕ) → (Fin (objLen Δ) → ℕ) :=
   ramifiedDenotation (collapseHom g)
 
+/-- The carrier-copy transport round trip: reading an object-sort value as a
+natural and transporting it back recovers the value. -/
+theorem objFromNat_objToNat {s : RType} (hs : s.IsObj)
+    (x : RType.interp (FreeAlg natAlgSig) s) : objFromNat hs (objToNat hs x) = x := by
+  unfold objFromNat objToNat
+  rw [natToFreeAlg_freeAlgToNat, cast_cast, cast_eq]
+
+/-- Evaluation of an identity morphism is the identity on environments. -/
+theorem Hom.eval_id {P : Presentation} {Γ : Ctx P.S}
+    (ρ : (standardModel P).Env Γ) :
+    (Hom.id P (interpQuotRel P) Γ).eval ρ = ρ := by
+  funext i
+  simp only [Hom.id, Hom.eval_mk, HomTuple.eval, HomTuple.id, Tm.eval_var]
+
+/-- The numeric denotation at a value and codomain position. -/
+theorem ramifiedDenotation_apply {n m : ℕ} {Γ : ObjCtx n} {Δ : ObjCtx m}
+    (g : Hom (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig))
+      Γ.toCtx Δ.toCtx) (v : Fin n → ℕ) (j : Fin m) :
+    ramifiedDenotation g v j
+      = objToNat (Δ.toCtx_get_isObj (Fin.cast (Δ.toCtx_length).symm j))
+          (g.eval (ramifiedEnv Γ v) (Fin.cast (Δ.toCtx_length).symm j)) :=
+  rfl
+
+/-- The numeric denotation of an identity morphism is the identity. -/
+theorem ramifiedDenotation_id {n : ℕ} (Γ : ObjCtx n) :
+    ramifiedDenotation
+      (Hom.id (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig)) Γ.toCtx)
+      = id := by
+  funext v j
+  rw [ramifiedDenotation_apply, Hom.eval_id]
+  exact objToNat_objFromNat _ _
+
+/-- The numeric denotation of a composite is the composition of the numeric
+denotations (the composition law of standard-model evaluation). -/
+theorem ramifiedDenotation_comp {n m k : ℕ}
+    {Γ : ObjCtx n} {Δ : ObjCtx m} {Θ : ObjCtx k}
+    (g : Hom (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig))
+      Γ.toCtx Δ.toCtx)
+    (h : Hom (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig))
+      Δ.toCtx Θ.toCtx) :
+    ramifiedDenotation (g.comp h) = ramifiedDenotation h ∘ ramifiedDenotation g := by
+  funext v j
+  have hmid : ramifiedEnv Δ (ramifiedDenotation g v) = g.eval (ramifiedEnv Γ v) := by
+    funext i
+    change objFromNat (Δ.toCtx_get_isObj i)
+        (objToNat (Δ.toCtx_get_isObj i) (g.eval (ramifiedEnv Γ v) i))
+        = g.eval (ramifiedEnv Γ v) i
+    exact objFromNat_objToNat _ _
+  change ramifiedDenotation (g.comp h) v j = ramifiedDenotation h (ramifiedDenotation g v) j
+  rw [ramifiedDenotation_apply, ramifiedDenotation_apply, Hom.eval_comp, hmid]
+
+/-- The bridge transport of an identity morphism is the identity morphism. -/
+theorem cast_hom_id {P : Presentation} {r : QuotRel P.sig} {A B : Ctx P.S}
+    (hAB : A = B) (h : Hom P r A A = Hom P r B B) :
+    cast h (Hom.id P r A) = Hom.id P r B := by
+  subst hAB
+  simp only [cast_eq]
+
+/-- The bridge transport of a composite is the composite of the bridge
+transports. -/
+theorem cast_hom_comp {P : Presentation} {r : QuotRel P.sig}
+    {A A' B B' C C' : Ctx P.S} (hA : A = A') (hB : B = B') (hC : C = C')
+    (f : Hom P r A B) (g : Hom P r B C)
+    (hac : Hom P r A C = Hom P r A' C') (hab : Hom P r A B = Hom P r A' B')
+    (hbc : Hom P r B C = Hom P r B' C') :
+    cast hac (Hom.comp f g) = Hom.comp (cast hab f) (cast hbc g) := by
+  subst hA
+  subst hB
+  subst hC
+  simp only [cast_eq]
+
+/-- The bridge transport of an identity `SynCatFO` morphism is the identity. -/
+theorem collapseHom_id (Γ : SynCatFO) :
+    collapseHom (𝟙 Γ)
+      = Hom.id (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig))
+          (Γ.toObjCtx.2).toCtx := by
+  unfold collapseHom
+  rw [CategoryTheory.ObjectProperty.FullSubcategory.id_hom]
+  exact cast_hom_id Γ.toObjCtx_toCtx.symm _
+
+/-- The bridge transport of a composite `SynCatFO` morphism is the composite. -/
+theorem collapseHom_comp {Γ Δ Θ : SynCatFO} (g : Γ ⟶ Δ) (h : Δ ⟶ Θ) :
+    collapseHom (g ≫ h) = (collapseHom g).comp (collapseHom h) := by
+  unfold collapseHom
+  rw [CategoryTheory.ObjectProperty.FullSubcategory.comp_hom]
+  exact cast_hom_comp Γ.toObjCtx_toCtx.symm Δ.toObjCtx_toCtx.symm Θ.toObjCtx_toCtx.symm
+    g.hom h.hom _ _ _
+
+/-- The collapse denotation of an identity morphism is the identity. -/
+theorem collapseDenotation_id (Γ : SynCatFO) : collapseDenotation (𝟙 Γ) = id := by
+  unfold collapseDenotation
+  rw [collapseHom_id]
+  exact ramifiedDenotation_id Γ.toObjCtx.2
+
+/-- The collapse denotation of a composite is the composition of the collapse
+denotations. -/
+theorem collapseDenotation_comp {Γ Δ Θ : SynCatFO} (g : Γ ⟶ Δ) (h : Δ ⟶ Θ) :
+    collapseDenotation (g ≫ h) = collapseDenotation h ∘ collapseDenotation g := by
+  unfold collapseDenotation
+  rw [collapseHom_comp]
+  exact ramifiedDenotation_comp (collapseHom g) (collapseHom h)
+
 end GebLean.Ramified

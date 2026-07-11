@@ -8,6 +8,7 @@ import GebLeanTests.Ramified.Soundness.DetStep
 import GebLeanTests.Ramified.Soundness.CodeTm
 import GebLeanTests.Ramified.Soundness.CodeNormalizer
 import GebLeanTests.Ramified.Soundness.NormStepER
+import GebLeanTests.Ramified.Soundness.Collapse
 
 /-!
 # Ramified-recurrence soundness test index
