@@ -107,6 +107,12 @@ normalizer tasks.
 * `OneLambda.decodeWord_codeTm_conc`, `OneLambda.decodeWord_codeConc` — the
   decoder inverts the constructor-word code: `decodeWord (codeTm (conc a)) =
   freeAlgToNat a` and `decodeWord (codeConc n) = n`.
+* `OneLambda.decodeWord_le_self` — the decoder is bounded by its input:
+  `decodeWord n ≤ n`, the value bound of its elementary-recursive realization.
+* `OneLambda.codeBbInner_le_tower` — the envelope tower bound of the numeral
+  spine code: `codeBbInner τ m` is below a height-`2` tower over an expression
+  linear in the numeral, the value bound of its elementary-recursive
+  realization.
 * `OneLambda.codeTm_lamSpine` — the code of an iterated abstraction is
   `codeLamWrap` applied to the body code.
 * `OneLambda.codeBbInner_codeTm`, `OneLambda.codeBbRep_codeTm` — the numeric folds
@@ -711,6 +717,29 @@ theorem decodeWord_codeConc (n : ℕ) : decodeWord (codeConc n) = n := by
         (Nat.pair (Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.con true)) 0))
           (Nat.pair (codeConc n) 0)))) = n + 1
     rw [decodeWord_app _ _ _ (by simp [codeOp, Nat.unpair_pair]), ih]
+
+/-- The decoder is bounded by its input: `decodeWord n ≤ n`. By strong recursion
+on the code value: at an application node the argument child sits strictly below
+the node (the pairing bounds `Nat.unpair_left_le`/`Nat.unpair_right_le` and the
+strict step `self_lt_pair_one` past the kind bit), so the child's decoding plus
+one stays below the node; every other reading is `0`. The value bound of the
+elementary-recursive realization of `decodeWord`. -/
+theorem decodeWord_le_self (n : ℕ) : decodeWord n ≤ n := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    rw [decodeWord]
+    split
+    · rename_i h1 _h2
+      have hsnd : (Nat.unpair n).2 < n := by
+        conv_rhs => rw [← Nat.pair_unpair n, h1]
+        exact self_lt_pair_one _
+      have hchild : (Nat.unpair (Nat.unpair (Nat.unpair (Nat.unpair n).2).2).2).1 < n :=
+        Nat.lt_of_le_of_lt
+          (le_trans (Nat.unpair_left_le _)
+            (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _))) hsnd
+      have hd := ih _ hchild
+      omega
+    · exact Nat.zero_le n
 
 /-- The code is invariant under a context transport realized as `cast` of a
 `congrArg` on the term type, the form the iterated abstraction `lamSpine` emits.
@@ -1504,6 +1533,73 @@ theorem codeTm_le_envelope {Γ : Binding.Ctx RType} {s : RType}
     (t : Binding.Tm (oneLambdaSig natAlgSig) Γ s) :
     codeTm t ≤ tower 2 (6 * (2 * Tm.size t + sortPayload t + Γ.length + 1)) :=
   codeTm_le_envelope_aux (Tm.size t) t le_rfl
+
+/-! ### Numeral-representation measures
+
+The size and sort-payload measures of the Berarducci-Böhm numeral spine
+`bbSpine`, by induction on the numeral through the `app'` measure equations:
+the spine adds one application node and one variable leaf per constructor over
+a fixed `app (barTy τ) (barTy τ)` operation tag. Instantiating the tower
+envelope `codeTm_le_envelope` at these measures bounds the spine code
+`codeBbInner`, the value bound of its elementary-recursive realization. -/
+
+/-- The size of the variable-headed spine of a numeral grows by two nodes per
+constructor: `Tm.size (bbSpine (barTy τ) (natToFreeAlg n)) ≤ 2 * n + 1`. Each
+successor layer adds one application node and one constructor-variable leaf
+over the predecessor spine. -/
+private theorem size_bbSpine_le (τ : RType) (n : ℕ) :
+    Tm.size (bbSpine (barTy τ) (natToFreeAlg n)) ≤ 2 * n + 1 := by
+  induction n with
+  | zero =>
+    calc Tm.size (bbSpine (barTy τ) (natToFreeAlg 0))
+        = 1 := Tm.size_var (ctorVar (σ := barTy τ) false)
+      _ ≤ 2 * 0 + 1 := le_refl _
+  | succ m ih =>
+    have h := size_app' (Γ := stepTypes natAlgSig (barTy τ) (barTy τ))
+      (Binding.Tm.var (ctorVar (σ := barTy τ) true))
+      (bbSpine (barTy τ) (natToFreeAlg m))
+    rw [Tm.size_var] at h
+    calc Tm.size (bbSpine (barTy τ) (natToFreeAlg (m + 1)))
+        = 1 + 1 + Tm.size (bbSpine (barTy τ) (natToFreeAlg m)) := h
+      _ ≤ 2 * (m + 1) + 1 := by omega
+
+/-- The sort payload of the variable-headed spine of a numeral is bounded by the
+payload of its sole operation tag `app (barTy τ) (barTy τ)`, uniformly in the
+numeral: the spine's leaves are variables (payload `0`) and its nodes all carry
+the same application tag. -/
+private theorem sortPayload_bbSpine_le (τ : RType) (n : ℕ) :
+    sortPayload (bbSpine (barTy τ) (natToFreeAlg n))
+      ≤ opPayload (OneLambdaOp.app (barTy τ) (barTy τ)) := by
+  induction n with
+  | zero =>
+    calc sortPayload (bbSpine (barTy τ) (natToFreeAlg 0))
+        = 0 := sortPayload_var (ctorVar (σ := barTy τ) false)
+      _ ≤ _ := Nat.zero_le _
+  | succ m ih =>
+    have h := sortPayload_app' (Γ := stepTypes natAlgSig (barTy τ) (barTy τ))
+      (Binding.Tm.var (ctorVar (σ := barTy τ) true))
+      (bbSpine (barTy τ) (natToFreeAlg m))
+    rw [sortPayload_var] at h
+    calc sortPayload (bbSpine (barTy τ) (natToFreeAlg (m + 1)))
+        = max (opPayload (OneLambdaOp.app (barTy τ) (barTy τ)))
+            (max 0 (sortPayload (bbSpine (barTy τ) (natToFreeAlg m)))) := h
+      _ ≤ opPayload (OneLambdaOp.app (barTy τ) (barTy τ)) := by omega
+
+/-- The tower envelope of the numeral spine code: `codeBbInner τ m` is bounded
+by a height-`2` tower over an expression linear in the numeral, with the sort
+payload of the spine's application tag and the constructor-context length as
+per-`τ` constants. Instantiates `codeTm_le_envelope` at the spine measures
+`size_bbSpine_le` and `sortPayload_bbSpine_le` through `codeBbInner_codeTm`.
+The value bound of the elementary-recursive realization of `codeBbInner`. -/
+theorem codeBbInner_le_tower (τ : RType) (m : ℕ) :
+    codeBbInner τ m
+      ≤ tower 2 (6 * (4 * m + (opPayload (OneLambdaOp.app (barTy τ) (barTy τ))
+          + (stepTypes natAlgSig (barTy τ) (barTy τ)).length + 3))) := by
+  rw [codeBbInner_codeTm]
+  refine le_trans (codeTm_le_envelope _) (tower_mono_right 2 ?_)
+  have hs := size_bbSpine_le τ m
+  have hp := sortPayload_bbSpine_le τ m
+  omega
 
 /-! ### The deterministic chain ceiling
 

@@ -95,6 +95,13 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
   `normStep` at slots clock, code, budget, with the budget slot as value bound; the
   budget input carries the per-instance trace ceiling, since no elementary function of
   the clock and the code alone dominates every trace.
+- `OneLambda.decodeWordER` — the word decoder, `ERMor1.cvRec` at the node
+  `decodeWordNode` with the code itself as value bound; the node reads the successor
+  of the argument-child β-read at an application node and `0` elsewhere.
+- `OneLambda.codeBbRepER` — the argument code of the Berarducci-Böhm numeral
+  representation: the fixed abstraction wrapper `codeLamWrapER` (a meta-level fold
+  over the constructor step types) around the spine fold `codeBbInnerER`, an
+  `ERMor1.boundedRec` under the Task 6.4.8 envelope tower.
 
 ## Main statements
 
@@ -141,6 +148,11 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
   computes the code of the deterministic iterate, `codeTm (detIter k t)`.
 - `OneLambda.normRun_normal` — the normalizer clock: at the Lemma 12 clock value the
   deterministic iterate of a closed term is normal and the ER iteration lands its code.
+- `OneLambda.decodeWordER_interp` — the word decoder interprets to `decodeWord`,
+  unconditionally on every code, its value bound `decodeWord_le_self`.
+- `OneLambda.codeBbRepER_interp` — the argument-code composite interprets to
+  `codeBbRep`, unconditionally on every numeral, its spine trace bounded by the
+  envelope tower `codeBbInner_le_tower`.
 
 ## Implementation notes
 
@@ -2556,6 +2568,219 @@ theorem normRun_normal {s : RType}
           codeCeil t]
         = codeTm (detIter ((redexRank t + 1) * tower (redexRank t + 1) (Tm.height t)) t) :=
   ⟨detIter_normal t, normRun_codeTm _ t⟩
+
+/-! ### The word decode and argument-code folds -/
+
+/-- The dispatch of `decodeWord` as a nested conditional on the shape tag and the
+operation kind bit: at an application node (shape `1`, kind `0`) one more than the
+decoding of the argument child `child1Code`; every other reading is `0`. -/
+private theorem decodeWord_eq_ite (c : ℕ) :
+    decodeWord c
+      = if shapeCode c = 1 then
+          (if opKindCode c = 0 then decodeWord (child1Code c) + 1 else 0)
+        else 0 := by
+  rw [decodeWord]
+  split <;> rename_i h <;>
+    simp_all [shapeCode, opKindCode, child1Code]
+
+/-- The argument child of an operation node sits strictly below the node: the
+pairing bounds `Nat.unpair_left_le`/`Nat.unpair_right_le` through the pack and the
+strict step `self_lt_pair_one` past the kind bit `1`. Local re-derivation of the
+recursion guard of `decodeWord` at the code reads. -/
+private theorem child1Code_lt_of_shape (c : ℕ) (h : shapeCode c = 1) :
+    child1Code c < c := by
+  have hsnd : (Nat.unpair c).2 < c := by
+    conv_rhs => rw [← Nat.pair_unpair c, show (Nat.unpair c).1 = 1 from h]
+    exact self_lt_pair_one _
+  exact Nat.lt_of_le_of_lt
+    (le_trans (Nat.unpair_left_le _)
+      (le_trans (Nat.unpair_right_le _) (Nat.unpair_right_le _))) hsnd
+
+/-- The node of the `decodeWord` course-of-values fold at slots `(i, cand, code)`:
+at an application node (shape tag `1`, operation kind bit `0`) the successor of the
+β-read at the argument child `child1Code i`; every other reading is `0`. Novel
+realization. -/
+private def decodeWordNode : ERMor1 3 :=
+  condEqER (ERMor1.comp shapeER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 1)
+    (condEqER (ERMor1.comp opKindER (fun _ : Fin 1 => ERMor1.proj 0)) (ERMor1.natN 3 0)
+      (ERMor1.comp ERMor1.succ (fun _ : Fin 1 =>
+        ERMor1.betaOnCandFold (ERMor1.comp child1ER (fun _ : Fin 1 => ERMor1.proj 0))))
+      (ERMor1.natN 3 0))
+    (ERMor1.natN 3 0)
+
+/-- The node value of `decodeWordNode` at `(i, cand, code)` as a nested conditional
+on the shape tag and the operation kind bit of `i`, with the argument-child decoding
+read off the candidate β-table. -/
+private theorem decodeWordNode_interp (i cand code : ℕ) :
+    decodeWordNode.interp (Fin.cons i (Fin.cons cand (Fin.cons code (![] : Fin 0 → ℕ)))) =
+      if shapeCode i = 1 then
+        (if opKindCode i = 0 then
+          cand.unpair.1 % (1 + (child1Code i + 1) * cand.unpair.2) + 1
+        else 0)
+      else 0 := by
+  simp only [decodeWordNode, condEqER_interp, ERMor1.interp_comp,
+    ERMor1.interp_betaOnCandFold, ERMor1.interp_succ, ERMor1.interp_natN,
+    ERMor1.interp_proj, Fin.cons_zero, cons_fin_one, shapeER_interp, opKindER_interp,
+    child1ER_interp, Matrix.cons_val_zero, Nat.succ_eq_add_one]
+
+/-- The word decoder as an elementary-recursive course-of-values fold:
+`ERMor1.cvRec` at fold slot the code and node `decodeWordNode`, with value bound
+the code itself (`decodeWord_le_self`). Realizes the well-founded recursion of
+`decodeWord` (Leivant III section 4.2) as a single bounded β-witness search.
+Novel realization. -/
+def decodeWordER : ERMor1 1 := ERMor1.cvRec decodeWordNode (ERMor1.proj 0)
+
+/-- Interpretation of `decodeWordER`: the word decoding `decodeWord`,
+unconditionally on every code. Discharges the hypotheses of
+`ERMor1.interp_cvRec_of_bounded` with `f := decodeWord`: the value bound
+`decodeWord_le_self`, its monotonicity immediate from the fold slot, and node
+faithfulness from the dispatch unfolding `decodeWord_eq_ite` with the argument
+child strictly below the index (`child1Code_lt_of_shape`). -/
+@[simp] theorem decodeWordER_interp (n : ℕ) : decodeWordER.interp ![n] = decodeWord n := by
+  refine ERMor1.interp_cvRec_of_bounded decodeWordNode (ERMor1.proj 0) n ![] decodeWord
+    (fun j _ => ?_) (fun j hj => ?_) (fun i _ cand htrace => ?_)
+  · exact decodeWord_le_self j
+  · exact hj
+  · rw [decodeWordNode_interp i cand n]
+    by_cases h1 : shapeCode i = 1
+    · rw [if_pos h1]
+      by_cases h2 : opKindCode i = 0
+      · rw [if_pos h2, htrace (child1Code i) (child1Code_lt_of_shape i h1)]
+        symm
+        rw [decodeWord_eq_ite i, if_pos h1, if_pos h2]
+      · rw [if_neg h2]
+        symm
+        rw [decodeWord_eq_ite i, if_pos h1, if_neg h2]
+    · rw [if_neg h1]
+      symm
+      rw [decodeWord_eq_ite i, if_neg h1]
+
+/-- The step term of the `codeBbInner` recursion at slots `(i, prev)`: one
+`app`-of-constructor-variable node layer over the running spine code, the `pairER`
+rebuild of `codeBbInner`'s successor arm. Novel realization. -/
+private def codeBbInnerStepER (τ : RType) : ERMor1 2 :=
+  pairER (ERMor1.natN 2 1)
+    (pairER (ERMor1.natN 2 (codeOp (OneLambdaOp.app (barTy τ) (barTy τ))))
+      (pairER (ERMor1.natN 2 (Nat.pair 0 (ctorIdx true).val))
+        (pairER (ERMor1.proj 1) (ERMor1.natN 2 0))))
+
+/-- The step term of the `codeBbInner` recursion evaluates to the successor arm of
+`codeBbInner` on the running value. -/
+private theorem codeBbInnerStepER_eval (τ : RType) (i prev : ℕ) :
+    (codeBbInnerStepER τ).interp (Fin.cons i (Fin.cons prev (![] : Fin 0 → ℕ)))
+      = Nat.pair 1 (Nat.pair (codeOp (OneLambdaOp.app (barTy τ) (barTy τ)))
+          (Nat.pair (Nat.pair 0 (ctorIdx true).val) (Nat.pair prev 0))) := by
+  simp only [codeBbInnerStepER, pairER_interp, ERMor1.interp_natN, ERMor1.interp_proj,
+    Fin.cons_zero, Fin.cons_one]
+
+/-- The value bound of the `codeBbInner` recursion: the `towerER 2` composite over
+the linear polynomial of `codeBbInner_le_tower`, with the application-tag payload
+and the constructor-context length as per-`τ` constants. Novel realization. -/
+private def bbInnerBoundER (τ : RType) : ERMor1 1 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.mulN (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.natN 1 6
+      | ⟨1, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun u => match u with
+              | ⟨0, _⟩ => ERMor1.natN 1 4
+              | ⟨1, _⟩ => ERMor1.proj 0)
+          | ⟨1, _⟩ => ERMor1.natN 1 (opPayload (OneLambdaOp.app (barTy τ) (barTy τ))
+              + (stepTypes natAlgSig (barTy τ) (barTy τ)).length + 3))))
+
+/-- The value bound of the `codeBbInner` recursion evaluates to the tower of
+`codeBbInner_le_tower` at the counter slot. -/
+private theorem bbInnerBoundER_eval (τ : RType) (j : ℕ) :
+    (bbInnerBoundER τ).interp (Fin.cons j (![] : Fin 0 → ℕ))
+      = tower 2 (6 * (4 * j + (opPayload (OneLambdaOp.app (barTy τ) (barTy τ))
+          + (stepTypes natAlgSig (barTy τ) (barTy τ)).length + 3))) := by
+  simp only [bbInnerBoundER, ERMor1.interp_comp, ERMor1.interp_towerER,
+    ERMor1.interp_mulN, ERMor1.interp_addN, ERMor1.interp_natN, ERMor1.interp_proj,
+    Fin.cons_zero]
+
+/-- The Gödel code of the variable-headed numeral spine as an elementary-recursive
+morphism: `ERMor1.boundedRec` at base the constructor-variable leaf code, step
+`codeBbInnerStepER`, and value bound the envelope tower `bbInnerBoundER` (N6: one
+bounded recursion under the Task 6.4.8 envelope). Realizes `codeBbInner`. Novel
+realization. -/
+private def codeBbInnerER (τ : RType) : ERMor1 1 :=
+  ERMor1.boundedRec (ERMor1.natN 0 (Nat.pair 0 (ctorIdx false).val))
+    (codeBbInnerStepER τ) (bbInnerBoundER τ)
+
+/-- The raw `Nat.rec` trace of the `codeBbInner` recursion at counter `k` equals
+the numeric fold `codeBbInner τ k`. -/
+private theorem codeBbInnerER_rec_eq (τ : RType) (k : ℕ) :
+    (Nat.rec ((ERMor1.natN 0 (Nat.pair 0 (ctorIdx false).val)).interp (![] : Fin 0 → ℕ))
+      (fun i prev => (codeBbInnerStepER τ).interp
+        (Fin.cons i (Fin.cons prev (![] : Fin 0 → ℕ)))) k : ℕ)
+      = codeBbInner τ k := by
+  induction k with
+  | zero =>
+    rw [show (Nat.rec ((ERMor1.natN 0 (Nat.pair 0 (ctorIdx false).val)).interp
+        (![] : Fin 0 → ℕ)) _ 0 : ℕ)
+      = (ERMor1.natN 0 (Nat.pair 0 (ctorIdx false).val)).interp (![] : Fin 0 → ℕ) from rfl,
+      ERMor1.interp_natN]
+    rfl
+  | succ m ih =>
+    change (codeBbInnerStepER τ).interp (Fin.cons m (Fin.cons _ (![] : Fin 0 → ℕ)))
+      = codeBbInner τ (m + 1)
+    rw [ih, codeBbInnerStepER_eval]
+    rfl
+
+/-- Interpretation of `codeBbInnerER`: the numeric spine fold `codeBbInner`,
+unconditionally on every numeral. Discharges the hypotheses of
+`ERMor1.boundedRec_eq_natRec_of_bounded`: the trace equals the fold
+(`codeBbInnerER_rec_eq`), the dominance is the envelope tower
+`codeBbInner_le_tower`, and the monotonicity is `tower_mono_right` at the linear
+polynomial. -/
+private theorem codeBbInnerER_interp (τ : RType) (n : ℕ) :
+    (codeBbInnerER τ).interp ![n] = codeBbInner τ n := by
+  change (codeBbInnerER τ).interp (Fin.cons n (![] : Fin 0 → ℕ)) = codeBbInner τ n
+  unfold codeBbInnerER
+  refine (ERMor1.boundedRec_eq_natRec_of_bounded _ _ _ _ _ ?_ ?_).trans ?_
+  · intro j _hj
+    rw [codeBbInnerER_rec_eq, bbInnerBoundER_eval]
+    exact codeBbInner_le_tower τ j
+  · intro j hj
+    rw [bbInnerBoundER_eval, bbInnerBoundER_eval]
+    exact tower_mono_right 2 (by omega)
+  · exact codeBbInnerER_rec_eq τ n
+
+/-- The numeric abstraction wrapper `codeLamWrap` as an elementary-recursive
+composite: a meta-level fold over the binder suffix layering one `pairER` rebuild
+of a `lam` node per context sort around an inner read. Novel realization. -/
+private def codeLamWrapER (result : RType) : List RType → ERMor1 1 → ERMor1 1
+  | [], e => e
+  | ξ :: Δ', e =>
+      pairER (ERMor1.natN 1 1)
+        (pairER (ERMor1.natN 1 (codeOp (OneLambdaOp.lam ξ (RType.curried Δ' result))))
+          (pairER (codeLamWrapER result Δ' e) (ERMor1.natN 1 0)))
+
+/-- Interpretation of `codeLamWrapER`: the numeric wrapper `codeLamWrap` applied to
+the inner read's value, by induction on the binder suffix. -/
+private theorem codeLamWrapER_interp (result : RType) (Δ : List RType) (e : ERMor1 1)
+    (ctx : Fin 1 → ℕ) :
+    (codeLamWrapER result Δ e).interp ctx = codeLamWrap result Δ (e.interp ctx) := by
+  induction Δ with
+  | nil => rfl
+  | cons ξ Δ' ih =>
+    simp only [codeLamWrapER, pairER_interp, ERMor1.interp_natN, ih, codeLamWrap]
+
+/-- The Gödel code of the Berarducci-Böhm representation of a numeral as an
+elementary-recursive morphism (spec §6.3; N6): the fixed abstraction wrapper
+`codeLamWrapER` over the constructor step types around the numeral-recursive spine
+fold `codeBbInnerER`, mirroring the factorization of `codeBbRep` (Leivant III
+section 4.2). Novel realization. -/
+def codeBbRepER (τ : RType) : ERMor1 1 :=
+  codeLamWrapER (barTy τ) (stepTypes natAlgSig (barTy τ) (barTy τ)) (codeBbInnerER τ)
+
+/-- Interpretation of `codeBbRepER`: the numeric fold `codeBbRep`, unconditionally
+on every numeral, composing the wrapper interpretation `codeLamWrapER_interp` with
+the spine interpretation `codeBbInnerER_interp`. -/
+@[simp] theorem codeBbRepER_interp (τ : RType) (n : ℕ) :
+    (codeBbRepER τ).interp ![n] = codeBbRep τ n := by
+  unfold codeBbRepER
+  rw [codeLamWrapER_interp, codeBbInnerER_interp]
+  rfl
 
 end OneLambda
 
