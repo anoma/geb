@@ -45,7 +45,10 @@ morphism is exercised at the singleton input family, where it agrees with the
 unary collapse morphism on the same fixture, and on the binary constant-zero
 function `λx:Ω o. λy:Ω o. c₀` at the numerals `(1, 2)`, where `collapseERN_interp`
 lands the denotational anchor of the doubly-applied term and the anchor reduces
-through the standard-evaluator equations to the expected numeral `0`.
+through the standard-evaluator equations to the expected numeral `0`. The K^sim
+landing corollary is exercised on the unary constant-zero fixture, where
+`collapseER_ksim_definable` exhibits a multi-output K^sim morphism agreeing with the
+collapse morphism on every input.
 
 ## References
 
@@ -614,5 +617,11 @@ example : (collapseERN constZeroF2).interp ![1, 2] = fun _ => 0 := by
   rw [collapseERN_interp constZeroF2 ![1, 2]]
   funext i
   simp only [hval, freeAlgToNat_natToFreeAlg]
+
+/-- The K^sim landing corollary on the constant-zero fixture: the collapse morphism
+is realized by a multi-output K^sim morphism agreeing with it on every input,
+`collapseER_ksim_definable` instantiated on the acceptance fixture. -/
+example : ∃ g : KMorN 1 1, ∀ v, KMorN.interp g v = (collapseER constZeroF).interp v :=
+  collapseER_ksim_definable constZeroF
 
 end GebLean.Ramified.OneLambda

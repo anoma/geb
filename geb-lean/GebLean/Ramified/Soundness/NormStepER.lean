@@ -196,6 +196,10 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
   every input tuple the collapse computes the numeric reading of the standard
   denotation of the source-side application spine of the fixed term over the
   constructor words of the inputs.
+- `OneLambda.collapseER_ksim_definable` — the K^sim landing of the collapse
+  morphism: the `ERMorN 1 1` collapse morphism is realized by a multi-output K^sim
+  morphism agreeing with it on every input, the ⊇ direction of the ER-to-K^sim
+  bridge stated as a corollary through `erToK`.
 
 ## Implementation notes
 
@@ -210,6 +214,9 @@ that mirror an `if`/`match` on a code (`conLabelER`, `resultShapeER`,
 D. Leivant, "Ramified recurrence and computational complexity III: Higher type
 recurrence and elementary complexity", Annals of Pure and Applied Logic 96
 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`.
+
+Tourlakis 2018, *Topics in PR Complexity*, §0.1.0.44 (the ER-to-K^sim inclusion
+realized by `erToKN` and consumed by `collapseER_ksim_definable`).
 
 ## Tags
 
