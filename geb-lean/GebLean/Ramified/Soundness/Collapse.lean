@@ -8,7 +8,8 @@ import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 
 The first-order syntactic category `SynCatFO`, its standard-model denotation
 `collapseDenotation`, and the soundness functor
-`collapseFunctor : SynCatFO ⥤ LawvereERCat`, packaging the Phase 5 definability data
+`collapseFunctor : SynCatFO ⥤ LawvereERCat` with its `Faithful` instance,
+packaging the Phase 5 definability data
 (`GebLean/Ramified/Definability/Top.lean`) and the sub-phase 6.4 landing
 normalizer (`GebLean/Ramified/Soundness/NormStepER.lean`).
 
@@ -29,8 +30,8 @@ coercions and the delta output coercion (`GebLean/Ramified/OmegaShift.lean`),
 λ-abstracted into a closed curried term (`collapseComponentTm`), and landed by
 the atomic collapse morphism `collapseERN`. The tupling lemma
 `collapseTupleER_interp` anchors the landed tuple's interpretation at
-`ramifiedDenotation`; well-definedness on the hom-quotient and functoriality
-read off this anchor.
+`ramifiedDenotation`; well-definedness on the hom-quotient, functoriality, and
+faithfulness all read off this anchor.
 
 ## Main definitions
 
@@ -60,6 +61,9 @@ read off this anchor.
   value.
 * `collapseTupleER_interp` — the tupling lemma: the landed tuple's
   interpretation is the numeric denotation of the hom class.
+* `ramifiedDenotation_injective` — the numeric denotation determines the
+  morphism.
+* `collapseFunctor.Faithful` — the soundness functor is faithful.
 
 ## Implementation notes
 
@@ -88,7 +92,7 @@ per-component landing is Proposition 13, section 5.
 ## Tags
 
 ramified recurrence, elementary recurrence, soundness, Lawvere theory, object
-sort, syntactic category, full subcategory
+sort, syntactic category, full subcategory, faithful functor
 -/
 
 namespace GebLean.Ramified
@@ -540,5 +544,74 @@ def collapseFunctor : SynCatFO ⥤ LawvereERCat where
       rw [ERMorN.interp_comp, collapseTupleER_interp, collapseTupleER_interp,
         collapseTupleER_interp]
       exact congrFun (ramifiedDenotation_comp (Quotient.mk _ f₁) (Quotient.mk _ f₂)) v
+
+/-- The numeric reading is injective on each carrier copy: `objFromNat`
+retracts it. -/
+theorem objToNat_injective {s : RType} (hs : s.IsObj)
+    {x y : RType.interp (FreeAlg natAlgSig) s}
+    (h : objToNat hs x = objToNat hs y) : x = y := by
+  rw [← objFromNat_objToNat hs x, ← objFromNat_objToNat hs y, h]
+
+/-- The numeric denotation determines the morphism: two morphisms between
+object-sort contexts with equal `ramifiedDenotation` are equal. Every
+standard-model environment over an object-sort context is the numeric
+environment of its numeric readings (`objFromNat_objToNat`), and the numeric
+reading is injective on each carrier copy (`objToNat_injective`), so equal
+denotations force equal evaluations at every environment — the interpretative
+relation of the hom-quotient. -/
+theorem ramifiedDenotation_injective {n m : ℕ} {Γo : ObjCtx n} {Δo : ObjCtx m}
+    (g g' : Hom (higherOrder natAlgSig) (interpQuotRel (higherOrder natAlgSig))
+      Γo.toCtx Δo.toCtx)
+    (h : ramifiedDenotation g = ramifiedDenotation g') : g = g' := by
+  induction g using Quotient.ind with
+  | _ f =>
+  induction g' using Quotient.ind with
+  | _ f' =>
+    refine Quotient.sound fun i ρ => ?_
+    -- The numeric readings of `ρ`, whose numeric environment recovers `ρ`.
+    have hρ : ramifiedEnv Γo (fun k =>
+        objToNat (Γo.toCtx_get_isObj (Fin.cast Γo.toCtx_length.symm k))
+          (ρ (Fin.cast Γo.toCtx_length.symm k))) = ρ := by
+      funext k
+      apply eq_of_heq
+      refine (cast_heq _ _).trans ?_
+      refine HEq.trans (heq_of_eq (natToFreeAlg_freeAlgToNat _)) ?_
+      refine (cast_heq _ _).trans ?_
+      exact congr_arg_heq ρ (Fin.ext rfl)
+    have hj := congrFun (congrFun h fun k =>
+      objToNat (Γo.toCtx_get_isObj (Fin.cast Γo.toCtx_length.symm k))
+        (ρ (Fin.cast Γo.toCtx_length.symm k))) (Fin.cast Δo.toCtx_length i)
+    rw [ramifiedDenotation_apply, ramifiedDenotation_apply, hρ] at hj
+    have h2 := objToNat_injective _ hj
+    exact (show Fin.cast Δo.toCtx_length.symm (Fin.cast Δo.toCtx_length i) = i from
+      Fin.ext rfl) ▸ h2
+
+/-- The morphism map of the collapse functor is injective at the
+object-context level: equal landed classes have interp-equal landed tuples,
+hence equal numeric denotations (`collapseTupleER_interp`), hence equal hom
+classes (`ramifiedDenotation_injective`). -/
+theorem collapseHomER_injective {n m : ℕ} (Γo : ObjCtx n) (Δo : ObjCtx m) :
+    Function.Injective (collapseHomER Γo Δo) := by
+  intro G H heq
+  induction G using Quotient.ind with
+  | _ f₁ =>
+  induction H using Quotient.ind with
+  | _ f₂ =>
+    refine ramifiedDenotation_injective _ _ (funext fun v => ?_)
+    have hrel := Quotient.exact (s := erMorNSetoid n m) heq
+    have hv := hrel v
+    rw [collapseTupleER_interp, collapseTupleER_interp] at hv
+    exact hv
+
+/-- The soundness functor is faithful (by construction with interpretative
+hom-sets): its morphism map factors injectively through the numeric
+denotation. Equal images force equal `collapseHom` transports
+(`collapseHomER_injective`), hence equal underlying homs (`cast_injective`),
+hence equal `SynCatFO` morphisms. -/
+instance : collapseFunctor.Faithful where
+  map_injective {Γ Δ} {g h} heq := by
+    have h1 : collapseHom g = collapseHom h :=
+      collapseHomER_injective Γ.toObjCtx.2 Δ.toObjCtx.2 heq
+    exact CategoryTheory.ObjectProperty.hom_ext isObjCtx ((cast_inj _).mp h1)
 
 end GebLean.Ramified

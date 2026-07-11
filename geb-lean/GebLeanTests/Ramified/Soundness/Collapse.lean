@@ -8,7 +8,8 @@ Acceptance examples for the collapse packaging: the collapse denotation of an
 identity morphism of `SynCatFO` is the identity function, through
 `collapseDenotation_id`; the soundness functor `collapseFunctor` lands the
 Phase 2 doubling morphism on an `ERMorN` whose interpretation doubles its
-input, through the interpretation lemmas (`collapseTupleER_interp`).
+input, through the interpretation lemmas (`collapseTupleER_interp`); and the
+functor's morphism map is injective, through `collapseFunctor.Faithful`.
 -/
 
 namespace GebLeanTests.Ramified.CollapseTest
@@ -81,5 +82,11 @@ example : ∃ e : ERMorN 1 1,
   · rw [hinterp ![0]]; decide
   · rw [hinterp ![1]]; decide
   · rw [hinterp ![3]]; decide
+
+
+/-- The soundness functor is faithful on the doubling hom-set. -/
+example :
+    Function.Injective (fun g : ctxDoubleFO ⟶ ctxOFO => collapseFunctor.map g) :=
+  fun _ _ h => collapseFunctor.map_injective h
 
 end GebLeanTests.Ramified.CollapseTest
