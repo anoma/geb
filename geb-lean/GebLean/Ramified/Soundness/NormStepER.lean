@@ -122,6 +122,10 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.sourceApps` — the `a`-fold source-level application spine: the
   `sourceApp` iterate applying a closed function term at the curried arrow sort
   over the shifted input sorts to one closed argument per input position.
+- `OneLambda.ofFnOmegaEnv` — the positional environment over the shifted input
+  context `List.ofFn fun i => Ω (τs i)`: position `k` reads the value tuple
+  `xs` at the underlying index, transported along the `List.get_ofFn` sort
+  identification.
 - `OneLambda.collapseERN` — the `a`-ary collapse morphism (spec §6.4): the
   `ERMorN a 1` composite of the same decode ∘ clocked normalization ∘ build shape,
   with the applied-spine code, the per-`F` ceilings over the staggered input sum
@@ -200,6 +204,10 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.collapseER_interp` — adequacy of the collapse morphism against the
   denotational anchor: at every input the collapse computes the numeric reading
   of the standard denotation of Proposition 13's applied term.
+- `OneLambda.appEval_sourceApps` — the denotation of the `a`-fold source-level
+  application spine `sourceApps` is the application chain `appChain` of the
+  head denotation over the argument denotations, read at the positional
+  environment `ofFnOmegaEnv`.
 - `OneLambda.collapseERN_interp` — adequacy of the `a`-ary collapse morphism: at
   every input tuple the collapse computes the numeric reading of the standard
   denotation of the source-side application spine of the fixed term over the
@@ -3264,6 +3272,166 @@ def sourceApps {a : ℕ} {τs : Fin a → RType}
     (ws : ∀ i : Fin a, Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega (τs i))) :
     Binding.Tm (rlmrOSig natAlgSig) [] RType.o :=
   sourceSpine τs ((omegaCurried_eq_curried τs).symm ▸ F) ws
+
+/-- The positional environment over the shifted input context
+`List.ofFn fun i => Ω (τs i)`: position `k` reads the value tuple `xs` at the
+underlying index, transported along the `List.get_ofFn` sort identification.
+The environment shape at which `appEval_sourceApps` reads the argument
+denotations of a source-level application spine. -/
+def ofFnOmegaEnv {a : ℕ} (τs : Fin a → RType)
+    (xs : ∀ i : Fin a, RType.interp (FreeAlg natAlgSig) (RType.omega (τs i))) :
+    ∀ k : Fin (List.ofFn fun i => RType.omega (τs i)).length,
+      RType.interp (FreeAlg natAlgSig) ((List.ofFn fun i => RType.omega (τs i)).get k) :=
+  fun k => cast (congrArg (RType.interp (FreeAlg natAlgSig)) (List.get_ofFn _ k).symm)
+    (xs (Fin.cast List.length_ofFn k))
+
+/-- The semantic application chain over a structurally-curried head: iterate
+function application of a value at `omegaCurried τs` over one carrier-copy value
+per shifted input position. The denotation-level mirror of `sourceSpine`, and
+the structural-recursion counterpart of `Ramified.appChain` at the shifted input
+sorts. -/
+private def omegaAppChain : {a : ℕ} → (τs : Fin a → RType) →
+    RType.interp (FreeAlg natAlgSig) (omegaCurried τs) →
+    (∀ i : Fin a, RType.interp (FreeAlg natAlgSig) (RType.omega (τs i))) →
+    RType.interp (FreeAlg natAlgSig) RType.o
+  | 0, _, c, _ => c
+  | _ + 1, τs, c, xs =>
+      omegaAppChain (fun i => τs i.succ)
+        ((c : RType.interp (FreeAlg natAlgSig) (RType.omega (τs 0)) →
+            RType.interp (FreeAlg natAlgSig) (omegaCurried fun i => τs i.succ)) (xs 0))
+        (fun i => xs i.succ)
+
+/-- The denotation of the source-level application spine over a structural head
+is the semantic application chain of the head denotation over the argument
+denotations: fold `appEval_app'` over the spine positions. -/
+private theorem appEval_sourceSpine : ∀ {a : ℕ} (τs : Fin a → RType)
+    (H : Binding.Tm (rlmrOSig natAlgSig) [] (omegaCurried τs))
+    (ws : ∀ i : Fin a, Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega (τs i))),
+    appEval (sourceSpine τs H ws) finZeroElim
+      = omegaAppChain τs (appEval H finZeroElim) (fun i => appEval (ws i) finZeroElim)
+  | 0, _, _, _ => rfl
+  | _ + 1, τs, H, ws => by
+      refine (appEval_sourceSpine (fun i => τs i.succ) (sourceApp H (ws 0))
+        (fun i => ws i.succ)).trans ?_
+      rw [show appEval (sourceApp H (ws 0)) finZeroElim
+          = appEval H finZeroElim (appEval (ws 0) finZeroElim) from
+        appEval_app' H (ws 0) finZeroElim]
+      rfl
+
+/-- Transport across a composed sort equality decomposes into the composed
+transports. A cast-commutation fact local to `appEval_sourceApps`. -/
+private theorem interp_transport_trans {a b c : RType} (h : a = c) (h₁ : a = b)
+    (h₂ : b = c) (x : RType.interp (FreeAlg natAlgSig) a) :
+    h ▸ x = h₂ ▸ (h₁ ▸ x : RType.interp (FreeAlg natAlgSig) b) := by
+  subst h₁; subst h₂; rfl
+
+/-- Transporting a function value along a codomain-sort equality of an arrow sort
+and applying it equals applying it and transporting the result. The
+transport-shaped companion of `cast_arrow_apply`, local to
+`appEval_sourceApps`. -/
+private theorem interp_transport_arrow_apply {σ b b' : RType} (h : b = b')
+    (f : RType.interp (FreeAlg natAlgSig) (RType.arrow (RType.omega σ) b))
+    (x : RType.interp (FreeAlg natAlgSig) (RType.omega σ)) :
+    ((congrArg (RType.arrow (RType.omega σ)) h ▸ f :
+        RType.interp (FreeAlg natAlgSig) (RType.arrow (RType.omega σ) b')) x : _)
+      = h ▸ (f x) := by
+  subst h; rfl
+
+/-- The application chain is invariant under transporting its list, head value,
+and environment along an equality of lists. A transport-commutation fact local
+to `appEval_sourceApps`. -/
+private theorem appChain_congr_list {L L' : List RType} (h : L = L')
+    (c : RType.interp (FreeAlg natAlgSig) (RType.curried L RType.o))
+    (env : ∀ k : Fin L.length, RType.interp (FreeAlg natAlgSig) (L.get k)) :
+    appChain natAlgSig L RType.o c env
+      = appChain natAlgSig L' RType.o
+          (congrArg (RType.curried · RType.o) h ▸ c) (h ▸ env) := by
+  subst h; rfl
+
+/-- Transporting an environment along an equality of lists reads the original
+environment at the index cast back. A transport-commutation fact local to
+`appEval_sourceApps`. -/
+private theorem transport_env_apply {L L' : List RType} (h : L = L')
+    (env : ∀ k : Fin L.length, RType.interp (FreeAlg natAlgSig) (L.get k))
+    (k : Fin L'.length) :
+    (h ▸ env) k ≍ env (Fin.cast (congrArg List.length h).symm k) := by
+  subst h; rfl
+
+/-- The semantic application chain over the `omegaCurried_eq_curried` transport
+of a list-curried value is the list-indexed application chain `appChain` at the
+positional environment `ofFnOmegaEnv`: peel one position per step, moving the
+head value across `List.ofFn_succ`. -/
+private theorem omegaAppChain_transport : ∀ {a : ℕ} (τs : Fin a → RType)
+    (c : RType.interp (FreeAlg natAlgSig)
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (xs : ∀ i : Fin a, RType.interp (FreeAlg natAlgSig) (RType.omega (τs i))),
+    omegaAppChain τs
+        ((omegaCurried_eq_curried τs).symm ▸ c :
+          RType.interp (FreeAlg natAlgSig) (omegaCurried τs)) xs
+      = appChain natAlgSig (List.ofFn fun i => RType.omega (τs i)) RType.o c
+          (ofFnOmegaEnv τs xs)
+  | 0, τs, c, xs => rfl
+  | a + 1, τs, c, xs => by
+      have hL : (List.ofFn fun i => RType.omega (τs i))
+          = RType.omega (τs 0) :: List.ofFn fun i : Fin a => RType.omega (τs i.succ) :=
+        List.ofFn_succ
+      rw [appChain_congr_list hL c (ofFnOmegaEnv τs xs)]
+      change omegaAppChain (fun i => τs i.succ)
+          (((omegaCurried_eq_curried τs).symm ▸ c :
+            RType.interp (FreeAlg natAlgSig) (omegaCurried τs)) (xs 0))
+          (fun i => xs i.succ)
+        = appChain natAlgSig (List.ofFn fun i : Fin a => RType.omega (τs i.succ)) RType.o
+            ((congrArg (RType.curried · RType.o) hL ▸ c) ((hL ▸ ofFnOmegaEnv τs xs) 0))
+            (fun k => (hL ▸ ofFnOmegaEnv τs xs) k.succ)
+      have henv0 : (hL ▸ ofFnOmegaEnv τs xs) 0 = xs 0 := by
+        apply eq_of_heq
+        refine (transport_env_apply hL (ofFnOmegaEnv τs xs) 0).trans ?_
+        refine (cast_heq _ _).trans ?_
+        exact congr_arg_heq xs (Fin.ext (by simp))
+      have henvtail :
+          (fun k : Fin (List.ofFn fun i : Fin a => RType.omega (τs i.succ)).length =>
+            (hL ▸ ofFnOmegaEnv τs xs) k.succ)
+          = ofFnOmegaEnv (fun i => τs i.succ) (fun i => xs i.succ) := by
+        funext k
+        apply eq_of_heq
+        refine (transport_env_apply hL (ofFnOmegaEnv τs xs) k.succ).trans ?_
+        refine (cast_heq _ _).trans (HEq.trans ?_ (cast_heq _ _).symm)
+        exact congr_arg_heq xs (Fin.ext (by simp))
+      have happly : (congrArg (RType.curried · RType.o) hL ▸ c) ((hL ▸ ofFnOmegaEnv τs xs) 0)
+          = (congrArg (RType.curried · RType.o) hL ▸ c) (xs 0) := by
+        rw [henv0]
+      rw [henvtail, happly]
+      have hhead : ((omegaCurried_eq_curried τs).symm ▸ c :
+            RType.interp (FreeAlg natAlgSig) (omegaCurried τs)) (xs 0)
+          = ((omegaCurried_eq_curried fun i => τs i.succ).symm
+              ▸ ((congrArg (RType.curried · RType.o) hL ▸ c) (xs 0)) :
+            RType.interp (FreeAlg natAlgSig) (omegaCurried fun i => τs i.succ)) := by
+        rw [interp_transport_trans (omegaCurried_eq_curried τs).symm
+          (congrArg (RType.curried · RType.o) hL)
+          (congrArg (RType.arrow (RType.omega (τs 0)))
+            (omegaCurried_eq_curried fun i => τs i.succ).symm) c]
+        exact interp_transport_arrow_apply
+          (omegaCurried_eq_curried fun i => τs i.succ).symm _ _
+      rw [hhead]
+      exact omegaAppChain_transport (fun i => τs i.succ)
+        ((congrArg (RType.curried · RType.o) hL ▸ c) (xs 0)) (fun i => xs i.succ)
+
+/-- The denotation of the `a`-fold source-level application spine is the
+application chain `appChain` of the head denotation over the argument
+denotations, read at the positional environment `ofFnOmegaEnv`: the
+`sourceSpine` fold of `appEval_app'`, carried across the
+`omegaCurried_eq_curried` head transport. -/
+theorem appEval_sourceApps {a : ℕ} {τs : Fin a → RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.curried (List.ofFn fun i => RType.omega (τs i)) RType.o))
+    (ws : ∀ i : Fin a, Binding.Tm (rlmrOSig natAlgSig) [] (RType.omega (τs i))) :
+    appEval (sourceApps F ws) finZeroElim
+      = appChain natAlgSig (List.ofFn fun i => RType.omega (τs i)) RType.o
+          (appEval F finZeroElim)
+          (ofFnOmegaEnv τs fun i => appEval (ws i) finZeroElim) := by
+  refine (appEval_sourceSpine τs _ ws).trans ?_
+  rw [appEval_eqRec]
+  exact omegaAppChain_transport τs (appEval F finZeroElim) fun i => appEval (ws i) finZeroElim
 
 /-- The bar-side application spine at numeric inputs: iterate `OneLambda.app'` over
 the Berarducci-Böhm representations of the input numerals, peeling the head sort of
