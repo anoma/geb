@@ -29,7 +29,15 @@ the ι worker, and on the nullary constant, where both guards fail and the step 
 identity. The clocked iteration is exercised on the identity β-redex at budget
 `codeCeil`, at clock `0`, where it is the identity on the code, and at clock `1`, where
 it computes the code of the one-step deterministic reduct, through the closed-term
-commutation `normRun_codeTm`.
+commutation `normRun_codeTm`. The word decoder is exercised on the codes of small
+concrete constructor words, where it reads the numerals back, through the landed
+read-off lemmas `decodeWord_codeConc` and `decodeWord_codeTm_conc`; the
+argument-code fold at the zero numeral, through `codeBbRep_codeTm`. The code
+builder, the in-system clock, and the in-system budget are exercised on the
+constant-zero function `λx:Ω o. c₀` (the `prop13_elementary` acceptance instance):
+the builder computes the code of the applied bar-image term, and the clock and
+budget dominate the deterministic Lemma 12 clock and the chain ceiling `codeCeil`
+at concrete numerals.
 
 ## References
 
@@ -476,5 +484,56 @@ reduct of the Task 6.4.1 identity β-redex: `normRun_codeTm` at `k = 1` and budg
 example : normRun.interp ![1, codeTm idBetaRedex, codeCeil idBetaRedex]
     = codeTm (detIter 1 idBetaRedex) :=
   normRun_codeTm 1 idBetaRedex
+
+/-- The word decoder reads the numeral `2` off the code of its concrete
+constructor word: `decodeWordER_interp` reduces the fold to `decodeWord`, and the
+decoder inverts the numeric word code (`decodeWord_codeConc`). -/
+example : decodeWordER.interp ![codeConc 2] = 2 := by
+  rw [decodeWordER_interp, decodeWord_codeConc]
+
+/-- The word decoder reads the numeral `3` off the code of the concrete term of
+its word: `decodeWord_codeTm_conc` inverts the term code to the free-algebra
+reading, and the numeral round-trips (`freeAlgToNat_natToFreeAlg`). -/
+example : decodeWordER.interp ![codeTm (conc (natToFreeAlg 3))] = 3 := by
+  rw [decodeWordER_interp, decodeWord_codeTm_conc, freeAlgToNat_natToFreeAlg]
+
+/-- The argument-code fold at the zero numeral computes the code of the
+Berarducci-Böhm representation of `0` at the base sort: `codeBbRepER_interp`
+reduces the fold to `codeBbRep`, and the numeric fold agrees with the term code
+(`codeBbRep_codeTm`). -/
+example : (codeBbRepER RType.o).interp ![0]
+    = codeTm (bbRep (natToFreeAlg 0) (barTy RType.o)) := by
+  rw [codeBbRepER_interp, codeBbRep_codeTm]
+
+/-- The constant-zero function `λx:Ω o. c₀ : Ω o → o`, the smallest closed
+abstraction at a Proposition 13 hypothesis sort, following the acceptance
+instance of the `prop13_elementary` tests. -/
+private def constZeroF : Binding.Tm (rlmrOSig natAlgSig) []
+    (RType.arrow (RType.omega RType.o) RType.o) :=
+  Ramified.lam' (Binding.Tm.op (S := rlmrOSig natAlgSig)
+    (RlmrOOp.con RType.o (Or.inl rfl) false) (fun k => k.elim0))
+
+/-- The code builder on the constant-zero function at the numeral `1` computes
+the code of the applied bar-image term of Proposition 13. -/
+example : (buildCode constZeroF).interp ![1]
+    = codeTm (app' (barTm constZeroF) (bbRep (natToFreeAlg 1) (barTy RType.o))) :=
+  buildCode_interp constZeroF 1
+
+/-- The in-system clock of the constant-zero function dominates the deterministic
+Lemma 12 clock of its applied bar-image term at the numeral `2`. -/
+example :
+    (redexRank (app' (barTm constZeroF) (bbRep (natToFreeAlg 2) (barTy RType.o))) + 1)
+      * tower (redexRank (app' (barTm constZeroF) (bbRep (natToFreeAlg 2) (barTy RType.o))) + 1)
+        (Tm.height (app' (barTm constZeroF) (bbRep (natToFreeAlg 2) (barTy RType.o))))
+      ≤ (clockER constZeroF).interp ![2] :=
+  clockER_dominates constZeroF 2
+
+/-- The in-system budget of the constant-zero function dominates the chain ceiling
+`codeCeil` of its applied bar-image term at the numeral `1`, the budget value at
+which `normRun`'s closed-term commutation applies. -/
+example :
+    codeCeil (app' (barTm constZeroF) (bbRep (natToFreeAlg 1) (barTy RType.o)))
+      ≤ (budgetER constZeroF).interp ![1] :=
+  budgetER_dominates constZeroF 1
 
 end GebLean.Ramified.OneLambda

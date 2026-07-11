@@ -105,6 +105,15 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.buildCode` — the code of the applied bar-image term of Proposition 13
   (plan decision P4): the `pairER` rebuild of the `app` node over the closed
   constants of the fixed function term and the argument code `codeBbRepER`.
+- `OneLambda.rankCeil`, `OneLambda.heightCeil`, `OneLambda.sizeCeil`,
+  `OneLambda.payloadCeil` — the per-`F` constants: the uniform rank, height, size,
+  and sort-payload ceilings of the applied bar-image term.
+- `OneLambda.clockER` — the in-system clock: the Lemma 12 clock at the per-`F`
+  ceilings, a `(rankCeil F + 1)`-height `ERMor1.towerER` composite over the input
+  numeral times the constant coefficient.
+- `OneLambda.budgetER` — the in-system budget: the chain-ceiling shape `codeCeil`
+  at the per-`F` ceilings, a `towerER 2` composite whose exponent is the in-system
+  clock, feeding the budget slot of `normRun`.
 
 ## Main statements
 
@@ -159,6 +168,15 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.buildCode_interp` — the code builder interprets to the code of the
   applied bar-image term, `codeTm (app' (barTm F) (bbRep (natToFreeAlg n)
   (barTy τ)))`, unconditionally on every numeral.
+- `OneLambda.redexRank_applied_le`, `OneLambda.height_applied_le`,
+  `OneLambda.size_applied_le`, `OneLambda.sortPayload_applied_le` — the per-`F`
+  ceilings dominate the applied term's measures, the rank and payload uniformly
+  and the height and size up to the input numeral.
+- `OneLambda.clockER_dominates` — the in-system clock dominates the deterministic
+  Lemma 12 clock of the applied bar-image term at every input numeral.
+- `OneLambda.budgetER_dominates` — the in-system budget dominates the chain
+  ceiling `codeCeil` of the applied bar-image term at every input numeral, so
+  `normRun`'s budget slot can be fed in-system.
 
 ## Implementation notes
 
@@ -2819,6 +2837,254 @@ theorem buildCode_interp {τ : RType}
   simp only [pairER_interp, ERMor1.interp_natN, codeBbRepER_interp]
   rw [codeBbRep_codeTm]
   exact (codeTm_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))).symm
+
+/-! ### The in-system clock and budget -/
+
+/-- The aggregate redex rank of an application node is bounded by the ranks of
+its subterms together with the order of the function's arrow sort: the top
+β-detector contributes at most `RType.ord (RType.arrow σ τ)` and the top
+ι-detector at most `1`. Local re-derivation of the rank-uniformity bound of
+Proposition 13 (Leivant III section 5, p. 226). -/
+private theorem redexRank_app'_le {Γ : Binding.Ctx RType} {σ τ : RType}
+    (f : Binding.Tm (oneLambdaSig natAlgSig) Γ (RType.arrow σ τ))
+    (x : Binding.Tm (oneLambdaSig natAlgSig) Γ σ) :
+    redexRank (app' f x)
+      ≤ max (redexRank f) (max (redexRank x) (max 1 (RType.ord (RType.arrow σ τ)))) := by
+  rw [redexRank_app', topBetaRank_app']
+  split_ifs <;> omega
+
+/-- The uniform rank ceiling of the fixed function term `F` (Proposition 13's
+`qF`, Leivant III section 5, p. 226): the redex rank of the bar image together
+with the order of the applied arrow sort, a constant of `F`. Applied to a normal
+argument, the rank of the application never exceeds it. -/
+def rankCeil {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) : ℕ :=
+  max (redexRank (barTm F))
+    (max 1 (RType.ord (RType.arrow (barTy (RType.omega τ)) RType.o)))
+
+/-- The rank ceiling dominates the redex rank of the applied bar-image term,
+uniformly in the argument word: the argument's rank vanishes (`normal_bbRep`),
+leaving the rank of `barTm F` and the sort data (`redexRank_app'_le`). -/
+theorem redexRank_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (a : FreeAlg natAlgSig) :
+    redexRank (OneLambda.app' (barTm F) (bbRep a (barTy τ))) ≤ rankCeil F := by
+  have happ : redexRank (OneLambda.app' (barTm F) (bbRep a (barTy τ)))
+      ≤ max (redexRank (barTm F)) (max (redexRank (bbRep a (barTy τ)))
+          (max 1 (RType.ord (RType.arrow (barTy (RType.omega τ)) RType.o)))) :=
+    redexRank_app'_le (barTm F) (bbRep a (barTy τ))
+  have h0 : redexRank (bbRep a (barTy τ)) = 0 := normal_bbRep a (barTy τ)
+  rw [h0] at happ
+  unfold rankCeil
+  omega
+
+/-- The height ceiling of the fixed function term `F`: the height of the bar
+image plus the constructor-context length plus two, a constant of `F`. Applied
+to the representation of the numeral `n`, the height of the application never
+exceeds `heightCeil F + n`. -/
+def heightCeil {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) : ℕ :=
+  Tm.height (barTm F) + ((stepTypes natAlgSig (barTy τ) (barTy τ)).length + 2)
+
+/-- The height ceiling dominates the height of the applied bar-image term up to
+the input numeral: `height_app'` splits the application, and the `bbRep` spine
+adds one level per constructor over the fixed abstraction prefix
+(`height_bbRep_le`). -/
+theorem height_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      ≤ heightCeil F + n := by
+  have happ : Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      = 1 + max (Tm.height (barTm F)) (Tm.height (bbRep (natToFreeAlg n) (barTy τ))) :=
+    height_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))
+  have hb := height_bbRep_le τ n
+  unfold heightCeil
+  omega
+
+/-- The size ceiling of the fixed function term `F`: the size of the bar image
+plus the constructor-context length plus two, a constant of `F`. Applied to the
+representation of the numeral `n`, the size of the application never exceeds
+`sizeCeil F + 2 * n`. -/
+def sizeCeil {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) : ℕ :=
+  Tm.size (barTm F) + ((stepTypes natAlgSig (barTy τ) (barTy τ)).length + 2)
+
+/-- The size ceiling dominates the size of the applied bar-image term up to
+twice the input numeral: `size_app'` splits the application, and the `bbRep`
+spine adds two nodes per constructor over the fixed abstraction prefix
+(`size_bbRep_le`). -/
+theorem size_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    Tm.size (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      ≤ sizeCeil F + 2 * n := by
+  have happ : Tm.size (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      = 1 + Tm.size (barTm F) + Tm.size (bbRep (natToFreeAlg n) (barTy τ)) :=
+    size_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))
+  have hb := size_bbRep_le τ n
+  unfold sizeCeil
+  omega
+
+/-- The sort-payload ceiling of the fixed function term `F`: the payload of the
+applied `app` tag, the payload of the bar image, and the payload wrapper of the
+argument representation, a constant of `F`. -/
+def payloadCeil {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) : ℕ :=
+  max (opPayload (OneLambdaOp.app (barTy (RType.omega τ)) RType.o))
+    (max (sortPayload (barTm F))
+      (lamWrapPayload (barTy τ) (stepTypes natAlgSig (barTy τ) (barTy τ))
+        (opPayload (OneLambdaOp.app (barTy τ) (barTy τ)))))
+
+/-- The payload ceiling dominates the sort payload of the applied bar-image term,
+uniformly in the input numeral: `sortPayload_app'` splits the application, and
+the argument representation's payload is a function of `τ` alone
+(`sortPayload_bbRep_le`). -/
+theorem sortPayload_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    sortPayload (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      ≤ payloadCeil F := by
+  have happ : sortPayload (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      = max (opPayload (OneLambdaOp.app (barTy (RType.omega τ)) RType.o))
+          (max (sortPayload (barTm F))
+            (sortPayload (bbRep (natToFreeAlg n) (barTy τ)))) :=
+    sortPayload_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))
+  have hb := sortPayload_bbRep_le τ n
+  unfold payloadCeil
+  omega
+
+/-- The in-system clock of the fixed function term `F` (spec §6.3; N6): the
+elementary-recursive composite computing
+`(rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n)`, the Lemma 12
+clock at the per-`F` rank and height ceilings — a `(rankCeil F + 1)`-height
+`ERMor1.towerER` over the successor-and-addition atoms, times the constant
+(Leivant III section 5, p. 226: the clock of Proposition 13 is a constant of
+the fixed term over the input's representation height). Novel realization. -/
+def clockER {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) :
+    ERMor1 1 :=
+  ERMor1.comp ERMor1.mulN (fun i => match i with
+    | ⟨0, _⟩ => ERMor1.natN 1 (rankCeil F + 1)
+    | ⟨1, _⟩ => ERMor1.comp (ERMor1.towerER (rankCeil F + 1)) (fun _ : Fin 1 =>
+        ERMor1.comp ERMor1.addN (fun j => match j with
+          | ⟨0, _⟩ => ERMor1.natN 1 (heightCeil F)
+          | ⟨1, _⟩ => ERMor1.proj 0)))
+
+/-- Interpretation of `clockER`: the Lemma 12 clock at the per-`F` ceilings,
+`(rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n)`. -/
+@[simp] theorem clockER_interp {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (clockER F).interp ![n]
+      = (rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n) := by
+  simp only [clockER, ERMor1.interp_comp, ERMor1.interp_mulN, ERMor1.interp_towerER,
+    ERMor1.interp_addN, ERMor1.interp_natN, ERMor1.interp_proj, Matrix.cons_val_zero]
+
+/-- The deterministic clock of the applied bar-image term is dominated by the
+Lemma 12 clock at the per-`F` ceilings: the rank ceiling enters both the
+coefficient and the tower height (`tower_mono_left`), and the height ceiling
+the tower argument (`tower_mono_right`). -/
+theorem detClock_applied_le {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+      * tower (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+        (Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))))
+      ≤ (rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n) := by
+  have hr := redexRank_applied_le F (natToFreeAlg n)
+  have hh := height_applied_le F n
+  exact Nat.mul_le_mul (Nat.add_le_add_right hr 1)
+    (le_trans (tower_mono_left (Nat.add_le_add_right hr 1) _) (tower_mono_right _ hh))
+
+/-- The in-system clock dominates the deterministic Lemma 12 clock of the applied
+bar-image term (spec §6.3; the binding inequality of the clock deliverable): at
+every input numeral `n`, the `detClock` value of Proposition 13's applied term is
+at most `clockER F` evaluated at `n`. -/
+theorem clockER_dominates {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+      * tower (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+        (Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))))
+      ≤ (clockER F).interp ![n] := by
+  rw [clockER_interp]
+  exact detClock_applied_le F n
+
+/-- The in-system budget of the fixed function term `F` (ratified correction to
+Task 6.4.14: the budget slot of `normRun` is a genuine input): the
+elementary-recursive composite computing the chain ceiling `codeCeil` at the
+per-`F` size, payload, rank, and height ceilings — a `towerER 2` composite over
+a polynomial-and-exponential expression in `n` whose exponent is the in-system
+clock `clockER F`. Novel realization. -/
+def budgetER {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) :
+    ERMor1 1 :=
+  ERMor1.comp (ERMor1.towerER 2) (fun _ : Fin 1 =>
+    ERMor1.comp ERMor1.mulN (fun s => match s with
+      | ⟨0, _⟩ => ERMor1.natN 1 6
+      | ⟨1, _⟩ => ERMor1.comp ERMor1.addN (fun t => match t with
+          | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun u => match u with
+              | ⟨0, _⟩ => ERMor1.comp ERMor1.mulN (fun v => match v with
+                  | ⟨0, _⟩ => ERMor1.natN 1 2
+                  | ⟨1, _⟩ => ERMor1.comp ERMor1.powN (fun w => match w with
+                      | ⟨0, _⟩ => ERMor1.comp ERMor1.addN (fun x => match x with
+                          | ⟨0, _⟩ => ERMor1.natN 1 (sizeCeil F)
+                          | ⟨1, _⟩ => ERMor1.comp ERMor1.mulN (fun y => match y with
+                              | ⟨0, _⟩ => ERMor1.natN 1 2
+                              | ⟨1, _⟩ => ERMor1.proj 0))
+                      | ⟨1, _⟩ => ERMor1.comp ERMor1.powN (fun z => match z with
+                          | ⟨0, _⟩ => ERMor1.natN 1 2
+                          | ⟨1, _⟩ => clockER F)))
+              | ⟨1, _⟩ => ERMor1.natN 1 (payloadCeil F))
+          | ⟨1, _⟩ => ERMor1.natN 1 1)))
+
+/-- Interpretation of `budgetER`: the chain ceiling shape at the per-`F`
+ceilings, a height-`2` tower over
+`6 * (2 * (sizeCeil F + 2 * n) ^ 2 ^ clock + payloadCeil F + 1)` with `clock`
+the Lemma 12 clock of `clockER_interp`. -/
+@[simp] theorem budgetER_interp {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (budgetER F).interp ![n]
+      = tower 2 (6 * (2 * (sizeCeil F + 2 * n)
+          ^ 2 ^ ((rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n))
+          + payloadCeil F + 1)) := by
+  simp only [budgetER, ERMor1.interp_comp, ERMor1.interp_towerER, ERMor1.interp_mulN,
+    ERMor1.interp_addN, ERMor1.interp_powN, ERMor1.interp_natN, ERMor1.interp_proj,
+    clockER_interp, Matrix.cons_val_zero]
+
+/-- The in-system budget dominates the deterministic chain ceiling of the applied
+bar-image term (ratified correction to Task 6.4.14; the binding inequality of the
+budget deliverable): at every input numeral `n`, `codeCeil` of Proposition 13's
+applied term is at most `budgetER F` evaluated at `n`, so the budget slot of
+`normRun` can be fed in-system. Chains the per-`F` measure ceilings with
+`tower_mono_right` and power monotonicity, the exponent bounded by
+`detClock_applied_le`. -/
+theorem budgetER_dominates {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    codeCeil (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+      ≤ (budgetER F).interp ![n] := by
+  rw [budgetER_interp]
+  unfold codeCeil detClock
+  refine tower_mono_right 2 ?_
+  have hs := size_applied_le F n
+  have hp := sortPayload_applied_le F n
+  have hD := detClock_applied_le F n
+  have hpow : Tm.size (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))
+        ^ 2 ^ ((redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+          * tower (redexRank (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) + 1)
+            (Tm.height (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))))
+      ≤ (sizeCeil F + 2 * n)
+        ^ 2 ^ ((rankCeil F + 1) * tower (rankCeil F + 1) (heightCeil F + n)) := by
+    refine le_trans (Nat.pow_le_pow_left hs _) (Nat.pow_le_pow_right ?_ ?_)
+    · unfold sizeCeil
+      have := Tm.one_le_size (barTm F)
+      omega
+    · exact Nat.pow_le_pow_right (by omega) hD
+  rw [show (List.map barTy ([] : Binding.Ctx RType)).length = 0 from rfl]
+  omega
 
 end OneLambda
 

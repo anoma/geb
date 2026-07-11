@@ -66,6 +66,8 @@ normalizer tasks.
   Berarducci-Böhm representation of a numeral: a `Nat.rec` fold.
 * `OneLambda.codeBbRep` — the Gödel code of the Berarducci-Böhm representation of a
   numeral: the fixed `codeLamWrap` prefix over `codeBbInner`.
+* `OneLambda.lamWrapPayload` — the sort-payload wrapper of an iterated
+  abstraction: the payload counterpart of `codeLamWrap`.
 * `OneLambda.tmOpMax` — the signature-generic maximal operation weight of a term
   under a per-operation weight `w`.
 * `OneLambda.opPayload` — the sort-code payload of a single operation: an
@@ -113,6 +115,14 @@ normalizer tasks.
   spine code: `codeBbInner τ m` is below a height-`2` tower over an expression
   linear in the numeral, the value bound of its elementary-recursive
   realization.
+* `OneLambda.size_lamSpine`, `OneLambda.height_lamSpine`,
+  `OneLambda.sortPayload_lamSpine` — the iterated-abstraction measures: one node
+  and one level per binder, and the payload wrapper `lamWrapPayload`.
+* `OneLambda.height_bbRep_le`, `OneLambda.size_bbRep_le`,
+  `OneLambda.sortPayload_bbRep_le` — the numeral-representation measure
+  ceilings: the height and size of `bbRep (natToFreeAlg n) (barTy τ)` grow by
+  one level and two nodes per constructor over per-`τ` constants, and the sort
+  payload is a per-`τ` constant.
 * `OneLambda.codeTm_lamSpine` — the code of an iterated abstraction is
   `codeLamWrap` applied to the body code.
 * `OneLambda.codeBbInner_codeTm`, `OneLambda.codeBbRep_codeTm` — the numeric folds
@@ -1584,6 +1594,170 @@ private theorem sortPayload_bbSpine_le (τ : RType) (n : ℕ) :
         = max (opPayload (OneLambdaOp.app (barTy τ) (barTy τ)))
             (max 0 (sortPayload (bbSpine (barTy τ) (natToFreeAlg m)))) := h
       _ ≤ opPayload (OneLambdaOp.app (barTy τ) (barTy τ)) := by omega
+
+/-- The tree height of the variable-headed spine of a numeral grows by one level
+per constructor: `Tm.height (bbSpine (barTy τ) (natToFreeAlg n)) ≤ n + 1`. Each
+successor layer adds one application node over the predecessor spine. -/
+private theorem height_bbSpine_le (τ : RType) (n : ℕ) :
+    Tm.height (bbSpine (barTy τ) (natToFreeAlg n)) ≤ n + 1 := by
+  induction n with
+  | zero =>
+    calc Tm.height (bbSpine (barTy τ) (natToFreeAlg 0))
+        = 1 := Tm.height_var (ctorVar (σ := barTy τ) false)
+      _ ≤ 0 + 1 := le_refl _
+  | succ m ih =>
+    have h := height_app' (Γ := stepTypes natAlgSig (barTy τ) (barTy τ))
+      (Binding.Tm.var (ctorVar (σ := barTy τ) true))
+      (bbSpine (barTy τ) (natToFreeAlg m))
+    rw [Tm.height_var] at h
+    calc Tm.height (bbSpine (barTy τ) (natToFreeAlg (m + 1)))
+        = 1 + max 1 (Tm.height (bbSpine (barTy τ) (natToFreeAlg m))) := h
+      _ ≤ (m + 1) + 1 := by omega
+
+/-- The size is invariant under a context transport realized as `cast` of a
+`congrArg` on the term type, the form the iterated abstraction `lamSpine` emits.
+The `cast`-shaped counterpart of `Tm.size_cast`. -/
+private theorem size_castCtx {Γ Γ' : Binding.Ctx RType} {τ : RType} (h : Γ = Γ')
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ τ) :
+    Tm.size (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ) h) t)
+      = Tm.size t := by
+  cases h; rfl
+
+/-- The height is invariant under a context transport realized as `cast` of a
+`congrArg` on the term type. The `cast`-shaped counterpart of `Tm.height_cast`. -/
+private theorem height_castCtx {Γ Γ' : Binding.Ctx RType} {τ : RType} (h : Γ = Γ')
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ τ) :
+    Tm.height (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ) h) t)
+      = Tm.height t := by
+  cases h; rfl
+
+/-- The sort payload is invariant under a context transport realized as `cast` of
+a `congrArg` on the term type. The `cast`-shaped counterpart of
+`sortPayload_cast`. -/
+private theorem sortPayload_castCtx {Γ Γ' : Binding.Ctx RType} {τ : RType} (h : Γ = Γ')
+    (t : Binding.Tm (oneLambdaSig natAlgSig) Γ τ) :
+    sortPayload (cast (congrArg (fun c => Binding.Tm (oneLambdaSig natAlgSig) c τ) h) t)
+      = sortPayload t := by
+  cases h; rfl
+
+/-- The size of an iterated abstraction adds one node per binder:
+`Tm.size (lamSpine Δ body) = Δ.length + Tm.size body`. By induction on the binder
+suffix, peeling one `lam'` layer at a time (`size_lam'`) and discharging the
+binder-associativity transports by `size_castCtx`. -/
+theorem size_lamSpine :
+    {Γ : Binding.Ctx RType} → {result : RType} → (Δ : List RType) →
+    (body : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ Δ) result) →
+    Tm.size (OneLambda.lamSpine Δ body) = Δ.length + Tm.size body
+  | Γ, _result, [], body => by
+      rw [OneLambda.lamSpine, List.length_nil, Nat.zero_add]
+      exact size_castCtx (List.append_nil Γ) body
+  | Γ, result, ξ :: Δ', body => by
+      refine (size_lam' (Γ := Γ) (σ := ξ) (τ := RType.curried Δ' result) _).trans ?_
+      rw [size_lamSpine Δ', size_castCtx (List.append_assoc Γ [ξ] Δ').symm body,
+        List.length_cons]
+      change 1 + (Δ'.length + Tm.size body) = Δ'.length + 1 + Tm.size body
+      omega
+
+/-- The height of an iterated abstraction adds one level per binder:
+`Tm.height (lamSpine Δ body) = Δ.length + Tm.height body`. By induction on the
+binder suffix, peeling one `lam'` layer at a time (`height_lam'`) and discharging
+the binder-associativity transports by `height_castCtx`. -/
+theorem height_lamSpine :
+    {Γ : Binding.Ctx RType} → {result : RType} → (Δ : List RType) →
+    (body : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ Δ) result) →
+    Tm.height (OneLambda.lamSpine Δ body) = Δ.length + Tm.height body
+  | Γ, _result, [], body => by
+      rw [OneLambda.lamSpine, List.length_nil, Nat.zero_add]
+      exact height_castCtx (List.append_nil Γ) body
+  | Γ, result, ξ :: Δ', body => by
+      refine (height_lam' (Γ := Γ) (σ := ξ) (τ := RType.curried Δ' result) _).trans ?_
+      rw [height_lamSpine Δ', height_castCtx (List.append_assoc Γ [ξ] Δ').symm body,
+        List.length_cons]
+      change 1 + (Δ'.length + Tm.height body) = Δ'.length + 1 + Tm.height body
+      omega
+
+/-- The sort-payload wrapper of an iterated abstraction over a binder suffix `Δ`
+at result sort `result`, as a fold over `Δ` maxing each `lam`-layer payload into a
+body payload, the empty suffix passing the body payload through. The payload
+counterpart of `codeLamWrap`, computed by `sortPayload_lamSpine`. -/
+def lamWrapPayload (result : RType) : List RType → ℕ → ℕ
+  | [], p => p
+  | ξ :: Δ', p =>
+      max (opPayload (OneLambdaOp.lam ξ (RType.curried Δ' result)))
+        (lamWrapPayload result Δ' p)
+
+/-- The payload wrapper is monotone in the body payload. -/
+theorem lamWrapPayload_mono (result : RType) (Δ : List RType) {p q : ℕ} (h : p ≤ q) :
+    lamWrapPayload result Δ p ≤ lamWrapPayload result Δ q := by
+  induction Δ with
+  | nil => exact h
+  | cons ξ Δ' ih => exact max_le_max (le_refl _) ih
+
+/-- The sort payload of an iterated abstraction is the wrapper `lamWrapPayload`
+applied to the payload of the body: `sortPayload (lamSpine Δ body) =
+lamWrapPayload result Δ (sortPayload body)`. By induction on the binder suffix,
+peeling one `lam'` layer at a time (`sortPayload_lam'`) and discharging the
+binder-associativity transports by `sortPayload_castCtx`. -/
+theorem sortPayload_lamSpine :
+    {Γ : Binding.Ctx RType} → {result : RType} → (Δ : List RType) →
+    (body : Binding.Tm (oneLambdaSig natAlgSig) (Γ ++ Δ) result) →
+    sortPayload (OneLambda.lamSpine Δ body) = lamWrapPayload result Δ (sortPayload body)
+  | Γ, _result, [], body => by
+      rw [OneLambda.lamSpine]
+      exact sortPayload_castCtx (List.append_nil Γ) body
+  | Γ, result, ξ :: Δ', body => by
+      refine (sortPayload_lam' (Γ := Γ) (σ := ξ) (τ := RType.curried Δ' result) _).trans ?_
+      rw [sortPayload_lamSpine Δ',
+        sortPayload_castCtx (List.append_assoc Γ [ξ] Δ').symm body]
+      rfl
+
+/-- The height of the Berarducci-Böhm representation of a numeral is bounded by
+the fixed abstraction depth plus one level per constructor:
+`Tm.height (bbRep (natToFreeAlg n) (barTy τ)) ≤ L + (n + 1)` with `L` the
+constructor-context length. The height ceiling of Proposition 13's applied
+term (Leivant III section 5, p. 226): the `bbRep` spine adds one level per
+constructor over the `lamSpine` prefix, a function of `τ` alone. -/
+theorem height_bbRep_le (τ : RType) (n : ℕ) :
+    Tm.height (bbRep (natToFreeAlg n) (barTy τ))
+      ≤ (stepTypes natAlgSig (barTy τ) (barTy τ)).length + (n + 1) := by
+  have h : Tm.height (bbRep (natToFreeAlg n) (barTy τ))
+      = (stepTypes natAlgSig (barTy τ) (barTy τ)).length
+        + Tm.height (bbSpine (barTy τ) (natToFreeAlg n)) :=
+    height_lamSpine (Γ := []) (stepTypes natAlgSig (barTy τ) (barTy τ))
+      (bbSpine (barTy τ) (natToFreeAlg n))
+  rw [h]
+  exact Nat.add_le_add_left (height_bbSpine_le τ n) _
+
+/-- The size of the Berarducci-Böhm representation of a numeral is bounded by the
+fixed abstraction depth plus two nodes per constructor:
+`Tm.size (bbRep (natToFreeAlg n) (barTy τ)) ≤ L + (2 * n + 1)` with `L` the
+constructor-context length. The size ceiling of Proposition 13's applied term. -/
+theorem size_bbRep_le (τ : RType) (n : ℕ) :
+    Tm.size (bbRep (natToFreeAlg n) (barTy τ))
+      ≤ (stepTypes natAlgSig (barTy τ) (barTy τ)).length + (2 * n + 1) := by
+  have h : Tm.size (bbRep (natToFreeAlg n) (barTy τ))
+      = (stepTypes natAlgSig (barTy τ) (barTy τ)).length
+        + Tm.size (bbSpine (barTy τ) (natToFreeAlg n)) :=
+    size_lamSpine (Γ := []) (stepTypes natAlgSig (barTy τ) (barTy τ))
+      (bbSpine (barTy τ) (natToFreeAlg n))
+  rw [h]
+  exact Nat.add_le_add_left (size_bbSpine_le τ n) _
+
+/-- The sort payload of the Berarducci-Böhm representation of a numeral is bounded
+uniformly in the numeral by the payload wrapper at the spine's application tag:
+the constants of the abstraction prefix and the single application tag are
+functions of `τ` alone. The payload ceiling of Proposition 13's applied term. -/
+theorem sortPayload_bbRep_le (τ : RType) (n : ℕ) :
+    sortPayload (bbRep (natToFreeAlg n) (barTy τ))
+      ≤ lamWrapPayload (barTy τ) (stepTypes natAlgSig (barTy τ) (barTy τ))
+          (opPayload (OneLambdaOp.app (barTy τ) (barTy τ))) := by
+  have h : sortPayload (bbRep (natToFreeAlg n) (barTy τ))
+      = lamWrapPayload (barTy τ) (stepTypes natAlgSig (barTy τ) (barTy τ))
+          (sortPayload (bbSpine (barTy τ) (natToFreeAlg n))) :=
+    sortPayload_lamSpine (Γ := []) (stepTypes natAlgSig (barTy τ) (barTy τ))
+      (bbSpine (barTy τ) (natToFreeAlg n))
+  rw [h]
+  exact lamWrapPayload_mono _ _ (sortPayload_bbSpine_le τ n)
 
 /-- The tower envelope of the numeral spine code: `codeBbInner τ m` is bounded
 by a height-`2` tower over an expression linear in the numeral, with the sort
