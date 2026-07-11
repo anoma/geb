@@ -36,8 +36,9 @@ realizes the deterministic normalizer step `normStep` — the numeric image of
 `detStep` — as an `ERMor1` morphism, together with every read, fold, and worker it
 composes, each interpreting to the mirrored ℕ-level function (`NormStepER`). A
 final module packages the Phase 5 definability data as the first-order syntactic
-category `SynCatFO` and its standard-model denotation `collapseDenotation`, with
-the identity and composition laws that the soundness functor consumes
+category `SynCatFO` and its standard-model denotation `collapseDenotation`,
+with its identity and composition laws, and assembles the soundness functor
+`collapseFunctor : SynCatFO ⥤ LawvereERCat` with its `Faithful` instance
 (`Collapse`).
 
 ## References

@@ -122,6 +122,10 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.sourceApps` — the `a`-fold source-level application spine: the
   `sourceApp` iterate applying a closed function term at the curried arrow sort
   over the shifted input sorts to one closed argument per input position.
+- `OneLambda.ofFnOmegaEnv` — the positional environment over the shifted input
+  context `List.ofFn fun i => Ω (τs i)`: position `k` reads the value tuple
+  `xs` at the underlying index, transported along the `List.get_ofFn` sort
+  identification.
 - `OneLambda.collapseERN` — the `a`-ary collapse morphism (spec §6.4): the
   `ERMorN a 1` composite of the same decode ∘ clocked normalization ∘ build shape,
   with the applied-spine code, the per-`F` ceilings over the staggered input sum
@@ -200,6 +204,10 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.collapseER_interp` — adequacy of the collapse morphism against the
   denotational anchor: at every input the collapse computes the numeric reading
   of the standard denotation of Proposition 13's applied term.
+- `OneLambda.appEval_sourceApps` — the denotation of the `a`-fold source-level
+  application spine `sourceApps` is the application chain `appChain` of the
+  head denotation over the argument denotations, read at the positional
+  environment `ofFnOmegaEnv`.
 - `OneLambda.collapseERN_interp` — adequacy of the `a`-ary collapse morphism: at
   every input tuple the collapse computes the numeric reading of the standard
   denotation of the source-side application spine of the fixed term over the

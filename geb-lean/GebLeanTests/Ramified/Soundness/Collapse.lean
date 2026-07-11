@@ -83,7 +83,6 @@ example : ∃ e : ERMorN 1 1,
   · rw [hinterp ![1]]; decide
   · rw [hinterp ![3]]; decide
 
-
 /-- The soundness functor is faithful on the doubling hom-set. -/
 example :
     Function.Injective (fun g : ctxDoubleFO ⟶ ctxOFO => collapseFunctor.map g) :=
