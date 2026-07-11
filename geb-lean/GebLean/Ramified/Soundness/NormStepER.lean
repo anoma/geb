@@ -102,6 +102,9 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
   representation: the fixed abstraction wrapper `codeLamWrapER` (a meta-level fold
   over the constructor step types) around the spine fold `codeBbInnerER`, an
   `ERMor1.boundedRec` under the Task 6.4.8 envelope tower.
+- `OneLambda.buildCode` — the code of the applied bar-image term of Proposition 13
+  (plan decision P4): the `pairER` rebuild of the `app` node over the closed
+  constants of the fixed function term and the argument code `codeBbRepER`.
 
 ## Main statements
 
@@ -153,6 +156,9 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.codeBbRepER_interp` — the argument-code composite interprets to
   `codeBbRep`, unconditionally on every numeral, its spine trace bounded by the
   envelope tower `codeBbInner_le_tower`.
+- `OneLambda.buildCode_interp` — the code builder interprets to the code of the
+  applied bar-image term, `codeTm (app' (barTm F) (bbRep (natToFreeAlg n)
+  (barTy τ)))`, unconditionally on every numeral.
 
 ## Implementation notes
 
@@ -2781,6 +2787,38 @@ the spine interpretation `codeBbInnerER_interp`. -/
   unfold codeBbRepER
   rw [codeLamWrapER_interp, codeBbInnerER_interp]
   rfl
+
+/-! ### The applied-term code builder -/
+
+/-- The code of the applied bar-image term as an elementary-recursive morphism
+(spec §6.3; N6; plan decision P4): the `pairER` rebuild of the `app` node of
+`codeTm_app'` over the closed constants `codeTm (barTm F)` and the application
+operation code — closed naturals of the fixed function term `F` — and the
+numeral-recursive argument code `codeBbRepER τ`. The applied term is the shape of
+Proposition 13 (Leivant III section 5, p. 226): the bar image `barTm F` applied to
+the Berarducci-Böhm representation of the input numeral. Novel realization. -/
+def buildCode {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o)) :
+    ERMor1 1 :=
+  pairER (ERMor1.natN 1 1)
+    (pairER (ERMor1.natN 1 (codeOp (OneLambdaOp.app (barTy (RType.omega τ)) RType.o)))
+      (pairER (ERMor1.natN 1 (codeTm (barTm F)))
+        (pairER (codeBbRepER τ) (ERMor1.natN 1 0))))
+
+/-- Interpretation of `buildCode`: the code of the applied bar-image term,
+`codeTm (app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ)))`, unconditionally on
+every numeral. The argument slot lands `codeBbRep` (`codeBbRepER_interp`), the
+numeric fold agrees with the argument's term code (`codeBbRep_codeTm`), and the
+node equation `codeTm_app'` reassembles the application code. -/
+theorem buildCode_interp {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) [] (RType.arrow (RType.omega τ) RType.o))
+    (n : ℕ) :
+    (buildCode F).interp ![n]
+      = codeTm (OneLambda.app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))) := by
+  unfold buildCode
+  simp only [pairER_interp, ERMor1.interp_natN, codeBbRepER_interp]
+  rw [codeBbRep_codeTm]
+  exact (codeTm_app' (barTm F) (bbRep (natToFreeAlg n) (barTy τ))).symm
 
 end OneLambda
 
