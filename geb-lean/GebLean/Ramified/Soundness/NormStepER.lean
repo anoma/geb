@@ -114,6 +114,10 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.budgetER` — the in-system budget: the chain-ceiling shape `codeCeil`
   at the per-`F` ceilings, a `towerER 2` composite whose exponent is the in-system
   clock, feeding the budget slot of `normRun`.
+- `OneLambda.collapseER` — the atomic collapse morphism (spec §6.4; plan decision
+  P4): decode ∘ clocked normalization ∘ build, the `ERMorN 1 1` composite feeding
+  `normRun` at the in-system clock, the applied-term code, and the in-system
+  budget, read off by the word decoder.
 
 ## Main statements
 
@@ -177,6 +181,9 @@ Leivant III leaves to a footnote (footnote 10, p. 226). Novel realization.
 - `OneLambda.budgetER_dominates` — the in-system budget dominates the chain
   ceiling `codeCeil` of the applied bar-image term at every input numeral, so
   `normRun`'s budget slot can be fed in-system.
+- `OneLambda.collapseER_interp` — adequacy of the collapse morphism against the
+  denotational anchor: at every input the collapse computes the numeric reading
+  of the standard denotation of Proposition 13's applied term.
 
 ## Implementation notes
 
@@ -3085,6 +3092,102 @@ theorem budgetER_dominates {τ : RType}
     · exact Nat.pow_le_pow_right (by omega) hD
   rw [show (List.map barTy ([] : Binding.Ctx RType)).length = 0 from rfl]
   omega
+
+/-! ### The atomic collapse morphism -/
+
+/-- Interpretation of a composition over a single fed slot: the fed morphism evaluates
+once and enters as the singleton context. -/
+private theorem interp_comp_singleton {k : ℕ} (e : ERMor1 1) (g : ERMor1 k)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.comp e fun _ => g).interp ctx = e.interp ![g.interp ctx] := by
+  rw [ERMor1.interp_comp]
+  exact congrArg e.interp (cons_fin_one (g.interp ctx))
+
+/-- Interpretation of a composition over three fed slots: each fed morphism evaluates
+pointwise and enters positionally. -/
+private theorem interp_comp_three {k : ℕ} (e : ERMor1 3) (g₀ g₁ g₂ : ERMor1 k)
+    (ctx : Fin k → ℕ) :
+    (ERMor1.comp e ![g₀, g₁, g₂]).interp ctx
+      = e.interp ![g₀.interp ctx, g₁.interp ctx, g₂.interp ctx] := by
+  rw [ERMor1.interp_comp]
+  refine congrArg e.interp (funext fun j => ?_)
+  match j with
+  | ⟨0, _⟩ => rfl
+  | ⟨1, _⟩ => rfl
+  | ⟨2, _⟩ => rfl
+
+/-- The atomic collapse morphism for a single codomain-`o` source (spec §6.4; plan
+decision P4): decode ∘ clocked normalization ∘ build. The composite feeds the clocked
+iteration `normRun` at the in-system clock `clockER F`, the applied-term code
+`buildCode F`, and the in-system budget `budgetER F`, and reads the word decoder
+`decodeWordER` off the resulting normal code — per fixed `F`, the whole of
+Proposition 13's normalization pipeline (Leivant III section 5, p. 226, DOI
+`10.1016/S0168-0072(98)00040-2`) as one elementary-recursive morphism, anchored
+denotationally by `collapseER_interp`. Novel realization. -/
+def collapseER {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.arrow (RType.omega τ) RType.o)) : ERMorN 1 1 :=
+  fun _ => ERMor1.comp decodeWordER fun _ =>
+    ERMor1.comp normRun ![clockER F, buildCode F, budgetER F]
+
+/-- Adequacy of the collapse morphism against the denotational anchor (spec §6.4; plan
+decision P4): at every input the collapse computes the numeric reading of the standard
+denotation of Proposition 13's applied term (Leivant III section 5, p. 226) —
+`freeAlgToNat` of `appEval` at the source-side application of `F` to the constructor
+word of the input. The fed code slot reduces by `buildCode_interp`; the budget
+dominance (`codeTm_detIter_le_codeCeil` chained through `budgetER_dominates`)
+discharges `normRun_interp_of_le`, landing the iterate's code by
+`stepCode_iterate_codeTm`; the clock dominance (`clockER_dominates`) absorbs the
+overshoot past the Lemma 12 normal form (`detIter_normal`, `detIter_eq_of_normal`);
+the normal reduct is identified with the value word by the Proposition 13
+identification chain (`normal_closed_o_eq_conc`, `oneEval_reduces`, `oneEval_conc`
+against `prop11_represents` through `represents_arrow` and `lemma9_omega`); and the
+word decoder reads the value off its code (`decodeWord_codeTm_conc`). -/
+theorem collapseER_interp {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.arrow (RType.omega τ) RType.o)) (v : Fin 1 → ℕ) :
+    (collapseER F).interp v = fun _ =>
+      freeAlgToNat (appEval
+        (sourceApp F (sourceWord (natToFreeAlg (v 0)) τ)) finZeroElim) := by
+  obtain ⟨n, rfl⟩ : ∃ n, v = ![n] :=
+    ⟨v 0, funext fun i => match i with | ⟨0, _⟩ => rfl⟩
+  funext i
+  simp only [Matrix.cons_val_zero]
+  set a : FreeAlg natAlgSig := natToFreeAlg n
+  set W : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
+    app' (barTm F) (bbRep a (barTy τ))
+  set L : ℕ := (redexRank W + 1) * tower (redexRank W + 1) (Tm.height W)
+  -- The fed slots: the code slot is the applied term's code, the clock slot dominates
+  -- the Lemma 12 clock, and the budget slot dominates every trace value.
+  have hcode : (buildCode F).interp ![n] = codeTm W := buildCode_interp F n
+  have hclk : L ≤ (clockER F).interp ![n] := clockER_dominates F n
+  have hbud : ∀ j, j ≤ (clockER F).interp ![n] →
+      stepCode^[j] (codeTm W) ≤ (budgetER F).interp ![n] := by
+    intro j _hj
+    rw [stepCode_iterate_codeTm j W]
+    exact le_trans (codeTm_detIter_le_codeCeil j W) (budgetER_dominates F n)
+  have hnorm : Normal (detIter L W) := detIter_normal W
+  -- The identification chain of Proposition 13: the normal reduct is the value word.
+  obtain ⟨b, hb⟩ := normal_closed_o_eq_conc (detIter L W) hnorm
+  have h9 : Represents (RType.omega τ) (sourceWord a τ) (bbRep a (barTy τ)) := by
+    have h := lemma9_omega τ (sourceWord a τ)
+    rwa [appEval_sourceWord] at h
+  have hrep : Represents RType.o (sourceApp F (sourceWord a τ)) W :=
+    (represents_arrow F (barTm F)).mp (prop11_represents F) (sourceWord a τ)
+      (bbRep a (barTy τ)) h9
+  have hred : Relation.ReflTransGen OneLambdaStep W
+      (conc (appEval (sourceApp F (sourceWord a τ)) finZeroElim)) := hrep
+  have hval : b = appEval (sourceApp F (sourceWord a τ)) finZeroElim := by
+    have h1 := oneEval_reduces (detIter_reduces L W) finZeroElim
+    have h2 := oneEval_reduces hred finZeroElim
+    rw [hb, oneEval_conc] at h1
+    rw [oneEval_conc] at h2
+    exact h1.symm.trans h2
+  -- The composite unfolds to the decode of the clocked run at the fed slots.
+  simp only [collapseER, ERMorN.interp]
+  rw [interp_comp_singleton, interp_comp_three, decodeWordER_interp, hcode,
+    normRun_interp_of_le _ _ _ hbud, stepCode_iterate_codeTm _ W,
+    detIter_eq_of_normal hclk hnorm, hb, decodeWord_codeTm_conc, hval]
 
 end OneLambda
 

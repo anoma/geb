@@ -37,7 +37,10 @@ builder, the in-system clock, and the in-system budget are exercised on the
 constant-zero function `λx:Ω o. c₀` (the `prop13_elementary` acceptance instance):
 the builder computes the code of the applied bar-image term, and the clock and
 budget dominate the deterministic Lemma 12 clock and the chain ceiling `codeCeil`
-at concrete numerals.
+at concrete numerals. The collapse morphism is exercised on the same fixture:
+`collapseER_interp` lands the denotational anchor at the numeral `2`, and at the
+numeral `1` the anchor reduces through the standard-evaluator equations to the
+expected numeral `0` (no kernel reduction on the composite).
 
 ## References
 
@@ -535,5 +538,28 @@ example :
     codeCeil (app' (barTm constZeroF) (bbRep (natToFreeAlg 1) (barTy RType.o)))
       ≤ (budgetER constZeroF).interp ![1] :=
   budgetER_dominates constZeroF 1
+
+/-- The collapse morphism on the constant-zero function at the numeral `2` computes
+the numeric reading of the standard denotation of Proposition 13's applied term:
+`collapseER_interp` instantiated on the acceptance fixture. -/
+example : (collapseER constZeroF).interp ![2]
+    = fun _ => freeAlgToNat (appEval
+        (sourceApp constZeroF (sourceWord (natToFreeAlg 2) RType.o)) finZeroElim) :=
+  collapseER_interp constZeroF ![2]
+
+/-- The collapse morphism on the constant-zero function at the numeral `1` computes
+the expected numeral `0`: `collapseER_interp` collapses the composite to the
+denotational anchor, the application and abstraction denotations reduce the anchor
+to the zero constructor (`appEval_app'`, `appEval_lam'` — the constant body drops
+the argument denotation), and the numeral reads back
+(`freeAlgToNat_natToFreeAlg`). -/
+example : (collapseER constZeroF).interp ![1] = fun _ => 0 := by
+  have hval : appEval (sourceApp constZeroF (sourceWord (natToFreeAlg 1) RType.o))
+      finZeroElim = natToFreeAlg 0 := by
+    simp only [sourceApp, constZeroF, appEval_app', appEval_lam']
+    exact congrArg (FreeAlg.mk (A := natAlgSig) false) (funext fun k => k.elim0)
+  rw [collapseER_interp constZeroF ![1]]
+  funext i
+  simp only [Matrix.cons_val_zero, hval, freeAlgToNat_natToFreeAlg]
 
 end GebLean.Ramified.OneLambda
