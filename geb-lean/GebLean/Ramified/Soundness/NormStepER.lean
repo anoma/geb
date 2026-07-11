@@ -3345,7 +3345,7 @@ private theorem redexRank_barSpine_le : ∀ {a : ℕ} (τs : Fin a → RType)
   | _ + 1, τs, H, v => by
       set W0 : Binding.Tm (oneLambdaSig natAlgSig) []
           (barTy (omegaCurried fun i => τs i.succ)) :=
-        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))) with hW0
+        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))
       have hrec := redexRank_barSpine_le (fun i => τs i.succ) W0 fun i => v i.succ
       have happ : redexRank W0
           ≤ max (redexRank H)
@@ -3383,7 +3383,7 @@ private theorem height_barSpine_le : ∀ {a : ℕ} (τs : Fin a → RType)
   | _ + 1, τs, H, v => by
       set W0 : Binding.Tm (oneLambdaSig natAlgSig) []
           (barTy (omegaCurried fun i => τs i.succ)) :=
-        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))) with hW0
+        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))
       have hrec := height_barSpine_le (fun i => τs i.succ) W0 fun i => v i.succ
       have happ : Tm.height W0
           = 1 + max (Tm.height H) (Tm.height (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))) :=
@@ -3414,7 +3414,7 @@ private theorem size_barSpine_le : ∀ {a : ℕ} (τs : Fin a → RType)
   | _ + 1, τs, H, v => by
       set W0 : Binding.Tm (oneLambdaSig natAlgSig) []
           (barTy (omegaCurried fun i => τs i.succ)) :=
-        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))) with hW0
+        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))
       have hrec := size_barSpine_le (fun i => τs i.succ) W0 fun i => v i.succ
       have happ : Tm.size W0
           = 1 + Tm.size H + Tm.size (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))) :=
@@ -3444,7 +3444,7 @@ private theorem sortPayload_barSpine_le : ∀ {a : ℕ} (τs : Fin a → RType)
   | _ + 1, τs, H, v => by
       set W0 : Binding.Tm (oneLambdaSig natAlgSig) []
           (barTy (omegaCurried fun i => τs i.succ)) :=
-        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0))) with hW0
+        OneLambda.app' H (bbRep (natToFreeAlg (v 0)) (barTy (τs 0)))
       have hrec := sortPayload_barSpine_le (fun i => τs i.succ) W0 fun i => v i.succ
       have happ : sortPayload W0
           = max (opPayload (OneLambdaOp.app (barTy (RType.omega (τs 0)))
@@ -3763,8 +3763,8 @@ theorem collapseERN_interp {a : ℕ} {τs : Fin a → RType}
         finZeroElim) := by
   funext i
   set W : Binding.Tm (oneLambdaSig natAlgSig) [] RType.o :=
-    barSpine τs (barHead F) v with hW
-  set L : ℕ := (redexRank W + 1) * tower (redexRank W + 1) (Tm.height W) with hL
+    barSpine τs (barHead F) v
+  set L : ℕ := (redexRank W + 1) * tower (redexRank W + 1) (Tm.height W)
   -- The fed slots: the code slot is the applied spine's code, the clock slot
   -- dominates the Lemma 12 clock, and the budget slot dominates every trace value.
   have hcode : (buildCodeN F).interp v = codeTm W := buildCodeN_interp F v
