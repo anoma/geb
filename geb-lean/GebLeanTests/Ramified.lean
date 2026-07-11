@@ -11,6 +11,7 @@ import GebLeanTests.Ramified.Algebras
 import GebLeanTests.Ramified.FirstOrder
 import GebLeanTests.Ramified.Definability
 import GebLeanTests.Ramified.Soundness
+import GebLeanTests.Ramified.Characterization
 
 /-!
 # Ramified-recurrence test index

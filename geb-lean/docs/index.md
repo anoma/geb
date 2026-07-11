@@ -13,6 +13,7 @@
   - [PshRelEdge and edge-of-presheaf machinery](#pshreledge-and-edge-of-presheaf-machinery)
   - [Tree calculus Phase 2](#tree-calculus-phase-2)
   - [K_sim hierarchy and ER ↔ K_sim_2 equivalence](#k_sim-hierarchy-and-er--k_sim_2-equivalence)
+  - [Ramified recurrence and the elementary characterization](#ramified-recurrence-and-the-elementary-characterization)
   - [NNO, arithmetic, and topos-theoretic primitives](#nno-arithmetic-and-topos-theoretic-primitives)
   - [Utilities (residual)](#utilities-residual)
 - [CSLib](#cslib)
@@ -142,6 +143,27 @@ Corollary 0.1.0.44 at `n = 2`). Builds on the polynomial-functor
 area for the Lawvere-categorical setting and shares the
 primitive-recursive layer with the tree-calculus area. See
 [`areas/lawvere-er-ksim.md`](areas/lawvere-er-ksim.md).
+
+### Ramified recurrence and the elementary characterization
+
+Leivant's higher-type ramified recurrence system `RMRec-omega` as a
+multi-sorted Lawvere theory: the generic core (free-algebra
+signatures, sorted terms, models, the syntactic category
+`RMRecCat`), the higher-order presentation over the ramified types
+with the `Omega` shift, the canonical algebra instances and
+first-order sub-theories, the definability direction (Phase 5,
+machine route) `ramified_definability`, and the soundness direction
+(Phase 6, normalization route) packaged as the faithful
+`collapseFunctor : SynCatFO ⥤ LawvereERCat`. Phase 7 assembles the
+two as the denotational form of Leivant III's Theorem 14 items
+(1)-(2) relative to `LawvereERCat`, and transfers them across
+`erKSimEquiv` to `LawvereKSimDCat 2` (`collapseKFunctor`,
+`ramified_definability_kSim`); the categorical packaging (spec open
+question 7) is not asserted. Builds on the polynomial-functor area
+for the W-type syntax and the Lawvere-theory setting, and on the
+lawvere-er-ksim area for the reference categories and the
+equivalence. See
+[`areas/ramified-recurrence.md`](areas/ramified-recurrence.md).
 
 ### NNO, arithmetic, and topos-theoretic primitives
 

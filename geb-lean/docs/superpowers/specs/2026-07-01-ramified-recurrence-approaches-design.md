@@ -873,6 +873,14 @@ question 3.
   tier-sorted instantiation (section 9).
 - Algebra-map functoriality: a morphism of signature functors (e.g.
   `1 + X` into `1 + 2 X`) induces a functor of syntactic categories.
+  **As executed (Phase 3).** The induced functor is not well-defined
+  on the interpretative quotient for a non-surjective signature
+  morphism, including the `1 + X` into `1 + 2 X` example; the
+  delivered scope is `AlgSigHom`, its carrier transport `freeAlgMap`,
+  the object-sort extension `interpMapObj`, and the image-point
+  naturality lemma `recurse_freeAlgMap`
+  (`GebLean/Ramified/Algebras.lean`), with term-clone-level
+  functoriality deferred to the equational workstream (section 9).
 - `omegaShift`: the sort shift maps the constructor summand
   (present at every object sort) and eq. (4) monotonic recurrences
   to schema instances, but not the flat-recurrence and destructor
@@ -976,6 +984,19 @@ theorem ramified_definability {n m} (f : (n : LawvereERCat) ⟶ m) :
     ∃ (Γ : ObjCtx n) (g : Γ ⟶ oCtx m),
       collapseDenotation g = f
 ```
+
+**As executed (Phase 7).** The schematic equality
+`collapseDenotation g = f` is delivered against the interpretation
+`f.interp` through the named arity transport `arityCongr`: an
+`ObjCtx n` is indexed by its arity while a `SynCatFO` object's
+context length equals that arity only propositionally, so the
+numeric denotation is read across the `objLen_toSynCatFO`
+identifications. `ObjCtx.toSynCatFO` lifts a context and
+`synCatFOHom` a hom into `SynCatFO`. The `K^sim_2` corollary is
+`ramified_definability_kSim`, stated against the `K^sim`
+interpretation `f.hom.interp` and transferred through
+`kToERFunctor_map_interp`. See
+`GebLean/Ramified/Characterization.lean`.
 
 The quantification over object-sort contexts is required by the
 source. It must range beyond the tower sorts `Omega^k o`: Lemma 6's
