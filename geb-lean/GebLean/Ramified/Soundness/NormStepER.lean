@@ -1,6 +1,7 @@
 import GebLean.Ramified.Soundness.CodeNormalizer
 import GebLean.Utilities.ERCourseOfValues
 import GebLean.LawvereERBoundComputable
+import GebLean.LawvereERKSim.ErToKFunctor
 
 /-!
 # Ramified recurrence: the deterministic normalizer step as an ER morphism
@@ -3798,6 +3799,21 @@ theorem collapseERN_interp {a : ℕ} {τs : Fin a → RType}
   rw [interp_comp_singleton, interp_comp_three, decodeWordER_interp, hcode,
     normRun_interp_of_le _ _ _ hbud, stepCode_iterate_codeTm _ W,
     detIter_eq_of_normal hclk hnorm, hb, decodeWord_codeTm_conc, hval]
+
+/-! ### The K^sim landing corollary -/
+
+/-- The K^sim landing of the collapse morphism (spec §6.5; plan decision D3): the
+`ERMorN 1 1` collapse morphism `collapseER F` is realized by a multi-output K^sim
+morphism, exhibited as the slotwise `erToK`-translation `erToKN (collapseER F)` and
+interp-faithful on every input by `erToKN_interp`. This states the ⊇ direction of
+the ER-to-K^sim bridge (Tourlakis 2018 §0.1.0.44, at the normalizer's output) as a
+corollary through `erToK`, rather than shipping a `KMor1` normalizer definition
+(spec §1.1 non-goal). Novel realization. -/
+theorem collapseER_ksim_definable {τ : RType}
+    (F : Binding.Tm (rlmrOSig natAlgSig) []
+      (RType.arrow (RType.omega τ) RType.o)) :
+    ∃ g : KMorN 1 1, ∀ v, KMorN.interp g v = (collapseER F).interp v :=
+  ⟨erToKN (collapseER F), fun v => funext fun i => erToKN_interp (collapseER F) v i⟩
 
 end OneLambda
 
