@@ -8,6 +8,7 @@ import GebLean.Ramified.Soundness.DetStep
 import GebLean.Ramified.Soundness.CodeTm
 import GebLean.Ramified.Soundness.CodeNormalizer
 import GebLean.Ramified.Soundness.NormStepER
+import GebLean.Ramified.Soundness.Collapse
 
 /-!
 # Ramified recurrence: soundness
@@ -33,7 +34,11 @@ weakening `shiftCode`, the numeric images of `Binding.instantiate₁` and
 `ren Thinning.weakAppend` under `codeTm` (`CodeNormalizer`). A further module
 realizes the deterministic normalizer step `normStep` — the numeric image of
 `detStep` — as an `ERMor1` morphism, together with every read, fold, and worker it
-composes, each interpreting to the mirrored ℕ-level function (`NormStepER`).
+composes, each interpreting to the mirrored ℕ-level function (`NormStepER`). A
+final module packages the Phase 5 definability data as the first-order syntactic
+category `SynCatFO` and its standard-model denotation `collapseDenotation`, with
+the identity and composition laws that the soundness functor consumes
+(`Collapse`).
 
 ## References
 
