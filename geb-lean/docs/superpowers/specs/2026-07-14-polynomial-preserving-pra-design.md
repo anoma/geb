@@ -11,6 +11,7 @@
 - [3. Intended method](#3-intended-method)
 - [4. Transcription and novelty](#4-transcription-and-novelty)
 - [5. Open questions and consistency checks](#5-open-questions-and-consistency-checks)
+- [6. Formula computation (working notes)](#6-formula-computation-working-notes)
 - [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -335,6 +336,72 @@ of the main definitions:
   the morphism direction; `FreeCoprodProdCat`'s documented
   morphism structure matches the standard generalized-polynomial
   convention).
+
+## 6. Formula computation (working notes)
+
+Status: derivation in progress; results below are
+conversation-validated candidates, not yet adversarially
+reviewed. Notation: `C`, `D` are the index categories (to be
+instantiated at `FP(I)`, `FP(J)`); data `(A, E)` with
+`A ∈ FC(D)` polynomial positions, `E : el(A) ⥤ FC(C)`
+directions; `P(Z)(d) = Σ_{a ∈ A(d)} Hom(E(d,a), Z)`.
+
+- **Criterion.** A presheaf is a coproduct of representables iff
+  every connected component of its category of elements has a
+  terminal object (a *universal element*); the decomposition is
+  indexed by the chosen universal elements.
+
+- **Reduction 1 (slicing).** Writing `A = ∐_{s∈S} y(k_s)`, the
+  category of elements of the `s`-summand of `P(Z)` is the comma
+  category `(E_s ↓ Z)` over the slice `D/k_s`, and a universal
+  element `(u₀ : d₀ → k_s, φ₀)` heads a component isomorphic to
+  `y_D(d₀)`. Hence `P` preserves polynomials iff for each `s`
+  and each polynomial `Z`, the presheaf `Hom(E_s(−), Z)` on
+  `D/k_s` is polynomial over the slice.
+
+- **Reduction 2 (positions trivialize).** The slice `D/k` has a
+  terminal object (`id_k`), so `1_{PSh(D/k)} = y(id_k)` is
+  representable, and the condition of Reduction 1 says exactly
+  that the positions-trivial PRA
+  `N_{E_s} : PSh(C) ⥤ PSh(D/k_s)`, `Z ↦ Hom(E_s(−), Z)`, is
+  polynomial-preserving. The problem therefore reduces to
+  positions `= 1` over a base with a terminal object.
+
+- **Directions unpack (nested ΣΠ shape).** A functor
+  `E : D/k ⥤ FC(C)` is equivalently a copresheaf `B` on `D/k`
+  (inner positions) together with `G : el(B) ⥤ C` (inner
+  predicates), and `N_E(Z)(u) = Π_{b ∈ B(u)} Z(G_u(b))`.
+
+- **Remaining condition (genericity).** `N_E` is
+  polynomial-preserving iff for every polynomial `Z`, every
+  connected component of the comma category `(E ↓ Z)` has a
+  terminal object ("generic element"), with canonical choices
+  required constructively. Checks: `E = y` (Yoneda; the identity
+  functor's directions) gives `(y ↓ Z) ≅ el(Z)`, recovering
+  exactly "`Z` polynomial" — the identity functor passes on any
+  base. Constant `E` passes. Over the slice `S = 2` (which has a
+  terminal object), genericity forces the transition map of `B`
+  to be an epimorphism: the condition does not dissolve on
+  bases with terminal objects and genuinely constrains `E`'s
+  morphism action; no uniform epi/mono form exists, since the
+  Yoneda case violates injectivity of restrictions while
+  passing.
+
+- **Bridge cross-check (Weber / Spivak–Garner–Fairbanks
+  Proposition 3.20).** Directions in `FC(C)` make the middle leg
+  of the bridge an étale map (discrete opfibration) `el(B) →
+  el(A)` carrying `C`-labels via `G`; positions in `FC(D)` are
+  the analogous condition on the last leg. The `S = 2` example
+  shows both-legs-étale is *not* sufficient: the genericity
+  condition is an additional constraint on `(B, G)`. A
+  closed-form bridge-side statement of genericity is open.
+
+- **Open.** A closed-form structural characterization of
+  genericity on `(B, G)`, versus carrying genericity as
+  Π-indexed structure (chosen terminal objects for each
+  polynomial `Z`) in the G1 formula data; the latter is
+  constructively unproblematic in Lean (a dependent-function
+  field, no choice) but heavier.
 
 ## References
 
