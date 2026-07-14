@@ -10,17 +10,26 @@
 - [2. Goals](#2-goals)
 - [3. Intended method](#3-intended-method)
 - [4. Transcription and novelty](#4-transcription-and-novelty)
-- [5. Open questions and consistency checks](#5-open-questions-and-consistency-checks)
-- [6. Formula computation (working notes)](#6-formula-computation-working-notes)
+- [5. Decision record](#5-decision-record)
+- [6. The formula](#6-the-formula)
+  - [6.1 Criterion](#61-criterion)
+  - [6.2 Objects](#62-objects)
+  - [6.3 Morphisms](#63-morphisms)
+  - [6.4 The value functor and the comparison](#64-the-value-functor-and-the-comparison)
+  - [6.5 Bridge form and elementary conditions](#65-bridge-form-and-elementary-conditions)
+- [7. Proof obligations and strategies](#7-proof-obligations-and-strategies)
+- [8. Acceptance criteria](#8-acceptance-criteria)
+- [9. Non-goals](#9-non-goals)
+- [10. Open questions](#10-open-questions)
 - [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Status: brainstorming phase, part 1 (goals). This part records
-the goals of the workstream and the consistency checks they must
-pass. Later parts (the formula computation, design alternatives,
-acceptance criteria, and non-goals) follow once the goals are
-approved.
+Status: brainstorming phase, complete draft. Part 1 (goals,
+§§ 1–5) is user-approved; part 2 (the formula and its
+validation, §§ 6–10) is computed and promoted from working
+notes. Pending: adversarial review, then user review, before an
+implementation plan is written.
 
 ## 1. Background
 
@@ -100,7 +109,8 @@ signature needs. Concretely:
   polynomial-functor formula, with a shapes/positions component
   and a directions component — together with a formula for the
   morphisms (corresponding to natural transformations) between
-  two such data.
+  two such data. The computed formula and its validation are in
+  § 6.
 
 - **G2 (characterization of PRA functors `FC(I) ⥤ FC(J)`).**
   Prove that the formula category of G1 is equivalent to the
@@ -222,7 +232,13 @@ of the main definitions:
   bibliographies (neither cites Carboni–Johnstone or Diers);
   they remain novel in the forms stated here.
 
-## 5. Open questions and consistency checks
+## 5. Decision record
+
+This section records the questions raised during goal-setting
+and their dispositions. O1, O1a, O5, and O6 are resolved below;
+O2 is subsumed by the G2 obligation (§ 7, where G2's and G5's
+fullness are identified); O3 and O4 are carried forward as § 10
+items 4 and 5.
 
 - **O1 (degeneracy check on G2 + G3 — resolved).** A draft of G2
   claimed the formula captures *all* functors `FC(I) ⥤ FC(J)`.
@@ -337,237 +353,245 @@ of the main definitions:
   morphism structure matches the standard generalized-polynomial
   convention).
 
-## 6. Formula computation (working notes)
+## 6. The formula
 
-Status: derivation in progress; results below are
-conversation-validated candidates, not yet adversarially
-reviewed. Notation: `C`, `D` are the index categories (to be
-instantiated at `FP(I)`, `FP(J)`); data `(A, E)` with
-`A ∈ FC(D)` polynomial positions, `E : el(A) ⥤ FC(C)`
-directions; `P(Z)(d) = Σ_{a ∈ A(d)} Hom(E(d,a), Z)`.
+Index categories are written `C`, `D`; the headline instantiation
+is `C = FP(I)`, `D = FP(J)` (§ 2). The elements category `el(W)`
+of a presheaf `W` is oriented so that a morphism
+`(d', w·v) → (d, w)` lies over `v : d' → d`; mathlib's
+`Functor.Elements` yields the opposite orientation, so Lean
+statements carry an `op` that cancels nLab's `el(T1)ᵒᵖ`
+convention.
 
-- **Criterion.** A presheaf is a coproduct of representables iff
-  every connected component of its category of elements has a
-  terminal object (a *universal element*); the decomposition is
-  indexed by the chosen universal elements.
+### 6.1 Criterion
 
-- **Reduction 1 (slicing).** Writing `A = ∐_{s∈S} y(k_s)`, the
-  category of elements of the `s`-summand of `P(Z)` is the comma
-  category `(E_s ↓ Z)` over the slice `D/k_s`, and a universal
-  element `(u₀ : d₀ → k_s, φ₀)` heads a component isomorphic to
-  `y_D(d₀)`. Hence `P` preserves polynomials iff for each `s`
-  and each polynomial `Z`, the presheaf `Hom(E_s(−), Z)` on
-  `D/k_s` is polynomial over the slice.
+A presheaf is polynomial iff every connected component of its
+category of elements has a terminal object (a *universal
+element*); a chosen family of universal elements determines the
+decomposition into representables. All constructions below carry
+chosen witnesses; nothing appeals to mere existence, keeping the
+development constructive.
 
-- **Reduction 2 (positions trivialize).** The slice `D/k` has a
-  terminal object (`id_k`), so `1_{PSh(D/k)} = y(id_k)` is
-  representable, and the condition of Reduction 1 says exactly
-  that the positions-trivial PRA
-  `N_{E_s} : PSh(C) ⥤ PSh(D/k_s)`, `Z ↦ Hom(E_s(−), Z)`, is
-  polynomial-preserving. The problem therefore reduces to
-  positions `= 1` over a base with a terminal object.
+### 6.2 Objects
 
-- **Directions unpack (nested ΣΠ shape).** A functor
-  `E : D/k ⥤ FC(C)` is equivalently a copresheaf `B` on `D/k`
-  (inner positions) together with `G : el(B) ⥤ C` (inner
-  predicates), and `N_E(Z)(u) = Π_{b ∈ B(u)} Z(G_u(b))`.
+A formula datum consists of:
 
-- **Remaining condition (genericity).** `N_E` is
-  polynomial-preserving iff for every polynomial `Z`, every
-  connected component of the comma category `(E ↓ Z)` has a
-  terminal object ("generic element"), with canonical choices
-  required constructively. Checks: `E = y` (Yoneda; the identity
-  functor's directions) gives `(y ↓ Z) ≅ el(Z)`, recovering
-  exactly "`Z` polynomial" — the identity functor passes on any
-  base. Constant `E` passes. Over the slice `S = 2` (which has a
-  terminal object), genericity forces the transition map of `B`
-  to be an epimorphism: the condition does not dissolve on
-  bases with terminal objects and genuinely constrains `E`'s
-  morphism action; no uniform epi/mono form exists, since the
-  Yoneda case violates injectivity of restrictions while
-  passing.
+- **Positions** `T1 ∈ FC(D)` (nLab's naming), `T1 = (S, k : S → D)`;
+- **Directions** `E : el(T1) ⥤ FC(C)`, equipped with
+- **a right multiadjoint** `(M, ε)` (Diers): for each
+  `Z ∈ FC(C)`, an object `M(Z) = (R(Z), m_Z : R(Z) → el(T1))` of
+  `FC(el(T1))` and counits `ε_ρ : E(m_Z(ρ)) → Z`, such that every
+  `φ : E(u) → Z` factors as `ε_ρ ∘ E(v)` for a unique pair
+  `(ρ, v : u → m_Z(ρ))`.
 
-- **Bridge cross-check (Weber / Spivak–Garner–Fairbanks
-  Proposition 3.20).** Directions in `FC(C)` make the middle leg
-  of the bridge an étale map (discrete opfibration) `el(B) →
-  el(A)` carrying `C`-labels via `G`; positions in `FC(D)` are
-  the analogous condition on the last leg. The `S = 2` example
-  shows both-legs-étale is *not* sufficient: the genericity
-  condition is an additional constraint on `(B, G)`. A
-  closed-form bridge-side statement of genericity is open.
+Since `T1` is polynomial, `el(T1) ≅ ∐_{s∈S} D/k_s` is a coproduct
+of slices, and a functor into the Grothendieck construction
+`FC(C)` is a base copresheaf with a `C`-valued functor on its
+elements, so the datum unpacks to the tower
 
-- **Closed form (round two): genericity is a right
-  multiadjoint.** The genericity condition — for every
-  `Z ∈ FC(C)`, every connected component of `(E ↓ Z)` has a
-  terminal object — is verbatim the statement that
-  `E : D/k ⥤ FC(C)` *admits a right multiadjoint* in the sense
-  of Diers ("Catégories localisables", 1977; the dual of the
-  left multiadjoint: for each `Z` a family
-  `{ε_i : E(u_i) → Z}` through which every `E(u) → Z` factors
-  uniquely via a unique `ε_i`). No "restricted to polynomials"
-  qualifier is needed: `FC(C)` is the codomain of `E`, so `Z`
-  already ranges over exactly the polynomial objects. Since
-  `el(A) = ∐_s D/k_s` and commas decompose componentwise, the
-  slicing can be undone: the candidate G1 data is
+```text
+S : Set,  k : S → D
+per s ∈ S:  B_s : D/k_s → Set,   G_s : el(B_s) ⥤ C,
+            right-multiadjoint witnesses for E_s = (B_s, G_s)
+```
 
-  `(A ∈ FC(D), E : el(A) ⥤ FC(C) equipped with a right
-  multiadjoint)`.
+with the multiadjoint condition decomposing per position (comma
+categories decompose over the components of `el(T1)`).
 
-  The multiadjoint witnesses are terminal objects, hence unique
-  up to unique isomorphism: the structure is property-like, so
-  no coherence conditions on the witnesses are expected in the
-  G1 category structure. Verified instances: `E = y` (identity
-  functor; `(y ↓ Z) ≅ el(Z)`), constant `E`, and the `S = 2`
-  epi example (the epi condition is what a right multiadjoint
-  reduces to there).
+Rationale (derivation summary). With `P` the induced presheaf
+functor (§ 6.4), the category of elements of the `s`-summand of
+`P(Z)` is the comma category `(E_s ↓ Z)` over `D/k_s`, and a
+universal element `(u₀ : d₀ → k_s, φ₀)` heads a component
+isomorphic to `y_D(d₀)`; hence `P` preserves polynomials iff each
+presheaf `Hom(E_s(−), Z)` is polynomial over its slice. The slice
+has a terminal object (`id_{k_s}`), so this says the
+positions-trivial PRA `Z ↦ Hom(E_s(−), Z)` is
+polynomial-preserving, and that condition — every component of
+`(E_s ↓ Z)` has a terminal object, for every `Z ∈ FC(C)` — is
+verbatim the existence of a right multiadjoint for `E_s`. No
+"restricted to polynomials" qualifier arises: `FC(C)` is the
+codomain of `E_s`. Verified instances: `E = y` (the identity
+functor; `(y ↓ Z) ≅ el(Z)`), constant `E`, and arrow-like slices
+(where the condition reduces to epimorphy of `B`'s transitions).
 
-- **Round-two negative results.** A purely morphismwise
-  condition on `(B, G)` cannot express genericity: the `S = 2`
-  case forces epimorphy of `B`'s transitions while the Yoneda
-  case (which passes) violates injectivity of restrictions, and
-  parallel-arrow analysis shows uniqueness constraints bite only
-  at the chosen generic elements, not at arbitrary morphisms.
-  Testing against representable `Z` only is insufficient (over
-  `C = 1`, `Z = 1` detects nothing; `Z = 2` is needed).
+Duality: `(E ↓ Z)ᵒᵖ ≅ (Z ↓ Eᵒᵖ)` exchanges terminal with initial
+objects, so `E` admits a right multiadjoint iff
+`Eᵒᵖ : el(T1)ᵒᵖ ⥤ FC(C)ᵒᵖ = FP(Cᵒᵖ)` admits a left multiadjoint;
+the codomain identification is the `FC`/`FP` duality implemented
+in the `geb-idris` prototype (`IntUFamIsOpEFamOp`,
+`geb-idris/src/LanguageDef/IntEFamCat.idr`, whose comment at
+lines 152–157 proposes the multiadjoint packaging adopted here).
 
-- **Duality (round three).** Comma categories dualize
-  (`(E ↓ Z)ᵒᵖ ≅ (Z ↓ Eᵒᵖ)`, exchanging terminal with initial
-  objects), so `E : S ⥤ FC(C)` admits a right multiadjoint iff
-  `Eᵒᵖ : Sᵒᵖ ⥤ FC(C)ᵒᵖ = FP(Cᵒᵖ)` admits a left multiadjoint.
-  The codomain identification is the `FC`/`FP` opposite-category
-  duality implemented in the `geb-idris` prototype as
-  `IntUFamIsOpEFamOp` (`geb-idris/src/LanguageDef/IntEFamCat.idr`);
-  the comment at lines 152–157 of that file proposes the
-  packaging of right-multiadjoint data adopted below
-  (`IntElemEFamOMap`'s inputs: a copresheaf with an
-  elements-functor — the `(B, G)` form of an `FC`-valued
-  functor). The name "parametric left adjoint" for functors
-  admitting right multiadjoints is a candidate pending a
-  terminology check against Diers.
+### 6.3 Morphisms
 
-- **Value formula (round three, validated informally).**
-  Package the right multiadjoint of `E : el(A) ⥤ FC(C)` as: for
-  each `Z ∈ FC(C)`, an object
-  `M(Z) = (R(Z), m_Z : R(Z) → el(A)) ∈ FC(el(A))` with counits
-  `ε_ρ : E(m_Z(ρ)) → Z`, such that every `φ : E(u) → Z` factors
-  as `ε_ρ ∘ E(v)` for a unique pair `(ρ, v : u → m_Z(ρ))`. With
-  `p_A : el(A) ⥤ D` the projection, the induced functor on the
-  completions is
+A morphism `(T1, E, M) ⟶ (T1', E', M')` is a pair
 
-  `T(Z) = (R(Z), p_A ∘ m_Z)`, i.e. `T = FC(p_A) ∘ M`,
+- `α : T1 → T1'` in `FC(D)` (forward on positions), and
+- `β : E' ∘ el(α) ⟶ E`, natural over `el(T1)` (backward on
+  directions, componentwise in `FC(C)`, which is full in
+  `PSh(C)`),
 
-  with morphism action: for `ζ : Z → Z'`, factor `ζ ∘ ε_ρ`
-  uniquely as `ε_{ρ'} ∘ E(v_ρ)` and set
-  `T(ζ) = (ρ ↦ ρ', p_A(v_ρ))`. Validated by
-  unique-factorization algebra:
-  1. functor laws for `T` (hence functoriality of `M`, which is
-     *derived*, not assumed — the multiadjoint structure is an
-     object-assignment, counits, and one factorization axiom);
-  2. the restriction isomorphism
-     `fcEval(T(Z))(d) ≅ P(Z)(d)` — each element `(u, φ)` over
-     `d` corresponds to the unique `(ρ, w : d → p_A(m_Z(ρ)))` —
-     natural in both `d` and `Z` (the G4 square at the formula
-     level);
-  3. the identity instance `E = y`: `M(Z) ≅ Z`, `T ≅ Id`.
+with whiskered composition. The multiadjoint witnesses do not
+occur in morphisms: they are terminal objects, unique up to
+unique isomorphism, hence property-like. The formula category is
+therefore a full subcategory of the unrestricted formula category
+(`PresheafPRACat` with directions constrained to `FC(C)`) on the
+multiadjoint-admitting objects. At `C = D = 1` the morphism
+formula reduces to `Poly`-morphisms. Transcription anchor:
+Spivak–Garner–Fairbanks Proposition 3.11.
 
-- **Morphism formula (round four).** A G1 morphism
-  `(A, E, M) ⟶ (A', E', M')` is a pair: `α : A → A'` in
-  `FC(D)`, and `β : E' ∘ el(α) ⟶ E` natural over `el(A)`
-  (componentwise in `FC(C)`, which is full in `PSh(C)`);
-  composition is whiskered composition. The multiadjoint data
-  does not appear in morphisms (it is property-like), so the G1
-  category is a full subcategory of the unrestricted formula
-  category with directions constrained to `FC(C)`; the
-  transcription anchor is Spivak–Garner–Fairbanks
-  Proposition 3.11. At `C = D = 1` the formula reduces to
-  `Poly`-morphisms. The comparison `(α, β) ↦ τ : T ⟹ T'` sends
-  a generic `ρ` to the unique factorization of
-  `ε_ρ ∘ β_{m_Z(ρ)}` through `M'`'s generics; naturality in `Z`
-  and functoriality in `(α, β)` are validated by
-  unique-factorization algebra and use the naturality of `β`
-  essentially. Full faithfulness of the comparison is G2's
-  proof obligation (deferred to implementation); the recovery
-  strategy is evaluation at `Z = E(u)` with the unit-like
-  factorization `id_{E(u)} = ε_{ρ₀} ∘ E(v₀)` (generic elements
-  retract identities). Implementation note: the formula
-  category and its comparison to the unrestricted one should be
-  obtained by applying the existing `coprodCovarRepFunctor` /
-  `ccrPresheafCatFunctor` machinery to `FC(C)` and whiskering
-  along the inclusion `FC(C) ⥤ PSh(C)`, not by hand-rolled
-  maps.
+### 6.4 The value functor and the comparison
 
-- **Unpacked form and bridge identification (round five).**
-  Naming: the positions object `A` is henceforth `T1`, matching
-  nLab. Since `T1 = ∐_{s∈S} y(k_s)`, its elements category is a
-  coproduct of slices, `el(T1) ≅ ∐_s D/k_s` (with the elements
-  orientation used throughout; mathlib's `Functor.Elements` of a
-  presheaf yields the opposite orientation, so Lean statements
-  carry an `op` that cancels nLab's `el(T1)ᵒᵖ` convention — the
-  directions components are covariant on genuine slices). A
-  functor into the Grothendieck construction `FC(C)` is a base
-  copresheaf plus a `C`-valued functor on its elements, so a G1
-  object unpacks to the tower
+The datum induces:
 
-  `S : Set`, `k : S → D`; per `s ∈ S`: `B_s : D/k_s → Set`,
-  `G_s : el(B_s) ⥤ C`, and right-multiadjoint witnesses for
-  `E_s = (B_s, G_s)`.
+- **On presheaf categories** (G3):
+  `P(Z)(d) = Σ_{a ∈ T1(d)} Hom(E(d,a), Z)` — the unrestricted PRA
+  formula with directions included along `FC(C) ⥤ PSh(C)`.
+- **On the completions** (G2), with `p : el(T1) ⥤ D` the
+  projection:
 
-  Assembling projections exhibits this as the bridge
-  `C ⟵ el(B) ⟶ el(T1) ⟶ D` with `el(T1) → D` a discrete
-  fibration (= `T1` polynomial) and `el(B) → el(T1)` a discrete
-  opfibration (= directions in `FC(C)`): the unpacked formula
-  *is* the both-inner-legs-étale bridge of Weber /
-  Spivak–Garner–Fairbanks Proposition 3.20, with the right
-  multiadjoint as the extra condition (settling the shape of
-  the bridge translation; a bridge-intrinsic statement of the
-  multiadjoint itself remains open). The multiadjoint imposes
-  per-test-object conditions on `(B_s, G_s)` (the `Z = ∅` test:
-  the sub-sieve `{u : B_s(u) = ∅}` of the slice has
-  component-terminals; arrow-like slices force epi conditions on
-  `B_s`'s transitions) but no purely morphismwise closed form
-  (round-two negative results); the test-family reduction would
-  turn it into a finite checklist on `(B_s, G_s)`.
+  `T(Z) = (R(Z), p ∘ m_Z)`, i.e. `T = FC(p) ∘ M`,
 
-- **Conditions on `B` alone (round six).** The conjecture that
-  the multiadjoint forces `B_s : D/k_s → Set` to be a coproduct
-  of corepresentables is refuted in both directions over the
-  slice `S = 2` (`C = 1`, where the condition is "transition
-  epi"): the passing `B = (2 → 1)` has a non-injective
-  transition, while coproducts of corepresentables on `S = 2`
-  have injective transitions `m ↪ m + n`; and the
-  corepresentable `B = Hom(T, −)` (transition `∅ → 1`) fails.
-  The intrinsic condition on `B_s` runs dual to the conjecture:
-  on the FCP signature `C = FP(I)` has a terminal object, the
-  test objects `Z = X·y(1_C)` collapse the evaluation to
-  `X^{B_s(−)}` independently of `G_s`, and the multiadjoint
-  therefore forces *dual-polynomiality* of `B_s`: the presheaf
-  `X^{B_s(−)}` on `D/k_s` is polynomial for every set `X` (the
-  `C = 1` instance of the condition; "transitions epi" on
-  arrow-like slices, and the `Z = ∅` sieve test is its `X = ∅`
-  case). Dual-polynomiality is not sufficient: `G_s` carries
-  separate conditions (with `B = 1` over `S = 2` and
-  `G = (g : c_a → c_T)`, the condition is that `g` is an
-  epimorphism in `C`, by the `Z = y(c)` tests). Sharpened
-  test-family conjecture: the family `{X·y(1_C)}` isolates
-  `B_s`, the representables `{y(c)}` isolate epi-conditions on
-  `G_s`, and the open question is whether these jointly
-  generate the full multiadjoint condition.
+  where for `ζ : Z → Z'` each `ζ ∘ ε_ρ` factors uniquely as
+  `ε'_{ρ'} ∘ E(v_ρ)` and `T(ζ) = (ρ ↦ ρ', p(v_ρ))`. The functor
+  laws for `T` (hence the functoriality of `M`, which is derived,
+  not assumed) follow from uniqueness of factorizations.
 
-- **Open (round seven).**
-  1. *Test-family reduction*: whether the `∀ Z` in the
-     multiadjoint can be reduced to a small generating family of
-     test objects (candidates: the initial object and binary
-     coproducts `y(c) ⊔ y(c')`), which would shrink the Lean
-     witness structure and turn the multiadjoint into a finite
-     checklist on `(B_s, G_s)`; over `S = 2`, `C = 1` the full
-     condition is already detected by `Z ∈ {∅, 2}`.
-  2. *Bridge-intrinsic multiadjoint*: a statement of the right
-     multiadjoint condition in terms of the bridge legs alone
-     (the bridge shape itself is settled by the round-five
-     identification).
-  3. *Terminology check*: Diers's usage for the dual notion
-     ("right multiadjoint" versus "parametric left adjoint");
-     to be settled during adversarial review of this part.
+- **The comparison** sends a formula morphism `(α, β)` to
+  `τ : T ⟹ T'` with `τ_Z(ρ)` the unique factorization of
+  `ε_ρ ∘ β_{m_Z(ρ)}` through `M'`'s generics (well-typed because
+  `el(α)` preserves the underlying `D`-object); naturality in `Z`
+  and functoriality in `(α, β)` again follow from uniqueness of
+  factorizations, using the naturality of `β` essentially.
+
+- **The restriction isomorphism** (G4):
+  `fcEval(T(Z))(d) ≅ P(Z)(d)`, sending `(ρ, w : d → p(m_Z(ρ)))`
+  to the element `(u, φ)` it uniquely factors — a bijection
+  natural in both `d` and `Z`, validated by the same
+  factorization algebra. The identity instance (`E = y`) gives
+  `M(Z) ≅ Z` and `T ≅ Id`.
+
+### 6.5 Bridge form and elementary conditions
+
+Assembling projections exhibits a formula datum as the bridge
+
+```text
+C  ⟵G—  el(B)  —π⟶  el(T1)  —p⟶  D
+```
+
+with `p` a discrete fibration (equivalent to `T1` polynomial) and
+`π` a discrete opfibration (equivalent to directions valued in
+`FC(C)`): the class refines Weber's / Spivak–Garner–Fairbanks's
+bridge presentation of PRAs (their Proposition 3.20) by making
+both inner legs discrete (op)fibrations, with the right
+multiadjoint as a further condition. Both-legs-étale alone is not
+sufficient (arrow-like slices with non-epi `B`-transitions fail).
+
+Elementary necessary conditions on the tower, on the FCP
+signature (`C = FP(I)` has a terminal object `1_C`):
+
+- **Dual-polynomiality of `B_s`** (`G`-independent): the test
+  objects `Z = X·y(1_C)` collapse the evaluation to
+  `X^{B_s(−)}`, so the presheaf `X^{B_s(−)}` on `D/k_s` must be
+  polynomial for every set `X`. On arrow-like slices this reads
+  "transitions of `B_s` are epi"; its `X = ∅` case says the
+  sub-sieve `{u : B_s(u) = ∅}` has component-terminals. `B_s`
+  being a coproduct of corepresentables is neither necessary
+  (the passing `B = (2 → 1)` has a non-injective transition)
+  nor sufficient (`B = Hom(T, −)` fails).
+- **Epi conditions on `G_s`**: with `B = 1` over an arrow-like
+  slice and `G = (g : c_a → c_T)`, the representable tests
+  `Z = y(c)` force `g` to be an epimorphism in `C`.
+
+Whether these two test families jointly generate the full
+multiadjoint condition is open (§ 10); no purely morphismwise
+closed form exists (the Yoneda instance passes while violating
+injectivity of restrictions, and uniqueness constraints bite only
+at the chosen generic elements).
+
+## 7. Proof obligations and strategies
+
+- **G2 (full faithfulness of the comparison).** Strategy:
+  recover `(α, β)` from `τ : T ⟹ T'` by evaluating at the
+  objects `Z = E(u)` (available at the completion level) and
+  using the unit-like factorization `id_{E(u)} = ε_{ρ₀} ∘ E(v₀)`
+  — generic elements retract identities. G2's fullness and G5's
+  fullness are the same computation (this subsumes O2).
+- **G3 (extension and PRA witness).** The extension is the same
+  datum read in the unrestricted formula category via
+  `FC(C) ⥤ PSh(C)`; PRA-ness holds by construction under the
+  essential-image definition (O1a). The Yoneda simplification is
+  the distributivity
+  `Π_b Σ_x Hom(G b, F x) ≅ Σ_{r} Π_b Hom(G b, F(r b))`
+  (Dorta–Jarvis–Niu Proposition 2.5), which doubles as the full
+  faithfulness of the bundled inclusion `FC(C) ⥤ PSh(C)`.
+- **G4 (restriction isomorphism).** Validated at the formula
+  level (§ 6.4); to be formalized with mathlib's restriction /
+  lifting vocabulary (§ 10, item 4).
+- **G5 (faithfulness).** Follows from the comparison chain
+  (formula category → `[FC(C), FC(D)]` → `[PSh(C), PSh(D)]`)
+  once G2 and G4 are in place; fullness is G2's computation.
+
+## 8. Acceptance criteria
+
+- Lean deliverables, all constructive (no `noncomputable`) and
+  passing the axiom gate (`lake build GebLeanAxiomChecks`):
+  1. the bundled inclusion functor `FC(C) ⥤ PSh(C)` with a
+     `Functor.FullyFaithful` witness (the contravariant analogue
+     of `ccrNewEvalCatFunctor` / `ccrNewEvalCatFullyFaithful`);
+  2. the formula category of § 6.2–6.3, built by applying the
+     existing `coprodCovarRepFunctor` / `ccrPresheafCatFunctor`
+     machinery to `FC(C)` and whiskering along the inclusion —
+     not by hand-rolled object/morphism maps;
+  3. the value functor `T = FC(p) ∘ M` and the comparison
+     functors of § 6.4;
+  4. the instantiation at `C = FP(I)`, `D = FP(J)` via
+     `FreeCoprodProdCat`.
+- Theorems: G2 full faithfulness; G3 PRA witness and Yoneda
+  simplification; G4 restriction natural isomorphism; G5
+  faithfulness.
+- Tests under `GebLeanTests/` exercising the `C = D = 1`
+  instance (recovering `Poly`) and the identity instance.
+- This spec passes adversarial review before an implementation
+  plan is written.
+
+## 9. Non-goals
+
+- A predicate-based (local-right-adjoint) characterization of
+  PRA-ness: excluded by the O1a decision; future work.
+- Composition and bicategory structure of the formula categories
+  across three index categories (the framed-bicategory analogue
+  of Spivak–Garner–Fairbanks): the composition-closure argument
+  is recorded (O6) but no bicategorical structure is a
+  deliverable.
+- The test-family generation theorem (§ 10, item 1): an
+  optimization of the witness structure, not required for
+  G1–G5.
+- Monoidal structures on `FCP` (Dorta–Jarvis–Niu's `⊗`, `◁`).
+
+## 10. Open questions
+
+1. **Test-family generation**: whether the multiadjoint's `∀ Z`
+   reduces to the families `{X·y(1_C)}` (isolating `B_s`) and
+   `{y(c)}` (isolating `G_s`), turning the condition into a
+   finite elementary checklist; over arrow-like slices with
+   `C = 1` the full condition is already detected by
+   `Z ∈ {∅, 2}`. Owner: implementation phase (pursue if the
+   witness structure proves heavy).
+2. **Bridge-intrinsic multiadjoint**: a statement of the right
+   multiadjoint condition in terms of the bridge legs alone.
+   Owner: future work.
+3. **Terminology**: Diers's usage for the dual notion ("right
+   multiadjoint" versus "parametric left adjoint"). Owner:
+   adversarial review.
+4. **Restriction vocabulary** (formerly O3): which mathlib
+   mechanism expresses the G4 restriction (lifting through
+   `Functor.FullyFaithful` / essential-image machinery). Owner:
+   implementation planning.
+5. **Universe parameters** (formerly O4): alignment of the `FC`
+   index universe with the presheaf value universe across the
+   tower and the `FP` instantiation. Owner: implementation
+   planning.
 
 ## References
 
