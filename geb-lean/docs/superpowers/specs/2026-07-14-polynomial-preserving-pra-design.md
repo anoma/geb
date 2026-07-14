@@ -528,7 +528,32 @@ directions; `P(Z)(d) = Σ_{a ∈ A(d)} Hom(E(d,a), Z)`.
   (round-two negative results); the test-family reduction would
   turn it into a finite checklist on `(B_s, G_s)`.
 
-- **Open (round six).**
+- **Conditions on `B` alone (round six).** The conjecture that
+  the multiadjoint forces `B_s : D/k_s → Set` to be a coproduct
+  of corepresentables is refuted in both directions over the
+  slice `S = 2` (`C = 1`, where the condition is "transition
+  epi"): the passing `B = (2 → 1)` has a non-injective
+  transition, while coproducts of corepresentables on `S = 2`
+  have injective transitions `m ↪ m + n`; and the
+  corepresentable `B = Hom(T, −)` (transition `∅ → 1`) fails.
+  The intrinsic condition on `B_s` runs dual to the conjecture:
+  on the FCP signature `C = FP(I)` has a terminal object, the
+  test objects `Z = X·y(1_C)` collapse the evaluation to
+  `X^{B_s(−)}` independently of `G_s`, and the multiadjoint
+  therefore forces *dual-polynomiality* of `B_s`: the presheaf
+  `X^{B_s(−)}` on `D/k_s` is polynomial for every set `X` (the
+  `C = 1` instance of the condition; "transitions epi" on
+  arrow-like slices, and the `Z = ∅` sieve test is its `X = ∅`
+  case). Dual-polynomiality is not sufficient: `G_s` carries
+  separate conditions (with `B = 1` over `S = 2` and
+  `G = (g : c_a → c_T)`, the condition is that `g` is an
+  epimorphism in `C`, by the `Z = y(c)` tests). Sharpened
+  test-family conjecture: the family `{X·y(1_C)}` isolates
+  `B_s`, the representables `{y(c)}` isolate epi-conditions on
+  `G_s`, and the open question is whether these jointly
+  generate the full multiadjoint condition.
+
+- **Open (round seven).**
   1. *Test-family reduction*: whether the `∀ Z` in the
      multiadjoint can be reduced to a small generating family of
      test objects (candidates: the initial object and binary
