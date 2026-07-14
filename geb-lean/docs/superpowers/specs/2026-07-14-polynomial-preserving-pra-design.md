@@ -396,12 +396,54 @@ directions; `P(Z)(d) = Σ_{a ∈ A(d)} Hom(E(d,a), Z)`.
   condition is an additional constraint on `(B, G)`. A
   closed-form bridge-side statement of genericity is open.
 
-- **Open.** A closed-form structural characterization of
-  genericity on `(B, G)`, versus carrying genericity as
-  Π-indexed structure (chosen terminal objects for each
-  polynomial `Z`) in the G1 formula data; the latter is
-  constructively unproblematic in Lean (a dependent-function
-  field, no choice) but heavier.
+- **Closed form (round two): genericity is a right
+  multiadjoint.** The genericity condition — for every
+  `Z ∈ FC(C)`, every connected component of `(E ↓ Z)` has a
+  terminal object — is verbatim the statement that
+  `E : D/k ⥤ FC(C)` *admits a right multiadjoint* in the sense
+  of Diers ("Catégories localisables", 1977; the dual of the
+  left multiadjoint: for each `Z` a family
+  `{ε_i : E(u_i) → Z}` through which every `E(u) → Z` factors
+  uniquely via a unique `ε_i`). No "restricted to polynomials"
+  qualifier is needed: `FC(C)` is the codomain of `E`, so `Z`
+  already ranges over exactly the polynomial objects. Since
+  `el(A) = ∐_s D/k_s` and commas decompose componentwise, the
+  slicing can be undone: the candidate G1 data is
+
+  `(A ∈ FC(D), E : el(A) ⥤ FC(C) equipped with a right
+  multiadjoint)`.
+
+  The multiadjoint witnesses are terminal objects, hence unique
+  up to unique isomorphism: the structure is property-like, so
+  no coherence conditions on the witnesses are expected in the
+  G1 category structure. Verified instances: `E = y` (identity
+  functor; `(y ↓ Z) ≅ el(Z)`), constant `E`, and the `S = 2`
+  epi example (the epi condition is what a right multiadjoint
+  reduces to there).
+
+- **Round-two negative results.** A purely morphismwise
+  condition on `(B, G)` cannot express genericity: the `S = 2`
+  case forces epimorphy of `B`'s transitions while the Yoneda
+  case (which passes) violates injectivity of restrictions, and
+  parallel-arrow analysis shows uniqueness constraints bite only
+  at the chosen generic elements, not at arbitrary morphisms.
+  Testing against representable `Z` only is insufficient (over
+  `C = 1`, `Z = 1` detects nothing; `Z = 2` is needed).
+
+- **Open (round three).**
+  1. *Test-family reduction*: whether the `∀ Z` in the
+     multiadjoint can be reduced to a small generating family of
+     test objects (candidates: the initial object and binary
+     coproducts `y(c) ⊔ y(c')`), which would shrink the Lean
+     witness structure; over `S = 2`, `C = 1` the full condition
+     is already detected by `Z ∈ {∅, 2}`.
+  2. *Bridge translation*: a bridge-side statement of the right
+     multiadjoint condition (beyond the necessary
+     both-legs-étale shape).
+  3. *Value formula*: the induced functor on objects,
+     `T(Z).index = components of (E ↓ Z)` with families given by
+     the domains of the chosen generic elements — to be written
+     out and checked functorial via the unique factorizations.
 
 ## References
 
