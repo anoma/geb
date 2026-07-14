@@ -82,7 +82,17 @@ polynomial presheaves to polynomial presheaves.
 The workstream aims at a restricted class of PRA functors
 `PSh(I) ⥤ PSh(J)` that preserve polynomials, presented by a
 positions/directions-style formula that simultaneously presents
-functors `FC(I) ⥤ FC(J)`. Concretely:
+functors `FC(I) ⥤ FC(J)`.
+
+Per the resolutions of O5 and O6, the target signature is
+`FCP(I) ⥤ FCP(J)`, where `FCP(−) = FC(FP(−))` is the free
+coproduct completion of the free product completion
+(`FreeCoprodProdCat`). Because `FCP` is `FC` applied to
+`FP(I)`, the goals below remain stated in terms of `FC` over
+general index categories; the headline instantiation takes the
+index categories to be `FP(I)` and `FP(J)`, which have terminal
+objects (and all small products) — the property O6 shows the
+signature needs. Concretely:
 
 - **G1 (formula category).** Define a category of
   positions/directions-style formula data — in the style of the
@@ -251,21 +261,57 @@ of the main definitions:
   already does via `catULiftFunctor2`). The universe parameters
   of the formula category are part of the formula computation.
 
-- **O5 (`FC` versus `FCP` as domain and codomain).** The
-  candidate formula may produce a product that reduces to a
+- **O5 (`FC` versus `FCP` as domain and codomain — resolved).**
+  The candidate formula may produce a product that reduces to a
   coproduct of representables only when `I` (respectively `J`)
-  has products. If so, the development may replace `FC(−)` as
-  domain and codomain by the free coproduct completion of the
-  free product completion, `FreeCoprodProdCat` (below `FCP(−)`),
-  which the repository already implements together with its
-  isomorphism `fcpCcrsIso` to the twice-iterated
-  covariant-representable construction
-  `CoprodCovarRepSquaredCat` (`GebLean/Utilities/Families.lean`).
-  `FCP` is studied in the literature as the category of
-  *generalized polynomials*: free coproduct completions of free
-  product completions (Dorta–Jarvis–Niu, arXiv:2305.05655).
-  Whether the switch is necessary is to be determined by working
-  out the candidate formulas, not decided in advance.
+  has products, suggesting replacing `FC(−)` as domain and
+  codomain by the free coproduct completion of the free product
+  completion, `FreeCoprodProdCat` (below `FCP(−)`), which the
+  repository already implements together with its isomorphism
+  `fcpCcrsIso` to the twice-iterated covariant-representable
+  construction `CoprodCovarRepSquaredCat`
+  (`GebLean/Utilities/Families.lean`). `FCP` is studied in the
+  literature as the category of *generalized polynomials*: free
+  coproduct completions of free product completions
+  (Dorta–Jarvis–Niu, arXiv:2305.05655). Decision: adopt the
+  `FCP` signature as the working target. The deciding argument
+  is O6 (identities force index categories with terminal
+  objects, which `FP(−)` adjoins); the product-reduction concern
+  above is addressed by the same move, since `FP(−)` adjoins all
+  small products. To be revisited only if the `FCP` formula
+  computation fails.
+
+- **O6 (identities force the `FCP` signature — resolved).** For
+  the formula-generated functors to form a category, the class
+  must contain the identity functors. The identity on `PSh(I)`
+  is a PRA whose positions presheaf is the terminal presheaf
+  `1`. A presheaf is a coproduct of representables iff every
+  connected component of its category of elements has a terminal
+  object; since `el(1) ≅ I`, the terminal presheaf is polynomial
+  iff every connected component of `I` has a terminal object.
+  Over `I = (ℕ, ≤)` it is not, so the identity is a
+  polynomial-preserving PRA violating the candidate positions
+  condition ("positions in `FC(J)`"), which is therefore not
+  necessary for polynomial preservation over general index
+  categories. Conversely, when every component of the index
+  category has a terminal object, `1` is polynomial and
+  evaluation at `1` makes the positions condition exact: every
+  polynomial-preserving PRA has polynomial positions. The free
+  product completion adjoins a terminal object (the empty
+  formal product) and all small products, so instantiating the
+  index categories at `FP(I)`, `FP(J)` — the `FCP` signature —
+  places the development where the positions condition is
+  necessary and the identities are expressible. Composition
+  closure holds on the class: `(Q ∘ P)(1) = Q(P(1))` is
+  polynomial whenever both factors have polynomial positions and
+  preserve polynomials. The conditions on the *directions*
+  remain the open part of the formula computation.
+  Implementation check recorded: audit the orientation
+  convention of `FreeProdCompletionCat` against the standard
+  free product completion (the terminal-object claim depends on
+  the morphism direction; `FreeCoprodProdCat`'s documented
+  morphism structure matches the standard generalized-polynomial
+  convention).
 
 ## References
 
