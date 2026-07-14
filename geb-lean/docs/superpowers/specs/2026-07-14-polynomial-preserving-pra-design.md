@@ -8,7 +8,7 @@
   - [1.1 Existing infrastructure](#11-existing-infrastructure)
   - [1.2 Terminology](#12-terminology)
 - [2. Goals](#2-goals)
-- [3. Intended method](#3-intended-method)
+- [3. Method](#3-method)
 - [4. Transcription and novelty](#4-transcription-and-novelty)
 - [5. Decision record](#5-decision-record)
 - [6. The formula](#6-the-formula)
@@ -161,9 +161,9 @@ analogue of `ccrNewEvalCatFunctor`), presumably with its own
 fully-faithfulness witness analogous to
 `ccrNewEvalCatFullyFaithful`.
 
-## 3. Intended method
+## 3. Method
 
-The first task is to compute the formula of G1, guided by:
+The derivation of § 6 draws on three sources:
 
 1. the nLab PRA formula, examining which constraints on its data
    (in particular on the directions `E_j(a)`) allow the induced
@@ -195,10 +195,8 @@ further condition on the `J`-side structure is needed for the
 `J` is part of the formula computation, not settled here; see O5
 for a contingency this computation may trigger.
 
-Once the formula and its morphism formula are fixed, the order of
-work is: prove the G2 equivalence; construct the G3 extension and
-its PRA witness; prove G4 preservation and restriction; prove G5
-faithfulness and resolve fullness.
+The proof obligations that remain after the derivation, with
+their strategies, are collected in § 7.
 
 ## 4. Transcription and novelty
 
