@@ -61,7 +61,7 @@ Two pieces of this repository ground the workstream:
   presheaf on `C` (`fcToFunctor`).
 
 Two distinct coproduct completions therefore appear, and the
-distinction is load-bearing throughout:
+distinction is used throughout:
 
 1. `FC(I)`, embedded in `PSh(I)` by coproducts of **contravariant
    representables of `I`** (via `fcEval` / `fcToFunctor`);
@@ -71,9 +71,10 @@ distinction is load-bearing throughout:
 
 Supporting facts already available: `ccrNewEvalCatFullyFaithful`
 exhibits the covariant completion's evaluation as fully faithful;
-`GebLean/PolyCover.lean` identifies coproducts of contravariant
-representables with the regular projective objects of the
-presheaf category.
+`GebLean/PolyCover.lean` exhibits coproducts of contravariant
+representables as regular projective objects covering the
+presheaf category (projectivity and enough-projectives; the
+converse identification is not formalized).
 
 ### 1.2 Terminology
 
@@ -83,7 +84,7 @@ it is isomorphic to a presheaf in the image of
 `FC(I) → PSh(I)`. (The literature calls such presheaves
 *familially representable*; see Carboni–Johnstone,
 "Connected limits, familial representability and Artin glueing",
-Math. Proc. Camb. Phil. Soc. 117 (1995).) A functor
+Math. Structures Comput. Sci. 5 (1995), no. 4, 441–459.) A functor
 `PSh(I) ⥤ PSh(J)` **preserves polynomials** when it sends
 polynomial presheaves to polynomial presheaves.
 
@@ -99,7 +100,7 @@ Per the resolutions of O5 and O6, the target signature is
 coproduct completion of the free product completion
 (`FreeCoprodProdCat`). Because `FCP` is `FC` applied to
 `FP(I)`, the goals below remain stated in terms of `FC` over
-general index categories; the headline instantiation takes the
+general index categories; the principal instantiation takes the
 index categories to be `FP(I)` and `FP(J)`, which have terminal
 objects (and all small products) — the property O6 shows the
 signature needs. Concretely:
@@ -126,7 +127,11 @@ signature needs. Concretely:
   of functors naturally isomorphic to formula-defined ones — so
   the mathematical content of G2 is the full faithfulness of the
   comparison, and the equivalence onto the PRA subcategory
-  follows by definition of essential image.
+  follows by definition of essential image; that equivalence
+  remains a Prop-level remark (mathlib's essential-image
+  machinery is Prop-valued, and a bundled equivalence would
+  require carried witnesses), and § 8 lists only the full
+  faithfulness as a theorem.
 
 - **G3 (extension to presheaf categories).** Show that each
   formula datum of G1 also induces a functor `PSh(I) ⥤ PSh(J)`,
@@ -146,20 +151,22 @@ signature needs. Concretely:
   rather than ad-hoc constructions (see O3).
 
 - **G5 (faithfulness of the comparison).** Prove that the
-  resulting comparison from the functor category
-  `FC(I) ⥤ FC(J)` to the functor category `PSh(I) ⥤ PSh(J)`
-  (equivalently, from the formula category into presheaf-PRAs)
-  is faithful. Investigate whether it is *fully* faithful; the
-  expectation is faithful with full faithfulness plausible but
-  less certain, so fullness is recorded as a question to resolve,
-  not a committed claim.
+  functor from the formula category to the functor category
+  `PSh(I) ⥤ PSh(J)` given by G3's extension is faithful, and
+  that it factors through G2's comparison via the G4 restriction
+  isomorphism. Investigate whether it is *fully* faithful;
+  fullness coincides with G2's computation (§ 7).
 
-A prerequisite deliverable surfaced by G4/G5: `fcToFunctor` is
-currently defined per object only; the workstream needs the
-bundled inclusion functor `FC(C) ⥤ PSh(C)` (the contravariant
-analogue of `ccrNewEvalCatFunctor`), presumably with its own
+Two prerequisite deliverables surfaced by the goals:
+`fcToFunctor` is currently defined per object only, and the
+workstream needs the bundled inclusion functor `FC(C) ⥤ PSh(C)`
+(the contravariant analogue of `ccrNewEvalCatFunctor`) with a
 fully-faithfulness witness analogous to
-`ccrNewEvalCatFullyFaithful`.
+`ccrNewEvalCatFullyFaithful`; and the action of `FC` on functors,
+`FC(p) : FC(A) ⥤ FC(B)` for `p : A ⥤ B`, consumed by the value
+functor of § 6.4 (constructible from `GrothendieckContra'.map`
+and the `familyNatTrans'` machinery, subject to that machinery's
+same-universe constraints; see § 10 item 4).
 
 ## 3. Method
 
@@ -236,7 +243,7 @@ This section records the questions raised during goal-setting
 and their dispositions. O1, O1a, O5, and O6 are resolved below;
 O2 is subsumed by the G2 obligation (§ 7, where G2's and G5's
 fullness are identified); O3 and O4 are carried forward as § 10
-items 4 and 5.
+items 3 and 4.
 
 - **O1 (degeneracy check on G2 + G3 — resolved).** A draft of G2
   claimed the formula captures *all* functors `FC(I) ⥤ FC(J)`.
@@ -344,16 +351,18 @@ items 4 and 5.
   polynomial whenever both factors have polynomial positions and
   preserve polynomials. The conditions on the *directions*
   remain the open part of the formula computation.
-  Implementation check recorded: audit the orientation
-  convention of `FreeProdCompletionCat` against the standard
-  free product completion (the terminal-object claim depends on
-  the morphism direction; `FreeCoprodProdCat`'s documented
-  morphism structure matches the standard generalized-polynomial
-  convention).
+  Audit result (review r1): `FreeProdCompletionCat` implements
+  the standard free product completion (backward reindexing,
+  covariant fibers; the empty family is terminal, so the
+  terminal-object claim above holds for the actual
+  construction), but its docstring describes the opposite data
+  and contradicts `FreeCoprodProdCat`'s docstring, which matches
+  Dorta–Jarvis–Niu Definition 2.6; the docstring correction is
+  deferred to a separate branch per the one-concern rule.
 
 ## 6. The formula
 
-Index categories are written `C`, `D`; the headline instantiation
+Index categories are written `C`, `D`; the principal instantiation
 is `C = FP(I)`, `D = FP(J)` (§ 2). The elements category `el(W)`
 of a presheaf `W` is oriented so that a morphism
 `(d', w·v) → (d, w)` lies over `v : d' → d`; mathlib's
@@ -374,13 +383,29 @@ development constructive.
 
 A formula datum consists of:
 
-- **Positions** `T1 ∈ FC(D)` (nLab's naming), `T1 = (S, k : S → D)`;
+- **Positions** `T1 ∈ FC(D)` (nLab's naming; `T1` is § 1.1's
+  `A`, and the name records that it is the value of the induced
+  functor at the terminal presheaf), `T1 = (S, k : S → D)`;
 - **Directions** `E : el(T1) ⥤ FC(C)`, equipped with
-- **a right multiadjoint** `(M, ε)` (Diers): for each
-  `Z ∈ FC(C)`, an object `M(Z) = (R(Z), m_Z : R(Z) → el(T1))` of
-  `FC(el(T1))` and counits `ε_ρ : E(m_Z(ρ)) → Z`, such that every
-  `φ : E(u) → Z` factors as `ε_ρ ∘ E(v)` for a unique pair
-  `(ρ, v : u → m_Z(ρ))`.
+- **multiadjunction witnesses** `(M, ε)`: for each `Z ∈ FC(C)`,
+  an object `M(Z) = (R(Z), m_Z : R(Z) → el(T1))` of
+  `FC(el(T1))`, counits `ε_ρ : E(m_Z(ρ)) → Z`, and a
+  factorization assignment sending each `φ : E(u) → Z` to a pair
+  `(ρ, v : u → m_Z(ρ))` with `φ = ε_ρ ∘ E(v)`, together with
+  Prop-valued fields stating that the assignment is the unique
+  such factorization. The factorization assignment is a
+  structure field (data), not an `∃!`: it is consumed by the
+  value functor, the comparison, and the restriction isomorphism
+  (§ 6.4).
+
+Terminology. This counit-sided data is dual to Diers's left
+multiadjoint: equivalently (duality paragraph below), `Eᵒᵖ`
+admits a left multiadjoint (Diers 1977). Osmond
+(arXiv:2012.00853) calls a functor admitting a left multiadjoint
+a *right multi-adjoint*; to avoid collision with that noun usage
+this document says *multiadjunction witnesses* for the data and
+*multiadjunction condition* for their existence, and does not
+use "parametric left adjoint", which is not established usage.
 
 Since `T1` is polynomial, `el(T1) ≅ ∐_{s∈S} D/k_s` is a coproduct
 of slices, and a functor into the Grothendieck construction
@@ -388,37 +413,37 @@ of slices, and a functor into the Grothendieck construction
 elements, so the datum unpacks to the tower
 
 ```text
-S : Set,  k : S → D
+S : Type w,  k : S → D
 per s ∈ S:  B_s : D/k_s → Set,   G_s : el(B_s) ⥤ C,
-            right-multiadjoint witnesses for E_s = (B_s, G_s)
+            multiadjunction witnesses for E_s = (B_s, G_s)
 ```
 
-with the multiadjoint condition decomposing per position (comma
+with the multiadjunction condition decomposing per position (comma
 categories decompose over the components of `el(T1)`).
 
 Rationale (derivation summary). With `P` the induced presheaf
 functor (§ 6.4), the category of elements of the `s`-summand of
 `P(Z)` is the comma category `(E_s ↓ Z)` over `D/k_s`, and a
-universal element `(u₀ : d₀ → k_s, φ₀)` heads a component
-isomorphic to `y_D(d₀)`; hence `P` preserves polynomials iff each
+universal element `(u₀ : d₀ → k_s, φ₀)` is the terminal object
+of a component isomorphic to `y_D(d₀)`; hence `P` preserves polynomials iff each
 presheaf `Hom(E_s(−), Z)` is polynomial over its slice. The slice
 has a terminal object (`id_{k_s}`), so this says the
 positions-trivial PRA `Z ↦ Hom(E_s(−), Z)` is
 polynomial-preserving, and that condition — every component of
 `(E_s ↓ Z)` has a terminal object, for every `Z ∈ FC(C)` — is
-verbatim the existence of a right multiadjoint for `E_s`. No
+verbatim the multiadjunction condition for `E_s`. No
 "restricted to polynomials" qualifier arises: `FC(C)` is the
 codomain of `E_s`. Verified instances: `E = y` (the identity
 functor; `(y ↓ Z) ≅ el(Z)`), constant `E`, and arrow-like slices
 (where the condition reduces to epimorphy of `B`'s transitions).
 
 Duality: `(E ↓ Z)ᵒᵖ ≅ (Z ↓ Eᵒᵖ)` exchanges terminal with initial
-objects, so `E` admits a right multiadjoint iff
-`Eᵒᵖ : el(T1)ᵒᵖ ⥤ FC(C)ᵒᵖ = FP(Cᵒᵖ)` admits a left multiadjoint;
+objects, so the multiadjunction condition for `E` says exactly that
+`Eᵒᵖ : el(T1)ᵒᵖ ⥤ FC(C)ᵒᵖ = FP(Cᵒᵖ)` admits a left multiadjoint (Diers);
 the codomain identification is the `FC`/`FP` duality implemented
 in the `geb-idris` prototype (`IntUFamIsOpEFamOp`,
 `geb-idris/src/LanguageDef/IntEFamCat.idr`, whose comment at
-lines 152–157 proposes the multiadjoint packaging adopted here).
+lines 152–157 proposes the witness packaging adopted here).
 
 ### 6.3 Morphisms
 
@@ -429,14 +454,19 @@ A morphism `(T1, E, M) ⟶ (T1', E', M')` is a pair
   directions, componentwise in `FC(C)`, which is full in
   `PSh(C)`),
 
-with whiskered composition. The multiadjoint witnesses do not
+with whiskered composition. The multiadjunction witnesses do not
 occur in morphisms: they are terminal objects, unique up to
-unique isomorphism, hence property-like. The formula category is
-therefore a full subcategory of the unrestricted formula category
-(`PresheafPRACat` with directions constrained to `FC(C)`) on the
-multiadjoint-admitting objects. At `C = D = 1` the morphism
-formula reduces to `Poly`-morphisms. Transcription anchor:
-Spivak–Garner–Fairbanks Proposition 3.11.
+unique isomorphism, hence property-like. The objects nonetheless
+carry the witnesses as structure (§ 6.2) — a Prop-valued
+existence predicate would force choice in the § 6.4 value
+functor — so the formula category relates to the intermediate
+category of `FC(C)`-directed data without witnesses (the
+unrestricted formula category with directions constrained along
+`FC(C) ⥤ PSh(C)`) by a fully faithful forgetful functor, not by
+a full-subcategory inclusion. At `C = D = 1` the morphism
+formula reduces to `Poly`-morphisms, and the discrete
+instantiation recovers Gambino–Kock's morphisms of polynomials.
+Transcription anchor: Spivak–Garner–Fairbanks Proposition 3.11.
 
 ### 6.4 The value functor and the comparison
 
@@ -477,13 +507,17 @@ Assembling projections exhibits a formula datum as the bridge
 C  ⟵G—  el(B)  —π⟶  el(T1)  —p⟶  D
 ```
 
-with `p` a discrete fibration (equivalent to `T1` polynomial) and
-`π` a discrete opfibration (equivalent to directions valued in
-`FC(C)`): the class refines Weber's / Spivak–Garner–Fairbanks's
-bridge presentation of PRAs (their Proposition 3.20) by making
-both inner legs discrete (op)fibrations, with the right
-multiadjoint as a further condition. Both-legs-étale alone is not
-sufficient (arrow-like slices with non-epi `B`-transitions fail).
+with `p` a discrete fibration whose domain has a terminal object
+in each connected component (the fibration property makes `T1` a
+presheaf — it holds for every PRA; the componentwise terminals
+are what make `T1` polynomial) and `π` a discrete opfibration
+(equivalent to directions valued in `FC(C)`). Relative to
+Weber's / Spivak–Garner–Fairbanks's bridge presentation of PRAs
+(their Proposition 3.20), the refinements are therefore the
+componentwise-terminal condition on `p`'s domain, the `π`
+condition, and the multiadjunction condition; the last is not
+implied by the first two (arrow-like slices with non-epi
+`B`-transitions fail).
 
 Elementary necessary conditions on the tower, on the FCP
 signature (`C = FP(I)` has a terminal object `1_C`):
@@ -502,9 +536,9 @@ signature (`C = FP(I)` has a terminal object `1_C`):
   `Z = y(c)` force `g` to be an epimorphism in `C`.
 
 Whether these two test families jointly generate the full
-multiadjoint condition is open (§ 10); no purely morphismwise
+multiadjunction condition is open (§ 10); no purely morphismwise
 closed form exists (the Yoneda instance passes while violating
-injectivity of restrictions, and uniqueness constraints bite only
+injectivity of restrictions, and uniqueness constraints apply only
 at the chosen generic elements).
 
 ## 7. Proof obligations and strategies
@@ -521,14 +555,19 @@ at the chosen generic elements).
   essential-image definition (O1a). The Yoneda simplification is
   the distributivity
   `Π_b Σ_x Hom(G b, F x) ≅ Σ_{r} Π_b Hom(G b, F(r b))`
-  (Dorta–Jarvis–Niu Proposition 2.5), which doubles as the full
-  faithfulness of the bundled inclusion `FC(C) ⥤ PSh(C)`.
+  (the Set instance of Dorta–Jarvis–Niu Proposition 2.5; their
+  Proposition 2.7 is the hom-set formula); the full faithfulness
+  of the bundled inclusion `FC(C) ⥤ PSh(C)` is their
+  Proposition 2.4 and is proved by the same computation.
 - **G4 (restriction isomorphism).** Validated at the formula
   level (§ 6.4); to be formalized with mathlib's restriction /
   lifting vocabulary (§ 10, item 4).
-- **G5 (faithfulness).** Follows from the comparison chain
-  (formula category → `[FC(C), FC(D)]` → `[PSh(C), PSh(D)]`)
-  once G2 and G4 are in place; fullness is G2's computation.
+- **G5 (faithfulness).** The G3 functor out of the formula
+  category factors, via the G4 restriction isomorphism, through
+  the G2 comparison; if two formula morphisms induce equal
+  presheaf-level transformations, the restriction isomorphism
+  gives equal completion-level transformations, and G2's
+  faithfulness separates them. Fullness is G2's computation.
 
 ## 8. Acceptance criteria
 
@@ -540,9 +579,12 @@ at the chosen generic elements).
   2. the formula category of § 6.2–6.3, built by applying the
      existing `coprodCovarRepFunctor` / `ccrPresheafCatFunctor`
      machinery to `FC(C)` and whiskering along the inclusion —
-     not by hand-rolled object/morphism maps;
-  3. the value functor `T = FC(p) ∘ M` and the comparison
-     functors of § 6.4;
+     not by explicit hand-written object/morphism maps;
+  3. the action of `FC` on functors
+     (`FC(p) : FC(A) ⥤ FC(B)` for `p : A ⥤ B`, via
+     `GrothendieckContra'.map` on a `familyNatTrans'`-style
+     transformation), the value functor `T = FC(p) ∘ M`, and the
+     comparison functors of § 6.4;
   4. the instantiation at `C = FP(I)`, `D = FP(J)` via
      `FreeCoprodProdCat`.
 - Theorems: G2 full faithfulness; G3 PRA witness and Yoneda
@@ -569,27 +611,37 @@ at the chosen generic elements).
 
 ## 10. Open questions
 
-1. **Test-family generation**: whether the multiadjoint's `∀ Z`
-   reduces to the families `{X·y(1_C)}` (isolating `B_s`) and
-   `{y(c)}` (isolating `G_s`), turning the condition into a
-   finite elementary checklist; over arrow-like slices with
-   `C = 1` the full condition is already detected by
+1. **Test-family generation**: whether the multiadjunction
+   condition's `∀ Z` reduces to the families `{X·y(1_C)}`
+   (isolating `B_s`) and `{y(c)}` (isolating `G_s`), turning the
+   condition into a finite elementary checklist; over arrow-like
+   slices with `C = 1` the full condition is already detected by
    `Z ∈ {∅, 2}`. Owner: implementation phase (pursue if the
    witness structure proves heavy).
-2. **Bridge-intrinsic multiadjoint**: a statement of the right
-   multiadjoint condition in terms of the bridge legs alone.
-   Owner: future work.
-3. **Terminology**: Diers's usage for the dual notion ("right
-   multiadjoint" versus "parametric left adjoint"). Owner:
-   adversarial review.
-4. **Restriction vocabulary** (formerly O3): which mathlib
+2. **Bridge-intrinsic multiadjunction condition**: a statement
+   of the multiadjunction condition in terms of the bridge legs
+   alone. Owner: future work.
+3. **Restriction vocabulary** (formerly O3): which mathlib
    mechanism expresses the G4 restriction (lifting through
    `Functor.FullyFaithful` / essential-image machinery). Owner:
    implementation planning.
-5. **Universe parameters** (formerly O4): alignment of the `FC`
+4. **Universe parameters** (formerly O4): alignment of the `FC`
    index universe with the presheaf value universe across the
-   tower and the `FP` instantiation. Owner: implementation
-   planning.
+   tower and the `FP` instantiation. Two concrete risks from the
+   present signatures: `FreeProdCompletionCat` raises the object
+   universe (`Cat.{max w' v', max (w' + 1) u' w'}`), so
+   `C = FP(I)` is a large category and the multiadjunction
+   witnesses' `∀ Z ∈ FC(C)` quantifies one universe above
+   `PresheafPRACat`'s parameters; and the `familyNatTrans'` /
+   `familyBifunctor'` machinery behind `FC(p)` requires both
+   categories in the same universe pair, which `el(T1)` and `D`
+   in general share only after `ULift` mediation
+   (`catULiftFunctor2`, as `PresheafPRA.lean` already uses).
+   Owner: implementation planning.
+
+The terminology question formerly listed here (Diers's usage for
+the dual notion) was resolved during adversarial review r1; the
+resolution is recorded in § 6.2.
 
 ## References
 
@@ -598,8 +650,9 @@ at the chosen generic elements).
 - nLab, *free coproduct completion*:
   <https://ncatlab.org/nlab/show/free+coproduct+completion>
 - A. Carboni, P. T. Johnstone, *Connected limits, familial
-  representability and Artin glueing*, Math. Proc. Camb. Phil.
-  Soc. 117 (1995), 117–158.
+  representability and Artin glueing*, Math. Structures Comput.
+  Sci. 5 (1995), no. 4, 441–459; *Corrigenda*, Math. Structures
+  Comput. Sci. 14 (2004), no. 1, 185–187.
 - Y. Diers, *Catégories localisables*, thèse, Université Paris VI
   (1977).
 - M. Weber, *Familial 2-functors and parametric right adjoints*,
@@ -613,5 +666,6 @@ at the chosen generic elements).
   aggregation*, J. Pure Appl. Algebra (2025),
   doi:10.1016/j.jpaa.2025.107883. arXiv:2111.10968.
   <https://arxiv.org/abs/2111.10968>
-- D. Ahman, T. Uustalu, *Directed containers as categories*,
-  EPTCS 207 (2016), 89–98. arXiv:1604.01187.
+- A. Osmond, *On Diers theory of Spectrum I: stable functors and
+  right multi-adjoints*, arXiv:2012.00853 (2020).
+  <https://arxiv.org/abs/2012.00853>
