@@ -160,7 +160,18 @@ The first task is to compute the formula of G1, guided by:
 2. the general shape of functors between contravariant
    Grothendieck constructions (`FC` is one, by construction:
    `GrothendieckContra'` applied to `familyFunctor'`), which
-   suggests what data a functor `FC(I) ⥤ FC(J)` decomposes into.
+   suggests what data a functor `FC(I) ⥤ FC(J)` decomposes
+   into; and
+3. the bicomodule packaging of the unrestricted class
+   (Spivak–Garner–Fairbanks, arXiv:2111.10968): its
+   composite-carrier formula (their Remark 5.19) locates where
+   composition can leave the restricted class — directions of
+   composites are colimits, not mere coproducts, of direction
+   presheaves — and its bridge decomposition of every PRA as
+   `Σ_T ∘ Π_π ∘ Δ_S` along `c ← e → b → d` with `T` étale
+   (their Proposition 3.20, after Weber 2007) offers a
+   compositional presentation on which the restriction may be
+   expressible as a condition on the bridge.
 
 The natural first candidate for the constraint in (1) is to
 require each direction `E_j(a)` to be a polynomial presheaf,
@@ -189,14 +200,26 @@ of the main definitions:
   (Carboni–Johnstone 1995, above; Diers, "Catégories localisables",
   1977; Weber, "Familial 2-functors and parametric right
   adjoints", TAC 18 (2007)); the free coproduct completion
-  ([nLab: free coproduct completion](https://ncatlab.org/nlab/show/free+coproduct+completion)).
-- **Novel (composed from established concepts):** the specific
-  formula category of G1 for functors `FC(I) ⥤ FC(J)`, its
-  equivalence proof (G2), and the polynomial-preservation and
-  restriction statements (G4, G5) in the forms stated here. If
-  the literature search (theoremsearch, during the next part)
-  finds published forms of these, they move to the transcription
-  column and carry citations.
+  ([nLab: free coproduct completion](https://ncatlab.org/nlab/show/free+coproduct+completion));
+  the *unrestricted* formula category and its equivalence with
+  the category of PRA functors between copresheaf categories,
+  with all natural transformations, as a full subcategory of the
+  functor category (Spivak–Garner–Fairbanks, arXiv:2111.10968:
+  Definition 3.7, Propositions 3.6, 3.8, 3.9, Theorem 4.28 —
+  this repository's `PresheafPRACat` matches their functors
+  `d → Fam((c-Set)ᵒᵖ)` under the dualization `c = Iᵒᵖ`,
+  `d = Jᵒᵖ`); their Proposition 3.11 end formula is the
+  candidate transcription source for the natural-transformation
+  formula of G1.
+- **Novel (composed from established concepts):** the
+  polynomial-preservation refinement — the restricted formula
+  category of G1, its equivalence proof (G2), and the
+  preservation and restriction statements (G4, G5). Literature
+  search (2026-07-14): the refinement, and the restriction of
+  the argument categories to free completions, are absent from
+  arXiv:2305.05655 and arXiv:2111.10968 and from their
+  bibliographies (neither cites Carboni–Johnstone or Diers);
+  they remain novel in the forms stated here.
 
 ## 5. Open questions and consistency checks
 
@@ -331,3 +354,9 @@ of the main definitions:
 - J. Dorta, S. Jarvis, N. Niu, *Monoidal structures on
   generalized polynomial categories*, arXiv:2305.05655 (2023).
   <https://arxiv.org/abs/2305.05655>
+- D. I. Spivak, R. Garner, A. D. Fairbanks, *Functorial
+  aggregation*, J. Pure Appl. Algebra (2025),
+  doi:10.1016/j.jpaa.2025.107883. arXiv:2111.10968.
+  <https://arxiv.org/abs/2111.10968>
+- D. Ahman, T. Uustalu, *Directed containers as categories*,
+  EPTCS 207 (2016), 89–98. arXiv:1604.01187.
