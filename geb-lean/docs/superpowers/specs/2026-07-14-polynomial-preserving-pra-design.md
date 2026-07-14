@@ -496,16 +496,50 @@ directions; `P(Z)(d) = Σ_{a ∈ A(d)} Hom(E(d,a), Z)`.
   along the inclusion `FC(C) ⥤ PSh(C)`, not by hand-rolled
   maps.
 
-- **Open (round five).**
+- **Unpacked form and bridge identification (round five).**
+  Naming: the positions object `A` is henceforth `T1`, matching
+  nLab. Since `T1 = ∐_{s∈S} y(k_s)`, its elements category is a
+  coproduct of slices, `el(T1) ≅ ∐_s D/k_s` (with the elements
+  orientation used throughout; mathlib's `Functor.Elements` of a
+  presheaf yields the opposite orientation, so Lean statements
+  carry an `op` that cancels nLab's `el(T1)ᵒᵖ` convention — the
+  directions components are covariant on genuine slices). A
+  functor into the Grothendieck construction `FC(C)` is a base
+  copresheaf plus a `C`-valued functor on its elements, so a G1
+  object unpacks to the tower
+
+  `S : Set`, `k : S → D`; per `s ∈ S`: `B_s : D/k_s → Set`,
+  `G_s : el(B_s) ⥤ C`, and right-multiadjoint witnesses for
+  `E_s = (B_s, G_s)`.
+
+  Assembling projections exhibits this as the bridge
+  `C ⟵ el(B) ⟶ el(T1) ⟶ D` with `el(T1) → D` a discrete
+  fibration (= `T1` polynomial) and `el(B) → el(T1)` a discrete
+  opfibration (= directions in `FC(C)`): the unpacked formula
+  *is* the both-inner-legs-étale bridge of Weber /
+  Spivak–Garner–Fairbanks Proposition 3.20, with the right
+  multiadjoint as the extra condition (settling the shape of
+  the bridge translation; a bridge-intrinsic statement of the
+  multiadjoint itself remains open). The multiadjoint imposes
+  per-test-object conditions on `(B_s, G_s)` (the `Z = ∅` test:
+  the sub-sieve `{u : B_s(u) = ∅}` of the slice has
+  component-terminals; arrow-like slices force epi conditions on
+  `B_s`'s transitions) but no purely morphismwise closed form
+  (round-two negative results); the test-family reduction would
+  turn it into a finite checklist on `(B_s, G_s)`.
+
+- **Open (round six).**
   1. *Test-family reduction*: whether the `∀ Z` in the
      multiadjoint can be reduced to a small generating family of
      test objects (candidates: the initial object and binary
      coproducts `y(c) ⊔ y(c')`), which would shrink the Lean
-     witness structure; over `S = 2`, `C = 1` the full condition
-     is already detected by `Z ∈ {∅, 2}`.
-  2. *Bridge translation*: a bridge-side statement of the right
-     multiadjoint condition (beyond the necessary
-     both-legs-étale shape).
+     witness structure and turn the multiadjoint into a finite
+     checklist on `(B_s, G_s)`; over `S = 2`, `C = 1` the full
+     condition is already detected by `Z ∈ {∅, 2}`.
+  2. *Bridge-intrinsic multiadjoint*: a statement of the right
+     multiadjoint condition in terms of the bridge legs alone
+     (the bridge shape itself is settled by the round-five
+     identification).
   3. *Terminology check*: Diers's usage for the dual notion
      ("right multiadjoint" versus "parametric left adjoint");
      to be settled during adversarial review of this part.
