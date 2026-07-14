@@ -470,7 +470,33 @@ directions; `P(Z)(d) = Σ_{a ∈ A(d)} Hom(E(d,a), Z)`.
      level);
   3. the identity instance `E = y`: `M(Z) ≅ Z`, `T ≅ Id`.
 
-- **Open (round four).**
+- **Morphism formula (round four).** A G1 morphism
+  `(A, E, M) ⟶ (A', E', M')` is a pair: `α : A → A'` in
+  `FC(D)`, and `β : E' ∘ el(α) ⟶ E` natural over `el(A)`
+  (componentwise in `FC(C)`, which is full in `PSh(C)`);
+  composition is whiskered composition. The multiadjoint data
+  does not appear in morphisms (it is property-like), so the G1
+  category is a full subcategory of the unrestricted formula
+  category with directions constrained to `FC(C)`; the
+  transcription anchor is Spivak–Garner–Fairbanks
+  Proposition 3.11. At `C = D = 1` the formula reduces to
+  `Poly`-morphisms. The comparison `(α, β) ↦ τ : T ⟹ T'` sends
+  a generic `ρ` to the unique factorization of
+  `ε_ρ ∘ β_{m_Z(ρ)}` through `M'`'s generics; naturality in `Z`
+  and functoriality in `(α, β)` are validated by
+  unique-factorization algebra and use the naturality of `β`
+  essentially. Full faithfulness of the comparison is G2's
+  proof obligation (deferred to implementation); the recovery
+  strategy is evaluation at `Z = E(u)` with the unit-like
+  factorization `id_{E(u)} = ε_{ρ₀} ∘ E(v₀)` (generic elements
+  retract identities). Implementation note: the formula
+  category and its comparison to the unrestricted one should be
+  obtained by applying the existing `coprodCovarRepFunctor` /
+  `ccrPresheafCatFunctor` machinery to `FC(C)` and whiskering
+  along the inclusion `FC(C) ⥤ PSh(C)`, not by hand-rolled
+  maps.
+
+- **Open (round five).**
   1. *Test-family reduction*: whether the `∀ Z` in the
      multiadjoint can be reduced to a small generating family of
      test objects (candidates: the initial object and binary
