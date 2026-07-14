@@ -430,7 +430,47 @@ directions; `P(Z)(d) = Σ_{a ∈ A(d)} Hom(E(d,a), Z)`.
   Testing against representable `Z` only is insufficient (over
   `C = 1`, `Z = 1` detects nothing; `Z = 2` is needed).
 
-- **Open (round three).**
+- **Duality (round three).** Comma categories dualize
+  (`(E ↓ Z)ᵒᵖ ≅ (Z ↓ Eᵒᵖ)`, exchanging terminal with initial
+  objects), so `E : S ⥤ FC(C)` admits a right multiadjoint iff
+  `Eᵒᵖ : Sᵒᵖ ⥤ FC(C)ᵒᵖ = FP(Cᵒᵖ)` admits a left multiadjoint.
+  The codomain identification is the `FC`/`FP` opposite-category
+  duality implemented in the `geb-idris` prototype as
+  `IntUFamIsOpEFamOp` (`geb-idris/src/LanguageDef/IntEFamCat.idr`);
+  the comment at lines 152–157 of that file proposes the
+  packaging of right-multiadjoint data adopted below
+  (`IntElemEFamOMap`'s inputs: a copresheaf with an
+  elements-functor — the `(B, G)` form of an `FC`-valued
+  functor). The name "parametric left adjoint" for functors
+  admitting right multiadjoints is a candidate pending a
+  terminology check against Diers.
+
+- **Value formula (round three, validated informally).**
+  Package the right multiadjoint of `E : el(A) ⥤ FC(C)` as: for
+  each `Z ∈ FC(C)`, an object
+  `M(Z) = (R(Z), m_Z : R(Z) → el(A)) ∈ FC(el(A))` with counits
+  `ε_ρ : E(m_Z(ρ)) → Z`, such that every `φ : E(u) → Z` factors
+  as `ε_ρ ∘ E(v)` for a unique pair `(ρ, v : u → m_Z(ρ))`. With
+  `p_A : el(A) ⥤ D` the projection, the induced functor on the
+  completions is
+
+  `T(Z) = (R(Z), p_A ∘ m_Z)`, i.e. `T = FC(p_A) ∘ M`,
+
+  with morphism action: for `ζ : Z → Z'`, factor `ζ ∘ ε_ρ`
+  uniquely as `ε_{ρ'} ∘ E(v_ρ)` and set
+  `T(ζ) = (ρ ↦ ρ', p_A(v_ρ))`. Validated by
+  unique-factorization algebra:
+  1. functor laws for `T` (hence functoriality of `M`, which is
+     *derived*, not assumed — the multiadjoint structure is an
+     object-assignment, counits, and one factorization axiom);
+  2. the restriction isomorphism
+     `fcEval(T(Z))(d) ≅ P(Z)(d)` — each element `(u, φ)` over
+     `d` corresponds to the unique `(ρ, w : d → p_A(m_Z(ρ)))` —
+     natural in both `d` and `Z` (the G4 square at the formula
+     level);
+  3. the identity instance `E = y`: `M(Z) ≅ Z`, `T ≅ Id`.
+
+- **Open (round four).**
   1. *Test-family reduction*: whether the `∀ Z` in the
      multiadjoint can be reduced to a small generating family of
      test objects (candidates: the initial object and binary
@@ -440,10 +480,9 @@ directions; `P(Z)(d) = Σ_{a ∈ A(d)} Hom(E(d,a), Z)`.
   2. *Bridge translation*: a bridge-side statement of the right
      multiadjoint condition (beyond the necessary
      both-legs-étale shape).
-  3. *Value formula*: the induced functor on objects,
-     `T(Z).index = components of (E ↓ Z)` with families given by
-     the domains of the chosen generic elements — to be written
-     out and checked functorial via the unique factorizations.
+  3. *Terminology check*: Diers's usage for the dual notion
+     ("right multiadjoint" versus "parametric left adjoint");
+     to be settled during adversarial review of this part.
 
 ## References
 
