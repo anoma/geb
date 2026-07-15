@@ -672,10 +672,15 @@ at the chosen generic elements).
   1. the bundled inclusion functor `FC(C) ⥤ PSh(C)` with a
      `Functor.FullyFaithful` witness (the contravariant analogue
      of `ccrNewEvalCatFunctor` / `ccrNewEvalCatFullyFaithful`);
-  2. the formula category of § 6.2–6.3, built by applying the
-     existing `coprodCovarRepFunctor` / `ccrPresheafCatFunctor`
-     machinery to `FC(C)` and whiskering along the inclusion —
-     not by explicit object/morphism maps;
+  2. the formula category of § 6.2–6.3, presented directly by the
+     § 6.2 tower (positions, directions, witnesses; the witness
+     layer an induced category over the witness-free
+     presentation), together with its conversion functor into the
+     unrestricted formula category — the conversion built by
+     applying the existing `coprodCovarRepFunctor` /
+     `ccrPresheafCatFunctor` machinery to `FC(C)` and whiskering
+     along the inclusion, with only the elements unpacking of
+     positions written directly;
   3. the action of `FC` on functors
      (`FC(p) : FC(A) ⥤ FC(B)` for `p : A ⥤ B`, via
      `GrothendieckContra'.map` on a `familyNatTrans'`-style
