@@ -360,6 +360,43 @@ items 3 and 4.
   Dorta–Jarvis–Niu Definition 2.6; the docstring correction is
   deferred to a separate branch per the one-concern rule.
 
+- **O7 (relation to positive inductive-recursive definitions —
+  resolved: distinct classes).** Ghani–Malatesta–Nordvall
+  Forsberg (LMCS 11(1:13), 2015) define IR⁺ codes decoding to
+  endofunctors of `Fam(C) = FC(C)` for arbitrary `C` (their
+  Definition 3.1, Theorem 3.3), generalizing Dybjer–Setzer's
+  discrete theory, with initial algebras under a Mahlo
+  assumption when `C` has connected colimits (their
+  Theorem 7.2). Comparison with this workstream's class:
+  1. The `δ`-clause `Σ_{g : A→X} ⟦F(P∘g)⟧(X,P)` extends to
+     presheaves by a coend over the label category,
+     `∫^{ℓ∈C^A} Π_a Z(ℓ(a)) × ⟦F(ℓ)⟧⁺(Z)`, and co-Yoneda shows
+     this extension restricts to the paper's semantics on
+     `FC(C)`, on objects and on morphisms.
+  2. The extension is not PRA in general, and some IR⁺ functors
+     admit no PRA extension at all: over `C = BG` (`|G| ≥ 2`)
+     the code `δ_1(const(ι ⋆))` decodes to the label-erasing
+     functor `free ∘ π₀`, while every PRA acts on morphisms by
+     post-composition, so naturality against right translations
+     forces `g = e`. The classes therefore diverge; this answers
+     a question the paper's § 8 lists as future work (the
+     relationship of IR⁺ to Weber's familial 2-functors).
+  3. Composition of IR⁺ codes is an open problem (their § 8),
+     and the interpretation `⟦−⟧` is not full and faithful for
+     non-discrete `C` (their § 3) — both properties the G1
+     formula is designed to have.
+  4. At discrete index categories the two theories coincide on
+     the polynomial core (their Proposition 6.2);
+     initial-algebra existence (their Theorem 7.2) is an
+     accessibility property and does not certify polynomiality.
+
+  Decision: the G1 formula remains the definition; IR⁺ is
+  recorded as a companion theory, with the hom-labelled
+  sub-syntax question carried as § 10 item 5. The discrete IR
+  syntax formalized in `geb-mathlib`
+  (`Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean`) is related
+  infrastructure for the shared polynomial core.
+
 ## 6. The formula
 
 Index categories are written `C`, `D`; the principal instantiation
@@ -639,6 +676,28 @@ at the chosen generic elements).
    (`catULiftFunctor2`, as `PresheafPRA.lean` already uses).
    Owner: implementation planning.
 
+5. **Hom-labelled IR⁺ sub-syntax** (from O7): whether
+   restricting IR⁺ `δ`-continuations to hom-labelled forms —
+   label consumption through `Hom_C(c, −)` filters and
+   hom-arities, or covariant pass-through to outputs, with no
+   label discarding — yields a witness-free inductive
+   presentation of a PRA-extendable subclass of the G1 class.
+   Classification so far: the restriction admits identities,
+   constants, coproducts, products, evaluations, the
+   container/nested-type apparatus (their § 5), and the
+   Σ-universe examples over `Set` and `Setᵒᵖ` (bare
+   element-choice acquires a hom-surrogate at an initial
+   object); it rules out label-discarding `π₀`-nodes over
+   categories without componentwise initial objects — hence the
+   groupoid-based examples (their § 4.1 normal-forms universe
+   over `Fam(Set≅)`) and the Π-universe. Bare element-choice
+   has a hom-surrogate agreeing on polynomials iff every
+   connected component of `C` has an initial object (the dual
+   of the O6 terminal condition); `FP(I)` does not supply this
+   automatically, so over the FCP signature the sub-syntax is
+   strictly weaker than IR⁺ — as required, since the excluded
+   functors are not PRA. Owner: future work.
+
 The terminology question formerly listed here (Diers's usage for
 the dual notion) was resolved during adversarial review r1; the
 resolution is recorded in § 6.2.
@@ -669,3 +728,8 @@ resolution is recorded in § 6.2.
 - A. Osmond, *On Diers theory of Spectrum I: stable functors and
   right multi-adjoints*, arXiv:2012.00853 (2020).
   <https://arxiv.org/abs/2012.00853>
+- N. Ghani, L. Malatesta, F. Nordvall Forsberg, *Positive
+  inductive-recursive definitions*, Log. Methods Comput. Sci. 11
+  (2015), no. 1:13. doi:10.2168/LMCS-11(1:13)2015.
+- P. Dybjer, A. Setzer, *Induction–recursion and initial
+  algebras*, Ann. Pure Appl. Logic 124 (2003), no. 1–3, 1–47.
