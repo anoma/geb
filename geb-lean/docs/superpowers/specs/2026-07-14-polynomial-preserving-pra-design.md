@@ -397,6 +397,54 @@ items 3 and 4.
   (`Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean`) is related
   infrastructure for the shared polynomial core.
 
+  Classification of the hom-labelled fragment (restricting
+  `δ`-continuations to consume labels through `Hom_C(c, −)`
+  filters and hom-arities, or to pass them through covariantly
+  to outputs, never discarding them). The governing criterion:
+  bare element-choice (`δ` with a label-free continuation) has a
+  hom-labelled surrogate agreeing on polynomials iff every
+  connected component of `C` has an initial object — then
+  `Hom_C(0, ℓ) ≅ 1` makes "choose an element of the index set"
+  representable. This is the input-side dual of the O6
+  component-terminal condition (each of the two completions in
+  `FCP` repairs one side: `FP` adjoins terminals, `FC` adjoins
+  initials). Consequences for the paper's examples:
+
+  - *Admitted*: the identity (their Lemma 5.3(i); the
+    continuation `ι ∘ eval` passes labels through); constants
+    (Lemma 5.3(ii); no `δ`); coproducts (`+IR`, Lemma 5.4);
+    products (`×_G`, Lemma 5.5; products of hom-good functors
+    are hom-good since `Hom(E, Z) × Hom(E', Z) =
+    Hom(E ⊔ E', Z)`); code exponentiation and composition on
+    uniform codes, hence the whole nested-types-are-containers
+    apparatus (their § 5, Theorem 5.7); evaluations
+    `Z ↦ Z(c) × (−)` (the filter `F(ℓ) = σ_{Hom(c,ℓ)}(…)`); the
+    Σ-universe over discrete `|Set|` (their Example 2.5; at
+    discrete index categories everything is admitted, by their
+    Proposition 6.2) and over `Setᵒᵖ` (Example 3.5:
+    element-choice has its surrogate at `Setᵒᵖ`'s initial
+    object, and the dependent arity `X∗ = Hom_{Setᵒᵖ}(X, 1)` is
+    itself a hom-arity — genuine induction-recursion survives);
+    the universe-to-universe maps of their Example 4.2
+    (`Fam(Setᵒᵖ)`, same mechanisms).
+  - *Ruled out*: label-discarding `π₀`-nodes over categories
+    without componentwise initial objects (the O7 item-2
+    counterexample class — exclusion is forced); the § 4.1
+    normal-forms universe over `Fam(Set≅)` (in a groupoid the
+    element-arity `X∗` is not any `Hom_{Set≅}(c, X)`, and
+    choosing representatives of isomorphism classes is
+    quotient-flavored computation no PRA expresses); the
+    Π-universe outside the discrete case (their Examples
+    2.6/3.6: already excluded over `Set` and `Setᵒᵖ` by the
+    paper's own contravariance obstruction, and its remaining
+    habitat `Set≅` is where hom-labelling forbids the
+    element-arity).
+
+  The restriction therefore costs exactly the groupoid fragment
+  (the paper's § 4 elimination examples) and retains the
+  container and Σ-universe canon — no loss relative to this
+  workstream's goals, since the excluded functors are not PRA.
+
 ## 6. The formula
 
 Index categories are written `C`, `D`; the principal instantiation
@@ -676,27 +724,19 @@ at the chosen generic elements).
    (`catULiftFunctor2`, as `PresheafPRA.lean` already uses).
    Owner: implementation planning.
 
-5. **Hom-labelled IR⁺ sub-syntax** (from O7): whether
-   restricting IR⁺ `δ`-continuations to hom-labelled forms —
-   label consumption through `Hom_C(c, −)` filters and
-   hom-arities, or covariant pass-through to outputs, with no
-   label discarding — yields a witness-free inductive
-   presentation of a PRA-extendable subclass of the G1 class.
-   Classification so far: the restriction admits identities,
-   constants, coproducts, products, evaluations, the
-   container/nested-type apparatus (their § 5), and the
-   Σ-universe examples over `Set` and `Setᵒᵖ` (bare
-   element-choice acquires a hom-surrogate at an initial
-   object); it rules out label-discarding `π₀`-nodes over
-   categories without componentwise initial objects — hence the
-   groupoid-based examples (their § 4.1 normal-forms universe
-   over `Fam(Set≅)`) and the Π-universe. Bare element-choice
-   has a hom-surrogate agreeing on polynomials iff every
-   connected component of `C` has an initial object (the dual
-   of the O6 terminal condition); `FP(I)` does not supply this
-   automatically, so over the FCP signature the sub-syntax is
-   strictly weaker than IR⁺ — as required, since the excluded
-   functors are not PRA. Owner: future work.
+5. **Hom-labelled IR⁺ sub-syntax** (from O7, where the
+   fragment's example classification is recorded): whether the
+   hom-labelled fragment yields a witness-free inductive
+   presentation of a PRA-extendable subclass of the G1 class,
+   and whether it generates *all* of the G1 class or only the
+   composites of evaluation-shaped functors (this connects to
+   item 1). Two recorded caveats: over the FCP signature
+   `C = FP(I)` componentwise initial objects are not automatic,
+   so the fragment is strictly weaker than IR⁺ there (as
+   required — the excluded functors are not PRA); and the
+   precise sub-syntax (hom-filters, hom-arities, pass-through,
+   and the corresponding restriction of the code-morphism
+   category) remains to be defined. Owner: future work.
 
 The terminology question formerly listed here (Diers's usage for
 the dual notion) was resolved during adversarial review r1; the
