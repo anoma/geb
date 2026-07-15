@@ -87,7 +87,7 @@ category theory (`Functor.FullyFaithful`, `InducedCategory`,
   subject, no trailing period; each message ends with the
   repository trailer
   `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`
-  (see `CLAUDE.md` § Tooling and the repository git convention);
+  (the repository git convention);
   commit via `jj commit`.
 - One definition at a time; factor helpers into
   `GebLean/Utilities/`.
@@ -99,13 +99,15 @@ category theory (`Functor.FullyFaithful`, `InducedCategory`,
    of `FCDirPRACat`; Tasks 6–8 consume its accessors directly. The
    higher-order `coprodCovarRepFunctor` / `ccrPresheafCatFunctor`
    machinery has a definite, unconditional role: Task 9's
-   conversion functor `fcDirToCCR` into the unrestricted formula
-   category (elements unpacking on positions;
-   `coprodCovarRepFunctor.map` on Task 1's inclusion for
-   directions), whose composite with the existing
-   `PresheafPRACat`-side machinery is `polyPRAExtend`. The spec's
+   conversion functor `fcDirToCCR` into the `FC(C)`-directed CCR
+   presentation (elements unpacking on positions; directions the
+   direct `P.E.obj` assignment), followed by the
+   `coprodCovarRepFunctor.map` whiskering along Task 1's
+   inclusion (with `catULiftFunctor2` mediation) — that composite
+   with the existing `PresheafPRACat`-side machinery is
+   `polyPRAExtend`. The spec's
    § 8 deliverable 2 is amended on this branch to match this
-   presentation (direct § 6.2 tower plus conversion functor built
+   presentation (direct § 6.2 formula datum plus conversion functor built
    from the existing machinery).
 2. **Restriction vocabulary (spec § 10 item 3 / O3).** Resolved as
    the specified-NatIso square: G4 is stated as a `NatIso` between
@@ -168,7 +170,7 @@ instantiated — standing decision 3):
 - Task 1 creates `GebLean/Utilities/FCEval.lean` (Tasks 1–2:
   bundled inclusion, full faithfulness, `fcMap`), the index file
   `GebLean/PolyPRA.lean` (initial content:
-  `public import GebLean.Utilities.FCEval`), and
+  `import GebLean.Utilities.FCEval`), and
   `GebLeanTests/PolyPRA/Basic.lean`, and registers both roots in
   the same commit: the line `import GebLean.PolyPRA` is added to
   `GebLean.lean` and the line
@@ -192,9 +194,15 @@ instantiated — standing decision 3):
   G5).
 - Create `GebLean/PolyPRA/FCP.lean` — Task 12 (FCP instantiation).
 - Every task that creates a `GebLean/PolyPRA/<Name>.lean` module
-  appends the line `public import GebLean.PolyPRA.<Name>` to
+  appends the line `import GebLean.PolyPRA.<Name>` to
   `GebLean/PolyPRA.lean` in the same commit that creates the
-  file.
+  file. Deviation from `.claude/rules/lean-coding.md` § Lean 4
+  module system, recorded per review r2: at this pin, `public
+  import` requires the importing file to declare `module`, and a
+  `module` file cannot import the existing non-`module`
+  `GebLean` tree, so plain `import` is used (matching the
+  `GebLean/Binding.lean` index precedent); correcting the rule
+  is a separate branch per the one-concern rule.
 - `GebLeanTests/PolyPRA/Basic.lean` receives each task's test
   declarations and Task 13 (registered in `GebLeanTests.lean` by
   Task 1).
@@ -228,7 +236,7 @@ Topic branch: continue `feat/poly-preserving-pra`.
 
 **Files:** Create `GebLean/Utilities/FCEval.lean`,
 `GebLean/PolyPRA.lean` (index; initial content
-`public import GebLean.Utilities.FCEval`), and
+`import GebLean.Utilities.FCEval`), and
 `GebLeanTests/PolyPRA/Basic.lean`; add `import GebLean.PolyPRA` to
 `GebLean.lean` and `import GebLeanTests.PolyPRA.Basic` to
 `GebLeanTests.lean` (File structure).
@@ -326,7 +334,7 @@ reuse.
 ### Task 3: elements of positions — `FCElem`, its projection, and `elMap`
 
 **Files:** Create `GebLean/PolyPRA/Elements.lean`; append
-`public import GebLean.PolyPRA.Elements` to `GebLean/PolyPRA.lean`;
+`import GebLean.PolyPRA.Elements` to `GebLean/PolyPRA.lean`;
 tests in `GebLeanTests/PolyPRA/Basic.lean`.
 
 **Interfaces — Produces** (universes `u_D v_D w`):
@@ -388,7 +396,7 @@ a `def` for reuse.
 ### Task 4: multiadjunction witnesses
 
 **Files:** Create `GebLean/PolyPRA/Multiadjunction.lean`; append
-`public import GebLean.PolyPRA.Multiadjunction` to
+`import GebLean.PolyPRA.Multiadjunction` to
 `GebLean/PolyPRA.lean`; tests in `GebLeanTests/PolyPRA/Basic.lean`.
 
 **Interfaces — Produces** (universes `u_C v_C u_D v_D w`):
@@ -437,7 +445,7 @@ witness for reuse (Tasks 5, 6, 13).
 ### Task 5: the formula categories
 
 **Files:** Create `GebLean/PolyPRA/Cat.lean`; append
-`public import GebLean.PolyPRA.Cat` to `GebLean/PolyPRA.lean`;
+`import GebLean.PolyPRA.Cat` to `GebLean/PolyPRA.lean`;
 tests in `GebLeanTests/PolyPRA/Basic.lean`.
 
 **Interfaces — Produces** (universes `u_C v_C u_D v_D w`):
@@ -486,14 +494,15 @@ unconditional interface of `FCDirPRACat` (standing decision 1);
 the morphism layer is the `(α, β)` pair of spec § 6.3 with
 Task 3's `elMap`, and the category laws follow from `elMap_id` /
 `elMap_comp` and `fcHom_ext`. The pinned mathlib's
-`InducedCategory` takes a single explicit argument with the target
-category implicit
+`InducedCategory` takes the function as its single trailing
+explicit argument, with the target category a preceding explicit
+variable, fillable by name (`D := …`)
 (`Mathlib/CategoryTheory/InducedCategory.lean:46`); the forgetful
 functor is `inducedFunctor` with `fullyFaithfulInducedFunctor`
 (`InducedCategory.lean:106`).
 
 **Test:** package the Task 4 witness seed into a named
-`PolyPRAObj (Discrete PUnit) (Discrete PUnit)` (the Task 13
+`PolyPRAObj (Discrete (Fin 2)) (Discrete (Fin 2))` (the Task 13
 identity-instance seed), check `PolyPRAObj.forget`'s image
 components (`T1`, `E`) by `rfl`, and return the object as a `def`
 for reuse (Tasks 6–13).
@@ -504,7 +513,7 @@ for reuse (Tasks 6–13).
 ### Task 6: spectrum and value functors
 
 **Files:** Create `GebLean/PolyPRA/Value.lean`; append
-`public import GebLean.PolyPRA.Value` to `GebLean/PolyPRA.lean`;
+`import GebLean.PolyPRA.Value` to `GebLean/PolyPRA.lean`;
 tests in `GebLeanTests/PolyPRA/Basic.lean`.
 
 **Interfaces — Produces** (universes `u_C v_C u_D v_D w`):
@@ -547,7 +556,7 @@ reuse (Tasks 7, 10, 13).
 ### Task 7: the comparison functor
 
 **Files:** Create `GebLean/PolyPRA/Comparison.lean`; append
-`public import GebLean.PolyPRA.Comparison` to
+`import GebLean.PolyPRA.Comparison` to
 `GebLean/PolyPRA.lean`; tests in `GebLeanTests/PolyPRA/Basic.lean`.
 
 **Interfaces — Produces** (universes `u_C v_C u_D v_D w`):
@@ -622,7 +631,7 @@ transformation:
 ### Task 9: G3 — extension to presheaf categories
 
 **Files:** Create `GebLean/PolyPRA/Extension.lean`; append
-`public import GebLean.PolyPRA.Extension` to
+`import GebLean.PolyPRA.Extension` to
 `GebLean/PolyPRA.lean`; tests in `GebLeanTests/PolyPRA/Basic.lean`.
 
 **Interfaces — Produces** (universes `u_C v_C u_D v_D w`;
@@ -662,10 +671,11 @@ def polyPRAExtendYonedaEquiv
 ```
 
 **Strategy:** `fcDirToCCR` carries the elements unpacking of
-positions directly, and its direction layer is
-`coprodCovarRepFunctor.map` applied to Task 1's inclusion
-(standing decision 1); PRA-ness is by construction (objects of
-`PresheafPRACat`). Universe mediation:
+positions directly, with its direction layer the direct
+`P.E.obj` assignment (its codomain keeps directions in `FC(C)`);
+the `coprodCovarRepFunctor.map` whiskering along Task 1's
+inclusion belongs to `polyPRAExtend` (standing decision 1);
+PRA-ness is by construction (objects of `PresheafPRACat`). Universe mediation:
 `FreeCoprodCompletionCat.{u_C, v_C, w} C` is an object of
 `Cat.{max w v_C, max (w + 1) u_C w}` while `PresheafPRACat`'s CCR
 layer is built over
@@ -776,7 +786,7 @@ the instance is the returned value).
 ### Task 12: FCP instantiation
 
 **Files:** Create `GebLean/PolyPRA/FCP.lean`; append
-`public import GebLean.PolyPRA.FCP` to `GebLean/PolyPRA.lean`;
+`import GebLean.PolyPRA.FCP` to `GebLean/PolyPRA.lean`;
 tests in `GebLeanTests/PolyPRA/Basic.lean`.
 
 **Interfaces — Produces** (universes `u_I v_I u_J v_J w`; the
@@ -849,7 +859,7 @@ the seeds built by the Tasks 4–6 tests are consumed here).
     Tasks 6, 10;
   - `FCElem` / `fcElProj` (Task 3) → Tasks 4, 5, 6, 10;
   - `elMap` / `elMap_id` / `elMap_comp` (Task 3) → Tasks 5, 7, 8;
-  - `fcElTerminalHom` (Task 3) → Task 13;
+  - `fcElTerminalHom` (Task 3) → Task 3's test;
   - `MultiadjunctionWitnesses` fields (Task 4) → Tasks 6, 7, 8;
   - `factor_counit` (Task 4) → Tasks 6, 13;
   - `FCDirPRACat` / `PolyPRAObj` / `PolyPRACat` / `polyPRAForget`

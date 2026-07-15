@@ -673,7 +673,7 @@ at the chosen generic elements).
      `Functor.FullyFaithful` witness (the contravariant analogue
      of `ccrNewEvalCatFunctor` / `ccrNewEvalCatFullyFaithful`);
   2. the formula category of § 6.2–6.3, presented directly by the
-     § 6.2 tower (positions, directions, witnesses; the witness
+     § 6.2 formula datum (positions, directions, witnesses; the witness
      layer an induced category over the witness-free
      presentation), together with its conversion functor into the
      unrestricted formula category — the conversion built by
