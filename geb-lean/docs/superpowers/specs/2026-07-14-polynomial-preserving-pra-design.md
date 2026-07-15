@@ -240,10 +240,11 @@ of the main definitions:
 ## 5. Decision record
 
 This section records the questions raised during goal-setting
-and their dispositions. O1, O1a, O5, and O6 are resolved below;
-O2 is subsumed by the G2 obligation (§ 7, where G2's and G5's
-fullness are identified); O3 and O4 are carried forward as § 10
-items 3 and 4.
+and the subsequent derivation, with their dispositions. O1, O1a,
+O5, O6, and O7 are resolved below (O7 carries its sub-syntax
+residue forward as § 10 item 5); O2 is subsumed by the G2
+obligation (§ 7, where G2's and G5's fullness are identified);
+O3 and O4 are carried forward as § 10 items 3 and 4.
 
 - **O1 (degeneracy check on G2 + G3 — resolved).** A draft of G2
   claimed the formula captures *all* functors `FC(I) ⥤ FC(J)`.
@@ -377,14 +378,18 @@ items 3 and 4.
      admit no PRA extension at all: over `C = BG` (`|G| ≥ 2`)
      the code `δ_1(const(ι ⋆))` decodes to the label-erasing
      functor `free ∘ π₀`, while every PRA acts on morphisms by
-     post-composition, so naturality against right translations
-     forces `g = e`. The classes therefore diverge; this answers
-     a question the paper's § 8 lists as future work (the
-     relationship of IR⁺ to Weber's familial 2-functors).
+     post-composition; the test `T(∅) ≅ ∅` forces every
+     direction to be nonempty, and then naturality against right
+     translations forces `g = e`. The classes therefore diverge;
+     this settles one direction of a relationship the paper's
+     § 8 lists as future work (IR⁺ versus Weber's familial
+     2-functors).
   3. Composition of IR⁺ codes is an open problem (their § 8),
      and the interpretation `⟦−⟧` is not full and faithful for
-     non-discrete `C` (their § 3) — both properties the G1
-     formula is designed to have.
+     non-discrete `C` (their p. 5; their Remark 3.4 records that
+     the property depends on the chosen collection of code
+     morphisms) — both properties the G1 formula is designed to
+     have.
   4. At discrete index categories the two theories coincide on
      the polynomial core (their Proposition 6.2);
      initial-algebra existence (their Theorem 7.2) is an
@@ -406,9 +411,13 @@ items 3 and 4.
   connected component of `C` has an initial object — then
   `Hom_C(0, ℓ) ≅ 1` makes "choose an element of the index set"
   representable. This is the input-side dual of the O6
-  component-terminal condition (each of the two completions in
-  `FCP` repairs one side: `FP` adjoins terminals, `FC` adjoins
-  initials). Consequences for the paper's examples:
+  component-terminal condition. In the FCP signature only the
+  output side is supplied: `FP(J)` provides the terminal objects
+  O6 needs, while the input side would need componentwise
+  initial objects in `C = FP(I)`, which the signature does not
+  provide (§ 10 item 5). (`FC` adjoins an initial object, but to
+  `FCP(I)` itself, not to the index category the criterion
+  consumes.) Consequences for the paper's examples:
 
   - *Admitted*: the identity (their Lemma 5.3(i); the
     continuation `ι ∘ eval` passes labels through); constants
@@ -424,26 +433,28 @@ items 3 and 4.
     Proposition 6.2) and over `Setᵒᵖ` (Example 3.5:
     element-choice has its surrogate at `Setᵒᵖ`'s initial
     object, and the dependent arity `X∗ = Hom_{Setᵒᵖ}(X, 1)` is
-    itself a hom-arity — genuine induction-recursion survives);
+    itself a hom-arity — the induction-recursion content is
+    retained);
     the universe-to-universe maps of their Example 4.2
     (`Fam(Setᵒᵖ)`, same mechanisms).
   - *Ruled out*: label-discarding `π₀`-nodes over categories
     without componentwise initial objects (the O7 item-2
-    counterexample class — exclusion is forced); the § 4.1
-    normal-forms universe over `Fam(Set≅)` (in a groupoid the
-    element-arity `X∗` is not any `Hom_{Set≅}(c, X)`, and
-    choosing representatives of isomorphism classes is
-    quotient-flavored computation no PRA expresses); the
-    Π-universe outside the discrete case (their Examples
-    2.6/3.6: already excluded over `Set` and `Setᵒᵖ` by the
-    paper's own contravariance obstruction, and its remaining
-    habitat `Set≅` is where hom-labelling forbids the
+    counterexample class — exclusion is forced); the
+    Example 4.1 normal-forms universe over `Fam(Set≅)` (in a
+    groupoid the element-arity `X∗` is not any
+    `Hom_{Set≅}(c, X)`, and computation on isomorphism classes
+    is expressible by no PRA); the Π-universe outside the
+    discrete case (their Examples 2.6/3.6: already excluded
+    over `Set` and `Setᵒᵖ` by the paper's own contravariance
+    obstruction on p. 10, and its remaining domain of
+    applicability `Set≅` is where hom-labelling forbids the
     element-arity).
 
   The restriction therefore costs exactly the groupoid fragment
   (the paper's § 4 elimination examples) and retains the
-  container and Σ-universe canon — no loss relative to this
-  workstream's goals, since the excluded functors are not PRA.
+  container and Σ-universe examples — no loss relative to this
+  workstream's goals, since those excluded functors are not PRA
+  (item 2's argument applies componentwise to `Set≅`).
 
 ## 6. The formula
 
@@ -664,7 +675,7 @@ at the chosen generic elements).
   2. the formula category of § 6.2–6.3, built by applying the
      existing `coprodCovarRepFunctor` / `ccrPresheafCatFunctor`
      machinery to `FC(C)` and whiskering along the inclusion —
-     not by explicit hand-written object/morphism maps;
+     not by explicit object/morphism maps;
   3. the action of `FC` on functors
      (`FC(p) : FC(A) ⥤ FC(B)` for `p : A ⥤ B`, via
      `GrothendieckContra'.map` on a `familyNatTrans'`-style
@@ -731,9 +742,12 @@ at the chosen generic elements).
    and whether it generates *all* of the G1 class or only the
    composites of evaluation-shaped functors (this connects to
    item 1). Two recorded caveats: over the FCP signature
-   `C = FP(I)` componentwise initial objects are not automatic,
-   so the fragment is strictly weaker than IR⁺ there (as
-   required — the excluded functors are not PRA); and the
+   `C = FP(I)` componentwise initial objects are not automatic
+   (`FP((ℤ, ≤))` is connected with no initial object), so the
+   fragment is strictly weaker than IR⁺ there — as required in
+   the verified groupoid cases, whose excluded functors are not
+   PRA; whether bare element-choice over `FP(I)` is ever
+   PRA-extendable is part of this item's question. And the
    precise sub-syntax (hom-filters, hom-arities, pass-through,
    and the corresponding restriction of the code-morphism
    category) remains to be defined. Owner: future work.
