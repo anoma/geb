@@ -155,11 +155,16 @@ consuming exploration is deferred.
 ## Tooling notes
 
 - Linting: `lake lint Geb` (a lib name) is not a valid invocation —
-  `lake lint` names modules. The refresh lints the vendored modules
-  computed from the `.lean` files on disk: `lake lint -- $VMODS` where
-  `VMODS=$(cd vendor/geb-mathlib && find . -name '*.lean' -printf '%P\n'
-  | sed 's|\.lean$||; s|/|.|g')`. This stays generic as the namespace
-  grows.
+  `lake lint` names modules. The refresh lints the single root module:
+  `lake lint -- Geb`. `runLinter` loads one flat environment whose
+  declaration set covers the root module's import closure, so the
+  umbrella module gives whole-tree coverage for one environment's
+  memory cost; enumerating every vendored module on the command line
+  instead loads an environment per module and exhausts memory.
+  `scripts/tests/test-lint-driver.sh` guards both halves of the
+  invariant: the workflow keeps the root-module invocation, and no
+  vendored `Geb.*` module is orphaned from the `Geb` umbrella (an
+  orphan would silently escape the linter).
 - Axiom check: the `GebLeanMeta.detectNonstandardAxiom` env_linter
   scans the vendored `Geb.*` tree via the
   `GebLeanAxiomChecks/Vendored.lean` gate
