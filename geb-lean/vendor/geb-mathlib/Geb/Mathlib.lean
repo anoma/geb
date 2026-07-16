@@ -7,6 +7,7 @@ module
 
 public import Geb.Mathlib.Data
 public import Geb.Mathlib.CategoryTheory
+public import Geb.Mathlib.Logic
 
 /-!
 # Geb.Mathlib — upstream-eligible content for mathlib4

@@ -9,6 +9,7 @@ public import Mathlib.CategoryTheory.Grothendieck
 public import Mathlib.CategoryTheory.Category.Cat.Op
 public import Mathlib.CategoryTheory.Comma.Over.Basic
 public import Mathlib.CategoryTheory.Whiskering
+public import Mathlib.Tactic.Attr.Core
 
 /-!
 # Covariant and contravariant Grothendieck constructions

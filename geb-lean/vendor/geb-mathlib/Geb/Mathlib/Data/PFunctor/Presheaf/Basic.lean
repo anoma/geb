@@ -98,8 +98,8 @@ later diamond via `PresheafDomPFunctorData` and `SlicePFunctor`); pinned
 references to it elsewhere take the synthesized order
 `PresheafDomPFunctorData.{uI, uA, uB, vI}`.
 
-The `@[nolint checkUnivs]` attribute suppresses the
-`checkUnivs` warning on the inherited `PFunctor` universes `uA`/`uB`: they are
+The `@[nolint checkUnivs]` attribute suppresses the `checkUnivs` warning on
+the inherited `PFunctor` universes `uA`/`uB`: they are
 the two `Type` universes of the `PFunctor` parent and appear only together in
 the result `max`, so the linter flags them as a pair that could be unified. The
 warning is independent of the morphism universe: naming `vI` does not remove it,
