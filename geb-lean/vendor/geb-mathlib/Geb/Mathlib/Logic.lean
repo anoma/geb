@@ -5,10 +5,8 @@ Authors: The geb-mathlib contributors
 -/
 module
 
-public import Geb.Mathlib.Data.PFunctor.Slice
-public import Geb.Mathlib.Data.PFunctor.Presheaf
-public import Geb.Mathlib.Data.PFunctor.IndRec
+public import Geb.Mathlib.Logic.Equiv
 
 /-!
-# PFunctor — index
+# Logic — index
 -/
