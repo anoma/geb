@@ -1,5 +1,5 @@
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
-index ba86cbd..5ce254f 100644
+index 4d9e638..e4a8b30 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
@@ -14,12 +14,12 @@ index ba86cbd..5ce254f 100644
  references to it elsewhere take the synthesized order
  `PresheafDomPFunctorData.{uI, uA, uB, vI}`.
  
--The `linter.checkUnivs false` option and `@[nolint checkUnivs]` suppress the
-+The `@[nolint checkUnivs]` attribute suppresses the
- `checkUnivs` warning on the inherited `PFunctor` universes `uA`/`uB`: they are
+-The `linter.checkUnivs false` option suppresses the `checkUnivs` warning on
++The `@[nolint checkUnivs]` attribute suppresses the `checkUnivs` warning on
+ the inherited `PFunctor` universes `uA`/`uB`: they are
  the two `Type` universes of the `PFunctor` parent and appear only together in
  the result `max`, so the linter flags them as a pair that could be unified. The
-@@ -139,7 +140,6 @@ open CategoryTheory
+@@ -139,10 +140,10 @@ open CategoryTheory
  
  universe uI uJ uA uB uZ u v vI vJ uX
  
@@ -27,7 +27,11 @@ index ba86cbd..5ce254f 100644
  /-- Operations of a presheaf-domain polynomial functor over `I`: a
  `SliceDomPFunctor` on `I`'s objects, with the contravariant `I`-action
  `directionRestr` making each arity a presheaf on `I`. -/
-@@ -248,8 +248,7 @@ private theorem value_map {I : Type uI} [Category.{vI} I]
++@[nolint checkUnivs]
+ structure PresheafDomPFunctorData (I : Type uI) [Category.{vI} I] :
+     Type (max (uA + 1) (uB + 1) uI vI)
+     extends SliceDomPFunctor.{uA, uB} I where
+@@ -247,8 +248,7 @@ private theorem value_map {I : Type uI} [Category.{vI} I]
      intro i i' f b
      simp only [value_map]
      refine (congrArg (fun w => α.app ⟨i'⟩ w) (x.2 f b)).trans ?_
@@ -37,7 +41,7 @@ index ba86cbd..5ce254f 100644
  
  /-- Functoriality in the input presheaf: the identity transformation acts as
  the identity. -/
-@@ -278,7 +277,6 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
+@@ -277,10 +277,10 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
  
  end PresheafDomPFunctorData
  
@@ -45,7 +49,11 @@ index ba86cbd..5ce254f 100644
  /-- A presheaf-domain polynomial functor: operations together with a
  proof they are functorial. Its action is a functor `(Iᵒᵖ ⥤ Type) ⥤ Type`
  (packaged in `Presheaf.Functor`). -/
-@@ -291,7 +289,6 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
++@[nolint checkUnivs]
+ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
+     Type (max (uA + 1) (uB + 1) uI vI)
+     extends PresheafDomPFunctorData.{uI, uA, uB, vI} I where
+@@ -289,10 +289,10 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
  
  attribute [ext] PresheafDomPFunctorData PresheafDomPFunctor
  
@@ -53,14 +61,21 @@ index ba86cbd..5ce254f 100644
  /-- Operations of a presheaf polynomial functor `(Iᵒᵖ ⥤ Type) → (Jᵒᵖ ⥤ Type)`:
  the dom operations plus the shape-output map `q` (via `SlicePFunctor`), the
  `J`-action `shapeRestr` on shapes, and the arity reindexing `reindex`. -/
-@@ -385,7 +382,6 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
++@[nolint checkUnivs]
+ structure PresheafPFunctorData (I : Type uI) [Category.{vI} I]
+     (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
+     extends PresheafDomPFunctorData.{uI, uA, uB, vI} I, SlicePFunctor.{uA, uB, uI, uJ} I J where
+@@ -382,9 +382,9 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
  
  end PresheafPFunctorData
  
 -set_option linter.checkUnivs false in
  /-- A presheaf polynomial functor: operations together with a proof they are
  functorial. Its action is a functor `(Iᵒᵖ ⥤ Type) ⥤ (Jᵒᵖ ⥤ Type)`. -/
- @[nolint checkUnivs]
++@[nolint checkUnivs]
+ structure PresheafPFunctor (I : Type uI) [Category.{vI} I]
+     (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
+     extends PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J where
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 index 9adfe8d..1c48437 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
@@ -83,7 +98,7 @@ index 9adfe8d..1c48437 100644
            (⟨⟨F.objRestrElt f (pnodeSlice (fun b => pelimData F Y α (fchild b)) hv hn.1) hqi,
              hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
-index d810684..dcca284 100644
+index 3126bdd..dcca284 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
@@ -94,22 +109,26 @@ index d810684..dcca284 100644
  module
  
  public import Mathlib.Data.PFunctor.Univariate.Basic
-@@ -89,7 +90,6 @@ public section
+@@ -89,17 +90,17 @@ public section
  
  universe uA uB uD uC uX uX' uY uZ
  
 -set_option linter.checkUnivs false in
  /-- A polynomial functor with a direction-input map `r` assigning each
  `(shape, direction)` pair (an element of `PFunctor.Idx`) a `dom`-index. -/
- @[nolint checkUnivs]
-@@ -98,7 +98,6 @@ structure SliceDomPFunctor (dom : Type uD) : Type (max (uA + 1) (uB + 1) uD)
++@[nolint checkUnivs]
+ structure SliceDomPFunctor (dom : Type uD) : Type (max (uA + 1) (uB + 1) uD)
+     extends PFunctor.{uA, uB} where
    /-- The direction-input map: each direction is assigned a `dom`-index. -/
    r : toPFunctor.Idx → dom
  
 -set_option linter.checkUnivs false in
  /-- A `SliceDomPFunctor` with a shape-output map `q` assigning each shape a
  `cod`-index. -/
- @[nolint checkUnivs]
++@[nolint checkUnivs]
+ structure SlicePFunctor (dom : Type uD) (cod : Type uC) : Type (max (uA + 1) (uB + 1) uC uD)
+     extends SliceDomPFunctor.{uA, uB, uD} dom where
+   /-- The shape-output map: each shape is assigned a `cod`-index. -/
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
 index 5c048ee..f1e06ab 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
