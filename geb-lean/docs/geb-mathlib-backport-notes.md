@@ -138,10 +138,13 @@ the same upstream revision is a no-op: the regenerated vendored source
 is byte-identical to what the update produced. After the patch and the
 regenerated vendored tree are committed together,
 `scripts/refresh-geb-mathlib.sh <rev>` followed by
-`git diff -- vendor/geb-mathlib` must leave every `.lean` file and
-`LICENSE` unchanged. `PROVENANCE.md` is excluded from the check: it
-records the upstream and patch commit SHAs, which change when the patch
-is committed.
+`git diff -- vendor/geb-mathlib` must leave the tree unchanged.
+`PROVENANCE.md` participates in the check: it records the upstream
+commit SHA and a content checksum of the patch, both of which are
+stable under a same-inputs re-run. When a refresh changes nothing but
+`PROVENANCE.md` (for example, a new upstream revision touching none of
+the mirrored files), the script restores `PROVENANCE.md` so the
+refresh workflow opens no pull request.
 
 ## The hard wall
 
