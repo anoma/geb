@@ -154,7 +154,7 @@ direction, hereditarily. The local conjunct is the tree analogue of
 slice W-type's `Prop`-valued paramorphism `SlicePFunctor.W.recProp`. -/
 @[expose] def IsHereditarilyNatural {I : Type uI} [Category.{vI} I]
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I) : F.toSlicePFunctor.W → Prop :=
-  SlicePFunctor.W.recProp (fun x ih =>
+  SlicePFunctor.W.recProp (fun x ih ↦
     (∀ ⦃i i' : I⦄ (g : i' ⟶ i) (b : F.toSliceDomPFunctor.Direction x.1.1 i),
         x.1.2 (F.directionRestr x.1.1 g b).1
           = F.wRestrTree g (x.1.2 b.1)
@@ -219,7 +219,7 @@ theorem isHereditarilyNatural_wRestrTree {I : Type uI} [Category.{vI} I]
     · intro i i' h b
       obtain ⟨bv, rfl⟩ := b
       rw [F.snd_objRestrElt]
-      exact (congrArg (fun d => (SlicePFunctor.W.dest ⟨WType.mk a fchild, hvalid⟩).1.2 d.1)
+      exact (congrArg (fun d ↦ (SlicePFunctor.W.dest ⟨WType.mk a fchild, hvalid⟩).1.2 d.1)
           (congrFun (F.isFunctorial.reindex_naturality g ⟨a, hq⟩ h) ⟨bv, rfl⟩).symm).trans
         (hz_local h (F.reindex g ⟨a, hq⟩ ⟨bv, rfl⟩))
     · intro b
@@ -236,7 +236,7 @@ restricted root shape via `shapeRestr`) and hereditary naturality (preserved by
         F.toSlicePFunctor.windex w = j ∧ F.IsHereditarilyNatural w } →
       ULift.{uI} { w : F.toSlicePFunctor.W //
         F.toSlicePFunctor.windex w = j' ∧ F.IsHereditarilyNatural w } :=
-  fun w => ULift.up
+  fun w ↦ ULift.up
     ⟨F.wRestrTree g w.down.1 w.down.2.1,
       F.windex_wRestrTree g w.down.1 w.down.2.1,
       F.isHereditarilyNatural_wRestrTree g w.down.1 w.down.2.1 w.down.2.2⟩
@@ -292,7 +292,7 @@ underlying slice W-tree unchanged. -/
 private theorem cast_down {I : Type uI} [Category.{vI} I]
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I) {k k' : I} (e : k = k')
     (u : (F.W).obj ⟨k⟩) :
-    (cast (congrArg (fun k : I => (F.W).obj ⟨k⟩) e) u).down.1 = u.down.1 := by
+    (cast (congrArg (fun k : I ↦ (F.W).obj ⟨k⟩) e) u).down.1 = u.down.1 := by
   cases e
   rfl
 
@@ -342,8 +342,8 @@ underlying slice W-tree of its carried fibre element. -/
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I)
     (n : F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj (F.W))) :
     F.toSliceDomPFunctor.Obj F.toSlicePFunctor.windex :=
-  ⟨⟨n.1.1, fun b => (n.1.2 b).2.down.1⟩,
-    (F.toSliceDomPFunctor.compatible_iff F.toSlicePFunctor.windex _ _).mpr fun b =>
+  ⟨⟨n.1.1, fun b ↦ (n.1.2 b).2.down.1⟩,
+    (F.toSliceDomPFunctor.compatible_iff F.toSlicePFunctor.windex _ _).mpr fun b ↦
       ((n.1.2 b).2.down.2.1).trans
         ((F.toSliceDomPFunctor.compatible_iff (PresheafDomPFunctorData.elemProj (F.W)) _ _).mp
           n.2 b)⟩
@@ -357,9 +357,9 @@ each direction to the carried fibre element built from the child tree, its index
     (y : F.toSliceDomPFunctor.Obj F.toSlicePFunctor.windex)
     (hchildren : ∀ b, F.IsHereditarilyNatural (y.1.2 b)) :
     F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj (F.W)) :=
-  ⟨⟨y.1.1, fun b => ⟨F.toSlicePFunctor.windex (y.1.2 b),
+  ⟨⟨y.1.1, fun b ↦ ⟨F.toSlicePFunctor.windex (y.1.2 b),
       ULift.up ⟨y.1.2 b, rfl, hchildren b⟩⟩⟩,
-    (F.toSliceDomPFunctor.compatible_iff (PresheafDomPFunctorData.elemProj (F.W)) _ _).mpr fun b =>
+    (F.toSliceDomPFunctor.compatible_iff (PresheafDomPFunctorData.elemProj (F.W)) _ _).mpr fun b ↦
       (F.toSliceDomPFunctor.compatible_iff F.toSlicePFunctor.windex _ _).mp y.2 b⟩
 
 /-- `rememberNode` depends on the slice node only, not the hereditary-naturality
@@ -392,7 +392,7 @@ private theorem rememberNode_forgetNode {I : Type uI} [Category.{vI} I]
     rememberNode F (forgetNode F n) hchildren = n := by
   apply Subtype.ext
   obtain ⟨⟨a, v⟩, hc⟩ := n
-  exact Sigma.ext rfl (heq_of_eq (funext fun b => sigma_eta F (v b).2))
+  exact Sigma.ext rfl (heq_of_eq (funext fun b ↦ sigma_eta F (v b).2))
 
 /-- The hereditary naturality of the slice tree built from a presheaf node over
 `F.W` is exactly the naturality of the node: the recursive conjunct of
@@ -411,8 +411,8 @@ theorem isHereditarilyNatural_mk_forgetNode {I : Type uI} [Category.{vI} I]
     simp only [value_down, map_down]
     exact hloc f b
   · intro hnat
-    refine ⟨fun i i' g b => ?_, fun b => (n.1.2 b).2.down.2.2⟩
-    have h := congrArg (fun u => u.down.1) (hnat g b)
+    refine ⟨fun i i' g b ↦ ?_, fun b ↦ (n.1.2 b).2.down.2.2⟩
+    have h := congrArg (fun u ↦ u.down.1) (hnat g b)
     simp only [value_down, map_down] at h
     exact h
 
@@ -464,7 +464,7 @@ theorem dest_mk {I : Type uI} [Category.{vI} I]
   change rememberNode F (SlicePFunctor.W.dest (F := F.toSlicePFunctor)
     (SlicePFunctor.W.mk (F := F.toSlicePFunctor) (forgetNode F x.1.1))) hch = x.1.1
   have hy' : ∀ b, F.IsHereditarilyNatural ((forgetNode F x.1.1).1.2 b) :=
-    fun b => (x.1.1.1.2 b).2.down.2.2
+    fun b ↦ (x.1.1.1.2 b).2.down.2.2
   exact (rememberNode_eq F hch hy'
     (SlicePFunctor.W.dest_mk (F := F.toSlicePFunctor) (forgetNode F x.1.1))).trans
     (rememberNode_forgetNode F x.1.1 hy')
@@ -510,12 +510,12 @@ node's `OverInput`. -/
     {F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I}
     {Y : Iᵒᵖ ⥤ Type (max uI uA uB)} {a : F.toPFunctor.A}
     (c : F.toPFunctor.B a → PElimData F Y)
-    (hv : F.toSlicePFunctor.NodeValid a (fun b => (c b).toWIndex))
+    (hv : F.toSlicePFunctor.NodeValid a (fun b ↦ (c b).toWIndex))
     (hc : ∀ b, (c b).H (hv.1 b)) :
     F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj Y) :=
-  ⟨⟨a, fun b => (c b).value (hv.1 b) (hc b)⟩,
+  ⟨⟨a, fun b ↦ (c b).value (hv.1 b) (hc b)⟩,
     (F.toSliceDomPFunctor.compatible_iff (PresheafDomPFunctorData.elemProj Y) a _).mpr
-      fun b => ((c b).over (hv.1 b) (hc b)).trans (congrFun hv.2 b)⟩
+      fun b ↦ ((c b).over (hv.1 b) (hc b)).trans (congrFun hv.2 b)⟩
 
 /-- The value-fold algebra step: index and admissibility as for `windexStep`; a
 hereditary-naturality proxy `H` combining the children's proxies with the
@@ -525,14 +525,14 @@ presheaf algebra `α` to that node, packaged over the shape's `q`-output index. 
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I)
     (Y : Iᵒᵖ ⥤ Type (max uI uA uB)) (α : NatTrans (F.objPresheaf Y) Y) :
     F.toPFunctor.Obj (PElimData F Y) → PElimData F Y :=
-  fun x =>
+  fun x ↦
     { index := F.q x.1
-      valid := F.toSlicePFunctor.NodeValid x.1 (fun b => (x.2 b).toWIndex)
-      H := fun hv => (∀ b, (x.2 b).H (hv.1 b)) ∧
+      valid := F.toSlicePFunctor.NodeValid x.1 (fun b ↦ (x.2 b).toWIndex)
+      H := fun hv ↦ (∀ b, (x.2 b).H (hv.1 b)) ∧
         (∀ hc : (∀ b, (x.2 b).H (hv.1 b)), F.IsNatural (pnodeSlice x.2 hv hc))
-      value := fun hv hn =>
+      value := fun hv hn ↦
         ⟨F.q x.1, α.app ⟨F.q x.1⟩ ⟨⟨pnodeSlice x.2 hv hn.1, hn.2 hn.1⟩, rfl⟩⟩
-      over := fun _ _ => rfl }
+      over := fun _ _ ↦ rfl }
 
 /-- The value fold: the `F.toPFunctor`-algebra morphism into
 `(PElimData F Y, pelimStep)` given by `WType.elim`, a single non-dependent fold
@@ -551,10 +551,10 @@ theorem pelimData_toWIndex {I : Type uI} [Category.{vI} I]
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I)
     (Y : Iᵒᵖ ⥤ Type (max uI uA uB)) (α : NatTrans (F.objPresheaf Y) Y) (w : F.toPFunctor.W) :
     (pelimData F Y α w).toWIndex = F.windexValid w :=
-  WType.rec (motive := fun w => (pelimData F Y α w).toWIndex = F.windexValid w)
-    (fun a f ih => by
-      change F.windexStep ⟨a, fun b => (pelimData F Y α (f b)).toWIndex⟩ =
-        F.windexStep ⟨a, fun b => F.windexValid (f b)⟩
+  WType.rec (motive := fun w ↦ (pelimData F Y α w).toWIndex = F.windexValid w)
+    (fun a f ih ↦ by
+      change F.windexStep ⟨a, fun b ↦ (pelimData F Y α (f b)).toWIndex⟩ =
+        F.windexStep ⟨a, fun b ↦ F.windexValid (f b)⟩
       rw [funext ih])
     w
 
@@ -605,7 +605,7 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
     (hv' : (pelimData F Y α (F.wRestrTree f t hqi).1).valid)
     (hn' : (pelimData F Y α (F.wRestrTree f t hqi).1).H hv') :
     (pelimData F Y α (F.wRestrTree f t hqi).1).value hv' hn' =
-      ⟨i', Y.map f.op (cast (congrArg (fun k : I => Y.obj ⟨k⟩)
+      ⟨i', Y.map f.op (cast (congrArg (fun k : I ↦ Y.obj ⟨k⟩)
           (((pelimData F Y α t.1).over hv hn).trans
             ((pelimData_index F Y α t.1).trans hqi)))
         ((pelimData F Y α t.1).value hv hn).2)⟩ := by
@@ -616,16 +616,16 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
     have hqa : F.q a = i := hqi
     subst hqa
     have hnat :
-        Y.map f.op (α.app ⟨F.q a⟩ (⟨⟨pnodeSlice (fun b => pelimData F Y α (fchild b)) hv hn.1,
+        Y.map f.op (α.app ⟨F.q a⟩ (⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1,
             hn.2 hn.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q a⟩)) =
           α.app ⟨i'⟩ ((F.objPresheaf Y).map f.op
-            ⟨⟨pnodeSlice (fun b => pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) := by
+            ⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) := by
       exact (FunctorToTypes.naturality _ _ α f.op _).symm
     change (α.app ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩
-          (⟨⟨F.objRestrElt f (pnodeSlice (fun b => pelimData F Y α (fchild b)) hv hn.1) hqi,
+          (⟨⟨F.objRestrElt f (pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1) hqi,
             hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
         Y.map f.op (α.app ⟨F.q a⟩
-          (⟨⟨pnodeSlice (fun b => pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩ :
+          (⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩ :
             (F.objPresheaf Y).obj ⟨F.q a⟩))
     rw [hnat]
     exact app_heq α (F.shapeRestr f ⟨a, hqi⟩).2
@@ -639,21 +639,21 @@ private theorem isNatural_pnodeSlice {I : Type uI} [Category.{vI} I]
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I)
     (Y : Iᵒᵖ ⥤ Type (max uI uA uB)) (α : NatTrans (F.objPresheaf Y) Y)
     {a : F.toPFunctor.A} (fc : F.toPFunctor.B a → F.toSlicePFunctor.W)
-    (hv : F.toSlicePFunctor.NodeValid a (fun b => (pelimData F Y α (fc b).1).toWIndex))
+    (hv : F.toSlicePFunctor.NodeValid a (fun b ↦ (pelimData F Y α (fc b).1).toWIndex))
     (hc : ∀ b, (pelimData F Y α (fc b).1).H (hv.1 b))
     (hloc : ∀ ⦃i i' : I⦄ (g : i' ⟶ i) (b : F.toSliceDomPFunctor.Direction a i)
         (hq : F.q (PFunctor.W.head (fc b.1).1) = i),
         fc (F.directionRestr a g b).1 = F.wRestrTree g (fc b.1) hq) :
-    F.IsNatural (pnodeSlice (fun b => pelimData F Y α (fc b).1) hv hc) := by
+    F.IsNatural (pnodeSlice (fun b ↦ pelimData F Y α (fc b).1) hv hc) := by
   intro i i' g b
-  change F.value (pnodeSlice (fun b => pelimData F Y α (fc b).1) hv hc) (F.directionRestr a g b) =
-    Y.map g.op (F.value (pnodeSlice (fun b => pelimData F Y α (fc b).1) hv hc) b)
+  change F.value (pnodeSlice (fun b ↦ pelimData F Y α (fc b).1) hv hc) (F.directionRestr a g b) =
+    Y.map g.op (F.value (pnodeSlice (fun b ↦ pelimData F Y α (fc b).1) hv hc) b)
   have hqit : F.q (PFunctor.W.head (fc b.1).1) = i :=
     (pelimData_index F Y α (fc b.1).1).symm.trans ((congrFun hv.2 b.1).trans b.2)
   have hgen : ∀ (T : F.toSlicePFunctor.W) (hvT : (pelimData F Y α T.1).valid)
       (hnT : (pelimData F Y α T.1).H hvT), T = F.wRestrTree g (fc b.1) hqit →
       (pelimData F Y α T.1).value hvT hnT =
-        ⟨i', Y.map g.op (cast (congrArg (fun k : I => Y.obj ⟨k⟩)
+        ⟨i', Y.map g.op (cast (congrArg (fun k : I ↦ Y.obj ⟨k⟩)
             (((pelimData F Y α (fc b.1).1).over (hv.1 b.1) (hc b.1)).trans
               ((pelimData_index F Y α (fc b.1).1).trans hqit)))
           ((pelimData F Y α (fc b.1).1).value (hv.1 b.1) (hc b.1)).2)⟩ := by
@@ -661,9 +661,9 @@ private theorem isNatural_pnodeSlice {I : Type uI} [Category.{vI} I]
     subst hT
     exact value_wRestrTree F Y α (fc b.1) g hqit (hv.1 b.1) (hc b.1) hvT hnT
   have hchild :
-      (pnodeSlice (fun b => pelimData F Y α (fc b).1) hv hc).1.2
+      (pnodeSlice (fun b ↦ pelimData F Y α (fc b).1) hv hc).1.2
           (F.directionRestr a g b).1 =
-        ⟨i', Y.map g.op (cast (congrArg (fun k : I => Y.obj ⟨k⟩)
+        ⟨i', Y.map g.op (cast (congrArg (fun k : I ↦ Y.obj ⟨k⟩)
             (((pelimData F Y α (fc b.1).1).over (hv.1 b.1) (hc b.1)).trans
               ((pelimData_index F Y α (fc b.1).1).trans hqit)))
           ((pelimData F Y α (fc b.1).1).value (hv.1 b.1) (hc b.1)).2)⟩ :=
@@ -684,13 +684,13 @@ theorem pelimData_H_of_isHN {I : Type uI} [Category.{vI} I]
     (w : F.toSlicePFunctor.W) (hv : (pelimData F Y α w.1).valid)
     (hn : F.IsHereditarilyNatural w) : (pelimData F Y α w.1).H hv :=
   SlicePFunctor.W.ind
-    (motive := fun z => ∀ (hv : (pelimData F Y α z.1).valid),
+    (motive := fun z ↦ ∀ (hv : (pelimData F Y α z.1).valid),
       F.IsHereditarilyNatural z → (pelimData F Y α z.1).H hv)
-    (fun x ih hv hHN => by
-      refine ⟨fun b => ih b (hv.1 b) (((F.isHereditarilyNatural_mk x).mp hHN).2 b), fun _ => ?_⟩
+    (fun x ih hv hHN ↦ by
+      refine ⟨fun b ↦ ih b (hv.1 b) (((F.isHereditarilyNatural_mk x).mp hHN).2 b), fun _ ↦ ?_⟩
       exact isNatural_pnodeSlice F Y α x.1.2 hv
-        (fun b => ih b (hv.1 b) (((F.isHereditarilyNatural_mk x).mp hHN).2 b))
-        (fun _ _ g b _ => ((F.isHereditarilyNatural_mk x).mp hHN).1 g b))
+        (fun b ↦ ih b (hv.1 b) (((F.isHereditarilyNatural_mk x).mp hHN).2 b))
+        (fun _ _ g b _ ↦ ((F.isHereditarilyNatural_mk x).mp hHN).1 g b))
     w hv hn
 
 /-- The fibre value the fold contributes to a validated hereditarily-natural
@@ -700,7 +700,7 @@ fibre over `j` through the fold's `over` law and root-index agreement. -/
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I)
     (Y : Iᵒᵖ ⥤ Type (max uI uA uB)) (α : NatTrans (F.objPresheaf Y) Y) {j : I}
     (z : (F.W).obj ⟨j⟩) : Y.obj ⟨j⟩ :=
-  cast (congrArg (fun i : I => Y.obj ⟨i⟩)
+  cast (congrArg (fun i : I ↦ Y.obj ⟨i⟩)
       ((((pelimData F Y α z.down.1.1).over
           ((pelimData_valid F Y α z.down.1.1) ▸ z.down.1.2)
           (pelimData_H_of_isHN F Y α z.down.1
@@ -757,7 +757,7 @@ presheaf algebra `(Y, α)`. Its component over `j` is the bespoke value fold
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I)
     (Y : Iᵒᵖ ⥤ Type (max uI uA uB)) (α : NatTrans (F.objPresheaf Y) Y) :
     NatTrans F.W Y where
-  app j := ↾ fun z => elimVal F Y α (j := j.unop) z
+  app j := ↾ fun z ↦ elimVal F Y α (j := j.unop) z
   naturality _ _ g := by
     ext z
     exact elimVal_wRestr F Y α g.unop z
@@ -787,7 +787,7 @@ theorem elim_mk {I : Type uI} [Category.{vI} I]
   have hq : F.q x.1.1.1.1 = j := x.2
   have hchild : ∀ b, (pelimData F Y α (x.1.1.1.2 b).2.down.1.1).value (hv.1 b) (hn.1 b)
       = (⟨(x.1.1.1.2 b).1, elimVal F Y α (x.1.1.1.2 b).2⟩ : Σ i : I, Y.obj ⟨i⟩) :=
-    fun b => value_eq_elimVal F Y α (x.1.1.1.2 b).2 (hv.1 b) (hn.1 b)
+    fun b ↦ value_eq_elimVal F Y α (x.1.1.1.2 b).2 (hv.1 b) (hn.1 b)
   have hval := value_eq_elimVal F Y α (mk x) hv hn
   apply eq_of_heq
   refine ((Sigma.ext_iff.mp hval).2.symm).trans ?_
@@ -795,7 +795,7 @@ theorem elim_mk {I : Type uI} [Category.{vI} I]
   refine objPresheaf_obj_heq F Y hq ?_
   apply Subtype.ext
   apply Subtype.ext
-  exact Sigma.ext rfl (heq_of_eq (funext fun b => hchild b))
+  exact Sigma.ext rfl (heq_of_eq (funext fun b ↦ hchild b))
 
 end W
 

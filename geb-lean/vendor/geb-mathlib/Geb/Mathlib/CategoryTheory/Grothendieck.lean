@@ -284,7 +284,7 @@ theorem homFiber_map_map {F F' : C ⥤ Cat.{v₂, u₂}} (α : F ⟶ F')
     homFiber ((map α).map f) =
       (α.app Y.base).toFunctor.map (homFiber f) ≫
         eqToHom (congrArg
-          (fun p : F.obj X.base ⟶ F'.obj Y.base =>
+          (fun p : F.obj X.base ⟶ F'.obj Y.base ↦
             p.toFunctor.obj X.fiber)
           (α.naturality (homBase f))) := by
   simp only [map, homBase, homFiber, Grothendieck.map_map_fiber, Functor.comp_map,
@@ -518,7 +518,7 @@ theorem homFiber_map_map {G G' : Cᵒᵖ ⥤ Cat.{v₂, u₂}} (α : G ⟶ G')
       (α.app (Opposite.op X.base)).toFunctor.map (homFiber f) ≫
         eqToHom (congrArg
           (fun p : G.obj (Opposite.op Y.base) ⟶
-              G'.obj (Opposite.op X.base) =>
+              G'.obj (Opposite.op X.base) ↦
             p.toFunctor.obj Y.fiber)
           (α.naturality ((homBase f).op))) :=
   GrothendieckOp.homFiber_map_map α (Quiver.Hom.unop f)
