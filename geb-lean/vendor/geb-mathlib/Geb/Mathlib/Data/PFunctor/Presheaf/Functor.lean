@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The geb-mathlib contributors
+Authors: Terence Rokop
 -/
 module
 
@@ -9,17 +9,17 @@ public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
 public import Mathlib.CategoryTheory.Elements
 
 /-!
-# Presheaf-domain polynomial functors: categorical wrapper
+# Presheaf polynomial functors: categorical wrapper
 
-Packages the constructive core (`Presheaf.Basic`) as a
-`CategoryTheory.Functor` on the presheaf category `Iᵒᵖ ⥤ Type`. The
+Packages the constructive core (`Presheaf.Basic`) as `CategoryTheory.Functor`
+values: the domain-side functor `(Iᵒᵖ ⥤ Type) ⥤ Type` and the presheaf
+polynomial functor `(Iᵒᵖ ⥤ Type) ⥤ (Jᵒᵖ ⥤ Type)`. The
 functor-category packaging — constructing `CategoryTheory.Functor` objects
 over presheaf categories and discharging their laws — is
 `Classical.choice`-dependent, so this packaging is kept in a separate
-module from the choice-free core; the module
-`Data.PFunctor.Presheaf.Functor` is on
-`GebMeta.classicalAllowedModules`. The notation `↾` (`TypeCat.ofHom`) is
-choice-free: `objPresheaf` uses `↾` and is `{propext, Quot.sound}`. This
+module from the choice-free core. The notation `↾` (`TypeCat.ofHom`) is
+itself choice-free: `objPresheaf` uses `↾` and depends only on `propext`
+and `Quot.sound`. This
 module also relates the core to mathlib's category of elements:
 `elemMap_eq_categoryOfElements_map` proves the choice-free core `elemMap` is
 the object map of mathlib's `Classical.choice`-dependent
@@ -36,7 +36,7 @@ the object map of mathlib's `Classical.choice`-dependent
 
 * `PresheafPFunctor.functor_obj` / `functor_map` — the categorical functor's
   object map is the core `objPresheaf`, and its morphism map is the
-  dom `map` restricted to the `q`-indexed fibre.
+  dom `map` restricted to the `q`-indexed fiber.
 * `PresheafDomPFunctorData.elemMap_eq_categoryOfElements_map` — the core's
   choice-free `elemMap` is the object map of mathlib's
   `Classical.choice`-dependent `CategoryOfElements.map`, across `toElements`.
@@ -53,7 +53,7 @@ shortcut: the codomain is a plain type category, not an `Over` category.
 `functor` assembles directly: its object map is `objPresheaf`, and its morphism
 map is the core `mapPresheaf` — the natural transformation a
 functor-category hom `α` induces, whose component is the dom `map α` restricted
-to the `q`-indexed fibre (the dom map preserves the output index, so it
+to the `q`-indexed fiber (the dom map preserves the output index, so it
 restricts), with naturality `map_objRestr`. The outer functor laws come from
 the dom `map_id` / `map_comp`. There is no `Functor.toOver`
 analogue for presheaf codomains. The morphism universes of `I` and `J` are
@@ -139,7 +139,7 @@ theorem functor_obj {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ}
     F.functor.obj Z = F.objPresheaf Z :=
   rfl
 
-/-- `functor.map`'s component over `j`, applied to a `q`-indexed fibre element,
+/-- `functor.map`'s component over `j`, applied to a `q`-indexed fiber element,
 applies the dom `map` to the underlying element: its underlying dom value is
 the dom `map α` of the input's. -/
 theorem functor_map {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ} J]

@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The geb-mathlib contributors
+Authors: Terence Rokop
 -/
 -- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
 module
@@ -12,21 +12,24 @@ public import Mathlib.CategoryTheory.Opposites
 public import Mathlib.CategoryTheory.Types.Basic
 
 /-!
-# Presheaf-domain polynomial functors (constructive core)
+# Presheaf polynomial functors (constructive core)
 
 A presheaf-domain polynomial functor extends a `SliceDomPFunctor` on the
 objects of a category `I` with a contravariant `I`-action on arities: for
 each shape `a`, the assignment `i ↦ Direction a i` extends to a presheaf on
-`I` via a restriction map `directionRestr a f`. This file is the p.r.a. (parametric
-right adjoint) construction restricted to the domain side; the full
-categorical packaging appears in sibling modules. Every declaration here is
+`I` via a restriction map `directionRestr a f`. A presheaf polynomial functor
+adds the shape-output side: a `J`-action `shapeRestr` on shapes with an arity
+reindexing `reindex`, assembling the output as a presheaf on `J`. This file
+is the constructive core of the p.r.a. (parametric right adjoint)
+construction, both the domain-restricted functor and the full
+`(Iᵒᵖ ⥤ Type) → (Jᵒᵖ ⥤ Type)` action. Every declaration here is
 `Classical.choice`-free; the categorical packaging that pulls in
 `Classical.choice` from mathlib is in the sibling `Presheaf.Functor` module.
 
-The design uses the option-(A) fibre encoding: directions over `i` are
-`SliceDomPFunctor.Direction a i = Subtype (DirectionOver a i)`, the fibre of
+Directions over `i` are
+`SliceDomPFunctor.Direction a i = Subtype (DirectionOver a i)`, the fiber of
 the direction-input map `rCurried a` over `i`. The `directionRestr` field
-reindexes these fibres contravariantly.
+reindexes these fibers contravariantly.
 
 ## Main definitions
 
@@ -56,7 +59,8 @@ reindexes these fibres contravariantly.
 * `PresheafPFunctorData.IsFunctorial` — the full functor laws bundled.
 * `PresheafPFunctor` — the full bundle: operations with a functoriality proof.
 * `PresheafPFunctor.objRestrElt` / `objRestr` — the restriction action of the
-  output presheaf on a `J`-morphism, on the dom value and on `F.obj Z`.
+  output presheaf on a `J`-morphism, on a slice element over an arbitrary
+  projection and on `F.obj Z`.
 * `PresheafPFunctor.objPresheaf` — the output presheaf `T(Z) : Jᵒᵖ ⥤ Type`, a
   `Functor` value with `map_id` / `map_comp` discharged from `isFunctorial`.
 * `PresheafPFunctor.mapPresheaf` — the presheaf morphism
@@ -93,7 +97,7 @@ The morphism universes of `I` and `J` are named `vI` and `vJ` (via
 `[Category.{vI} I]` / `[Category.{vJ} J]`), and every parent and presheaf-functor
 argument pins its universes, so no declaration's signature carries an auto-bound
 `u_N` variable. `PresheafDomPFunctorData` uses
-`extends SliceDomPFunctor.{uA, uB} I` with pinned universes (load-bearing for a
+`extends SliceDomPFunctor.{uA, uB} I` with pinned universes (required for a
 later diamond via `PresheafDomPFunctorData` and `SlicePFunctor`); pinned
 references to it elsewhere take the synthesized order
 `PresheafDomPFunctorData.{uI, uA, uB, vI}`.
@@ -328,7 +332,7 @@ namespace PresheafPFunctorData
 /-- Each `reindex g a` commutes with `directionRestr` (a presheaf morphism
 `E_T(shapeRestr g a) ⟶ E_T(a)`): for `f : i' ⟶ i`,
 `directionRestr a.1 f ∘ reindex g a = reindex g a ∘ directionRestr (shapeRestr g a).1 f`.
-Ordinary fibre maps only; no `shapeRestr` transport. -/
+Ordinary fiber maps only; no `shapeRestr` transport. -/
 @[expose] def ReindexNaturality {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ} J]
     (F : PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J) : Prop :=
   ∀ ⦃j j' : J⦄ (g : j' ⟶ j) (a : F.Shape j) ⦃i i' : I⦄ (f : i' ⟶ i),
@@ -391,8 +395,7 @@ structure PresheafPFunctor (I : Type uI) [Category.{vI} I]
   /-- Proof the operations are functorial. -/
   isFunctorial : toPresheafPFunctorData.IsFunctorial
 
-attribute [ext] PresheafPFunctorData
-  PresheafPFunctor
+attribute [ext] PresheafPFunctorData PresheafPFunctor
 
 namespace PresheafPFunctor
 
@@ -520,7 +523,7 @@ theorem objRestrElt_comp {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category
     (F.cast_val_heq (congrFun (F.isFunctorial.shapeRestr_comp g h) ⟨a, hq⟩) ⟨b1, rfl⟩) hb
 
 /-- The output presheaf `T(Z) : Jᵒᵖ ⥤ Type`, built directly as a `Functor`
-value. Its fibre over `j` is the subtype of the dom value `F.obj Z` whose
+value. Its fiber over `j` is the subtype of the dom value `F.obj Z` whose
 `q`-output index is `j`; its restriction maps are the shape-and-direction
 reindex action `objRestr`, whose `map_id` / `map_comp` are discharged
 from `F.isFunctorial`. -/
@@ -538,7 +541,7 @@ from `F.isFunctorial`. -/
     exact F.objRestrElt_comp g.unop h.unop w.1.1 w.2 (F.shapeRestr g.unop ⟨w.1.shape, w.2⟩).2
 
 /-- Naturality of the dom morphism map with respect to `objPresheaf`'s
-`J`-restriction: for `α : NatTrans Z Z'`, the dom `map α` carries the fibre of
+`J`-restriction: for `α : NatTrans Z Z'`, the dom `map α` carries the fiber of
 `objPresheaf Z` over `j` into that of `objPresheaf Z'` (it preserves the
 `q`-output index, the shape being fixed by `SliceDomPFunctor.map_fst`) and
 commutes with the shape-and-direction reindex restriction `objRestr g`. The
@@ -555,7 +558,7 @@ theorem map_objRestr {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ
 
 /-- The natural transformation `objPresheaf Z ⟶ objPresheaf Z'` induced by a
 morphism `α : Z ⟶ Z'` of input presheaves: each component is the dom `map α` on
-the underlying element, restricted to the `q`-indexed fibre (the dom map
+the underlying element, restricted to the `q`-indexed fiber (the dom map
 preserves the output index, the shape being fixed by
 `SliceDomPFunctor.map_fst`); naturality is `map_objRestr`. The categorical
 wrapper `functor.map` reuses it. -/

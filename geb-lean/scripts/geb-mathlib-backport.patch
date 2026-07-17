@@ -1,16 +1,16 @@
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
-index 429483f..8754442 100644
+index 004265e..fc173cb 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
- Authors: The geb-mathlib contributors
+ Authors: Terence Rokop
  -/
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module
  
  public import Geb.Mathlib.Data.PFunctor.Slice.Basic
-@@ -97,7 +98,7 @@ later diamond via `PresheafDomPFunctorData` and `SlicePFunctor`); pinned
+@@ -101,7 +102,7 @@ later diamond via `PresheafDomPFunctorData` and `SlicePFunctor`); pinned
  references to it elsewhere take the synthesized order
  `PresheafDomPFunctorData.{uI, uA, uB, vI}`.
  
@@ -19,7 +19,7 @@ index 429483f..8754442 100644
  the inherited `PFunctor` universes `uA`/`uB`: they are
  the two `Type` universes of the `PFunctor` parent and appear only together in
  the result `max`, so the linter flags them as a pair that could be unified. The
-@@ -139,10 +140,10 @@ open CategoryTheory
+@@ -143,10 +144,10 @@ open CategoryTheory
  
  universe uI uJ uA uB uZ u v vI vJ uX
  
@@ -31,7 +31,7 @@ index 429483f..8754442 100644
  structure PresheafDomPFunctorData (I : Type uI) [Category.{vI} I] :
      Type (max (uA + 1) (uB + 1) uI vI)
      extends SliceDomPFunctor.{uA, uB} I where
-@@ -247,8 +248,7 @@ private theorem value_map {I : Type uI} [Category.{vI} I]
+@@ -251,8 +252,7 @@ private theorem value_map {I : Type uI} [Category.{vI} I]
      intro i i' f b
      simp only [value_map]
      refine (congrArg (fun w ↦ α.app ⟨i'⟩ w) (x.2 f b)).trans ?_
@@ -41,7 +41,7 @@ index 429483f..8754442 100644
  
  /-- Functoriality in the input presheaf: the identity transformation acts as
  the identity. -/
-@@ -277,10 +277,10 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
+@@ -281,10 +281,10 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
  
  end PresheafDomPFunctorData
  
@@ -53,7 +53,7 @@ index 429483f..8754442 100644
  structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
      Type (max (uA + 1) (uB + 1) uI vI)
      extends PresheafDomPFunctorData.{uI, uA, uB, vI} I where
-@@ -289,10 +289,10 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
+@@ -293,10 +293,10 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
  
  attribute [ext] PresheafDomPFunctorData PresheafDomPFunctor
  
@@ -65,7 +65,7 @@ index 429483f..8754442 100644
  structure PresheafPFunctorData (I : Type uI) [Category.{vI} I]
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafDomPFunctorData.{uI, uA, uB, vI} I, SlicePFunctor.{uA, uB, uI, uJ} I J where
-@@ -382,9 +382,9 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
+@@ -386,9 +386,9 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
  
  end PresheafPFunctorData
  
@@ -77,17 +77,17 @@ index 429483f..8754442 100644
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J where
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
-index 8a4bc84..0539afe 100644
+index 415d9f8..aea4009 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
- Authors: The geb-mathlib contributors
+ Authors: Terence Rokop
  -/
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module
  
- public import Geb.Mathlib.Data.PFunctor.Slice.W
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
 @@ -424,7 +425,7 @@ theorem isHereditarilyNatural_mk_forgetNode {I : Type uI} [Category.{vI} I]
      refine ⟨fun i i' g b ↦ ?_, fun b ↦ (n.1.2 b).2.down.2.2⟩
      have h := congrArg (fun u ↦ u.down.1) (hnat g b)
@@ -96,25 +96,25 @@ index 8a4bc84..0539afe 100644
 +    exact h
  
  /-- The fixed-point constructor of the presheaf W-type: the `objPresheaf`-value
- at the carrier presheaf `F.W` maps into `F.W`, fibrewise over `I`. It builds the
+ at the carrier presheaf `F.W` maps into `F.W`, fiberwise over `I`. It builds the
 @@ -630,9 +631,7 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
              hn.2 hn.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q a⟩)) =
            α.app ⟨i'⟩ ((F.objPresheaf Y).map f.op
-             ⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) :=
+             ⟨⟨pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) :=
 -      (ConcreteCategory.comp_apply _ _ _).symm.trans
 -        ((ConcreteCategory.congr_hom (α.naturality f.op).symm _).trans
 -          (ConcreteCategory.comp_apply _ _ _))
 +      (FunctorToTypes.naturality _ _ α f.op _).symm
      change (α.app ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩
-           (⟨⟨F.objRestrElt f (pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1) hqi,
+           (⟨⟨F.objRestrElt f (pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1) hqi,
              hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
-index 2b85da3..0445d60 100644
+index b1a1552..6f3e66e 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
- Authors: The geb-mathlib contributors
+ Authors: Terence Rokop
  -/
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module
@@ -141,12 +141,12 @@ index 2b85da3..0445d60 100644
      extends SliceDomPFunctor.{uA, uB, uD} dom where
    /-- The shape-output map: each shape is assigned a `cod`-index. -/
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
-index ff11455..9d14602 100644
+index 2862e7d..9b3104d 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
- Authors: The geb-mathlib contributors
+ Authors: Terence Rokop
  -/
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module
@@ -216,12 +216,12 @@ index ff11455..9d14602 100644
  
  end SlicePFunctor
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
-index 6458274..b126356 100644
+index 2f62943..568cbe6 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
- Authors: The geb-mathlib contributors
+ Authors: Terence Rokop
  -/
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module
@@ -236,20 +236,22 @@ index 6458274..b126356 100644
        exact and_congr (forall_congr' ih)
          (iff_of_eq (congrArg (F.OverInput a)
 diff --git a/vendor/geb-mathlib/Geb.lean b/vendor/geb-mathlib/Geb.lean
-index 5d37c79..9b07ec4 100644
+index ce78258..2e3e12d 100644
 --- a/vendor/geb-mathlib/Geb.lean
 +++ b/vendor/geb-mathlib/Geb.lean
-@@ -3,12 +3,12 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+@@ -3,14 +3,13 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
- Authors: The geb-mathlib contributors
+ Authors: Terence Rokop
  -/
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module -- shake: keep-all, shake: keep-downstream
  
- public import Geb.Mathlib
  public import Geb.Cslib
  public import Geb.Internal
--import GebMeta
+ public import Geb.Mathlib
  
+-import GebMeta
+-
  /-!
  # Geb root module
+ 

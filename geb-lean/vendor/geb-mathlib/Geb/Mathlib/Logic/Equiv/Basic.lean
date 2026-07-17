@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The geb-mathlib contributors
+Authors: Terence Rokop
 -/
 module
 
@@ -17,6 +17,11 @@ Extensions of `Mathlib.Logic.Equiv.Basic`.
 * `sigmaFstSectionElim` — eliminate a function into a sigma type along
   a proof that it is a section of the first projection, producing a
   dependent function.
+
+## Main statements
+
+* `sigmaFstSectionElim_eq` — `sigmaFstSectionElim` computes the
+  inverse direction of `Equiv.piEquivSubtypeSigma`.
 
 ## Tags
 

@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The geb-mathlib contributors
+Authors: Terence Rokop
 -/
 module
 
@@ -26,7 +26,7 @@ coproducts, and the coproducts' functorial action, constructively.
   transport `FreeCoprodCompDisc.homOfEq`.
 * `FreeCoprodCompDisc.Endo`, `FreeCoprodCompDisc.EndoMor` — the
   object-map and morphism-map components of endofunctors.
-* `FreeCoprodCompDisc.copr`, `FreeCoprodCompDisc.coprMor` — the
+* `FreeCoprodCompDisc.coprod`, `FreeCoprodCompDisc.coprodMor` — the
   indexed coproducts and their functorial action.
 
 ## Implementation notes
@@ -90,18 +90,18 @@ def EndoMor (F : Endo D) : Type (max (u + 1) v) :=
 treated as a discrete category. The result lives in the completion at
 index universe `max u uI`, which is the original completion — making
 the result an in-category coproduct — exactly when `uI ≤ u`. -/
-def copr.{uI} (I : Type uI) (fi : I → FreeCoprodCompDisc.{u, v} D) :
+def coprod.{uI} (I : Type uI) (fi : I → FreeCoprodCompDisc.{u, v} D) :
     FreeCoprodCompDisc.{max u uI} D :=
   ⟨(Σ i : I, (fi i).1), Sigma.uncurry (fun i ↦ (fi i).2)⟩
 
-/-- The functorial action of `FreeCoprodCompDisc.copr` on morphisms: a
-reindexing function together with a componentwise family of morphisms
-induces a morphism of indexed coproducts. -/
-def coprMor.{uI} (I J : Type uI) (r : I → J)
+/-- The functorial action of `FreeCoprodCompDisc.coprod` on morphisms:
+a reindexing function together with a componentwise family of
+morphisms induces a morphism of indexed coproducts. -/
+def coprodMor.{uI} (I J : Type uI) (r : I → J)
     (fi : I → FreeCoprodCompDisc.{u, v} D)
     (gj : J → FreeCoprodCompDisc.{u, v} D)
     (hom : (i : I) → Hom D (fi i) (gj (r i))) :
-    Hom D (copr D I fi) (copr D J gj) :=
+    Hom D (coprod D I fi) (coprod D J gj) :=
   ⟨Sigma.map r (fun i ↦ (hom i).1),
     funext (fun p ↦ congrFun (hom p.1).2 p.2)⟩
 
