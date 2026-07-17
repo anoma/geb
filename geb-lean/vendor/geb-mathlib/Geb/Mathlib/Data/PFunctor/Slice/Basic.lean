@@ -72,7 +72,12 @@ reuses these — its carrier is `SliceDomPFunctor.Obj` and its `map` the
 namespaces' `map`,
 `SliceDomPFunctor.ofCurried` / `rCurried` / `DirectionOver` / `Direction`,
 and `SlicePFunctor.ShapeOver` / `Shape` are `@[expose]` so the
-wrapper and tests can unfold them across the module boundary.
+wrapper and tests can unfold them across the module boundary. The fibre
+formers `DirectionOver` / `Direction` / `ShapeOver` / `Shape` are
+additionally `@[implicit_reducible]`: they occur inside dependent types,
+and type-level unification compares types at implicit transparency, so
+without the attribute keyed matching fails on terms whose types differ
+only by unfolding them.
 
 ## References
 
@@ -137,13 +142,13 @@ direction-input map. -/
 
 /-- The direction-input-map condition on a direction of shape `a`: that its
 image under `rCurried a` is `i`. Point-free as `(· = i) ∘ rCurried a`. -/
-@[expose] def DirectionOver {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
+@[expose, implicit_reducible] def DirectionOver {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
     (a : F.A) (i : dom) : F.B a → Prop :=
   (· = i) ∘ F.rCurried a
 
 /-- The directions of shape `a` lying over the base point `i`: the fibre
 of `rCurried a` over `i`. -/
-@[expose] def Direction {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
+@[expose, implicit_reducible] def Direction {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
     (a : F.A) (i : dom) : Type uB :=
   Subtype (F.DirectionOver a i)
 
@@ -225,12 +230,12 @@ theorem map_comp {dom : Type uD} {cod : Type uC} (F : SlicePFunctor.{uA, uB, uD,
 
 /-- The shape-output-map condition on a shape: that its image under `q`
 is `j`. Point-free as `(· = j) ∘ q`. -/
-@[expose] def ShapeOver {dom : Type uD} {cod : Type uC}
+@[expose, implicit_reducible] def ShapeOver {dom : Type uD} {cod : Type uC}
     (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) (j : cod) : F.A → Prop :=
   (· = j) ∘ F.q
 
 /-- The shapes lying over `j`: the fibre of `q` over `j`. -/
-@[expose] def Shape {dom : Type uD} {cod : Type uC}
+@[expose, implicit_reducible] def Shape {dom : Type uD} {cod : Type uC}
     (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) (j : cod) : Type uA :=
   Subtype (F.ShapeOver j)
 

@@ -42,7 +42,10 @@ is the covariant Grothendieck construction. This module adds:
 `GrothendieckOp` and `CoGrothendieck` are semireducible `def` type
 synonyms, not `abbrev`s and not new structures: instance synthesis and
 object-level dot notation stop at the new names, while all round-trip
-lemmas hold by `rfl`. Morphism-level dot notation resolves through
+lemmas hold by `rfl`. Both are `@[implicit_reducible]`: type-level
+unification compares types at implicit transparency, so the attribute
+lets keyed `rw`/`simp` matching cross the synonym while instance
+synthesis and dot notation still stop at it. Morphism-level dot notation resolves through
 `Quiver.Hom` to `Grothendieck.Hom`'s own projections (whose op-side
 types make direction misuse a type error); the wrapper accessors
 `homBase`/`homFiber` are therefore free functions, used qualified or
@@ -83,7 +86,7 @@ universe u v u₂ v₂
 
 namespace CategoryTheory
 
-open Functor
+open CategoryTheory.Functor
 
 variable {C : Type u} [Category.{v} C]
 
@@ -117,6 +120,7 @@ end Grothendieck
 oppositization of `F`: objects are pairs of a base object `c : C` and a
 fiber object of `F.obj c`, and morphisms reverse the fiber direction
 relative to `Grothendieck F`. -/
+@[implicit_reducible]
 def GrothendieckOp (F : C ⥤ Cat.{v₂, u₂}) : Type (max u u₂) :=
   Grothendieck (F ⋙ Cat.opFunctor)
 
@@ -350,6 +354,7 @@ the opposite category of `GrothendieckOp G`. Objects are pairs of
 `c : C` and an object of `G.obj (op c)`; a morphism `X ⟶ Y` consists of
 `β : X.base ⟶ Y.base` in `C` and a fiber morphism
 `X.fiber ⟶ (G.map β.op).toFunctor.obj Y.fiber`. -/
+@[implicit_reducible]
 def CoGrothendieck (G : Cᵒᵖ ⥤ Cat.{v₂, u₂}) : Type (max u u₂) :=
   (GrothendieckOp G)ᵒᵖ
 

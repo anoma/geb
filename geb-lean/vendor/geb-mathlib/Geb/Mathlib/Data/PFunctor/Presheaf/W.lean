@@ -251,7 +251,8 @@ theorem wRestrTree_id {I : Type uI} [Category.{vI} I]
   cases tree with
   | mk a fchild =>
     simp only [wRestrTree]
-    rw [F.objRestrElt_id, SlicePFunctor.W.mk_dest]
+    rw [F.objRestrElt_id]
+    exact SlicePFunctor.W.mk_dest _
 
 /-- Restriction along a composite factors: `dest_mk` exposes the inner
 restriction and `objRestrElt_comp` splits the rebuilt root. -/
@@ -294,6 +295,16 @@ private theorem cast_down {I : Type uI} [Category.{vI} I]
     (u : (F.W).obj ⟨k⟩) :
     (cast (congrArg (fun k : I ↦ (F.W).obj ⟨k⟩) e) u).down.1 = u.down.1 := by
   cases e
+  rfl
+
+/-- `wRestrTree` respects equality of the restricted trees; the head-index
+witnesses are proof-irrelevant. -/
+private theorem wRestrTree_congr {I : Type uI} [Category.{vI} I]
+    (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I) ⦃j j' : I⦄ (g : j' ⟶ j)
+    {z z' : F.toSlicePFunctor.W} (hz : z = z')
+    (hq : F.q (PFunctor.W.head z.1) = j) (hq' : F.q (PFunctor.W.head z'.1) = j) :
+    F.wRestrTree g z hq = F.wRestrTree g z' hq' := by
+  cases hz
   rfl
 
 /-- Two carrier fibre elements with equal underlying trees are equal. -/
@@ -413,7 +424,7 @@ theorem isHereditarilyNatural_mk_forgetNode {I : Type uI} [Category.{vI} I]
   · intro hnat
     refine ⟨fun i i' g b ↦ ?_, fun b ↦ (n.1.2 b).2.down.2.2⟩
     have h := congrArg (fun u ↦ u.down.1) (hnat g b)
-    simp only [value_down, map_down] at h
+    simp only [value_down F n, map_down F g] at h
     exact h
 
 /-- The fixed-point constructor of the presheaf W-type: the `objPresheaf`-value
@@ -619,8 +630,8 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
         Y.map f.op (α.app ⟨F.q a⟩ (⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1,
             hn.2 hn.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q a⟩)) =
           α.app ⟨i'⟩ ((F.objPresheaf Y).map f.op
-            ⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) := by
-      exact (FunctorToTypes.naturality _ _ α f.op _).symm
+            ⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) :=
+      (FunctorToTypes.naturality _ _ α f.op _).symm
     change (α.app ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩
           (⟨⟨F.objRestrElt f (pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1) hqi,
             hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
