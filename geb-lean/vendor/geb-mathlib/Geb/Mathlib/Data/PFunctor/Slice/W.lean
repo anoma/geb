@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The geb-mathlib contributors
+Authors: Terence Rokop
 -/
 -- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
 module
@@ -22,7 +22,7 @@ The index (codomain-assignment) and the admissibility predicate
 tree is the output index of its root, so it is not recursive at all; the
 predicate is recursive, but is obtained from mathlib's non-dependent W-type
 eliminator `WType.elim`, folding the index and the predicate together into
-the structure `WIndex` via the algebra `windexStep`. Carrying the index
+the structure `WIndex` via the algebra `wIndexStep`. Carrying the index
 inside the fold is what lets the algebra state the direction-input-map
 condition `OverInput` — the children's index family, as a function of
 direction, equals `rCurried a`, the shape of `SliceDomPFunctor.Compatible`:
@@ -30,7 +30,7 @@ the plain `Prop`-valued fold discards the children, so the condition would
 be inexpressible without either this
 pairing or the dependent recursor.
 
-The carrier `W` is the admissible trees, with structure map `windex`. Its
+The carrier `W` is the admissible trees, with structure map `wIndex`. Its
 constructor `mk` and destructor `dest` are mutually inverse (`W` is a fixed
 point of the slice endofunctor), and `elim` is the morphism into any slice
 algebra over `I`. Only the existence half of the initial-algebra universal
@@ -48,7 +48,7 @@ admissibility component to `WValid`. A direct `WType.rec` definition of a
 `Type`-valued datum (such as `elim`'s value) would be `noncomputable` — the
 code generator does not compile recursor applications — which the project's
 constructive discipline forbids; a `Prop`-valued recursor definition such as
-`recProp` is exempt, its content being erased. All of this stays
+`RecProp` is exempt, its content being erased. All of this stays
 `Classical.choice`-free.
 
 The single index type is forced: the constraint compares a child's
@@ -57,9 +57,9 @@ codomain-index against the parent's domain-index, so it typechecks only when
 
 ## Main definitions
 
-* `SlicePFunctor.windexRoot` — the index of a slice W-tree: the output index
+* `SlicePFunctor.wIndexRoot` — the index of a slice W-tree: the output index
   of its root shape. Not recursive.
-* `SlicePFunctor.WIndex` / `SlicePFunctor.windexStep` / `SlicePFunctor.windexValid`
+* `SlicePFunctor.WIndex` / `SlicePFunctor.wIndexStep` / `SlicePFunctor.wIndexValid`
   — the index-and-admissibility carrier, the algebra computing it, and the fold.
   `SlicePFunctor.ForAll` / `SlicePFunctor.AllValid` / `SlicePFunctor.OverInput` /
   `SlicePFunctor.NodeValid` are the direction-quantifier, the
@@ -67,43 +67,43 @@ codomain-index against the parent's domain-index, so it typechecks only when
   direction-input-map condition, and the node-admissibility predicate
   combining the latter two.
 * `SlicePFunctor.WValid` — the domain-restriction predicate: the admissibility
-  component of `windexValid`.
+  component of `wIndexValid`.
 * `SlicePFunctor.W` — the carrier of the slice W-type: the admissible trees.
-* `SlicePFunctor.windex` — the slice W-type's structure map into `I`.
+* `SlicePFunctor.wIndex` — the slice W-type's structure map into `I`.
 * `SlicePFunctor.W.mk` / `SlicePFunctor.W.dest` — the constructor and
   destructor of the slice W-type.
 * `SlicePFunctor.W.ElimData` / `SlicePFunctor.W.elimStep` /
   `SlicePFunctor.W.elimData` — the `elim` carrier, algebra, and fold.
 * `SlicePFunctor.W.elim` — the morphism from the slice W-type into any slice
   algebra over `I`.
-* `SlicePFunctor.W.recProp` — the paramorphism from the slice W-type into
+* `SlicePFunctor.W.RecProp` — the paramorphism from the slice W-type into
   `Prop`: a predicate whose step sees each node and its child subtrees together
   with the children's predicate values.
 
 ## Main statements
 
-* `SlicePFunctor.windexValid_index_eq_windexRoot` — the index component of the
+* `SlicePFunctor.wIndexValid_index_eq_wIndexRoot` — the index component of the
   fold agrees with the non-recursive root index; one non-recursive case split.
 * `SlicePFunctor.wValid_mk` — admissibility unfolded one level.
 * `SlicePFunctor.W.dest_mk` / `SlicePFunctor.W.mk_dest` — `mk` and `dest` are
   mutually inverse.
-* `SlicePFunctor.W.windex_mk` / `SlicePFunctor.W.comp_elim` — `mk` and `elim`
+* `SlicePFunctor.W.wIndex_mk` / `SlicePFunctor.W.comp_elim` — `mk` and `elim`
   lie over `I`.
 * `SlicePFunctor.W.elim_mk` — the computation rule for `elim`: it is a morphism
   of slice algebras.
 * `SlicePFunctor.W.elimData_valid` — the fold's admissibility component agrees
   with `WValid`; a use of the dependent recursor `WType.rec`.
-* `SlicePFunctor.W.ind` — structural induction for the slice W-type, the wrapped
+* `SlicePFunctor.W.induction` — structural induction for the slice W-type, the wrapped
   form of `WType.rec` on the admissibility subtype.
-* `SlicePFunctor.W.recProp_mk` — the one-level computation rule for `recProp`.
+* `SlicePFunctor.W.recProp_mk` — the one-level computation rule for `RecProp`.
 
 ## Implementation notes
 
-`windexValid` folds into the structure `WIndex` (`index`, `valid`) via
-`windexStep`; a node's `valid` is `NodeValid` — `AllValid` (every child
+`wIndexValid` folds into the structure `WIndex` (`index`, `valid`) via
+`wIndexStep`; a node's `valid` is `NodeValid` — `AllValid` (every child
 admissible) and `OverInput` (the children's index family equal to `rCurried a`,
 the `Compatible` shape). Its index component is the depth-1 root output
-index, so `windexValid_index_eq_windexRoot` needs only `cases`. `elim`'s
+index, so `wIndexValid_index_eq_wIndexRoot` needs only `cases`. `elim`'s
 value is computed by `elimData`, a single non-dependent `WType.elim` with
 algebra `elimStep` into
 the structure `ElimData` (extending `WIndex` with a `value` function and an
@@ -112,11 +112,11 @@ recursor is used only in the proof `elimData_valid` (a `WType.rec` application
 showing the fold's admissibility component agrees with `WValid`). A direct
 `WType.rec` *definition* of a `Type`-valued datum (such as `elim`'s value) would
 be rejected by the code generator as `noncomputable`; a `WType.rec` application
-in a proof, or a `Prop`-valued `WType.rec` definition such as `recProp`, is
-unproblematic. `windexRoot`, `ForAll`, `AllValid`, `OverInput`,
-`NodeValid`, `windexStep`,
-`windexValid`, `WValid`, `W`, `windex`, `W.mk`, `W.dest`, `W.elimStep`,
-`W.elimData`, `W.elim`, and `W.recProp` are `@[expose]` so a wrapper module and
+in a proof, or a `Prop`-valued `WType.rec` definition such as `RecProp`, is
+unproblematic. `wIndexRoot`, `ForAll`, `AllValid`, `OverInput`,
+`NodeValid`, `wIndexStep`,
+`wIndexValid`, `WValid`, `W`, `wIndex`, `W.mk`, `W.dest`, `W.elimStep`,
+`W.elimData`, `W.elim`, and `W.RecProp` are `@[expose]` so a wrapper module and
 the tests can unfold them across the module boundary.
 
 ## References
@@ -138,12 +138,12 @@ namespace SlicePFunctor
 
 /-- The index of a slice W-tree: the `q`-assigned output index of its root
 shape. Not recursive — it reads only the root node, via `PFunctor.W.head`. -/
-@[expose] def windexRoot {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
+@[expose] def wIndexRoot {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
     F.toPFunctor.W → I :=
   F.q ∘ PFunctor.W.head
 
 /-- The index and admissibility of a slice W-tree, the two components folded
-together by `windexValid`. -/
+together by `wIndexValid`. -/
 @[ext]
 structure WIndex (I : Type uI) where
   /-- The tree's index: the output index of its root shape. -/
@@ -180,29 +180,29 @@ direction-input map (`OverInput`). -/
 /-- The algebra computing a node's index and admissibility from its children's:
 the index is the `q`-assigned output index of the shape, and the node is
 `NodeValid`. -/
-@[expose] def windexStep {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
+@[expose] def wIndexStep {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
     F.toPFunctor.Obj (WIndex I) → WIndex I :=
   fun ⟨a, c⟩ ↦ { index := F.q a, valid := F.NodeValid a c }
 
 /-- The index paired with admissibility: the `F.toPFunctor`-algebra morphism
-into `(WIndex I, windexStep)` given by `WType.elim`. -/
-@[expose] def windexValid {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
+into `(WIndex I, wIndexStep)` given by `WType.elim`. -/
+@[expose] def wIndexValid {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
     F.toPFunctor.W → WIndex I :=
-  WType.elim (WIndex I) F.windexStep
+  WType.elim (WIndex I) F.wIndexStep
 
 /-- The domain-restriction predicate on slice W-trees: a tree is admitted when
 every node's children sit over the direction-input indices prescribed by
-`r`. The admissibility component of `windexValid`. -/
+`r`. The admissibility component of `wIndexValid`. -/
 @[expose] def WValid {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
     F.toPFunctor.W → Prop :=
-  WIndex.valid ∘ F.windexValid
+  WIndex.valid ∘ F.wIndexValid
 
-/-- The index component of `windexValid` agrees with the non-recursive root
+/-- The index component of `wIndexValid` agrees with the non-recursive root
 index. A depth-1 fact: proved by a single non-recursive case split. -/
 @[simp]
-theorem windexValid_index_eq_windexRoot {I : Type uI}
+theorem wIndexValid_index_eq_wIndexRoot {I : Type uI}
     (F : SlicePFunctor.{uA, uB, uI, uI} I I) (w : F.toPFunctor.W) :
-    (F.windexValid w).index = F.windexRoot w := by
+    (F.wIndexValid w).index = F.wIndexRoot w := by
   cases w with
   | mk a f => rfl
 
@@ -212,10 +212,10 @@ direction-input map. -/
 theorem wValid_mk {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (a : F.toPFunctor.A) (f : F.toPFunctor.B a → F.toPFunctor.W) :
     F.WValid (WType.mk a f) ↔
-      F.ForAll a (F.WValid ∘ f) ∧ F.OverInput a (F.windexRoot ∘ f) := by
-  have h : WIndex.index ∘ F.windexValid ∘ f = F.windexRoot ∘ f :=
-    funext fun b ↦ F.windexValid_index_eq_windexRoot (f b)
-  change (F.ForAll a (F.WValid ∘ f) ∧ F.OverInput a (WIndex.index ∘ F.windexValid ∘ f)) ↔ _
+      F.ForAll a (F.WValid ∘ f) ∧ F.OverInput a (F.wIndexRoot ∘ f) := by
+  have h : WIndex.index ∘ F.wIndexValid ∘ f = F.wIndexRoot ∘ f :=
+    funext fun b ↦ F.wIndexValid_index_eq_wIndexRoot (f b)
+  change (F.ForAll a (F.WValid ∘ f) ∧ F.OverInput a (WIndex.index ∘ F.wIndexValid ∘ f)) ↔ _
   rw [h]
 
 /-- The carrier of the slice W-type: the admissible `PFunctor` W-trees. -/
@@ -224,34 +224,34 @@ theorem wValid_mk {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
 
 /-- The slice W-type's structure map as an object of `Type/I`: the index of the
 underlying tree. -/
-@[expose] def windex {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) : F.W → I :=
-  F.windexRoot ∘ Subtype.val
+@[expose] def wIndex {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) : F.W → I :=
+  F.wIndexRoot ∘ Subtype.val
 
 namespace W
 
 /-- The constructor of the slice W-type: the slice endofunctor's value at
-`(W, windex)` maps into `W`. The algebra structure map. -/
+`(W, wIndex)` maps into `W`. The algebra structure map. -/
 @[expose] def mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
-    (x : F.toSliceDomPFunctor.Obj F.windex) : F.W :=
+    (x : F.toSliceDomPFunctor.Obj F.wIndex) : F.W :=
   ⟨WType.mk x.1.1 (Subtype.val ∘ x.1.2),
     (F.wValid_mk _ _).mpr ⟨fun b ↦ (x.1.2 b).property,
-      funext ((F.toSliceDomPFunctor.compatible_iff F.windex x.1.1 x.1.2).mp x.2)⟩⟩
+      funext ((F.toSliceDomPFunctor.compatible_iff F.wIndex x.1.1 x.1.2).mp x.2)⟩⟩
 
 /-- The destructor of the slice W-type: every admissible tree decomposes as a
 shape together with a compatible family of admissible subtrees. Inverse to
 `mk`. -/
 @[expose] def dest {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
-    (z : F.W) : F.toSliceDomPFunctor.Obj F.windex :=
+    (z : F.W) : F.toSliceDomPFunctor.Obj F.wIndex :=
   match z with
   | ⟨WType.mk a f, hw⟩ =>
       ⟨⟨a, fun b ↦ ⟨f b, ((F.wValid_mk a f).mp hw).1 b⟩⟩,
-        (F.toSliceDomPFunctor.compatible_iff F.windex a _).mpr
+        (F.toSliceDomPFunctor.compatible_iff F.wIndex a _).mpr
           fun b ↦ congrFun ((F.wValid_mk a f).mp hw).2 b⟩
 
 /-- `dest` is a left inverse of `mk`. -/
 @[simp]
 theorem dest_mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
-    (x : F.toSliceDomPFunctor.Obj F.windex) : dest (mk x) = x := by
+    (x : F.toSliceDomPFunctor.Obj F.wIndex) : dest (mk x) = x := by
   obtain ⟨⟨a, v⟩, hv⟩ := x
   apply Subtype.ext
   exact Sigma.ext rfl (heq_of_eq (funext fun b ↦ Subtype.ext rfl))
@@ -267,8 +267,8 @@ theorem mk_dest {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
 
 /-- `mk` lies over `I`: its index is the output index assigned by `F.obj`. -/
 @[simp]
-theorem windex_mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
-    (x : F.toSliceDomPFunctor.Obj F.windex) : F.windex (mk x) = F.obj F.windex x :=
+theorem wIndex_mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
+    (x : F.toSliceDomPFunctor.Obj F.wIndex) : F.wIndex (mk x) = F.obj F.wIndex x :=
   rfl
 
 /-- The `elim` fold carrier: extends `WIndex` to a slice morphism
@@ -282,7 +282,7 @@ structure ElimData {I : Type uI} (Y : Type uY) (p : Y → I) extends WIndex I wh
   over : p ∘ value = Function.const valid index
 
 /-- The slice-algebra step of the `elim` fold: index and admissibility
-(`NodeValid`) as for `windexStep`, and a value function that, given a node's
+(`NodeValid`) as for `wIndexStep`, and a value function that, given a node's
 admissibility, applies the target algebra `g` to the compatible family of its
 children's values, with `over` recording that the result lies over the index. -/
 @[expose] def elimStep {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
@@ -308,7 +308,7 @@ with no explicit recursion. -/
 @[simp]
 theorem elimData_index {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (Y : Type uY) (p : Y → I) (g : F.toSliceDomPFunctor.Obj p → Y) (hg : p ∘ g = F.obj p)
-    (w : F.toPFunctor.W) : (elimData F Y p g hg w).index = F.windexRoot w := by
+    (w : F.toPFunctor.W) : (elimData F Y p g hg w).index = F.wIndexRoot w := by
   cases w with
   | mk a f => rfl
 
@@ -350,10 +350,10 @@ argument to the fold's `value` function. -/
       ((elimData_valid F Y p g hg z.val).mpr z.property)
 
 /-- `elim` lies over `I`: composing with the target structure map recovers
-`windex`. -/
+`wIndex`. -/
 theorem comp_elim {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (Y : Type uY) (p : Y → I) (g : F.toSliceDomPFunctor.Obj p → Y) (hg : p ∘ g = F.obj p) :
-    p ∘ elim F Y p g hg = F.windex :=
+    p ∘ elim F Y p g hg = F.wIndex :=
   funext fun z ↦
     (congrFun (elimData F Y p g hg z.val).over
       ((elimData_valid F Y p g hg z.val).mpr z.property)).trans
@@ -363,7 +363,7 @@ theorem comp_elim {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
 is a morphism of slice algebras. -/
 theorem elim_mk {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (Y : Type uY) (p : Y → I) (g : F.toSliceDomPFunctor.Obj p → Y) (hg : p ∘ g = F.obj p)
-    (x : F.toSliceDomPFunctor.Obj F.windex) :
+    (x : F.toSliceDomPFunctor.Obj F.wIndex) :
     elim F Y p g hg (mk x) =
       g (F.toSliceDomPFunctor.map (elim F Y p g hg) (comp_elim F Y p g hg) x) :=
   rfl
@@ -372,9 +372,9 @@ theorem elim_mk {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
 admissible tree once it holds of `mk x` whenever it holds of each child
 `x.1.2 b`. The wrapped form of the dependent recursor `WType.rec` on the
 admissibility subtype. -/
-theorem ind {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
+theorem induction {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     {motive : F.W → Prop}
-    (mk : ∀ (x : F.toSliceDomPFunctor.Obj F.windex),
+    (mk : ∀ (x : F.toSliceDomPFunctor.Obj F.wIndex),
         (∀ b, motive (x.1.2 b)) → motive (W.mk x)) :
     ∀ z, motive z :=
   fun z ↦
@@ -388,8 +388,8 @@ theorem ind {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
 hence its child subtrees `x.1.2 b`, together with the children's predicate
 values. The value is computed by `WType.rec` with a `Prop` motive, so no
 `noncomputable` flag arises. `@[expose]` so the presheaf layer can unfold it. -/
-@[expose] def recProp {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
-    (step : (x : F.toSliceDomPFunctor.Obj F.windex) →
+@[expose] def RecProp {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
+    (step : (x : F.toSliceDomPFunctor.Obj F.wIndex) →
       (F.toPFunctor.B x.1.1 → Prop) → Prop) :
     F.W → Prop :=
   fun z ↦
@@ -399,14 +399,14 @@ values. The value is computed by `WType.rec` with a `Prop` motive, so no
           (fun b ↦ ih b (((F.wValid_mk a f).mp hv).1 b)))
       z.1 z.2
 
-/-- The one-level computation rule for `recProp`: on `mk x` it applies `step`
+/-- The one-level computation rule for `RecProp`: on `mk x` it applies `step`
 to the node `x` and the family of child values. Definitional; stated for
 downstream unfolding. -/
 theorem recProp_mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
-    (step : (x : F.toSliceDomPFunctor.Obj F.windex) →
+    (step : (x : F.toSliceDomPFunctor.Obj F.wIndex) →
       (F.toPFunctor.B x.1.1 → Prop) → Prop)
-    (x : F.toSliceDomPFunctor.Obj F.windex) :
-    W.recProp step (W.mk x) = step x (fun b ↦ W.recProp step (x.1.2 b)) := by
+    (x : F.toSliceDomPFunctor.Obj F.wIndex) :
+    W.RecProp step (W.mk x) = step x (fun b ↦ W.RecProp step (x.1.2 b)) := by
   obtain ⟨⟨a, v⟩, hc⟩ := x
   rfl
 

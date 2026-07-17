@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The geb-mathlib contributors
+Authors: Terence Rokop
 -/
 module
 
@@ -29,7 +29,7 @@ of [DybjerSetzer2003].
 ## Main definitions
 
 * `IR.pFunctor` — the polynomial functor whose W-type defines codes:
-  shapes `IR.Shape`, directions `IR.Dir`.
+  shapes `IR.Shape`, directions `IR.Direction`.
 * `IR.Dest`, `IR.Dest.elim`, `IR.Dest.elimInv`, `IR.destEquiv` — the
   pattern-matched destructor for morphisms out of `IR.Obj`, its
   conversions to and from such morphisms, and the equivalence they
@@ -43,7 +43,7 @@ of [DybjerSetzer2003].
   shape.
 * `IR.elim`, `IR.rec` — the eliminator and the dependent recursor,
   the latter with step arguments of type `IR.RecStep` (the `Type`
-  specialization, alongside `IR.IndStep` for `Prop`, of the
+  specialization, alongside `IR.InductionStep` for `Prop`, of the
   `Sort`-valued `IR.Step`).
 * `IR.interpObj`, `IR.interpMor` — the object map and morphism map of
   the interpretation of an `IR` code on `FreeCoprodCompDisc`.
@@ -55,6 +55,8 @@ of [DybjerSetzer2003].
 ## Main statements
 
 * `IR.ext`, `IR.snd_eq_of_eq` — extensionality for codes.
+* `IR.induction` — the induction principle, the recursor restricted to
+  `Prop`-valued motives.
 
 ## Implementation notes
 
@@ -105,30 +107,31 @@ def Shape : Type (max (uA + 1) uD) :=
 
 /-- The direction type of the polynomial functor whose W-type defines
 codes for positive inductive-recursive types. -/
-def Dir : Shape.{uA, uD} D → Type (max uA uD) :=
+def Direction : Shape.{uA, uD} D → Type (max uA uD) :=
   Sum.elim (fun _ ↦ PEmpty)
     (Sum.elim (fun A ↦ ULift.{uD} A) (fun A ↦ A → D))
 
-/-- Simplification for the constant (`iota`) case of `IR.Dir`. -/
+/-- Simplification for the constant (`iota`) case of `IR.Direction`. -/
 @[simp]
-theorem dir_iota (d : D) : Dir.{uA, uD} D (Sum.inl d) = PEmpty := rfl
+theorem direction_iota (d : D) : Direction.{uA, uD} D (Sum.inl d) = PEmpty := rfl
 
-/-- Simplification for the dependent sum (`sigma`) case of `IR.Dir`. -/
+/-- Simplification for the dependent sum (`sigma`) case of
+`IR.Direction`. -/
 @[simp]
-theorem dir_sigma (A : Type uA) : Dir D (Sum.inr (Sum.inl A)) = ULift A := rfl
+theorem direction_sigma (A : Type uA) : Direction D (Sum.inr (Sum.inl A)) = ULift A := rfl
 
 /-- Simplification for the dependent product (`delta`) case of
-`IR.Dir`. -/
+`IR.Direction`. -/
 @[simp]
-theorem dir_delta (A : Type uA) : Dir D (Sum.inr (Sum.inr A)) = (A → D) := rfl
+theorem direction_delta (A : Type uA) : Direction D (Sum.inr (Sum.inr A)) = (A → D) := rfl
 
 /-- Rewrite the direction type along a shape-type equality. -/
-def dirOfEq {s s' : Shape.{uA, uD} D} : s = s' → Dir D s → Dir D s'
+def directionOfEq {s s' : Shape.{uA, uD} D} : s = s' → Direction D s → Direction D s'
   | rfl => id
 
-/-- Elimination rule for `IR.Dir`. -/
-def dirElim.{v} (V : Type v) (σ : (A : Type uA) → A → V)
-    (δ : (A : Type uA) → (A → D) → V) (s : Shape D) (ds : Dir D s) : V :=
+/-- Elimination rule for `IR.Direction`. -/
+def directionElim.{v} (V : Type v) (σ : (A : Type uA) → A → V)
+    (δ : (A : Type uA) → (A → D) → V) (s : Shape D) (ds : Direction D s) : V :=
   match s with
   | Sum.inl _ => PEmpty.elim ds
   | Sum.inr (Sum.inl (A : Type uA)) => σ A (ULift.down ds)
@@ -137,7 +140,7 @@ def dirElim.{v} (V : Type v) (σ : (A : Type uA) → A → V)
 /-- The polynomial functor whose W-type defines codes for positive
 inductive-recursive types. -/
 def pFunctor : PFunctor.{max (uA + 1) uD, max uA uD} :=
-  ⟨Shape D, Dir D⟩
+  ⟨Shape D, Direction D⟩
 
 /-- The value at `V` of the interpretation of `IR.pFunctor` as an
 endofunctor on `Type`. -/
@@ -150,7 +153,7 @@ def ObjFst : Type (max (uA + 1) uD) :=
 
 /-- The second component of `IR.Obj`. -/
 def ObjSnd.{v} (V : Type v) : ObjFst D → Type (max uA uD v) :=
-  fun s ↦ Dir.{uA, uD} D s → V
+  fun s ↦ Direction.{uA, uD} D s → V
 
 /-- Rewrite the second component of `IR.Obj` along a shape-type
 equality. -/
@@ -180,7 +183,7 @@ def objDelta.{v} (V : Type v) (A : Type uA) (f : (A → D) → V) :
 `IR.objIota` element: direction assignments out of the empty direction
 type are all equal. -/
 theorem objIota_eq_mk.{v} (V : Type v) (d : D)
-    (ds : Dir.{uA, uD} D (Sum.inl d) → V) :
+    (ds : Direction.{uA, uD} D (Sum.inl d) → V) :
     objIota D V d = (⟨Sum.inl d, ds⟩ : Obj.{uA, uD, v} D V) :=
   congrArg (Sigma.mk (Sum.inl d)) (funext (fun x ↦ PEmpty.elim x))
 
@@ -320,7 +323,7 @@ def IR : Type (max (uA + 1) uD) :=
 namespace IR
 
 /-- The constructor for `IR`. -/
-def mk (s : Shape D) (d : Dir D s → IR D) : IR D :=
+def mk (s : Shape D) (d : Direction D s → IR D) : IR D :=
   WType.mk.{max (uA + 1) uD, max uA uD} s d
 
 /-- The constant (`iota`) code: no subcodes; its interpretation is the
@@ -342,19 +345,19 @@ def delta (A : Type uA) (c : (A → D) → IR.{uA, uD} D) : IR D :=
   mk D (Sum.inr (Sum.inr A)) c
 
 /-- Congruence for `IR.mk` in the direction assignment. -/
-theorem mk_congr (s : Shape D) {ds ds' : Dir D s → IR D} :
+theorem mk_congr (s : Shape D) {ds ds' : Direction D s → IR D} :
     ds = ds' → mk.{uA, uD} D s ds = mk.{uA, uD} D s ds'
   | rfl => rfl
 
 /-- The motive of the proof of `IR.ext`. -/
-def ExtMotive (s : Shape.{uA, uD} D) (d : Dir D s → IR D) (s' : Shape D)
+def ExtMotive (s : Shape.{uA, uD} D) (d : Direction D s → IR D) (s' : Shape D)
     (eq1 : s = s') : Prop :=
-  ∀ d' : Dir D s' → IR D, d = d' ∘ dirOfEq D eq1 → mk D s d = mk D s' d'
+  ∀ d' : Direction D s' → IR D, d = d' ∘ directionOfEq D eq1 → mk D s d = mk D s' d'
 
 /-- Extensionality for `IR` (equality is determined by equality of
 shapes and pointwise equality of directions). -/
 theorem ext {ir ir' : IR.{uA, uD} D} (eq1 : ir.1 = ir'.1)
-    (eq2 : ir.2 = ir'.2 ∘ dirOfEq D eq1) : ir = ir' :=
+    (eq2 : ir.2 = ir'.2 ∘ directionOfEq D eq1) : ir = ir' :=
   match ir, ir' with
   | ⟨s, d⟩, ⟨_, d'⟩ =>
       Eq.rec (motive := ExtMotive D s d) (fun _ ↦ mk_congr D s) eq1 d' eq2
@@ -363,7 +366,7 @@ theorem ext {ir ir' : IR.{uA, uD} D} (eq1 : ir.1 = ir'.1)
 pointwise equality of directions (transported along the shape equality
 induced by the first projection). -/
 theorem snd_eq_of_eq {ir ir' : IR.{uA, uD} D} :
-    (eq : ir = ir') → ir.2 = ir'.2 ∘ dirOfEq D (congrArg (fun t ↦ t.1) eq)
+    (eq : ir = ir') → ir.2 = ir'.2 ∘ directionOfEq D (congrArg (fun t ↦ t.1) eq)
   | rfl => rfl
 
 /-- The eliminator (the algebra morphism from the initial algebra) for
@@ -379,11 +382,11 @@ def elimAlg.{v} (V : Type v) (alg : Alg.{uA, uD, v} D V) : IR D → V :=
 `Sort`-valued motive: from a shape, a subcode assignment, and results
 for the subcodes, produce the result for the constructed code. The
 result sort (an `imax` expression) is left to inference; the
-specializations `IR.RecStep` and `IR.IndStep` carry the explicit
+specializations `IR.RecStep` and `IR.InductionStep` carry the explicit
 ascriptions. -/
 def Step.{v} (motive : IR.{uA, uD} D → Sort v) :=
-  (a : Shape D) → (f : Dir D a → IR D) →
-  ((d : Dir D a) → motive (f d)) → motive (mk D a f)
+  (a : Shape D) → (f : Direction D a → IR D) →
+  ((d : Direction D a) → motive (f d)) → motive (mk D a f)
 
 /-- The step argument type at a `Type`-valued motive (for `IR.rec`,
 `IR.sigmaRec`, and their companions). -/
@@ -391,18 +394,18 @@ def RecStep.{v} (motive : IR.{uA, uD} D → Type v) :
     Type (max (uA + 1) uD v) :=
   Step D motive
 
-/-- The step argument type at a `Prop`-valued motive (for `IR.ind`). -/
-def IndStep (motive : IR.{uA, uD} D → Prop) : Prop :=
+/-- The step argument type at a `Prop`-valued motive (for `IR.induction`). -/
+def InductionStep (motive : IR.{uA, uD} D → Prop) : Prop :=
   Step D motive
 
 /-- The induction principle — the recursor restricted to `Prop`-valued
 motives. (The compiler does not generate code for `WType.rec`
 applications, so `WType.rec` is used only here, where propositions
 need no code.) -/
-theorem ind (motive : IR D → Prop) :
-    IndStep.{uA, uD} D motive → ∀ t : IR D, motive t :=
+theorem induction (motive : IR D → Prop) :
+    InductionStep.{uA, uD} D motive → ∀ t : IR D, motive t :=
   WType.rec.{0, max (uA + 1) uD, max uA uD}
-    (α := Shape D) (β := Dir D) (motive := motive)
+    (α := Shape D) (β := Direction D) (motive := motive)
 
 /-- The `IR.pFunctor` algebra over a sigma type generated by a
 recursor step. -/
@@ -433,14 +436,14 @@ def sigmaRec.{v} (motive : IR D → Type v)
 the first projection. -/
 theorem sigmaRec_fst_step.{v} (motive : IR D → Type v)
     (mk' : RecStep.{uA, uD, v} D motive) :
-    IndStep.{uA, uD} D (fun t ↦ (sigmaRec D motive mk' t).1 = t) :=
+    InductionStep.{uA, uD} D (fun t ↦ (sigmaRec D motive mk' t).1 = t) :=
   fun _ _ ih ↦ ext D rfl (funext ih)
 
 /-- `IR.sigmaRec` is a section of the first projection. -/
 theorem sigmaRec_fst.{v} (motive : IR D → Type v)
     (mk' : RecStep.{uA, uD, v} D motive) :
     ∀ t : IR D, (sigmaRec D motive mk' t).1 = t :=
-  ind D (motive := fun t ↦ (sigmaRec D motive mk' t).1 = t)
+  induction D (motive := fun t ↦ (sigmaRec D motive mk' t).1 = t)
     (sigmaRec_fst_step D motive mk')
 
 /-- The shape component of `IR.sigmaRec` agrees with the shape
@@ -456,7 +459,7 @@ component of the argument, transported along `IR.sigmaRec_fst_fst`. -/
 theorem sigmaRec_fst_snd.{v} (motive : IR D → Type v)
     (mk' : RecStep.{uA, uD, v} D motive) (t : IR D) :
     (sigmaRec D motive mk' t).1.2 =
-      t.2 ∘ dirOfEq D (sigmaRec_fst_fst D motive mk' t) :=
+      t.2 ∘ directionOfEq D (sigmaRec_fst_fst D motive mk' t) :=
   snd_eq_of_eq D (sigmaRec_fst D motive mk' t)
 
 /-- The recursor — the dependent eliminator for `IR`. -/
@@ -480,7 +483,7 @@ of the interpretations `α` of the subcodes. -/
 def interpObjSigma (A : Type uA)
     (α : A → FreeCoprodCompDisc.Endo.{uA, uD} D) :
     FreeCoprodCompDisc.Endo.{uA, uD} D :=
-  fun X ↦ FreeCoprodCompDisc.copr.{uA, uD, uA} D A (fun a ↦ α a X)
+  fun X ↦ FreeCoprodCompDisc.coprod.{uA, uD, uA} D A (fun a ↦ α a X)
 
 /-- The dependent product (`delta`) case of the interpretation of an
 `IR` code on `FreeCoprodCompDisc`: at an object `X`, the indexed
@@ -490,7 +493,7 @@ def interpObjDelta (A : Type uA)
     (α : (A → D) → FreeCoprodCompDisc.Endo.{uA, uD} D) :
     FreeCoprodCompDisc.Endo.{uA, uD} D :=
   fun X ↦
-    FreeCoprodCompDisc.copr.{uA, uD, uA} D (A → X.1) (fun g ↦ α (X.2 ∘ g) X)
+    FreeCoprodCompDisc.coprod.{uA, uD, uA} D (A → X.1) (fun g ↦ α (X.2 ∘ g) X)
 
 /-- The algebra which computes one step of the interpretation of an
 `IR` code on `FreeCoprodCompDisc`. -/
@@ -521,7 +524,7 @@ def interpMorSigma (A : Type uA)
     (μ : (a : A) → FreeCoprodCompDisc.EndoMor D (α a)) :
     FreeCoprodCompDisc.EndoMor D (interpObjSigma D A α) :=
   fun X Y h ↦
-    FreeCoprodCompDisc.coprMor D A A id
+    FreeCoprodCompDisc.coprodMor D A A id
       (fun a ↦ α a X)
       (fun a ↦ α a Y)
       (fun a ↦ μ a X Y h)
@@ -535,7 +538,7 @@ def interpMorDelta (A : Type uA)
     (μ : (f : A → D) → FreeCoprodCompDisc.EndoMor D (α f)) :
     FreeCoprodCompDisc.EndoMor D (interpObjDelta D A α) :=
   fun X Y h ↦
-    FreeCoprodCompDisc.coprMor D (A → X.1) (A → Y.1) (fun g ↦ h.1 ∘ g)
+    FreeCoprodCompDisc.coprodMor D (A → X.1) (A → Y.1) (fun g ↦ h.1 ∘ g)
       (fun g ↦ α (X.2 ∘ g) X)
       (fun g ↦ α (Y.2 ∘ g) Y)
       (fun g ↦

@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
+Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The geb-mathlib contributors
+Authors: Terence Rokop
 -/
 -- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
 module
@@ -39,7 +39,7 @@ categorical packaging is in the sibling `Slice.Functor` module.
 * `SliceDomPFunctor.ofCurried` / `rCurried` — the curried constructor and
   the direction-input map in dependently-curried form.
 * `SliceDomPFunctor.DirectionOver` / `Direction` — the direction-input-map
-  condition on a direction of shape `a`, and the fibre of `rCurried a`
+  condition on a direction of shape `a`, and the fiber of `rCurried a`
   over `i`.
 * `SliceDomPFunctor.Obj` / `map` — the domain-restricted functor's
   object and morphism maps; `map_id` / `map_comp` its functoriality.
@@ -48,7 +48,7 @@ categorical packaging is in the sibling `Slice.Functor` module.
   underlying function; `map_w` that it lies over `cod`, `map_id` /
   `map_comp` its functoriality.
 * `SlicePFunctor.ShapeOver` / `Shape` — the shape-output-map condition and
-  the fibre of `q` over `j`.
+  the fiber of `q` over `j`.
 
 ## Main statements
 
@@ -72,7 +72,7 @@ reuses these — its carrier is `SliceDomPFunctor.Obj` and its `map` the
 namespaces' `map`,
 `SliceDomPFunctor.ofCurried` / `rCurried` / `DirectionOver` / `Direction`,
 and `SlicePFunctor.ShapeOver` / `Shape` are `@[expose]` so the
-wrapper and tests can unfold them across the module boundary. The fibre
+wrapper and tests can unfold them across the module boundary. The fiber
 formers `DirectionOver` / `Direction` / `ShapeOver` / `Shape` are
 additionally `@[implicit_reducible]`: they occur inside dependent types,
 and type-level unification compares types at implicit transparency, so
@@ -146,7 +146,7 @@ image under `rCurried a` is `i`. Point-free as `(· = i) ∘ rCurried a`. -/
     (a : F.A) (i : dom) : F.B a → Prop :=
   (· = i) ∘ F.rCurried a
 
-/-- The directions of shape `a` lying over the base point `i`: the fibre
+/-- The directions of shape `a` lying over the base point `i`: the fiber
 of `rCurried a` over `i`. -/
 @[expose, implicit_reducible] def Direction {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
     (a : F.A) (i : dom) : Type uB :=
@@ -234,7 +234,7 @@ is `j`. Point-free as `(· = j) ∘ q`. -/
     (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) (j : cod) : F.A → Prop :=
   (· = j) ∘ F.q
 
-/-- The shapes lying over `j`: the fibre of `q` over `j`. -/
+/-- The shapes lying over `j`: the fiber of `q` over `j`. -/
 @[expose, implicit_reducible] def Shape {dom : Type uD} {cod : Type uC}
     (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) (j : cod) : Type uA :=
   Subtype (F.ShapeOver j)
