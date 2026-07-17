@@ -77,7 +77,7 @@ index 429483f..8754442 100644
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J where
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
-index cab3559..1b78d18 100644
+index 8a4bc84..0539afe 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
@@ -88,17 +88,28 @@ index cab3559..1b78d18 100644
  module
  
  public import Geb.Mathlib.Data.PFunctor.Slice.W
-@@ -619,7 +620,7 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
+@@ -424,7 +425,7 @@ theorem isHereditarilyNatural_mk_forgetNode {I : Type uI} [Category.{vI} I]
+     refine ⟨fun i i' g b ↦ ?_, fun b ↦ (n.1.2 b).2.down.2.2⟩
+     have h := congrArg (fun u ↦ u.down.1) (hnat g b)
+     simp only [value_down F n, map_down F g] at h
+-    exact h.trans (wRestrTree_congr F g (value_down F n b) _ _)
++    exact h
+ 
+ /-- The fixed-point constructor of the presheaf W-type: the `objPresheaf`-value
+ at the carrier presheaf `F.W` maps into `F.W`, fibrewise over `I`. It builds the
+@@ -630,9 +631,7 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
              hn.2 hn.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q a⟩)) =
            α.app ⟨i'⟩ ((F.objPresheaf Y).map f.op
-             ⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) := by
--      rw [← ConcreteCategory.comp_apply, ← α.naturality f.op, ConcreteCategory.comp_apply]
-+      exact (FunctorToTypes.naturality _ _ α f.op _).symm
+             ⟨⟨pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) :=
+-      (ConcreteCategory.comp_apply _ _ _).symm.trans
+-        ((ConcreteCategory.congr_hom (α.naturality f.op).symm _).trans
+-          (ConcreteCategory.comp_apply _ _ _))
++      (FunctorToTypes.naturality _ _ α f.op _).symm
      change (α.app ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩
            (⟨⟨F.objRestrElt f (pnodeSlice (fun b ↦ pelimData F Y α (fchild b)) hv hn.1) hqi,
              hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
-index 579e42f..568164a 100644
+index 2b85da3..0445d60 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
@@ -109,7 +120,7 @@ index 579e42f..568164a 100644
  module
  
  public import Mathlib.Data.PFunctor.Univariate.Basic
-@@ -89,17 +90,17 @@ public section
+@@ -94,17 +95,17 @@ public section
  
  universe uA uB uD uC uX uX' uY uZ
  
@@ -205,7 +216,7 @@ index ff11455..9d14602 100644
  
  end SlicePFunctor
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
-index afbc314..533b3ed 100644
+index 6458274..b126356 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 The geb-mathlib contributors. All rights reserved.
@@ -221,9 +232,9 @@ index afbc314..533b3ed 100644
    WType.rec (motive := fun w ↦ (elimData F Y p g hg w).valid ↔ F.WValid w)
      (fun a f ih ↦ by
 +      beta_reduce
-       rw [F.wValid_mk, elimData_valid_mk]
-       exact and_congr (forall_congr' ih) (by simp only [OverInput, elimData_index]; rfl))
-     w
+       rw [F.wValid_mk a f, elimData_valid_mk F Y p g hg a f]
+       exact and_congr (forall_congr' ih)
+         (iff_of_eq (congrArg (F.OverInput a)
 diff --git a/vendor/geb-mathlib/Geb.lean b/vendor/geb-mathlib/Geb.lean
 index 5d37c79..9b07ec4 100644
 --- a/vendor/geb-mathlib/Geb.lean

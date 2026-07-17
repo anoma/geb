@@ -9,6 +9,7 @@
   - [2. `linter.checkUnivs` configuration absent in v4.29](#2-lintercheckunivs-configuration-absent-in-v429)
   - [3. `ConcreteCategory` redesign (mathlib pull request 34741)](#3-concretecategory-redesign-mathlib-pull-request-34741)
   - [4. `WType.rec` motive left as an unreduced beta-redex](#4-wtyperec-motive-left-as-an-unreduced-beta-redex)
+  - [5. `simp` rewriting under dependent proof arguments narrowed in v4.33](#5-simp-rewriting-under-dependent-proof-arguments-narrowed-in-v433)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [The hard wall](#the-hard-wall)
@@ -18,7 +19,7 @@
 
 These notes catalogue the categories of change in
 `scripts/geb-mathlib-backport.patch`, which adapts the vendored
-`geb-mathlib` `Geb` source (mathlib `v4.32.0-rc1`) to compile under this
+`geb-mathlib` `Geb` source (mathlib `v4.33.0-rc1`) to compile under this
 repository's `v4.29.0-rc6`. When a refresh fails, check whether the new
 failure matches a category below (extend the corresponding hunk) or is
 genuinely new (decide the adaptation, add a category here).
@@ -74,10 +75,10 @@ genuinely new (decide the adaptation, add a category here).
   the `Type`-valued naturality lemma whose statement is the goal
   (`α.app Y (Z.map f x) = Z'.map f (α.app X x)`).
 - Adaptation in `Presheaf/W.lean` (`value_wRestrTree`): the same
-  `ConcreteCategory.comp_apply` gap appears in a naturality step written
-  `rw [← ConcreteCategory.comp_apply, ← α.naturality f.op,
-  ConcreteCategory.comp_apply]`. Replace with
-  `exact (FunctorToTypes.naturality _ _ α f.op _).symm`; the `.symm` is
+  `ConcreteCategory.comp_apply` gap appears in a naturality step, a
+  term-mode proof chaining `ConcreteCategory.comp_apply` and
+  `ConcreteCategory.congr_hom`. Replace the chain with the term
+  `(FunctorToTypes.naturality _ _ α f.op _).symm`; the `.symm` is
   needed because this goal is the naturality equation with sides
   reversed.
 
@@ -95,6 +96,22 @@ genuinely new (decide the adaptation, add a category here).
   such step.
 - Adaptation: prepend `beta_reduce` as the first tactic of the minor
   premise, exposing `F.WValid (WType.mk a f)` for the existing rewrite.
+
+### 5. `simp` rewriting under dependent proof arguments narrowed in v4.33
+
+- Upstream cause: `Presheaf/W.lean`'s `isHereditarilyNatural_mk_forgetNode`
+  closes its converse direction with
+  `exact h.trans (wRestrTree_congr F g (value_down F n b) _ _)`. The
+  `wRestrTree_congr` bridge compensates for v4.33's `simp`, which no
+  longer rewrites the `value_down` occurrence sitting under
+  `wRestrTree`'s dependent head-index proof argument.
+- v4.29 symptom: `simp only [value_down F n, map_down F g] at h`
+  rewrites that occurrence as well, so the bridge's left-hand side no
+  longer occurs in `h`: application type mismatch on the `h.trans`
+  argument.
+- Adaptation: close with `exact h` (drop the `.trans` bridge). The
+  private `wRestrTree_congr` lemma compiles under v4.29 and is left
+  unmodified, unused.
 
 ## Updating the patch for a new upstream
 
@@ -152,7 +169,7 @@ When a vendored module depends on a mathlib definition or theorem that
 does not exist in `v4.29.0-rc6` (a genuinely new result, not a rename),
 no patch hunk can supply it and `sorry`/`admit` are banned. Such a module
 is dropped from the vendored copy via the refresh script's exclusion list
-until either `geb-lean` is forward-migrated to `v4.32.0-rc1` or the
+until either `geb-lean` is forward-migrated to `v4.33.0-rc1` or the
 consuming exploration is deferred.
 
 ## Tooling notes
