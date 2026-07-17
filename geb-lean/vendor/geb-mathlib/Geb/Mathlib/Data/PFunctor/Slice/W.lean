@@ -182,7 +182,7 @@ the index is the `q`-assigned output index of the shape, and the node is
 `NodeValid`. -/
 @[expose] def windexStep {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
     F.toPFunctor.Obj (WIndex I) → WIndex I :=
-  fun ⟨a, c⟩ => { index := F.q a, valid := F.NodeValid a c }
+  fun ⟨a, c⟩ ↦ { index := F.q a, valid := F.NodeValid a c }
 
 /-- The index paired with admissibility: the `F.toPFunctor`-algebra morphism
 into `(WIndex I, windexStep)` given by `WType.elim`. -/
@@ -214,7 +214,7 @@ theorem wValid_mk {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     F.WValid (WType.mk a f) ↔
       F.ForAll a (F.WValid ∘ f) ∧ F.OverInput a (F.windexRoot ∘ f) := by
   have h : WIndex.index ∘ F.windexValid ∘ f = F.windexRoot ∘ f :=
-    funext fun b => F.windexValid_index_eq_windexRoot (f b)
+    funext fun b ↦ F.windexValid_index_eq_windexRoot (f b)
   change (F.ForAll a (F.WValid ∘ f) ∧ F.OverInput a (WIndex.index ∘ F.windexValid ∘ f)) ↔ _
   rw [h]
 
@@ -234,7 +234,7 @@ namespace W
 @[expose] def mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     (x : F.toSliceDomPFunctor.Obj F.windex) : F.W :=
   ⟨WType.mk x.1.1 (Subtype.val ∘ x.1.2),
-    (F.wValid_mk _ _).mpr ⟨fun b => (x.1.2 b).property,
+    (F.wValid_mk _ _).mpr ⟨fun b ↦ (x.1.2 b).property,
       funext ((F.toSliceDomPFunctor.compatible_iff F.windex x.1.1 x.1.2).mp x.2)⟩⟩
 
 /-- The destructor of the slice W-type: every admissible tree decomposes as a
@@ -244,9 +244,9 @@ shape together with a compatible family of admissible subtrees. Inverse to
     (z : F.W) : F.toSliceDomPFunctor.Obj F.windex :=
   match z with
   | ⟨WType.mk a f, hw⟩ =>
-      ⟨⟨a, fun b => ⟨f b, ((F.wValid_mk a f).mp hw).1 b⟩⟩,
+      ⟨⟨a, fun b ↦ ⟨f b, ((F.wValid_mk a f).mp hw).1 b⟩⟩,
         (F.toSliceDomPFunctor.compatible_iff F.windex a _).mpr
-          fun b => congrFun ((F.wValid_mk a f).mp hw).2 b⟩
+          fun b ↦ congrFun ((F.wValid_mk a f).mp hw).2 b⟩
 
 /-- `dest` is a left inverse of `mk`. -/
 @[simp]
@@ -254,7 +254,7 @@ theorem dest_mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     (x : F.toSliceDomPFunctor.Obj F.windex) : dest (mk x) = x := by
   obtain ⟨⟨a, v⟩, hv⟩ := x
   apply Subtype.ext
-  exact Sigma.ext rfl (heq_of_eq (funext fun b => Subtype.ext rfl))
+  exact Sigma.ext rfl (heq_of_eq (funext fun b ↦ Subtype.ext rfl))
 
 /-- `mk` is a left inverse of `dest`; with `dest_mk`, `mk` and `dest` are
 mutually inverse, so `W` is a fixed point of the slice endofunctor. -/
@@ -288,13 +288,13 @@ children's values, with `over` recording that the result lies over the index. -/
 @[expose] def elimStep {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (Y : Type uY) (p : Y → I) (g : F.toSliceDomPFunctor.Obj p → Y) (hg : p ∘ g = F.obj p) :
     F.toPFunctor.Obj (ElimData Y p) → ElimData Y p :=
-  fun ⟨a, c⟩ =>
+  fun ⟨a, c⟩ ↦
     { index := F.q a
       valid := F.NodeValid a (ElimData.toWIndex ∘ c)
-      value := fun hv => g ⟨⟨a, fun b => (c b).value (hv.1 b)⟩,
-        (F.toSliceDomPFunctor.compatible_iff p a _).mpr fun b =>
+      value := fun hv ↦ g ⟨⟨a, fun b ↦ (c b).value (hv.1 b)⟩,
+        (F.toSliceDomPFunctor.compatible_iff p a _).mpr fun b ↦
           (congrFun (c b).over (hv.1 b)).trans (congrFun hv.2 b)⟩
-      over := funext fun _ => congrFun hg _ }
+      over := funext fun _ ↦ congrFun hg _ }
 
 /-- The `elim` fold: the `F.toPFunctor`-algebra morphism into
 `(ElimData Y p, elimStep)` given by `WType.elim`, a single non-dependent fold
@@ -317,8 +317,8 @@ theorem elimData_valid_mk {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (Y : Type uY) (p : Y → I) (g : F.toSliceDomPFunctor.Obj p → Y) (hg : p ∘ g = F.obj p)
     (a : F.toPFunctor.A) (f : F.toPFunctor.B a → F.toPFunctor.W) :
     (elimData F Y p g hg (WType.mk a f)).valid =
-      (F.ForAll a (fun b => (elimData F Y p g hg (f b)).valid) ∧
-        F.OverInput a (fun b => (elimData F Y p g hg (f b)).index)) :=
+      (F.ForAll a (fun b ↦ (elimData F Y p g hg (f b)).valid) ∧
+        F.OverInput a (fun b ↦ (elimData F Y p g hg (f b)).index)) :=
   rfl
 
 /-- The admissibility component of `elimData` agrees with `WValid`. An
@@ -329,8 +329,8 @@ non-computability is immaterial. -/
 theorem elimData_valid {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (Y : Type uY) (p : Y → I) (g : F.toSliceDomPFunctor.Obj p → Y) (hg : p ∘ g = F.obj p)
     (w : F.toPFunctor.W) : (elimData F Y p g hg w).valid ↔ F.WValid w :=
-  WType.rec (motive := fun w => (elimData F Y p g hg w).valid ↔ F.WValid w)
-    (fun a f ih => by
+  WType.rec (motive := fun w ↦ (elimData F Y p g hg w).valid ↔ F.WValid w)
+    (fun a f ih ↦ by
       beta_reduce
       rw [F.wValid_mk, elimData_valid_mk]
       exact and_congr (forall_congr' ih) (by simp only [OverInput, elimData_index]; rfl))
@@ -343,7 +343,7 @@ argument to the fold's `value` function. -/
 @[expose] def elim {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (Y : Type uY) (p : Y → I) (g : F.toSliceDomPFunctor.Obj p → Y) (hg : p ∘ g = F.obj p) :
     F.W → Y :=
-  fun z =>
+  fun z ↦
     (elimData F Y p g hg z.val).value
       ((elimData_valid F Y p g hg z.val).mpr z.property)
 
@@ -352,7 +352,7 @@ argument to the fold's `value` function. -/
 theorem comp_elim {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI} I I)
     (Y : Type uY) (p : Y → I) (g : F.toSliceDomPFunctor.Obj p → Y) (hg : p ∘ g = F.obj p) :
     p ∘ elim F Y p g hg = F.windex :=
-  funext fun z =>
+  funext fun z ↦
     (congrFun (elimData F Y p g hg z.val).over
       ((elimData_valid F Y p g hg z.val).mpr z.property)).trans
       (elimData_index F Y p g hg z.val)
@@ -375,11 +375,11 @@ theorem ind {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     (mk : ∀ (x : F.toSliceDomPFunctor.Obj F.windex),
         (∀ b, motive (x.1.2 b)) → motive (W.mk x)) :
     ∀ z, motive z :=
-  fun z =>
-    WType.rec (motive := fun w => ∀ (hw : F.WValid w), motive ⟨w, hw⟩)
-      (fun a f ih hw' => by
+  fun z ↦
+    WType.rec (motive := fun w ↦ ∀ (hw : F.WValid w), motive ⟨w, hw⟩)
+      (fun a f ih hw' ↦ by
         rw [← mk_dest ⟨WType.mk a f, hw'⟩]
-        exact mk _ fun b => ih b (((F.wValid_mk a f).mp hw').1 b))
+        exact mk _ fun b ↦ ih b (((F.wValid_mk a f).mp hw').1 b))
       z.1 z.2
 
 /-- Paramorphism from the slice W-type into `Prop`: `step` sees the node `x`,
@@ -390,11 +390,11 @@ values. The value is computed by `WType.rec` with a `Prop` motive, so no
     (step : (x : F.toSliceDomPFunctor.Obj F.windex) →
       (F.toPFunctor.B x.1.1 → Prop) → Prop) :
     F.W → Prop :=
-  fun z =>
-    WType.rec (motive := fun w => F.WValid w → Prop)
-      (fun a f ih hv =>
+  fun z ↦
+    WType.rec (motive := fun w ↦ F.WValid w → Prop)
+      (fun a f ih hv ↦
         step (dest ⟨WType.mk a f, hv⟩)
-          (fun b => ih b (((F.wValid_mk a f).mp hv).1 b)))
+          (fun b ↦ ih b (((F.wValid_mk a f).mp hv).1 b)))
       z.1 z.2
 
 /-- The one-level computation rule for `recProp`: on `mk x` it applies `step`
@@ -404,7 +404,7 @@ theorem recProp_mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     (step : (x : F.toSliceDomPFunctor.Obj F.windex) →
       (F.toPFunctor.B x.1.1 → Prop) → Prop)
     (x : F.toSliceDomPFunctor.Obj F.windex) :
-    W.recProp step (W.mk x) = step x (fun b => W.recProp step (x.1.2 b)) := by
+    W.recProp step (W.mk x) = step x (fun b ↦ W.recProp step (x.1.2 b)) := by
   obtain ⟨⟨a, v⟩, hc⟩ := x
   rfl
 

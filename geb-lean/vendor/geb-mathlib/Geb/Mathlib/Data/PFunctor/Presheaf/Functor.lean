@@ -100,7 +100,7 @@ by `rfl`. -/
 mathlib's `Iᵒᵖ`-indexed category of elements `Z.Elements`, sending `⟨i, z⟩` to
 `⟨op i, z⟩`. -/
 @[expose] def toElements {I : Type uI} [Category.{vI} I] (Z : Iᵒᵖ ⥤ Type uZ) :
-    (Σ i : I, Z.obj ⟨i⟩) → Z.Elements := fun p => ⟨⟨p.1⟩, p.2⟩
+    (Σ i : I, Z.obj ⟨i⟩) → Z.Elements := fun p ↦ ⟨⟨p.1⟩, p.2⟩
 
 /-- The core's `elemMap` is the object map of the functor on categories of
 elements that `α` induces — mathlib's `CategoryOfElements.map` — across the

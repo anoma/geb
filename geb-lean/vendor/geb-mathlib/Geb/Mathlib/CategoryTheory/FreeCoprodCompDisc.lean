@@ -92,7 +92,7 @@ index universe `max u uI`, which is the original completion — making
 the result an in-category coproduct — exactly when `uI ≤ u`. -/
 def copr.{uI} (I : Type uI) (fi : I → FreeCoprodCompDisc.{u, v} D) :
     FreeCoprodCompDisc.{max u uI} D :=
-  ⟨(Σ i : I, (fi i).1), Sigma.uncurry (fun i => (fi i).2)⟩
+  ⟨(Σ i : I, (fi i).1), Sigma.uncurry (fun i ↦ (fi i).2)⟩
 
 /-- The functorial action of `FreeCoprodCompDisc.copr` on morphisms: a
 reindexing function together with a componentwise family of morphisms
@@ -102,8 +102,8 @@ def coprMor.{uI} (I J : Type uI) (r : I → J)
     (gj : J → FreeCoprodCompDisc.{u, v} D)
     (hom : (i : I) → Hom D (fi i) (gj (r i))) :
     Hom D (copr D I fi) (copr D J gj) :=
-  ⟨Sigma.map r (fun i => (hom i).1),
-    funext (fun p => congrFun (hom p.1).2 p.2)⟩
+  ⟨Sigma.map r (fun i ↦ (hom i).1),
+    funext (fun p ↦ congrFun (hom p.1).2 p.2)⟩
 
 end FreeCoprodCompDisc
 

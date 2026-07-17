@@ -94,8 +94,8 @@ the `Functor.toOver` triangle obligation for `functor`, shared with
 private theorem output_triangle {dom : Type uD} {cod : Type (max uA uB uD)}
     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod)
     {Y Z : Over dom} (g : Y ⟶ Z) :
-    F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z => F.q z.1.1) =
-      (↾fun z => F.q z.1.1) := by
+    F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z ↦ F.q z.1.1) =
+      (↾fun z ↦ F.q z.1.1) := by
   ext z
   exact congrArg F.q (F.toSliceDomPFunctor.map_fst (g.left)
     (SliceDomPFunctor.over_hom_comp g) z)
@@ -106,7 +106,7 @@ private theorem output_triangle {dom : Type uD} {cod : Type (max uA uB uD)}
     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) :
     CategoryTheory.Functor (Over dom) (Over cod) :=
   Functor.toOver F.toSliceDomPFunctor.domFunctor cod
-    (fun _ => ↾(fun z => F.q z.1.1))
+    (fun _ ↦ ↾(fun z ↦ F.q z.1.1))
     (by intro Y Z g; exact F.output_triangle g)
 
 /-- The wrapper forgets back to `domFunctor`. -/
@@ -114,7 +114,7 @@ theorem functor_comp_forget {dom : Type uD} {cod : Type (max uA uB uD)}
     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) :
     F.functor ⋙ Over.forget cod = F.toSliceDomPFunctor.domFunctor := by
   rw [functor]
-  exact Functor.toOver_comp_forget _ _ _ fun g => F.output_triangle g
+  exact Functor.toOver_comp_forget _ _ _ fun g ↦ F.output_triangle g
 
 /-- `functor.obj` is the core `obj`, packaged with `Over.mk`. The
 categorical object map carries no data beyond the core. -/
