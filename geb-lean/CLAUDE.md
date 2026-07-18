@@ -72,11 +72,14 @@ active topic branches.
   theorem taken from published mathematics carries a literature
   reference with a searchable identifier in its plan, spec, and
   Lean source. Each workstream's brainstorming-phase spec marks
-  each definition as transcription or novel. In `.lean` files,
-  citations live in the module docstring's `## References`
-  section or inside the declaration's `/-- ... -/` docstring.
-  The `theoremsearch` MCP (`theorem_search`) locates published
-  statements and their identifiers.
+  each definition as transcription or novel. Comments, however,
+  do not -- they just cite any literature which they are
+  transcribing, and do not claim novelty (and claiming
+  "transcription" is redundant given an actual citation).
+  In `.lean` files, citations live in the module docstring's
+  `## References` section or inside the declaration's `/-- ... -/`
+  docstring.  The `theoremsearch` MCP (`theorem_search`) locates
+  published statements and their identifiers.
 - **Document only the persistent.** Comments and committed text
   describe what is enduring about the code as it is — its purpose,
   its contracts, non-obvious external constraints. They do not
