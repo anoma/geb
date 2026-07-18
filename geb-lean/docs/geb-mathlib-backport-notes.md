@@ -36,26 +36,31 @@ genuinely new (decide the adaptation, add a category here).
 ### 2. `linter.checkUnivs` configuration absent in v4.29
 
 - Upstream cause: `geb-mathlib` suppresses the `linter.checkUnivs`
-  universe linter on its `Slice` and `Presheaf` structures. As of
-  upstream commit `0a772c2` the suppression is the
-  `set_option linter.checkUnivs false in` lines alone; the
-  `@[nolint checkUnivs]` attributes were removed upstream.
+  universe linter on its `Slice` and `Presheaf` structures and on the
+  `IndRec` declarations whose separated arity universes `uA`/`uB`
+  appear only together under `max`. As of upstream commit `0a772c2`
+  the suppression is the `set_option linter.checkUnivs false in` lines
+  alone; the `@[nolint checkUnivs]` attributes were removed upstream.
 - v4.29 symptom: `Unknown option 'linter.checkUnivs'`; without a
   replacement suppression, the `checkUnivs` env-linter then fires on
   the structures under `lake lint`.
 - Adaptation: delete the `set_option linter.checkUnivs false in` lines
   and insert an `@[nolint checkUnivs]` attribute between each affected
-  structure's docstring and its `structure` keyword (`nolint` is the
-  v4.29-compatible suppression). The affected structures are
-  `SliceDomPFunctor` and `SlicePFunctor` in `Slice/Basic.lean` and
-  `PresheafDomPFunctorData`, `PresheafDomPFunctor`,
-  `PresheafPFunctorData`, and `PresheafPFunctor` in
-  `Presheaf/Basic.lean`.
-- Prose adaptation: `Presheaf/Basic.lean`'s module docstring describes
-  the suppression as "The `linter.checkUnivs false` option suppresses
-  the ...". Because the option line is deleted and the attribute
-  inserted, reword to "The `@[nolint checkUnivs]` attribute suppresses
-  the ..." so the docstring describes the code as it stands in v4.29.
+  declaration's docstring and its `structure` or `def` keyword
+  (`nolint` is the v4.29-compatible suppression). The affected
+  structures are `SliceDomPFunctor` and `SlicePFunctor` in
+  `Slice/Basic.lean` and `PresheafDomPFunctorData`,
+  `PresheafDomPFunctor`, `PresheafPFunctorData`, and `PresheafPFunctor`
+  in `Presheaf/Basic.lean`. The affected definitions in
+  `IndRec/Basic.lean` are `IR.Shape`, `IR.pFunctor`, `IR.Obj`,
+  `IR.ObjFst`, `IR.Dest`, `IR.Alg`, the top-level `IR`, and
+  `IR.interpObjIota`.
+- Prose adaptation: the module docstrings of `Presheaf/Basic.lean` and
+  `IndRec/Basic.lean` describe the suppression as
+  "The `linter.checkUnivs false` option suppresses the ...". Because
+  the option line is deleted and the attribute inserted, reword to
+  "The `@[nolint checkUnivs]` attribute suppresses the ..." so the
+  docstring describes the code as it stands in v4.29.
 
 ### 3. `ConcreteCategory` redesign (mathlib pull request 34741)
 

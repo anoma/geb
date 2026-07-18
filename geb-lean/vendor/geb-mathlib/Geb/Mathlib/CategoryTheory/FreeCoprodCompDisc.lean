@@ -15,8 +15,10 @@ public import Mathlib.Logic.Function.Basic
 `D` treated as a discrete category: the category `Fam |D|` of families
 of elements of `D`, with objects the pairs of an index type `A` and an
 assignment `A → D`, and morphisms the index functions commuting with
-the assignments. This module provides the objects, morphisms, indexed
-coproducts, and the coproducts' functorial action, constructively.
+the assignments. This module provides the objects, morphisms, the
+object-map and morphism-map components of functors between
+completions, indexed coproducts, and the coproducts' functorial
+action, constructively.
 
 ## Main definitions
 
@@ -24,8 +26,12 @@ coproducts, and the coproducts' functorial action, constructively.
   assignments.
 * `FreeCoprodCompDisc.Hom` — the morphisms, with the codomain
   transport `FreeCoprodCompDisc.homOfEq`.
+* `FreeCoprodCompDisc.Map`, `FreeCoprodCompDisc.MapMor` — the
+  object-map and morphism-map components of functors between the free
+  coproduct completions of two (generally different) types.
 * `FreeCoprodCompDisc.Endo`, `FreeCoprodCompDisc.EndoMor` — the
-  object-map and morphism-map components of endofunctors.
+  endofunctor specializations `FreeCoprodCompDisc.Map D D` and
+  `FreeCoprodCompDisc.MapMor D D`.
 * `FreeCoprodCompDisc.coprod`, `FreeCoprodCompDisc.coprodMor` — the
   indexed coproducts and their functorial action.
 
@@ -65,10 +71,17 @@ def FreeCoprodCompDisc : Type (max (u + 1) v) :=
 
 namespace FreeCoprodCompDisc
 
+/-- The (object-map components of) functors from the free coproduct
+completion of `I` to that of `O` (both treated as discrete
+categories). -/
+def Map.{w} (I : Type v) (O : Type w) : Type (max (u + 1) v w) :=
+  FreeCoprodCompDisc.{u, v} I → FreeCoprodCompDisc.{u, w} O
+
 /-- The (object-map components of) endofunctors on
-`FreeCoprodCompDisc`. -/
+`FreeCoprodCompDisc`: the specialization
+`FreeCoprodCompDisc.Map D D`. -/
 def Endo : Type (max (u + 1) v) :=
-  FreeCoprodCompDisc.{u, v} D → FreeCoprodCompDisc.{u, v} D
+  Map.{u, v, v} D D
 
 /-- The morphisms of the free coproduct completion of `D` treated as a
 discrete category. -/
@@ -81,27 +94,35 @@ def homOfEq {X Y Y' : FreeCoprodCompDisc.{u, v} D} :
     Y = Y' → Hom D X Y → Hom D X Y'
   | rfl => id
 
+/-- The morphism-map component over an object map between the free
+coproduct completions of two (generally different) types. -/
+def MapMor.{w} (I : Type v) (O : Type w) (F : Map.{u, v, w} I O) :
+    Type (max (u + 1) v) :=
+  (X Y : FreeCoprodCompDisc.{u, v} I) → Hom.{u, v} I X Y →
+    Hom.{u, w} O (F X) (F Y)
+
 /-- The morphism-map component over an object map on
-`FreeCoprodCompDisc`. -/
+`FreeCoprodCompDisc`: the specialization
+`FreeCoprodCompDisc.MapMor D D`. -/
 def EndoMor (F : Endo D) : Type (max (u + 1) v) :=
-  (X Y : FreeCoprodCompDisc.{u, v} D) → Hom D X Y → Hom D (F X) (F Y)
+  MapMor.{u, v, v} D D F
 
 /-- The indexed coproduct in the free coproduct completion of `D`
 treated as a discrete category. The result lives in the completion at
-index universe `max u uI`, which is the original completion — making
-the result an in-category coproduct — exactly when `uI ≤ u`. -/
-def coprod.{uI} (I : Type uI) (fi : I → FreeCoprodCompDisc.{u, v} D) :
-    FreeCoprodCompDisc.{max u uI} D :=
-  ⟨(Σ i : I, (fi i).1), Sigma.uncurry (fun i ↦ (fi i).2)⟩
+index universe `max u w`, which is the original completion — making
+the result an in-category coproduct — exactly when `w ≤ u`. -/
+def coprod.{w} (ι : Type w) (fi : ι → FreeCoprodCompDisc.{u, v} D) :
+    FreeCoprodCompDisc.{max u w} D :=
+  ⟨(Σ i : ι, (fi i).1), Sigma.uncurry (fun i ↦ (fi i).2)⟩
 
 /-- The functorial action of `FreeCoprodCompDisc.coprod` on morphisms:
 a reindexing function together with a componentwise family of
 morphisms induces a morphism of indexed coproducts. -/
-def coprodMor.{uI} (I J : Type uI) (r : I → J)
-    (fi : I → FreeCoprodCompDisc.{u, v} D)
-    (gj : J → FreeCoprodCompDisc.{u, v} D)
-    (hom : (i : I) → Hom D (fi i) (gj (r i))) :
-    Hom D (coprod D I fi) (coprod D J gj) :=
+def coprodMor.{w} (ι κ : Type w) (r : ι → κ)
+    (fi : ι → FreeCoprodCompDisc.{u, v} D)
+    (gk : κ → FreeCoprodCompDisc.{u, v} D)
+    (hom : (i : ι) → Hom D (fi i) (gk (r i))) :
+    Hom D (coprod D ι fi) (coprod D κ gk) :=
   ⟨Sigma.map r (fun i ↦ (hom i).1),
     funext (fun p ↦ congrFun (hom p.1).2 p.2)⟩
 
