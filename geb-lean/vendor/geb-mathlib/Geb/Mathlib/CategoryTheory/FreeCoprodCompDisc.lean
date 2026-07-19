@@ -6,7 +6,9 @@ Authors: Terence Rokop
 module
 
 public import Mathlib.Data.Sigma.Basic
+public import Mathlib.Logic.Equiv.Basic
 public import Mathlib.Logic.Function.Basic
+public import Geb.Mathlib.Logic.Equiv.Basic
 
 /-!
 # The free coproduct completion of a discrete category
@@ -34,6 +36,24 @@ action, constructively.
   `FreeCoprodCompDisc.MapMor D D`.
 * `FreeCoprodCompDisc.coprod`, `FreeCoprodCompDisc.coprodMor` — the
   indexed coproducts and their functorial action.
+* `FreeCoprodCompDisc.Hom.comp` — composition of morphisms, in
+  diagrammatic order.
+* `FreeCoprodCompDisc.coprodPair`, `FreeCoprodCompDisc.plus` — the
+  binary coproduct (the cotuple object `[i, k]` of
+  [HancockMcBrideGhaniMalatestaAltenkirch2013]) and its
+  fixed-left-object specialization (the object map `(+i)`), with
+  injections `coprodPairInl`/`coprodPairInr` and the universal
+  cotuple `coprodPairDesc`.
+* `FreeCoprodCompDisc.copower` — the copower `X ⊗ i` (the `X`-fold
+  coproduct of `i`, [HancockMcBrideGhaniMalatestaAltenkirch2013],
+  Lemma 3), with universal property `copowerEquiv`.
+* `FreeCoprodCompDisc.lift` — the `ULift` renaming of an object,
+  with universal property `homLiftEquiv`.
+* `FreeCoprodCompDisc.Iso` — isomorphism of two objects (a
+  name-type equivalence commuting with the decodings), with
+  `refl`/`symm`/`trans` and the transport `isoOfEq`; `coprodIso` is
+  the congruence of `coprod` along an index equivalence and a
+  family of isomorphisms of the summands.
 
 ## Implementation notes
 
@@ -49,6 +69,7 @@ wrapper module.
 ## References
 
 * [GhaniNordvallForsbergMalatesta2015]
+* [HancockMcBrideGhaniMalatestaAltenkirch2013]
 
 ## Tags
 
@@ -84,8 +105,10 @@ def Endo : Type (max (u + 1) v) :=
   Map.{u, v, v} D D
 
 /-- The morphisms of the free coproduct completion of `D` treated as a
-discrete category. -/
-def Hom (X Y : FreeCoprodCompDisc.{u, v} D) : Type u :=
+discrete category. The two objects may sit at different index
+universes. -/
+def Hom.{u'} (X : FreeCoprodCompDisc.{u, v} D)
+    (Y : FreeCoprodCompDisc.{u', v} D) : Type (max u u') :=
   {h : X.1 → Y.1 // Y.2 ∘ h = X.2}
 
 /-- Rewrite the codomain of a `FreeCoprodCompDisc.Hom` along an
@@ -94,12 +117,18 @@ def homOfEq {X Y Y' : FreeCoprodCompDisc.{u, v} D} :
     Y = Y' → Hom D X Y → Hom D X Y'
   | rfl => id
 
+/-- Composition of morphisms of the free coproduct completion, in
+diagrammatic order. -/
+def Hom.comp {X Y Z : FreeCoprodCompDisc.{u, v} D} (f : Hom D X Y)
+    (g : Hom D Y Z) : Hom D X Z :=
+  ⟨g.1 ∘ f.1, (congrArg (· ∘ f.1) g.2).trans f.2⟩
+
 /-- The morphism-map component over an object map between the free
 coproduct completions of two (generally different) types. -/
 def MapMor.{w} (I : Type v) (O : Type w) (F : Map.{u, v, w} I O) :
     Type (max (u + 1) v) :=
-  (X Y : FreeCoprodCompDisc.{u, v} I) → Hom.{u, v} I X Y →
-    Hom.{u, w} O (F X) (F Y)
+  (X Y : FreeCoprodCompDisc.{u, v} I) → Hom.{u, v, u} I X Y →
+    Hom.{u, w, u} O (F X) (F Y)
 
 /-- The morphism-map component over an object map on
 `FreeCoprodCompDisc`: the specialization
@@ -125,6 +154,144 @@ def coprodMor.{w} (ι κ : Type w) (r : ι → κ)
     Hom D (coprod D ι fi) (coprod D κ gk) :=
   ⟨Sigma.map r (fun i ↦ (hom i).1),
     funext (fun p ↦ congrFun (hom p.1).2 p.2)⟩
+
+/-- The binary coproduct of two objects of the free coproduct
+completion: the sum of the name types, the cotuple of the
+decodings — the cotuple object `[i, k]` of
+[HancockMcBrideGhaniMalatestaAltenkirch2013] (the discussion
+preceding Theorem 2). The two objects may live at different
+index universes. -/
+def coprodPair.{uX, uY} (X : FreeCoprodCompDisc.{uX, v} D)
+    (Y : FreeCoprodCompDisc.{uY, v} D) :
+    FreeCoprodCompDisc.{max uX uY, v} D :=
+  ⟨X.1 ⊕ Y.1, Sum.elim X.2 Y.2⟩
+
+/-- The object map `(+i)` of [HancockMcBrideGhaniMalatestaAltenkirch2013]
+(the discussion preceding Theorem 2): the binary coproduct with a
+fixed left object. -/
+def plus.{uJ, uK} (i : FreeCoprodCompDisc.{uJ, v} D)
+    (k : FreeCoprodCompDisc.{uK, v} D) :
+    FreeCoprodCompDisc.{max uJ uK, v} D :=
+  coprodPair.{v, uJ, uK} D i k
+
+/-- The left injection into a binary coproduct (at one index
+universe, where the coproduct is in-category). -/
+def coprodPairInl (X Y : FreeCoprodCompDisc.{u, v} D) :
+    Hom D X (coprodPair.{v, u, u} D X Y) :=
+  ⟨Sum.inl, rfl⟩
+
+/-- The right injection into a binary coproduct. -/
+def coprodPairInr (X Y : FreeCoprodCompDisc.{u, v} D) :
+    Hom D Y (coprodPair.{v, u, u} D X Y) :=
+  ⟨Sum.inr, rfl⟩
+
+/-- The cotuple: the universal morphism out of a binary
+coproduct. -/
+def coprodPairDesc {X Y Z : FreeCoprodCompDisc.{u, v} D}
+    (f : Hom D X Z) (g : Hom D Y Z) :
+    Hom D (coprodPair.{v, u, u} D X Y) Z :=
+  ⟨Sum.elim f.1 g.1,
+    funext (fun s ↦
+      Sum.casesOn s (fun a ↦ congrFun f.2 a) (fun b ↦ congrFun g.2 b))⟩
+
+/-- The cotuple restricted along the left injection is the left
+component. -/
+theorem coprodPair_inl_desc (X Y Z : FreeCoprodCompDisc.{u, v} D)
+    (f : Hom D X Z) (g : Hom D Y Z) :
+    Hom.comp D (coprodPairInl D X Y) (coprodPairDesc D f g) = f :=
+  Subtype.ext rfl
+
+/-- The cotuple restricted along the right injection is the right
+component. -/
+theorem coprodPair_inr_desc (X Y Z : FreeCoprodCompDisc.{u, v} D)
+    (f : Hom D X Z) (g : Hom D Y Z) :
+    Hom.comp D (coprodPairInr D X Y) (coprodPairDesc D f g) = g :=
+  Subtype.ext rfl
+
+/-- Every morphism out of a binary coproduct is the cotuple of its
+restrictions along the injections (uniqueness half of the
+universal property). -/
+theorem coprodPairDesc_eta (X Y Z : FreeCoprodCompDisc.{u, v} D)
+    (h : Hom D (coprodPair.{v, u, u} D X Y) Z) :
+    coprodPairDesc D (Hom.comp D (coprodPairInl D X Y) h)
+      (Hom.comp D (coprodPairInr D X Y) h) = h :=
+  Subtype.ext (funext (fun s ↦ Sum.casesOn s (fun _ ↦ rfl) (fun _ ↦ rfl)))
+
+/-- An isomorphism of two objects of the free coproduct completion of `D`
+treated as a discrete category: a name-type equivalence commuting with the
+decodings. -/
+def Iso.{u₁, u₂} (X : FreeCoprodCompDisc.{u₁, v} D) (Y : FreeCoprodCompDisc.{u₂, v} D) :
+    Type (max u₁ u₂) :=
+  {e : X.1 ≃ Y.1 // Y.2 ∘ e = X.2}
+
+/-- The identity isomorphism of an object. -/
+def Iso.refl (X : FreeCoprodCompDisc.{u, v} D) : Iso D X X :=
+  ⟨Equiv.refl X.1, rfl⟩
+
+/-- The inverse of an isomorphism. -/
+def Iso.symm.{u₁, u₂} {X : FreeCoprodCompDisc.{u₁, v} D}
+    {Y : FreeCoprodCompDisc.{u₂, v} D} (e : Iso D X Y) : Iso D Y X :=
+  ⟨e.1.symm, funext (fun y ↦
+    (congrFun e.2 (e.1.symm y)).symm.trans (congrArg Y.2 (e.1.apply_symm_apply y)))⟩
+
+/-- The composite of two isomorphisms. -/
+def Iso.trans.{u₁, u₂, u₃} {X : FreeCoprodCompDisc.{u₁, v} D}
+    {Y : FreeCoprodCompDisc.{u₂, v} D} {Z : FreeCoprodCompDisc.{u₃, v} D}
+    (e : Iso D X Y) (f : Iso D Y Z) : Iso D X Z :=
+  ⟨e.1.trans f.1, (congrArg (· ∘ ⇑e.1) f.2).trans e.2⟩
+
+/-- Transport an isomorphism along an equality of objects. -/
+def isoOfEq {X Y : FreeCoprodCompDisc.{u, v} D} : X = Y → Iso D X Y
+  | rfl => Iso.refl D X
+
+/-- The congruence of `FreeCoprodCompDisc.coprod` along an index
+equivalence and a family of isomorphisms of the summands. -/
+def coprodIso.{u₁, u₂, w₁, w₂} (ι : Type w₁) (κ : Type w₂) (e : ι ≃ κ)
+    (fi : ι → FreeCoprodCompDisc.{u₁, v} D)
+    (gk : κ → FreeCoprodCompDisc.{u₂, v} D)
+    (iso : (i : ι) → Iso D (fi i) (gk (e i))) :
+    Iso D (coprod.{u₁, v, w₁} D ι fi) (coprod.{u₂, v, w₂} D κ gk) :=
+  ⟨(sigmaCongrRight' (fun i ↦ (iso i).1)).trans
+      (Equiv.sigmaCongrLeft (β := fun j ↦ (gk j).1) e),
+    funext (fun p ↦ congrFun (iso p.1).2 p.2)⟩
+
+/-- The copower `X ⊗ i`: the `X`-fold coproduct of `i`
+([HancockMcBrideGhaniMalatestaAltenkirch2013], Lemma 3). -/
+def copower.{w} (X : Type w) (i : FreeCoprodCompDisc.{u, v} D) :
+    FreeCoprodCompDisc.{max u w, v} D :=
+  coprod.{u, v, w} D X (fun _ ↦ i)
+
+/-- The universal property of the copower: morphisms out of `X ⊗ i`
+correspond to `X`-indexed families of morphisms out of `i`
+([HancockMcBrideGhaniMalatestaAltenkirch2013], Lemma 3). -/
+def copowerEquiv.{w} (X : Type w) (i : FreeCoprodCompDisc.{max u w, v} D)
+    (Z : FreeCoprodCompDisc.{max u w, v} D) :
+    Hom D (copower.{max u w, v, w} D X i) Z ≃ (X → Hom D i Z) :=
+  { toFun := fun h x ↦
+      ⟨fun a ↦ h.1 ⟨x, a⟩, funext (fun a ↦ congrFun h.2 ⟨x, a⟩)⟩,
+    invFun := fun m ↦
+      ⟨fun p ↦ (m p.1).1 p.2, funext (fun p ↦ congrFun (m p.1).2 p.2)⟩,
+    left_inv := fun _ ↦ Subtype.ext rfl,
+    right_inv := fun _ ↦ funext (fun _ ↦ Subtype.ext rfl) }
+
+/-- The `ULift` renaming of an object: the same decodings, through
+names raised to a (generally higher) universe. -/
+def lift.{w} (X : FreeCoprodCompDisc.{u, v} D) :
+    FreeCoprodCompDisc.{max u w, v} D :=
+  ⟨ULift.{w} X.1, X.2 ∘ ULift.down⟩
+
+/-- The universal property of `lift`: morphisms out of a lifted
+object correspond to morphisms out of the un-lifted object, by
+precomposing with `ULift.up`. -/
+def homLiftEquiv.{w} (X : FreeCoprodCompDisc.{u, v} D)
+    (Y : FreeCoprodCompDisc.{max u w, v} D) :
+    Hom D (lift.{u, v, w} D X) Y ≃ Hom D X Y :=
+  { toFun := fun f ↦
+      ⟨f.1 ∘ ULift.up, funext (fun a ↦ congrFun f.2 (ULift.up a))⟩,
+    invFun := fun h ↦
+      ⟨h.1 ∘ ULift.down, funext (fun a ↦ congrFun h.2 a.down)⟩,
+    left_inv := fun _ ↦ Subtype.ext rfl,
+    right_inv := fun _ ↦ Subtype.ext rfl }
 
 end FreeCoprodCompDisc
 
