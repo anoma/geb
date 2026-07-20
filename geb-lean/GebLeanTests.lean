@@ -31,6 +31,7 @@ import GebLeanTests.TestTreeCalcReduction
 import GebLeanTests.PLang.BTPair
 import GebLeanTests.PolyBridge.Slice
 import GebLeanTests.PolyBridge.WEquiv
+import GebLeanTests.PolyBridge.FreeMEquiv
 import GebLeanTests.Ramified
 import GebLeanTests.SliceW.FreeM
 import GebLeanTests.SliceW.Iso
