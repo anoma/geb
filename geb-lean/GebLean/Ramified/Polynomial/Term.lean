@@ -1,3 +1,4 @@
+import GebLean.PolyBridge.FreeMEquiv
 import GebLean.PolyBridge.Slice
 import GebLean.Ramified.Term
 import GebLean.SliceW.FreeM
@@ -15,7 +16,9 @@ right-unit and associativity laws, mirroring the legacy proofs with
 `SlicePFunctor.FreeM.bind_pure`, `SlicePFunctor.FreeM.bind_assoc`,
 `SlicePFunctor.FreeM.pure_transport`, and `SlicePFunctor.FreeM.bind_transport`
 in place of the legacy `polyFreeM_bind_pure`, `polyFreeM_bind_assoc`,
-`polyFreeMPure_transport`, and `polyFreeMBind_transport`.
+`polyFreeMPure_transport`, and `polyFreeMBind_transport`. The bridge equivalence
+`tmSliceEquiv` relates this realization to the legacy `Tm` layer, carrying
+`var`, `op`, and `subst` across it.
 
 ## Main definitions
 
@@ -27,6 +30,8 @@ in place of the legacy `polyFreeM_bind_pure`, `polyFreeM_bind_assoc`,
 * `Tm'.subst` — simultaneous substitution (the slice free monad's `bind`).
 * `Tm'.reind` — reindexing of a term along an equality of its sort.
 * `Tm'.weaken` — substitution along a sort-preserving variable renaming.
+* `tmSliceEquiv` — the bridge equivalence `Tm' sig Γ s ≃ Tm sig Γ s`,
+  inverting `polyFreeMSliceEquiv` at the context's variable family.
 
 ## Main statements
 
@@ -35,6 +40,12 @@ in place of the legacy `polyFreeM_bind_pure`, `polyFreeM_bind_assoc`,
 * `Tm'.var_subst` — substituting a variable by a tuple selects that tuple
   entry.
 * `Tm'.subst_reind` — substitution commutes with reindexing.
+* `tmSliceEquiv_var` — the bridge equivalence carries a primed variable term to
+  the legacy `Tm.var`.
+* `tmSliceEquiv_op` — the bridge equivalence carries a primed operation term to
+  the legacy `Tm.op` with arguments mapped through the equivalence.
+* `tmSliceEquiv_subst` — the bridge equivalence intertwines primed substitution
+  with legacy `Tm.subst`.
 
 ## References
 
@@ -151,5 +162,57 @@ def Tm'.weaken {sig : SortedSig S} {Γ Δ : Ctx S} {s : S}
     (f : Fin Γ.length → Fin Δ.length) (h : ∀ i, Δ.get (f i) = Γ.get i)
     (t : Tm' sig Γ s) : Tm' sig Δ s :=
   t.subst (fun i => Tm'.reind (h i) (Tm'.var (f i)))
+
+/-- The bridge equivalence between the primed term layer `Tm' sig Γ s` and the
+legacy term layer `Tm sig Γ s` (`GebLean/Ramified/Term.lean`): the free-monad
+equivalence `polyFreeMSliceEquiv` (`GebLean/PolyBridge/FreeMEquiv.lean`) at the
+context's variable family `varOver Γ` and the signature endofunctor
+`sig.polyEndo`, inverted so that the primed carrier reads as the source. The
+target reads by `(varOver Γ).hom = Γ.get` definitionally. -/
+def tmSliceEquiv {sig : SortedSig S} (Γ : Ctx S) (s : S) : Tm' sig Γ s ≃ Tm sig Γ s :=
+  (polyFreeMSliceEquiv (varOver Γ) sig.polyEndo s).symm
+
+/-- The bridge equivalence carries a primed variable term `Tm'.var i` to the
+legacy variable term `Tm.var i`: the leaf-naturality of `polyFreeMSliceEquiv`
+(`polyFreeMSliceEquiv_pure`) re-read across the inverting `.symm`. -/
+theorem tmSliceEquiv_var {sig : SortedSig S} {Γ : Ctx S} (i : Fin Γ.length) :
+    tmSliceEquiv Γ _ (Tm'.var (sig := sig) i) = Tm.var (sig := sig) i := by
+  have h := polyFreeMSliceEquiv_pure (varOver Γ) sig.polyEndo (Γ.get i) ⟨i, rfl⟩
+  exact ((polyFreeMSliceEquiv (varOver Γ) sig.polyEndo (Γ.get i)).symm_apply_eq).mpr h.symm
+
+/-- The bridge equivalence carries a primed operation term `Tm'.op o args` to
+the legacy operation term `Tm.op o` whose arguments are the images of `args`:
+the node-naturality of `polyFreeMSliceEquiv` (`polyFreeMSliceEquiv_node`) re-read
+across the inverting `.symm`. -/
+theorem tmSliceEquiv_op {sig : SortedSig S} {Γ : Ctx S} (o : sig.Op)
+    (args : ∀ i : Fin (sig.arity o).length, Tm' sig Γ ((sig.arity o).get i)) :
+    tmSliceEquiv Γ _ (Tm'.op o args) = Tm.op o (fun i => tmSliceEquiv Γ _ (args i)) := by
+  refine ((polyFreeMSliceEquiv (varOver Γ) sig.polyEndo (sig.result o)).symm_apply_eq).mpr ?_
+  refine Eq.trans ?_ (polyFreeMSliceEquiv_node (varOver Γ) sig.polyEndo (sig.result o)
+    ⟨o, rfl⟩ (fun i => tmSliceEquiv Γ _ (args i))).symm
+  exact congrArg
+    (FreeM.node (F := toSlice sig.polyEndo) (v := (varOver Γ).hom) ⟨sig.result o, ⟨o, rfl⟩⟩)
+    (funext fun i => (Equiv.apply_symm_apply _ _).symm)
+
+/-- The bridge equivalence intertwines primed substitution `Tm'.subst` with
+legacy substitution `Tm.subst`: the bind-naturality of `polyFreeMSliceEquiv`
+(`polyFreeMSliceEquiv_bind`) re-read across the inverting `.symm`, commuting the
+leaf transport past the equivalence with `polyFreeMSliceEquiv_transport`. -/
+theorem tmSliceEquiv_subst {sig : SortedSig S} {Γ Δ : Ctx S} {s : S}
+    (t : Tm' sig Γ s) (σ : ∀ i : Fin Γ.length, Tm' sig Δ (Γ.get i)) :
+    tmSliceEquiv Δ _ (t.subst σ) =
+      (tmSliceEquiv Γ _ t).subst (fun i => tmSliceEquiv Δ _ (σ i)) := by
+  refine ((polyFreeMSliceEquiv (varOver Δ) sig.polyEndo s).symm_apply_eq).mpr ?_
+  refine Eq.trans ?_ (polyFreeMSliceEquiv_bind (varOver Γ) (varOver Δ) sig.polyEndo s
+    ((polyFreeMSliceEquiv (varOver Γ) sig.polyEndo s).symm t)
+    (fun _ a => a.2 ▸ tmSliceEquiv Δ _ (σ a.1))).symm
+  rw [Equiv.apply_symm_apply]
+  unfold Tm'.subst
+  congr 1
+  funext y a
+  have hcomm := polyFreeMSliceEquiv_transport (varOver Δ) sig.polyEndo a.2
+    ((polyFreeMSliceEquiv (varOver Δ) sig.polyEndo (Γ.get a.1)).symm (σ a.1))
+  rw [Equiv.apply_symm_apply] at hcomm
+  exact hcomm.symm
 
 end GebLean.Ramified.Polynomial

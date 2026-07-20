@@ -59,4 +59,36 @@ example :
     (t.subst sigma).subst sigma = t.subst (fun i => (sigma i).subst sigma) :=
   Tm'.subst_subst t sigma sigma
 
+/-- The argument tuple of `sub1`: its single argument at position `0` is
+`var 1`. -/
+def sub1args :
+    ∀ i : Fin (twoSortedSig.arity false).length,
+      Tm' twoSortedSig ctx ((twoSortedSig.arity false).get i) :=
+  Fin.cons (Tm'.var 1) finZeroElim
+
+/-- The bridge equivalence carries a primed variable term to the legacy
+`Tm.var`. -/
+example :
+    tmSliceEquiv ctx _ (Tm'.var (sig := twoSortedSig) (1 : Fin ctx.length)) =
+      Tm.var (sig := twoSortedSig) 1 :=
+  tmSliceEquiv_var (sig := twoSortedSig) (Γ := ctx) 1
+
+/-- The bridge equivalence carries a primed operation term to the legacy
+`Tm.op` with arguments mapped through the equivalence. -/
+example :
+    tmSliceEquiv ctx _ (Tm'.op (sig := twoSortedSig) (Γ := ctx) false sub1args) =
+      Tm.op (sig := twoSortedSig) false (fun i => tmSliceEquiv ctx _ (sub1args i)) :=
+  tmSliceEquiv_op (sig := twoSortedSig) (Γ := ctx) false sub1args
+
+/-- The bridge equivalence intertwines primed substitution with legacy
+`Tm.subst` on the concrete term `t`. -/
+example :
+    tmSliceEquiv ctx _ (t.subst sigma) =
+      (tmSliceEquiv ctx _ t).subst (fun i => tmSliceEquiv ctx _ (sigma i)) :=
+  tmSliceEquiv_subst t sigma
+
+/-- The transported round trip: the inverse of `tmSliceEquiv` recovers `t`. -/
+example : (tmSliceEquiv ctx _).symm (tmSliceEquiv ctx _ t) = t :=
+  Equiv.symm_apply_apply (tmSliceEquiv ctx _) t
+
 end GebLeanTests.Ramified.Polynomial.Term
