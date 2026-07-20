@@ -1,4 +1,5 @@
 import GebLean.Ramified.Polynomial.FreeAlg
+import GebLean.Ramified.Polynomial.RType
 
 /-!
 # Ramified recurrence on the vendored polynomial-functor stack
@@ -9,5 +10,7 @@ Directory index for the reimplementation of the `Ramified` recursive layer
 generic bridge `GebLean/PolyBridge/`. `FreeAlg` supplies the free algebra
 `FreeAlg'` on the slice `W`-type, its native recurrence
 `FreeAlg'.recurse`, the bridge equivalence `freeAlgSliceEquiv : FreeAlg' A ≃
-FreeAlg A`, and the numeric carrier of `natAlgSig`.
+FreeAlg A`, and the numeric carrier of `natAlgSig`. `RType` reimplements the
+ramified types `RType'` and their operations on that stack, with a
+compatibility lemma per operation across the bridge `rTypeSliceEquiv`.
 -/
