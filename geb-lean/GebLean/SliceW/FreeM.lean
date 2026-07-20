@@ -62,7 +62,7 @@ def pure {i : I} (a : { y : Y // v y = i }) : FreeM v F i :=
 at that position, gives the `Sum.inr` node of `translate v F`. -/
 def node (a : F.A) (c : (b : F.B a) → FreeM v F (F.rCurried a b)) : FreeM v F (F.q a) :=
   ⟨W.mk ⟨⟨Sum.inr a, fun b => (c b).1⟩,
-      (SliceDomPFunctor.compatible_iff _ _ _ _).mpr fun b => (c b).2⟩, by
+      ((translate v F).toSliceDomPFunctor.compatible_iff _ _ _).mpr fun b => (c b).2⟩, by
     rw [W.wIndex_mk]
     exact translate_q_inr a⟩
 
@@ -79,7 +79,7 @@ at `a`, with children `c` reduced to their underlying trees. -/
 @[simp]
 theorem val_node (a : F.A) (c : (b : F.B a) → FreeM v F (F.rCurried a b)) :
     (node a c).1 = W.mk (F := translate v F) ⟨⟨Sum.inr a, fun b => (c b).1⟩,
-      (SliceDomPFunctor.compatible_iff _ _ _ _).mpr fun b => (c b).2⟩ :=
+      ((translate v F).toSliceDomPFunctor.compatible_iff _ _ _).mpr fun b => (c b).2⟩ :=
   rfl
 
 end FreeM

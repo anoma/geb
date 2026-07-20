@@ -43,7 +43,8 @@ example :
 example : nodeWithLeaves.1 =
     W.mk (F := translate SliceWTranslateTest.v SliceWIsoTest.F)
       ⟨⟨Sum.inr true, fun _ => pureLeaf.1⟩,
-        (SliceDomPFunctor.compatible_iff _ _ _ _).mpr fun _ => pureLeaf.2⟩ := by
+        ((translate SliceWTranslateTest.v SliceWIsoTest.F).toSliceDomPFunctor.compatible_iff
+          _ _ _).mpr fun _ => pureLeaf.2⟩ := by
   rfl
 
 end SliceWFreeMTest
