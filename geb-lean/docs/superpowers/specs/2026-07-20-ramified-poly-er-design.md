@@ -138,7 +138,11 @@ rules in `GebLean/SliceW/FreeM.lean`; `freeAlgSliceEquiv_recurse` in
 (and `RType'.interp_isObj` and a `natFreeAlgEquiv'`-versus-legacy
 agreement lemma, where Phase A does not already provide them) in
 `GebLean/Ramified/Polynomial/RType.lean` or
-`GebLean/Ramified/Polynomial/FreeAlg.lean`; `Tm'.reind_symm` /
+`GebLean/Ramified/Polynomial/FreeAlg.lean`; `RType.interpCongr` (the
+congruence of the legacy denotation along a base-carrier equivalence)
+in the legacy `GebLean/Ramified/RType.lean`, with the carrier bridge
+`carrierSliceEquiv` and `carrierSliceEquiv_isObj` in
+`GebLean/Ramified/Polynomial/RType.lean`; `Tm'.reind_symm` /
 `Tm'.reind_symm'` in `GebLean/Ramified/Polynomial/Term.lean`.
 Deletions: `GebLean/Ramified/FirstOrder.lean`,
 `GebLeanTests/Ramified/FirstOrder.lean`, and their aggregator entries.
@@ -213,7 +217,9 @@ universal algebra — Sannella and Tarlecki, "Foundations of Algebraic
 Specification and Formal Software Development", 2012, DOI
 `10.1007/978-3-642-17336-3`, Chapter 1; the Lean packaging is novel):
 
-- `SortedSig.Equiv sig sig̅`: `sortEquiv : S ≃ S̅`,
+- `SortedSigEquiv sig sig̅` (top-level in the namespace, not
+  `SortedSig.Equiv`, avoiding the shadowing of mathlib's `Equiv`
+  inside the namespace): `sortEquiv : S ≃ S̅`,
   `opEquiv : sig.Op ≃ sig̅.Op`,
   `arity_comm : sig̅.arity (opEquiv o) = (sig.arity o).map sortEquiv`,
   `result_comm : sig̅.result (opEquiv o) = sortEquiv (sig.result o)`.
@@ -226,14 +232,17 @@ Specification and Formal Software Development", 2012, DOI
 
 `PresentationEquiv.lean` (generic; same provenance):
 
-- `PresentationEquiv P P̅`: a `SortedSig.Equiv` of the signatures
+- `PresentationEquiv P P̅`: a `SortedSigEquiv` of the signatures
   together with model agreement for the standard models — a carrier
-  equality `carrier_comm : (standardModel P̅).carrier (sortEquiv s) =
-  (standardModel P).carrier s` and `interpOp` agreement modulo `cast`
-  along `carrier_comm` and `arity_comm` / `result_comm`.
+  equivalence `carrierEquiv : (standardModel P).carrier s ≃
+  (standardModel P̅).carrier (sortEquiv s)` and `interpOp` agreement
+  through `carrierEquiv` and `arity_comm` / `result_comm`. An
+  equivalence, not an equality: at the Phase C instantiation the base
+  carriers `FreeAlg' A` and `FreeAlg A` are related only by
+  `freeAlgSliceEquiv`, so no carrier equality exists.
 - `tmMapSig_eval`: evaluation commutes with the term translation
-  modulo `cast` along `carrier_comm` (by `PolyFix.ind`; the pattern
-  of `foTm_eval`).
+  through `carrierEquiv` (by `PolyFix.ind`; the pattern of
+  `foTm_eval`).
 - `presentationSynCatEquiv : SynCat P (interpQuotRel P) ≌
   SynCat P̅ (interpQuotRel P̅)`: object map `List.map sortEquiv`; hom
   map componentwise `tmMapSigEquiv` with reindexing along
@@ -315,9 +324,13 @@ packaging is novel along the legacy module's precedent):
   `_mrec` / `_frec` via `wMap_mk`.
 - `identSliceEquiv_interp` (the phase's summit): the legacy `interp`
   of the translated identifier agrees with the native
-  `RIdent'.interp` under `cast` along `rTypeSliceEquiv_interp` (a
-  `Type`-level equality, so conjugation is by `cast`, the legacy
-  idiom). By `W.induction` over the identifier tree: the `defn'` case
+  `RIdent'.interp` under the named carrier bridge
+  `carrierSliceEquiv A t' : RType'.interp (FreeAlg' A) t' ≃
+  RType.interp (FreeAlg A) (rTypeSliceEquiv t')` — the `Equiv.cast`
+  of `rTypeSliceEquiv_interp` at `FreeAlg' A` composed with
+  `RType.interpCongr (freeAlgSliceEquiv A)`, the congruence of the
+  legacy denotation along a base-carrier equivalence. By
+  `W.induction` over the identifier tree: the `defn'` case
   by `tmSliceEquiv_eval` composed with `tmMapSig_eval` at
   `defnModel'` / `defnModel` with hole interpretations matched by the
   induction hypothesis; the `mrec'` / `frec'` cases by
@@ -349,8 +362,10 @@ A))`, and `identHom'` with `identHom_eval'`.
   rTypeSliceEquiv` and `rTypeSliceEquiv`, with `identSliceEquiv` at
   the identifier component and `rTypeSliceEquiv_curried` (new, by
   `List.foldr` induction) at the constant summand's results.
-- Model agreement: carriers by `rTypeSliceEquiv_interp`; the
-  constructor and application cases by `cast` computation; the
+- Model agreement: carriers by `carrierSliceEquiv` (section 7); the
+  constructor cases by `freeAlgSliceEquiv_mk` with
+  `carrierSliceEquiv_isObj` at the object-sort readings, the
+  application cases through `RType.interpCongr`'s arrow equation, the
   identifier cases by `identSliceEquiv_interp`, the constant cases by
   a `curryInterp'` agreement induction on the context.
 - `rmRecCatSliceEquiv A : RMRecCat' A ≌ RMRecCat A`:
@@ -404,7 +419,8 @@ content) of `GebLean/Ramified/Soundness/Collapse.lean`:
   arityCongr h₁ h₂ (collapseDenotation' g')`, proved by unfolding
   both denotations to evaluations and applying the model agreement,
   `tmSliceEquiv_eval` / `tmMapSig_eval`, and the `objToNat'`
-  correspondence.
+  correspondence (`carrierSliceEquiv_isObj` composed with the
+  `natFreeAlgEquiv'` agreement).
 
 `Polynomial/Characterization.lean` mirrors
 `GebLean/Ramified/Characterization.lean`:
