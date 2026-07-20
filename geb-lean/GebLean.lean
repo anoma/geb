@@ -144,6 +144,7 @@ import GebLean.RelInterpComposition
 import GebLean.RelSpanDiagram
 import GebLean.RestrictedCoendAsColimit
 import GebLean.Semicategory
+import GebLean.SliceW
 import GebLean.Utilities
 import GebLean.Utilities.ArrowCospanAdjunction
 import GebLean.Utilities.ArrowSpanAdjunction
