@@ -63,7 +63,8 @@ commits.
 - Recursor-only elimination of tree types: `SlicePFunctor.W.elim` /
   `W.induction` / `W.RecProp` / `FreeM.elim` / the free-monad bind on
   the vendored side; `PolyFix.ind` only where a bridge consumes the
-  legacy side (here: `tmMapSigEquiv` and its lemmas, and the legacy
+  legacy side (here: `SortedSigEquiv.tmMap` and its lemmas,
+  `RType.interpCongr`, and the legacy
   halves of agreement proofs). Forbidden on tree types: `induction` /
   `cases` tactics, structural `match` with self-calls,
   `termination_by`, well-founded recursion, `WType.rec` in
@@ -140,15 +141,16 @@ tasks depend on them.
   `elim_node` on the Phase B toy translate functor — sorry-free.
 - [ ] **Step 3:** For a two-operation toy `SortedSig Bool` and a toy
   sort equivalence, build the `DefnShape'`-style term-translation
-  composite: a `tmMapSigEquiv`-style forward map by `PolyFix.ind`
-  with `List.get_map` transports, composed with `tmSliceEquiv` —
-  confirming, sorry-free, the reindex transports at variable and
-  operation nodes.
+  composite: a `SortedSigEquiv.tmMap`-style forward map by
+  `PolyFix.ind` with `get`-of-`map` transports (the C.8 `get_map`
+  helper, stated locally in the scratch), composed with
+  `tmSliceEquiv` — confirming, sorry-free, the reindex transports
+  at variable and operation nodes.
 - [ ] **Step 4:** Validate the `defn'`-case agreement shape on the
   toy data: evaluation of the translated term in a model matched by
-  a carrier equality equals the `cast` of the primed evaluation
-  (the `tmMapSig_eval`-plus-`tmSliceEquiv_eval` composite on one
-  operation node) — sorry-free.
+  a carrier equivalence equals that equivalence applied to the
+  primed evaluation (the `tmMap_eval`-plus-`tmSliceEquiv_eval`
+  composite on one operation node) — sorry-free.
 - [ ] **Step 5:** Record working term shapes (motives, transport
   idioms, `hg` discharges) as notes in the corresponding task steps
   if they differ from what is written there; delete the scratch
@@ -209,7 +211,7 @@ tasks depend on them.
 
 - [ ] **Step 1: Write the failing test.** In
   `GebLeanTests/SliceW/Reindex.lean`, with the spike's toy functor
-  and `Equiv.not`: assert `reindex_q`/`reindex_r` by `simp`, the
+  and `Equiv.boolNot`: assert `reindex_q`/`reindex_r` by `simp`, the
   index law `wIndex_wMap` on a sample `W.mk` tree, and one round
   trip via `Equiv.symm_apply_apply`.
 - [ ] **Step 2: Run to verify it fails.** Run
@@ -224,7 +226,7 @@ tasks depend on them.
 - [ ] **Step 6: Commit.**
 
 ```bash
-jj commit -m "feat(slicew): add base change of a slice endofunctor along an index equivalence"
+jj commit -m "feat(slicew): add base change along an index equivalence"
 ```
 
 ## Task C.3: `FreeM.elim` with computation rules
@@ -391,7 +393,7 @@ jj commit -m "feat(slicew): add the free-monad fold with computation rules"
 - [ ] **Step 6: Commit.**
 
 ```bash
-jj commit -m "feat(ramified): add primed term evaluation and the interpretative quotient"
+jj commit -m "feat(ramified): add primed evaluation and interpretative quotient"
 ```
 
 ## Task C.5: primed syntactic category (category and evaluation)
@@ -499,7 +501,7 @@ jj commit -m "feat(ramified): add the primed syntactic category"
 - [ ] **Step 6: Commit.**
 
 ```bash
-jj commit -m "feat(ramified): add chosen finite products to the primed syntactic category"
+jj commit -m "feat(ramified): add finite products to the primed syntactic category"
 ```
 
 ## Task C.7: the term-layer equivalence (step 1)
@@ -569,18 +571,25 @@ jj commit -m "feat(ramified): relate the primed and legacy syntactic categories"
 - Create: `GebLean/Ramified/SigEquiv.lean`
 - Create: `GebLeanTests/Ramified/SigEquiv.lean`
 - Modify: `GebLean/Ramified.lean`, `GebLeanTests/Ramified.lean`
-  (imports; alphabetical position)
+  (imports; after their dependencies, per the file's import order)
 
 **Interfaces:**
 
-- Consumes: `SortedSig`, `Ctx` (`GebLean/Ramified/SortedSig.lean`);
+- Consumes: `SortedSig` (`GebLean/Ramified/SortedSig.lean`); `Ctx`,
   `Tm`, `Tm.var`, `Tm.op`, `Tm.subst`, `Tm.reind`
   (`GebLean/Ramified/Term.lean`); `PolyFix.ind`
-  (`GebLean/PolyAlg.lean`); `List.get_map`, `List.map_map`,
-  `Equiv` (mathlib / core).
+  (`GebLean/PolyAlg.lean`); `List.getElem_map`,
+  `List.get_eq_getElem`, `List.map_map`, `Equiv` (mathlib / core).
 - Produces (structure named `SortedSigEquiv`, top-level in the
   `GebLean.Ramified` namespace — not `SortedSig.Equiv` — to avoid
   shadowing mathlib's `Equiv` inside the namespace):
+  - `theorem get_map {S S' : Type} (f : S → S') (Γ : Ctx S)`
+    `(i : Fin (Γ.map f).length) : (Γ.map f).get i =`
+    `f (Γ.get (Fin.cast (by simp) i))` — the `get`-of-`map` reading
+    (no such lemma exists in core or mathlib, which carry only
+    `List.getElem_map`); by `List.get_eq_getElem` and
+    `List.getElem_map`. The shared transport helper every later
+    translation cites.
   - `structure SortedSigEquiv {S S' : Type} (sig : SortedSig S)`
     `(sig' : SortedSig S')` with fields
     `sortEquiv : S ≃ S'`, `opEquiv : sig.Op ≃ sig'.Op`,
@@ -600,12 +609,12 @@ jj commit -m "feat(ramified): relate the primed and legacy syntactic categories"
     `{Γ : Ctx S} {s : S} (t : Tm sig Γ s) :`
     `Tm sig' (Γ.map e.sortEquiv) (e.sortEquiv s)` — by
     `PolyFix.ind`: a variable `⟨i, h⟩` becomes
-    `Tm.reind (by rw [List.get_map, h]) (Tm.var (Fin.cast
+    `Tm.reind (by rw [get_map, h]) (Tm.var (Fin.cast
     (List.length_map …).symm i))` (index re-typed along
     `List.length_map`); an operation node `o` with translated
     children becomes `Tm.reind (e.result_comm o).symm ▸ …`-free
     form: `Tm.reind ((e.result_comm o).symm) (Tm.op (e.opEquiv o)
-    (fun i => Tm.reind (by rw [e.arity_comm]; exact (List.get_map
+    (fun i => Tm.reind (by rw [e.arity_comm]; exact (get_map
     …).symm) (child at the re-typed position)))` — the exact
     transport spelling from the spike's Step 3 notes.
   - `theorem SortedSigEquiv.tmMap_var`, `tmMap_op` — the
@@ -617,7 +626,7 @@ jj commit -m "feat(ramified): relate the primed and legacy syntactic categories"
     `e.tmMap (t.subst σ) = (e.tmMap t).subst (fun j => Tm.reind …`
     `(e.tmMap (σ (re-typed j))))` — by `PolyFix.ind` with
     `Tm.subst_reind` and `Tm.var_subst` at the leaf case (statement
-    fixes the substitution tuple as the `List.get_map`-transported
+    fixes the substitution tuple as the `get_map`-transported
     translate of `σ`).
   - `theorem SortedSigEquiv.tmMap_symm_tmMap (e) (t) :`
     `(transport along List.map_map and sortEquiv round trip of`
@@ -688,12 +697,12 @@ jj commit -m "feat(ramified): add sorted-signature equivalences with term transl
     `(matched environment) = e.carrierEquiv s (t.eval (standardModel`
     `P) ρ)` — by `PolyFix.ind` (the `foTm_eval` pattern with
     `carrierEquiv` in place of the value casts); the matched
-    environment pushes `ρ` forward along `List.get_map` and
+    environment pushes `ρ` forward along `get_map` and
     `carrierEquiv`.
   - `def PresentationEquiv.synCatFunctor (e) : SynCat P`
     `(interpQuotRel P) ⥤ SynCat P' (interpQuotRel P')` — object map
     `List.map e.sigEquiv.sortEquiv`; hom map by `Quotient.lift` of
-    the componentwise `List.get_map`-transported `tmMap`;
+    the componentwise `get_map`-transported `tmMap`;
     well-definedness and `map_id` / `map_comp` by `Quotient.sound`
     from `tmMap_eval` (the `foInclusion` pattern: interpretative
     equality, no syntactic identities needed).
@@ -725,7 +734,7 @@ jj commit -m "feat(ramified): add sorted-signature equivalences with term transl
 - [ ] **Step 6: Commit.**
 
 ```bash
-jj commit -m "feat(ramified): induce syntactic-category equivalences from presentation equivalences"
+jj commit -m "feat(ramified): relate syntactic categories of equivalent presentations"
 ```
 
 ## Task C.10: primed identifier data (`Ident.lean`, formers)
@@ -743,7 +752,8 @@ jj commit -m "feat(ramified): induce syntactic-category equivalences from presen
   `RType'.IsObj` (Phase A); `Tm'` (Phase B); `constructorSig`,
   `SortedSig.sum` (`GebLean/Ramified/SortedSig.lean`); `toSlice`
   (Phase A); `W`, `W.mk`, `wIndex`, `W.wIndex_mk` (vendored);
-  `PolyEndo`, `ccrObjMk`, `Over.mk` (`GebLean/PolyAlg.lean` — as
+  `PolyEndo` (`GebLean/PolyAlg.lean`), `ccrObjMk`
+  (`GebLean/Utilities/Families.lean`), `Over.mk` (mathlib — as
   non-recursive signature data only); `FreeAlg'`,
   `FreeAlg'.recurse` (Phase A); `RType'.interp` (Phase A).
 - Produces (mirrors of the legacy `HigherOrder.lean` up to
@@ -762,6 +772,12 @@ jj commit -m "feat(ramified): induce syntactic-category equivalences from presen
     `Γ.foldr RType'.arrow τ` with `@[simp] curried_nil` /
     `curried_cons`; `def curryInterp' (A)` — the `List`-recursive
     mirror (permitted: recursion on `List`, not on a tree type).
+  - `theorem rTypeSliceEquiv_curried (Γ' : List RType')`
+    `(τ' : RType') : rTypeSliceEquiv (RType'.curried Γ' τ') =`
+    `RType.curried (Γ'.map rTypeSliceEquiv) (rTypeSliceEquiv τ')`
+    — by `List.foldr` induction with `rTypeSliceEquiv_arrow`
+    (moved here from the additive-lemma task: it consumes
+    `RType'.curried`, defined in this task).
   - `def holeSig'` / `holeConstSig'` (over
     `Fin n → List RType' × RType'`), `def defnSig' (A) (n)`
     `(holeIdx')` — the four-summand sum mirror.
@@ -784,13 +800,10 @@ jj commit -m "feat(ramified): induce syntactic-category equivalences from presen
     `@[simp]` val-characterization lemmas `val_defn` / `val_mrec` /
     `val_frec` (the `FreeM.val_pure` naming pattern).
 
-**Task-order note:** Task C.12 (Phase A additive lemmas) is
-implemented BEFORE this task if `RType'.interp_isObj` is absent from
-Phase A; the executor checks
-`GebLean/Ramified/Polynomial/RType.lean` for it first (search
-`interp_isObj`) and, if missing, executes C.12 first. The plan
-orders C.10–C.12 by dependency narrative; the checked order is
-C.12 → C.10 → C.11 when the lemma is absent.
+**Task-order note:** `RType'.interp_isObj` is absent from Phase A
+(verified at review 1), so the execution order is fixed:
+C.12 → C.10 → C.11. The plan lists C.10–C.12 in dependency-narrative
+order only.
 
 **Steps:**
 
@@ -875,7 +888,7 @@ jj commit -m "feat(ramified): add the primed schema identifiers on the slice W-t
 - [ ] **Step 6: Commit.**
 
 ```bash
-jj commit -m "feat(ramified): interpret the primed identifiers over the standard carriers"
+jj commit -m "feat(ramified): add the primed identifier interpretation"
 ```
 
 ## Task C.12: Phase A additive agreement lemmas
@@ -893,19 +906,21 @@ jj commit -m "feat(ramified): interpret the primed identifiers over the standard
 **Interfaces:**
 
 - Consumes: `FreeAlg'`, `FreeAlg'.mk`, `FreeAlg'.recurse`,
-  `recurse_mk`, `FreeAlg'.induction`, `freeAlgSliceEquiv`,
-  `freeAlgSliceEquiv_mk`, `natFreeAlgEquiv'` (Phase A); the legacy
-  `FreeAlg.recurse`, `natFreeAlgEquiv`
-  (`GebLean/Ramified/AlgSig.lean`); `RType'.curried` (Task C.10 —
-  see the C.10 task-order note; if C.12 runs first, state
-  `rTypeSliceEquiv_curried` in this task but implement it as the
-  final step after C.10 lands, or place it in C.10; the executor
-  records which).
+  `recurse_mk`, `freeAlgSliceEquiv`, `freeAlgSliceEquiv_mk`,
+  `natFreeAlgEquiv'` (Phase A, `Polynomial/FreeAlg.lean`);
+  `FreeAlg'.induction` (Phase A, `Polynomial/RType.lean`); the
+  legacy `FreeAlg.recurse` (`GebLean/Ramified/AlgSig.lean`) and
+  `natFreeAlgEquiv` (`GebLean/Ramified/Algebras.lean`).
+  (`rTypeSliceEquiv_curried` is produced by Task C.10, which
+  defines `RType'.curried`; C.12 runs first and does not touch
+  it.)
 - Produces:
   - `theorem freeAlgSliceEquiv_recurse {A : AlgSig} {P C : Type}`
     `(g) (p : P) (x : FreeAlg' A) :`
     `FreeAlg'.recurse g p x = FreeAlg.recurse g p`
-    `(freeAlgSliceEquiv A x)` — statement shape: the two
+    `(freeAlgSliceEquiv A x)` — hosted in `Polynomial/RType.lean`,
+    where `FreeAlg'.induction` is in scope (`FreeAlg.lean` is its
+    upstream and cannot use it). Statement shape: the two
     paramorphisms agree when fed the same step function `g` up to
     the equivalence on the subterm argument (the step's subterm
     tuple on the legacy side is the image tuple; the precise
@@ -915,25 +930,17 @@ jj commit -m "feat(ramified): interpret the primed identifiers over the standard
     `mrec'`/`frec'` cases direct, and record it); by
     `FreeAlg'.induction` with `recurse_mk` on both sides and
     `freeAlgSliceEquiv_mk`.
-  - `theorem natFreeAlgEquiv'_slice (n-free form) :`
+  - `theorem natFreeAlgEquiv'_slice :`
     `natFreeAlgEquiv' = (freeAlgSliceEquiv natAlgSig).trans`
-    `natFreeAlgEquiv` — or the pointwise form
-    `natFreeAlgEquiv' x = natFreeAlgEquiv (freeAlgSliceEquiv`
-    `natAlgSig x)` if the `Equiv`-level equality is obstructed;
-    by `FreeAlg'.induction` through the two `recurse_mk`s. (If
-    Phase A already provides this agreement under another name,
-    reuse it and skip the addition — the executor searches
-    `GebLean/Ramified/Polynomial/FreeAlg.lean` for
-    `natFreeAlgEquiv'` consumers first.)
+    `natFreeAlgEquiv` — in `Polynomial/FreeAlg.lean`, by `rfl`:
+    Phase A defines `natFreeAlgEquiv'` as exactly this composite
+    (verified at review 1); the lemma names the fact for Task
+    C.18's `objToNat` correspondence.
   - `theorem RType'.interp_isObj (C : Type) {t : RType'}`
     `(h : t.IsObj) : RType'.interp C t = C` — mirror of the legacy
-    `RType.interp_isObj`, by the shape reading of `IsObj` (skip if
-    Phase A already provides it; the executor searches
-    `GebLean/Ramified/Polynomial/RType.lean` first).
-  - `theorem rTypeSliceEquiv_curried (Γ' : List RType')`
-    `(τ' : RType') : rTypeSliceEquiv (RType'.curried Γ' τ') =`
-    `RType.curried (Γ'.map rTypeSliceEquiv) (rTypeSliceEquiv τ')` —
-    by `List.foldr` induction on `Γ'` with `rTypeSliceEquiv_arrow`.
+    `RType.interp_isObj`, by the shape reading of `IsObj` (absent
+    from Phase A, verified at review 1; in
+    `Polynomial/RType.lean`).
   - `def RType.interpCongr {C D : Type} (e : C ≃ D) (t : RType) :`
     `RType.interp C t ≃ RType.interp D t` — the congruence of the
     legacy denotation along a base-carrier equivalence (in the
@@ -960,24 +967,20 @@ jj commit -m "feat(ramified): interpret the primed identifiers over the standard
 
 **Steps:**
 
-- [ ] **Step 1: Check for existing lemmas.** Search
-  `GebLean/Ramified/Polynomial/{FreeAlg,RType}.lean` for
-  `interp_isObj`, `recurse`-agreement, and `natFreeAlgEquiv'`
-  compatibility lemmas; record which of the four productions are
-  genuinely new.
-- [ ] **Step 2: Write the failing tests** for the new lemmas
-  (statement-level `example`s on `natAlgSig` samples).
-- [ ] **Step 3: Run to verify they fail.** Run
+- [ ] **Step 1: Write the failing tests** for the new lemmas
+  (statement-level `example`s on `natAlgSig` samples), in the
+  `RType` and `FreeAlg` test mirrors.
+- [ ] **Step 2: Run to verify they fail.** Run
   `lake build GebLeanTests.Ramified.Polynomial.FreeAlg`
   (and `…RType`). Expected: failure, names not found.
-- [ ] **Step 4: Implement** the new lemmas.
-- [ ] **Step 5: Run to verify they pass.** Run the two test builds.
+- [ ] **Step 3: Implement** the new lemmas, one at a time.
+- [ ] **Step 4: Run to verify they pass.** Run the two test builds.
   Expected: success.
-- [ ] **Step 6: Gate.** Run `bash scripts/pre-commit.sh`.
-- [ ] **Step 7: Commit.**
+- [ ] **Step 5: Gate.** Run `bash scripts/pre-commit.sh`.
+- [ ] **Step 6: Commit.**
 
 ```bash
-jj commit -m "feat(ramified): add recurrence and interp agreement lemmas across the bridge"
+jj commit -m "feat(ramified): add bridge agreement lemmas for recurrence and interp"
 ```
 
 ## Task C.13: the identifier bridge equivalence
@@ -1107,7 +1110,7 @@ jj commit -m "feat(ramified): relate the primed identifiers to the legacy identi
     `(Γ'.get i)) : (identSliceEquiv f).interp (matched legacy`
     `environment) = carrierSliceEquiv A τ' (f.interp ρ')` — the
     matched legacy environment pushes `ρ'` forward through
-    `List.get_map` and `carrierSliceEquiv`; by
+    `get_map` and `carrierSliceEquiv`; by
     `W.induction` on `f`'s underlying tree with the three-former
     shape split: `defn'` by `identSliceEquiv_defn`,
     `RIdent'.interp_defn`, the legacy `interp` reduction, and
@@ -1259,9 +1262,10 @@ jj commit -m "feat(ramified): assemble the primed higher-order presentation"
 - [ ] **Step 2: Run to verify it fails.** Run
   `lake build GebLeanTests.Ramified.Polynomial.HigherOrderEquiv`.
   Expected: failure, names not found.
-- [ ] **Step 3: Implement** `rTypeInterpCongr`, then
-  `higherOrderSigEquiv`, then `higherOrderPresEquiv`, then the
-  composite, one at a time.
+- [ ] **Step 3: Implement** `higherOrderSigEquiv`, then
+  `higherOrderPresEquiv`, then the composite, one at a time
+  (`RType.interpCongr` and `carrierSliceEquiv` come from Task
+  C.12).
 - [ ] **Step 4: Run to verify it passes.** Run
   `lake build GebLeanTests.Ramified.Polynomial.HigherOrderEquiv`.
   Expected: success.
@@ -1293,17 +1297,17 @@ jj commit -m "feat(ramified): establish the primed-to-legacy category equivalenc
   `RType'.IsTower` (Phase A).
 - Produces (legacy names freed by the deletion; namespace-membered
   where the subject is a primed type):
-  - `def Tm'.towerSorts {sig : SortedSig RType'} {Γ} {s}`
+  - `def Tm'.TowerSorts {sig : SortedSig RType'} {Γ} {s}`
     `(t : Tm' sig Γ s) : Prop` — via `W.RecProp` over the
     underlying tree with the `Sum` shape split (leaf: the
     variable's sort is a tower sort; node: the result sort is a
     tower sort and all children satisfy the predicate), with
     `@[simp]` unfolding lemmas `towerSorts_var` / `towerSorts_op`
     (mirroring the legacy statements at `Tm'.var` / `Tm'.op`).
-  - `def RIdent'.shapeFO : IdentShape' A Γ' τ' → Prop` (defn body
-    `towerSorts`; recurrences `True`).
+  - `def RIdent'.ShapeFO : IdentShape' A Γ' τ' → Prop` (defn body
+    `TowerSorts`; recurrences `True`).
   - `def RIdent'.FirstOrder (f : RIdent' A Γ' τ') : Prop` — via
-    `W.RecProp` (context and result tower sorts, `shapeFO`,
+    `W.RecProp` (context and result tower sorts, `ShapeFO`,
     children first-order), with `@[simp]` unfolding at the three
     formers.
   - `def foIdentSig (A)`, `def foIdentConstSig (A)` (subtype
@@ -1323,7 +1327,7 @@ jj commit -m "feat(ramified): establish the primed-to-legacy category equivalenc
 **Steps:**
 
 - [ ] **Step 1: Write the failing test.** Port the deleted test
-  module's assertions to the primed vocabulary: `towerSorts` on
+  module's assertions to the primed vocabulary: `TowerSorts` on
   tower and arrow-sorted samples, `FirstOrder` on a first-order
   and a non-first-order identifier, `foTm_eval` on a sample body,
   and a `foInclusion.map` instance.
@@ -1344,7 +1348,7 @@ jj commit -m "feat(ramified): establish the primed-to-legacy category equivalenc
 - [ ] **Step 7: Commit.**
 
 ```bash
-jj commit -m "refactor(ramified): rebuild the first-order sub-theory on the primed stack"
+jj commit -m "refactor(ramified): move the first-order sub-theory to the primed stack"
 ```
 
 ## Task C.18: collapse packaging and the restriction equivalence
@@ -1359,10 +1363,10 @@ jj commit -m "refactor(ramified): rebuild the first-order sub-theory on the prim
 **Interfaces:**
 
 - Consumes: Tasks C.15, C.16; the legacy `isObjCtx`, `SynCatFO`,
-  `collapseDenotation`, `ramifiedDenotation`, `objToNat`,
-  `objFromNat`, `arityCongr`
-  (`GebLean/Ramified/Soundness/Collapse.lean`,
-  `Definability/Top.lean`, `Characterization.lean`);
+  `collapseDenotation` (`GebLean/Ramified/Soundness/Collapse.lean`),
+  `ramifiedDenotation` (`Definability/Top.lean`), `objToNat` /
+  `objFromNat` (`GebLean/Ramified/Examples.lean`), `arityCongr`
+  (`Characterization.lean`);
   `natFreeAlgEquiv'` and Task C.12's agreement;
   `RType'.interp_isObj` (Task C.12); `rTypeSliceEquiv_isObj`,
   `rTypeSliceEquiv_o` (Phase A); `ObjectProperty.FullSubcategory`
@@ -1395,7 +1399,7 @@ jj commit -m "refactor(ramified): rebuild the first-order sub-theory on the prim
   - `def synCatFOSliceEquiv : SynCatFO' ≌ SynCatFO` — the
     restriction of `rmRecCatSliceEquiv natAlgSig` along the object
     properties: functor and inverse by
-    `ObjectProperty.FullSubcategory.lift` of the composed
+    `ObjectProperty.lift` of the composed
     projections (property transfer by `rTypeSliceEquiv_isObj`
     through the `List.map` object action, and its converse for
     the inverse), unit/counit induced from the parent equivalence
@@ -1435,7 +1439,7 @@ jj commit -m "refactor(ramified): rebuild the first-order sub-theory on the prim
 - [ ] **Step 6: Commit.**
 
 ```bash
-jj commit -m "feat(ramified): add the primed collapse packaging and denotation agreement"
+jj commit -m "feat(ramified): add primed collapse packaging and denotation agreement"
 ```
 
 ## Task C.19: endpoints and documentation
@@ -1453,13 +1457,15 @@ jj commit -m "feat(ramified): add the primed collapse packaging and denotation a
 **Interfaces:**
 
 - Consumes: Task C.18; the legacy `ramified_definability`,
-  `ramified_definability_kSim`, `collapseFunctor`, `erToKFunctor`,
-  `kToERFunctor_map_interp`, `arityCongr`, `arityCongr_apply`,
+  `ramified_definability_kSim`, `arityCongr`, `arityCongr_apply`,
   `ObjCtx.toSynCatFO`, `synCatFOHom`
-  (`GebLean/Ramified/Characterization.lean`,
-  `Soundness/Collapse.lean`); `LawvereERCat`, `LawvereKSimDCat`,
-  `erKSimEquiv` (`GebLean/LawvereERQuot.lean`,
-  `LawvereERKSim/Equivalence.lean`); `eqToHom`, `Equivalence`
+  (`GebLean/Ramified/Characterization.lean`); `collapseFunctor`
+  (`GebLean/Ramified/Soundness/Collapse.lean`); `erToKFunctor`
+  (`GebLean/LawvereERKSim/ErToKFunctor.lean`); `kToERFunctor`,
+  `kToERFunctor_map_interp` (`GebLean/LawvereKSimER.lean`);
+  `LawvereERCat` (`GebLean/LawvereERQuot.lean`); `LawvereKSimDCat`
+  (`GebLean/LawvereKSimQuot.lean`); `erKSimEquiv`
+  (`GebLean/LawvereERKSim/Equivalence.lean`); `eqToHom`, `Equivalence`
   laws (mathlib).
 - Produces:
   - `def synCatFOHom'` — the primed mirror of `synCatFOHom`.
@@ -1536,7 +1542,7 @@ jj commit -m "feat(ramified): add the primed collapse packaging and denotation a
 - [ ] **Step 7: Commit.**
 
 ```bash
-jj commit -m "feat(ramified): transfer the elementary characterization to the primed stack"
+jj commit -m "feat(ramified): transfer the characterization to the primed stack"
 ```
 
 ## Task C.20: whole-branch verification

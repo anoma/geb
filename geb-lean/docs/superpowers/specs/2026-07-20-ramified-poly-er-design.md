@@ -119,7 +119,7 @@ in the aggregators:
 | Module | Content |
 | --- | --- |
 | `GebLean/SliceW/Reindex.lean` | `SlicePFunctor.reindex`, `W`-equivalence, fiber form |
-| `GebLean/Ramified/SigEquiv.lean` | `SortedSig.Equiv`, `tmMapSigEquiv`, naturality, round trips |
+| `GebLean/Ramified/SigEquiv.lean` | `SortedSigEquiv`, `tmMap` / `tmEquiv`, naturality, round trips |
 | `GebLean/Ramified/PresentationEquiv.lean` | model agreement, generic step-2 category equivalence |
 | `GebLean/Ramified/Polynomial/Interp.lean` | `Tm'.eval`, `QuotRel'`, `interpQuotRel'`, `tmSliceEquiv_eval` |
 | `GebLean/Ramified/Polynomial/SynCat.lean` | `HomTuple'`, `Hom'`, `SynCat'`, category and product instances |
@@ -133,11 +133,11 @@ in the aggregators:
 | `GebLean/Ramified/Polynomial/Characterization.lean` | `collapseFunctor'`, endpoints |
 
 Additive changes to existing modules: `FreeM.elim` with computation
-rules in `GebLean/SliceW/FreeM.lean`; `freeAlgSliceEquiv_recurse` in
-`GebLean/Ramified/Polynomial/FreeAlg.lean`; `rTypeSliceEquiv_curried`
-(and `RType'.interp_isObj` and a `natFreeAlgEquiv'`-versus-legacy
-agreement lemma, where Phase A does not already provide them) in
-`GebLean/Ramified/Polynomial/RType.lean` or
+rules in `GebLean/SliceW/FreeM.lean`; `freeAlgSliceEquiv_recurse` and
+`RType'.interp_isObj` (both absent from Phase A) in
+`GebLean/Ramified/Polynomial/RType.lean`, where `FreeAlg'.induction`
+is in scope; `natFreeAlgEquiv'_slice` (holding by `rfl`, since
+Phase A defines `natFreeAlgEquiv'` as the composite) in
 `GebLean/Ramified/Polynomial/FreeAlg.lean`; `RType.interpCongr` (the
 congruence of the legacy denotation along a base-carrier equivalence)
 in the legacy `GebLean/Ramified/RType.lean`, with the carrier bridge
@@ -223,9 +223,12 @@ Specification and Formal Software Development", 2012, DOI
   `opEquiv : sig.Op ≃ sig̅.Op`,
   `arity_comm : sig̅.arity (opEquiv o) = (sig.arity o).map sortEquiv`,
   `result_comm : sig̅.result (opEquiv o) = sortEquiv (sig.result o)`.
-- `tmMapSigEquiv : Tm sig Γ s ≃ Tm sig̅ (Γ.map sortEquiv) (sortEquiv
+- `SortedSigEquiv.tmMap`, packaged as `tmEquiv : Tm sig Γ s ≃
+  Tm sig̅ (Γ.map sortEquiv) (sortEquiv
   s)`: both directions by `PolyFix.ind`, with reindexing transports
-  along `List.get_map` at variables and along `arity_comm` /
+  along `get_map` (a new shared helper reading `get` through
+  `List.map` — core and mathlib carry only `List.getElem_map`) at
+  variables and along `arity_comm` /
   `result_comm` at operation nodes; round trips by `PolyFix.ind`.
   Naturality lemmas at `var` and `op`, and commutation with `subst`
   and `reind`.
@@ -240,14 +243,15 @@ Specification and Formal Software Development", 2012, DOI
   equivalence, not an equality: at the Phase C instantiation the base
   carriers `FreeAlg' A` and `FreeAlg A` are related only by
   `freeAlgSliceEquiv`, so no carrier equality exists.
-- `tmMapSig_eval`: evaluation commutes with the term translation
+- `PresentationEquiv.tmMap_eval`: evaluation commutes with the term
+  translation
   through `carrierEquiv` (by `PolyFix.ind`; the pattern of
   `foTm_eval`).
-- `presentationSynCatEquiv : SynCat P (interpQuotRel P) ≌
+- `PresentationEquiv.synCatEquiv : SynCat P (interpQuotRel P) ≌
   SynCat P̅ (interpQuotRel P̅)`: object map `List.map sortEquiv`; hom
-  map componentwise `tmMapSigEquiv` with reindexing along
-  `List.get_map`; well-definedness and the functor laws by
-  `Quotient.sound` from `tmMapSig_eval` (the `foInclusion` proof
+  map componentwise `tmMap` with reindexing along
+  `get_map`; well-definedness and the functor laws by
+  `Quotient.sound` from `tmMap_eval` (the `foInclusion` proof
   pattern); the inverse functor from the symmetric data; unit and
   counit by `eqToIso` on the propositional object round trips
   (`List.map_map` and the sort equivalence's round trips), their hom
@@ -263,8 +267,9 @@ along an equivalence; the Lean packaging is novel):
 - `SlicePFunctor.reindex (e : I ≃ J) (F : SlicePFunctor I I) :
   SlicePFunctor J J`: shapes and positions unchanged, `q` and `r`
   conjugated by `e`.
-- `reindex_wEquiv : (reindex e F).W ≃ F.W` and its fiber form
-  `{ w // wIndex w = j } ≃ { w // wIndex w = e.symm j }`: the
+- `reindex.wEquiv : F.W ≃ (reindex e F).W` and its fiber form
+  `{ w : F.W // wIndex w = e.symm j } ≃`
+  `{ w' : (reindex e F).W // wIndex w' = j }`: the
   underlying `PFunctor.W` trees are identical; admissibility is
   conjugated by a `Prop`-valued induction (`RecProp` /
   `W.induction`), and `wIndex` commutes with `e`.
@@ -312,7 +317,7 @@ packaging is novel along the legacy module's precedent):
   (reindex identCtxEquiv.symm (toSlice (identEndo A)))`. Its
   `shapeEquiv` maps `IdentShape'` to `IdentShape` at translated
   indices summand-wise: `DefnShape'` bodies through the composite of
-  `tmSliceEquiv` and `tmMapSigEquiv` at the `defnSig'`-to-`defnSig`
+  `tmSliceEquiv` and `tmEquiv` at the `defnSig'`-to-`defnSig`
   signature equivalence; `MrecShape'` / `FrecShape'` by congruence on
   the context equations (`rTypeSliceEquiv_omega`, `rTypeSliceEquiv_o`,
   `List.map_append`).
@@ -331,7 +336,7 @@ packaging is novel along the legacy module's precedent):
   `RType.interpCongr (freeAlgSliceEquiv A)`, the congruence of the
   legacy denotation along a base-carrier equivalence. By
   `W.induction` over the identifier tree: the `defn'` case
-  by `tmSliceEquiv_eval` composed with `tmMapSig_eval` at
+  by `tmSliceEquiv_eval` composed with `tmMap_eval` at
   `defnModel'` / `defnModel` with hole interpretations matched by the
   induction hypothesis; the `mrec'` / `frec'` cases by
   `freeAlgSliceEquiv_recurse` (new agreement lemma for Phase A's
@@ -353,7 +358,7 @@ A))`, and `identHom'` with `identHom_eval'`.
 
 `Polynomial/HigherOrderEquiv.lean` instantiates step 2 and composes:
 
-- The `SortedSig.Equiv` between `(higherOrder' A).sig` and
+- The `SortedSigEquiv` between `(higherOrder' A).sig` and
   `(higherOrder A).sig`, summand-wise: the constructor summand by
   subtype congruence along `rTypeSliceEquiv_isObj` (arities by
   `List.map` of `List.replicate`); `appSig'` by product congruence
@@ -370,7 +375,7 @@ A))`, and `identHom'` with `identHom_eval'`.
   a `curryInterp'` agreement induction on the context.
 - `rmRecCatSliceEquiv A : RMRecCat' A ≌ RMRecCat A`:
   `Equivalence.trans` of `synCatSliceEquiv (higherOrder' A)` and the
-  instantiated `presentationSynCatEquiv`.
+  instantiated `PresentationEquiv.synCatEquiv`.
 
 ## 9. First-order sub-theory replacement
 
@@ -382,10 +387,10 @@ module's names are freed by the deletion, so the replacement keeps
 them unprimed except where the declaration is a member of a primed
 type's namespace:
 
-- `Tm'.towerSorts` and `RIdent'.FirstOrder`: recursive `Prop`
+- `Tm'.TowerSorts` and `RIdent'.FirstOrder`: recursive `Prop`
   predicates via `W.RecProp` (the Phase A `IsTower` pattern), with
   `@[simp]` unfolding lemmas at variables / operations and at the
-  formers; `RIdent.shapeFO`'s primed counterpart `RIdent'.shapeFO` on
+  formers; `RIdent.shapeFO`'s primed counterpart `RIdent'.ShapeFO` on
   `IdentShape'`.
 - `foIdentSig`, `foIdentConstSig`, `firstOrderSig`,
   `firstOrderModel`, `firstOrderPresentation` over the primed
@@ -412,13 +417,15 @@ content) of `GebLean/Ramified/Soundness/Collapse.lean`:
 - `synCatFOSliceEquiv : SynCatFO' ≌ SynCatFO`: the restriction of
   `rmRecCatSliceEquiv natAlgSig` to the full subcategories, using the
   object-property correspondence from `rTypeSliceEquiv_isObj`
-  (assembled through mathlib's full-subcategory lifting; the exact
-  mathlib route is pinned in the sub-plan).
+  (via mathlib's `ObjectProperty.lift`; the executor searches for a
+  ready-made equivalence-restriction lemma first and assembles
+  manually otherwise, recording the outcome — the sub-plan carries
+  the decision procedure).
 - The agreement lemma (decision 5):
   `collapseDenotation (synCatFOSliceEquiv.functor.map g') =
   arityCongr h₁ h₂ (collapseDenotation' g')`, proved by unfolding
   both denotations to evaluations and applying the model agreement,
-  `tmSliceEquiv_eval` / `tmMapSig_eval`, and the `objToNat'`
+  `tmSliceEquiv_eval` / `tmMap_eval`, and the `objToNat'`
   correspondence (`carrierSliceEquiv_isObj` composed with the
   `natFreeAlgEquiv'` agreement).
 
@@ -454,7 +461,7 @@ The master spec section 3 constraints apply unchanged: no
 passes; recursor-only elimination over the recursive tree types
 (`W.elim`, `W.RecProp`, `W.induction`, `FreeM.elim`, the free-monad
 bind on the vendored side; `PolyFix.ind` on the legacy side only
-where a bridge consumes it — here `tmMapSigEquiv`, `tmMapSig_eval`,
+where a bridge consumes it — here `SortedSigEquiv.tmMap` and its lemmas, `RType.interpCongr`,
 and the legacy halves of the agreement proofs); `GebLean/SliceW/*`
 stays legacy-free; module docstrings, mathlib naming and style, lines
 at most 100 characters; `@[simp]` only on constructor-compatibility
@@ -462,8 +469,10 @@ and field-characterization lemmas.
 
 ## 12. `TODO.md` porting record
 
-A new bullet in `TODO.md`'s "To be done in geb-mathlib" section,
-**slicew-promotion**, records the geb-mathlib-eligible modules — the
+A bullet in `TODO.md`'s "To be done in geb-mathlib" section,
+**slicew-promotion** (delivered: committed on this branch by the
+`doc(todo)` commit preceding the sub-plan), records the
+geb-mathlib-eligible modules — the
 ones depending only on the vendored `Geb.Mathlib` tree, mathlib, or
 CSLib and written to geb-mathlib standards: `GebLean/SliceW.lean`,
 `GebLean/SliceW/{Translate,Iso,FreeM,Reindex}.lean` and their
@@ -481,7 +490,7 @@ Compositional, lemma-routed tests (numeric and semantic assertions
 through proven lemmas, never kernel reduction of composite
 `W`-trees), one mirror module per source module: `reindex` round
 trips on a sample tree; `Tm'.eval` on Phase B's two-sorted
-mixed-arity smoke signature; `tmMapSigEquiv` round trips and eval
+mixed-arity smoke signature; `tmEquiv` round trips and eval
 agreement on a small signature equivalence; `identSliceEquiv`
 former-naturality and interp agreement on a small identifier over
 `natAlgSig`; the first-order predicates on tower and non-tower
