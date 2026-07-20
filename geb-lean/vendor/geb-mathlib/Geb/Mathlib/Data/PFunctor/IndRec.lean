@@ -6,6 +6,7 @@ Authors: Terence Rokop
 module
 
 public import Geb.Mathlib.Data.PFunctor.IndRec.Basic
+public import Geb.Mathlib.Data.PFunctor.IndRec.Hom
 
 /-!
 # IndRec — index
