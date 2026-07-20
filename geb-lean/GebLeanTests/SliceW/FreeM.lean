@@ -47,4 +47,21 @@ example : nodeWithLeaves.1 =
           _ _ _).mpr fun _ => pureLeaf.2⟩ := by
   rfl
 
+/-- The identity substitution: every leaf maps to its own `pure`. -/
+def pureSubst : ∀ j, { a : Bool // SliceWTranslateTest.v a = j } →
+    FreeM SliceWTranslateTest.v SliceWIsoTest.F j :=
+  fun _ a => FreeM.pure a
+
+/-- Left unit: binding a `pure` leaf with `pureSubst` returns the leaf, by
+`pure_bind`. -/
+example : pureLeaf.bind pureSubst = pureLeaf :=
+  FreeM.pure_bind ⟨true, rfl⟩ pureSubst
+
+/-- Binding a one-node tree with `pureSubst` reduces, by `bind_node` then
+`pure_bind` on the child, back to the tree. No kernel reduction of trees. -/
+example : nodeWithLeaves.bind pureSubst = nodeWithLeaves := by
+  have hleaf : pureLeaf.bind pureSubst = pureLeaf := FreeM.pure_bind ⟨true, rfl⟩ pureSubst
+  rw [nodeWithLeaves, FreeM.bind_node]
+  simp only [hleaf]
+
 end SliceWFreeMTest
