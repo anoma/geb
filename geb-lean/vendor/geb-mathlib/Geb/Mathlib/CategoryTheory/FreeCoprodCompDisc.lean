@@ -36,8 +36,9 @@ action, constructively.
   `FreeCoprodCompDisc.MapMor D D`.
 * `FreeCoprodCompDisc.coprod`, `FreeCoprodCompDisc.coprodMor` — the
   indexed coproducts and their functorial action.
-* `FreeCoprodCompDisc.Hom.comp` — composition of morphisms, in
-  diagrammatic order.
+* `FreeCoprodCompDisc.Hom.id`, `FreeCoprodCompDisc.Hom.comp` — the
+  identity and composition of morphisms, composition in diagrammatic
+  order.
 * `FreeCoprodCompDisc.coprodPair`, `FreeCoprodCompDisc.plus` — the
   binary coproduct (the cotuple object `[i, k]` of
   [HancockMcBrideGhaniMalatestaAltenkirch2013]) and its
@@ -54,6 +55,14 @@ action, constructively.
   `refl`/`symm`/`trans` and the transport `isoOfEq`; `coprodIso` is
   the congruence of `coprod` along an index equivalence and a
   family of isomorphisms of the summands.
+
+## Main statements
+
+* `FreeCoprodCompDisc.Hom.id_comp`, `FreeCoprodCompDisc.Hom.comp_id`,
+  `FreeCoprodCompDisc.Hom.comp_assoc` — the category laws.
+* `FreeCoprodCompDisc.coprodMor_id`,
+  `FreeCoprodCompDisc.coprodMor_comp` — the functoriality of
+  `FreeCoprodCompDisc.coprodMor`.
 
 ## Implementation notes
 
@@ -123,6 +132,26 @@ def Hom.comp {X Y Z : FreeCoprodCompDisc.{u, v} D} (f : Hom D X Y)
     (g : Hom D Y Z) : Hom D X Z :=
   ⟨g.1 ∘ f.1, (congrArg (· ∘ f.1) g.2).trans f.2⟩
 
+/-- The identity morphism of the free coproduct completion. -/
+def Hom.id (X : FreeCoprodCompDisc.{u, v} D) : Hom D X X :=
+  ⟨_root_.id, rfl⟩
+
+/-- The identity morphism is a left identity for composition. -/
+theorem Hom.id_comp {X Y : FreeCoprodCompDisc.{u, v} D} (f : Hom D X Y) :
+    Hom.comp D (Hom.id D X) f = f :=
+  Subtype.ext rfl
+
+/-- The identity morphism is a right identity for composition. -/
+theorem Hom.comp_id {X Y : FreeCoprodCompDisc.{u, v} D} (f : Hom D X Y) :
+    Hom.comp D f (Hom.id D Y) = f :=
+  Subtype.ext rfl
+
+/-- Composition is associative. -/
+theorem Hom.comp_assoc {X Y Z W : FreeCoprodCompDisc.{u, v} D}
+    (f : Hom D X Y) (g : Hom D Y Z) (h : Hom D Z W) :
+    Hom.comp D (Hom.comp D f g) h = Hom.comp D f (Hom.comp D g h) :=
+  Subtype.ext rfl
+
 /-- The morphism-map component over an object map between the free
 coproduct completions of two (generally different) types. -/
 def MapMor.{w} (I : Type v) (O : Type w) (F : Map.{u, v, w} I O) :
@@ -154,6 +183,26 @@ def coprodMor.{w} (ι κ : Type w) (r : ι → κ)
     Hom D (coprod D ι fi) (coprod D κ gk) :=
   ⟨Sigma.map r (fun i ↦ (hom i).1),
     funext (fun p ↦ congrFun (hom p.1).2 p.2)⟩
+
+/-- The functorial action of `coprod` preserves identities. -/
+theorem coprodMor_id.{w} (ι : Type w)
+    (fi : ι → FreeCoprodCompDisc.{u, v} D) :
+    coprodMor D ι ι _root_.id fi fi (fun i ↦ Hom.id D (fi i)) =
+      Hom.id D (coprod D ι fi) :=
+  Subtype.ext rfl
+
+/-- The functorial action of `coprod` preserves composition. -/
+theorem coprodMor_comp.{w} (ι κ ρ : Type w) (r : ι → κ) (t : κ → ρ)
+    (fi : ι → FreeCoprodCompDisc.{u, v} D)
+    (gk : κ → FreeCoprodCompDisc.{u, v} D)
+    (hr : ρ → FreeCoprodCompDisc.{u, v} D)
+    (hom₁ : (i : ι) → Hom D (fi i) (gk (r i)))
+    (hom₂ : (k : κ) → Hom D (gk k) (hr (t k))) :
+    Hom.comp D (coprodMor D ι κ r fi gk hom₁)
+        (coprodMor D κ ρ t gk hr hom₂) =
+      coprodMor D ι ρ (t ∘ r) fi hr
+        (fun i ↦ Hom.comp D (hom₁ i) (hom₂ (r i))) :=
+  Subtype.ext rfl
 
 /-- The binary coproduct of two objects of the free coproduct
 completion: the sum of the name types, the cotuple of the
