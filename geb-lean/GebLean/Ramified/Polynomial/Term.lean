@@ -147,6 +147,17 @@ def Tm'.reind {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
 @[simp] theorem Tm'.reind_rfl {sig : SortedSig S} {Γ : Ctx S} {a : S}
     (t : Tm' sig Γ a) : Tm'.reind rfl t = t := rfl
 
+/-- Reindexing then reindexing back along the reverse equality is the
+identity. -/
+theorem Tm'.reind_symm {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
+    (t : Tm' sig Γ a) : Tm'.reind h.symm (Tm'.reind h t) = t := by
+  subst h; rfl
+
+/-- Reindexing back then forward along an equality is the identity. -/
+theorem Tm'.reind_symm' {sig : SortedSig S} {Γ : Ctx S} {a b : S} (h : a = b)
+    (t : Tm' sig Γ b) : Tm'.reind h (Tm'.reind h.symm t) = t := by
+  subst h; rfl
+
 /-- Substitution commutes with reindexing of its input term. -/
 theorem Tm'.subst_reind {sig : SortedSig S} {Γ Δ : Ctx S} {a b : S}
     (h : a = b) (t : Tm' sig Γ a)
