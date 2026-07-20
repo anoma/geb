@@ -134,7 +134,9 @@ precedent (`GebLean/PolyBridge/Slice.lean`).
 - `FreeM.node` — the operation-node constructor: `W.mk` at an `inr`
   shape, taking the shape's compatible family of `FreeM` children.
   The piece `Tm'.op` instantiates.
-- `FreeM.bind :`
+- `FreeM.bind`, for leaf families `v : Y → I` and `v' : Y' → I` (the
+  target leaf family has its own leaf type, as the legacy
+  `polyFreeMBind` changes the leaf family from `A` to `B`):
   `FreeM v F i → (∀ j, { a : Y // v a = j } → FreeM v' F j) → FreeM v' F i`
   — a single `SlicePFunctor.W.elim` into the slice algebra
   `((translate v' F).W, wIndex)`: a leaf shape dispatches to the
@@ -153,7 +155,7 @@ Proved natively by `SlicePFunctor.W.induction`, with no legacy imports:
 
 - `FreeM.pure_bind` — expected definitional or near-definitional, from
   `W.elim_mk` at a leaf shape;
-- `FreeM.bind_pure` — right unit;
+- `FreeM.bind_pure` — right unit (stated at `Y' = Y`, `v' = v`);
 - `FreeM.bind_assoc` — associativity;
 - `FreeM.pure_transport`, `FreeM.bind_transport` — commutation of
   `pure` and `bind` with reindexing along a fiber equality, the native
@@ -181,7 +183,9 @@ that isomorphic containers have equivalent initial algebras
   shapes, distribute `Σ x, ({ a // V.hom a = x } ⊕ i)` to
   `V.left ⊕ Σ x, i`, contracting `Σ x, { a // V.hom a = x } ≃ V.left`;
   positions match leaf-to-leaf (`PEmpty` to `PEmpty`) and node-to-node
-  (identical carriers); `q` and `r` commute by computation.
+  (identical carriers); `q` and `r` commute definitionally on node
+  shapes and on positions, while on leaf shapes `q`-commutation is
+  `V.hom a = x`, discharged by the leaf shape's stored fiber witness.
 - `polyFreeMSliceEquiv (V : Over X) (P : PolyEndo X) (x : X) :`
   `PolyFreeM V P x ≃ FreeM V.hom (toSlice P) x` — the composite of
   `polyFixSliceEquiv (polyTranslate V P) x` (Phase A, applied verbatim
@@ -202,16 +206,21 @@ Novel packaging throughout.
 
 - `Tm' (sig : SortedSig S) (Γ : Ctx S) : S → Type :=`
   `FreeM Γ.get (toSlice sig.polyEndo)`.
-- `Tm'.var`, `Tm'.op`, `Tm'.subst`, `Tm'.reind`, `Tm'.weaken` — thin
-  instances of `FreeM.pure` / `FreeM.node` / `FreeM.bind`, mirroring
-  the legacy signatures (`GebLean/Ramified/Term.lean`) exactly,
-  including the substitution tuple's transport `a.2 ▸ σ a.1`, so that
-  Phase C can exchange the layers.
+- `Tm'.var`, `Tm'.op`, `Tm'.subst`, `Tm'.weaken` — thin instances of
+  `FreeM.pure` / `FreeM.node` / `FreeM.bind`, mirroring the legacy
+  signatures (`GebLean/Ramified/Term.lean`) exactly, including the
+  substitution tuple's transport `a.2 ▸ σ a.1`, so that Phase C can
+  exchange the layers. `Tm'.reind` is the bare transport `h ▸ t`, as
+  in the legacy layer.
 - Clone laws `Tm'.subst_id`, `Tm'.subst_subst`, `Tm'.var_subst`,
   `Tm'.subst_reind` — instances of the native laws and transport
   lemmas of section 4.3; the bridge is not involved.
-- `tmSliceEquiv : Tm' sig Γ s ≃ Tm sig Γ s` — `polyFreeMSliceEquiv`
-  at `(varOver Γ, sig.polyEndo)`, noting `(varOver Γ).hom = Γ.get`.
+- `tmSliceEquiv : Tm' sig Γ s ≃ Tm sig Γ s` —
+  `(polyFreeMSliceEquiv (varOver Γ) sig.polyEndo s).symm`, noting
+  `(varOver Γ).hom = Γ.get`. The `.symm` re-orients the bridge so the
+  primed carrier reads as the source, as in Phase A's
+  `freeAlgSliceEquiv` (the orientation imprecision the handoff records
+  from Phase A).
 - Compatibility lemmas `tmSliceEquiv_var` / `tmSliceEquiv_op` /
   `tmSliceEquiv_subst` — instances of the bridge naturality lemmas.
 
