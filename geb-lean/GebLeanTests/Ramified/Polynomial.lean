@@ -1,5 +1,6 @@
 import GebLeanTests.Ramified.Polynomial.FreeAlg
 import GebLeanTests.Ramified.Polynomial.RType
+import GebLeanTests.Ramified.Polynomial.Term
 
 /-!
 # Ramified-recurrence polynomial-stack test index

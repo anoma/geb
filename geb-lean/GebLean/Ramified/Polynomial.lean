@@ -1,5 +1,6 @@
 import GebLean.Ramified.Polynomial.FreeAlg
 import GebLean.Ramified.Polynomial.RType
+import GebLean.Ramified.Polynomial.Term
 
 /-!
 # Ramified recurrence on the vendored polynomial-functor stack
