@@ -1,6 +1,7 @@
 import GebLean.Ramified.Polynomial.FreeAlg
 import GebLean.Ramified.Polynomial.Interp
 import GebLean.Ramified.Polynomial.RType
+import GebLean.Ramified.Polynomial.SynCat
 import GebLean.Ramified.Polynomial.Term
 
 /-!
