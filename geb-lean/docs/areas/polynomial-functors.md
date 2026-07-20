@@ -8,6 +8,7 @@
 - [Modules](#modules)
   - [Core polynomial functor infrastructure](#core-polynomial-functor-infrastructure)
   - [Algebra and coalgebra of polynomial endofunctors](#algebra-and-coalgebra-of-polynomial-endofunctors)
+  - [Bridge to the vendored `geb-mathlib` slice-functor stack](#bridge-to-the-vendored-geb-mathlib-slice-functor-stack)
   - [Polynomial presentations and copresheaf cover](#polynomial-presentations-and-copresheaf-cover)
   - [Distributive laws and GSOS](#distributive-laws-and-gsos)
   - [Dependent and twisted polynomial functors](#dependent-and-twisted-polynomial-functors)
@@ -201,6 +202,22 @@ existence and combinators:
   Reflexive-coequalizer preservation by finitary functors is
   standard (Barr–Wells; Kelly; mathlib
   `CategoryTheory.Monad.Coequalizer`).
+
+### Bridge to the vendored `geb-mathlib` slice-functor stack
+
+- [`GebLean/PolyBridge/Slice.lean`](../../GebLean/PolyBridge/Slice.lean)
+  — `toSlice : PolyEndo X → SlicePFunctor X X`, translating this
+  development's Grothendieck-construction presentation of a
+  polynomial endofunctor to the vendored `geb-mathlib`
+  `SlicePFunctor` presentation (`Geb.Mathlib.Data.PFunctor.Slice.Basic`);
+  the two differ only in packaging (Gambino–Kock 2013;
+  Abbott–Altenkirch–Ghani 2005).
+- [`GebLean/PolyBridge/WEquiv.lean`](../../GebLean/PolyBridge/WEquiv.lean)
+  — the fiberwise equivalence `polyFixSliceEquiv : PolyFix P x ≃
+  { w : (toSlice P).W // wIndex w = x }` between this development's
+  initial-algebra carrier `PolyFix P` (`PolyAlg.lean`) and the
+  W-type of the translated slice functor
+  (`Geb.Mathlib.Data.PFunctor.Slice.W`).
 
 ### Polynomial presentations and copresheaf cover
 
