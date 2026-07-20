@@ -29,6 +29,7 @@ import GebLeanTests.TestTreeCalcMeta
 import GebLeanTests.TestTreeCalcPrograms
 import GebLeanTests.TestTreeCalcReduction
 import GebLeanTests.PLang.BTPair
+import GebLeanTests.PolyBridge.Slice
 import GebLeanTests.Ramified
 import GebLeanTests.Utilities.ERAMajorants
 import GebLeanTests.Utilities.ERArith
