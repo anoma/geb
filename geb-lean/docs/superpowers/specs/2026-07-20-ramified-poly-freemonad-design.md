@@ -155,6 +155,8 @@ Proved natively by `SlicePFunctor.W.induction`, with no legacy imports:
 
 - `FreeM.pure_bind` — expected definitional or near-definitional, from
   `W.elim_mk` at a leaf shape;
+- `FreeM.bind_node` — the computation rule at an operation node, from
+  `W.elim_mk`; consumed by the bridge's bind-naturality proof;
 - `FreeM.bind_pure` — right unit (stated at `Y' = Y`, `v' = v`);
 - `FreeM.bind_assoc` — associativity;
 - `FreeM.pure_transport`, `FreeM.bind_transport` — commutation of

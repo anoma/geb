@@ -4,7 +4,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Global constraints](#global-constraints)
-- [Task B.1: de-risking spike (iso-induced W-map and native bind)](#task-b1-de-risking-spike-iso-induced-w-map-and-native-bind)
+- [Task B.1: validation spike (iso-induced W-map and native bind)](#task-b1-validation-spike-iso-induced-w-map-and-native-bind)
 - [Task B.2: `SlicePFunctor` isomorphisms and the induced W-equivalence](#task-b2-slicepfunctor-isomorphisms-and-the-induced-w-equivalence)
 - [Task B.3: the `translate` augmentation](#task-b3-the-translate-augmentation)
 - [Task B.4: `FreeM` carrier and constructors](#task-b4-freem-carrier-and-constructors)
@@ -65,8 +65,8 @@ test`; `jj` commits.
 - Tests route numeric/semantic assertions through proven lemmas, not
   kernel reduction of composite W-trees.
 - Universe polymorphism as far as it compiles: `SliceW` modules follow
-  the vendored `{uA, uB, uI}` scheme where frictionless; the bridge
-  and term modules may fix `{u, u, u, u}` as Phase A does.
+  the vendored `{uA, uB, uI}` scheme; the bridge and term modules may
+  fix `{u, u, u, u}` as Phase A does.
 - Build with `lake build <Module>` / `lake test` only; never
   `lake env lean`, never `lake clean`. Pre-commit gate for every task:
   `bash scripts/pre-commit.sh`.
@@ -85,25 +85,26 @@ test`; `jj` commits.
 
 ---
 
-## Task B.1: de-risking spike (iso-induced W-map and native bind)
+## Task B.1: validation spike (iso-induced W-map and native bind)
 
-A short throwaway spike (scratch file, not committed) validating the
-two constructions the design marks hardest, before real tasks depend
-on them.
+A short spike (scratch file, deleted before any commit) validating
+the two constructions the design marks hardest, sorry-free, before
+real tasks depend on them.
 
 - [ ] **Step 1:** In a scratch module importing
   `Geb.Mathlib.Data.PFunctor.Slice.W`, define a toy pair of isomorphic
   `SlicePFunctor PUnit PUnit`s (e.g. shapes `Bool` versus
   `Unit ⊕ Unit`, positions `Fin 2` at one shape) and build the induced
   W-map by `SlicePFunctor.W.elim` into the target `(W, wIndex)`
-  algebra, confirming the `Compatible` re-indexing across the position
-  equivalence and the `hg` side condition discharge.
+  algebra, confirming — sorry-free — the `Compatible` re-indexing
+  across the position equivalence and the `hg` side condition
+  discharge.
 - [ ] **Step 2:** Define a toy `translate`-style augmented functor
   (leaf shapes `Bool` over `PUnit`, node shapes from the toy functor)
   and build `bind` as a single `W.elim` with a `Sum` shape split,
-  confirming: the leaf case's `hg` discharge from the substituted
-  tree's fiber property, and the node case's `Compatible` transfer
-  (the target functor has identical `B`/`r` at `Sum.inr`).
+  confirming — sorry-free — the leaf case's `hg` discharge from the
+  substituted tree's fiber property, and the node case's `Compatible`
+  transfer (the target functor has identical `B`/`r` at `Sum.inr`).
 - [ ] **Step 3:** Record working term shapes (motives, `hg` proofs,
   transport idioms) as notes in the Task B.2 and B.5 implementation
   steps if they differ from what is written there; delete the scratch
@@ -124,8 +125,10 @@ on them.
 
 **Interfaces:**
 
-- Consumes: `SlicePFunctor` fields `A`/`B`/`q`/`r`, `rCurried`,
-  `toSliceDomPFunctor`, `Compatible`, `compatible_iff`, `obj`
+- Consumes: `SlicePFunctor` fields `A`/`B`/`q`/`r`,
+  `toSliceDomPFunctor`, `obj`, and the `SliceDomPFunctor`
+  declarations `Compatible`, `compatible_iff`, `rCurried` (reached by
+  dot notation through `toSliceDomPFunctor`)
   (`Geb.Mathlib.Data.PFunctor.Slice.Basic`); `W`, `wIndex`, `W.mk`,
   `W.elim`, `W.elim_mk`, `W.comp_elim`, `W.wIndex_mk`, `W.induction`
   (`Geb.Mathlib.Data.PFunctor.Slice.W`); `Equiv` (mathlib).
@@ -135,9 +138,16 @@ on them.
     `posEquiv : ∀ a, F.B a ≃ G.B (shapeEquiv a)`,
     `q_comm : ∀ a, G.q (shapeEquiv a) = F.q a`,
     `r_comm : ∀ a b, G.r ⟨shapeEquiv a, posEquiv a b⟩ = F.r ⟨a, b⟩`.
-  - `def SlicePFunctor.Iso.symm : Iso F G → Iso G F` (equivalences
-    reversed; `q_comm`/`r_comm` by rewriting along the forward fields
-    at `shapeEquiv.symm a` / `(posEquiv _).symm b`).
+  - `def SlicePFunctor.Iso.symm : Iso F G → Iso G F` — the shape
+    equivalence reversed; the position field is NOT a bare reversal:
+    at `a' : G.A` it must land in `F.B (shapeEquiv.symm a')`, while
+    the reversed forward field has domain
+    `G.B (shapeEquiv (shapeEquiv.symm a'))`, so it is the reversal
+    composed with the transport (`Equiv.cast` of
+    `congrArg G.B (shapeEquiv.apply_symm_apply a')`, or an equivalent
+    `▸` re-typing); the same transport threads through `symm`'s
+    `q_comm`/`r_comm` proofs (rewriting along the forward fields) and
+    later through the round trips.
   - `def SlicePFunctor.Iso.wMap (e : Iso F G) : F.W → G.W` — a single
     `W.elim` into the algebra `(G.W, G.wIndex)`: at a node
     `⟨⟨a, c⟩, hc⟩` build
@@ -147,8 +157,10 @@ on them.
     `(e.posEquiv a).apply_symm_apply`); `hg` by `funext`, `wIndex_mk`,
     and `q_comm`.
   - `theorem SlicePFunctor.Iso.wIndex_wMap (e : Iso F G) (z : F.W) :`
-    `G.wIndex (e.wMap z) = F.wIndex z` — from `W.comp_elim` and
-    `q_comm` (pointwise application of the `comp_elim` equation).
+    `G.wIndex (e.wMap z) = F.wIndex z` — the pointwise application of
+    `W.comp_elim`, whose conclusion is exactly
+    `G.wIndex ∘ e.wMap = F.wIndex` (`q_comm` is consumed inside `hg`,
+    not here).
   - `theorem SlicePFunctor.Iso.wMap_mk` (`@[simp]`) — constructor
     naturality: `e.wMap (W.mk ⟨⟨a, c⟩, hc⟩)` equals the `W.mk` node at
     `e.shapeEquiv a` with children `fun b' => e.wMap (c ((e.posEquiv
@@ -259,8 +271,9 @@ jj commit -m "feat(slicew): add the translate augmentation of a slice endofuncto
 **Interfaces:**
 
 - Consumes: `translate` and its `@[simp]` lemmas (Task B.3); `W`,
-  `wIndex`, `W.mk`, `W.wIndex_mk`, `compatible_iff`
-  (vendored stack).
+  `wIndex`, `W.mk`, `W.wIndex_mk` (vendored stack);
+  `SliceDomPFunctor.compatible_iff` (dot notation through
+  `toSliceDomPFunctor`).
 - Produces:
   - `def SlicePFunctor.FreeM (v : Y → I) (F : SlicePFunctor I I)`
     `(i : I) := { w : (translate v F).W // (translate v F).wIndex w = i }`.
@@ -274,17 +287,19 @@ jj commit -m "feat(slicew): add the translate augmentation of a slice endofuncto
     `W.mk ⟨⟨Sum.inr a, fun b => (c b).1⟩, _⟩` where the compatibility
     is `(compatible_iff …).mpr fun b => (c b).2` (children's fiber
     proofs), and the fiber proof is `wIndex_mk` then `translate_q_inr`.
-  - `@[simp] theorem SlicePFunctor.FreeM.pure_val` and
-    `node_val` — the underlying-tree characterizations (`(pure a).1 =
-    W.mk …`, `(node a c).1 = W.mk …`), each `rfl`; these are the
-    constructor-level lemmas later tasks rewrite with.
+  - `@[simp] theorem SlicePFunctor.FreeM.val_pure` and
+    `val_node` — the underlying-tree characterizations (`(pure a).1 =
+    W.mk …`, `(node a c).1 = W.mk …`), each `rfl`, named
+    projection-first per the mathlib convention (`Fin.val_mk`
+    precedent); these are the constructor-level lemmas later tasks
+    rewrite with.
 
 **Steps:**
 
 - [ ] **Step 1: Write the failing test.** With the toy translate
   functor from Task B.3's test: build `FreeM.pure ⟨true, rfl⟩` and a
   `FreeM.node` with leaf children; assert their `.2` fiber properties
-  and the `pure_val`/`node_val` equations by `simp`/`rfl`.
+  and the `val_pure`/`val_node` equations by `simp`/`rfl`.
 - [ ] **Step 2: Run to verify it fails.** Run
   `lake build GebLeanTests.SliceW.FreeM`. Expected: failure, `FreeM`
   not found.
@@ -443,12 +458,14 @@ jj commit -m "feat(slicew): prove the free-monad laws and transport lemmas"
   `translate` (Task B.3); `FreeM` (Task B.4); `toSlice`, `toSlice_*`
   (Phase A); `polyFixSliceEquiv` (Phase A); `polyTranslate`,
   `polyTranslateIndex`, `polyTranslateFamily`, `overEmpty`,
-  `PolyFreeM` (`GebLean/PolyAlg.lean`); `Equiv.sigmaSumDistrib` or
-  equivalent mathlib pieces (`Equiv.sumSigmaDistrib` — verify the
-  exact mathlib name with `lean_local_search` / `loogle` before use;
-  build by hand from `Equiv.ofBijective`-free explicit `toFun`/
-  `invFun` if no fit exists), `Equiv.sigmaFiberEquiv` (mathlib:
-  `Σ x, { a // f a = x } ≃ …` — verify orientation).
+  `PolyFreeM` (`GebLean/PolyAlg.lean`); the mathlib equivalences
+  `Equiv.sigmaSumDistrib`
+  (`(Σ i, α i ⊕ β i) ≃ (Σ i, α i) ⊕ (Σ i, β i)`), `Equiv.sumCongr`,
+  and `Equiv.sigmaFiberEquiv` (`(Σ y, { x // f x = y }) ≃ α`) — all
+  three verified present in this checkout
+  (`Mathlib/Logic/Equiv/Sum.lean`); do not use
+  `Equiv.sumSigmaDistrib` (the sigma-indexed-by-a-sum variant, which
+  does not fit).
 - Produces:
   - `def translateSliceIso {X : Type u} (V : Over X) (P : PolyEndo X) :`
     `SlicePFunctor.Iso (toSlice (polyTranslate V P))`
@@ -477,11 +494,13 @@ jj commit -m "feat(slicew): prove the free-monad laws and transport lemmas"
 - [ ] **Step 2: Run to verify it fails.** Run
   `lake build GebLeanTests.PolyBridge.FreeMEquiv`. Expected: failure,
   names not found.
-- [ ] **Step 3: Implement `translateSliceIso`.** Search mathlib for
-  the sigma-sum distribution and sigma-fiber-contraction equivalences
-  first (`lean_local_search`, `loogle`); compose them, or write the
-  explicit `toFun`/`invFun` pair (both directions are `rfl`-inverse
-  case splits). Prove `q_comm`/`r_comm` by shape split.
+- [ ] **Step 3: Implement `translateSliceIso`.** Compose the shape
+  equivalence as `Equiv.sigmaSumDistrib` followed by
+  `Equiv.sumCongr (Equiv.sigmaFiberEquiv V.hom) (Equiv.refl _)` (or
+  write the explicit `toFun`/`invFun` pair if the composite's
+  definitional behaviour obstructs the later `q_comm`/`r_comm`
+  proofs; both directions are `rfl`-inverse case splits). Prove
+  `q_comm`/`r_comm` by shape split.
 - [ ] **Step 4: Implement `polyFreeMSliceEquiv`** as the two-leg
   composite.
 - [ ] **Step 5: Run to verify it passes.** Run
@@ -507,6 +526,12 @@ jj commit -m "feat(polybridge): relate the legacy free monad to the slice free m
   `pure_bind`, `bind_node` (Tasks B.4–B.5); `polyFreeMPure`,
   `polyFreeMBind`, `PolyFix.ind` (`GebLean/PolyAlg.lean`).
 - Produces (none `@[simp]`; operation-level):
+  - `theorem polyFreeMSliceEquiv_transport (V P) {x x' : X}`
+    `(h : x = x') (t : PolyFreeM V P x) :`
+    `polyFreeMSliceEquiv V P x' (h ▸ t) = h ▸ polyFreeMSliceEquiv V P x t`
+    — by `subst h; rfl` (the transport-naturality of the equivalence,
+    mirroring Phase A's `toSliceW_transport`; consumed by Task B.10's
+    `tmSliceEquiv_subst`).
   - `theorem polyFreeMSliceEquiv_pure (V P x)`
     `(a : { v : V.left // V.hom v = x }) :`
     `polyFreeMSliceEquiv V P x (polyFreeMPure V P a) = FreeM.pure a` —
@@ -534,8 +559,8 @@ jj commit -m "feat(polybridge): relate the legacy free monad to the slice free m
   naturality lemma at the Task B.7 sample data.
 - [ ] **Step 2: Run to verify it fails.** Run
   `lake build GebLeanTests.PolyBridge.FreeMEquiv`. Expected: failure.
-- [ ] **Step 3: Implement** the three lemmas in order (each consumes
-  the previous).
+- [ ] **Step 3: Implement** the four lemmas in order (transport
+  first; each later lemma consumes earlier ones).
 - [ ] **Step 4: Run to verify it passes.** Run
   `lake build GebLeanTests.PolyBridge.FreeMEquiv`. Expected: success.
 - [ ] **Step 5: Gate.** Run `bash scripts/pre-commit.sh`.
@@ -646,9 +671,10 @@ jj commit -m "feat(ramified): add the sorted term layer on the slice free monad"
     `tmSliceEquiv Γ _ (t.subst σ) =`
     `(tmSliceEquiv Γ _ t).subst (fun i => tmSliceEquiv Γ _ (σ i))` —
     from `polyFreeMSliceEquiv_bind` via the equivalence laws, moving
-    the leaf-function transport with `FreeM.pure_transport` /
-    `polyFreeMPure_transport` as needed (the legacy and primed leaf
-    functions both transport by `a.2 ▸ σ a.1`).
+    the leaf-function transport with `polyFreeMSliceEquiv_transport`
+    (Task B.8) — the legacy and primed leaf functions both transport
+    by `a.2 ▸ σ a.1`, and the transport must be commuted past the
+    equivalence to match them.
 - None of the three are `@[simp]`.
 
 **Steps:**
