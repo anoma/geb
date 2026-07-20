@@ -32,6 +32,7 @@ import GebLeanTests.PLang.BTPair
 import GebLeanTests.PolyBridge.Slice
 import GebLeanTests.PolyBridge.WEquiv
 import GebLeanTests.Ramified
+import GebLeanTests.SliceW.FreeM
 import GebLeanTests.SliceW.Iso
 import GebLeanTests.SliceW.Translate
 import GebLeanTests.Utilities.ERAMajorants

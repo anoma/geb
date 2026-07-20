@@ -1,3 +1,4 @@
+import GebLean.SliceW.FreeM
 import GebLean.SliceW.Iso
 import GebLean.SliceW.Translate
 
@@ -9,5 +10,6 @@ Directory index for the native development on the vendored slice W-type
 and ramified layers. `Iso` supplies container isomorphisms of slice
 endofunctors and the equivalence they induce on the associated W-types.
 `Translate` supplies the free-monad augmentation `Y + F(-)` of a slice
-endofunctor.
+endofunctor. `FreeM` supplies the free monad's carrier and constructors as
+the fibers and node shapes of the translate augmentation's W-type.
 -/
