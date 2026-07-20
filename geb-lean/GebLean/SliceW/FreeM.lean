@@ -22,6 +22,10 @@ fiber. `FreeM v F i` is that fiber; `pure` and `node` are the two shapes of
   `translate`-trees: a single `W.elim` replacing each leaf by its substitute.
 * `SlicePFunctor.FreeM.bind` — the free-monad bind, `bindW` on the underlying
   tree with the index-preservation witness.
+* `SlicePFunctor.FreeM.elimAlg` — the algebra of the `elim` fold at the sigma
+  carrier `Σ i, C i`, the leaf and node cases of `W.elim`'s target algebra.
+* `SlicePFunctor.FreeM.elim` — the free-monad fold: a leaf function and a
+  node algebra into a sort-indexed family `C`, realized by a single `W.elim`.
 
 ## Main statements
 
@@ -37,6 +41,13 @@ fiber. `FreeM v F i` is that fiber; `pure` and `node` are the two shapes of
   associativity law, at the underlying-tree level and wrapped for `bind`.
 * `SlicePFunctor.FreeM.pure_transport` / `SlicePFunctor.FreeM.bind_transport` —
   compatibility of index transport with `pure` and `bind`.
+* `SlicePFunctor.FreeM.elimAlg_over` — `elimAlg` lies over `I`, the algebra
+  condition `W.elim` requires.
+* `SlicePFunctor.FreeM.elim_pure` / `SlicePFunctor.FreeM.elim_node` — the
+  computation rules for `elim`: the leaf case and recursion into children on
+  `node`.
+* `SlicePFunctor.FreeM.elim_transport` — compatibility of index transport
+  with `elim`.
 
 ## References
 
@@ -52,7 +63,7 @@ container, PFunctor
 
 namespace SlicePFunctor
 
-universe uY uY' uY'' uA uB uI
+universe uY uY' uY'' uA uB uI uC
 
 variable {I : Type uI} {Y : Type uY} {Y' : Type uY'} {Y'' : Type uY''}
 variable {v : Y → I} {v' : Y' → I} {v'' : Y'' → I}
@@ -202,6 +213,72 @@ transporting the bind. -/
 theorem bind_transport {i i' : I} (h : i = i') (t : FreeM v F i)
     (f : ∀ j, { a : Y // v a = j } → FreeM v' F j) :
     (h ▸ t).bind f = h ▸ (t.bind f) := by
+  subst h
+  rfl
+
+/-- The algebra of the `elim` fold at the sigma carrier `Σ i, C i` with index
+map `Sigma.fst`: a leaf shape returns the leaf function's value at its own
+index; a node shape applies the node algebra to the children's values, each
+transported along its pinned index (the compatibility of the folded child).
+N. Gambino and J. Kock, "Polynomial functors and polynomial monads",
+Mathematical Proceedings of the Cambridge Philosophical Society 154 (2013)
+153-192, DOI `10.1017/S0305004112000394` (the free monad's fold). -/
+def elimAlg (C : I → Type uC) (leaf : ∀ i, { y : Y // v y = i } → C i)
+    (node : ∀ a : F.A, (∀ b : F.B a, C (F.rCurried a b)) → C (F.q a)) :
+    (translate v F).toSliceDomPFunctor.Obj (Sigma.fst (β := C)) → Σ i, C i :=
+  fun z => match z with
+    | ⟨⟨Sum.inl y, _⟩, _⟩ => ⟨v y, leaf (v y) ⟨y, rfl⟩⟩
+    | ⟨⟨Sum.inr a, c⟩, hc⟩ =>
+        ⟨F.q a, node a (fun b => cast (congrArg C
+          (((translate v F).toSliceDomPFunctor.compatible_iff
+            (Sigma.fst (β := C)) (Sum.inr a) c).mp hc b)) (c b).2)⟩
+
+/-- The `elimAlg` algebra lies over `I`: its sigma index is the translate
+functor's output index, by a non-recursive shape split. -/
+theorem elimAlg_over (C : I → Type uC) (leaf : ∀ i, { y : Y // v y = i } → C i)
+    (node : ∀ a : F.A, (∀ b : F.B a, C (F.rCurried a b)) → C (F.q a)) :
+    Sigma.fst ∘ elimAlg C leaf node = (translate v F).obj (Sigma.fst (β := C)) :=
+  funext fun z => match z with
+    | ⟨⟨Sum.inl _, _⟩, _⟩ => rfl
+    | ⟨⟨Sum.inr _, _⟩, _⟩ => rfl
+
+/-- The fold of the free monad into a sort-indexed family `C`: a leaf function
+and a node algebra, realized by a single `W.elim` at the sigma carrier
+`Σ i, C i` with index map `Sigma.fst`; the final value is the sigma's second
+component transported along the fiber proof `t.2`. N. Gambino and J. Kock,
+"Polynomial functors and polynomial monads", Mathematical Proceedings of the
+Cambridge Philosophical Society 154 (2013) 153-192, DOI
+`10.1017/S0305004112000394` (the free monad's fold). -/
+def elim (C : I → Type uC) (leaf : ∀ i, { y : Y // v y = i } → C i)
+    (node : ∀ a : F.A, (∀ b : F.B a, C (F.rCurried a b)) → C (F.q a))
+    {i : I} (t : FreeM v F i) : C i :=
+  cast (congrArg C ((congrFun (W.comp_elim (translate v F) (Σ j, C j)
+      (Sigma.fst (β := C)) (elimAlg C leaf node) (elimAlg_over C leaf node)) t.1).trans t.2))
+    (W.elim (translate v F) (Σ j, C j) (Sigma.fst (β := C))
+      (elimAlg C leaf node) (elimAlg_over C leaf node) t.1).2
+
+/-- Left unit: folding a leaf `pure a` applies the leaf function at `a`. -/
+theorem elim_pure (C : I → Type uC) (leaf : ∀ i, { y : Y // v y = i } → C i)
+    (node : ∀ a : F.A, (∀ b : F.B a, C (F.rCurried a b)) → C (F.q a))
+    {i : I} (a : { y : Y // v y = i }) :
+    elim C leaf node (FreeM.pure a) = leaf i a := by
+  obtain ⟨y, hy⟩ := a
+  subst hy
+  rfl
+
+/-- Folding commutes with `node`: it recurses into each child. -/
+theorem elim_node (C : I → Type uC) (leaf : ∀ i, { y : Y // v y = i } → C i)
+    (node : ∀ a : F.A, (∀ b : F.B a, C (F.rCurried a b)) → C (F.q a))
+    (a : F.A) (c : (b : F.B a) → FreeM v F (F.rCurried a b)) :
+    elim C leaf node (FreeM.node a c) = node a (fun b => elim C leaf node (c b)) :=
+  rfl
+
+/-- Transport commutes with `elim`: folding a transported tree equals
+transporting the fold. -/
+theorem elim_transport (C : I → Type uC) (leaf : ∀ i, { y : Y // v y = i } → C i)
+    (node : ∀ a : F.A, (∀ b : F.B a, C (F.rCurried a b)) → C (F.q a))
+    {i i' : I} (h : i = i') (t : FreeM v F i) :
+    elim C leaf node (h ▸ t) = h ▸ (elim C leaf node t) := by
   subst h
   rfl
 
