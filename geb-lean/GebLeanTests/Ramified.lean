@@ -12,6 +12,7 @@ import GebLeanTests.Ramified.FirstOrder
 import GebLeanTests.Ramified.Definability
 import GebLeanTests.Ramified.Soundness
 import GebLeanTests.Ramified.Characterization
+import GebLeanTests.Ramified.Polynomial
 
 /-!
 # Ramified-recurrence test index

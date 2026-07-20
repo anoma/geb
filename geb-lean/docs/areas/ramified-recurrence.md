@@ -12,6 +12,7 @@
   - [Definability (`GebLean/Ramified/Definability/`)](#definability-gebleanramifieddefinability)
   - [Soundness (`GebLean/Ramified/Soundness/`)](#soundness-gebleanramifiedsoundness)
   - [Characterization](#characterization)
+  - [Ramified recurrence on the polynomial-functor stack (`GebLean/Ramified/Polynomial/`)](#ramified-recurrence-on-the-polynomial-functor-stack-gebleanramifiedpolynomial)
 - [Statement inventory](#statement-inventory)
 - [Deferred and future work](#deferred-and-future-work)
 - [Dependencies](#dependencies)
@@ -201,6 +202,26 @@ The directory index is
   the K-valued soundness functor `collapseKFunctor` with its
   faithfulness, and the transferred `ramified_definability_kSim`.
 
+### Ramified recurrence on the polynomial-functor stack (`GebLean/Ramified/Polynomial/`)
+
+A reimplementation of the generic-core carrier and the ramified
+types on the vendored `geb-mathlib` `SlicePFunctor` stack, connected
+to the modules above by the generic bridge
+`GebLean/PolyBridge/` (see
+[polynomial / W- / M-types and PFunctors](polynomial-functors.md)).
+The directory index is
+[`GebLean/Ramified/Polynomial.lean`](../../GebLean/Ramified/Polynomial.lean).
+
+- [`GebLean/Ramified/Polynomial/FreeAlg.lean`](../../GebLean/Ramified/Polynomial/FreeAlg.lean)
+  — the free algebra `FreeAlg'` on the slice `W`-type and its native
+  recurrence `FreeAlg'.recurse`, the bridge equivalence
+  `freeAlgSliceEquiv : FreeAlg' A ≃ FreeAlg A`, and the numeric
+  carrier equivalence `natFreeAlgEquiv' : FreeAlg' natAlgSig ≃ ℕ`.
+- [`GebLean/Ramified/Polynomial/RType.lean`](../../GebLean/Ramified/Polynomial/RType.lean)
+  — the ramified types `RType'` and their operations reimplemented
+  on `FreeAlg'`, and the bridge equivalence `rTypeSliceEquiv : RType'
+  ≃ RType`, with a compatibility lemma per operation across it.
+
 ## Statement inventory
 
 The characterization is delivered as the pair of statements
@@ -303,6 +324,11 @@ Specification and plan (co-evolved on-branch with the code):
   sections 9-10 the deferred items and open questions).
 - [`docs/superpowers/plans/2026-07-02-ramified-recurrence-plan.md`](../superpowers/plans/2026-07-02-ramified-recurrence-plan.md)
   — the master plan (Phases 1-7).
+- [`docs/superpowers/specs/2026-07-19-ramified-polynomial-design.md`](../superpowers/specs/2026-07-19-ramified-polynomial-design.md)
+  and
+  [`docs/superpowers/plans/2026-07-19-ramified-polynomial-plan.md`](../superpowers/plans/2026-07-19-ramified-polynomial-plan.md)
+  — the design spec and plan for the polynomial-functor-stack
+  reimplementation (`GebLean/Ramified/Polynomial/`).
 
 ## References
 

@@ -105,6 +105,7 @@ import GebLean.PolyAlgColimits
 import GebLean.PolyDistributiveLaw
 import GebLean.PolyGSOS
 import GebLean.PolyAlgUMorph
+import GebLean.PolyBridge
 import GebLean.PolyFilteredColimits
 import GebLean.PolyLimits
 import GebLean.PolyPresentation
