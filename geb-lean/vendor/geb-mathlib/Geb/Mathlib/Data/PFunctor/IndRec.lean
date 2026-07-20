@@ -7,6 +7,9 @@ module
 
 public import Geb.Mathlib.Data.PFunctor.IndRec.Basic
 public import Geb.Mathlib.Data.PFunctor.IndRec.Hom
+public import Geb.Mathlib.Data.PFunctor.IndRec.Functor
+public import Geb.Mathlib.Data.PFunctor.IndRec.Universes
+public import Geb.Mathlib.Data.PFunctor.IndRec.Container
 
 /-!
 # IndRec — index
