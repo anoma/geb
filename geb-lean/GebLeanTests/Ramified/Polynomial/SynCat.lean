@@ -92,4 +92,18 @@ example :
       = Hom'.eval sumMor (Hom'.eval (𝟙 twoCtx) twoEnv) :=
   Hom'.eval_comp (𝟙 twoCtx) sumMor twoEnv
 
+-- Pairing followed by the first projection recovers the first component.
+example :
+    SynProd'.lift sumMor projMor ≫ SynProd'.fst natPres r oneCtx oneCtx = sumMor :=
+  SynProd'.lift_fst sumMor projMor
+
+-- Pairing followed by the second projection recovers the second component.
+example :
+    SynProd'.lift sumMor projMor ≫ SynProd'.snd natPres r oneCtx oneCtx = projMor :=
+  SynProd'.lift_snd sumMor projMor
+
+-- Every morphism to the empty context is the terminal morphism.
+example (f : twoCtx ⟶ ([] : SynCat' natPres r)) : f = Hom'.terminal natPres r twoCtx :=
+  Hom'.terminal_uniq f
+
 end GebLeanTests.Ramified.Polynomial.SynCat
