@@ -31,6 +31,12 @@ fiber. `FreeM v F i` is that fiber; `pure` and `node` are the two shapes of
 * `SlicePFunctor.FreeM.pure_bind` / `SlicePFunctor.FreeM.bind_node` — the
   computation rules for `bind`: the left-unit law on `pure`, and recursion into
   children on `node`.
+* `SlicePFunctor.FreeM.bindW_pure` / `SlicePFunctor.FreeM.bind_pure` — the
+  right-unit law, at the underlying-tree level and wrapped for `bind`.
+* `SlicePFunctor.FreeM.bindW_bindW` / `SlicePFunctor.FreeM.bind_assoc` — the
+  associativity law, at the underlying-tree level and wrapped for `bind`.
+* `SlicePFunctor.FreeM.pure_transport` / `SlicePFunctor.FreeM.bind_transport` —
+  compatibility of index transport with `pure` and `bind`.
 
 ## References
 
@@ -46,9 +52,10 @@ container, PFunctor
 
 namespace SlicePFunctor
 
-universe uY uY' uA uB uI
+universe uY uY' uY'' uA uB uI
 
-variable {I : Type uI} {Y : Type uY} {Y' : Type uY'} {v : Y → I} {v' : Y' → I}
+variable {I : Type uI} {Y : Type uY} {Y' : Type uY'} {Y'' : Type uY''}
+variable {v : Y → I} {v' : Y' → I} {v'' : Y'' → I}
 variable {F : SlicePFunctor.{uA, uB, uI, uI} I I}
 
 /-- The free-monad carrier at `i`: the fiber of `(translate v F).wIndex` over
@@ -131,6 +138,72 @@ theorem bind_node (a : F.A) (c : (b : F.B a) → FreeM v F (F.rCurried a b))
     (f : ∀ j, { a : Y // v a = j } → FreeM v' F j) :
     (FreeM.node a c).bind f = FreeM.node a (fun b => (c b).bind f) :=
   Subtype.ext rfl
+
+/-- Right unit at the tree level: grafting each leaf to its own `pure` is the
+identity on `translate v F`-trees. Structural induction with a `Sum` shape
+split; the leaf branch collapses to the `pure` tree (children into `PEmpty`
+agree by elimination) and the node branch recurses through the hypotheses. -/
+theorem bindW_pure (z : (translate v F).W) :
+    bindW (fun _ a => FreeM.pure a) z = z :=
+  W.induction (F := translate v F)
+    (motive := fun z => bindW (fun _ a => FreeM.pure a) z = z)
+    (fun x ih => by
+      obtain ⟨⟨a, c⟩, hc⟩ := x
+      cases a with
+      | inl y =>
+          exact congrArg W.mk
+            (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun e => e.elim))))
+      | inr a' =>
+          exact congrArg W.mk
+            (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b => ih b)))))
+    z
+
+/-- Right unit: binding a tree with the identity substitution returns it. -/
+theorem bind_pure {i : I} (t : FreeM v F i) :
+    t.bind (fun _ a => FreeM.pure a) = t :=
+  Subtype.ext (bindW_pure t.1)
+
+/-- Associativity at the tree level: grafting along `f` then `g` equals grafting
+along the pointwise composite `fun j a => (f j a).bind g`. Structural induction
+with a `Sum` shape split; the leaf branch reduces both sides to
+`((f (v y) ⟨y, rfl⟩).bind g).1` and the node branch recurses through the
+hypotheses. -/
+theorem bindW_bindW (f : ∀ j, { a : Y // v a = j } → FreeM v' F j)
+    (g : ∀ j, { b : Y' // v' b = j } → FreeM v'' F j) (z : (translate v F).W) :
+    bindW g (bindW f z) = bindW (fun j a => (f j a).bind g) z :=
+  W.induction (F := translate v F)
+    (motive := fun z => bindW g (bindW f z) = bindW (fun j a => (f j a).bind g) z)
+    (fun x ih => by
+      obtain ⟨⟨a, c⟩, hc⟩ := x
+      cases a with
+      | inl y => rfl
+      | inr a' =>
+          exact congrArg W.mk
+            (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b => ih b)))))
+    z
+
+/-- Associativity: rebinding `t` along `f` then `g` factors through the
+pointwise composite. -/
+theorem bind_assoc {i : I} (t : FreeM v F i)
+    (f : ∀ j, { a : Y // v a = j } → FreeM v' F j)
+    (g : ∀ j, { b : Y' // v' b = j } → FreeM v'' F j) :
+    (t.bind f).bind g = t.bind (fun j a => (f j a).bind g) :=
+  Subtype.ext (bindW_bindW f g t.1)
+
+/-- Transporting a `pure` leaf along an index equality re-reads its fiber
+witness: it is the `pure` of the same datum lying over the target index. -/
+theorem pure_transport {i i' : I} (h : i = i') (y : Y) (hy : v y = i) :
+    h ▸ (FreeM.pure ⟨y, hy⟩ : FreeM v F i) = FreeM.pure ⟨y, hy.trans h⟩ := by
+  subst h
+  rfl
+
+/-- Transport commutes with `bind`: binding a transported tree equals
+transporting the bind. -/
+theorem bind_transport {i i' : I} (h : i = i') (t : FreeM v F i)
+    (f : ∀ j, { a : Y // v a = j } → FreeM v' F j) :
+    (h ▸ t).bind f = h ▸ (t.bind f) := by
+  subst h
+  rfl
 
 end FreeM
 

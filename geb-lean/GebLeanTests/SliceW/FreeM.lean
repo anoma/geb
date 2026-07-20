@@ -64,4 +64,15 @@ example : nodeWithLeaves.bind pureSubst = nodeWithLeaves := by
   rw [nodeWithLeaves, FreeM.bind_node]
   simp only [hleaf]
 
+/-- Right unit: binding a one-node tree with the identity substitution
+`pureSubst` returns the tree, by `bind_pure`. -/
+example : nodeWithLeaves.bind pureSubst = nodeWithLeaves :=
+  FreeM.bind_pure nodeWithLeaves
+
+/-- Associativity: rebinding a one-node tree factors through the pointwise
+composite, by `bind_assoc`. -/
+example : (nodeWithLeaves.bind pureSubst).bind pureSubst =
+    nodeWithLeaves.bind (fun j a => (pureSubst j a).bind pureSubst) :=
+  FreeM.bind_assoc nodeWithLeaves pureSubst pureSubst
+
 end SliceWFreeMTest
