@@ -130,7 +130,7 @@ tasks depend on them.
   `SlicePFunctor.reindex` for a toy index equivalence
   `e : Bool ≃ Bool` (e.g. `Equiv.boolNot`) over a toy
   `SlicePFunctor Bool Bool`, and build the `W`-equivalence
-  `(reindex e F).W ≃ F.W` — confirming, sorry-free, that the
+  `F.W ≃ (reindex e F).W` — confirming, sorry-free, that the
   underlying `PFunctor.W` trees coincide and that admissibility
   transfers by a `Prop`-valued induction (`W.induction` or
   `RecProp`), with `wIndex` conjugating by `e`.
@@ -763,11 +763,8 @@ jj commit -m "feat(ramified): relate syntactic categories of equivalent presenta
     `result op := op.2`).
   - `def stdConstructorInterp' (A)` and `def stdAppInterp' (A)` —
     mirrors over carriers `RType'.interp (FreeAlg' A)`, with the
-    object-sort cast through `RType'.interp_isObj` (Task C.12
-    provides it if Phase A lacks it — if so, this task declares its
-    statement locally as a `have`-free forward reference is NOT
-    possible: instead Task C.12 is ordered BEFORE this task's
-    implementation step; see the task-order note below).
+    object-sort cast through `RType'.interp_isObj`, supplied by Task
+    C.12, which runs first (see the task-order note below).
   - `def RType'.curried (Γ : List RType') (τ : RType') : RType' :=`
     `Γ.foldr RType'.arrow τ` with `@[simp] curried_nil` /
     `curried_cons`; `def curryInterp' (A)` — the `List`-recursive
@@ -1001,7 +998,7 @@ jj commit -m "feat(ramified): add bridge agreement lemmas for recurrence and int
   (`GebLean/Ramified/HigherOrder.lean`); `tmSliceEquiv` (Phase B);
   `Equiv.listEquivOfEquiv` (mathlib, forward map `List.map e`);
   `rTypeSliceEquiv_omega`, `rTypeSliceEquiv_o` (Phase A),
-  `rTypeSliceEquiv_curried` (Task C.12).
+  `rTypeSliceEquiv_curried` (Task C.10).
 - Produces:
   - `def identCtxEquiv : List RType' × RType' ≃`
     `List RType × RType` — `Equiv.prodCongr`
@@ -1364,8 +1361,8 @@ jj commit -m "refactor(ramified): move the first-order sub-theory to the primed 
 
 - Consumes: Tasks C.15, C.16; the legacy `isObjCtx`, `SynCatFO`,
   `collapseDenotation` (`GebLean/Ramified/Soundness/Collapse.lean`),
-  `ramifiedDenotation` (`Definability/Top.lean`), `objToNat` /
-  `objFromNat` (`GebLean/Ramified/Examples.lean`), `arityCongr`
+  `ramifiedDenotation` and `objFromNat` (`Definability/Top.lean`),
+  `objToNat` (`GebLean/Ramified/Examples.lean`), `arityCongr`
   (`Characterization.lean`);
   `natFreeAlgEquiv'` and Task C.12's agreement;
   `RType'.interp_isObj` (Task C.12); `rTypeSliceEquiv_isObj`,
