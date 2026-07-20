@@ -221,6 +221,13 @@ The directory index is
   — the ramified types `RType'` and their operations reimplemented
   on `FreeAlg'`, and the bridge equivalence `rTypeSliceEquiv : RType'
   ≃ RType`, with a compatibility lemma per operation across it.
+- [`GebLean/Ramified/Polynomial/Term.lean`](../../GebLean/Ramified/Polynomial/Term.lean)
+  — the sorted term layer `Tm'` on the slice free monad
+  `SlicePFunctor.FreeM`, with `var`, `op`, and `subst` (the free
+  monad's `pure`, `node`, and `bind`) and the clone laws as instances
+  of the monad laws, and the bridge equivalence `tmSliceEquiv : Tm' sig
+  Γ s ≃ Tm sig Γ s`, with a compatibility lemma for `var`, `op`, and
+  `subst` across it.
 
 ## Statement inventory
 

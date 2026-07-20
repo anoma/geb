@@ -218,6 +218,28 @@ existence and combinators:
   initial-algebra carrier `PolyFix P` (`PolyAlg.lean`) and the
   W-type of the translated slice functor
   (`Geb.Mathlib.Data.PFunctor.Slice.W`).
+- [`GebLean/SliceW/`](../../GebLean/SliceW.lean) — the native free-monad
+  layer on the vendored slice W-type
+  (`Geb.Mathlib.Data.PFunctor.Slice.W`), independent of the
+  polynomial-algebra and ramified layers.
+  [`Translate.lean`](../../GebLean/SliceW/Translate.lean) builds the
+  free-monad augmentation `translate v F = Y + F(-)` of a slice
+  endofunctor (Gambino–Kock 2013).
+  [`FreeM.lean`](../../GebLean/SliceW/FreeM.lean) supplies the free
+  monad's carrier `SlicePFunctor.FreeM v F i` (the fiber of `translate v
+  F`'s W-type over `i`), its `pure`/`node`/`bind` constructors, and the
+  monad laws with their transport compatibility.
+  [`Iso.lean`](../../GebLean/SliceW/Iso.lean) supplies container
+  isomorphisms `SlicePFunctor.Iso F G` of slice endofunctors and the
+  W-type equivalence `wEquivFiber` they induce fiberwise.
+- [`GebLean/PolyBridge/FreeMEquiv.lean`](../../GebLean/PolyBridge/FreeMEquiv.lean)
+  — the container isomorphism `translateSliceIso` identifying `toSlice
+  (polyTranslate V P)` with `SlicePFunctor.translate V.hom (toSlice P)`,
+  and the fiberwise free-monad equivalence `polyFreeMSliceEquiv :
+  PolyFreeM V P x ≃ SlicePFunctor.FreeM V.hom (toSlice P) x` composing
+  `polyFixSliceEquiv` with `Iso.wEquivFiber`; its transport, `pure`,
+  `node`, and `bind` naturality lemmas relate the legacy free monad's
+  operations to the slice free monad's.
 
 ### Polynomial presentations and copresheaf cover
 

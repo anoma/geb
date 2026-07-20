@@ -31,7 +31,11 @@ import GebLeanTests.TestTreeCalcReduction
 import GebLeanTests.PLang.BTPair
 import GebLeanTests.PolyBridge.Slice
 import GebLeanTests.PolyBridge.WEquiv
+import GebLeanTests.PolyBridge.FreeMEquiv
 import GebLeanTests.Ramified
+import GebLeanTests.SliceW.FreeM
+import GebLeanTests.SliceW.Iso
+import GebLeanTests.SliceW.Translate
 import GebLeanTests.Utilities.ERAMajorants
 import GebLeanTests.Utilities.ERArith
 import GebLeanTests.Utilities.ERCourseOfValues
