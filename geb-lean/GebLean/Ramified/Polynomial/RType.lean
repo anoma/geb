@@ -152,7 +152,7 @@ def RType'.shape (t : RType') : RTypeShape := (SlicePFunctor.W.dest t.1).1.1.2
 
 /-- The top constructor shape agrees with the legacy shape across the bridge
 (Leivant III section 2.3). -/
-@[simp] theorem rTypeSliceEquiv_shape (t : RType') :
+theorem rTypeSliceEquiv_shape (t : RType') :
     RType'.shape t = RType.shape (rTypeSliceEquiv t) := by
   refine FreeAlg'.induction
     (motive := fun t => RType'.shape t = RType.shape (rTypeSliceEquiv t))
