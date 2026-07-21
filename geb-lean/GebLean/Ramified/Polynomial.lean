@@ -1,5 +1,6 @@
 import GebLean.Ramified.Polynomial.FreeAlg
 import GebLean.Ramified.Polynomial.HigherOrder
+import GebLean.Ramified.Polynomial.HigherOrderEquiv
 import GebLean.Ramified.Polynomial.Ident
 import GebLean.Ramified.Polynomial.IdentEquiv
 import GebLean.Ramified.Polynomial.Interp
