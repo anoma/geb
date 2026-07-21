@@ -121,10 +121,12 @@ name under `GebLeanTests/Ramified/`. The directory index is
   FreeAlg natAlgSig ≃ ℕ`, and the signature morphisms `AlgSigHom`
   with their carrier transport `freeAlgMap` and image-point
   naturality.
-- [`GebLean/Ramified/FirstOrder.lean`](../../GebLean/Ramified/FirstOrder.lean)
-  — the first-order identifier predicate `RIdent.FirstOrder`, the
-  sub-theory presentation `firstOrderPresentation`, and the
-  inclusion functor `foInclusion` into the host `RMRecCat`.
+- The first-order sub-theory — the identifier predicate
+  `RIdent'.FirstOrder`, the sub-theory presentation
+  `firstOrderPresentation`, and the inclusion functor `foInclusion`
+  into the host `RMRecCat'` — lives on the polynomial-functor stack,
+  in
+  [`GebLean/Ramified/Polynomial/FirstOrder.lean`](../../GebLean/Ramified/Polynomial/FirstOrder.lean).
 
 ### Definability (`GebLean/Ramified/Definability/`)
 
@@ -228,6 +230,47 @@ The directory index is
   of the monad laws, and the bridge equivalence `tmSliceEquiv : Tm' sig
   Γ s ≃ Tm sig Γ s`, with a compatibility lemma for `var`, `op`, and
   `subst` across it.
+- [`GebLean/Ramified/Polynomial/Interp.lean`](../../GebLean/Ramified/Polynomial/Interp.lean)
+  — primed evaluation `Tm'.eval` by the slice free monad's fold, the
+  interpretative setoid `interpQuotRel'`, and the evaluation
+  agreement `tmSliceEquiv_eval` across the term bridge.
+- [`GebLean/Ramified/Polynomial/SynCat.lean`](../../GebLean/Ramified/Polynomial/SynCat.lean)
+  — the primed syntactic category `SynCat'` over the primed term
+  layer, with context concatenation as chosen finite products.
+- [`GebLean/Ramified/Polynomial/SynCatEquiv.lean`](../../GebLean/Ramified/Polynomial/SynCatEquiv.lean)
+  — the term-layer equivalence `synCatSliceEquiv : SynCat' P
+  (interpQuotRel' P) ≌ SynCat P (interpQuotRel P)`, the identity on
+  objects and `tmSliceEquiv` componentwise on morphisms.
+- [`GebLean/Ramified/Polynomial/Ident.lean`](../../GebLean/Ramified/Polynomial/Ident.lean)
+  — the primed schema identifiers `RIdent'` as a fiber of the slice
+  `W`-type, with the application signature, the curried arrow sort,
+  and the denotation `RIdent'.interp` by `SlicePFunctor.W.elim`.
+- [`GebLean/Ramified/Polynomial/HigherOrder.lean`](../../GebLean/Ramified/Polynomial/HigherOrder.lean)
+  — the primed higher-order presentation `higherOrder'`, its
+  syntactic category `RMRecCat'`, and the identifier morphism
+  `identHom'`.
+- [`GebLean/Ramified/Polynomial/IdentEquiv.lean`](../../GebLean/Ramified/Polynomial/IdentEquiv.lean)
+  — the identifier bridge `identSliceEquiv`, assembled from a
+  container isomorphism of the two identifier signature
+  endofunctors, base change, and the initial-algebra comparison.
+- [`GebLean/Ramified/Polynomial/HigherOrderEquiv.lean`](../../GebLean/Ramified/Polynomial/HigherOrderEquiv.lean)
+  — the presentation equivalence `higherOrderPresEquiv` and the
+  category equivalence `rmRecCatSliceEquiv : RMRecCat' A ≌ RMRecCat
+  A`.
+- [`GebLean/Ramified/Polynomial/FirstOrder.lean`](../../GebLean/Ramified/Polynomial/FirstOrder.lean)
+  — the first-order identifier predicate `RIdent'.FirstOrder`, the
+  sub-theory presentation `firstOrderPresentation`, and the
+  inclusion functor `foInclusion` into the host `RMRecCat'`.
+- [`GebLean/Ramified/Polynomial/Collapse.lean`](../../GebLean/Ramified/Polynomial/Collapse.lean)
+  — the primed first-order syntactic category `SynCatFO'`, its
+  numeric denotation `collapseDenotation'`, the restriction
+  equivalence `synCatFOSliceEquiv : SynCatFO' ≌ SynCatFO`, and the
+  denotation agreement `collapseDenotation_sliceEquiv` across it.
+- [`GebLean/Ramified/Polynomial/Characterization.lean`](../../GebLean/Ramified/Polynomial/Characterization.lean)
+  — the primed soundness functors `collapseFunctor'` and
+  `collapseKFunctor'` with their faithfulness, and the transferred
+  endpoints `ramified_definability'` and
+  `ramified_definability_kSim'`.
 
 ## Statement inventory
 
@@ -258,6 +301,18 @@ elementary.
   — the same existential for every `f` in `LawvereKSimDCat 2`, with
   the `K^sim` interpretation `f.hom.interp` in place of `f.interp`,
   transferred across `erKSimEquiv` through `kToERFunctor_map_interp`.
+
+The same pair is stated over the polynomial-functor stack, in
+[`Polynomial/Characterization.lean`](../../GebLean/Ramified/Polynomial/Characterization.lean),
+with no part of the elementary-definability or soundness argument
+redone: `collapseFunctor' : SynCatFO' ⥤ LawvereERCat` and
+`collapseKFunctor' : SynCatFO' ⥤ LawvereKSimDCat 2` are the
+composites of the restriction equivalence `synCatFOSliceEquiv` with
+`collapseFunctor` and `collapseKFunctor`, faithful as composites,
+and `ramified_definability'` / `ramified_definability_kSim'` read
+the legacy witnesses back through that equivalence's fully faithful
+preimage, with `collapseDenotation'` and the primed object-sort
+contexts `ObjCtx'` in place of their legacy counterparts.
 
 Both directions are existential and denotational. The
 quantification in `ramified_definability` ranges over all
