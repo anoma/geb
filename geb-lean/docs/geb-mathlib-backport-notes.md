@@ -54,12 +54,9 @@ genuinely new (decide the adaptation, add a category here).
   in `Presheaf/Basic.lean`. The affected definitions in
   `IndRec/Basic.lean` are `IR.Shape`, `IR.pFunctor`, `IR.Obj`,
   `IR.ObjFst`, `IR.Dest`, `IR.Alg`, the top-level `IR`, and
-  `IR.interpObjIota`. The affected theorems in `IndRec/Category.lean`
-  are `IR.comp_isoOfEq_hom` and `IR.isoOfEq_symm_hom_comp`; there the
-  attribute goes between the docstring and the `theorem` keyword.
-- Prose adaptation: the module docstrings of `Presheaf/Basic.lean`,
-  `IndRec/Basic.lean`, and `IndRec/Category.lean` describe the
-  suppression as
+  `IR.interpObjIota`.
+- Prose adaptation: the module docstrings of `Presheaf/Basic.lean` and
+  `IndRec/Basic.lean` describe the suppression as
   "The `linter.checkUnivs false` option suppresses the ...". Because
   the option line is deleted and the attribute inserted, reword to
   "The `@[nolint checkUnivs]` attribute suppresses the ..." so the

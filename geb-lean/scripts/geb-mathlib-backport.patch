@@ -99,50 +99,6 @@ index 44ebba7..b6df37e 100644
  def interpObjIota (o : O) : FreeCoprodCompDisc.Map.{max uA uB, uI, uO} I O :=
    fun _ ↦ ⟨ULift Unit, fun _ ↦ o⟩
  
-diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Category.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Category.lean
-index a162a0c..92535e6 100644
---- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Category.lean
-+++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Category.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
- Released under Apache 2.0 license as described in the file LICENSE.
- Authors: Terence Rokop
- -/
-+-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
- module
- 
- public import Geb.Mathlib.Data.PFunctor.IndRec.Naturality
-@@ -86,7 +87,7 @@ are carried as `FreeCoprodCompDisc.isoOfEq` transports and commuted
- across the Lemma 4 isomorphism by elimination of the generalized
- equality.
- 
--The `linter.checkUnivs false` option on `IR.comp_isoOfEq_hom` and
-+The `@[nolint checkUnivs]` attribute on `IR.comp_isoOfEq_hom` and
- `IR.isoOfEq_symm_hom_comp` suppresses the `checkUnivs` warning on
- the separated arity universes `uA`/`uB`: in those two declarations'
- types the pair appears only together under `max`, so the linter
-@@ -4125,10 +4126,10 @@ theorem interpHom_cast_cod (D : IR.{max uA uB, uB, uI, uO} I O)
-       (fun f ↦ (FreeCoprodCompDisc.Hom.comp_id O
-         ((interpHom I O D γ₀ f).1 X)).symm)
-       h
--set_option linter.checkUnivs false in
- /-- Postcomposition with an object-equality transport is the transport
- of the morphism's codomain, by elimination of the generalized
- equality. -/
-+@[nolint checkUnivs]
- theorem comp_isoOfEq_hom (Z W : FreeCoprodCompDisc.{max uA uB, uI} I) :
-     ∀ (V : FreeCoprodCompDisc.{max uA uB, uI} I) (q : W = V)
-       (f : FreeCoprodCompDisc.Hom I Z W),
-@@ -4143,9 +4144,9 @@ theorem comp_isoOfEq_hom (Z W : FreeCoprodCompDisc.{max uA uB, uI} I) :
-                 (FreeCoprodCompDisc.isoOfEq I q')) =
-             cast (congrArg (FreeCoprodCompDisc.Hom I Z) q') f)
-       (fun f ↦ FreeCoprodCompDisc.Hom.comp_id I f) q
--set_option linter.checkUnivs false in
- /-- An object-equality transport followed by its inverse is the
- identity, by elimination of the generalized equality. -/
-+@[nolint checkUnivs]
- theorem isoOfEq_symm_hom_comp (Z : FreeCoprodCompDisc.{max uA uB, uO} O) :
-     ∀ (W : FreeCoprodCompDisc.{max uA uB, uO} O) (q : Z = W),
-       FreeCoprodCompDisc.Hom.comp O
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 index 004265e..fc173cb 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean

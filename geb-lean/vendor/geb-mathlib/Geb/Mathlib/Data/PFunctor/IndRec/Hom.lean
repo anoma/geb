@@ -113,8 +113,8 @@ codomain: propositional equality of indices, a dependent sum over the
 `σ`-arity, and an empty-witness sum over the `δ`-arity. -/
 def InnerHom (o : O) : IR.{max uA uB, uB, uI, uO} I O → Type (max uA uB uI) :=
   elimAlg I O (Type (max uA uB uI))
-    ⟨fun o' => ULift.{max uA uB uI} (PLift (o = o')), fun _ dir => Σ a, dir a,
-     fun B dir => Σ e : B → PEmpty.{1}, dir (fun b => (e b).elim)⟩
+    ⟨fun o' ↦ ULift.{max uA uB uI} (PLift (o = o')), fun _ dir ↦ Σ a, dir a,
+     fun B dir ↦ Σ e : B → PEmpty.{1}, dir (fun b ↦ (e b).elim)⟩
 
 /-- The homset of IR codes (Definition 8 of
 [HancockMcBrideGhaniMalatestaAltenkirch2013]), by `IR.elimAlg` on the
@@ -124,8 +124,8 @@ codomain (clause 3's `γ'^i`). -/
 def Hom : IR.{max uA uB, uB, uI, uO} I O → IR.{max uA uB, uB, uI, uO} I O
     → Type (max uA uB uI) :=
   elimAlg I O (IR.{max uA uB, uB, uI, uO} I O → Type (max uA uB uI))
-    ⟨fun o => InnerHom I O o, fun _ dir => fun g' => ∀ a, dir a g',
-     fun B dir => fun g' => ∀ i : B → I, dir i (precomp I O B i g')⟩
+    ⟨fun o ↦ InnerHom I O o, fun _ dir ↦ fun g' ↦ ∀ a, dir a g',
+     fun B dir ↦ fun g' ↦ ∀ i : B → I, dir i (precomp I O B i g')⟩
 
 /-- The motive of `IR.sigmaPush` (named so `IR.rec_mk` applies). -/
 def SigmaPushMotive (γ : IR.{max uA uB, uB, uI, uO} I O) :
@@ -137,12 +137,12 @@ def SigmaPushMotive (γ : IR.{max uA uB, uB, uI, uO} I O) :
 def sigmaPushStep :
     RecStep.{max uA uB, uB, uI, uO, max (max uA uB + 1) uI uO} I O
       (SigmaPushMotive I O) :=
-  fun s _c m => match s with
-  | Sum.inl _ => fun _ _ a' f => ⟨a', f⟩
-  | Sum.inr (Sum.inl _) => fun A' K' a' f b => m (ULift.up b) A' K' a' (f b)
-  | Sum.inr (Sum.inr B) => fun A' K' a' f i =>
+  fun s _c m ↦ match s with
+  | Sum.inl _ => fun _ _ a' f ↦ ⟨a', f⟩
+  | Sum.inr (Sum.inl _) => fun A' K' a' f b ↦ m (ULift.up b) A' K' a' (f b)
+  | Sum.inr (Sum.inr B) => fun A' K' a' f i ↦
       m (ULift.up i) (ULift.{uB} A')
-        (fun x => precomp I O B i (K' x.down)) (ULift.up a') (f i)
+        (fun x ↦ precomp I O B i (K' x.down)) (ULift.up a') (f i)
 
 /-- Postcomposition with the `σ`-injection into the `a'`-th summand:
 identity at a `σ`-code is a product of these injections. By `IR.rec` on
@@ -174,7 +174,7 @@ theorem sigmaPush_mk_sigma (A : Type (max uA uB))
     (a' : A')
     (f : Hom.{uA, uB, uI, uO} I O (mk I O (Sum.inr (Sum.inl A)) d) (K' a')) :
     sigmaPush I O (mk I O (Sum.inr (Sum.inl A)) d) A' K' a' f =
-      fun b => sigmaPush I O (d (ULift.up b)) A' K' a' (f b) :=
+      fun b ↦ sigmaPush I O (d (ULift.up b)) A' K' a' (f b) :=
   congrFun (congrFun (congrFun (congrFun
     (rec_mk I O (sigmaPushStep I O) (Sum.inr (Sum.inl A)) d) A') K') a') f
 
@@ -187,8 +187,8 @@ theorem sigmaPush_mk_delta (B : Type uB)
     (a' : A')
     (f : Hom.{uA, uB, uI, uO} I O (mk I O (Sum.inr (Sum.inr B)) d) (K' a')) :
     sigmaPush I O (mk I O (Sum.inr (Sum.inr B)) d) A' K' a' f =
-      fun i => sigmaPush I O (d (ULift.up i)) (ULift.{uB} A')
-        (fun x => precomp I O B i (K' x.down)) (ULift.up a') (f i) :=
+      fun i ↦ sigmaPush I O (d (ULift.up i)) (ULift.{uB} A')
+        (fun x ↦ precomp I O B i (K' x.down)) (ULift.up a') (f i) :=
   congrFun (congrFun (congrFun (congrFun
     (rec_mk I O (sigmaPushStep I O) (Sum.inr (Sum.inr B)) d) A') K') a') f
 
@@ -197,29 +197,29 @@ def DeltaEmptyPushMotive (γ : IR.{max uA uB, uB, uI, uO} I O) :
     Type (max (max uA uB + 1) uI uO) :=
   ∀ (E : Type uB) (e : E → PEmpty.{1})
     (M : (E → I) → IR.{max uA uB, uB, uI, uO} I O),
-    Hom I O γ (M (fun x => (e x).elim)) → Hom I O γ (delta I O E M)
+    Hom I O γ (M (fun x ↦ (e x).elim)) → Hom I O γ (delta I O E M)
 
 /-- The step of `IR.deltaEmptyPush` (named so `IR.rec_mk` applies). -/
 def deltaEmptyPushStep :
     RecStep.{max uA uB, uB, uI, uO, max (max uA uB + 1) uI uO} I O
       (DeltaEmptyPushMotive I O) :=
-  fun s c m => match s with
-  | Sum.inl _ => fun _ e _ f => ⟨e, f⟩
-  | Sum.inr (Sum.inl _) => fun E e M f b => m (ULift.up b) E e M (f b)
-  | Sum.inr (Sum.inr B) => fun E e M f i =>
+  fun s c m ↦ match s with
+  | Sum.inl _ => fun _ e _ f ↦ ⟨e, f⟩
+  | Sum.inr (Sum.inl _) => fun E e M f b ↦ m (ULift.up b) E e M (f b)
+  | Sum.inr (Sum.inr B) => fun E e M f i ↦
       sigmaPush I O (c (ULift.up i)) (ULift.{max uA uB} (E → B ⊕ PUnit.{uB + 1}))
-        (fun cl => delta I O {z : E // cl.down z = Sum.inr PUnit.unit}
-          (fun j => precomp I O B i (M (precompMerge I B i cl.down j))))
-        (ULift.up (fun x => (e x).elim))
-        (m (ULift.up i) {z : E // (fun x => (e x).elim) z = Sum.inr PUnit.unit}
-          (fun z => (e z.1).elim)
-          (fun j => precomp I O B i (M (precompMerge I B i (fun x => (e x).elim) j)))
+        (fun cl ↦ delta I O {z : E // cl.down z = Sum.inr PUnit.unit}
+          (fun j ↦ precomp I O B i (M (precompMerge I B i cl.down j))))
+        (ULift.up (fun x ↦ (e x).elim))
+        (m (ULift.up i) {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
+          (fun z ↦ (e z.1).elim)
+          (fun j ↦ precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
           (cast (congrArg
-            (fun a => Hom I O (c (ULift.up i)) (precomp I O B i (M a)))
-            (funext (fun x => (e x).elim) :
-              (fun x => (e x).elim) = precompMerge I B i (fun x => (e x).elim)
-                    (fun z : {z : E // (fun x => (e x).elim) z = Sum.inr PUnit.unit}
-                      => ((e z.1).elim : PEmpty.{1}).elim)))
+            (fun a ↦ Hom I O (c (ULift.up i)) (precomp I O B i (M a)))
+            (funext (fun x ↦ (e x).elim) :
+              (fun x ↦ (e x).elim) = precompMerge I B i (fun x ↦ (e x).elim)
+                    (fun z : {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
+                      ↦ ((e z.1).elim : PEmpty.{1}).elim)))
             (f i)))
 
 /-- Postcomposition with the `δ`-injection at an empty direction witness
@@ -228,7 +228,7 @@ generalized; the `δ`-domain case injects, via `sigmaPush`, into the
 all-resolved classifier summand of the precomposed `δ`-code. -/
 def deltaEmptyPush : (γ : IR.{max uA uB, uB, uI, uO} I O) →
       ∀ (E : Type uB) (e : E → PEmpty.{1}) (M : (E → I) → IR.{max uA uB, uB, uI, uO} I O),
-        Hom I O γ (M (fun x => (e x).elim)) → Hom I O γ (delta I O E M) :=
+        Hom I O γ (M (fun x ↦ (e x).elim)) → Hom I O γ (delta I O E M) :=
   rec I O (deltaEmptyPushStep I O)
 
 /-- The characterizing equation of `IR.deltaEmptyPush` at an `ι`-shaped
@@ -239,7 +239,7 @@ theorem deltaEmptyPush_mk_iota (o : O)
     (E : Type uB) (e : E → PEmpty.{1})
     (M : (E → I) → IR.{max uA uB, uB, uI, uO} I O)
     (f : Hom.{uA, uB, uI, uO} I O (mk I O (Sum.inl o) d)
-      (M (fun x => (e x).elim))) :
+      (M (fun x ↦ (e x).elim))) :
     deltaEmptyPush I O (mk I O (Sum.inl o) d) E e M f = ⟨e, f⟩ :=
   congrFun (congrFun (congrFun (congrFun
     (rec_mk I O (deltaEmptyPushStep I O) (Sum.inl o) d) E) e) M) f
@@ -252,9 +252,9 @@ theorem deltaEmptyPush_mk_sigma (A : Type (max uA uB))
     (E : Type uB) (e : E → PEmpty.{1})
     (M : (E → I) → IR.{max uA uB, uB, uI, uO} I O)
     (f : Hom.{uA, uB, uI, uO} I O (mk I O (Sum.inr (Sum.inl A)) d)
-      (M (fun x => (e x).elim))) :
+      (M (fun x ↦ (e x).elim))) :
     deltaEmptyPush I O (mk I O (Sum.inr (Sum.inl A)) d) E e M f =
-      fun b => deltaEmptyPush I O (d (ULift.up b)) E e M (f b) :=
+      fun b ↦ deltaEmptyPush I O (d (ULift.up b)) E e M (f b) :=
   congrFun (congrFun (congrFun (congrFun
     (rec_mk I O (deltaEmptyPushStep I O) (Sum.inr (Sum.inl A)) d) E) e) M) f
 
@@ -267,23 +267,23 @@ theorem deltaEmptyPush_mk_delta (B : Type uB)
     (E : Type uB) (e : E → PEmpty.{1})
     (M : (E → I) → IR.{max uA uB, uB, uI, uO} I O)
     (f : Hom.{uA, uB, uI, uO} I O (mk I O (Sum.inr (Sum.inr B)) d)
-      (M (fun x => (e x).elim))) :
+      (M (fun x ↦ (e x).elim))) :
     deltaEmptyPush I O (mk I O (Sum.inr (Sum.inr B)) d) E e M f =
-      fun i => sigmaPush I O (d (ULift.up i))
+      fun i ↦ sigmaPush I O (d (ULift.up i))
         (ULift.{max uA uB} (E → B ⊕ PUnit.{uB + 1}))
-        (fun cl => delta I O {z : E // cl.down z = Sum.inr PUnit.unit}
-          (fun j => precomp I O B i (M (precompMerge I B i cl.down j))))
-        (ULift.up (fun x => (e x).elim))
+        (fun cl ↦ delta I O {z : E // cl.down z = Sum.inr PUnit.unit}
+          (fun j ↦ precomp I O B i (M (precompMerge I B i cl.down j))))
+        (ULift.up (fun x ↦ (e x).elim))
         (deltaEmptyPush I O (d (ULift.up i))
-          {z : E // (fun x => (e x).elim) z = Sum.inr PUnit.unit}
-          (fun z => (e z.1).elim)
-          (fun j => precomp I O B i (M (precompMerge I B i (fun x => (e x).elim) j)))
+          {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
+          (fun z ↦ (e z.1).elim)
+          (fun j ↦ precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
           (cast (congrArg
-            (fun a => Hom I O (d (ULift.up i)) (precomp I O B i (M a)))
-            (funext (fun x => (e x).elim) :
-              (fun x => (e x).elim) = precompMerge I B i (fun x => (e x).elim)
-                    (fun z : {z : E // (fun x => (e x).elim) z = Sum.inr PUnit.unit}
-                      => ((e z.1).elim : PEmpty.{1}).elim)))
+            (fun a ↦ Hom I O (d (ULift.up i)) (precomp I O B i (M a)))
+            (funext (fun x ↦ (e x).elim) :
+              (fun x ↦ (e x).elim) = precompMerge I B i (fun x ↦ (e x).elim)
+                    (fun z : {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
+                      ↦ ((e z.1).elim : PEmpty.{1}).elim)))
             (f i))) :=
   congrFun (congrFun (congrFun (congrFun
     (rec_mk I O (deltaEmptyPushStep I O) (Sum.inr (Sum.inr B)) d) E) e) M) f
@@ -299,25 +299,25 @@ abbrev SupObj (I : Type uI) := Σ Q : Type uB, Q → I
 objects (`γ ^^ L`). -/
 def mprecomp (L : List (SupObj.{uB, uI} I)) (γ : IR.{max uA uB, uB, uI, uO} I O) :
     IR.{max uA uB, uB, uI, uO} I O :=
-  L.foldl (fun g a => precomp I O a.1 a.2 g) γ
+  L.foldl (fun g a ↦ precomp I O a.1 a.2 g) γ
 
 /-- `mprecomp` at a right-appended superscript is one outer `precomp`. -/
 theorem mprecomp_snoc (L : List (SupObj.{uB, uI} I)) (b : SupObj.{uB, uI} I)
     (γ : IR.{max uA uB, uB, uI, uO} I O) :
     mprecomp I O (L ++ [b]) γ = precomp I O b.1 b.2 (mprecomp I O L γ) :=
-  (List.foldl_concat (fun g a => precomp I O a.1 a.2 g) γ b L) ▸ rfl
+  (List.foldl_concat (fun g a ↦ precomp I O a.1 a.2 g) γ b L) ▸ rfl
 
 /-- `mprecomp` fixes the constant (`iota`) code. -/
 theorem mprecomp_iota (L : List (SupObj.{uB, uI} I)) (o : O) :
     mprecomp I O L (iota I O o) = iota I O o :=
-  L.rec (motive := fun L => ∀ o, mprecomp I O L (iota I O o) = iota I O o)
-    (fun _ => rfl) (fun _a _L ih o => ih o) o
+  L.rec (motive := fun L ↦ ∀ o, mprecomp I O L (iota I O o) = iota I O o)
+    (fun _ ↦ rfl) (fun _a _L ih o ↦ ih o) o
 
 /-- `mprecomp` fixes any `mk`-form of an `iota` code. -/
 theorem mprecomp_iota_mk (L : List (SupObj.{uB, uI} I)) (o : O)
     (c : Direction I O (Sum.inl o) → IR.{max uA uB, uB, uI, uO} I O) :
     mprecomp I O L (mk I O (Sum.inl o) c) = iota I O o :=
-  (mk_congr I O (Sum.inl o) (funext (fun x => nomatch x)) :
+  (mk_congr I O (Sum.inl o) (funext (fun x ↦ nomatch x)) :
       mk I O (Sum.inl o) c = iota I O o) ▸ mprecomp_iota I O L o
 
 /-- Stack `σ`-push: `sigmaPush` under an iterated precomposition. By
@@ -326,12 +326,12 @@ reindexing the target family through `ULift`. -/
 def msigmaPush (D : IR.{max uA uB, uB, uI, uO} I O) (A' : Type (max uA uB))
     (K' : A' → IR.{max uA uB, uB, uI, uO} I O) (a' : A') (L : List (SupObj.{uB, uI} I))
     (f : Hom I O D (mprecomp I O L (K' a'))) : Hom I O D (mprecomp I O L (sigma I O A' K')) :=
-  L.rec (motive := fun L => ∀ (A' : Type (max uA uB))
+  L.rec (motive := fun L ↦ ∀ (A' : Type (max uA uB))
       (K' : A' → IR.{max uA uB, uB, uI, uO} I O) (a' : A'),
       Hom I O D (mprecomp I O L (K' a')) → Hom I O D (mprecomp I O L (sigma I O A' K')))
-    (fun A' K' a' f => sigmaPush I O D A' K' a' f)
-    (fun c _L ih A' K' a' f =>
-      ih (ULift.{uB} A') (fun x => precomp I O c.1 c.2 (K' x.down)) (ULift.up a') f)
+    (fun A' K' a' f ↦ sigmaPush I O D A' K' a' f)
+    (fun c _L ih A' K' a' f ↦
+      ih (ULift.{uB} A') (fun x ↦ precomp I O c.1 c.2 (K' x.down)) (ULift.up a') f)
     A' K' a' f
 
 /-- The base navigation: inject a `Hom` into `precomp Bout iout (K …)`
@@ -342,18 +342,18 @@ def deltaNavBase (D : IR.{max uA uB, uB, uI, uO} I O) (Bout : Type uB) (iout : B
     (f : Hom I O D (precomp I O Bout iout (K (iout ∘ g)))) :
     Hom I O D (precomp I O Bout iout (delta I O Bin K)) :=
   sigmaPush I O D (ULift.{max uA uB} (Bin → Bout ⊕ PUnit.{uB + 1}))
-    (fun cl => delta I O {z : Bin // cl.down z = Sum.inr PUnit.unit}
-      (fun j => precomp I O Bout iout (K (precompMerge I Bout iout cl.down j))))
-    (ULift.up (fun b => Sum.inl (g b)))
-    (deltaEmptyPush I O D {z : Bin // (fun b => Sum.inl (g b)) z = Sum.inr PUnit.unit}
-      (fun z => nomatch z.2)
-      (fun j => precomp I O Bout iout
-        (K (precompMerge I Bout iout (fun b => Sum.inl (g b)) j)))
-      (cast (congrArg (fun a => Hom I O D (precomp I O Bout iout (K a)))
-        (funext (fun _b => rfl) :
-          (iout ∘ g) = precompMerge I Bout iout (fun b => Sum.inl (g b))
-                (fun z : {z : Bin // (fun b => Sum.inl (g b)) z = Sum.inr PUnit.unit}
-                  => (nomatch z.2 : I)))) f))
+    (fun cl ↦ delta I O {z : Bin // cl.down z = Sum.inr PUnit.unit}
+      (fun j ↦ precomp I O Bout iout (K (precompMerge I Bout iout cl.down j))))
+    (ULift.up (fun b ↦ Sum.inl (g b)))
+    (deltaEmptyPush I O D {z : Bin // (fun b ↦ Sum.inl (g b)) z = Sum.inr PUnit.unit}
+      (fun z ↦ nomatch z.2)
+      (fun j ↦ precomp I O Bout iout
+        (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
+      (cast (congrArg (fun a ↦ Hom I O D (precomp I O Bout iout (K a)))
+        (funext (fun _b ↦ rfl) :
+          (iout ∘ g) = precompMerge I Bout iout (fun b ↦ Sum.inl (g b))
+                (fun z : {z : Bin // (fun b ↦ Sum.inl (g b)) z = Sum.inr PUnit.unit}
+                  ↦ (nomatch z.2 : I)))) f))
 
 /-- The navigation up an iterated-precomposition tower: at each stack
 layer, inject through the all-unresolved classifier (`msigmaPush`),
@@ -364,26 +364,26 @@ def deltaNav (D : IR.{max uA uB, uB, uI, uO} I O) (Bout : Type uB) (iout : Bout 
     (f : Hom I O D
       (mprecomp I O (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) (K (iout ∘ g)))) :
     Hom I O D (mprecomp I O (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) (delta I O Bin K)) :=
-  L.rec (motive := fun L => ∀ (Bin : Type uB)
+  L.rec (motive := fun L ↦ ∀ (Bin : Type uB)
       (K : (Bin → I) → IR.{max uA uB, uB, uI, uO} I O) (g : Bin → Bout),
       Hom I O D (mprecomp I O (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) (K (iout ∘ g))) →
       Hom I O D (mprecomp I O (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) (delta I O Bin K)))
-    (fun Bin K g f =>
+    (fun Bin K g f ↦
       (mprecomp_snoc I O [] (⟨Bout, iout⟩ : SupObj.{uB, uI} I) (delta I O Bin K)).symm ▸
         deltaNavBase I O D Bout iout Bin K g
           (mprecomp_snoc I O [] (⟨Bout, iout⟩ : SupObj.{uB, uI} I) (K (iout ∘ g)) ▸ f))
-    (fun a _L ih Bin K g f =>
+    (fun a _L ih Bin K g f ↦
       msigmaPush I O D (ULift.{max uA uB, uB} (Bin → a.1 ⊕ PUnit.{uB + 1}))
-        (fun cl => delta I O {z : Bin // cl.down z = Sum.inr PUnit.unit}
-          (fun m => precomp.{max uA uB, uB, uI, uO, uB} I O a.1 a.2
+        (fun cl ↦ delta I O {z : Bin // cl.down z = Sum.inr PUnit.unit}
+          (fun m ↦ precomp.{max uA uB, uB, uI, uO, uB} I O a.1 a.2
             (K (precompMerge I a.1 a.2 cl.down m))))
-        (ULift.up (fun _ => Sum.inr PUnit.unit))
+        (ULift.up (fun _ ↦ Sum.inr PUnit.unit))
         (_L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)])
-        (ih {z : Bin // (fun _ : Bin => (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z
+        (ih {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z
               = Sum.inr PUnit.unit}
-          (fun m => precomp.{max uA uB, uB, uI, uO, uB} I O a.1 a.2
-            (K (precompMerge I a.1 a.2 (fun _ => Sum.inr PUnit.unit) m)))
-          (fun z => g z.1) f))
+          (fun m ↦ precomp.{max uA uB, uB, uI, uO, uB} I O a.1 a.2
+            (K (precompMerge I a.1 a.2 (fun _ ↦ Sum.inr PUnit.unit) m)))
+          (fun z ↦ g z.1) f))
     Bin K g f
 
 /-- The motive of `IR.preUnitStack` (named so `IR.rec_mk` applies). -/
@@ -395,18 +395,18 @@ def PreUnitStackMotive (γ : IR.{max uA uB, uB, uI, uO} I O) :
 def preUnitStackStep :
     RecStep.{max uA uB, uB, uI, uO, max uA (uB + 1) uI} I O
       (PreUnitStackMotive I O) :=
-  fun s c m => match s with
-  | Sum.inl o => fun L =>
+  fun s c m ↦ match s with
+  | Sum.inl o => fun L ↦
       cast (congrArg (InnerHom.{uA, uB, uI, uO} I O o)
           (mprecomp_iota_mk I O L o c).symm)
         (ULift.up (PLift.up rfl) : InnerHom.{uA, uB, uI, uO} I O o (iota I O o))
-  | Sum.inr (Sum.inl A) => fun L a =>
-      msigmaPush I O (c (ULift.up a)) A (fun a' => c (ULift.up a')) a L
+  | Sum.inr (Sum.inl A) => fun L a ↦
+      msigmaPush I O (c (ULift.up a)) A (fun a' ↦ c (ULift.up a')) a L
         (m (ULift.up a) L)
-  | Sum.inr (Sum.inr B) => fun L i =>
+  | Sum.inr (Sum.inr B) => fun L i ↦
       cast (congrArg (Hom I O (c (ULift.up i)))
              (mprecomp_snoc I O L ⟨B, i⟩ (mk I O (Sum.inr (Sum.inr B)) c)))
-        (deltaNav I O (c (ULift.up i)) B i B (fun i' => c (ULift.up i')) _root_.id L
+        (deltaNav I O (c (ULift.up i)) B i B (fun i' ↦ c (ULift.up i')) _root_.id L
           (m (ULift.up i) (L ++ [⟨B, i⟩])))
 
 /-- The list-generalized pre-unit `Hom γ (γ ^^ L)`: by `IR.rec` on `γ`
@@ -437,7 +437,7 @@ theorem preUnitStack_mk_sigma (A : Type (max uA uB))
       IR.{max uA uB, uB, uI, uO} I O)
     (L : List (SupObj.{uB, uI} I)) (a : A) :
     preUnitStack I O (mk I O (Sum.inr (Sum.inl A)) d) L a =
-      msigmaPush I O (d (ULift.up a)) A (fun a' => d (ULift.up a')) a L
+      msigmaPush I O (d (ULift.up a)) A (fun a' ↦ d (ULift.up a')) a L
         (preUnitStack I O (d (ULift.up a)) L) :=
   congrFun (congrFun
     (rec_mk I O (preUnitStackStep I O) (Sum.inr (Sum.inl A)) d) L) a
@@ -453,7 +453,7 @@ def preUnitDeltaData (B : Type uB)
       (precomp I O B i (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d))) :=
   cast (congrArg (Hom I O (d (ULift.up i)))
       (mprecomp_snoc I O L ⟨B, i⟩ (mk I O (Sum.inr (Sum.inr B)) d)))
-    (deltaNav I O (d (ULift.up i)) B i B (fun i' => d (ULift.up i')) _root_.id L
+    (deltaNav I O (d (ULift.up i)) B i B (fun i' ↦ d (ULift.up i')) _root_.id L
       (preUnitStack I O (d (ULift.up i)) (L ++ [⟨B, i⟩])))
 
 /-- The characterizing equation of `IR.preUnitStack` at a `δ`-shaped
