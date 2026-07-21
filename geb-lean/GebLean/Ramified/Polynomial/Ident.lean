@@ -1,6 +1,7 @@
 import GebLean.Ramified.HigherOrder
 import GebLean.Ramified.Polynomial.RType
 import GebLean.Ramified.Polynomial.Term
+import GebLean.Ramified.Polynomial.Interp
 import GebLean.PolyBridge.Slice
 import GebLean.Utilities.Families
 
@@ -18,8 +19,9 @@ the legacy `PolyFix` W-type. The three schema formers `RIdent'.defn`,
 fiber proofs discharged pointwise through
 `SliceDomPFunctor.compatible_iff`, mirroring `FreeAlg'.mk`'s idiom
 extended to the indexed case (the shape of `SlicePFunctor.FreeM.node`,
-`GebLean/SliceW/FreeM.lean`). The denotation `RIdent'.interp` is deferred to
-a later module.
+`GebLean/SliceW/FreeM.lean`). The denotation `RIdent'.interp` folds an
+identifier by a single `SlicePFunctor.W.elim` at a sigma-of-interpretations
+carrier, the `SlicePFunctor.FreeM.elim` idiom at the identifier endofunctor.
 
 ## Main definitions
 
@@ -48,6 +50,15 @@ a later module.
 * `RIdent'.defn`, `RIdent'.mrec`, `RIdent'.frec` — the derived schema
   formers (explicit definition, ramified monotonic recurrence eq. (4), flat
   recurrence eq. (5)).
+* `defnModel'` — the model interpreting an explicit definition's body.
+* `childEnv'`, `envHead'`, `envLast'` — the recurrence-context environment
+  helpers.
+* `RIdent'.interpStep` — the recursion step of the identifier denotation at
+  one node.
+* `RIdent'.interpFam`, `RIdent'.interpAlg` — the interpretation carrier family
+  and the slice algebra of the `SlicePFunctor.W.elim` fold.
+* `RIdent'.interp` — the denotation of an identifier as a function on the
+  environment at its context.
 
 ## Main statements
 
@@ -56,6 +67,10 @@ a later module.
 * `RIdent'.val_defn`, `RIdent'.val_mrec`, `RIdent'.val_frec` — the
   underlying-tree characterization of each schema former, as
   `SlicePFunctor.W.mk` on the corresponding summand of `identEndo'`.
+* `RIdent'.interpAlg_over` — the interpretation algebra lies over the index
+  type.
+* `RIdent'.interp_defn`, `RIdent'.interp_mrec`, `RIdent'.interp_frec` — the
+  computation rules of the identifier denotation at the three schema formers.
 
 ## References
 
@@ -345,6 +360,176 @@ Mirror of the `SlicePFunctor.FreeM.val_node` naming pattern. -/
               (toSlice (identEndo' A)).wIndex
               ⟨(params ++ [RType'.o], τ'), Sum.inr (Sum.inr ⟨params, rfl⟩)⟩ _).mpr
             (fun i => (clauses i).2)⟩ :=
+  rfl
+
+/-- The model interpreting an explicit definition's body over the primed
+standard carriers: constructors and application read as usual, each saturated
+hole read by the recursive result `ih` of the referenced identifier, and each
+curried hole by the currying (`curryInterp'`) of that recursive result. Mirror
+of the legacy `defnModel`. -/
+def defnModel' (A : AlgSig) (n : Nat) (holeIdx' : Fin n → List RType' × RType')
+    (ih : ∀ j : Fin n,
+      (∀ i : Fin (holeIdx' j).1.length,
+        RType'.interp (FreeAlg' A) ((holeIdx' j).1.get i)) →
+        RType'.interp (FreeAlg' A) (holeIdx' j).2) :
+    SortedModel (defnSig' A n holeIdx') where
+  carrier := RType'.interp (FreeAlg' A)
+  interpOp op args :=
+    match op with
+    | Sum.inl (Sum.inl (Sum.inl cop)) => stdConstructorInterp' A cop args
+    | Sum.inl (Sum.inl (Sum.inr aop)) => stdAppInterp' A aop args
+    | Sum.inl (Sum.inr j) => ih j args
+    | Sum.inr j => curryInterp' A (holeIdx' j).1 (holeIdx' j).2 (ih j)
+
+/-- The environment over `params ++ replicate n σ` built from a parameter
+environment and `n` values at sort `σ`: the recursive results (`mrec'`) or the
+subterms (`frec'`) of a recurrence step. Mirror of the legacy `childEnv`. -/
+def childEnv' {C : RType' → Type} (params : List RType') (σ : RType') (n : Nat)
+    (xvec : ∀ i : Fin params.length, C (params.get i))
+    (rest : Fin n → C σ)
+    (k : Fin (params ++ List.replicate n σ).length) :
+    C ((params ++ List.replicate n σ).get k) :=
+  if h : k.val < params.length then
+    cast (congrArg C (get_append_lt params (List.replicate n σ) k h).symm)
+      (xvec ⟨k.val, h⟩)
+  else
+    have hb : k.val - params.length < n := by
+      have hlen : (params ++ List.replicate n σ).length = params.length + n := by
+        rw [List.length_append, List.length_replicate]
+      have hk : k.val < params.length + n := Nat.lt_of_lt_of_eq k.isLt hlen
+      omega
+    have hget : (params ++ List.replicate n σ).get k = σ := by
+      rw [get_append_ge params (List.replicate n σ) k h]
+      simp [List.get_eq_getElem, List.getElem_replicate]
+    cast (congrArg C hget.symm) (rest ⟨k.val - params.length, hb⟩)
+
+/-- The parameter environment read off a recurrence context `params ++ [ω]`.
+Mirror of the legacy `envHead`. -/
+def envHead' {C : RType' → Type} (params : List RType') (ω : RType')
+    (ρ : ∀ k : Fin (params ++ [ω]).length, C ((params ++ [ω]).get k)) :
+    ∀ i : Fin params.length, C (params.get i) :=
+  fun i => cast (congrArg C (get_finAppL params [ω] i)) (ρ (finAppL params [ω] i))
+
+/-- The recurrence argument read off a recurrence context `params ++ [ω]`.
+Mirror of the legacy `envLast`. -/
+def envLast' {C : RType' → Type} (params : List RType') (ω : RType')
+    (ρ : ∀ k : Fin (params ++ [ω]).length, C ((params ++ [ω]).get k)) : C ω :=
+  let idx : Fin [ω].length := ⟨0, by simp⟩
+  cast (congrArg C (get_finAppR params [ω] idx)) (ρ (finAppR params [ω] idx))
+
+/-- The recursion step of `RIdent'.interp` at one identifier node: a `defn'`
+folds its body against `defnModel'`; a `mrec'` recurses on the recurrence
+argument with the monotonic step (parameters and recursive results); a `frec'`
+recurses with the flat step (parameters and subterms). Mirror of the legacy
+`RIdent.interpStep`. -/
+def RIdent'.interpStep (A : AlgSig) (Γ' : List RType') (τ' : RType')
+    (shape : IdentShape' A Γ' τ')
+    (ih : ∀ d : IdentDir' A Γ' τ' shape,
+      (∀ i : Fin (identTarget' A Γ' τ' shape d).1.length,
+        RType'.interp (FreeAlg' A) ((identTarget' A Γ' τ' shape d).1.get i)) →
+        RType'.interp (FreeAlg' A) (identTarget' A Γ' τ' shape d).2) :
+    (∀ i : Fin Γ'.length, RType'.interp (FreeAlg' A) (Γ'.get i)) →
+      RType'.interp (FreeAlg' A) τ' := by
+  rcases shape with d | ⟨params, rfl⟩ | ⟨params, rfl⟩
+  · exact fun ρ => Tm'.eval (defnModel' A d.numHoles d.holeIdx' ih) ρ d.body
+  · exact fun ρ =>
+      FreeAlg'.recurse (A := A) (P := Unit)
+        (fun i _ _sub phi =>
+          ih i (childEnv' params τ' (A.ar i) (envHead' params (RType'.omega τ') ρ) phi))
+        () (envLast' params (RType'.omega τ') ρ)
+  · exact fun ρ =>
+      FreeAlg'.recurse (A := A) (P := Unit)
+        (fun i _ sub _phi =>
+          ih i (childEnv' params RType'.o (A.ar i) (envHead' params RType'.o ρ)
+            (fun j => sub j)))
+        () (envLast' params RType'.o ρ)
+
+/-- The interpretation carrier family: at an index `(Γ', τ')`, functions from an
+environment at the context `Γ'` to a value at the result sort `τ'`. The target
+family of the `SlicePFunctor.W.elim` fold realizing `RIdent'.interp`. -/
+def RIdent'.interpFam (A : AlgSig) (p : List RType' × RType') : Type :=
+  (∀ i : Fin p.1.length, RType'.interp (FreeAlg' A) (p.1.get i)) →
+    RType'.interp (FreeAlg' A) p.2
+
+/-- The slice algebra of the `SlicePFunctor.W.elim` fold realizing
+`RIdent'.interp`, at the sigma carrier `Σ p, RIdent'.interpFam A p` with index
+map `Sigma.fst`: a node applies `RIdent'.interpStep` to the children's
+interpretations, each transported along its pinned index (the compatibility of
+the folded child). The `SlicePFunctor.FreeM.elimAlg` idiom
+(`GebLean/SliceW/FreeM.lean`) at the identifier endofunctor. -/
+def RIdent'.interpAlg (A : AlgSig) :
+    (toSlice (identEndo' A)).toSliceDomPFunctor.Obj
+        (Sigma.fst (β := RIdent'.interpFam A)) →
+      Σ p, RIdent'.interpFam A p :=
+  fun z => ⟨(toSlice (identEndo' A)).q z.1.1,
+    RIdent'.interpStep A z.1.1.1.1 z.1.1.1.2 z.1.1.2
+      (fun b => cast (congrArg (RIdent'.interpFam A)
+        (((toSlice (identEndo' A)).toSliceDomPFunctor.compatible_iff
+          (Sigma.fst (β := RIdent'.interpFam A)) z.1.1 z.1.2).mp z.2 b)) (z.1.2 b).2)⟩
+
+/-- The `RIdent'.interpAlg` algebra lies over the index type: its sigma index is
+the identifier endofunctor's output index, by the shape-output map `q`. -/
+theorem RIdent'.interpAlg_over (A : AlgSig) :
+    Sigma.fst ∘ RIdent'.interpAlg A =
+      (toSlice (identEndo' A)).obj (Sigma.fst (β := RIdent'.interpFam A)) :=
+  rfl
+
+/-- The denotation of a primed identifier over the standard carriers
+`RType'.interp (FreeAlg' A)`: a function from an environment at the identifier's
+context to a value at its result sort. Realized by a single
+`SlicePFunctor.W.elim` at the sigma carrier `Σ p, RIdent'.interpFam A p` with
+index map `Sigma.fst`, transporting the final value along the fiber proof (the
+`SlicePFunctor.FreeM.elim` idiom, `GebLean/SliceW/FreeM.lean`). Mirror of the
+legacy `RIdent.interp`. -/
+def RIdent'.interp {A : AlgSig} {Γ' : List RType'} {τ' : RType'} (f : RIdent' A Γ' τ') :
+    (∀ i : Fin Γ'.length, RType'.interp (FreeAlg' A) (Γ'.get i)) →
+      RType'.interp (FreeAlg' A) τ' :=
+  cast (congrArg (RIdent'.interpFam A)
+      ((congrFun (SlicePFunctor.W.comp_elim (toSlice (identEndo' A))
+        (Σ p, RIdent'.interpFam A p) Sigma.fst (RIdent'.interpAlg A)
+        (RIdent'.interpAlg_over A)) f.1).trans f.2))
+    (SlicePFunctor.W.elim (toSlice (identEndo' A)) (Σ p, RIdent'.interpFam A p)
+      Sigma.fst (RIdent'.interpAlg A) (RIdent'.interpAlg_over A) f.1).2
+
+/-- The computation rule of `RIdent'.interp` at a `defn'` node: the
+interpretation of an explicit definition folds the body against `defnModel'`,
+with each hole read by the interpretation of the corresponding child. From the
+`SlicePFunctor.W.elim` computation at the `val_defn` form (the `defn'` branch of
+`RIdent'.interpStep`). -/
+theorem RIdent'.interp_defn {A : AlgSig} {Γ' : List RType'} {τ' : RType'}
+    (d : DefnShape' A Γ' τ')
+    (children : (j : Fin d.numHoles) → RIdent' A (d.holeIdx' j).1 (d.holeIdx' j).2) :
+    (RIdent'.defn d children).interp =
+      fun ρ => Tm'.eval (defnModel' A d.numHoles d.holeIdx' (fun j => (children j).interp))
+        ρ d.body :=
+  rfl
+
+/-- The computation rule of `RIdent'.interp` at a `mrec'` node: the
+interpretation of a ramified monotonic recurrence recurses on the recurrence
+argument by `FreeAlg'.recurse`, the monotonic step reading the parameters and
+the recursive results. From the `SlicePFunctor.W.elim` computation at the
+`val_mrec` form (the `mrec'` branch of `RIdent'.interpStep`). -/
+theorem RIdent'.interp_mrec {A : AlgSig} (params : List RType') (τ' : RType')
+    (steps : (i : A.B) → RIdent' A (params ++ List.replicate (A.ar i) τ') τ') :
+    (RIdent'.mrec params τ' steps).interp =
+      fun ρ => FreeAlg'.recurse (A := A) (P := Unit)
+        (fun i _ _sub phi => (steps i).interp
+          (childEnv' params τ' (A.ar i) (envHead' params (RType'.omega τ') ρ) phi))
+        () (envLast' params (RType'.omega τ') ρ) :=
+  rfl
+
+/-- The computation rule of `RIdent'.interp` at a `frec'` node: the
+interpretation of a flat recurrence recurses on the recurrence argument by
+`FreeAlg'.recurse`, the flat step reading the parameters and the subterms. From
+the `SlicePFunctor.W.elim` computation at the `val_frec` form (the `frec'`
+branch of `RIdent'.interpStep`). -/
+theorem RIdent'.interp_frec {A : AlgSig} (params : List RType') (τ' : RType')
+    (clauses : (i : A.B) → RIdent' A (params ++ List.replicate (A.ar i) RType'.o) τ') :
+    (RIdent'.frec params τ' clauses).interp =
+      fun ρ => FreeAlg'.recurse (A := A) (P := Unit)
+        (fun i _ sub _phi => (clauses i).interp
+          (childEnv' params RType'.o (A.ar i) (envHead' params RType'.o ρ) (fun j => sub j)))
+        () (envLast' params RType'.o ρ) :=
   rfl
 
 end GebLean.Ramified.Polynomial
