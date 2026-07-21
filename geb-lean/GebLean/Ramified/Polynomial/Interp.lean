@@ -47,9 +47,11 @@ result equality. `Tm'.eval_var` and `Tm'.eval_op` are the fold's computation
 rules `elim_pure` and `elim_node`. `tmSliceEquiv_eval` is proved by
 `PolyFix.ind` on the legacy term (a bridge consumption of the legacy side),
 using the bridge naturality lemmas `polyFreeMSliceEquiv_pure` /
-`polyFreeMSliceEquiv_node` and the computation rules of both evaluations;
-`Tm'.eval_subst` then follows from it together with the legacy `Tm.eval_subst`
-and `tmSliceEquiv_subst`, mirroring the legacy `Tm.eval_subst`.
+`polyFreeMSliceEquiv_node` and the computation rules of both evaluations.
+`Tm'.eval_subst` is a `SlicePFunctor.FreeM.induction` over the primed term,
+independent of the bridge: the variable case reduces by `Tm'.var_subst` and
+`Tm'.eval_var`, the operation case by `SlicePFunctor.FreeM.bind_node`,
+`Tm'.eval_op`, and the induction hypotheses.
 
 ## References
 
@@ -163,17 +165,33 @@ theorem tmSliceEquiv_eval {sig : SortedSig S} {Γ : Ctx S} {s : S}
 
 /-- Evaluation of a substituted term equals evaluation of the term under the
 environment obtained by evaluating the substitution (the semantic clone law).
-Follows from `tmSliceEquiv_eval`, the legacy `Tm.eval_subst`, and
-`tmSliceEquiv_subst`, mirroring the legacy `Tm.eval_subst`. -/
+Proved by `SlicePFunctor.FreeM.induction` over the term: the variable case by
+`Tm'.var_subst` and `Tm'.eval_var`, the operation case by
+`SlicePFunctor.FreeM.bind_node`, `Tm'.eval_op`, and the induction hypotheses.
+Mirrors the legacy `Tm.eval_subst`. -/
 theorem Tm'.eval_subst {sig : SortedSig S} {Γ Δ : Ctx S} {s : S}
     (M : SortedModel sig) (t : Tm' sig Γ s)
     (σ : ∀ i : Fin Γ.length, Tm' sig Δ (Γ.get i)) (ρ : M.Env Δ) :
-    (t.subst σ).eval M ρ = t.eval M (fun i => (σ i).eval M ρ) := by
-  rw [← tmSliceEquiv_eval M ρ (t.subst σ), tmSliceEquiv_subst, Tm.eval_subst,
-    ← tmSliceEquiv_eval M (fun i => (σ i).eval M ρ) t]
-  congr 1
-  funext i
-  rw [tmSliceEquiv_eval]
+    (t.subst σ).eval M ρ = t.eval M (fun i => (σ i).eval M ρ) :=
+  FreeM.induction
+    (motive := fun x u => Tm'.eval M ρ (Tm'.subst (u : Tm' sig Γ x) σ)
+      = Tm'.eval M (fun i => (σ i).eval M ρ) u)
+    (fun _ a => by
+      obtain ⟨i, hi⟩ := a
+      subst hi
+      change Tm'.eval M ρ ((Tm'.var (sig := sig) (Γ := Γ) i).subst σ)
+        = Tm'.eval M (fun j => (σ j).eval M ρ) (Tm'.var (sig := sig) (Γ := Γ) i)
+      rw [Tm'.var_subst, Tm'.eval_var])
+    (fun a args ih => by
+      obtain ⟨_, o, hres⟩ := a
+      subst hres
+      change Tm'.eval M ρ ((Tm'.op (sig := sig) (Γ := Γ) o args).subst σ)
+        = Tm'.eval M (fun j => (σ j).eval M ρ) (Tm'.op (sig := sig) (Γ := Γ) o args)
+      rw [show (Tm'.op (sig := sig) (Γ := Γ) o args).subst σ
+            = Tm'.op o (fun b => Tm'.subst (args b) σ) from FreeM.bind_node _ _ _,
+        Tm'.eval_op, Tm'.eval_op]
+      exact congrArg (M.interpOp o) (funext ih))
+    t
 
 /-- A quotient relation for the primed syntactic category: a per-hom setoid
 family on primed terms together with the congruence law composition needs

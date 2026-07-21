@@ -78,9 +78,9 @@ over the subtype `{f : RIdent' A Γ' τ' // f.FirstOrder}`, in both the saturate
 (dropping the `FirstOrder` proof); it preserves arity and result definitionally,
 so `foTm` — a `SlicePFunctor.FreeM.elim` fold (`GebLean/SliceW/FreeM.lean`) —
 rebuilds a restricted term as a host term with no transport beyond the reindexing
-already present at each node. `foTm_eval` is a `SlicePFunctor.W.induction` over
-the underlying tree, fibrewise over the sort index, whose operation case reduces
-to `foOp_eval`. The functor's `map` lifts `foTm` through the interpretative
+already present at each node. `foTm_eval` is a `SlicePFunctor.FreeM.induction`
+over the term, whose operation case reduces to `foOp_eval`. The functor's `map`
+lifts `foTm` through the interpretative
 quotient; its identity and composition laws are discharged by `Quotient.sound`
 from `foTm_eval` and `Tm'.eval_subst`, without a syntactic
 substitution-commutation lemma.
@@ -294,62 +294,43 @@ theorem foOp_eval (A : AlgSig) {Γ : Ctx RType'} (op : (firstOrderSig A).Op)
 
 /-- The term translation preserves interpretation at the standard model: a
 restricted term and its host translation denote the same value under every
-environment. Proved by `SlicePFunctor.W.induction` over the underlying tree,
-fibrewise over the sort index; the operation case reduces to `foOp_eval`. -/
+environment. Proved by `SlicePFunctor.FreeM.induction` over the term; the
+variable case reduces both sides by `Tm'.eval_var` and the operation case by
+`foOp_eval`. -/
 theorem foTm_eval (A : AlgSig) {Γ : Ctx RType'} {s : RType'}
     (t : Tm' (firstOrderSig A) Γ s)
     (ρ : (standardModel (higherOrder' A)).Env Γ) :
     (foTm A t).eval (standardModel (higherOrder' A)) ρ
-      = t.eval (standardModel (firstOrderPresentation A)) ρ := by
-  have key : ∀ w : (translate Γ.get (toSlice (firstOrderSig A).polyEndo)).W,
-      ∀ (x : RType')
-        (hx : (translate Γ.get (toSlice (firstOrderSig A).polyEndo)).wIndex w = x),
-      (foTm A (⟨w, hx⟩ : Tm' (firstOrderSig A) Γ x)).eval
-          (standardModel (higherOrder' A)) ρ
-        = Tm'.eval (standardModel (firstOrderPresentation A)) ρ
-            (⟨w, hx⟩ : Tm' (firstOrderSig A) Γ x) := by
-    refine W.induction (F := translate Γ.get (toSlice (firstOrderSig A).polyEndo)) ?_
-    intro y ihc x hx
-    subst hx
-    obtain ⟨⟨a, fch⟩, hc⟩ := y
-    cases a with
-    | inl i =>
-      have hterm : (⟨W.mk ⟨⟨Sum.inl i, fch⟩, hc⟩, rfl⟩ :
-          Tm' (firstOrderSig A) Γ _) = Tm'.var i :=
-        Subtype.ext (congrArg W.mk
-          (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun e => e.elim)))))
-      have hvar : foTm A (Tm'.var (sig := firstOrderSig A) (Γ := Γ) i) = Tm'.var i :=
-        FreeM.elim_pure _ _ _ ⟨i, rfl⟩
-      rw [hterm]
+      = t.eval (standardModel (firstOrderPresentation A)) ρ :=
+  FreeM.induction
+    (motive := fun x u => Tm'.eval (standardModel (higherOrder' A)) ρ
+        (foTm A (u : Tm' (firstOrderSig A) Γ x))
+      = Tm'.eval (standardModel (firstOrderPresentation A)) ρ u)
+    (fun _ a => by
+      obtain ⟨i, hi⟩ := a
+      subst hi
       change Tm'.eval (standardModel (higherOrder' A)) ρ
             (foTm A (Tm'.var (sig := firstOrderSig A) (Γ := Γ) i))
           = Tm'.eval (standardModel (firstOrderPresentation A)) ρ
             (Tm'.var (sig := firstOrderSig A) (Γ := Γ) i)
-      rw [hvar]
-      exact (Tm'.eval_var _ ρ i).trans (Tm'.eval_var _ ρ i).symm
-    | inr a =>
-      obtain ⟨xa, o, hres⟩ := a
+      rw [show foTm A (Tm'.var (sig := firstOrderSig A) (Γ := Γ) i) = Tm'.var i from
+        FreeM.elim_pure _ _ _ ⟨i, rfl⟩]
+      exact (Tm'.eval_var _ ρ i).trans (Tm'.eval_var _ ρ i).symm)
+    (fun a args ih => by
+      obtain ⟨_, o, hres⟩ := a
       subst hres
-      have hpf :=
-        ((translate Γ.get (toSlice (firstOrderSig A).polyEndo)).toSliceDomPFunctor.compatible_iff
-          (translate Γ.get (toSlice (firstOrderSig A).polyEndo)).wIndex
-          (Sum.inr ⟨(firstOrderSig A).result o, o, rfl⟩) fch).mp hc
-      have hterm : (⟨W.mk ⟨⟨Sum.inr ⟨(firstOrderSig A).result o, o, rfl⟩, fch⟩, hc⟩, rfl⟩ :
-          Tm' (firstOrderSig A) Γ _) = Tm'.op o (fun b => ⟨fch b, hpf b⟩) := Subtype.ext rfl
-      have hfo : foTm A (Tm'.op (sig := firstOrderSig A) (Γ := Γ) o (fun b => ⟨fch b, hpf b⟩))
-          = foOp A o (fun b => foTm A (⟨fch b, hpf b⟩ : Tm' (firstOrderSig A) Γ _)) :=
-        FreeM.elim_node (v := Γ.get) (F := toSlice (firstOrderSig A).polyEndo) _ _ _
-          ⟨(firstOrderSig A).result o, o, rfl⟩ _
-      rw [hterm]
       change Tm'.eval (standardModel (higherOrder' A)) ρ
-            (foTm A (Tm'.op (sig := firstOrderSig A) (Γ := Γ) o (fun b => ⟨fch b, hpf b⟩)))
+            (foTm A (Tm'.op (sig := firstOrderSig A) (Γ := Γ) o args))
           = Tm'.eval (standardModel (firstOrderPresentation A)) ρ
-            (Tm'.op (sig := firstOrderSig A) (Γ := Γ) o (fun b => ⟨fch b, hpf b⟩))
-      rw [hfo, foOp_eval]
-      exact (congrArg ((firstOrderModel A).interpOp o)
-        (funext fun b => ihc b _ (hpf b))).trans
-          (Tm'.eval_op (standardModel (firstOrderPresentation A)) ρ o _).symm
-  exact key t.1 s t.2
+            (Tm'.op (sig := firstOrderSig A) (Γ := Γ) o args)
+      rw [show foTm A (Tm'.op (sig := firstOrderSig A) (Γ := Γ) o args)
+            = foOp A o (fun b => foTm A (args b)) from
+          FreeM.elim_node (v := Γ.get) (F := toSlice (firstOrderSig A).polyEndo) _ _ _
+            ⟨(firstOrderSig A).result o, o, rfl⟩ _,
+        foOp_eval]
+      exact (congrArg ((firstOrderModel A).interpOp o) (funext ih)).trans
+        (Tm'.eval_op (standardModel (firstOrderPresentation A)) ρ o args).symm)
+    t
 
 /-- The morphism map of the inclusion: translate a representative tuple by `foTm`
 and re-quotient. Well-defined on the interpretative quotient because `foTm`

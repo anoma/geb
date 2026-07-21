@@ -32,6 +32,8 @@ fiber. `FreeM v F i` is that fiber; `pure` and `node` are the two shapes of
 * `SlicePFunctor.FreeM.val_pure` / `SlicePFunctor.FreeM.val_node` — the
   underlying-tree characterization of `pure` and `node`, as `W.mk` on the
   corresponding summand of `translate v F`.
+* `SlicePFunctor.FreeM.induction` — structural induction over the free monad: a
+  leaf case at `pure`, a node case at `node` with the children's hypotheses.
 * `SlicePFunctor.FreeM.pure_bind` / `SlicePFunctor.FreeM.bind_node` — the
   computation rules for `bind`: the left-unit law on `pure`, and recursion into
   children on `node`.
@@ -108,6 +110,41 @@ theorem val_node (a : F.A) (c : (b : F.B a) → FreeM v F (F.rCurried a b)) :
       ((translate v F).toSliceDomPFunctor.compatible_iff _ _ _).mpr fun b => (c b).2⟩ :=
   rfl
 
+/-- Structural induction for the free monad: a predicate on the sort-indexed
+family `FreeM v F` holds everywhere once it holds of every leaf `pure a` and is
+inherited by every node `node a c` from its children. The fibrewise form of
+`SlicePFunctor.W.induction`: the motive is generalized over the fiber witness,
+and the two branches of the `translate` shape split are re-read as `pure` and
+`node`. -/
+theorem induction {motive : ∀ i, FreeM v F i → Prop}
+    (leaf : ∀ (i : I) (a : { y : Y // v y = i }), motive i (FreeM.pure a))
+    (nd : ∀ (a : F.A) (c : (b : F.B a) → FreeM v F (F.rCurried a b)),
+      (∀ b, motive (F.rCurried a b) (c b)) → motive (F.q a) (FreeM.node a c))
+    {i : I} (t : FreeM v F i) : motive i t := by
+  have key : ∀ w : (translate v F).W,
+      ∀ (x : I) (hx : (translate v F).wIndex w = x), motive x ⟨w, hx⟩ := by
+    refine W.induction (F := translate v F) ?_
+    intro z ih x hx
+    subst hx
+    obtain ⟨⟨a, c⟩, hc⟩ := z
+    cases a with
+    | inl y =>
+        have hleaf : (⟨W.mk ⟨⟨Sum.inl y, c⟩, hc⟩, rfl⟩ : FreeM v F _)
+            = FreeM.pure ⟨y, rfl⟩ :=
+          Subtype.ext (congrArg W.mk
+            (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun e => e.elim)))))
+        rw [hleaf]
+        exact leaf _ ⟨y, rfl⟩
+    | inr a' =>
+        have hpf := ((translate v F).toSliceDomPFunctor.compatible_iff
+          (translate v F).wIndex (Sum.inr a') c).mp hc
+        have hnode : (⟨W.mk ⟨⟨Sum.inr a', c⟩, hc⟩, rfl⟩ : FreeM v F _)
+            = FreeM.node a' (fun b => ⟨c b, hpf b⟩) :=
+          Subtype.ext rfl
+        rw [hnode]
+        exact nd a' _ fun b => ih b _ (hpf b)
+  exact key t.1 i t.2
+
 /-- The grafting substitution on `translate v F`-trees underlying `bind`: a
 single `W.elim` into `(translate v' F).W`. A leaf `Sum.inl y` is replaced by
 the underlying tree of the substitute `f (v y) ⟨y, rfl⟩`; a node `Sum.inr a` is
@@ -151,23 +188,16 @@ theorem bind_node (a : F.A) (c : (b : F.B a) → FreeM v F (F.rCurried a b))
   Subtype.ext rfl
 
 /-- Right unit at the tree level: grafting each leaf to its own `pure` is the
-identity on `translate v F`-trees. Structural induction with a `Sum` shape
-split; the leaf branch collapses to the `pure` tree (children into `PEmpty`
-agree by elimination) and the node branch recurses through the hypotheses. -/
+identity on `translate v F`-trees. `FreeM.induction` at the tautological fiber
+of the tree; the leaf branch collapses definitionally and the node branch
+recurses through the hypotheses. -/
 theorem bindW_pure (z : (translate v F).W) :
     bindW (fun _ a => FreeM.pure a) z = z :=
-  W.induction (F := translate v F)
-    (motive := fun z => bindW (fun _ a => FreeM.pure a) z = z)
-    (fun x ih => by
-      obtain ⟨⟨a, c⟩, hc⟩ := x
-      cases a with
-      | inl y =>
-          exact congrArg W.mk
-            (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun e => e.elim))))
-      | inr a' =>
-          exact congrArg W.mk
-            (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b => ih b)))))
-    z
+  induction (motive := fun _ t => bindW (fun _ a => FreeM.pure a) t.1 = t.1)
+    (fun _ _ => rfl)
+    (fun _ _ ih => congrArg W.mk
+      (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b => ih b)))))
+    (⟨z, rfl⟩ : FreeM v F _)
 
 /-- Right unit: binding a tree with the identity substitution returns it. -/
 theorem bind_pure {i : I} (t : FreeM v F i) :
@@ -175,23 +205,19 @@ theorem bind_pure {i : I} (t : FreeM v F i) :
   Subtype.ext (bindW_pure t.1)
 
 /-- Associativity at the tree level: grafting along `f` then `g` equals grafting
-along the pointwise composite `fun j a => (f j a).bind g`. Structural induction
-with a `Sum` shape split; the leaf branch reduces both sides to
+along the pointwise composite `fun j a => (f j a).bind g`. `FreeM.induction` at
+the tautological fiber of the tree; the leaf branch reduces both sides to
 `((f (v y) ⟨y, rfl⟩).bind g).1` and the node branch recurses through the
 hypotheses. -/
 theorem bindW_bindW (f : ∀ j, { a : Y // v a = j } → FreeM v' F j)
     (g : ∀ j, { b : Y' // v' b = j } → FreeM v'' F j) (z : (translate v F).W) :
     bindW g (bindW f z) = bindW (fun j a => (f j a).bind g) z :=
-  W.induction (F := translate v F)
-    (motive := fun z => bindW g (bindW f z) = bindW (fun j a => (f j a).bind g) z)
-    (fun x ih => by
-      obtain ⟨⟨a, c⟩, hc⟩ := x
-      cases a with
-      | inl y => rfl
-      | inr a' =>
-          exact congrArg W.mk
-            (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b => ih b)))))
-    z
+  induction
+    (motive := fun _ t => bindW g (bindW f t.1) = bindW (fun j a => (f j a).bind g) t.1)
+    (fun _ _ => rfl)
+    (fun _ _ ih => congrArg W.mk
+      (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b => ih b)))))
+    (⟨z, rfl⟩ : FreeM v F _)
 
 /-- Associativity: rebinding `t` along `f` then `g` factors through the
 pointwise composite. -/
