@@ -2,22 +2,37 @@ import Geb.Mathlib.Data.PFunctor.Slice.W
 import Mathlib.Logic.Equiv.Defs
 
 /-!
-# Base change of a slice endofunctor along an index equivalence
+# Reindexing a slice polynomial functor along maps of its domain and codomain
 
-Given a slice endofunctor `F` over `I` and an equivalence `e : I ≃ J`, the
-base change `reindex e F` is the slice endofunctor over `J` with the same
-underlying `PFunctor` and with the shape-output map `q` and the
-direction-input map `r` conjugated by `e`. The associated slice W-types are
-equivalent: since `reindex` leaves the underlying `PFunctor` untouched, a
-`PFunctor.W` tree admissible for `F` is, without any rebuilding, admissible
-for `reindex e F` once its indices are read through `e`, and conversely
-through `e.symm`. This is base change along an index equivalence, in the
-sense of Gambino–Kock 2013, section 1.
+A `SlicePFunctor D C` is the polynomial diagram
+`D ◀ r ─ Idx ─ fst ▶ A ─ q ▶ C`, interpreted as the composite
+`Σ_q ∘ Π_fst ∘ Δ_r : Type/D → Type/C`. The two index maps sit at opposite
+ends of that composite, so composing each with a function has a different
+meaning. Composing the direction-input map `r` with `g : D → D'` replaces
+`Δ_r` by `Δ_r ∘ Δ_g`, that is, pre-composes the functor with the base change
+`Δ_g : Type/D' → Type/D` (`domReindex`). Composing the shape-output map `q`
+with `f : C → C'` replaces `Σ_q` by `Σ_f ∘ Σ_q`, that is, post-composes the
+functor with the dependent sum `Σ_f : Type/C → Type/C'` (`codReindex`). The
+two touch disjoint fields; `reindexMap` performs both at once. Neither
+operation requires its map to be invertible.
+
+When the domain and the codomain coincide and the two maps are one and the
+same equivalence `e : I ≃ J`, the result `reindex e F` is again a slice
+endofunctor, and the associated slice W-types are equivalent: since
+reindexing leaves the underlying `PFunctor` untouched, a `PFunctor.W` tree
+admissible for `F` is, without any rebuilding, admissible for `reindex e F`
+once its indices are read through `e`, and conversely through `e.symm`. Base
+change is in the sense of Gambino–Kock 2013, section 1.
 
 ## Main definitions
 
-* `SlicePFunctor.reindex` — the base change of a slice endofunctor along an
-  index equivalence.
+* `SlicePFunctor.domReindex` — pre-composition with the base change along a
+  map of domains.
+* `SlicePFunctor.codReindex` — post-composition with the dependent sum along
+  a map of codomains.
+* `SlicePFunctor.reindexMap` — both at once.
+* `SlicePFunctor.reindex` — the endofunctor special case: one index
+  equivalence used on both sides.
 * `SlicePFunctor.reindex.wMap` — the induced map on W-types: the identity on
   underlying trees, with admissibility transferred.
 * `SlicePFunctor.reindex.wEquiv` — the induced equivalence of W-types.
@@ -26,17 +41,22 @@ sense of Gambino–Kock 2013, section 1.
 
 ## Main statements
 
-* `SlicePFunctor.reindex_A`, `reindex_B`, `reindex_q`, `reindex_r` — the
-  characterization of each field of `reindex e F`.
+* `SlicePFunctor.domReindex_A`, `domReindex_B`, `domReindex_q`,
+  `domReindex_r`, and the corresponding `codReindex_*` and `reindex_*` — the
+  characterization of each field.
 * `SlicePFunctor.reindex.wIndex_wMap` — `wMap` conjugates `wIndex` by `e`.
 * `SlicePFunctor.reindex.wMap_mk` — `wMap` is a morphism of constructors.
 
 ## Implementation notes
 
-`reindex` leaves the underlying `PFunctor` untouched, so `F.W` and
+Reindexing leaves the underlying `PFunctor` untouched, so `F.W` and
 `(reindex e F).W` are both subtypes of the same `F.toPFunctor.W`; `wMap` is
 the identity on the underlying tree, with admissibility transferred by the
-`Prop`-valued inductions `reindex_wValid` / `reindex_wValid_symm`. `wEquiv`'s
+`Prop`-valued inductions `reindex_wValid` / `reindex_wValid_symm`. Those
+inductions are where the endofunctor hypothesis and the invertibility of `e`
+enter: admissibility compares a child's `q`-index against its parent's
+`r`-index, so it transfers forwards only when both fields are composed with
+the same map, and backwards only when that map is injective. `wEquiv`'s
 round trips are consequently `Subtype.ext rfl`, with no induction needed at
 that level; `wEquivFiber` reuses `wEquiv` and the index law
 `reindex.wIndex_wEquiv_symm`, whose orientation is fixed by
@@ -50,30 +70,91 @@ Mathematical Proceedings of the Cambridge Philosophical Society 154 (2013)
 
 ## Tags
 
-polynomial functor, W-type, initial algebra, base change, slice category,
-PFunctor
+polynomial functor, W-type, initial algebra, base change, dependent sum,
+slice category, PFunctor
 -/
 
 namespace SlicePFunctor
 
-universe uA uB uI
+universe uA uB uD uD' uC uC'
+
+section Reindex
+
+variable {D : Type uD} {D' : Type uD'} {C : Type uC} {C' : Type uC'}
+
+/-- Pre-composition of a slice polynomial functor with the base change
+`Δ_g : Type/D' → Type/D` along `g : D → D'`: the underlying `PFunctor` and
+the shape-output map `q` are unchanged; the direction-input map `r` is
+composed with `g`. -/
+def domReindex (g : D → D') (F : SlicePFunctor.{uA, uB, uD, uC} D C) :
+    SlicePFunctor.{uA, uB, uD', uC} D' C where
+  toPFunctor := F.toPFunctor
+  r := g ∘ F.r
+  q := F.q
+
+/-- Post-composition of a slice polynomial functor with the dependent sum
+`Σ_f : Type/C → Type/C'` along `f : C → C'`: the underlying
+`SliceDomPFunctor` is unchanged; the shape-output map `q` is composed with
+`f`. -/
+def codReindex (f : C → C') (F : SlicePFunctor.{uA, uB, uD, uC} D C) :
+    SlicePFunctor.{uA, uB, uD, uC'} D C' where
+  toSliceDomPFunctor := F.toSliceDomPFunctor
+  q := f ∘ F.q
+
+/-- Reindexing on both sides at once: `Σ_f ∘ F ∘ Δ_g`. The two constituents
+act on disjoint fields, so the order in which they are applied is
+immaterial. -/
+def reindexMap (g : D → D') (f : C → C') (F : SlicePFunctor.{uA, uB, uD, uC} D C) :
+    SlicePFunctor.{uA, uB, uD', uC'} D' C' :=
+  codReindex f (domReindex g F)
+
+variable (g : D → D') (f : C → C') (F : SlicePFunctor.{uA, uB, uD, uC} D C)
+
+/-- The shape type of `domReindex g F` is unchanged. -/
+theorem domReindex_A : (domReindex g F).A = F.A := rfl
+
+/-- The position type of `domReindex g F` at a shape `a` is unchanged. -/
+theorem domReindex_B (a : F.A) : (domReindex g F).B a = F.B a := rfl
+
+/-- The shape-output map of `domReindex g F` is unchanged. -/
+@[simp] theorem domReindex_q (a : F.A) : (domReindex g F).q a = F.q a := rfl
+
+/-- The direction-input map of `domReindex g F` is `F`'s composed with `g`. -/
+@[simp] theorem domReindex_r (a : F.A) (b : F.B a) :
+    (domReindex g F).r ⟨a, b⟩ = g (F.r ⟨a, b⟩) := rfl
+
+/-- The shape type of `codReindex f F` is unchanged. -/
+theorem codReindex_A : (codReindex f F).A = F.A := rfl
+
+/-- The position type of `codReindex f F` at a shape `a` is unchanged. -/
+theorem codReindex_B (a : F.A) : (codReindex f F).B a = F.B a := rfl
+
+/-- The shape-output map of `codReindex f F` is `F`'s composed with `f`. -/
+@[simp] theorem codReindex_q (a : F.A) : (codReindex f F).q a = f (F.q a) := rfl
+
+/-- The direction-input map of `codReindex f F` is unchanged. -/
+@[simp] theorem codReindex_r (a : F.A) (b : F.B a) :
+    (codReindex f F).r ⟨a, b⟩ = F.r ⟨a, b⟩ := rfl
+
+end Reindex
+
+universe uI uJ
 
 /-- Base change of a slice endofunctor along an index equivalence: the
-underlying `PFunctor` is unchanged; the shape-output map `q` and the
-direction-input map `r` are conjugated by `e`. -/
-def reindex {I J : Type uI} (e : I ≃ J) (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
-    SlicePFunctor.{uA, uB, uI, uI} J J where
-  toPFunctor := F.toPFunctor
-  r := e ∘ F.r
-  q := e ∘ F.q
+special case of `reindexMap` in which the domain and the codomain coincide
+and both are reindexed by the same equivalence. This is the case in which
+the W-types transport. -/
+def reindex {I : Type uI} {J : Type uJ} (e : I ≃ J) (F : SlicePFunctor.{uA, uB, uI, uI} I I) :
+    SlicePFunctor.{uA, uB, uJ, uJ} J J :=
+  reindexMap e e F
 
-variable {I J : Type uI} (e : I ≃ J) (F : SlicePFunctor.{uA, uB, uI, uI} I I)
+variable {I : Type uI} {J : Type uJ} (e : I ≃ J) (F : SlicePFunctor.{uA, uB, uI, uI} I I)
 
 /-- The shape type of `reindex e F` is unchanged. -/
-@[simp] theorem reindex_A : (reindex e F).A = F.A := rfl
+theorem reindex_A : (reindex e F).A = F.A := rfl
 
 /-- The position type of `reindex e F` at a shape `a` is unchanged. -/
-@[simp] theorem reindex_B (a : F.A) : (reindex e F).B a = F.B a := rfl
+theorem reindex_B (a : F.A) : (reindex e F).B a = F.B a := rfl
 
 /-- The shape-output map of `reindex e F` is `F`'s conjugated by `e`. -/
 @[simp] theorem reindex_q (a : F.A) : (reindex e F).q a = e (F.q a) := rfl

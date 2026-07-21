@@ -4,7 +4,9 @@ import Mathlib.Logic.Equiv.Bool
 /-! Smoke test for `SlicePFunctor.reindex` and its induced W-equivalence. A
 toy slice endofunctor over `Bool` is base-changed along `Equiv.boolNot`; a
 sample two-level tree exercises the field characterization lemmas, the
-`wIndex_wMap` index law, and the `wEquiv` round trip. -/
+`wIndex_wMap` index law, and the `wEquiv` round trip. The one-sided
+`domReindex` / `codReindex` are exercised on a non-endofunctor, reindexed on
+its two sides by different maps. -/
 
 namespace SliceWReindexTest
 
@@ -44,5 +46,23 @@ example : (reindex Equiv.boolNot F).wIndex (reindex.wMap Equiv.boolNot F tree) =
 /-- The `wEquiv` round trip on the sample tree. -/
 example : (reindex.wEquiv Equiv.boolNot F).symm (reindex.wEquiv Equiv.boolNot F tree) = tree :=
   (reindex.wEquiv Equiv.boolNot F).symm_apply_apply tree
+
+/-- Summing along `Bool → Unit` leaves the endofunctors: a slice functor from
+`Type/Bool` to `Type/Unit`, with the direction-input map untouched. -/
+def G : SlicePFunctor.{0, 0, 0, 0} Bool Unit := codReindex (fun _ => ()) F
+
+/-- The shape-output map of `G` is `F`'s composed with the collapse. -/
+example : G.q true = () := by simp [G]
+
+/-- The direction-input map survives `codReindex` unchanged. -/
+example : G.r ⟨true, ()⟩ = F.r ⟨true, ()⟩ := by simp [G]
+
+/-- Reindexing the two sides by different maps: `G`'s domain by
+`Equiv.boolNot`, its codomain having already been collapsed. -/
+example : (domReindex Equiv.boolNot G).r ⟨true, ()⟩ = Equiv.boolNot (F.r ⟨true, ()⟩) := by
+  simp [G]
+
+/-- `domReindex` leaves the shape-output map, hence the codomain side, alone. -/
+example : (domReindex Equiv.boolNot G).q true = () := by simp [G]
 
 end SliceWReindexTest
