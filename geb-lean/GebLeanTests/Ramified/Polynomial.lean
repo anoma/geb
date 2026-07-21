@@ -1,4 +1,5 @@
 import GebLeanTests.Ramified.Polynomial.FreeAlg
+import GebLeanTests.Ramified.Polynomial.Ident
 import GebLeanTests.Ramified.Polynomial.Interp
 import GebLeanTests.Ramified.Polynomial.RType
 import GebLeanTests.Ramified.Polynomial.SynCat
