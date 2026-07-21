@@ -58,8 +58,8 @@ translations `tmSliceEquiv` (Phase B) and `SortedSigEquiv.tmEquiv` (Task C.8).
 
 * `identSliceEquiv_defn`, `identSliceEquiv_mrec`, `identSliceEquiv_frec` — the
   former naturality of the bridge equivalence.
-* `carrierSliceEquiv_arrow`, `carrierSliceEquiv_o`, `carrierSliceEquiv_omega`
-  — the carrier bridge at an arrow sort and at the two object sorts.
+* `carrierSliceEquiv_arrow`, `carrierSliceEquiv_o` — the carrier bridge at an
+  arrow sort and at the base object sort.
 * `curryInterp'_agree` — the currying of a denotation agrees with the legacy
   currying across the bridge.
 * `stdConstructorInterp_agree` — the constructor interpretation agrees across
@@ -589,15 +589,6 @@ theorem isObj_o' : RType'.IsObj RType'.o :=
 theorem isObj_omega' (t' : RType') : RType'.IsObj (RType'.omega t') :=
   Or.inr (RType'.shape_mk RTypeShape.omega ![t'])
 
-/-- The carrier bridge at an object sort, solved for the bridge image: it is
-the free-algebra bridge read through the object-sort denotation equalities. -/
-theorem carrierSliceEquiv_isObj' {A : AlgSig} {t' : RType'} (h : t'.IsObj)
-    (x : RType'.interp (FreeAlg' A) t') :
-    carrierSliceEquiv A t' x
-      = cast (RType.interp_isObj (FreeAlg A) (cast (rTypeSliceEquiv_isObj t') h)).symm
-          (freeAlgSliceEquiv A (cast (RType'.interp_isObj (FreeAlg' A) h) x)) := by
-  rw [← carrierSliceEquiv_isObj h x, cast_cast, cast_eq]
-
 /-- The carrier bridge at the base object sort computes to the free-algebra
 bridge: both denotations are copies of the base carrier. -/
 theorem carrierSliceEquiv_o {A : AlgSig} (x : RType'.interp (FreeAlg' A) RType'.o) :
@@ -605,15 +596,6 @@ theorem carrierSliceEquiv_o {A : AlgSig} (x : RType'.interp (FreeAlg' A) RType'.
         (carrierSliceEquiv A RType'.o x)
       = freeAlgSliceEquiv A x :=
   carrierSliceEquiv_isObj isObj_o' x
-
-/-- The carrier bridge at an `Omega` sort computes to the free-algebra bridge:
-both denotations are copies of the base carrier. -/
-theorem carrierSliceEquiv_omega {A : AlgSig} (t' : RType')
-    (x : RType'.interp (FreeAlg' A) (RType'.omega t')) :
-    cast (congrArg (RType.interp (FreeAlg A)) (rTypeSliceEquiv_omega t'))
-        (carrierSliceEquiv A (RType'.omega t') x)
-      = freeAlgSliceEquiv A x :=
-  carrierSliceEquiv_isObj (isObj_omega' t') x
 
 /-- The pushed-forward environment agrees with its source. -/
 theorem envAgree_envSlice {A : AlgSig} (Γ' : List RType')
@@ -842,7 +824,6 @@ theorem defnModel_agree {A : AlgSig} {n : Nat} (hi : Fin n → List RType' × RT
       = carrierSliceEquiv A τ' (Tm'.eval (defnModel' A n hi ih') ρ' t) := by
   rw [← tmSliceEquiv_eval (defnModel' A n hi ih') ρ' t]
   exact (defnPresEquiv A n hi ih' ih hmatch).tmMap_eval (tmSliceEquiv Γ' τ' t) ρ'
-
 
 /-- The computation rule of the legacy `RIdent.interp` at an explicit
 definition. -/
