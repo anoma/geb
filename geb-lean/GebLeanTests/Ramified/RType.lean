@@ -51,4 +51,10 @@ example : RType.o.IsSimple := by decide
 example : ¬ (RType.omega RType.o).IsSimple := by decide
 example : arrowOO.IsSimple := by decide
 
+-- The denotation congruence is the base equivalence at an object sort and
+-- `Equiv.arrowCongr` of the recursive equivalences at an arrow.
+example (e : Nat ≃ Bool) : RType.interpCongr e RType.o = e := rfl
+example (e : Nat ≃ Bool) :
+    RType.interpCongr e arrowOO = Equiv.arrowCongr e e := rfl
+
 end GebLeanTests.Ramified.RTypeTest

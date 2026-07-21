@@ -35,6 +35,8 @@ whose shapes are a nullary `o`, a binary `arrow`, and a unary `omega`.
 * `RType.IsSimple` — the omega-free predicate (no `Omega` occurs anywhere in
   the r-type), with a `DecidablePred` instance.
 * `RType.interp` — the denotation of an r-type over a carrier.
+* `RType.interpCongr` — the congruence of the denotation along a base-carrier
+  equivalence.
 * `oObj` — the base object sort `o` as an object-sort witness.
 
 ## Main statements
@@ -44,6 +46,8 @@ whose shapes are a nullary `o`, a binary `arrow`, and a unary `omega`.
 * `RType.tower_isObj` — every tower sort is an object sort.
 * `RType.tower_isTower` — every tower sort satisfies `RType.IsTower`.
 * `RType.interp_isObj` — every object sort denotes a copy of the carrier.
+* `RType.interpCongr_isObj` — the denotation congruence at an object sort is
+  the base equivalence.
 * `RType.o_isSimple`, `RType.arrow_isSimple_iff` — the simple-type predicate
   on the base type and on `arrow`.
 
@@ -231,6 +235,34 @@ theorem RType.interp_isObj (C : Type) {s : RType} (h : s.IsObj) :
     RType.interp C s = C := by
   rcases s with ⟨_, i, children⟩
   rcases h with h | h <;> (simp only [RType.shape, PolyFix.index] at h; subst h; rfl)
+
+/-- The congruence of the denotation along a base-carrier equivalence
+(Leivant III section 2.7): every object sort transports by `e`, and each
+arrow by `Equiv.arrowCongr` of the equivalences on its subterms. Realized by
+the dependent eliminator `PolyFix.ind` (decision 8), following
+`RType.interp`'s pattern. Novel packaging. -/
+def RType.interpCongr {C D : Type} (e : C ≃ D) (t : RType) :
+    RType.interp C t ≃ RType.interp D t :=
+  PolyFix.ind (P := rTypeSig.polyEndo)
+    (motive := fun {_} t => RType.interp C t ≃ RType.interp D t)
+    (fun i childx ih =>
+      match i, childx, ih with
+      | RTypeShape.o, _, _ => e
+      | RTypeShape.arrow, _, ih =>
+        Equiv.arrowCongr (ih (⟨0, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)))
+          (ih (⟨1, by decide⟩ : Fin (rTypeSig.ar RTypeShape.arrow)))
+      | RTypeShape.omega, _, _ => e) t
+
+/-- The denotation congruence at an object sort is the base equivalence, read
+through the object-sort denotation equalities (Leivant III section 2.7): for
+`s.IsObj`, `RType.interpCongr e s` transports to `e`. -/
+theorem RType.interpCongr_isObj {C D : Type} (e : C ≃ D) {s : RType} (h : s.IsObj)
+    (w : RType.interp C s) :
+    cast (RType.interp_isObj D h) (RType.interpCongr e s w)
+      = e (cast (RType.interp_isObj C h) w) := by
+  rcases s with ⟨_, i, children⟩
+  rcases h with h | h <;>
+    (simp only [RType.shape, PolyFix.index] at h; subst h; rfl)
 
 /-- The base object sort `o` as an object-sort witness. -/
 def oObj : { s : RType // RType.IsObj s } := ⟨RType.o, Or.inl rfl⟩
