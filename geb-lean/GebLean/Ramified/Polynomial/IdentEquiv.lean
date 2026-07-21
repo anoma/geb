@@ -36,8 +36,10 @@ translations `tmSliceEquiv` (`GebLean/Ramified/Polynomial/Term.lean`) and
 
 * `identCtxEquiv` — the index equivalence `List RType' × RType' ≃
   List RType × RType`.
+* `constructorSigEquiv`, `appSigEquiv`, `baseSigEquiv`, `holeSigEquiv`,
+  `holeConstSigEquiv` — the summand signature isomorphisms.
 * `defnSigEquiv` — the signature isomorphism of the base signatures of an
-  explicit definition's body.
+  explicit definition's body, their `SortedSigEquiv.sum`.
 * `defnShapeEquiv`, `mrecShapeEquiv`, `frecShapeEquiv` — the schema-former
   data equivalences.
 * `identShapeEquiv` — the identifier shape-type equivalence.
@@ -108,37 +110,68 @@ equivalence `List.map rTypeSliceEquiv` and `rTypeSliceEquiv`. -/
 def identCtxEquiv : List RType' × RType' ≃ List RType × RType :=
   Equiv.prodCongr (Equiv.listEquivOfEquiv rTypeSliceEquiv) rTypeSliceEquiv
 
-/-- The signature isomorphism between the primed and legacy base signatures
-of an explicit definition's body: `rTypeSliceEquiv` on sorts, the summand-wise
-congruence on operations (the object-sort subtype congruence and the
-application, hole, and hole-constant congruences), with arities and result
-sorts transported by `List.map_replicate`, `rTypeSliceEquiv_arrow`, and
-`rTypeSliceEquiv_curried`. -/
-def defnSigEquiv (A : AlgSig) (n : Nat) (h : Fin n → List RType' × RType') :
-    SortedSigEquiv (defnSig' A n h) (defnSig A n (fun j => identCtxEquiv (h j))) where
+/-- The signature isomorphism between the primed and legacy constructor
+summands: `rTypeSliceEquiv` on sorts and the object-sort subtype congruence on
+operations, with the arity transported by `List.map_replicate`. -/
+def constructorSigEquiv (A : AlgSig) :
+    SortedSigEquiv (constructorSig A RType'.IsObj) (constructorSig A RType.IsObj) where
   sortEquiv := rTypeSliceEquiv
   opEquiv :=
-    Equiv.sumCongr (Equiv.sumCongr (Equiv.sumCongr
-      (Equiv.prodCongr
-        (Equiv.subtypeEquiv rTypeSliceEquiv (fun a => Iff.of_eq (rTypeSliceEquiv_isObj a)))
-        (Equiv.refl A.B))
-      (Equiv.prodCongr rTypeSliceEquiv rTypeSliceEquiv)) (Equiv.refl (Fin n))) (Equiv.refl (Fin n))
-  arity_comm := by
-    rintro (((c | a) | j) | j)
-    · change List.replicate (A.ar c.2) (rTypeSliceEquiv c.1.val)
-        = List.map rTypeSliceEquiv (List.replicate (A.ar c.2) c.1.val)
-      exact List.map_replicate.symm
-    · change [RType.arrow (rTypeSliceEquiv a.1) (rTypeSliceEquiv a.2), rTypeSliceEquiv a.1]
-        = [rTypeSliceEquiv (RType'.arrow a.1 a.2), rTypeSliceEquiv a.1]
-      rw [rTypeSliceEquiv_arrow]
-    · rfl
-    · rfl
-  result_comm := by
-    rintro (((c | a) | j) | j)
-    · rfl
-    · rfl
-    · rfl
-    · exact (rTypeSliceEquiv_curried (h j).1 (h j).2).symm
+    Equiv.prodCongr
+      (Equiv.subtypeEquiv rTypeSliceEquiv (fun a => Iff.of_eq (rTypeSliceEquiv_isObj a)))
+      (Equiv.refl A.B)
+  arity_comm := fun c => by
+    change List.replicate (A.ar c.2) (rTypeSliceEquiv c.1.val)
+      = List.map rTypeSliceEquiv (List.replicate (A.ar c.2) c.1.val)
+    exact List.map_replicate.symm
+  result_comm := fun _ => rfl
+
+/-- The signature isomorphism between the primed and legacy application
+summands: `rTypeSliceEquiv` on sorts and its square on operations, with the
+arity transported by `rTypeSliceEquiv_arrow`. -/
+def appSigEquiv : SortedSigEquiv appSig' appSig where
+  sortEquiv := rTypeSliceEquiv
+  opEquiv := Equiv.prodCongr rTypeSliceEquiv rTypeSliceEquiv
+  arity_comm := fun a => by
+    change [RType.arrow (rTypeSliceEquiv a.1) (rTypeSliceEquiv a.2), rTypeSliceEquiv a.1]
+      = [rTypeSliceEquiv (RType'.arrow a.1 a.2), rTypeSliceEquiv a.1]
+    rw [rTypeSliceEquiv_arrow]
+  result_comm := fun _ => rfl
+
+/-- The signature isomorphism on the base summands shared by the higher-order
+signature and an explicit definition's body signature: the sum of
+`constructorSigEquiv` and `appSigEquiv`. -/
+def baseSigEquiv (A : AlgSig) :
+    SortedSigEquiv ((constructorSig A RType'.IsObj).sum appSig')
+      ((constructorSig A RType.IsObj).sum appSig) :=
+  (constructorSigEquiv A).sum appSigEquiv rfl
+
+/-- The signature isomorphism between the primed and legacy saturated hole
+summands: `rTypeSliceEquiv` on sorts and the identity on the hole index, the
+arity and result being the transported hole data. -/
+def holeSigEquiv (n : Nat) (h : Fin n → List RType' × RType') :
+    SortedSigEquiv (holeSig' n h) (holeSig n (fun j => identCtxEquiv (h j))) where
+  sortEquiv := rTypeSliceEquiv
+  opEquiv := Equiv.refl (Fin n)
+  arity_comm := fun _ => rfl
+  result_comm := fun _ => rfl
+
+/-- The signature isomorphism between the primed and legacy curried hole
+summands: `rTypeSliceEquiv` on sorts and the identity on the hole index, with
+the result sort transported by `rTypeSliceEquiv_curried`. -/
+def holeConstSigEquiv (n : Nat) (h : Fin n → List RType' × RType') :
+    SortedSigEquiv (holeConstSig' n h) (holeConstSig n (fun j => identCtxEquiv (h j))) where
+  sortEquiv := rTypeSliceEquiv
+  opEquiv := Equiv.refl (Fin n)
+  arity_comm := fun _ => rfl
+  result_comm := fun j => (rTypeSliceEquiv_curried (h j).1 (h j).2).symm
+
+/-- The signature isomorphism between the primed and legacy base signatures
+of an explicit definition's body: the summand-wise sum of `baseSigEquiv`,
+`holeSigEquiv`, and `holeConstSigEquiv`. -/
+def defnSigEquiv (A : AlgSig) (n : Nat) (h : Fin n → List RType' × RType') :
+    SortedSigEquiv (defnSig' A n h) (defnSig A n (fun j => identCtxEquiv (h j))) :=
+  ((baseSigEquiv A).sum (holeSigEquiv n h) rfl).sum (holeConstSigEquiv n h) rfl
 
 /-- The explicit-definition data as a sigma of its number of holes, hole
 indices, and body. -/
