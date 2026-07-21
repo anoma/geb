@@ -43,6 +43,8 @@ translations `tmSliceEquiv` (Phase B) and `SortedSigEquiv.tmEquiv` (Task C.8).
   endofunctors.
 * `identSliceEquiv` — the identifier bridge equivalence
   `RIdent' A Γ' τ' ≃ RIdent A (Γ'.map rTypeSliceEquiv) (rTypeSliceEquiv τ')`.
+* `RIdent.reindCtx` — the transport of a legacy identifier along a
+  propositional context equality.
 
 ## Main statements
 
@@ -304,6 +306,163 @@ theorem identSliceEquiv_defn {A : AlgSig} {Γ' : List RType'} {τ' : RType'}
       = (polyFixSliceEquiv (identEndo A) (identCtxEquiv (Γ', τ'))).symm
           ((SlicePFunctor.reindex.wEquivFiber identCtxEquiv.symm (toSlice (identEndo A))
             (Γ', τ')).symm ((identEndoIso A).wEquivFiber (Γ', τ') (RIdent'.defn d children))) := rfl
+  rw [h1, key]
+  exact Equiv.symm_apply_apply _ _
+
+/-- The transport of a legacy identifier along a propositional context
+equality. The recurrence formers `RIdent.mrec` / `RIdent.frec` sit at the
+concatenated legacy context, while the bridge equivalence lands at the mapped
+primed context; the two are propositionally equal, and this transport carries
+the former naturality statements across that equality. -/
+def _root_.GebLean.Ramified.RIdent.reindCtx {A : AlgSig} {Γ Δ : List RType} {τ : RType}
+    (h : Γ = Δ) (f : RIdent A Γ τ) : RIdent A Δ τ :=
+  h ▸ f
+
+/-- `RIdent.reindCtx` at a reflexive context equality is the identity. -/
+theorem _root_.GebLean.Ramified.RIdent.reindCtx_rfl {A : AlgSig} {Γ : List RType}
+    {τ : RType} (f : RIdent A Γ τ) : RIdent.reindCtx rfl f = f :=
+  rfl
+
+/-- Context transport does not change the underlying slice tree of the
+initial-algebra comparison: `polyFixSliceEquiv` reads `RIdent.reindCtx` as a
+re-typing of the same tree. -/
+theorem polyFixSliceEquiv_reindCtx {A : AlgSig} {Γ Δ : List RType} {τ : RType}
+    (h : Γ = Δ) (f : RIdent A Γ τ) :
+    (polyFixSliceEquiv (identEndo A) (Δ, τ) (RIdent.reindCtx h f)).1
+      = (polyFixSliceEquiv (identEndo A) (Γ, τ) f).1 := by
+  subst h
+  rfl
+
+/-- The underlying slice tree of the comparison at a context-transported
+monotonic recurrence: the `W.mk` node at the transported index, with the
+context equation absorbed into the `MrecShape` field `hΓ` and the steps
+reduced to their comparison trees. -/
+theorem polyFixSliceEquiv_reindCtx_mrec {A : AlgSig} (params : List RType) (τ : RType)
+    (steps : (i : A.B) → RIdent A (params ++ List.replicate (A.ar i) τ) τ)
+    {Δ : List RType} (h : params ++ [RType.omega τ] = Δ) :
+    (polyFixSliceEquiv (identEndo A) (Δ, τ)
+        (RIdent.reindCtx h (RIdent.mrec params τ steps))).1
+      = SlicePFunctor.W.mk (F := toSlice (identEndo A))
+          ⟨⟨⟨(Δ, τ), Sum.inr (Sum.inl ⟨params, h.symm⟩)⟩,
+            fun i => (polyFixSliceEquiv (identEndo A) _ (steps i)).1⟩,
+            ((toSlice (identEndo A)).toSliceDomPFunctor.compatible_iff
+                (toSlice (identEndo A)).wIndex
+                ⟨(Δ, τ), Sum.inr (Sum.inl ⟨params, h.symm⟩)⟩ _).mpr
+              (fun i => (polyFixSliceEquiv (identEndo A) _ (steps i)).2)⟩ := by
+  subst h
+  rfl
+
+/-- The underlying slice tree of the comparison at a context-transported flat
+recurrence: the `W.mk` node at the transported index, with the context
+equation absorbed into the `FrecShape` field `hΓ` and the clauses reduced to
+their comparison trees. -/
+theorem polyFixSliceEquiv_reindCtx_frec {A : AlgSig} (params : List RType) (τ : RType)
+    (clauses : (i : A.B) → RIdent A (params ++ List.replicate (A.ar i) RType.o) τ)
+    {Δ : List RType} (h : params ++ [RType.o] = Δ) :
+    (polyFixSliceEquiv (identEndo A) (Δ, τ)
+        (RIdent.reindCtx h (RIdent.frec params τ clauses))).1
+      = SlicePFunctor.W.mk (F := toSlice (identEndo A))
+          ⟨⟨⟨(Δ, τ), Sum.inr (Sum.inr ⟨params, h.symm⟩)⟩,
+            fun i => (polyFixSliceEquiv (identEndo A) _ (clauses i)).1⟩,
+            ((toSlice (identEndo A)).toSliceDomPFunctor.compatible_iff
+                (toSlice (identEndo A)).wIndex
+                ⟨(Δ, τ), Sum.inr (Sum.inr ⟨params, h.symm⟩)⟩ _).mpr
+              (fun i => (polyFixSliceEquiv (identEndo A) _ (clauses i)).2)⟩ := by
+  subst h
+  rfl
+
+/-- Former naturality at a monotonic recurrence: the bridge image is the
+legacy monotonic recurrence of the translated data, transported by
+`RIdent.reindCtx` along the context equations `hctx` (at the root) and
+`hstep` (at each step). -/
+theorem identSliceEquiv_mrec {A : AlgSig} (params : List RType') (τ' : RType')
+    (steps : (i : A.B) → RIdent' A (params ++ List.replicate (A.ar i) τ') τ')
+    (hctx : List.map rTypeSliceEquiv params ++ [RType.omega (rTypeSliceEquiv τ')]
+      = List.map rTypeSliceEquiv (params ++ [RType'.omega τ']))
+    (hstep : ∀ i : A.B, List.map rTypeSliceEquiv (params ++ List.replicate (A.ar i) τ')
+      = List.map rTypeSliceEquiv params ++ List.replicate (A.ar i) (rTypeSliceEquiv τ')) :
+    identSliceEquiv (RIdent'.mrec params τ' steps)
+      = RIdent.reindCtx hctx
+          (RIdent.mrec (List.map rTypeSliceEquiv params) (rTypeSliceEquiv τ')
+            (fun i => RIdent.reindCtx (hstep i) (identSliceEquiv (steps i)))) := by
+  have key :
+      (SlicePFunctor.reindex.wEquivFiber identCtxEquiv.symm (toSlice (identEndo A))
+        (params ++ [RType'.omega τ'], τ')).symm
+        ((identEndoIso A).wEquivFiber (params ++ [RType'.omega τ'], τ')
+          (RIdent'.mrec params τ' steps))
+      = polyFixSliceEquiv (identEndo A) (identCtxEquiv (params ++ [RType'.omega τ'], τ'))
+          (RIdent.reindCtx hctx
+            (RIdent.mrec (List.map rTypeSliceEquiv params) (rTypeSliceEquiv τ')
+              (fun i => RIdent.reindCtx (hstep i) (identSliceEquiv (steps i))))) := by
+    apply Subtype.ext
+    change (SlicePFunctor.reindex.wEquiv identCtxEquiv.symm (toSlice (identEndo A))).symm
+        ((identEndoIso A).wMap (RIdent'.mrec params τ' steps).1)
+      = (polyFixSliceEquiv (identEndo A) (identCtxEquiv (params ++ [RType'.omega τ'], τ'))
+          (RIdent.reindCtx hctx
+            (RIdent.mrec (List.map rTypeSliceEquiv params) (rTypeSliceEquiv τ')
+              (fun i => RIdent.reindCtx (hstep i) (identSliceEquiv (steps i)))))).1
+    refine Eq.trans ?_ (polyFixSliceEquiv_reindCtx_mrec _ _ _ hctx).symm
+    rw [RIdent'.val_mrec, SlicePFunctor.Iso.wMap_mk]
+    apply Subtype.ext
+    refine congrArg (WType.mk _) ?_
+    funext i
+    exact ((congrArg Subtype.val (polyFixSliceEquiv_reindCtx (hstep i)
+      (identSliceEquiv (steps i)))).trans (identSliceEquiv_apply_val (steps i))).symm
+  have h1 : identSliceEquiv (RIdent'.mrec params τ' steps)
+      = (polyFixSliceEquiv (identEndo A)
+          (identCtxEquiv (params ++ [RType'.omega τ'], τ'))).symm
+          ((SlicePFunctor.reindex.wEquivFiber identCtxEquiv.symm (toSlice (identEndo A))
+            (params ++ [RType'.omega τ'], τ')).symm
+            ((identEndoIso A).wEquivFiber (params ++ [RType'.omega τ'], τ')
+              (RIdent'.mrec params τ' steps))) := rfl
+  rw [h1, key]
+  exact Equiv.symm_apply_apply _ _
+
+/-- Former naturality at a flat recurrence: the bridge image is the legacy
+flat recurrence of the translated data, transported by `RIdent.reindCtx`
+along the context equations `hctx` (at the root) and `hstep` (at each
+clause). -/
+theorem identSliceEquiv_frec {A : AlgSig} (params : List RType') (τ' : RType')
+    (clauses : (i : A.B) → RIdent' A (params ++ List.replicate (A.ar i) RType'.o) τ')
+    (hctx : List.map rTypeSliceEquiv params ++ [RType.o]
+      = List.map rTypeSliceEquiv (params ++ [RType'.o]))
+    (hstep : ∀ i : A.B,
+      List.map rTypeSliceEquiv (params ++ List.replicate (A.ar i) RType'.o)
+        = List.map rTypeSliceEquiv params ++ List.replicate (A.ar i) RType.o) :
+    identSliceEquiv (RIdent'.frec params τ' clauses)
+      = RIdent.reindCtx hctx
+          (RIdent.frec (List.map rTypeSliceEquiv params) (rTypeSliceEquiv τ')
+            (fun i => RIdent.reindCtx (hstep i) (identSliceEquiv (clauses i)))) := by
+  have key :
+      (SlicePFunctor.reindex.wEquivFiber identCtxEquiv.symm (toSlice (identEndo A))
+        (params ++ [RType'.o], τ')).symm
+        ((identEndoIso A).wEquivFiber (params ++ [RType'.o], τ')
+          (RIdent'.frec params τ' clauses))
+      = polyFixSliceEquiv (identEndo A) (identCtxEquiv (params ++ [RType'.o], τ'))
+          (RIdent.reindCtx hctx
+            (RIdent.frec (List.map rTypeSliceEquiv params) (rTypeSliceEquiv τ')
+              (fun i => RIdent.reindCtx (hstep i) (identSliceEquiv (clauses i))))) := by
+    apply Subtype.ext
+    change (SlicePFunctor.reindex.wEquiv identCtxEquiv.symm (toSlice (identEndo A))).symm
+        ((identEndoIso A).wMap (RIdent'.frec params τ' clauses).1)
+      = (polyFixSliceEquiv (identEndo A) (identCtxEquiv (params ++ [RType'.o], τ'))
+          (RIdent.reindCtx hctx
+            (RIdent.frec (List.map rTypeSliceEquiv params) (rTypeSliceEquiv τ')
+              (fun i => RIdent.reindCtx (hstep i) (identSliceEquiv (clauses i)))))).1
+    refine Eq.trans ?_ (polyFixSliceEquiv_reindCtx_frec _ _ _ hctx).symm
+    rw [RIdent'.val_frec, SlicePFunctor.Iso.wMap_mk]
+    apply Subtype.ext
+    refine congrArg (WType.mk _) ?_
+    funext i
+    exact ((congrArg Subtype.val (polyFixSliceEquiv_reindCtx (hstep i)
+      (identSliceEquiv (clauses i)))).trans (identSliceEquiv_apply_val (clauses i))).symm
+  have h1 : identSliceEquiv (RIdent'.frec params τ' clauses)
+      = (polyFixSliceEquiv (identEndo A)
+          (identCtxEquiv (params ++ [RType'.o], τ'))).symm
+          ((SlicePFunctor.reindex.wEquivFiber identCtxEquiv.symm (toSlice (identEndo A))
+            (params ++ [RType'.o], τ')).symm
+            ((identEndoIso A).wEquivFiber (params ++ [RType'.o], τ')
+              (RIdent'.frec params τ' clauses))) := rfl
   rw [h1, key]
   exact Equiv.symm_apply_apply _ _
 

@@ -6,8 +6,9 @@ import GebLean.Ramified.Polynomial.IdentEquiv
 
 Executable checks over the `1 + X` word algebra `natAlgSig` that the bridge
 equivalence `identSliceEquiv` carries the Task C.10 sample identifiers
-(`idZero'`, `idVar'`, `pred'`) to the legacy schema formers of the translated
-data, through the former-naturality lemmas `identSliceEquiv_defn` and
+(`idZero'`, `idVar'`, `pred'`) and the monotonic recurrence `mrecSample'` to
+the legacy schema formers of the translated data, through the
+former-naturality lemmas `identSliceEquiv_defn`, `identSliceEquiv_mrec`, and
 `identSliceEquiv_frec`, and that it round-trips with its inverse.
 -/
 
@@ -43,6 +44,11 @@ def predClauses : (i : A.B) → RIdent' A ([] ++ List.replicate (A.ar i) RType'.
 def pred' : RIdent' A [RType'.o] RType'.o :=
   RIdent'.frec [] RType'.o predClauses
 
+/-- A monotonic recurrence sample: the flat-recurrence clauses reused as
+steps at `τ' = o`. -/
+def mrecSample' : RIdent' A [RType'.omega RType'.o] RType'.o :=
+  RIdent'.mrec [] RType'.o predClauses
+
 -- The image of `idZero'` is the legacy explicit definition of the translated
 -- data, with the (empty) children carried through the equivalence.
 example :
@@ -60,5 +66,30 @@ example : identSliceEquiv.symm (identSliceEquiv idZero') = idZero' :=
 
 example : identSliceEquiv.symm (identSliceEquiv pred') = pred' :=
   Equiv.symm_apply_apply _ _
+
+example : identSliceEquiv.symm (identSliceEquiv mrecSample') = mrecSample' :=
+  Equiv.symm_apply_apply _ _
+
+-- The image of the monotonic-recurrence sample is the context-transported
+-- legacy monotonic recurrence of the translated data.
+example :
+    identSliceEquiv mrecSample'
+      = RIdent.reindCtx
+          (by simp)
+          (RIdent.mrec (List.map rTypeSliceEquiv []) (rTypeSliceEquiv RType'.o)
+            (fun i => RIdent.reindCtx (by simp)
+              (identSliceEquiv (predClauses i)))) :=
+  identSliceEquiv_mrec [] RType'.o predClauses _ _
+
+-- The image of `pred'` is the context-transported legacy flat recurrence of
+-- the translated data.
+example :
+    identSliceEquiv pred'
+      = RIdent.reindCtx
+          (by simp)
+          (RIdent.frec (List.map rTypeSliceEquiv []) (rTypeSliceEquiv RType'.o)
+            (fun i => RIdent.reindCtx (by simp)
+              (identSliceEquiv (predClauses i)))) :=
+  identSliceEquiv_frec [] RType'.o predClauses _ _
 
 end GebLeanTests.Ramified.Polynomial.IdentEquivTest
