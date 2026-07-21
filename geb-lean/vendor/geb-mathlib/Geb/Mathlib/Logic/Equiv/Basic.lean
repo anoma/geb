@@ -26,6 +26,9 @@ unresolved elements.
   the two families at independent universes.
 * `sigmaCompEquivSigmaFiber` — group a sigma over a composite family by
   the fibers of the inner function.
+* `sigmaSubtypeEquiv` — commute a sigma with a fiberwise subtype.
+* `arrowPEmptyEquiv` — the empty-valued function types across
+  universes are equivalent.
 * `arrowSumEquivSigma` — a function into a sum type is a classifier
   into `X ⊕ PUnit` together with an assignment on the classifier's
   unresolved (right-classified) elements.
@@ -87,6 +90,25 @@ def sigmaCompEquivSigmaFiber.{w} {X : Type u} {B : Type v}
   right_inv q :=
     match q with
     | ⟨_, ⟨_, rfl⟩, _⟩ => rfl
+
+/-- Commute a sigma with a fiberwise subtype: a dependent pair whose
+second component is constrained is a constrained dependent pair. -/
+def sigmaSubtypeEquiv.{p, q} {A : Type p} (N : A → Type q)
+    (P : (a : A) → N a → Prop) :
+    (Σ a, {n : N a // P a n}) ≃ {z : Σ a, N a // P z.1 z.2} :=
+  { toFun := fun x ↦ ⟨⟨x.1, x.2.1⟩, x.2.2⟩,
+    invFun := fun z ↦ ⟨z.1.1, ⟨z.1.2, z.2⟩⟩,
+    left_inv := fun _ ↦ rfl,
+    right_inv := fun _ ↦ rfl }
+
+/-- The equivalence of empty-valued function types across universes:
+each direction composes with the elimination out of `PEmpty`. -/
+def arrowPEmptyEquiv.{p, q, r} (B : Type r) :
+    (B → PEmpty.{p + 1}) ≃ (B → PEmpty.{q + 1}) :=
+  { toFun := fun e b ↦ (e b).elim,
+    invFun := fun g b ↦ (g b).elim,
+    left_inv := fun e ↦ funext (fun b ↦ (e b).elim),
+    right_inv := fun g ↦ funext (fun g' ↦ (g g').elim) }
 
 /-- The type of classifiers of `B` over `X`: functions
 `B → X ⊕ PUnit` marking each element of `B` as resolved (carrying a
