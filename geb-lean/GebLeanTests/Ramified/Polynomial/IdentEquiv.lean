@@ -92,4 +92,36 @@ example :
               (identSliceEquiv (predClauses i)))) :=
   identSliceEquiv_frec [] RType'.o predClauses _ _
 
+-- The denotation of the projection identifier agrees across the bridge: the
+-- legacy denotation of the translated identifier, at the pushed-forward
+-- environment, is the carrier-bridge image of the primed denotation, which
+-- reads the environment at position `0`.
+example (ρ' : ∀ i : Fin [RType'.o].length, RType'.interp (FreeAlg' A) ([RType'.o].get i)) :
+    (identSliceEquiv idVar').interp (envSlice A [RType'.o] ρ')
+      = carrierSliceEquiv A RType'.o (ρ' 0) := by
+  rw [identSliceEquiv_interp]
+  refine congrArg (carrierSliceEquiv A RType'.o) ?_
+  unfold idVar'
+  rw [RIdent'.interp_defn]
+  exact Tm'.eval_var _ _ _
+
+-- The denotation of the flat-recurrence sample agrees across the bridge.
+example (ρ' : ∀ i : Fin ([] ++ [RType'.o]).length,
+      RType'.interp (FreeAlg' A) (([] ++ [RType'.o]).get i)) :
+    (identSliceEquiv pred').interp (envSlice A ([] ++ [RType'.o]) ρ')
+      = carrierSliceEquiv A RType'.o (pred'.interp ρ') :=
+  identSliceEquiv_interp pred' ρ'
+
+-- The currying of a denotation agrees across the bridge at the empty context.
+example (g' : (∀ i : Fin ([] : List RType').length,
+      RType'.interp (FreeAlg' A) (([] : List RType').get i)) → RType'.interp (FreeAlg' A) RType'.o)
+    (g : (∀ i : Fin (List.map rTypeSliceEquiv ([] : List RType')).length,
+        RType.interp (FreeAlg A) ((List.map rTypeSliceEquiv ([] : List RType')).get i)) →
+      RType.interp (FreeAlg A) (rTypeSliceEquiv RType'.o))
+    (hg : ∀ ρ', g (envSlice A [] ρ') = carrierSliceEquiv A RType'.o (g' ρ')) :
+    curryInterp A (List.map rTypeSliceEquiv []) (rTypeSliceEquiv RType'.o) g
+      = cast (congrArg (RType.interp (FreeAlg A)) (rTypeSliceEquiv_curried [] RType'.o))
+          (carrierSliceEquiv A (RType'.curried [] RType'.o) (curryInterp' A [] RType'.o g')) :=
+  curryInterp'_agree A [] RType'.o g' g hg
+
 end GebLeanTests.Ramified.Polynomial.IdentEquivTest
