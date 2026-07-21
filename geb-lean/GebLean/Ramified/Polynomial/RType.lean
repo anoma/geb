@@ -27,6 +27,8 @@ across `rTypeSliceEquiv`.
 * `RType'.shape` — the top constructor shape, native via `W.dest`.
 * `RType'.IsObj` — the object-sort predicate, shape-based.
 * `RType'.interp` — the denotation over a carrier, native via `W.elim`.
+* `carrierSliceEquiv` — the carrier bridge: the equivalence between the primed
+  and legacy denotations at a translated r-type.
 * `RType'.IsTower`, `RType'.IsSimple` — the tower- and simple-sort
   predicates, native via `W.RecProp`.
 * `RType'.objTarget`, `RType'.domains` — the object target and domain
@@ -45,6 +47,11 @@ across `rTypeSliceEquiv`.
   `rTypeSliceEquiv_omegaShift`, `rTypeSliceEquiv_ord`, `rTypeSliceEquiv_tower` —
   the operation compatibility lemmas, each stating agreement with the
   legacy operation across `rTypeSliceEquiv`.
+* `RType'.interp_isObj` — every object sort denotes a copy of the carrier.
+* `freeAlgSliceEquiv_recurse` — the primed recurrence agrees with the legacy
+  recurrence across the bridge.
+* `carrierSliceEquiv_isObj` — the carrier bridge at an object sort computes to
+  the free-algebra bridge equivalence.
 
 ## References
 
@@ -404,5 +411,70 @@ def RType'.interp (carrier : Type) (t : RType') : Type :=
   · rfl
   · exact congrArg₂ (fun a b => a → b) (ih ⟨0, by decide⟩) (ih ⟨1, by decide⟩)
   · rfl
+
+/-- The denotation of an object sort is a copy of the carrier (Leivant III
+section 2.7): for any `t` with `t.IsObj`, `RType'.interp C t = C`. Mirror of
+the legacy `RType.interp_isObj`. -/
+theorem RType'.interp_isObj (C : Type) {t : RType'} (h : t.IsObj) :
+    RType'.interp C t = C := by
+  refine FreeAlg'.induction
+    (motive := fun t => RType'.IsObj t → RType'.interp C t = C) (fun b sub _ h => ?_) t h
+  simp only [RType'.IsObj, RType'.shape_mk] at h
+  simp only [RType'.interp, FreeAlg'.mk]
+  rw [SlicePFunctor.W.elim_mk]
+  cases b
+  · rfl
+  · rcases h with h | h <;> exact absurd h (by decide)
+  · rfl
+
+/-- The primed paramorphism `FreeAlg'.recurse` agrees with the legacy
+`FreeAlg.recurse` across the bridge equivalence (Leivant III section 2.1):
+running the primed recurrence on `x` with a legacy step function `g` — whose
+subterm reads on the primed side are pushed forward by `freeAlgSliceEquiv A`
+— equals running the legacy recurrence on the image `freeAlgSliceEquiv A x`.
+By `FreeAlg'.induction` with the reduction rules of both recurrences at a
+constructor node and `mk`-naturality of `freeAlgSliceEquiv`. -/
+theorem freeAlgSliceEquiv_recurse {A : AlgSig} {P C : Type}
+    (g : (b : A.B) → P → (Fin (A.ar b) → FreeAlg A) → (Fin (A.ar b) → C) → C)
+    (p : P) (x : FreeAlg' A) :
+    FreeAlg'.recurse
+        (fun b q sub rec => g b q (fun e => freeAlgSliceEquiv A (sub e)) rec) p x
+      = FreeAlg.recurse g p (freeAlgSliceEquiv A x) := by
+  refine FreeAlg'.induction
+    (motive := fun x =>
+      FreeAlg'.recurse
+          (fun b q sub rec => g b q (fun e => freeAlgSliceEquiv A (sub e)) rec) p x
+        = FreeAlg.recurse g p (freeAlgSliceEquiv A x))
+    (fun b sub ih => ?_) x
+  dsimp only
+  rw [FreeAlg'.recurse_mk, freeAlgSliceEquiv_mk, FreeAlg.recurse_mk]
+  exact congrArg (g b p (fun e => freeAlgSliceEquiv A (sub e))) (funext ih)
+
+/-- The carrier bridge (Leivant III section 2.7): the equivalence between the
+primed denotation `RType'.interp (FreeAlg' A) t'` and the legacy denotation
+`RType.interp (FreeAlg A)` at the translated r-type. The composite of the
+denotation-agreement cast `rTypeSliceEquiv_interp` with the denotation
+congruence `RType.interpCongr` along the free-algebra bridge equivalence
+`freeAlgSliceEquiv`. The single named carrier bridge for the identifier
+interp-agreement proofs. -/
+def carrierSliceEquiv (A : AlgSig) (t' : RType') :
+    RType'.interp (FreeAlg' A) t' ≃ RType.interp (FreeAlg A) (rTypeSliceEquiv t') :=
+  (Equiv.cast (rTypeSliceEquiv_interp (FreeAlg' A) t')).trans
+    (RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv t'))
+
+/-- At an object sort the carrier bridge computes to the free-algebra bridge
+equivalence, read through the object-sort denotation equalities (Leivant III
+section 2.7): for `t'.IsObj`, `carrierSliceEquiv A t'` transports to
+`freeAlgSliceEquiv A`. By `RType.interpCongr_isObj` together with the
+composition of the denotation casts. -/
+theorem carrierSliceEquiv_isObj {A : AlgSig} {t' : RType'} (h : t'.IsObj)
+    (x : RType'.interp (FreeAlg' A) t') :
+    cast (RType.interp_isObj (FreeAlg A) (cast (rTypeSliceEquiv_isObj t') h))
+        (carrierSliceEquiv A t' x)
+      = freeAlgSliceEquiv A (cast (RType'.interp_isObj (FreeAlg' A) h) x) := by
+  simp only [carrierSliceEquiv, Equiv.trans_apply, Equiv.cast_apply]
+  rw [RType.interpCongr_isObj (freeAlgSliceEquiv A) (cast (rTypeSliceEquiv_isObj t') h)]
+  congr 1
+  simp only [cast_cast]
 
 end GebLean.Ramified.Polynomial

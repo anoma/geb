@@ -75,4 +75,32 @@ example : (nodeWithLeaves.bind pureSubst).bind pureSubst =
     nodeWithLeaves.bind (fun j a => (pureSubst j a).bind pureSubst) :=
   FreeM.bind_assoc nodeWithLeaves pureSubst pureSubst
 
+/-- A constant carrier family: `Nat` at every index. -/
+abbrev natCarrier : PUnit → Type := fun _ => Nat
+
+/-- The leaf case of a node-counting fold: every leaf counts as one. -/
+abbrev countLeaf : ∀ i : PUnit, { y : Bool // SliceWTranslateTest.v y = i } → natCarrier i :=
+  fun _ _ => 1
+
+/-- The node case of a node-counting fold: one more than the child count at
+the toy functor's unary shape, zero at its nullary shape. -/
+abbrev countNode : ∀ a : SliceWIsoTest.F.A,
+    (∀ b : SliceWIsoTest.F.B a, natCarrier (SliceWIsoTest.F.rCurried a b)) →
+      natCarrier (SliceWIsoTest.F.q a) :=
+  fun a ih => match a with
+    | true => ih () + 1
+    | false => 0
+
+/-- Folding `pureLeaf` counts its single leaf, by `elim_pure`. -/
+example : FreeM.elim natCarrier countLeaf countNode pureLeaf = 1 :=
+  FreeM.elim_pure natCarrier countLeaf countNode ⟨true, rfl⟩
+
+/-- Folding `nodeWithLeaves` counts its one node plus its one leaf, by
+`elim_node` then `elim_pure` on the child. No kernel reduction of trees. -/
+example : FreeM.elim natCarrier countLeaf countNode nodeWithLeaves = 2 := by
+  have hleaf : FreeM.elim natCarrier countLeaf countNode pureLeaf = 1 :=
+    FreeM.elim_pure natCarrier countLeaf countNode ⟨true, rfl⟩
+  rw [nodeWithLeaves, FreeM.elim_node]
+  simp only [hleaf]
+
 end SliceWFreeMTest

@@ -48,4 +48,33 @@ example : RType'.IsSimple (RType'.arrow RType'.o RType'.o) := by
   rw [rTypeSliceEquiv_isSimple, rTypeSliceEquiv_arrow, rTypeSliceEquiv_o]
   decide
 
+-- The primed paramorphism agrees with the legacy one across the bridge, with
+-- the legacy step reading the subterms as images of the primed ones.
+example
+    (g : (b : natAlgSig.B) → Unit → (Fin (natAlgSig.ar b) → FreeAlg natAlgSig) →
+      (Fin (natAlgSig.ar b) → Nat) → Nat)
+    (x : FreeAlg' natAlgSig) :
+    FreeAlg'.recurse
+        (fun b q sub rec => g b q (fun e => freeAlgSliceEquiv natAlgSig (sub e)) rec) () x
+      = FreeAlg.recurse g () (freeAlgSliceEquiv natAlgSig x) :=
+  freeAlgSliceEquiv_recurse g () x
+
+-- The denotation of an object sort is a copy of the carrier.
+example : RType'.interp Nat RType'.o = Nat :=
+  RType'.interp_isObj Nat (Or.inl (RType'.shape_mk RTypeShape.o Fin.elim0))
+
+-- The carrier bridge is the interp cast followed by the denotation congruence.
+example :
+    carrierSliceEquiv natAlgSig RType'.o
+      = (Equiv.cast (rTypeSliceEquiv_interp (FreeAlg' natAlgSig) RType'.o)).trans
+          (RType.interpCongr (freeAlgSliceEquiv natAlgSig) (rTypeSliceEquiv RType'.o)) :=
+  rfl
+
+-- At an object sort the carrier bridge computes to `freeAlgSliceEquiv`.
+example (hObj : RType'.o.IsObj) (x : RType'.interp (FreeAlg' natAlgSig) RType'.o) :
+    cast (RType.interp_isObj (FreeAlg natAlgSig) (cast (rTypeSliceEquiv_isObj RType'.o) hObj))
+        (carrierSliceEquiv natAlgSig RType'.o x)
+      = freeAlgSliceEquiv natAlgSig (cast (RType'.interp_isObj (FreeAlg' natAlgSig) hObj) x) :=
+  carrierSliceEquiv_isObj hObj x
+
 end GebLeanTests.Ramified.Polynomial.RType

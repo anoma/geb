@@ -8,10 +8,11 @@ import GebLean.Ramified.HigherOrder
 import GebLean.Ramified.OmegaShift
 import GebLean.Ramified.Examples
 import GebLean.Ramified.Algebras
-import GebLean.Ramified.FirstOrder
 import GebLean.Ramified.Definability
 import GebLean.Ramified.Soundness
 import GebLean.Ramified.Characterization
+import GebLean.Ramified.SigEquiv
+import GebLean.Ramified.PresentationEquiv
 import GebLean.Ramified.Polynomial
 
 /-!
@@ -41,11 +42,11 @@ word algebra `natAlgSig`, the polyadic binary-word algebra
 recurrence at each, the numeric equivalence
 `natFreeAlgEquiv : FreeAlg natAlgSig ≃ ℕ`, and the signature morphisms
 `AlgSigHom` with their carrier transport `freeAlgMap` and image-point
-naturality (`Algebras`). Phase 4 carves out the first-order sub-theories: the
-tower-sort predicate `RType.IsTower`, the first-order identifier predicate
-`RIdent.FirstOrder`, the sub-theory presentation `firstOrderPresentation` (its
-identifier summands restricted to the `FirstOrder` subtype), and the inclusion
-functor `foInclusion` into the host `RMRecCat` (`FirstOrder`). Phase 5 opens the
+naturality (`Algebras`). Phase 4 carves out the first-order sub-theories on the
+polynomial stack: the first-order identifier predicate `RIdent'.FirstOrder`, the
+sub-theory presentation `firstOrderPresentation` (its identifier summands
+restricted to the `FirstOrder` subtype), and the inclusion functor `foInclusion`
+into the host `RMRecCat'` (`Polynomial/FirstOrder`). Phase 5 opens the
 definability development (`Definability`): the case function `ramCase`, the destructor
 `ramDstr`, and the selector `chooseIdent`, the building blocks of Leivant III's Lemma 2
 reduction of simultaneous recurrence to plain recurrence. Phase 6 packages the
@@ -55,6 +56,14 @@ soundness direction (`Soundness`): the first-order syntactic category
 (`Characterization`): the definability statement `ramified_definability` over
 the collapse denotation, paired with the collapse functor's faithfulness as
 the denotational form of Leivant III's Theorem 14 items (1)-(2).
+
+The generic transport layer for relating two presentations of the same theory
+is `SigEquiv` — sorted-signature isomorphisms `SortedSigEquiv` with the term
+translation `tmMap` and its equivalence packaging `tmEquiv` — and
+`PresentationEquiv`, which adds a carrier equivalence commuting with the
+operation interpretations and delivers the induced equivalence `synCatEquiv`
+of syntactic categories. `Polynomial` reimplements the whole development on
+the vendored `SlicePFunctor` stack and connects it back by that layer.
 
 ## References
 

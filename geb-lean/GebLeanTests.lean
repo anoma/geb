@@ -35,6 +35,7 @@ import GebLeanTests.PolyBridge.FreeMEquiv
 import GebLeanTests.Ramified
 import GebLeanTests.SliceW.FreeM
 import GebLeanTests.SliceW.Iso
+import GebLeanTests.SliceW.Reindex
 import GebLeanTests.SliceW.Translate
 import GebLeanTests.Utilities.ERAMajorants
 import GebLeanTests.Utilities.ERArith

@@ -20,4 +20,10 @@ example : freeAlgToNat' (natToFreeAlg' 3) = 3 := by simp
 
 example : natFreeAlgEquiv' (natToFreeAlg' 3) = 3 := by simp
 
+-- The transported equivalence is definitionally the named composite.
+example :
+    natFreeAlgEquiv'
+      = (freeAlgSliceEquiv GebLean.Ramified.natAlgSig).trans GebLean.Ramified.natFreeAlgEquiv :=
+  natFreeAlgEquiv'_slice
+
 end GebLeanTests.Ramified.Polynomial.FreeAlg

@@ -209,6 +209,22 @@ present repository.** Listed here so the work is not lost.
   inductive-type machinery. Deferred so the replacement is
   carried out atop Geb-native polynomial-functor foundations
   rather than the current Lean encoding.
+- **slicew-promotion**: port the `GebLean/SliceW` library —
+  the modules that depend only on the vendored `Geb.Mathlib`
+  tree, mathlib, or CSLib and are written to geb-mathlib
+  standards — into `geb-mathlib` itself, then refresh this
+  repository's vendored tree and replace the `GebLean/SliceW`
+  originals with the vendored copies. The eligible modules
+  are `GebLean/SliceW.lean` (index) and
+  `GebLean/SliceW/{Translate,Iso,FreeM,Reindex}.lean` with
+  their `GebLeanTests/SliceW/` mirrors (`Reindex.lean` and
+  the `FreeM.elim` extension of `FreeM.lean` are added by the
+  ramified-polynomial Phase C branch
+  `feat/ramified-poly-er`). At promotion time, apply the
+  residue recorded by the Phase B whole-branch review: mark
+  the four `Iso` transport helper theorems `private`, and
+  re-check the `uY`-first universe declaration order in
+  `Translate.lean` against the vendored convention.
 - **poly-presheaf-ccc**: generalise the polynomial-functor
   category `PolyFunctorBetweenCat` from slice categories
   `Over X` to presheaf categories `PSh(D)` via parametric

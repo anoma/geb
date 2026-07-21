@@ -240,6 +240,14 @@ existence and combinators:
   `polyFixSliceEquiv` with `Iso.wEquivFiber`; its transport, `pure`,
   `node`, and `bind` naturality lemmas relate the legacy free monad's
   operations to the slice free monad's.
+- [`GebLean/Ramified/Polynomial/`](../../GebLean/Ramified/Polynomial.lean)
+  — the consumer of this bridge: the ramified-recurrence layer
+  rebuilt on the vendored slice-functor stack, from the free algebra
+  `FreeAlg'` and the ramified types `RType'` up to the syntactic
+  category `RMRecCat'`, its equivalence `rmRecCatSliceEquiv` with the
+  legacy `RMRecCat`, and the elementary characterization
+  `ramified_definability'` transferred across that equivalence. See
+  [ramified recurrence and the elementary characterization](ramified-recurrence.md).
 
 ### Polynomial presentations and copresheaf cover
 

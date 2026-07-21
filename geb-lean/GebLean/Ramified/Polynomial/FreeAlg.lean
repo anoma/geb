@@ -50,6 +50,8 @@ numeric carrier of `natAlgSig` transports along it.
 * `freeAlgSliceEquiv_natToFreeAlg'`, `natFreeAlgEquiv'_natToFreeAlg'` — the
   native numeral encoding agrees with the legacy one across the bridge, and
   with the transported equivalence `natFreeAlgEquiv'`.
+* `natFreeAlgEquiv'_slice` — `natFreeAlgEquiv'` is the composite of
+  `freeAlgSliceEquiv` with the legacy `natFreeAlgEquiv`.
 
 ## References
 
@@ -227,6 +229,12 @@ computable equivalence `FreeAlg' natAlgSig ≃ ℕ`, transporting the legacy
 equivalence `freeAlgSliceEquiv`. -/
 def natFreeAlgEquiv' : FreeAlg' natAlgSig ≃ ℕ :=
   (freeAlgSliceEquiv natAlgSig).trans natFreeAlgEquiv
+
+/-- The transported equivalence `natFreeAlgEquiv'` is definitionally the
+composite of the bridge equivalence `freeAlgSliceEquiv` with the legacy
+`natFreeAlgEquiv`; names the fact for the `objToNat` correspondence. -/
+theorem natFreeAlgEquiv'_slice :
+    natFreeAlgEquiv' = (freeAlgSliceEquiv natAlgSig).trans natFreeAlgEquiv := rfl
 
 /-- The transported equivalence `natFreeAlgEquiv'` agrees with the native
 encoding `natToFreeAlg'` on the naturals, by `freeAlgSliceEquiv_natToFreeAlg'`
