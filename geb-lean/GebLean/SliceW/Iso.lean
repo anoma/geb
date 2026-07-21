@@ -4,14 +4,14 @@ import Mathlib.Logic.Equiv.Defs
 /-!
 # Isomorphisms of slice polynomial functors and W-type transport
 
-An isomorphism `SlicePFunctor.Iso F G` of slice endofunctors over `I` is a
+An isomorphism `SlicePFunctor.Iso F G` of slice functors from `D` to `C` is a
 container isomorphism: a shape equivalence `F.A ≃ G.A`, a fibrewise position
 equivalence `F.B a ≃ G.B (shapeEquiv a)`, and the compatibility of the
-shape-output and direction-input maps. Such an isomorphism induces an
-equivalence of the associated W-types (initial algebras), fibrewise over `I`.
-The transport `wMap` is a single slice-W eliminator; the inverse is the
-`wMap` of the reversed isomorphism, and the two round trips are structural
-inductions.
+shape-output and direction-input maps. For endofunctors, such an isomorphism
+induces an equivalence of the associated W-types (initial algebras), fibrewise
+over the shared (co)domain.  The transport `wMap` is a single slice-W
+eliminator; the inverse is the `wMap` of the reversed isomorphism, and the two
+round trips are structural inductions.
 
 ## Main definitions
 
@@ -55,12 +55,12 @@ category, PFunctor
 
 namespace SlicePFunctor
 
-universe uA uB uI
+universe uA uB uD uC
 
-/-- A container isomorphism of slice endofunctors over `I`: a shape
+/-- A container isomorphism of slice functors `D` to `C`: a shape
 equivalence, a fibrewise position equivalence, and the compatibility of the
 shape-output map `q` and the direction-input map `r`. -/
-structure Iso {I : Type uI} (F G : SlicePFunctor.{uA, uB, uI, uI} I I) where
+structure Iso {D : Type uD} {C : Type uC} (F G : SlicePFunctor.{uA, uB, uD, uC} D C) where
   /-- The equivalence of shapes. -/
   shapeEquiv : F.A ≃ G.A
   /-- The fibrewise equivalence of positions, over each shape. -/
@@ -73,7 +73,7 @@ structure Iso {I : Type uI} (F G : SlicePFunctor.{uA, uB, uI, uI} I I) where
 
 namespace Iso
 
-variable {I : Type uI} {F G : SlicePFunctor.{uA, uB, uI, uI} I I}
+variable {D : Type uD} {C : Type uC} {F G : SlicePFunctor.{uA, uB, uD, uC} D C}
 
 /-- The reversed isomorphism. The position field at `a'` reverses the forward
 position equivalence at `shapeEquiv.symm a'` and re-types its domain from
@@ -97,7 +97,8 @@ theorem posEquiv_heq_cast (e : Iso F G) {a₀ a : F.A} (h : a₀ = a) (b : F.B a
   subst h
   rfl
 
-/-- The reversed position equivalence washes out its cast under `HEq`. -/
+/-- The reversed position equivalence is a position equivalence in the
+reversed direction. -/
 theorem symm_posEquiv_symm_heq (e : Iso F G) (a' : G.A)
     (b' : F.B (e.shapeEquiv.symm a')) :
     (e.symm.posEquiv a').symm b' ≍ e.posEquiv (e.shapeEquiv.symm a') b' := by
@@ -125,6 +126,14 @@ theorem posEquiv_symm_comp' (e : Iso F G) (a' : G.A)
   apply eq_of_heq
   exact ((symm_posEquiv_symm_heq e a' ((e.posEquiv (e.shapeEquiv.symm a')).symm b'')).trans
     (heq_of_eq (Equiv.apply_symm_apply _ b''))).trans (cast_heq _ b'').symm
+
+end Iso
+
+namespace Iso
+
+universe uI
+
+variable {I : Type uI} {F G : SlicePFunctor.{uA, uB, uI, uI} I I}
 
 /-- The map on W-types induced by an isomorphism, a single slice-W eliminator
 into the algebra `(G.W, G.wIndex)`: each node re-indexes its shape by
