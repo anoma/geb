@@ -39,7 +39,8 @@ the identity on the underlying tree, with admissibility transferred by the
 `Prop`-valued inductions `reindex_wValid` / `reindex_wValid_symm`. `wEquiv`'s
 round trips are consequently `Subtype.ext rfl`, with no induction needed at
 that level; `wEquivFiber` reuses `wEquiv` and the index law
-`reindex.wIndex_wEquiv_symm`, oriented through `Equiv.symm_apply_eq`.
+`reindex.wIndex_wEquiv_symm`, whose orientation is fixed by
+`Equiv.apply_symm_apply` and `Equiv.symm_apply_apply`.
 
 ## References
 

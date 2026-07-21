@@ -55,7 +55,8 @@ D. Leivant, "Ramified recurrence and computational complexity III: Higher
 type recurrence and elementary complexity", Annals of Pure and Applied Logic
 96 (1999) 209-229, DOI `10.1016/S0168-0072(98)00040-2`. The schema of
 higher-type identifiers -- explicit definitions, ramified monotonic
-recurrence (eq. (4)), and flat recurrence (eq. (5)) -- is section 2.3; every
+recurrence (eq. (4)), and flat recurrence (eq. (5)) -- is section 2.3; the
+free-algebra data-system conventions it is built over are section 2.1; every
 object sort denotes a copy of the base carrier in section 2.7. The
 data-types-a-la-carte factoring follows W. Swierstra, "Data types a la
 carte", Journal of Functional Programming 18 (2008) 423-436, DOI

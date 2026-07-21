@@ -19,11 +19,13 @@ identifier summands restricted to the `FirstOrder` subtype), and `foInclusion` i
 the inclusion functor of the sub-theory's syntactic category into the host
 `RMRecCat'`.
 
-The inclusion is a genuine functor: it keeps the same algebra and standard model,
-so the restricted operations map onto the identical host operations,
-interpretations agree on the nose (`foTm_eval`), and well-definedness on the
-quotient is immediate: A-equal restricted terms are A-equal host terms, since
-both sides denote in the same standard model.
+The inclusion is a genuine functor: unlike the algebra-transport of
+`GebLean/Ramified/Algebras.lean`, which changes the base algebra and so does not
+descend to the interpretative quotient, the first-order inclusion keeps the same
+algebra and standard model. The restricted operations map onto the identical host
+operations, interpretations agree on the nose (`foTm_eval`), and
+well-definedness on the quotient is immediate: A-equal restricted terms are
+A-equal host terms, since both sides denote in the same standard model.
 
 In the tier-vector notation of Danner, Leivant, Marion, and others (DLMZ; DOI
 `10.4204/EPTCS.23.4`, adopted for prose exposition only), a first-order

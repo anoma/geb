@@ -121,12 +121,11 @@ name under `GebLeanTests/Ramified/`. The directory index is
   FreeAlg natAlgSig ≃ ℕ`, and the signature morphisms `AlgSigHom`
   with their carrier transport `freeAlgMap` and image-point
   naturality.
-- The first-order sub-theory — the identifier predicate
-  `RIdent'.FirstOrder`, the sub-theory presentation
-  `firstOrderPresentation`, and the inclusion functor `foInclusion`
-  into the host `RMRecCat'` — lives on the polynomial-functor stack,
+- The first-order sub-theory lives on the polynomial-functor stack,
   in
-  [`GebLean/Ramified/Polynomial/FirstOrder.lean`](../../GebLean/Ramified/Polynomial/FirstOrder.lean).
+  [`GebLean/Ramified/Polynomial/FirstOrder.lean`](../../GebLean/Ramified/Polynomial/FirstOrder.lean);
+  see the inventory entry under [Ramified recurrence on the
+  polynomial-functor stack](#ramified-recurrence-on-the-polynomial-functor-stack-gebleanramifiedpolynomial).
 
 ### Definability (`GebLean/Ramified/Definability/`)
 

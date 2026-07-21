@@ -57,6 +57,14 @@ soundness direction (`Soundness`): the first-order syntactic category
 the collapse denotation, paired with the collapse functor's faithfulness as
 the denotational form of Leivant III's Theorem 14 items (1)-(2).
 
+The generic transport layer for relating two presentations of the same theory
+is `SigEquiv` — sorted-signature isomorphisms `SortedSigEquiv` with the term
+translation `tmMap` and its equivalence packaging `tmEquiv` — and
+`PresentationEquiv`, which adds a carrier equivalence commuting with the
+operation interpretations and delivers the induced equivalence `synCatEquiv`
+of syntactic categories. `Polynomial` reimplements the whole development on
+the vendored `SlicePFunctor` stack and connects it back by that layer.
+
 ## References
 
 D. Leivant, "Ramified recurrence and computational complexity III:

@@ -80,8 +80,8 @@ theorem tmSliceEquiv_rel (P : Presentation) {Γ : Ctx P.S} {s : P.S}
 
 /-- The image of a primed hom under the equivalence's functor: componentwise
 `tmSliceEquiv`, lifted along the hom quotient. Well-defined by the forward
-direction of `tmSliceEquiv_rel`. Mirrors the legacy `foHomMap`
-(`GebLean/Ramified/FirstOrder.lean`). -/
+direction of `tmSliceEquiv_rel`. Mirrors `foHomMap`
+(`GebLean/Ramified/Polynomial/FirstOrder.lean`). -/
 def synHomMap (P : Presentation) (Γ Δ : Ctx P.S)
     (f : Hom' P (interpQuotRel' P) Γ Δ) : Hom P (interpQuotRel P) Γ Δ :=
   Quotient.liftOn f (fun f' => Quotient.mk _ (fun i => tmSliceEquiv Γ (Δ.get i) (f' i)))

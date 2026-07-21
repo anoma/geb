@@ -52,8 +52,9 @@ open CategoryTheory
 
 /-- A presentation isomorphism: a signature isomorphism `sigEquiv`, a
 sort-indexed equivalence `carrierEquiv` of the standard models' carriers (an
-equivalence, not an equality — at the Phase C instantiation the base carriers
-are related only by an equivalence), and the commutation `interpOp_comm` of the
+equivalence, not an equality: two presentations built over distinct but
+equivalent base carriers are related only by an equivalence of carriers, never
+by an equality of them), and the commutation `interpOp_comm` of the
 carrier equivalence with every operation's interpretation. The standard notion
 of an isomorphism of presentations (Sannella–Tarlecki, Chapter 1). -/
 structure PresentationEquiv (P P' : Presentation) where
@@ -359,7 +360,7 @@ round-trip cast. -/
 theorem symm_mapEnv_mapEnv (e : PresentationEquiv P P') {Γ : Ctx P.S}
     (ρ : (standardModel P).Env Γ) :
     e.symm.mapEnv (e.mapEnv ρ)
-      = cast (congrArg (standardModel P).Env (e.sigEquiv.ctxMapMap Γ).symm) ρ := by
+      = cast (congrArg (standardModel P).Env (e.sigEquiv.ctx_map_map Γ).symm) ρ := by
   have hcancel : ∀ (s : P.S) (s' : P'.S) (hs : e.sigEquiv.sortEquiv s = s')
       (x : (standardModel P).carrier s),
       HEq (e.symm.carrierEquiv s'
@@ -370,7 +371,7 @@ theorem symm_mapEnv_mapEnv (e : PresentationEquiv P P') {Γ : Ctx P.S}
     exact cast_heq _ _
   suffices h : HEq (e.symm.mapEnv (e.mapEnv ρ)) ρ by
     exact (cast_eq_iff_heq.mpr h.symm).symm
-  refine Function.hfunext (congrArg Fin (congrArg List.length (e.sigEquiv.ctxMapMap Γ))) ?_
+  refine Function.hfunext (congrArg Fin (congrArg List.length (e.sigEquiv.ctx_map_map Γ))) ?_
   intro k k' hk
   simp only [mapEnv]
   refine HEq.trans (cast_heq _ _) ?_
@@ -379,7 +380,7 @@ theorem symm_mapEnv_mapEnv (e : PresentationEquiv P P') {Γ : Ctx P.S}
   · congr 1
     apply Fin.ext
     simp only [Fin.val_cast]
-    exact (Fin.heq_ext_iff (congrArg List.length (e.sigEquiv.ctxMapMap Γ))).mp hk
+    exact (Fin.heq_ext_iff (congrArg List.length (e.sigEquiv.ctx_map_map Γ))).mp hk
 
 /-- The double inverse environment transport recovers the original after the
 context round-trip cast. -/
@@ -387,8 +388,8 @@ theorem unmapEnv_symm_unmapEnv (e : PresentationEquiv P P') {Γ : Ctx P.S}
     (ρ : (standardModel P).Env
       ((Γ.map e.sigEquiv.sortEquiv).map e.sigEquiv.sortEquiv.symm)) :
     e.unmapEnv (e.symm.unmapEnv ρ)
-      = cast (congrArg (standardModel P).Env (e.sigEquiv.ctxMapMap Γ)) ρ := by
-  have key : cast (congrArg (standardModel P).Env (e.sigEquiv.ctxMapMap Γ).symm)
+      = cast (congrArg (standardModel P).Env (e.sigEquiv.ctx_map_map Γ)) ρ := by
+  have key : cast (congrArg (standardModel P).Env (e.sigEquiv.ctx_map_map Γ).symm)
       (e.unmapEnv (e.symm.unmapEnv ρ)) = ρ := by
     rw [← e.symm_mapEnv_mapEnv, e.mapEnv_unmapEnv, e.symm.mapEnv_unmapEnv]
   conv_rhs => rw [← key]
@@ -415,7 +416,7 @@ theorem carrierEquiv_symm_carrierEquiv_comp (e : PresentationEquiv P P') {s' : P
 theorem mapEnv_symm_mapEnv (e : PresentationEquiv P P') {Δ : Ctx P'.S}
     (ρ : (standardModel P').Env Δ) :
     e.mapEnv (e.symm.mapEnv ρ)
-      = cast (congrArg (standardModel P').Env (e.sigEquiv.ctxMapMap' Δ).symm) ρ := by
+      = cast (congrArg (standardModel P').Env (e.sigEquiv.ctx_map_map' Δ).symm) ρ := by
   have hcancel : ∀ (s' : P'.S) (s : P.S) (hs : e.sigEquiv.sortEquiv.symm s' = s)
       (x : (standardModel P').carrier s'),
       HEq (e.carrierEquiv s
@@ -426,7 +427,7 @@ theorem mapEnv_symm_mapEnv (e : PresentationEquiv P P') {Δ : Ctx P'.S}
     exact cast_heq _ _
   suffices h : HEq (e.mapEnv (e.symm.mapEnv ρ)) ρ by
     exact (cast_eq_iff_heq.mpr h.symm).symm
-  refine Function.hfunext (congrArg Fin (congrArg List.length (e.sigEquiv.ctxMapMap' Δ))) ?_
+  refine Function.hfunext (congrArg Fin (congrArg List.length (e.sigEquiv.ctx_map_map' Δ))) ?_
   intro k k' hk
   simp only [mapEnv]
   refine HEq.trans (cast_heq _ _) ?_
@@ -435,7 +436,7 @@ theorem mapEnv_symm_mapEnv (e : PresentationEquiv P P') {Δ : Ctx P'.S}
   · congr 1
     apply Fin.ext
     simp only [Fin.val_cast]
-    exact (Fin.heq_ext_iff (congrArg List.length (e.sigEquiv.ctxMapMap' Δ))).mp hk
+    exact (Fin.heq_ext_iff (congrArg List.length (e.sigEquiv.ctx_map_map' Δ))).mp hk
 
 /-- The double inverse environment transport starting with the forward inverse:
 the mirror of `unmapEnv_symm_unmapEnv`. -/
@@ -443,8 +444,8 @@ theorem symm_unmapEnv_unmapEnv (e : PresentationEquiv P P') {Δ : Ctx P'.S}
     (ρ : (standardModel P').Env
       ((Δ.map e.sigEquiv.sortEquiv.symm).map e.sigEquiv.sortEquiv)) :
     e.symm.unmapEnv (e.unmapEnv ρ)
-      = cast (congrArg (standardModel P').Env (e.sigEquiv.ctxMapMap' Δ)) ρ := by
-  have key : cast (congrArg (standardModel P').Env (e.sigEquiv.ctxMapMap' Δ).symm)
+      = cast (congrArg (standardModel P').Env (e.sigEquiv.ctx_map_map' Δ)) ρ := by
+  have key : cast (congrArg (standardModel P').Env (e.sigEquiv.ctx_map_map' Δ).symm)
       (e.symm.unmapEnv (e.unmapEnv ρ)) = ρ := by
     rw [← e.mapEnv_symm_mapEnv, e.symm.mapEnv_unmapEnv, e.mapEnv_unmapEnv]
   conv_rhs => rw [← key]
@@ -458,7 +459,7 @@ def synCatEquiv (e : PresentationEquiv P P') :
     SynCat P (interpQuotRel P) ≌ SynCat P' (interpQuotRel P') :=
   CategoryTheory.Equivalence.mk e.synCatFunctor e.symm.synCatFunctor
     (NatIso.ofComponents
-      (fun Γ => eqToIso (e.sigEquiv.ctxMapMap Γ).symm)
+      (fun Γ => eqToIso (e.sigEquiv.ctx_map_map Γ).symm)
       (fun {Γ Δ} f => by
         apply Hom.ext_eval
         intro ρ
@@ -473,7 +474,7 @@ def synCatEquiv (e : PresentationEquiv P P') :
         congr 1
         exact eq_of_heq ((cast_heq _ _).trans (cast_heq _ _)).symm))
     (NatIso.ofComponents
-      (fun Δ => eqToIso (e.sigEquiv.ctxMapMap' Δ))
+      (fun Δ => eqToIso (e.sigEquiv.ctx_map_map' Δ))
       (fun {Γ Δ} f => by
         apply Hom.ext_eval
         intro ρ

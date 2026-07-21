@@ -240,7 +240,7 @@ theorem RType.interp_isObj (C : Type) {s : RType} (h : s.IsObj) :
 (Leivant III section 2.7): every object sort transports by `e`, and each
 arrow by `Equiv.arrowCongr` of the equivalences on its subterms. Realized by
 the dependent eliminator `PolyFix.ind` (decision 8), following
-`RType.interp`'s pattern. Novel packaging. -/
+`RType.interp`'s pattern. -/
 def RType.interpCongr {C D : Type} (e : C ≃ D) (t : RType) :
     RType.interp C t ≃ RType.interp D t :=
   PolyFix.ind (P := rTypeSig.polyEndo)

@@ -207,7 +207,7 @@ theorem tmMap_subst (e : SortedSigEquiv sig sig') {Γ Δ : Ctx S} {s : S}
 
 /-- The double-map context identity: mapping by the sort equivalence and then
 by its inverse returns the original context. -/
-theorem ctxMapMap (e : SortedSigEquiv sig sig') (Γ : Ctx S) :
+theorem ctx_map_map (e : SortedSigEquiv sig sig') (Γ : Ctx S) :
     (Γ.map e.sortEquiv).map e.sortEquiv.symm = Γ := by
   rw [List.map_map, e.sortEquiv.symm_comp_self, List.map_id]
 
@@ -215,7 +215,7 @@ theorem ctxMapMap (e : SortedSigEquiv sig sig') (Γ : Ctx S) :
 the original context. -/
 def ctxCast (e : SortedSigEquiv sig sig') (Γ : Ctx S) {s : S}
     (w : Tm sig ((Γ.map e.sortEquiv).map e.sortEquiv.symm) s) : Tm sig Γ s :=
-  cast (congrArg (fun c => Tm sig c s) (e.ctxMapMap Γ)) w
+  cast (congrArg (fun c => Tm sig c s) (e.ctx_map_map Γ)) w
 
 /-- The context transport is heterogeneously the identity. -/
 theorem ctxCast_heq (e : SortedSigEquiv sig sig') (Γ : Ctx S) {s : S}
@@ -264,7 +264,7 @@ theorem tmMap_symm_tmMap_heq (e : SortedSigEquiv sig sig') {Γ : Ctx S} {s : S}
       change HEq (e.symm.tmMap (e.tmMap (Tm.var (sig := sig) (Γ := Γ) a1))) _
       rw [tmMap_var, tmMap_reind, tmMap_var]
       refine (reind_heq _ _).trans ((reind_heq _ _).trans
-        ((var_heq_var (e.ctxMapMap Γ) _).trans ?_))
+        ((var_heq_var (e.ctx_map_map Γ) _).trans ?_))
       exact heq_of_eq (congrArg _ (funext fun e : PEmpty => e.elim))
   | Sum.inr o, ch, ih =>
       obtain ⟨op, hop⟩ := o
@@ -273,14 +273,14 @@ theorem tmMap_symm_tmMap_heq (e : SortedSigEquiv sig sig') {Γ : Ctx S} {s : S}
         (Tm.op (sig := sig) (Γ := Γ) op ch)
       rw [tmMap_op, tmMap_reind, tmMap_op]
       refine (reind_heq _ _).trans ((reind_heq _ _).trans ?_)
-      refine op_heq (e.ctxMapMap Γ).symm (Equiv.symm_apply_apply e.opEquiv op) ch _ ?_
+      refine op_heq (e.ctx_map_map Γ).symm (Equiv.symm_apply_apply e.opEquiv op) ch _ ?_
       intro j
       refine (reind_heq _ _).trans ?_
       rw [tmMap_reind]
       exact (reind_heq _ _).trans (ih _)
 
 /-- The round trip: translating and translating back is the identity, up to the
-context transport `ctxMapMap` and the sort transport `sortEquiv.symm_apply_apply`. -/
+context transport `ctx_map_map` and the sort transport `sortEquiv.symm_apply_apply`. -/
 theorem tmMap_symm_tmMap (e : SortedSigEquiv sig sig') {Γ : Ctx S} {s : S}
     (t : Tm sig Γ s) :
     e.ctxCast Γ (Tm.reind (e.sortEquiv.symm_apply_apply s) (e.symm.tmMap (e.tmMap t))) = t := by
@@ -289,7 +289,7 @@ theorem tmMap_symm_tmMap (e : SortedSigEquiv sig sig') {Γ : Ctx S} {s : S}
 
 /-- The double-map context identity in the other direction: mapping by the
 inverse sort equivalence and then by the sort equivalence returns the context. -/
-theorem ctxMapMap' (e : SortedSigEquiv sig sig') (Δ : Ctx S') :
+theorem ctx_map_map' (e : SortedSigEquiv sig sig') (Δ : Ctx S') :
     (Δ.map e.sortEquiv.symm).map e.sortEquiv = Δ := by
   rw [List.map_map, e.sortEquiv.self_comp_symm, List.map_id]
 
@@ -306,7 +306,7 @@ theorem tmMap_tmMap_symm_heq (e : SortedSigEquiv sig sig') {Δ : Ctx S'} {s' : S
       change HEq (e.tmMap (e.symm.tmMap (Tm.var (sig := sig') (Γ := Δ) a1))) _
       rw [tmMap_var, tmMap_reind, tmMap_var]
       refine (reind_heq _ _).trans ((reind_heq _ _).trans
-        ((var_heq_var (e.ctxMapMap' Δ) _).trans ?_))
+        ((var_heq_var (e.ctx_map_map' Δ) _).trans ?_))
       exact heq_of_eq (congrArg _ (funext fun ee : PEmpty => ee.elim))
   | Sum.inr o, ch, ih =>
       obtain ⟨op, hop⟩ := o
@@ -315,7 +315,7 @@ theorem tmMap_tmMap_symm_heq (e : SortedSigEquiv sig sig') {Δ : Ctx S'} {s' : S
         (Tm.op (sig := sig') (Γ := Δ) op ch)
       rw [tmMap_op, tmMap_reind, tmMap_op]
       refine (reind_heq _ _).trans ((reind_heq _ _).trans ?_)
-      refine op_heq (e.ctxMapMap' Δ).symm (Equiv.apply_symm_apply e.opEquiv op) ch _ ?_
+      refine op_heq (e.ctx_map_map' Δ).symm (Equiv.apply_symm_apply e.opEquiv op) ch _ ?_
       intro j
       refine (reind_heq _ _).trans ?_
       rw [tmMap_reind]
@@ -336,7 +336,7 @@ theorem tmMap_tmMap_symm (e : SortedSigEquiv sig sig') {Γ : Ctx S} {s : S}
     e.tmMap (e.ctxCast Γ (Tm.reind (e.sortEquiv.symm_apply_apply s) (e.symm.tmMap u))) = u := by
   apply eq_of_heq
   refine HEq.trans ?_ (e.tmMap_tmMap_symm_heq u)
-  exact tmMap_heq_arg e (e.ctxMapMap Γ).symm (e.sortEquiv.symm_apply_apply s).symm
+  exact tmMap_heq_arg e (e.ctx_map_map Γ).symm (e.sortEquiv.symm_apply_apply s).symm
     ((e.ctxCast_heq Γ _).trans (reind_heq _ _))
 
 /-- The term translation packaged as an equivalence. -/

@@ -20,8 +20,8 @@ two identifier layers present the same schema-generated identifiers over a
 base algebra; the bridge `identSliceEquiv` is that identification, fibrewise
 over the index `(Γ', τ')` and mapped across `rTypeSliceEquiv`.
 
-The equivalence is assembled the Phase B way (the `polyFreeMSliceEquiv`
-pattern of `GebLean/PolyBridge/FreeMEquiv.lean`): a container isomorphism
+The equivalence is assembled on the `polyFreeMSliceEquiv` pattern of
+`GebLean/PolyBridge/FreeMEquiv.lean`: a container isomorphism
 `identEndoIso` of the two identifier signature endofunctors — its shape
 equivalence the sigma congruence over the schema-former equivalences
 `identShapeEquiv`, its positions the identity on holes and constructor
@@ -29,7 +29,8 @@ labels — composed with the base change `SlicePFunctor.reindex` along the
 context equivalence `identCtxEquiv` and the initial-algebra comparison
 `polyFixSliceEquiv`. The schema-former equivalence `defnShapeEquiv` carries a
 defining term across the signature isomorphism `defnSigEquiv` and the term
-translations `tmSliceEquiv` (Phase B) and `SortedSigEquiv.tmEquiv` (Task C.8).
+translations `tmSliceEquiv` (`GebLean/Ramified/Polynomial/Term.lean`) and
+`SortedSigEquiv.tmEquiv` (`GebLean/Ramified/SigEquiv.lean`).
 
 ## Main definitions
 

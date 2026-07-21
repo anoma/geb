@@ -30,8 +30,6 @@ congruences.
 
 * `ObjCtx.toObjCtx'` — the objectwise preimage of an object-sort context under
   the sort bridge.
-* `synCatFOHom'` — the lift of a primed hom between underlying contexts to
-  `SynCatFO'`.
 * `collapseFunctor'` — the primed soundness functor
   `SynCatFO' ⥤ LawvereERCat`.
 * `collapseKFunctor'` — the primed K-valued soundness functor
@@ -43,8 +41,6 @@ congruences.
   `oCtx_toObjCtx'`, `synCatFOSliceEquiv_obj_oCtx'` — the object
   identifications across the restriction equivalence.
 * `arityCongr_trans` — stacked arity congruences compose.
-* `collapseDenotation'_eqToHom` — conjugating the primed collapse denotation by
-  object identifications is the arity congruence of the denotation.
 * `collapseFunctor'.Faithful`, `collapseKFunctor'.Faithful` — the two primed
   soundness functors are faithful.
 * `ramified_definability'` — every morphism of `LawvereERCat` has a primed
@@ -73,15 +69,6 @@ object sort, syntactic category, definability, slice category, W-type
 namespace GebLean.Ramified.Polynomial
 
 open CategoryTheory GebLean.Ramified GebLean.Ramified.Definability
-
-/-- The lift of a primed hom between the underlying contexts of two primed
-object-sort contexts to a morphism of `SynCatFO'` between the lifted objects.
-Mirror of the legacy `synCatFOHom`. -/
-def synCatFOHom' {n m : ℕ} {Γ' : ObjCtx' n} {Δ' : ObjCtx' m}
-    (g : Hom' (higherOrder' natAlgSig) (interpQuotRel' (higherOrder' natAlgSig))
-      Γ'.toCtx Δ'.toCtx) :
-    Γ'.toSynCatFO' ⟶ Δ'.toSynCatFO' :=
-  ObjectProperty.homMk g
 
 /-- The objectwise preimage of an object-sort context under the sort bridge:
 each sort is read back by `rTypeSliceEquiv.symm`, its object-sort property
@@ -128,18 +115,6 @@ theorem _root_.GebLean.Ramified.arityCongr_trans {n n' n'' m m' m'' : ℕ}
   subst h₁'
   subst h₂
   subst h₂'
-  rfl
-
-/-- Conjugating a `SynCatFO'` morphism by object identifications reads its
-primed collapse denotation across the induced arity identifications. -/
-theorem collapseDenotation'_eqToHom {Γ' Δ' Θ' Ξ' : SynCatFO'} (hΓ : Γ' = Δ')
-    (hΘ : Θ' = Ξ') (g : Δ' ⟶ Θ') :
-    collapseDenotation' (eqToHom hΓ ≫ g ≫ eqToHom hΘ)
-      = arityCongr (congrArg objLen' hΓ).symm (congrArg objLen' hΘ)
-          (collapseDenotation' g) := by
-  subst hΓ
-  subst hΘ
-  rw [eqToHom_refl, eqToHom_refl, Category.id_comp, Category.comp_id]
   rfl
 
 /-- The primed soundness functor (Leivant III Theorem 14, the arm (1) ⇒ (4),

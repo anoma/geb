@@ -78,8 +78,9 @@ statement about `Hom.eval` against `Hom'.eval`, with no context transports left.
 
 Mathlib's `CategoryTheory.Equivalence.congrFullSubcategory` restricts an
 equivalence of categories to full subcategories, but requires the target
-property to be closed under isomorphism, which is unavailable for `isObjCtx`:
-an isomorphism of the syntactic category carries no sortwise information.
+property to be closed under isomorphism; no `IsClosedUnderIsomorphisms`
+instance for `isObjCtx` is available here, and none is known, so
+`Equivalence.congrFullSubcategory` cannot be applied.
 `synCatFOSliceEquiv` therefore reproduces that construction, with the inverse
 functor's object property supplied directly by the sortwise correspondence
 `isObjCtx'_map_symm`.
@@ -363,7 +364,7 @@ theorem collapseDenotation'_comp {Γ' Δ' Θ' : SynCatFO'} (g : Γ' ⟶ Δ') (h 
 /-- Evaluation of a context-transported legacy morphism agrees, heterogeneously,
 with evaluation of the untransported morphism at the corresponding environment
 and codomain position. -/
-theorem Hom.eval_heq_cast {P : Presentation} {A A' B B' : Ctx P.S}
+theorem homEval_heq_cast {P : Presentation} {A A' B B' : Ctx P.S}
     (hA : A = A') (hB : B = B')
     (h : Hom P (interpQuotRel P) A B = Hom P (interpQuotRel P) A' B')
     (f : Hom P (interpQuotRel P) A B)
@@ -402,7 +403,7 @@ theorem collapseDenotation_apply {Γ Δ : SynCatFO} (g : Γ ⟶ Δ)
           (Hom.eval g.hom (fun i => objFromNat (Γ.property i) (v i)) j) := by
   refine Eq.trans (ramifiedDenotation_apply (collapseHom g) v j) ?_
   refine objToNat_heq _ _ ?_
-  refine Hom.eval_heq_cast Γ.toObjCtx_toCtx.symm Δ.toObjCtx_toCtx.symm _ g.hom
+  refine homEval_heq_cast Γ.toObjCtx_toCtx.symm Δ.toObjCtx_toCtx.symm _ g.hom
     (fun i => objFromNat (Γ.property i) (v i)) (ramifiedEnv Γ.toObjCtx.2 v) ?_ j _ ?_
   · refine Function.hfunext (congrArg Fin (congrArg List.length Γ.toObjCtx_toCtx.symm)) ?_
     intro a a' haa

@@ -5,11 +5,12 @@ import Mathlib.Logic.Equiv.Bool
 /-!
 # Tests for presentation equivalences
 
-The Task C.8 toy signatures `toySig` / `toySig'` (over `Bool`, related by
-`Equiv.boolNot`) are packaged as two toy presentations with matched standard
-models over the constant carrier `ℕ`. The equivalence `toyPresEquiv` exercises
-`PresentationEquiv.tmMap_eval` at a concrete term and the functoriality of
-`PresentationEquiv.synCatFunctor` (its `map_comp`).
+The toy signatures `toySig` / `toySig'` of `GebLeanTests/Ramified/SigEquiv.lean`
+(over `Bool`, related by `Equiv.boolNot`) are packaged as two toy presentations
+with matched standard models over the constant carrier `ℕ`. The equivalence
+`toyPresEquiv` exercises the functoriality of `PresentationEquiv.synCatFunctor`
+(its `map_comp`) and `PresentationEquiv.tmMap_eval` at the closed term
+`succ zero`, whose two readings both evaluate to `1`.
 -/
 
 namespace GebLean.Ramified
@@ -75,5 +76,24 @@ example {Γ Δ E : SynCat toyPres (interpQuotRel toyPres)}
     (toyPresEquiv.synCatFunctor).map (f ≫ g)
       = (toyPresEquiv.synCatFunctor).map f ≫ (toyPresEquiv.synCatFunctor).map g :=
   (toyPresEquiv.synCatFunctor).map_comp f g
+
+/-- The empty environment at the toy presentation. -/
+abbrev toyEnv : (standardModel toyPres).Env [] := fun i => i.elim0
+
+/-- The closed term `succ zero` evaluates to `1` in the toy standard model. -/
+example : toySuccZero.eval (standardModel toyPres) toyEnv = 1 := rfl
+
+/-- Its explicitly written counterpart over the translated signature evaluates
+to `1` in the translated standard model, at the transported environment. -/
+example :
+    toySuccZero'.eval (standardModel toyPres') (toyPresEquiv.mapEnv toyEnv) = 1 := rfl
+
+/-- The two readings agree through the named lemmas: `tmMap_eval` at the closed
+term, with the term translation identified by `toyEquiv_tmMap_toySuccZero`. -/
+example :
+    toySuccZero'.eval (standardModel toyPres') (toyPresEquiv.mapEnv toyEnv)
+      = toyPresEquiv.carrierEquiv true (toySuccZero.eval (standardModel toyPres) toyEnv) := by
+  rw [← toyEquiv_tmMap_toySuccZero]
+  exact toyPresEquiv.tmMap_eval toySuccZero toyEnv
 
 end GebLean.Ramified

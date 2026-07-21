@@ -65,4 +65,41 @@ example {Γ : Ctx Bool} {s : Bool} (t : Tm toySig Γ s) :
     (toyEquiv.tmEquiv Γ s).symm (toyEquiv.tmEquiv Γ s t) = t :=
   (toyEquiv.tmEquiv Γ s).symm_apply_apply t
 
+/-- The closed nullary term over `toySig`, at sort `false`. -/
+abbrev toyZero : Tm toySig [] false :=
+  Tm.op (sig := toySig) false (fun i => i.elim0)
+
+/-- The closed term `succ zero` over `toySig`: the unary operation at sort
+`true` applied to `toyZero`. -/
+abbrev toySuccZero : Tm toySig [] true :=
+  Tm.op (sig := toySig) true (Fin.cases toyZero (fun k => k.elim0))
+
+/-- The closed nullary term over `toySig'`, at the negated sort `true`. -/
+abbrev toyZero' : Tm toySig' [] true :=
+  Tm.op (sig := toySig') false (fun i => i.elim0)
+
+/-- The counterpart of `toySuccZero` written directly over `toySig'`: the same
+two operations, now at the negated sorts — the unary operation at sort `false`
+applied to `toyZero'`. -/
+abbrev toySuccZero' : Tm toySig' [] false :=
+  Tm.op (sig := toySig') true (Fin.cases toyZero' (fun k => k.elim0))
+
+/-- The term translation carries the nullary closed term onto its counterpart
+at the negated result sort. -/
+theorem toyEquiv_tmMap_toyZero : toyEquiv.tmMap toyZero = toyZero' := by
+  simp only [toyZero, toyZero', toyEquiv.tmMap_op]
+  congr 3
+  funext m
+  exact m.elim0
+
+/-- The term translation carries the closed term onto its explicitly written
+counterpart, arity and result transported the same way. -/
+theorem toyEquiv_tmMap_toySuccZero : toyEquiv.tmMap toySuccZero = toySuccZero' := by
+  simp only [toySuccZero, toySuccZero', toyEquiv.tmMap_op]
+  congr 3
+  funext k
+  induction k using Fin.cases with
+  | zero => exact toyEquiv_tmMap_toyZero
+  | succ m => exact m.elim0
+
 end GebLean.Ramified
