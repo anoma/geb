@@ -99,4 +99,13 @@ example (v : Fin (objLen' ctx2) → ℕ) (j : Fin (objLen' ctx2)) :
   rw [collapseDenotation'_comp, Function.comp_apply, collapseDenotation'_diag1,
     collapseDenotation'_proj2]
 
+-- The agreement instance: the legacy collapse denotation of the image of the
+-- second projection reads the second input.
+example (v : Fin (objLen (synCatFOSliceEquiv.functor.obj ctx2)) → ℕ)
+    (j : Fin (objLen (synCatFOSliceEquiv.functor.obj ctx1))) :
+    collapseDenotation (synCatFOSliceEquiv.functor.map proj2) v j
+      = v ⟨1, objLen_functor_obj ctx2 ▸ (by decide : 1 < objLen' ctx2)⟩ := by
+  rw [collapseDenotation_sliceEquiv, arityCongr_apply, collapseDenotation'_proj2]
+  rfl
+
 end GebLeanTests.Ramified.Polynomial.CollapseTest

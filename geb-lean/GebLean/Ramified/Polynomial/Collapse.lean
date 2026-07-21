@@ -20,6 +20,14 @@ morphism through that bridge into `ramifiedDenotation'`, the numeric denotation
 of a morphism between object-sort contexts, whose per-position numeric reading
 is `objToNat'` (the primed carrier-copy transport, through `natFreeAlgEquiv'`).
 
+The phase's central equivalence `rmRecCatSliceEquiv natAlgSig`
+(`GebLean/Ramified/Polynomial/HigherOrderEquiv.lean`) restricts to the two
+first-order full subcategories as `synCatFOSliceEquiv`, the object properties
+corresponding sortwise by `rTypeSliceEquiv_isObj`, and
+`collapseDenotation_sliceEquiv` identifies the legacy collapse denotation of a
+transported morphism with the primed collapse denotation read across the arity
+identifications `arityCongr`.
+
 ## Main definitions
 
 * `isObjCtx'` — the object property selecting the contexts of
@@ -35,6 +43,8 @@ is `objToNat'` (the primed carrier-copy transport, through `natFreeAlgEquiv'`).
   object-sort context and the numeric denotation of a morphism between such.
 * `collapseHom'`, `collapseDenotation'` — the bridge transport of a `SynCatFO'`
   morphism and its numeric denotation.
+* `synCatFOSliceEquiv` — the restriction of `rmRecCatSliceEquiv natAlgSig` to
+  the first-order full subcategories.
 
 ## Main statements
 
@@ -46,6 +56,14 @@ is `objToNat'` (the primed carrier-copy transport, through `natFreeAlgEquiv'`).
   collapse denotation.
 * `collapseDenotation_apply`, `collapseDenotation'_apply` — the transport-free
   readings of the two collapse denotations.
+* `isObjCtx_map`, `isObjCtx'_map_symm` — the sortwise correspondence of the two
+  object properties across the bridge.
+* `synHomMap_eval`, `rmRecCatSliceEquiv_map_eval` — the evaluation of a
+  transported morphism, conjugated by the environment transport.
+* `objToNat_carrierSliceEquiv`, `carrierSliceEquiv_objFromNat'` — the numeric
+  transports agree across the carrier bridge.
+* `collapseDenotation_sliceEquiv` — the collapse denotations agree across
+  `synCatFOSliceEquiv`, read along the arity identifications.
 
 ## Implementation notes
 
@@ -55,7 +73,16 @@ of the bridge equals the original object (`SynCatFO'.toObjCtx'_toCtx`), the
 equality along which `collapseHom'` transports the full-subcategory morphism
 into `ramifiedDenotation'`'s domain. `collapseDenotation_apply` and
 `collapseDenotation'_apply` undo that transport, presenting each denotation
-directly in terms of the underlying hom's evaluation.
+directly in terms of the underlying hom's evaluation; the agreement is then a
+statement about `Hom.eval` against `Hom'.eval`, with no context transports left.
+
+Mathlib's `CategoryTheory.Equivalence.congrFullSubcategory` restricts an
+equivalence of categories to full subcategories, but requires the target
+property to be closed under isomorphism, which is unavailable for `isObjCtx`:
+an isomorphism of the syntactic category carries no sortwise information.
+`synCatFOSliceEquiv` therefore reproduces that construction, with the inverse
+functor's object property supplied directly by the sortwise correspondence
+`isObjCtx'_map_symm`.
 
 ## References
 
@@ -74,7 +101,7 @@ transport of environments and terms.
 ## Tags
 
 ramified recurrence, object sort, syntactic category, full subcategory,
-numeric denotation, slice category, W-type
+equivalence of categories, numeric denotation, slice category, W-type
 -/
 
 namespace GebLean.Ramified.Polynomial
@@ -404,5 +431,156 @@ theorem collapseDenotation'_apply {Γ' Δ' : SynCatFO'} (g : Γ' ⟶ Δ')
     rw [hv]
     exact objFromNat'_heq _ _ _
   · exact (Fin.heq_ext_iff (congrArg List.length Δ'.toObjCtx'_toCtx.symm)).mpr rfl
+
+/-- The object property transfers forward along the bridge: the image of a
+primed object-sort context is a legacy object-sort context, sortwise by
+`rTypeSliceEquiv_isObj`. -/
+theorem isObjCtx_map {Γ' : Ctx RType'} (h : isObjCtx' Γ') :
+    isObjCtx (Γ'.map rTypeSliceEquiv) := by
+  intro i
+  have hi := h (Fin.cast (List.length_map ..) i)
+  rw [rTypeSliceEquiv_isObj] at hi
+  refine Eq.mpr (congrArg RType.IsObj ?_) hi
+  simp only [List.get_eq_getElem, List.getElem_map]
+  rfl
+
+/-- The object property transfers backward along the bridge: the preimage of a
+legacy object-sort context is a primed object-sort context. -/
+theorem isObjCtx'_map_symm {Δ : Ctx RType} (h : isObjCtx Δ) :
+    isObjCtx' (Δ.map rTypeSliceEquiv.symm) := by
+  intro i
+  have key : RType'.IsObj (rTypeSliceEquiv.symm (Δ.get (Fin.cast (List.length_map ..) i))) := by
+    rw [rTypeSliceEquiv_isObj, Equiv.apply_symm_apply]
+    exact h _
+  refine Eq.mpr (congrArg RType'.IsObj ?_) key
+  simp only [List.get_eq_getElem, List.getElem_map]
+  rfl
+
+/-- The restriction of `rmRecCatSliceEquiv natAlgSig` to the first-order full
+subcategories: the functor and inverse are the lifts of the composites with the
+inclusions, their object properties supplied by the sortwise correspondences
+`isObjCtx_map` and `isObjCtx'_map_symm`, and the unit and counit are the
+preimages of the parent equivalence's unit and counit under the fully faithful
+inclusions. -/
+def synCatFOSliceEquiv : SynCatFO' ≌ SynCatFO where
+  functor := isObjCtx.lift (isObjCtx'.ι ⋙ (rmRecCatSliceEquiv natAlgSig).functor)
+    (fun Γ' => isObjCtx_map Γ'.property)
+  inverse := isObjCtx'.lift (isObjCtx.ι ⋙ (rmRecCatSliceEquiv natAlgSig).inverse)
+    (fun Δ => isObjCtx'_map_symm Δ.property)
+  unitIso := (isObjCtx'.fullyFaithfulι.whiskeringRight _).preimageIso
+    (isObjCtx'.ι.isoWhiskerLeft (rmRecCatSliceEquiv natAlgSig).unitIso)
+  counitIso := (isObjCtx.fullyFaithfulι.whiskeringRight _).preimageIso
+    (isObjCtx.ι.isoWhiskerLeft (rmRecCatSliceEquiv natAlgSig).counitIso)
+  functor_unitIso_comp X :=
+    ObjectProperty.hom_ext _ ((rmRecCatSliceEquiv natAlgSig).functor_unit_comp X.obj)
+
+/-- Evaluation of a translated hom at the term layer is evaluation of the
+original: the bridge equivalence `tmSliceEquiv` preserves standard-model
+evaluation componentwise. -/
+theorem synHomMap_eval (P : Presentation) {Γ Δ : Ctx P.S}
+    (f : Hom' P (interpQuotRel' P) Γ Δ) (ρ : (standardModel P).Env Γ) :
+    Hom.eval (synHomMap P Γ Δ f) ρ = Hom'.eval f ρ := by
+  induction f using Quotient.ind with
+  | _ f' => exact funext fun i => tmSliceEquiv_eval _ ρ (f' i)
+
+/-- Evaluation of the image of a primed hom under the phase's central
+equivalence: the presentation-level environment transport conjugates primed
+evaluation. -/
+theorem rmRecCatSliceEquiv_map_eval (A : AlgSig) {Γ' Δ' : RMRecCat' A} (f : Γ' ⟶ Δ')
+    (ρ : (standardModel (higherOrder A)).Env ((rmRecCatSliceEquiv A).functor.obj Γ')) :
+    Hom.eval ((rmRecCatSliceEquiv A).functor.map f) ρ
+      = (higherOrderPresEquiv A).mapEnv
+          (Hom'.eval f ((higherOrderPresEquiv A).unmapEnv ρ)) := by
+  refine Eq.trans ((higherOrderPresEquiv A).mapHom_eval
+    ((synCatSliceEquiv (higherOrder' A)).functor.map f) ρ) ?_
+  exact congrArg (higherOrderPresEquiv A).mapEnv (synHomMap_eval (higherOrder' A) f _)
+
+/-- The numeric readings agree across the carrier bridge: the legacy reading of
+the bridge image of an object-sort value is the primed reading of the value
+(Leivant III section 2.7). -/
+theorem objToNat_carrierSliceEquiv {t' : RType'} (h : t'.IsObj)
+    (hL : RType.IsObj (rTypeSliceEquiv t')) (x : RType'.interp (FreeAlg' natAlgSig) t') :
+    objToNat hL (carrierSliceEquiv natAlgSig t' x) = objToNat' h x := by
+  unfold objToNat objToNat'
+  rw [carrierSliceEquiv_isObj h x, natFreeAlgEquiv'_slice, Equiv.trans_apply,
+    natFreeAlgEquiv_apply]
+
+/-- The carrier-copy transports agree across the carrier bridge: the bridge
+image of the primed transport of a natural is the legacy transport. -/
+theorem carrierSliceEquiv_objFromNat' {t' : RType'} (h : t'.IsObj)
+    (hL : RType.IsObj (rTypeSliceEquiv t')) (k : ℕ) :
+    carrierSliceEquiv natAlgSig t' (objFromNat' h k) = objFromNat hL k := by
+  refine (cast_inj (RType.interp_isObj (FreeAlg natAlgSig) hL)).mp ?_
+  refine Eq.trans (carrierSliceEquiv_isObj h (objFromNat' h k)) ?_
+  have hx : cast (RType'.interp_isObj (FreeAlg' natAlgSig) h) (objFromNat' h k)
+      = natFreeAlgEquiv'.symm k := by
+    unfold objFromNat'
+    rw [cast_cast, cast_eq]
+  have hy : cast (RType.interp_isObj (FreeAlg natAlgSig) hL) (objFromNat hL k)
+      = natToFreeAlg k := by
+    unfold objFromNat
+    rw [cast_cast, cast_eq]
+  rw [hx, hy]
+  exact (freeAlgSliceEquiv natAlgSig).apply_symm_apply (natToFreeAlg k)
+
+/-- The arity identification across the restriction equivalence: the transported
+object has the same length. -/
+theorem objLen_functor_obj (Γ' : SynCatFO') :
+    objLen' Γ' = objLen (synCatFOSliceEquiv.functor.obj Γ') :=
+  (List.length_map ..).symm
+
+/-- The legacy numeric reading of a transported environment at a codomain
+position is the primed numeric reading at the corresponding position. -/
+theorem objToNat_mapEnv {Δ' : SynCatFO'}
+    (u : (standardModel (higherOrder' natAlgSig)).Env Δ'.obj)
+    (j : Fin (objLen (synCatFOSliceEquiv.functor.obj Δ'))) :
+    objToNat ((synCatFOSliceEquiv.functor.obj Δ').property j)
+        ((higherOrderPresEquiv natAlgSig).mapEnv u j)
+      = objToNat' (Δ'.property (Fin.cast (objLen_functor_obj Δ').symm j))
+          (u (Fin.cast (objLen_functor_obj Δ').symm j)) := by
+  have hL : RType.IsObj
+      (rTypeSliceEquiv (Δ'.obj.get (Fin.cast (objLen_functor_obj Δ').symm j))) :=
+    cast (rTypeSliceEquiv_isObj _) (Δ'.property (Fin.cast (objLen_functor_obj Δ').symm j))
+  unfold PresentationEquiv.mapEnv
+  refine Eq.trans (objToNat_heq _ hL (cast_heq _ _)) ?_
+  exact objToNat_carrierSliceEquiv _ hL _
+
+/-- The inverse environment transport of a legacy numeric environment is the
+primed numeric environment of the same numeric input. -/
+theorem unmapEnv_objFromNat {Γ' : SynCatFO'}
+    (v : Fin (objLen (synCatFOSliceEquiv.functor.obj Γ')) → ℕ) :
+    (higherOrderPresEquiv natAlgSig).unmapEnv
+        (fun i => objFromNat ((synCatFOSliceEquiv.functor.obj Γ').property i) (v i))
+      = fun i => objFromNat' (Γ'.property i) (v (Fin.cast (objLen_functor_obj Γ') i)) := by
+  funext i
+  have hL : RType.IsObj (rTypeSliceEquiv (Γ'.obj.get i)) :=
+    cast (rTypeSliceEquiv_isObj _) (Γ'.property i)
+  unfold PresentationEquiv.unmapEnv
+  refine ((higherOrderPresEquiv natAlgSig).carrierEquiv (Γ'.obj.get i)).symm_apply_eq.mpr ?_
+  exact (cast_objFromNat _ hL _ _).trans
+    (carrierSliceEquiv_objFromNat' (Γ'.property i) hL _).symm
+
+/-- The collapse denotations agree across the restriction equivalence: the
+legacy collapse denotation of the image of a primed first-order morphism is the
+primed collapse denotation, read along the arity identifications. -/
+theorem collapseDenotation_sliceEquiv {Γ' Δ' : SynCatFO'} (g' : Γ' ⟶ Δ') :
+    collapseDenotation (synCatFOSliceEquiv.functor.map g')
+      = arityCongr (objLen_functor_obj Γ') (objLen_functor_obj Δ')
+          (collapseDenotation' g') := by
+  funext v j
+  rw [collapseDenotation_apply, arityCongr_apply, collapseDenotation'_apply]
+  have hmap : Hom.eval (synCatFOSliceEquiv.functor.map g').hom
+        (fun i => objFromNat ((synCatFOSliceEquiv.functor.obj Γ').property i) (v i))
+      = (higherOrderPresEquiv natAlgSig).mapEnv (Hom'.eval g'.hom
+          ((higherOrderPresEquiv natAlgSig).unmapEnv
+            (fun i => objFromNat ((synCatFOSliceEquiv.functor.obj Γ').property i) (v i)))) :=
+    rmRecCatSliceEquiv_map_eval natAlgSig g'.hom _
+  refine Eq.trans (congrArg (objToNat
+    ((synCatFOSliceEquiv.functor.obj Δ').property j)) (congrFun hmap j)) ?_
+  refine Eq.trans (objToNat_mapEnv _ j) ?_
+  exact congrArg (fun w => objToNat'
+      (Δ'.property (Fin.cast (objLen_functor_obj Δ').symm j))
+      (Hom'.eval g'.hom w (Fin.cast (objLen_functor_obj Δ').symm j)))
+    (unmapEnv_objFromNat v)
 
 end GebLean.Ramified.Polynomial
