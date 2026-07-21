@@ -20,8 +20,11 @@ the syntactic-category equivalence `PresentationEquiv.synCatEquiv`
 
 * `identOpSliceEquiv` — the identifier-operation equivalence: the sigma
   congruence over the context, result-sort, and identifier bridges.
+* `identSigEquiv`, `identConstSigEquiv` — the identifier summand signature
+  isomorphisms.
 * `higherOrderSigEquiv` — the signature isomorphism between the primed and
-  legacy higher-order signatures.
+  legacy higher-order signatures, the `SortedSigEquiv.sum` of `baseSigEquiv`
+  with the two identifier summands.
 * `higherOrderPresEquiv` — the presentation equivalence between the primed and
   legacy higher-order presentations.
 * `rmRecCatSliceEquiv` — the equivalence of syntactic categories
@@ -60,39 +63,31 @@ def identOpSliceEquiv (A : AlgSig) :
   Equiv.sigmaCongr (Equiv.listEquivOfEquiv rTypeSliceEquiv) (fun _Γ' =>
     Equiv.sigmaCongr rTypeSliceEquiv (fun _τ' => identSliceEquiv))
 
-/-- The signature isomorphism between the primed and legacy higher-order
-signatures: `rTypeSliceEquiv` on sorts, and summand-wise on operations the
-object-sort subtype congruence at the constructor summand, the sort congruence
-at the application summand, and `identOpSliceEquiv` at both identifier
-summands. Arities transport by `List.map_replicate` at the constructors and
-`rTypeSliceEquiv_arrow` at application; the constant summand's result sort
-transports by `rTypeSliceEquiv_curried`. -/
-def higherOrderSigEquiv (A : AlgSig) :
-    SortedSigEquiv (higherOrder' A).sig (higherOrder A).sig where
+/-- The signature isomorphism between the primed and legacy saturated
+identifier summands: `rTypeSliceEquiv` on sorts and `identOpSliceEquiv` on
+operations, the arity and result being the transported identifier index. -/
+def identSigEquiv (A : AlgSig) : SortedSigEquiv (identSig' A) (identSig A) where
   sortEquiv := rTypeSliceEquiv
-  opEquiv :=
-    Equiv.sumCongr (Equiv.sumCongr (Equiv.sumCongr
-      (Equiv.prodCongr
-        (Equiv.subtypeEquiv rTypeSliceEquiv (fun a => Iff.of_eq (rTypeSliceEquiv_isObj a)))
-        (Equiv.refl A.B))
-      (Equiv.prodCongr rTypeSliceEquiv rTypeSliceEquiv)) (identOpSliceEquiv A))
-      (identOpSliceEquiv A)
-  arity_comm := by
-    rintro (((c | a) | i) | i)
-    · change List.replicate (A.ar c.2) (rTypeSliceEquiv c.1.val)
-        = List.map rTypeSliceEquiv (List.replicate (A.ar c.2) c.1.val)
-      exact List.map_replicate.symm
-    · change [RType.arrow (rTypeSliceEquiv a.1) (rTypeSliceEquiv a.2), rTypeSliceEquiv a.1]
-        = [rTypeSliceEquiv (RType'.arrow a.1 a.2), rTypeSliceEquiv a.1]
-      rw [rTypeSliceEquiv_arrow]
-    · rfl
-    · rfl
-  result_comm := by
-    rintro (((c | a) | i) | i)
-    · rfl
-    · rfl
-    · rfl
-    · exact (rTypeSliceEquiv_curried i.1 i.2.1).symm
+  opEquiv := identOpSliceEquiv A
+  arity_comm := fun _ => rfl
+  result_comm := fun _ => rfl
+
+/-- The signature isomorphism between the primed and legacy identifier-constant
+summands: `rTypeSliceEquiv` on sorts and `identOpSliceEquiv` on operations, with
+the result sort transported by `rTypeSliceEquiv_curried`. -/
+def identConstSigEquiv (A : AlgSig) :
+    SortedSigEquiv (identConstSig' A) (identConstSig A) where
+  sortEquiv := rTypeSliceEquiv
+  opEquiv := identOpSliceEquiv A
+  arity_comm := fun _ => rfl
+  result_comm := fun i => (rTypeSliceEquiv_curried i.1 i.2.1).symm
+
+/-- The signature isomorphism between the primed and legacy higher-order
+signatures: the summand-wise sum of `baseSigEquiv`, `identSigEquiv`, and
+`identConstSigEquiv`. -/
+def higherOrderSigEquiv (A : AlgSig) :
+    SortedSigEquiv (higherOrder' A).sig (higherOrder A).sig :=
+  ((baseSigEquiv A).sum (identSigEquiv A) rfl).sum (identConstSigEquiv A) rfl
 
 /-- The presentation equivalence between the primed and legacy higher-order
 presentations: the signature isomorphism `higherOrderSigEquiv` together with the

@@ -22,6 +22,8 @@ action on terms of a signature isomorphism (a reduct along an isomorphism).
 
 * `SortedSigEquiv` — an isomorphism of multi-sorted signatures.
 * `SortedSigEquiv.symm` — the inverse signature isomorphism.
+* `SortedSigEquiv.sum` — the sum of two signature isomorphisms sharing a sort
+  equivalence, over `SortedSig.sum`.
 * `SortedSigEquiv.tmMap` — the term translation along a signature isomorphism.
 * `SortedSigEquiv.tmEquiv` — the term translation packaged as an equivalence.
 
@@ -118,6 +120,26 @@ def symm (e : SortedSigEquiv sig sig') : SortedSigEquiv sig' sig where
     have h := e.result_comm (e.opEquiv.symm o')
     rw [Equiv.apply_symm_apply] at h
     rw [h, Equiv.symm_apply_apply]
+
+/-- The sum of two signature isomorphisms sharing a sort equivalence: the
+operation equivalence is the disjoint union of the summands', and the arity and
+result compatibilities are inherited summand-wise. The signature-isomorphism
+counterpart of `SortedSig.sum`. -/
+def sum {sig₂ : SortedSig S} {sig₂' : SortedSig S'} (e : SortedSigEquiv sig sig')
+    (e₂ : SortedSigEquiv sig₂ sig₂') (h : e₂.sortEquiv = e.sortEquiv) :
+    SortedSigEquiv (sig.sum sig₂) (sig'.sum sig₂') where
+  sortEquiv := e.sortEquiv
+  opEquiv := Equiv.sumCongr e.opEquiv e₂.opEquiv
+  arity_comm := by
+    rintro (o | o₂)
+    · exact e.arity_comm o
+    · rw [← h]
+      exact e₂.arity_comm o₂
+  result_comm := by
+    rintro (o | o₂)
+    · exact e.result_comm o
+    · rw [← h]
+      exact e₂.result_comm o₂
 
 /-- The term translation along a signature isomorphism, by `PolyFix.ind`: a
 variable node becomes the reindexed translated variable; an operation node
