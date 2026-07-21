@@ -13,6 +13,7 @@ import GebLeanTests.Ramified.Definability
 import GebLeanTests.Ramified.Soundness
 import GebLeanTests.Ramified.Characterization
 import GebLeanTests.Ramified.SigEquiv
+import GebLeanTests.Ramified.PresentationEquiv
 import GebLeanTests.Ramified.Polynomial
 
 /-!

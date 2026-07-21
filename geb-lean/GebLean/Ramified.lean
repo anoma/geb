@@ -13,6 +13,7 @@ import GebLean.Ramified.Definability
 import GebLean.Ramified.Soundness
 import GebLean.Ramified.Characterization
 import GebLean.Ramified.SigEquiv
+import GebLean.Ramified.PresentationEquiv
 import GebLean.Ramified.Polynomial
 
 /-!
