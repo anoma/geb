@@ -41,7 +41,7 @@ of `collapseFunctor`) is claimed.
 * `ObjCtx.toSynCatFO` — the lift of an object-sort context to `SynCatFO`.
 * `synCatFOHom` — the lift of a hom between underlying contexts to `SynCatFO`.
 * `arityCongr` — the congruence of numeric function spaces along arity
-  equalities.
+  equalities; `arityCongr_trans` collapses stacked congruences.
 * `collapseKFunctor` — the K-valued soundness functor
   `SynCatFO ⥤ LawvereKSimDCat 2`.
 
@@ -104,6 +104,19 @@ position. -/
 @[simp] theorem arityCongr_apply {n n' m m' : ℕ} (hn : n = n') (hm : m = m')
     (F : (Fin n → ℕ) → (Fin m → ℕ)) (v : Fin n' → ℕ) (j : Fin m') :
     arityCongr hn hm F v j = F (fun i => v (Fin.cast hn i)) (Fin.cast hm.symm j) :=
+  rfl
+
+/-- Stacked arity congruences compose: reading a numeric function across two
+successive arity identifications is reading it across their composite. -/
+theorem arityCongr_trans {n n' n'' m m' m'' : ℕ}
+    (h₁ : n = n') (h₁' : n' = n'') (h₂ : m = m') (h₂' : m' = m'')
+    (F : (Fin n → ℕ) → (Fin m → ℕ)) :
+    arityCongr h₁' h₂' (arityCongr h₁ h₂ F)
+      = arityCongr (h₁.trans h₁') (h₂.trans h₂') F := by
+  subst h₁
+  subst h₁'
+  subst h₂
+  subst h₂'
   rfl
 
 /-- The lift inverts the Phase 6 bridge, heterogeneously across the arity

@@ -53,6 +53,10 @@ faithfulness all read off this anchor.
 
 ## Main statements
 
+* `homEval_heq_cast` — evaluation of a context-transported morphism agrees,
+  heterogeneously, with evaluation of the untransported morphism.
+* `collapseDenotation_apply` — the transport-free reading of the collapse
+  denotation.
 * `collapseDenotation_id` — the collapse denotation of an identity is the
   identity.
 * `collapseDenotation_comp` — the collapse denotation of a composite is the
@@ -157,6 +161,43 @@ theorem ramifiedDenotation_apply {n m : ℕ} {Γ : ObjCtx n} {Δ : ObjCtx m}
       = objToNat (Δ.toCtx_get_isObj (Fin.cast (Δ.toCtx_length).symm j))
           (g.eval (ramifiedEnv Γ v) (Fin.cast (Δ.toCtx_length).symm j)) :=
   rfl
+
+/-- Evaluation of a context-transported morphism agrees, heterogeneously, with
+evaluation of the untransported morphism at the corresponding environment and
+codomain position. -/
+theorem homEval_heq_cast {P : Presentation} {A A' B B' : Ctx P.S}
+    (hA : A = A') (hB : B = B')
+    (h : Hom P (interpQuotRel P) A B = Hom P (interpQuotRel P) A' B')
+    (f : Hom P (interpQuotRel P) A B)
+    (ρ : (standardModel P).Env A) (ρ' : (standardModel P).Env A') (hρ : ρ ≍ ρ')
+    (i : Fin B.length) (i' : Fin B'.length) (hi : i ≍ i') :
+    (cast h f).eval ρ' i' ≍ f.eval ρ i := by
+  subst hA
+  subst hB
+  obtain rfl := eq_of_heq hρ
+  obtain rfl := eq_of_heq hi
+  rw [cast_eq]
+
+/-- The transport-free reading of the collapse denotation: the numeric reading
+of the underlying hom's evaluation at the numeric environment over the
+underlying context. -/
+theorem collapseDenotation_apply {Γ Δ : SynCatFO} (g : Γ ⟶ Δ)
+    (v : Fin (objLen Γ) → ℕ) (j : Fin (objLen Δ)) :
+    collapseDenotation g v j
+      = objToNat (Δ.property j)
+          (Hom.eval g.hom (fun i => objFromNat (Γ.property i) (v i)) j) := by
+  refine Eq.trans (ramifiedDenotation_apply (collapseHom g) v j) ?_
+  refine objToNat_heq _ _ ?_
+  refine homEval_heq_cast Γ.toObjCtx_toCtx.symm Δ.toObjCtx_toCtx.symm _ g.hom
+    (fun i => objFromNat (Γ.property i) (v i)) (ramifiedEnv Γ.toObjCtx.2 v) ?_ j _ ?_
+  · refine Function.hfunext (congrArg Fin (congrArg List.length Γ.toObjCtx_toCtx.symm)) ?_
+    intro a a' haa
+    have hval : a.val = a'.val :=
+      (Fin.heq_ext_iff (congrArg List.length Γ.toObjCtx_toCtx.symm)).mp haa
+    have hv : v a = v (Fin.cast (Γ.toObjCtx.2).toCtx_length a') := congrArg v (Fin.ext hval)
+    rw [hv]
+    exact objFromNat_heq _ _ _
+  · exact (Fin.heq_ext_iff (congrArg List.length Δ.toObjCtx_toCtx.symm)).mpr rfl
 
 /-- The numeric denotation of an identity morphism is the identity. -/
 theorem ramifiedDenotation_id {n : ℕ} (Γ : ObjCtx n) :

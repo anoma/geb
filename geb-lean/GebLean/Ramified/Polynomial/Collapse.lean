@@ -54,8 +54,8 @@ identifications `arityCongr`.
   composition laws of primed standard-model evaluation.
 * `collapseDenotation'_id`, `collapseDenotation'_comp` — the same laws for the
   collapse denotation.
-* `collapseDenotation_apply`, `collapseDenotation'_apply` — the transport-free
-  readings of the two collapse denotations.
+* `collapseDenotation'_apply` — the transport-free reading of the primed
+  collapse denotation.
 * `isObjCtx_map`, `isObjCtx'_map_symm` — the sortwise correspondence of the two
   object properties across the bridge.
 * `synHomMap_eval`, `rmRecCatSliceEquiv_map_eval` — the evaluation of a
@@ -71,10 +71,11 @@ The bridge from a full-subcategory object (a context with an object-sort proof)
 to `ObjCtx'` threads the per-position object-sort proof; the underlying context
 of the bridge equals the original object (`SynCatFO'.toObjCtx'_toCtx`), the
 equality along which `collapseHom'` transports the full-subcategory morphism
-into `ramifiedDenotation'`'s domain. `collapseDenotation_apply` and
-`collapseDenotation'_apply` undo that transport, presenting each denotation
-directly in terms of the underlying hom's evaluation; the agreement is then a
-statement about `Hom.eval` against `Hom'.eval`, with no context transports left.
+into `ramifiedDenotation'`'s domain. `collapseDenotation'_apply` and the legacy
+`collapseDenotation_apply` (`GebLean/Ramified/Soundness/Collapse.lean`) undo that
+transport, presenting each denotation directly in terms of the underlying hom's
+evaluation; the agreement is then a statement about `Hom.eval` against
+`Hom'.eval`, with no context transports left.
 
 Mathlib's `CategoryTheory.Equivalence.congrFullSubcategory` restricts an
 equivalence of categories to full subcategories, but requires the target
@@ -218,22 +219,6 @@ theorem objToNat'_heq {s s' : RType'} (hs : s.IsObj) (hs' : s'.IsObj)
   congrArg natFreeAlgEquiv'
     (eq_of_heq ((cast_heq _ _).trans (h.trans (cast_heq _ _).symm)))
 
-/-- The legacy numeric reading is invariant under heterogeneous equality of the
-values read. -/
-theorem objToNat_heq {s s' : RType} (hs : s.IsObj) (hs' : s'.IsObj)
-    {x : RType.interp (FreeAlg natAlgSig) s} {y : RType.interp (FreeAlg natAlgSig) s'}
-    (h : x ≍ y) : objToNat hs x = objToNat hs' y :=
-  congrArg freeAlgToNat
-    (eq_of_heq ((cast_heq _ _).trans (h.trans (cast_heq _ _).symm)))
-
-/-- The carrier-copy transports of a natural at two object sorts agree across a
-transport of the carrier copies. -/
-theorem cast_objFromNat {s s' : RType} (hs : s.IsObj) (hs' : s'.IsObj)
-    (h : RType.interp (FreeAlg natAlgSig) s = RType.interp (FreeAlg natAlgSig) s')
-    (k : ℕ) : cast h (objFromNat hs k) = objFromNat hs' k := by
-  unfold objFromNat
-  rw [cast_cast]
-
 /-- The primed numeric environment over an object-sort context: position `i`
 carries the numeral of `v` at that position, transported into the object sort's
 carrier copy. Mirror of the legacy `ramifiedEnv`. -/
@@ -361,22 +346,6 @@ theorem collapseDenotation'_comp {Γ' Δ' Θ' : SynCatFO'} (g : Γ' ⟶ Δ') (h 
   rw [collapseHom'_comp]
   exact ramifiedDenotation'_comp (collapseHom' g) (collapseHom' h)
 
-/-- Evaluation of a context-transported legacy morphism agrees, heterogeneously,
-with evaluation of the untransported morphism at the corresponding environment
-and codomain position. -/
-theorem homEval_heq_cast {P : Presentation} {A A' B B' : Ctx P.S}
-    (hA : A = A') (hB : B = B')
-    (h : Hom P (interpQuotRel P) A B = Hom P (interpQuotRel P) A' B')
-    (f : Hom P (interpQuotRel P) A B)
-    (ρ : (standardModel P).Env A) (ρ' : (standardModel P).Env A') (hρ : ρ ≍ ρ')
-    (i : Fin B.length) (i' : Fin B'.length) (hi : i ≍ i') :
-    (cast h f).eval ρ' i' ≍ f.eval ρ i := by
-  subst hA
-  subst hB
-  obtain rfl := eq_of_heq hρ
-  obtain rfl := eq_of_heq hi
-  rw [cast_eq]
-
 /-- Evaluation of a context-transported primed morphism agrees, heterogeneously,
 with evaluation of the untransported morphism at the corresponding environment
 and codomain position. -/
@@ -392,27 +361,6 @@ theorem Hom'.eval_heq_cast {P : Presentation} {A A' B B' : Ctx P.S}
   obtain rfl := eq_of_heq hρ
   obtain rfl := eq_of_heq hi
   rw [cast_eq]
-
-/-- The transport-free reading of the legacy collapse denotation: the numeric
-reading of the underlying hom's evaluation at the numeric environment over the
-underlying context. -/
-theorem collapseDenotation_apply {Γ Δ : SynCatFO} (g : Γ ⟶ Δ)
-    (v : Fin (objLen Γ) → ℕ) (j : Fin (objLen Δ)) :
-    collapseDenotation g v j
-      = objToNat (Δ.property j)
-          (Hom.eval g.hom (fun i => objFromNat (Γ.property i) (v i)) j) := by
-  refine Eq.trans (ramifiedDenotation_apply (collapseHom g) v j) ?_
-  refine objToNat_heq _ _ ?_
-  refine homEval_heq_cast Γ.toObjCtx_toCtx.symm Δ.toObjCtx_toCtx.symm _ g.hom
-    (fun i => objFromNat (Γ.property i) (v i)) (ramifiedEnv Γ.toObjCtx.2 v) ?_ j _ ?_
-  · refine Function.hfunext (congrArg Fin (congrArg List.length Γ.toObjCtx_toCtx.symm)) ?_
-    intro a a' haa
-    have hval : a.val = a'.val :=
-      (Fin.heq_ext_iff (congrArg List.length Γ.toObjCtx_toCtx.symm)).mp haa
-    have hv : v a = v (Fin.cast (Γ.toObjCtx.2).toCtx_length a') := congrArg v (Fin.ext hval)
-    rw [hv]
-    exact objFromNat_heq _ _ _
-  · exact (Fin.heq_ext_iff (congrArg List.length Δ.toObjCtx_toCtx.symm)).mpr rfl
 
 /-- The transport-free reading of the primed collapse denotation. -/
 theorem collapseDenotation'_apply {Γ' Δ' : SynCatFO'} (g : Γ' ⟶ Δ')

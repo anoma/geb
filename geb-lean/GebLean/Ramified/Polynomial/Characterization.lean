@@ -23,8 +23,8 @@ context maps onto the original (`ObjCtx.toObjCtx'_map`), so the image of its
 lift under the equivalence is the legacy lift
 (`synCatFOSliceEquiv_obj_toSynCatFO'`), and it carries the base-sort context to
 the primed base-sort context (`oCtx_toObjCtx'`). The arity bookkeeping is
-`arityCongr` throughout, with `arityCongr_trans` collapsing stacked
-congruences.
+`arityCongr` throughout, with `arityCongr_trans`
+(`GebLean/Ramified/Characterization.lean`) collapsing stacked congruences.
 
 ## Main definitions
 
@@ -40,7 +40,6 @@ congruences.
 * `ObjCtx.toObjCtx'_map`, `synCatFOSliceEquiv_obj_toSynCatFO'`,
   `oCtx_toObjCtx'`, `synCatFOSliceEquiv_obj_oCtx'` — the object
   identifications across the restriction equivalence.
-* `arityCongr_trans` — stacked arity congruences compose.
 * `collapseFunctor'.Faithful`, `collapseKFunctor'.Faithful` — the two primed
   soundness functors are faithful.
 * `ramified_definability'` — every morphism of `LawvereERCat` has a primed
@@ -103,19 +102,6 @@ theorem synCatFOSliceEquiv_obj_oCtx' (m : ℕ) :
     synCatFOSliceEquiv.functor.obj (oCtx' m).toSynCatFO' = (oCtx m).toSynCatFO := by
   rw [← oCtx_toObjCtx']
   exact synCatFOSliceEquiv_obj_toSynCatFO' (oCtx m)
-
-/-- Stacked arity congruences compose: reading a numeric function across two
-successive arity identifications is reading it across their composite. -/
-theorem _root_.GebLean.Ramified.arityCongr_trans {n n' n'' m m' m'' : ℕ}
-    (h₁ : n = n') (h₁' : n' = n'') (h₂ : m = m') (h₂' : m' = m'')
-    (F : (Fin n → ℕ) → (Fin m → ℕ)) :
-    arityCongr h₁' h₂' (arityCongr h₁ h₂ F)
-      = arityCongr (h₁.trans h₁') (h₂.trans h₂') F := by
-  subst h₁
-  subst h₁'
-  subst h₂
-  subst h₂'
-  rfl
 
 /-- The primed soundness functor (Leivant III Theorem 14, the arm (1) ⇒ (4),
 section 6.1): the restriction equivalence `synCatFOSliceEquiv` followed by the
