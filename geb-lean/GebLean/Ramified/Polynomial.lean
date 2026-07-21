@@ -1,3 +1,4 @@
+import GebLean.Ramified.Polynomial.Collapse
 import GebLean.Ramified.Polynomial.FirstOrder
 import GebLean.Ramified.Polynomial.FreeAlg
 import GebLean.Ramified.Polynomial.HigherOrder
