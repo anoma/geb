@@ -1,3 +1,4 @@
+import GebLeanTests.Ramified.Polynomial.FirstOrder
 import GebLeanTests.Ramified.Polynomial.FreeAlg
 import GebLeanTests.Ramified.Polynomial.HigherOrder
 import GebLeanTests.Ramified.Polynomial.HigherOrderEquiv

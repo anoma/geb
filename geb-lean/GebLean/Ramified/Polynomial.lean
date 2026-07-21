@@ -1,3 +1,4 @@
+import GebLean.Ramified.Polynomial.FirstOrder
 import GebLean.Ramified.Polynomial.FreeAlg
 import GebLean.Ramified.Polynomial.HigherOrder
 import GebLean.Ramified.Polynomial.HigherOrderEquiv
@@ -21,4 +22,8 @@ generic bridge `GebLean/PolyBridge/`. `FreeAlg` supplies the free algebra
 FreeAlg A`, and the numeric carrier of `natAlgSig`. `RType` reimplements the
 ramified types `RType'` and their operations on that stack, with a
 compatibility lemma per operation across the bridge `rTypeSliceEquiv`.
+`FirstOrder` carves out the first-order sub-theories on that stack: the
+first-order identifier predicate `RIdent'.FirstOrder`, the sub-theory
+presentation `firstOrderPresentation`, and the inclusion functor `foInclusion`
+into the host `RMRecCat'`.
 -/

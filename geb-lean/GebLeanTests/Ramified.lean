@@ -8,7 +8,6 @@ import GebLeanTests.Ramified.HigherOrder
 import GebLeanTests.Ramified.OmegaShift
 import GebLeanTests.Ramified.Examples
 import GebLeanTests.Ramified.Algebras
-import GebLeanTests.Ramified.FirstOrder
 import GebLeanTests.Ramified.Definability
 import GebLeanTests.Ramified.Soundness
 import GebLeanTests.Ramified.Characterization
