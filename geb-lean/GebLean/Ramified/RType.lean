@@ -48,6 +48,10 @@ whose shapes are a nullary `o`, a binary `arrow`, and a unary `omega`.
 * `RType.interp_isObj` — every object sort denotes a copy of the carrier.
 * `RType.interpCongr_isObj` — the denotation congruence at an object sort is
   the base equivalence.
+* `interpCongr_cast` — the denotation congruence commutes with transport along
+  an r-type equality.
+* `interpCongr_arrow` — the denotation congruence at an arrow is the conjugation
+  by the congruences at the subterms.
 * `RType.o_isSimple`, `RType.arrow_isSimple_iff` — the simple-type predicate
   on the base type and on `arrow`.
 
@@ -263,6 +267,23 @@ theorem RType.interpCongr_isObj {C D : Type} (e : C ≃ D) {s : RType} (h : s.Is
   rcases s with ⟨_, i, children⟩
   rcases h with h | h <;>
     (simp only [RType.shape, PolyFix.index] at h; subst h; rfl)
+
+/-- The denotation congruence commutes with transport along an r-type
+equality. -/
+theorem interpCongr_cast {C D : Type} (e : C ≃ D) {t u : RType} (h : t = u)
+    (w : RType.interp C t) :
+    cast (congrArg (RType.interp D) h) (RType.interpCongr e t w)
+      = RType.interpCongr e u (cast (congrArg (RType.interp C) h) w) := by
+  subst h; rfl
+
+/-- The denotation congruence at an arrow acts by the congruences at the
+subterms: it precomposes with the inverse at the domain and postcomposes with
+the congruence at the codomain. -/
+theorem interpCongr_arrow {C D : Type} (e : C ≃ D) (a b : RType)
+    (w : RType.interp C (RType.arrow a b)) (x : RType.interp D a) :
+    RType.interpCongr e (RType.arrow a b) w x
+      = RType.interpCongr e b (w ((RType.interpCongr e a).symm x)) :=
+  rfl
 
 /-- The base object sort `o` as an object-sort witness. -/
 def oObj : { s : RType // RType.IsObj s } := ⟨RType.o, Or.inl rfl⟩

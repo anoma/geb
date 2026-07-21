@@ -28,7 +28,9 @@ common clock, the `m` realizers sharing `machineCtx` and tupled into
 * `ObjCtx.toCtx` — the underlying context of an object-sort context.
 * `oCtx` — the object-sort context of `m` copies of the base sort `o`.
 * `objFromNat` — the carrier-copy transport of a natural into an object-sort
-  denotation (the inverse direction of `objToNat`).
+  denotation (the inverse direction of `objToNat`); `cast_objFromNat` and
+  `objFromNat_heq` record its invariance under transport of the carrier
+  copies.
 * `ramifiedEnv` — the numeric environment over an object-sort context.
 * `ramifiedDenotation` — the numeric denotation of a morphism between
   object-sort contexts.
@@ -122,6 +124,14 @@ copy. -/
 def objFromNat {s : RType} (hs : s.IsObj) (k : ℕ) :
     RType.interp (FreeAlg natAlgSig) s :=
   cast (RType.interp_isObj (FreeAlg natAlgSig) hs).symm (natToFreeAlg k)
+
+/-- The carrier-copy transports of a natural at two object sorts agree across a
+transport of the carrier copies. -/
+theorem cast_objFromNat {s s' : RType} (hs : s.IsObj) (hs' : s'.IsObj)
+    (h : RType.interp (FreeAlg natAlgSig) s = RType.interp (FreeAlg natAlgSig) s')
+    (k : ℕ) : cast h (objFromNat hs k) = objFromNat hs' k := by
+  unfold objFromNat
+  rw [cast_cast]
 
 /-- The numeric reading inverts the carrier-copy transport:
 `objToNat hs (objFromNat hs k) = k`. -/

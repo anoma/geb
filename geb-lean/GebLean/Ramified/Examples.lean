@@ -18,7 +18,9 @@ identities of natural numbers.
 ## Main definitions
 
 * `objToNat` — the numeric reading at an object sort, through the carrier-copy
-  equality (needed at the tower sorts `Omega^m o`).
+  equality (needed at the tower sorts `Omega^m o`); `objToNat_cast` and
+  `objToNat_heq` record its invariance under carrier-copy transport and under
+  heterogeneous equality.
 * `ramKappa` — the single `Omega`-lowering coercion `Omega^{m+1} o -> Omega^m o`.
 * `ramDeltaIdent` — the tower-sort coercion `Omega^m o -> o`, extensionally the
   identity.
@@ -105,6 +107,14 @@ theorem objToNat_cast {s s' : RType} (hs : s.IsObj) (hs' : s'.IsObj)
     objToNat hs' (cast h x) = objToNat hs x :=
   congrArg freeAlgToNat
     (eq_of_heq (((cast_heq _ _).trans (cast_heq _ _)).trans (cast_heq _ _).symm))
+
+/-- The numeric reading is invariant under heterogeneous equality of the values
+read. -/
+theorem objToNat_heq {s s' : RType} (hs : s.IsObj) (hs' : s'.IsObj)
+    {x : RType.interp (FreeAlg natAlgSig) s} {y : RType.interp (FreeAlg natAlgSig) s'}
+    (h : x ≍ y) : objToNat hs x = objToNat hs' y :=
+  congrArg freeAlgToNat
+    (eq_of_heq ((cast_heq _ _).trans (h.trans (cast_heq _ _).symm)))
 
 /-- Leivant III section 2.4(1)'s coercion `kappa`, at the tower sorts: the single
 `Omega`-lowering step `Omega^{m+1} o -> Omega^m o`, realized as the auxiliary

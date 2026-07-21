@@ -61,8 +61,6 @@ translations `tmSliceEquiv` (`GebLean/Ramified/Polynomial/Term.lean`) and
 
 * `identSliceEquiv_defn`, `identSliceEquiv_mrec`, `identSliceEquiv_frec` — the
   former naturality of the bridge equivalence.
-* `carrierSliceEquiv_arrow`, `carrierSliceEquiv_o` — the carrier bridge at an
-  arrow sort and at the base object sort.
 * `curryInterp'_agree` — the currying of a denotation agrees with the legacy
   currying across the bridge.
 * `stdConstructorInterp_agree` — the constructor interpretation agrees across
@@ -556,12 +554,6 @@ def EnvAgree {A : AlgSig} {Γ' : List RType'} {Δ : List RType}
   ∀ (i : Fin Γ'.length) (j : Fin Δ.length), i.val = j.val →
     HEq (ρ j) (carrierSliceEquiv A (Γ'.get i) (ρ' i))
 
-/-- Transport of a function along an equality of function types acts as
-transport of the argument and of the value. -/
-theorem cast_arrow {α β γ δ : Type} (hα : α = γ) (hβ : β = δ) (h : (α → β) = (γ → δ))
-    (f : α → β) (x : α) : cast h f (cast hα x) = cast hβ (f x) := by
-  subst hα; subst hβ; rfl
-
 /-- Transport along an equality is injective. -/
 theorem cast_left_inj {α β : Type} (h : α = β) {a b : α} (hab : cast h a = cast h b) : a = b := by
   subst h; exact hab
@@ -575,61 +567,6 @@ of the value. -/
 theorem cast_cod {α β δ : Type} (hβ : β = δ) (h : (α → β) = (α → δ)) (f : α → β) (x : α) :
     cast h f x = cast hβ (f x) := by
   subst hβ; rfl
-
-/-- The denotation congruence commutes with transport along an r-type
-equality. -/
-theorem interpCongr_cast {C D : Type} (e : C ≃ D) {t u : RType} (h : t = u)
-    (w : RType.interp C t) :
-    cast (congrArg (RType.interp D) h) (RType.interpCongr e t w)
-      = RType.interpCongr e u (cast (congrArg (RType.interp C) h) w) := by
-  subst h; rfl
-
-/-- The denotation congruence at an arrow acts by the congruences at the
-subterms: it precomposes with the inverse at the domain and postcomposes with
-the congruence at the codomain. -/
-theorem interpCongr_arrow {C D : Type} (e : C ≃ D) (a b : RType)
-    (w : RType.interp C (RType.arrow a b)) (x : RType.interp D a) :
-    RType.interpCongr e (RType.arrow a b) w x
-      = RType.interpCongr e b (w ((RType.interpCongr e a).symm x)) :=
-  rfl
-
-/-- The carrier bridge at an arrow sort: the bridge image of a function,
-read at the translated arrow, is the conjugate of the function by the bridges
-at the domain and codomain. -/
-theorem carrierSliceEquiv_arrow {A : AlgSig} (a b : RType')
-    (f : RType'.interp (FreeAlg' A) (RType'.arrow a b))
-    (x : RType'.interp (FreeAlg' A) a) :
-    cast (congrArg (RType.interp (FreeAlg A)) (rTypeSliceEquiv_arrow a b))
-        (carrierSliceEquiv A (RType'.arrow a b) f) (carrierSliceEquiv A a x)
-      = carrierSliceEquiv A b (f x) := by
-  change cast (congrArg (RType.interp (FreeAlg A)) (rTypeSliceEquiv_arrow a b))
-      (RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv (RType'.arrow a b))
-        (cast (rTypeSliceEquiv_interp (FreeAlg' A) (RType'.arrow a b)) f))
-      (RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv a)
-        (cast (rTypeSliceEquiv_interp (FreeAlg' A) a) x))
-    = RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv b)
-        (cast (rTypeSliceEquiv_interp (FreeAlg' A) b) (f x))
-  rw [interpCongr_cast (freeAlgSliceEquiv A) (rTypeSliceEquiv_arrow a b),
-    interpCongr_arrow, Equiv.symm_apply_apply]
-  refine congrArg (RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv b)) ?_
-  exact cast_arrow (rTypeSliceEquiv_interp (FreeAlg' A) a)
-    (rTypeSliceEquiv_interp (FreeAlg' A) b) _ f x
-
-/-- The base object sort is an object sort. -/
-theorem isObj_o' : RType'.IsObj RType'.o :=
-  Or.inl (RType'.shape_mk RTypeShape.o Fin.elim0)
-
-/-- Every `Omega` sort is an object sort. -/
-theorem isObj_omega' (t' : RType') : RType'.IsObj (RType'.omega t') :=
-  Or.inr (RType'.shape_mk RTypeShape.omega ![t'])
-
-/-- The carrier bridge at the base object sort computes to the free-algebra
-bridge: both denotations are copies of the base carrier. -/
-theorem carrierSliceEquiv_o {A : AlgSig} (x : RType'.interp (FreeAlg' A) RType'.o) :
-    cast (congrArg (RType.interp (FreeAlg A)) rTypeSliceEquiv_o)
-        (carrierSliceEquiv A RType'.o x)
-      = freeAlgSliceEquiv A x :=
-  carrierSliceEquiv_isObj isObj_o' x
 
 /-- The pushed-forward environment agrees with its source. -/
 theorem envAgree_envSlice {A : AlgSig} (Γ' : List RType')
@@ -976,14 +913,6 @@ theorem EnvAgree.get {A : AlgSig} {Γ' : List RType'} {Δ : List RType}
     (h : Δ.get j = rTypeSliceEquiv (Γ'.get i)) :
     cast (congrArg (RType.interp (FreeAlg A)) h) (ρ j) = carrierSliceEquiv A (Γ'.get i) (ρ' i) :=
   eq_of_heq ((cast_heq _ _).trans (hρ i j hij))
-
-/-- The carrier bridge commutes with transport of its argument along a sort
-equality, heterogeneously. -/
-theorem carrierSliceEquiv_cast_heq {A : AlgSig} {s t : RType'} (h : s = t)
-    (x : RType'.interp (FreeAlg' A) s) :
-    HEq (carrierSliceEquiv A t (cast (congrArg (RType'.interp (FreeAlg' A)) h) x))
-      (carrierSliceEquiv A s x) := by
-  subst h; rfl
 
 /-- Environment agreement is inherited by the parameter environments of a
 recurrence context. -/

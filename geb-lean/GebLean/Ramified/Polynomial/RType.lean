@@ -50,6 +50,14 @@ across `rTypeSliceEquiv`.
 * `RType'.interp_isObj` — every object sort denotes a copy of the carrier.
 * `freeAlgSliceEquiv_recurse` — the primed recurrence agrees with the legacy
   recurrence across the bridge.
+* `cast_arrow` — transport along an equality of function types acts as
+  transport of the argument and of the value.
+* `carrierSliceEquiv_arrow`, `carrierSliceEquiv_o` — the carrier bridge at an
+  arrow sort and at the base object sort.
+* `carrierSliceEquiv_cast_heq` — the carrier bridge commutes with transport of
+  its argument along a sort equality.
+* `isObj_o'`, `isObj_omega'` — the base sort and every `Omega` sort are object
+  sorts.
 * `carrierSliceEquiv_isObj` — the carrier bridge at an object sort computes to
   the free-algebra bridge equivalence.
 
@@ -476,5 +484,57 @@ theorem carrierSliceEquiv_isObj {A : AlgSig} {t' : RType'} (h : t'.IsObj)
   rw [RType.interpCongr_isObj (freeAlgSliceEquiv A) (cast (rTypeSliceEquiv_isObj t') h)]
   congr 1
   simp only [cast_cast]
+
+/-- Transport of a function along an equality of function types acts as
+transport of the argument and of the value. -/
+theorem cast_arrow {α β γ δ : Type} (hα : α = γ) (hβ : β = δ) (h : (α → β) = (γ → δ))
+    (f : α → β) (x : α) : cast h f (cast hα x) = cast hβ (f x) := by
+  subst hα; subst hβ; rfl
+
+/-- The carrier bridge at an arrow sort: the bridge image of a function,
+read at the translated arrow, is the conjugate of the function by the bridges
+at the domain and codomain. -/
+theorem carrierSliceEquiv_arrow {A : AlgSig} (a b : RType')
+    (f : RType'.interp (FreeAlg' A) (RType'.arrow a b))
+    (x : RType'.interp (FreeAlg' A) a) :
+    cast (congrArg (RType.interp (FreeAlg A)) (rTypeSliceEquiv_arrow a b))
+        (carrierSliceEquiv A (RType'.arrow a b) f) (carrierSliceEquiv A a x)
+      = carrierSliceEquiv A b (f x) := by
+  change cast (congrArg (RType.interp (FreeAlg A)) (rTypeSliceEquiv_arrow a b))
+      (RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv (RType'.arrow a b))
+        (cast (rTypeSliceEquiv_interp (FreeAlg' A) (RType'.arrow a b)) f))
+      (RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv a)
+        (cast (rTypeSliceEquiv_interp (FreeAlg' A) a) x))
+    = RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv b)
+        (cast (rTypeSliceEquiv_interp (FreeAlg' A) b) (f x))
+  rw [interpCongr_cast (freeAlgSliceEquiv A) (rTypeSliceEquiv_arrow a b),
+    interpCongr_arrow, Equiv.symm_apply_apply]
+  refine congrArg (RType.interpCongr (freeAlgSliceEquiv A) (rTypeSliceEquiv b)) ?_
+  exact cast_arrow (rTypeSliceEquiv_interp (FreeAlg' A) a)
+    (rTypeSliceEquiv_interp (FreeAlg' A) b) _ f x
+
+/-- The base object sort is an object sort. -/
+theorem isObj_o' : RType'.IsObj RType'.o :=
+  Or.inl (RType'.shape_mk RTypeShape.o Fin.elim0)
+
+/-- Every `Omega` sort is an object sort. -/
+theorem isObj_omega' (t' : RType') : RType'.IsObj (RType'.omega t') :=
+  Or.inr (RType'.shape_mk RTypeShape.omega ![t'])
+
+/-- The carrier bridge at the base object sort computes to the free-algebra
+bridge: both denotations are copies of the base carrier. -/
+theorem carrierSliceEquiv_o {A : AlgSig} (x : RType'.interp (FreeAlg' A) RType'.o) :
+    cast (congrArg (RType.interp (FreeAlg A)) rTypeSliceEquiv_o)
+        (carrierSliceEquiv A RType'.o x)
+      = freeAlgSliceEquiv A x :=
+  carrierSliceEquiv_isObj isObj_o' x
+
+/-- The carrier bridge commutes with transport of its argument along a sort
+equality, heterogeneously. -/
+theorem carrierSliceEquiv_cast_heq {A : AlgSig} {s t : RType'} (h : s = t)
+    (x : RType'.interp (FreeAlg' A) s) :
+    HEq (carrierSliceEquiv A t (cast (congrArg (RType'.interp (FreeAlg' A)) h) x))
+      (carrierSliceEquiv A s x) := by
+  subst h; rfl
 
 end GebLean.Ramified.Polynomial

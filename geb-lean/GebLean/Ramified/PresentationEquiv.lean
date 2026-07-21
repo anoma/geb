@@ -74,13 +74,6 @@ structure PresentationEquiv (P P' : Presentation) where
             (carrierEquiv _ (args (Fin.cast (sigEquiv.arity_length o) j)))))
       = carrierEquiv (P.sig.result o) ((standardModel P).interpOp o args)
 
-/-- Evaluation of a composite tuple is evaluation of the second at the
-evaluated first (the semantic clone law `Tm.eval_subst`, componentwise). -/
-theorem HomTuple.eval_comp {P : Presentation} {Γ Δ E : Ctx P.S}
-    (f : HomTuple P Γ Δ) (g : HomTuple P Δ E) (M : SortedModel P.sig) (ρ : M.Env Γ) :
-    (HomTuple.comp f g).eval M ρ = g.eval M (f.eval M ρ) :=
-  funext (fun i => Tm.eval_subst M (g i) f ρ)
-
 /-- Evaluation of `eqToHom` transports the environment along the object
 equality. -/
 theorem Hom.eval_eqToHom {P : Presentation} {Γ Δ : SynCat P (interpQuotRel P)}

@@ -48,6 +48,7 @@ generalizes the hand-rolled quotient categories `GebLean.LawvereERCat`
 
 * `Hom.eval_mk` — evaluation of a class is componentwise evaluation of its
   representative.
+* `HomTuple.eval_comp` — evaluation of a composite tuple in any model.
 * `Hom.eval_comp` — evaluation respects composition (the semantic clone law
   `Tm.eval_subst` componentwise).
 
@@ -201,9 +202,17 @@ tuple. -/
     Hom.eval (Quotient.mk _ f) ρ = HomTuple.eval f (standardModel P) ρ :=
   rfl
 
+/-- Evaluation of a composite tuple is evaluation of the second at the
+evaluated first, in any model: the semantic clone law `Tm.eval_subst`
+componentwise. The representative-level form of `Hom.eval_comp`. -/
+theorem HomTuple.eval_comp {P : Presentation} {Γ Δ E : Ctx P.S}
+    (f : HomTuple P Γ Δ) (g : HomTuple P Δ E) (M : SortedModel P.sig) (ρ : M.Env Γ) :
+    (HomTuple.comp f g).eval M ρ = g.eval M (f.eval M ρ) :=
+  funext (fun i => Tm.eval_subst M (g i) f ρ)
+
 /-- Evaluation respects composition (`≫`, i.e. `Hom.comp`): evaluating a
 composite at an environment evaluates the second hom at the value of the first.
-The semantic clone law `Tm.eval_subst` componentwise. -/
+`HomTuple.eval_comp` at representatives, at the standard model. -/
 theorem Hom.eval_comp {P : Presentation} {Γ Δ E : Ctx P.S}
     (f : Hom P (interpQuotRel P) Γ Δ) (g : Hom P (interpQuotRel P) Δ E)
     (ρ : (standardModel P).Env Γ) :
@@ -211,7 +220,7 @@ theorem Hom.eval_comp {P : Presentation} {Γ Δ E : Ctx P.S}
   induction f using Quotient.ind with
   | _ f' =>
   induction g using Quotient.ind with
-  | _ g' => exact funext (fun i => Tm.eval_subst (standardModel P) (g' i) f' ρ)
+  | _ g' => exact HomTuple.eval_comp f' g' (standardModel P) ρ
 
 /-- The carrier of the syntactic category of a presentation `P` under a quotient
 relation `r`: a type synonym for `Ctx P.S` carrying the category and product
