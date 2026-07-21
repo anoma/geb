@@ -129,9 +129,10 @@ affected declarations: Lemma 4 states an equality between the
 precomposed and direct interpretations, but `IR.interpPrecompIso`
 supplies only the pointwise isomorphism `IR.PrecompIsoMotive`, since
 equality is not the natural comparison between general objects here;
-Lemma 3 states a natural isomorphism, but `IR.interpDeltaIso` states
-it pointwise at a fixed object, since natural transformations between
-interpretations are not yet defined. The `delta` case of both
+the naturality upgrade is `IR.interpPrecompIso_natural`. Lemma 3
+states a natural isomorphism, but `IR.interpDeltaIso` states it
+pointwise at a fixed object; the naturality upgrade is
+`IR.natDeltaEquiv`. The `delta` case of both
 `IR.precomp` and `IR.interpPrecompIso` inserts `ULift`s to align the
 classifier sigma's index universe with the code's ambient arity
 universes, and `IR.interpDeltaIso` inserts `FreeCoprodCompDisc.lift`
@@ -1030,8 +1031,8 @@ interpreting the dependent product (`delta`) code at `k` is isomorphic
 to the indexed coproduct, over the direction assignments `i : B → I`,
 of the copower of the interpretation of the subcode `c i` by the
 morphisms `Hom I (lift ⟨B, i⟩) k`. The paper states a natural
-isomorphism; the recorded deviation states it pointwise at `k`, because
-natural transformations between interpretations are not yet defined.
+isomorphism; the recorded deviation states it pointwise at `k`; the
+naturality upgrade is `IR.natDeltaEquiv`.
 The isomorphism composes `interpDeltaIsoGroup` and `interpDeltaIsoHom`;
 its decodings agree definitionally. -/
 def interpDeltaIso (B : Type uB)

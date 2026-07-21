@@ -1,5 +1,5 @@
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean
-index 12839ab..3995840 100644
+index 44ebba7..b6df37e 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -10,7 +10,7 @@ index 12839ab..3995840 100644
  module
  
  public import Geb.Mathlib.CategoryTheory.FreeCoprodCompDisc
-@@ -90,7 +91,7 @@ decodes to `o : O`); the input index type `I` parameterizes the
+@@ -109,7 +110,7 @@ decodes to `o : O`); the input index type `I` parameterizes the
  `delta` directions (a code `IR.delta I O B c` receives the decodings
  of its recursive arguments as assignments `B → I`).
  
@@ -19,7 +19,7 @@ index 12839ab..3995840 100644
  warning on the separated arity universes `uA`/`uB`: in the suppressed
  declarations' types they appear only together under `max`, so the
  linter flags them as a pair that could be unified; keeping them
-@@ -124,9 +125,9 @@ variable (I : Type uI) (O : Type uO)
+@@ -162,9 +163,9 @@ variable (I : Type uI) (O : Type uO)
  
  namespace IR
  
@@ -30,7 +30,7 @@ index 12839ab..3995840 100644
  def Shape : Type (max (uA + 1) (uB + 1) uO) :=
    O ⊕ Type uA ⊕ Type uB
  
-@@ -164,21 +165,21 @@ def directionElim.{v} (V : Type v) (σ : (A : Type uA) → A → V)
+@@ -202,21 +203,21 @@ def directionElim.{v} (V : Type v) (σ : (A : Type uA) → A → V)
    | Sum.inr (Sum.inl (A : Type uA)) => σ A (ULift.down ds)
    | Sum.inr (Sum.inr (B : Type uB)) => δ B (ULift.down ds)
  
@@ -55,7 +55,7 @@ index 12839ab..3995840 100644
  def ObjFst : Type (max (uA + 1) (uB + 1) uO) :=
    Shape.{uA, uB, uO} O
  
-@@ -219,9 +220,9 @@ theorem objIota_eq_mk.{v} (V : Type v) (o : O)
+@@ -257,9 +258,9 @@ theorem objIota_eq_mk.{v} (V : Type v) (o : O)
      objIota I O V o = (⟨Sum.inl o, ds⟩ : Obj.{uA, uB, uI, uO, v} I O V) :=
    congrArg (Sigma.mk (Sum.inl o)) (funext (fun x ↦ PEmpty.elim x))
  
@@ -66,7 +66,7 @@ index 12839ab..3995840 100644
  def Dest.{v, w} (V : Type v) (W : Type w) :
      Type (max (uA + 1) (uB + 1) uI uO v w) :=
    (O → W) × ((A : Type uA) → (A → V) → W) ×
-@@ -339,8 +340,8 @@ def depDestEquiv.{v, w} (V : Type v) (W : Obj I O V → Type w) :
+@@ -377,8 +378,8 @@ def depDestEquiv.{v, w} (V : Type v) (W : Obj I O V → Type w) :
    left_inv := DepDest.elimInv_elim I O V W
    right_inv := DepDest.elim_elimInv I O V W
  
@@ -76,7 +76,7 @@ index 12839ab..3995840 100644
  def Alg.{v} (V : Type v) : Type (max (uA + 1) (uB + 1) uI uO v) :=
    Dest.{uA, uB, uI, uO, v, v} I O V V
  
-@@ -351,9 +352,9 @@ def Alg.toHom.{v} (V : Type v) (alg : Alg.{uA, uB, uI, uO, v} I O V) : Obj I O V
+@@ -389,9 +390,9 @@ def Alg.toHom.{v} (V : Type v) (alg : Alg.{uA, uB, uI, uO, v} I O V) : Obj I O V
  
  end IR
  
@@ -87,7 +87,7 @@ index 12839ab..3995840 100644
  def IR : Type (max (uA + 1) (uB + 1) uI uO) :=
    PFunctor.W.{max (uA + 1) (uB + 1) uO, max uA uB uI}
      (IR.pFunctor.{uA, uB, uI, uO} I O)
-@@ -509,10 +510,10 @@ end IR
+@@ -619,10 +620,10 @@ end IR
  
  namespace IR
  
@@ -99,6 +99,50 @@ index 12839ab..3995840 100644
  def interpObjIota (o : O) : FreeCoprodCompDisc.Map.{max uA uB, uI, uO} I O :=
    fun _ ↦ ⟨ULift Unit, fun _ ↦ o⟩
  
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Category.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Category.lean
+index a162a0c..92535e6 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Category.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Category.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.IndRec.Naturality
+@@ -86,7 +87,7 @@ are carried as `FreeCoprodCompDisc.isoOfEq` transports and commuted
+ across the Lemma 4 isomorphism by elimination of the generalized
+ equality.
+ 
+-The `linter.checkUnivs false` option on `IR.comp_isoOfEq_hom` and
++The `@[nolint checkUnivs]` attribute on `IR.comp_isoOfEq_hom` and
+ `IR.isoOfEq_symm_hom_comp` suppresses the `checkUnivs` warning on
+ the separated arity universes `uA`/`uB`: in those two declarations'
+ types the pair appears only together under `max`, so the linter
+@@ -4125,10 +4126,10 @@ theorem interpHom_cast_cod (D : IR.{max uA uB, uB, uI, uO} I O)
+       (fun f ↦ (FreeCoprodCompDisc.Hom.comp_id O
+         ((interpHom I O D γ₀ f).1 X)).symm)
+       h
+-set_option linter.checkUnivs false in
+ /-- Postcomposition with an object-equality transport is the transport
+ of the morphism's codomain, by elimination of the generalized
+ equality. -/
++@[nolint checkUnivs]
+ theorem comp_isoOfEq_hom (Z W : FreeCoprodCompDisc.{max uA uB, uI} I) :
+     ∀ (V : FreeCoprodCompDisc.{max uA uB, uI} I) (q : W = V)
+       (f : FreeCoprodCompDisc.Hom I Z W),
+@@ -4143,9 +4144,9 @@ theorem comp_isoOfEq_hom (Z W : FreeCoprodCompDisc.{max uA uB, uI} I) :
+                 (FreeCoprodCompDisc.isoOfEq I q')) =
+             cast (congrArg (FreeCoprodCompDisc.Hom I Z) q') f)
+       (fun f ↦ FreeCoprodCompDisc.Hom.comp_id I f) q
+-set_option linter.checkUnivs false in
+ /-- An object-equality transport followed by its inverse is the
+ identity, by elimination of the generalized equality. -/
++@[nolint checkUnivs]
+ theorem isoOfEq_symm_hom_comp (Z : FreeCoprodCompDisc.{max uA uB, uO} O) :
+     ∀ (W : FreeCoprodCompDisc.{max uA uB, uO} O) (q : Z = W),
+       FreeCoprodCompDisc.Hom.comp O
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 index 004265e..fc173cb 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
