@@ -9,13 +9,14 @@ container isomorphism: a shape equivalence `F.A ≃ G.A`, a fibrewise position
 equivalence `F.B a ≃ G.B (shapeEquiv a)`, and the compatibility of the
 shape-output and direction-input maps. For endofunctors, such an isomorphism
 induces an equivalence of the associated W-types (initial algebras), fibrewise
-over the shared (co)domain.  The transport `wMap` is a single slice-W
+over the shared (co)domain. The transport `wMap` is a single slice-W
 eliminator; the inverse is the `wMap` of the reversed isomorphism, and the two
 round trips are structural inductions.
 
 ## Main definitions
 
-* `SlicePFunctor.Iso` — the container isomorphism of slice endofunctors.
+* `SlicePFunctor.Iso` — the container isomorphism of slice functors from `D`
+  to `C`.
 * `SlicePFunctor.Iso.symm` — the reversed isomorphism.
 * `SlicePFunctor.Iso.wMap` — the induced map on W-types, by `W.elim`.
 * `SlicePFunctor.Iso.wEquiv` — the induced equivalence of W-types.
@@ -73,6 +74,8 @@ structure Iso {D : Type uD} {C : Type uC} (F G : SlicePFunctor.{uA, uB, uD, uC} 
 
 namespace Iso
 
+section General
+
 variable {D : Type uD} {C : Type uC} {F G : SlicePFunctor.{uA, uB, uD, uC} D C}
 
 /-- The reversed isomorphism. The position field at `a'` reverses the forward
@@ -97,8 +100,9 @@ theorem posEquiv_heq_cast (e : Iso F G) {a₀ a : F.A} (h : a₀ = a) (b : F.B a
   subst h
   rfl
 
-/-- The reversed position equivalence is a position equivalence in the
-reversed direction. -/
+/-- The inverse of the reversed position equivalence agrees with the forward
+position equivalence at the reversed shape, the intervening cast being
+absorbed by `HEq`. -/
 theorem symm_posEquiv_symm_heq (e : Iso F G) (a' : G.A)
     (b' : F.B (e.shapeEquiv.symm a')) :
     (e.symm.posEquiv a').symm b' ≍ e.posEquiv (e.shapeEquiv.symm a') b' := by
@@ -127,9 +131,9 @@ theorem posEquiv_symm_comp' (e : Iso F G) (a' : G.A)
   exact ((symm_posEquiv_symm_heq e a' ((e.posEquiv (e.shapeEquiv.symm a')).symm b'')).trans
     (heq_of_eq (Equiv.apply_symm_apply _ b''))).trans (cast_heq _ b'').symm
 
-end Iso
+end General
 
-namespace Iso
+section Endofunctor
 
 universe uI
 
@@ -219,6 +223,8 @@ def wEquivFiber (e : Iso F G) (i : I) :
   invFun w' := ⟨e.symm.wMap w'.1, (e.symm.wIndex_wMap w'.1).trans w'.2⟩
   left_inv w := Subtype.ext (e.symm_wMap_wMap w.1)
   right_inv w' := Subtype.ext (e.wMap_symm_wMap w'.1)
+
+end Endofunctor
 
 end Iso
 
