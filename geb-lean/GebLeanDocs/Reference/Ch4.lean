@@ -2,6 +2,7 @@ import VersoManual
 import GebLeanDocs.Bibliography
 import GebLean.Ramified.HigherOrder
 import GebLean.Ramified.OmegaShift
+import GebLean.Ramified.Examples
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -309,3 +310,165 @@ that it, too, denotes the identity on the carrier copy.
 {docstring GebLean.Ramified.deltaIdent}
 
 {docstring GebLean.Ramified.deltaIdent_interp}
+
+# Successor, addition, and multiplication
+
+The remainder of this chapter renders `GebLean/Ramified/Examples.lean`: Leivant III section
+2.4's ladder of examples over the monadic word algebra
+{name GebLean.Ramified.natAlgSig}`natAlgSig`, the `1 + X` algebra of the unary naturals
+{citep leivant3}[]. Each example is a schema identifier of the higher-order system above,
+interpreted on the standard carrier `FreeAlg natAlgSig` by an interpretation lemma stated
+through the numeric reading {name GebLean.Ramified.natToFreeAlg}`natToFreeAlg` and
+{name GebLean.Ramified.freeAlgToNat}`freeAlgToNat` (`GebLean/Ramified/AlgSig.lean`). Part I
+chapter 5 reads the same ladder as a worked sequence of examples; the prose here places each
+identifier and its interpretation lemma in relation to its neighbours.
+
+{name GebLean.Ramified.ramSucc}`ramSucc`, at context `[RType.o]` and result `RType.o`, is the
+successor-wrapper identifier `sc (x) = succ x`: an explicit definition applying the object
+algebra's unary constructor to its argument. It carries no recurrence of its own; the
+exponentiation clauses below apply its curried combinator form as the function iterated by the
+second-order recurrence for `e`.
+
+Leivant III section 2.4(2) defines addition and multiplication over
+{name GebLean.Ramified.natAlgSig}`natAlgSig`'s single unary constructor, each a
+{tech}[monotonic] recurrence. {name GebLean.Ramified.ramAdd}`ramAdd`, at context
+`[RType.o, RType.omega RType.o]` and result `RType.o`, recurs on the second argument with the
+first as {tech}[recurrence parameters]: `a + 0 = a` and `a + (n + 1) = (a + n) + 1`.
+{name GebLean.Ramified.ramMul}`ramMul`, at context `[RType.omega RType.o, RType.omega RType.o]`
+and result `RType.o`, recurs on the second argument with the first — itself at
+`RType.omega RType.o` — as parameter: `x * 0 = 0` and `x * (n + 1) = x * n + x`, the inner
+addition supplied by {name GebLean.Ramified.ramAdd}`ramAdd` through a hole.
+
+{name GebLean.Ramified.ramAdd_interp}`ramAdd_interp` states that on natural-number inputs `a`
+and `b` the denotation of {name GebLean.Ramified.ramAdd}`ramAdd` reads out, by
+{name GebLean.Ramified.freeAlgToNat}`freeAlgToNat`, as `a + b`.
+{name GebLean.Ramified.ramMul_interp}`ramMul_interp` states the corresponding fact for
+{name GebLean.Ramified.ramMul}`ramMul`: on inputs `x` and `y` the denotation reads out as
+`x * y`.
+
+{docstring GebLean.Ramified.ramSucc}
+
+{docstring GebLean.Ramified.ramAdd}
+
+{docstring GebLean.Ramified.ramAdd_interp}
+
+{docstring GebLean.Ramified.ramMul}
+
+{docstring GebLean.Ramified.ramMul_interp}
+
+# The size function
+
+Leivant III section 2.4(6) defines a size function `sz` by a {tech}[monotonic] recurrence with
+no {tech}[recurrence parameters]: its recurrence argument sits at `RType.omega RType.o` and its
+{tech}[recursive results] at `RType.o`. {name GebLean.Ramified.ramSize}`ramSize`, at context
+`[RType.omega RType.o]` and result `RType.o`, is that recurrence: `sz (0) = 0` and
+`sz (n + 1) = sz (n) + 1`. Over the `1 + X` word algebra a recursive result rebuilds the count
+of its subterm at each step, so the recurrence is extensionally the identity; the paper's exact
+typing for `sz` was not independently verified, and the shape rendered here follows the
+schema's general monotonic form.
+
+{name GebLean.Ramified.ramSize_interp}`ramSize_interp` states this identity: for a carrier
+element `t`, the denotation of {name GebLean.Ramified.ramSize}`ramSize` on the environment
+carrying `t` reads out, by {name GebLean.Ramified.freeAlgToNat}`freeAlgToNat`, as the count of
+`t` itself.
+
+{docstring GebLean.Ramified.ramSize}
+
+{docstring GebLean.Ramified.ramSize_interp}
+
+# Composition, exponentiation, and the two-power ladder
+
+{name GebLean.Ramified.ramFun}`ramFun` names the r-type `RType.arrow RType.o RType.o`, the
+function sort at which the identifiers below take their values; it is rendered here so that
+their types below carry no unrendered name.
+
+{name GebLean.Ramified.ramComp}`ramComp`, at context `[ramFun, ramFun, RType.o]` and result
+`RType.o`, is the two-fold-application identifier `comp (f, g, x) = f (g x)`: an explicit
+definition applying its two function arguments to its third argument in turn through the
+application former. Its curried combinator form is what the exponentiation step clause below
+uses to compose a recursive result with itself.
+
+Leivant III section 2.4(3) defines an exponentiation `e` by second-order recurrence, the
+ladder's turn: it recurs at the function sort {name GebLean.Ramified.ramFun}`ramFun` rather
+than at an {tech}[object type], so its {tech}[recursive results] are themselves functions and
+its recurrence argument sits at `RType.omega ramFun`, one {tech}[tier] above the output.
+{name GebLean.Ramified.ramExp}`ramExp`, at context `[RType.omega ramFun]` and result
+{name GebLean.Ramified.ramFun}`ramFun`, is the recurrence `e (0) = sc` and
+`e (n + 1) = e (n) ∘ e (n)`, where `sc` is
+{name GebLean.Ramified.ramSucc}`ramSucc`'s combinator form and `∘` is
+{name GebLean.Ramified.ramComp}`ramComp`'s; self-composing the recursive result at every step,
+rather than applying the step function once more to it, is what turns `2^n`-fold repetition of
+the successor into `2^{n+1}`-fold repetition.
+
+{name GebLean.Ramified.ramExp_interp}`ramExp_interp` states the resulting semantics: for a
+recurrence argument `ρ 0` at `RType.omega ramFun` and an input `x`, the denotation
+`(ramExp.interp ρ) x` has count `freeAlgToNat x + 2 ^ freeAlgToNat (ρ 0)`.
+
+Leivant III section 2.4(4) iterates `e` to build the ladder `2_m`: `2_0 (x) = x` and
+`2_{m+1} (x) = 2 ^ (2_m (x))`. No identifier realizes this iteration directly — the tier
+discipline forbids a raising coercion into a strictly higher tier, so the `m`-fold composite of
+`e` cannot be assembled as a single schema identifier whose recurrence argument is itself the
+output of a previous stage. {name GebLean.Ramified.ramTwoPow}`ramTwoPow` instead composes, at
+the carrier level, `m` applications of the single exponential step obtained by driving
+{name GebLean.Ramified.ramExp}`ramExp` with its argument and evaluating the result at `0`.
+
+{name GebLean.Ramified.ramTwoPow_interp}`ramTwoPow_interp` states that on a carrier element
+`x`, the count of `ramTwoPow m x` equals `GebLean.tower m (freeAlgToNat x)`, the height-`m`
+tower of twos ({name GebLean.tower}`GebLean.tower`, `GebLean/Utilities/Tower.lean`) applied to
+the count of `x`.
+
+{docstring GebLean.Ramified.ramFun}
+
+{docstring GebLean.Ramified.ramComp}
+
+{docstring GebLean.Ramified.ramExp}
+
+{docstring GebLean.Ramified.ramExp_interp}
+
+{docstring GebLean.Ramified.ramTwoPow}
+
+{docstring GebLean.Ramified.ramTwoPow_interp}
+
+# The kappa and delta coercions
+
+Leivant III section 2.4(1) supplies two downward coercions between {tech}[object type]s, both
+extensionally the identity on the carrier; this development instantiates them over the
+tower-sort chain of {tech}[tier]s that chapter 3 built.
+{name GebLean.Ramified.objToNat}`objToNat` is the numeric reading of an object-sort carrier
+value through the carrier-copy equality a tower sort carries, needed because a tower sort's
+denotation does not reduce syntactically to the carrier for a symbolic tier index.
+
+{name GebLean.Ramified.ramKappa}`ramKappa` is the single `Omega`-lowering step, from
+`RType.tower (m + 1)` to `RType.tower m` for a natural number `m`:
+{name GebLean.Ramified.kappaHatIdent}`kappaHatIdent` (`GebLean/Ramified/OmegaShift.lean`)
+instantiated at the object type `RType.tower m`, an identifier whose recurrence reconstructs
+its argument constructor by constructor. {name GebLean.Ramified.ramDeltaIdent}`ramDeltaIdent`
+composes {name GebLean.Ramified.ramKappa}`ramKappa` at every step from `RType.tower m` down to
+`RType.o`, an `m`-fold composite lowering a tower sort all the way to the base object sort.
+
+{name GebLean.Ramified.ramKappa_interp}`ramKappa_interp` reads the denotation of `ramKappa m`
+on an environment `ρ` at context `[RType.tower (m + 1)]` — at the lower tower sort
+`RType.tower m` — as the numeric reading of `ρ 0` at the higher tower sort
+`RType.tower (m + 1)`. {name GebLean.Ramified.ramDeltaIdent_interp}`ramDeltaIdent_interp` reads
+the denotation of `ramDeltaIdent m` on an environment `ρ` at context `[RType.tower m]`,
+directly by {name GebLean.Ramified.freeAlgToNat}`freeAlgToNat` since its result sort is
+`RType.o`, as the numeric reading of `ρ 0` at that same tower sort `RType.tower m`. Both
+readings pass through {name GebLean.Ramified.objToNat}`objToNat`'s carrier-copy identification,
+needed because a tower sort's denotation does not reduce syntactically to the carrier for a
+symbolic tier index.
+
+{docstring GebLean.Ramified.objToNat}
+
+{docstring GebLean.Ramified.ramKappa}
+
+{docstring GebLean.Ramified.ramDeltaIdent}
+
+{docstring GebLean.Ramified.ramKappa_interp}
+
+{docstring GebLean.Ramified.ramDeltaIdent_interp}
+
+This completes the chapter: the higher-order system of Leivant III section 2.3, its auxiliary
+coercions at every r-type, and its instantiation over the monadic word algebra
+{name GebLean.Ramified.natAlgSig}`natAlgSig` in the section 2.4 ladder whose narrative reading
+is Part I chapter 5. The next chapter takes up the characterization built on the syntactic
+category this instantiation supplies.
