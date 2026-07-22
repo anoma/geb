@@ -39,3 +39,7 @@ jobs:
         run: lake build GebLeanAxiomChecks
       - name: Axiom-linter smoke test
         run: bash scripts/tests/test-axiom-linter.sh
+      - name: Build and generate the ramified-recurrence manual
+        run: |
+          lake lint -- GebLeanDocs
+          lake exe geblean-docs
