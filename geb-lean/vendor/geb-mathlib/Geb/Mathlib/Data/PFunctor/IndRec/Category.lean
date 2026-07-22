@@ -1275,15 +1275,6 @@ theorem interpHom_sigmaPush (γ : IR.{max uA uB, uB, uI, uO} I O) :
 
 /-! ### The empty-`δ`-push characterization -/
 
-/-- Hom-extensionality at an empty-name domain: any two morphisms out
-of the lift of an empty-witnessed family are equal. -/
-theorem emptyHom_ext (E : Type uB) (e : E → PEmpty.{1})
-    (X : FreeCoprodCompDisc.{max uA uB, uI} I)
-    (f g : FreeCoprodCompDisc.Hom I
-      (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨E, fun x ↦ (e x).elim⟩) X) :
-    f = g :=
-  Subtype.ext (funext (fun z ↦ (e z.down).elim))
-
 /-- The canonical weight: the morphism out of the lift of an
 empty-witnessed family given by elimination at every name. -/
 def deltaEmptyWeight (E : Type uB) (e : E → PEmpty.{1})
@@ -1373,7 +1364,7 @@ theorem interpMor_deltaEmpty_inj (E : Type uB) (e : E → PEmpty.{1})
                         ⟨E, fun x ↦ (e x).elim⟩) W)
                     (fun _ ↦ interpObj I O (M (fun x ↦ (e x).elim)) W) t))
                 (deltaInto I O E M (fun x ↦ (e x).elim) W))
-              (emptyHom_ext I E e W
+              (FreeCoprodCompDisc.emptyHom_ext I E e W
                 (FreeCoprodCompDisc.Hom.comp I (deltaEmptyWeight I E e Z) h)
                 (deltaEmptyWeight I E e W))).trans
             (FreeCoprodCompDisc.Hom.comp_assoc O
@@ -2347,23 +2338,6 @@ theorem interpHom_deltaEmptyPush (γ : IR.{max uA uB, uB, uI, uO} I O) :
 
 /-! ### The navigation characterizations -/
 
-/-- Cancellation through an isomorphism: a factorization through the
-forward component determines the factorization through the inverse. -/
-theorem eq_comp_invHom (V Y Z : FreeCoprodCompDisc.{uA, uO} O)
-    (f : FreeCoprodCompDisc.Hom O V Y) (g : FreeCoprodCompDisc.Hom O V Z)
-    (e : FreeCoprodCompDisc.Iso O Y Z)
-    (h : FreeCoprodCompDisc.Hom.comp O f (FreeCoprodCompDisc.Iso.hom O e) = g) :
-    f = FreeCoprodCompDisc.Hom.comp O g (FreeCoprodCompDisc.Iso.invHom O e) :=
-  (FreeCoprodCompDisc.Hom.comp_id O f).symm.trans
-    ((congrArg (FreeCoprodCompDisc.Hom.comp O f)
-        (FreeCoprodCompDisc.Iso.hom_invHom O e).symm).trans
-      ((FreeCoprodCompDisc.Hom.comp_assoc O f (FreeCoprodCompDisc.Iso.hom O e)
-          (FreeCoprodCompDisc.Iso.invHom O e)).symm.trans
-        (congrArg
-          (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
-            (FreeCoprodCompDisc.Iso.invHom O e))
-          h)))
-
 /-- The `IR.msigmaPush` characterization: `IR.interpHom` sends a stack
 `σ`-push to the composite with the semantic `σ`-injection conjugated
 through the iterated Lemma 4 isomorphism. -/
@@ -2419,7 +2393,7 @@ theorem interpHom_msigmaPush (D : IR.{max uA uB, uB, uI, uO} I O)
                 (FreeCoprodCompDisc.Iso.invHom O
                   (mprecompIso.{uA, uB, uI, uO} I O _L
                     (precomp I O b.1 b.2 (sigma I O A'' K'')) X')))
-              (eq_comp_invHom O
+              (FreeCoprodCompDisc.eq_comp_invHom O
                 (interpObj I O (precomp I O b.1 b.2 (K'' a''))
                   (mplus.{uA, uB, uI} I _L X'))
                 (interpObj I O (precomp I O b.1 b.2 (sigma I O A'' K''))
@@ -3310,7 +3284,7 @@ theorem navInj_nil (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                 (K (precompMerge I Bout iout cl.down j)))) X)
           (ULift.up (fun b ↦ Sum.inl (g b)))) =
       navInj I O Bout iout Bin K g [] X :=
-  (eq_comp_invHom O
+  (FreeCoprodCompDisc.eq_comp_invHom O
       (interpObj I O (precomp I O Bout iout (K (iout ∘ g))) X)
       (interpObj I O (precomp I O Bout iout (delta I O Bin K)) X)
       (interpObj I O (delta I O Bin K)
@@ -3708,7 +3682,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                         (fun cl ↦ delta I O {z : Bin // cl.down z = Sum.inr PUnit.unit}
                           (fun m ↦ precomp I O a.1 a.2 (K (precompMerge I a.1 a.2 cl.down m))))) X))
                           ))
-              (eq_comp_invHom O
+              (FreeCoprodCompDisc.eq_comp_invHom O
                 (interpObj I O
                   (precomp I O a.1 a.2
                     (K
@@ -4117,39 +4091,6 @@ theorem interpHom_cast_cod (D : IR.{max uA uB, uB, uI, uO} I O)
       (fun f ↦ (FreeCoprodCompDisc.Hom.comp_id O
         ((interpHom I O D γ₀ f).1 X)).symm)
       h
-/-- Postcomposition with an object-equality transport is the transport
-of the morphism's codomain, by elimination of the generalized
-equality. -/
-theorem comp_isoOfEq_hom (Z W : FreeCoprodCompDisc.{u, uI} I) :
-    ∀ (V : FreeCoprodCompDisc.{u, uI} I) (q : W = V)
-      (f : FreeCoprodCompDisc.Hom I Z W),
-      FreeCoprodCompDisc.Hom.comp I f
-          (FreeCoprodCompDisc.Iso.hom I (FreeCoprodCompDisc.isoOfEq I q)) =
-        cast (congrArg (FreeCoprodCompDisc.Hom I Z) q) f :=
-  fun _ q ↦
-    Eq.rec (motive := fun _V' q' ↦
-        ∀ f : FreeCoprodCompDisc.Hom I Z W,
-          FreeCoprodCompDisc.Hom.comp I f
-              (FreeCoprodCompDisc.Iso.hom I
-                (FreeCoprodCompDisc.isoOfEq I q')) =
-            cast (congrArg (FreeCoprodCompDisc.Hom I Z) q') f)
-      (fun f ↦ FreeCoprodCompDisc.Hom.comp_id I f) q
-/-- An object-equality transport followed by its inverse is the
-identity, by elimination of the generalized equality. -/
-theorem isoOfEq_symm_hom_comp (Z : FreeCoprodCompDisc.{u, uO} O) :
-    ∀ (W : FreeCoprodCompDisc.{u, uO} O) (q : Z = W),
-      FreeCoprodCompDisc.Hom.comp O
-          (FreeCoprodCompDisc.Iso.hom O (FreeCoprodCompDisc.isoOfEq O q.symm))
-          (FreeCoprodCompDisc.Iso.hom O (FreeCoprodCompDisc.isoOfEq O q)) =
-        FreeCoprodCompDisc.Hom.id O W :=
-  fun _ q ↦
-    Eq.rec (motive := fun W' q' ↦
-        FreeCoprodCompDisc.Hom.comp O
-            (FreeCoprodCompDisc.Iso.hom O
-              (FreeCoprodCompDisc.isoOfEq O q'.symm))
-            (FreeCoprodCompDisc.Iso.hom O (FreeCoprodCompDisc.isoOfEq O q')) =
-          FreeCoprodCompDisc.Hom.id O W')
-      (Subtype.ext rfl) q
 
 /-- An object-equality transport of the interpreted argument passes
 through `IR.interpMor`, by elimination of the generalized equality. -/
@@ -4177,18 +4118,6 @@ theorem interpMor_isoOfEq_dom (γ' : IR.{max uA uB, uB, uI, uO} I O)
                   (FreeCoprodCompDisc.isoOfEq I q')) h))
       (fun _ ↦ rfl) q
 
-/-- The fresh right injection commutes past a coproduct-pair morphism
-with identity left component. -/
-theorem coprodPairInr_mor (a : SupObj.{uB, uI} I)
-    (Z W : FreeCoprodCompDisc.{max uA uB, uI} I)
-    (h : FreeCoprodCompDisc.Hom I Z W) :
-    FreeCoprodCompDisc.Hom.comp I (FreeCoprodCompDisc.coprodPairInr.{uI, uB, max uA uB} I a Z)
-        (FreeCoprodCompDisc.coprodPairMor I
-          (FreeCoprodCompDisc.Hom.id I a) h) =
-      FreeCoprodCompDisc.Hom.comp I h
-        (FreeCoprodCompDisc.coprodPairInr.{uI, uB, max uA uB} I a W) :=
-  Subtype.ext rfl
-
 /-- Naturality of the iterated right injection `IR.mplusInj` in the
 base object. -/
 theorem mplusInj_natural (L : List (SupObj.{uB, uI} I))
@@ -4212,7 +4141,7 @@ theorem mplusInj_natural (L : List (SupObj.{uB, uI} I))
         ((congrArg
             (FreeCoprodCompDisc.Hom.comp I (mplusInj.{uA, uB, uI} I _L Z) :
               _ → _)
-            (coprodPairInr_mor I a (mplus.{uA, uB, uI} I _L Z)
+            (FreeCoprodCompDisc.coprodPairInr_mor I a (mplus.{uA, uB, uI} I _L Z)
               (mplus.{uA, uB, uI} I _L W)
               (mplusMorMap.{uA, uB, uI} I _L Z W h))).trans
           ((FreeCoprodCompDisc.Hom.comp_assoc I (mplusInj.{uA, uB, uI} I _L Z)
@@ -4349,7 +4278,7 @@ theorem mprecompIso_snoc_hom_comp (L : List (SupObj.{uB, uI} I))
                 (FreeCoprodCompDisc.Iso.hom O
                   (mprecompIso.{uA, uB, uI, uO} I O L γ
                     (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I b X))))
-              (isoOfEq_symm_hom_comp.{max uA uB, uO} O
+              (FreeCoprodCompDisc.isoOfEq_symm_hom_comp.{max uA uB, uO} O
                 (interpObj I O γ (mplus.{uA, uB, uI} I (L ++ [b]) X))
                 (interpObj I O γ (mplus.{uA, uB, uI} I L
                   (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I b X)))
@@ -4404,7 +4333,7 @@ theorem mplusInj_navBridge (B : Type uB) (i : B → I)
             (FreeCoprodCompDisc.Hom.comp I (plusLiftBridgeInvHom I B i X)
               (FreeCoprodCompDisc.coprodPairDesc I e
                 (FreeCoprodCompDisc.Hom.id I X)))))
-        ((comp_isoOfEq_hom.{max uA uB, uI} I X
+        ((FreeCoprodCompDisc.comp_isoOfEq_hom.{max uA uB, uI} I X
             (mplus.{uA, uB, uI} I (L ++ [(⟨B, i⟩ : SupObj.{uB, uI} I)]) X)
             (mplus.{uA, uB, uI} I L
               (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨B, i⟩ X))
@@ -4480,7 +4409,7 @@ theorem navWeight_navBridge (B : Type uB) (i : B → I)
             (FreeCoprodCompDisc.Hom.comp I (plusLiftBridgeInvHom I B i X)
               (FreeCoprodCompDisc.coprodPairDesc I e
                 (FreeCoprodCompDisc.Hom.id I X)))))
-        ((comp_isoOfEq_hom.{max uA uB, uI} I
+        ((FreeCoprodCompDisc.comp_isoOfEq_hom.{max uA uB, uI} I
             (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩)
             (mplus.{uA, uB, uI} I (L ++ [(⟨B, i⟩ : SupObj.{uB, uI} I)]) X)
             (mplus.{uA, uB, uI} I L
@@ -4820,7 +4749,7 @@ theorem interpHom_preUnitStack_deltaWeight (B : Type uB)
         (FreeCoprodCompDisc.Hom.comp O
           (deltaInto I O B (fun j ↦ d (ULift.up j)) i X)
           (preUnitComponent I O (mk I O (Sum.inr (Sum.inr B)) d) L X)) :=
-  eq_comp_invHom O (interpObj I O (d (ULift.up i)) X)
+  FreeCoprodCompDisc.eq_comp_invHom O (interpObj I O (d (ULift.up i)) X)
     (interpObj I O (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)) X)
     (interpObj I O (mk I O (Sum.inr (Sum.inr B)) d) (mplus.{uA, uB, uI} I L X))
     (FreeCoprodCompDisc.Hom.comp O

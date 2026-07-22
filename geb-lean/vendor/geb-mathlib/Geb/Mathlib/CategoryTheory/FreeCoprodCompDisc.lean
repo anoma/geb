@@ -87,9 +87,16 @@ action, constructively.
   compatibilities `FreeCoprodCompDisc.coprodPairMor_desc`,
   `FreeCoprodCompDisc.coprodPairMor_id_desc`,
   `FreeCoprodCompDisc.coprodPairMor_inr_desc_inl`.
+* `FreeCoprodCompDisc.coprodPairInr_mor` — the naturality of the
+  right injection in the right summand.
 * `FreeCoprodCompDisc.Iso.hom_invHom`,
   `FreeCoprodCompDisc.Iso.invHom_hom` — the inverse laws of the
-  underlying morphisms.
+  underlying morphisms, with the cancellation law
+  `FreeCoprodCompDisc.eq_comp_invHom` and the transport laws
+  `FreeCoprodCompDisc.comp_isoOfEq_hom`,
+  `FreeCoprodCompDisc.isoOfEq_symm_hom_comp`.
+* `FreeCoprodCompDisc.emptyHom_ext` — hom-extensionality at the
+  lift of an empty-witnessed family.
 
 ## Implementation notes
 
@@ -455,6 +462,15 @@ theorem coprodPairMor_inr_desc_inl {Z X : FreeCoprodCompDisc.{u, v} D} :
       Hom.id D (coprodPair.{v, u, u} D Z X) :=
   Subtype.ext (funext (fun s ↦ Sum.casesOn s (fun _ ↦ rfl) (fun _ ↦ rfl)))
 
+/-- The right injection commutes past a coproduct-pair morphism with
+identity left component. -/
+theorem coprodPairInr_mor.{w} (X : FreeCoprodCompDisc.{w, v} D)
+    (Z W : FreeCoprodCompDisc.{max u w, v} D) (h : Hom D Z W) :
+    Hom.comp D (coprodPairInr.{v, w, max u w} D X Z)
+        (coprodPairMor D (Hom.id D X) h) =
+      Hom.comp D h (coprodPairInr.{v, w, max u w} D X W) :=
+  Subtype.ext rfl
+
 /-- An isomorphism of two objects of the free coproduct completion of `D`
 treated as a discrete category: a name-type equivalence commuting with the
 decodings. -/
@@ -506,6 +522,44 @@ theorem Iso.invHom_hom {X Y : FreeCoprodCompDisc.{u, v} D}
     Hom.comp D (Iso.invHom D e) (Iso.hom D e) = Hom.id D Y :=
   Subtype.ext (funext (fun b ↦ e.1.apply_symm_apply b))
 
+/-- Cancellation through an isomorphism: a factorization through the
+forward component determines the factorization through the inverse. -/
+theorem eq_comp_invHom (V Y Z : FreeCoprodCompDisc.{u, v} D)
+    (f : Hom D V Y) (g : Hom D V Z) (e : Iso D Y Z)
+    (h : Hom.comp D f (Iso.hom D e) = g) :
+    f = Hom.comp D g (Iso.invHom D e) :=
+  (Hom.comp_id D f).symm.trans
+    ((congrArg (Hom.comp D f) (Iso.hom_invHom D e).symm).trans
+      ((Hom.comp_assoc D f (Iso.hom D e) (Iso.invHom D e)).symm.trans
+        (congrArg (fun t ↦ Hom.comp D t (Iso.invHom D e)) h)))
+
+/-- Postcomposition with an object-equality transport is the transport
+of the morphism's codomain, by elimination of the generalized
+equality. -/
+theorem comp_isoOfEq_hom (Z W : FreeCoprodCompDisc.{u, v} D) :
+    ∀ (V : FreeCoprodCompDisc.{u, v} D) (q : W = V) (f : Hom D Z W),
+      Hom.comp D f (Iso.hom D (isoOfEq D q)) =
+        cast (congrArg (Hom D Z) q) f :=
+  fun _ q ↦
+    Eq.rec (motive := fun _V' q' ↦
+        ∀ f : Hom D Z W,
+          Hom.comp D f (Iso.hom D (isoOfEq D q')) =
+            cast (congrArg (Hom D Z) q') f)
+      (fun f ↦ Hom.comp_id D f) q
+
+/-- An object-equality transport followed by its inverse is the
+identity, by elimination of the generalized equality. -/
+theorem isoOfEq_symm_hom_comp (Z : FreeCoprodCompDisc.{u, v} D) :
+    ∀ (W : FreeCoprodCompDisc.{u, v} D) (q : Z = W),
+      Hom.comp D (Iso.hom D (isoOfEq D q.symm)) (Iso.hom D (isoOfEq D q)) =
+        Hom.id D W :=
+  fun _ q ↦
+    Eq.rec (motive := fun W' q' ↦
+        Hom.comp D (Iso.hom D (isoOfEq D q'.symm))
+            (Iso.hom D (isoOfEq D q')) =
+          Hom.id D W')
+      (Subtype.ext rfl) q
+
 /-- The congruence of `FreeCoprodCompDisc.coprod` along an index
 equivalence and a family of isomorphisms of the summands. -/
 def coprodIso.{u₁, u₂, w₁, w₂} (ι : Type w₁) (κ : Type w₂) (e : ι ≃ κ)
@@ -554,6 +608,14 @@ def homLiftEquiv.{w} (X : FreeCoprodCompDisc.{u, v} D)
       ⟨h.1 ∘ ULift.down, funext (fun a ↦ congrFun h.2 a.down)⟩,
     left_inv := fun _ ↦ Subtype.ext rfl,
     right_inv := fun _ ↦ Subtype.ext rfl }
+
+/-- Hom-extensionality at an empty-name domain: any two morphisms out
+of the lift of an empty-witnessed family are equal. -/
+theorem emptyHom_ext.{w} (E : Type w) (e : E → PEmpty.{1})
+    (X : FreeCoprodCompDisc.{max u w, v} D)
+    (f g : Hom D (lift.{w, v, max u w} D ⟨E, fun x ↦ (e x).elim⟩) X) :
+    f = g :=
+  Subtype.ext (funext (fun z ↦ (e z.down).elim))
 
 /-- Morphisms out of a singleton object are the fiber of the decoding
 over its value. -/
