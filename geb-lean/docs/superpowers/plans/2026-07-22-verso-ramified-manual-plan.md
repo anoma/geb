@@ -253,7 +253,7 @@ print('changed:', changed)
 EOF
 ```
 
-Expected exactly:
+Expected:
 
 ```text
 removed: []
@@ -525,8 +525,9 @@ is rewritten properly in Task
 **Files:**
 
 - Modify: `geb-lean/lakefile.toml`
-- Modify: `geb-lean/.gitignore`
 - Modify: `geb-lean/lake-manifest.json` (regenerated)
+
+`geb-lean/.gitignore` already carries `/_out` from Task 0.2 Step 1.
 
 **Interfaces:**
 
@@ -568,14 +569,6 @@ supportInterpreter = true
 
 Add any further `weak.linter.<name> = false` entries Task 0.2
 recorded, inside the same `[lean_lib.leanOptions]` subtable.
-
-- [ ] **Step 3: Add the output directory to `.gitignore`**
-
-Append to `geb-lean/.gitignore`:
-
-```text
-/_out
-```
 
 - [ ] **Step 4: Resolve**
 
@@ -650,8 +643,9 @@ transcribed for the three `Article` entries alone. Neither structure
 has a DOI field, so the DOI
 goes in `url`. `month` is `Option`, so `none` is a legal value, but
 the field carries no default and must be written. `InProceedings`
-requires `booktitle`; `Article` requires `journal`, `volume` and
-`number`. Field values are transcribed from the References section at
+requires `booktitle` and takes an optional `series`, which `clote`
+sets as `some inlines!"…"`; `Article` requires `journal`, `volume`
+and `number`. Field values are transcribed from the References section at
 the end of this plan, which records them with their DOIs.
 
 ```lean
@@ -1008,7 +1002,7 @@ name, source root, workflow file:
 | `GebLeanDocs` | `.` | `../.github/workflows/lean_action_ci.yml` |
 
 The invocation-form check must require `lake lint -- <library>` in
-**that library's own** workflow: a single check over one file would be
+that library's own workflow: a single check over one file would be
 satisfied by the wrong workflow and would silently stop guarding the
 refresh job. The orphan check's module-to-file mapping is currently
 hard-coded to the vendored source root, so it needs the per-library
@@ -1221,13 +1215,18 @@ in some docstring.
 ```bash
 cd /home/terence/git-workspaces/geb/geb-lean
 # appendix-b.txt: one fully qualified name per line, from Appendix B.
-cp GebLeanTests/Ramified/Characterization.lean /tmp/ch-backup.lean
 while read -r n; do echo "#check @$n"; done < appendix-b.txt \
   >> GebLeanTests/Ramified/Characterization.lean
 lake build GebLeanTests 2>&1 | grep -E "unknown identifier|error" | head -20
-cp /tmp/ch-backup.lean GebLeanTests/Ramified/Characterization.lean
-rm /tmp/ch-backup.lean appendix-b.txt
+cd /home/terence/git-workspaces/geb
+jj restore geb-lean/GebLeanTests/Ramified/Characterization.lean
+rm -f geb-lean/appendix-b.txt
 ```
+
+The restore uses `jj`, as Tasks 0.1 and 0.2 do, rather than a copy
+under `/tmp`. Remove `appendix-b.txt` on every exit path: it is
+untracked in a repository whose `snapshot.auto-track` is `all()`, so
+any intervening `jj` command would track it.
 
 Expected: no output from the `grep`. Any `unknown identifier` names a
 transcription error in the appendix.
@@ -1314,10 +1313,14 @@ to by each task:
 algebra is infinite; word algebras, monadic and polyadic, against tree
 algebras. Carries the §7 `signature` presentation of
 `FreeAlg.recurse`, fully qualified, with `margin` notes naming each
-position's role. Carries the sole `deftech` definitions for the eq. (1)
-vocabulary — constructor label, recurrence parameters, recurrence
-argument, subterms, recursive results, step functions — and for the
-fragment names monotonic, closed and flat.
+position's role. Carries the twelve chapter-1 `deftech` definitions
+of Appendix A: the eq. (1) vocabulary — constructor label, recurrence parameters,
+recurrence argument, subterms, recursive results, step functions — the
+fragment names monotonic, closed and flat, and the algebra
+classifications monadic word algebra, polyadic word algebra and tree
+algebra.
+
+**Depends on:** Appendix A, which fixes the term set.
 
 The `signature` block is the one in §7, verbatim.
 
@@ -1429,9 +1432,9 @@ under `GebLean/Ramified/` and note it in the commit (§8).
 **Imports:** `GebLeanDocs.Bibliography`.
 **Content (§4.2 item 1):** the paper-to-code table, as a `:::table +header`
 directive, with one row per `deftech` term in
-Appendix A — seventeen rows, not §6's six, since §4.2 item 1 calls for
-the correspondence for the whole vocabulary and §6's table covers the
-eq. (1) positions alone. Columns: term here, Leivant III's symbol,
+Appendix A, whose two tables fix the set — not §6's six rows, which
+cover the eq. (1) positions alone, where §4.2 item 1 calls for the
+correspondence across the whole vocabulary. Columns: term here, Leivant III's symbol,
 Leivant III's name, and where the term lands in the Lean code — a
 declaration name where one corresponds, a position within a
 declaration's type where the term names one, an em dash where
@@ -1652,7 +1655,7 @@ Part I chapter 1, from Leivant III eq. (1) (§6):
 | recursive results | Part I ch. 4, Part II ch. 1 |
 | step functions | Part I ch. 4, Part II ch. 1 |
 | monotonic | Part I ch. 4 |
-| closed | Part I ch. 4 |
+| closed | none; see the exception below |
 | flat | Part I ch. 4, Part II ch. 4 |
 | monadic word algebra | Part I ch. 6, Part II ch. 1 |
 | polyadic word algebra | Part I ch. 6, Part II ch. 1 |
