@@ -82,9 +82,9 @@ as a recurrence argument without changing what it denotes.
 
 The tower sorts alone recover a familiar picture. First-order ramified
 recurrence assigns each argument one of finitely many tiers and lets a
-recursion raise its output by at most one tier over its recurrence
-argument's; Leivant III presents `RMRec-omega` as this discipline raised to
-higher type {citep leivant3}[]. Read through the tower sorts, tier `m` is
+recursion's output sit one tier below its recurrence argument's; Leivant III
+presents `RMRec-omega` as this discipline raised to higher type
+{citep leivant3}[]. Read through the tower sorts, tier `m` is
 `RType.tower m`, and moving from tier `m` to tier `m + 1` is exactly
 `RType.omega`:
 
