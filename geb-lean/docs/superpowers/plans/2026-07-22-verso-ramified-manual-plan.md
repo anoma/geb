@@ -80,7 +80,7 @@ Every task's requirements implicitly include this section. Values are
 copied verbatim from the spec.
 
 - **Verso pin:** `name = "verso"`, `scope = "leanprover"`,
-  `rev = "v4.29.0-rc6"`. The `[[require]]` block goes **before** the
+  `rev = "v4.29.0-rc6"`. The `[[require]]` block goes before the
   existing `mathlib` require (§2.1, §3.1).
 - **`plausible` invariant:** the `plausible` entry in
   `geb-lean/lake-manifest.json` is unchanged after `lake update`. This
@@ -115,7 +115,7 @@ copied verbatim from the spec.
   module docstring is mandatory after imports, and §3.1 confirms it
   as an authored obligation for this library, no linter reaching it.
   `#doc` replaces the command parser for the rest of the module, so
-  the docstring can only appear **before** the `#doc` line; it cannot
+  the docstring can only appear before the `#doc` line; it cannot
   be retrofitted afterwards.
 - **Style:** `.claude/rules/lean-coding.md` for `.lean` (100-column
   limit, enforced by `linter.style.longLine`, which
@@ -181,7 +181,8 @@ copied verbatim from the spec.
 
 ## Phase 0: dependency resolution
 
-This phase is a go/no-go. If Task 0.1 fails after its fallbacks, the
+This phase decides whether the rest proceeds. If Task 0.1 fails after its
+fallbacks, the
 deliverable reduces to §9's Markdown fallback and Phases 1 to 6 do not
 run.
 
@@ -260,7 +261,10 @@ added: ['MD4Lean', 'subverso', 'verso']
 changed: {}
 ```
 
-Any entry under `changed` — `plausible` above all, but equally
+Further names under `added` are acceptable: Verso's or SubVerso's
+manifest may contribute packages this repository does not yet carry,
+and the criterion is additions only. Any entry under `changed` —
+`plausible` above all, but equally
 `batteries`, `aesop`, `Qq`, `proofwidgets` or `Cli`, each of which
 Verso's manifest may also pin — means a package already in mathlib's
 closure has moved, which is the mathlib-rebuild outcome §9 declares
@@ -290,6 +294,7 @@ In order (§9):
 cd /home/terence/git-workspaces/geb && jj restore geb-lean/lakefile.toml geb-lean/lake-manifest.json
 ```
 
+   Remove `manifest-before.json` as well.
    The deliverable then reduces to Markdown plus a `GebLeanTests/`
    module holding one `example` per presented signature, ascribing the
    written type to the real declaration. Report to the user and do not
@@ -304,8 +309,9 @@ rm manifest-before.json
 ```
 
 Append the three resolved revisions to this plan under Task 0.1, with
-a line confirming the manifest diff was additions only. The lakefile
-edit stays in the working copy; Task 1.1 completes and commits it.
+a line confirming the manifest diff was additions only. Task 0.2
+reverts the lakefile at its own Step 7; Task 1.1 rewrites it in full
+and commits.
 
 ### Task 0.2: settle the diagnostic classes
 
@@ -316,6 +322,7 @@ every role and directive argument the chapters write.
 
 **Files:**
 
+- Modify: `geb-lean/.gitignore` (kept)
 - Modify, provisionally: `geb-lean/lakefile.toml`
 - Create, provisionally: `GebLeanDocs.lean`, `GebLeanDocs/Probe.lean`,
   `GebLeanDocsMain.lean`
@@ -326,7 +333,14 @@ every role and directive argument the chapters write.
 - Produces: the exact `[lean_lib.leanOptions]` entries and
   `scripts/nolints.json` entries Tasks 1.1 and 1.3 apply.
 
-- [ ] **Step 1: Add the library and executable**
+- [ ] **Step 1: Ignore the generator's output, then add the targets**
+
+The probe runs the generator, and `jj` here sets
+`snapshot.auto-track = "all()"`, so an unignored `_out` would be
+snapshotted into the working copy — and `snapshot.max-new-file-size`
+would make `jj` itself fail on a larger asset. Append `/_out` to
+`geb-lean/.gitignore` now rather than in Task 1.1, which then has
+nothing to add there.
 
 Append to `geb-lean/lakefile.toml`:
 
@@ -356,6 +370,11 @@ Create `GebLeanDocs.lean`:
 
 ```lean
 import GebLeanDocs.Probe
+
+/-! # GebLeanDocs (probe stage)
+
+Provisional library index; Task 1.2 replaces it.
+-/
 ```
 
 Create `GebLeanDocsMain.lean`:
@@ -364,6 +383,11 @@ Create `GebLeanDocsMain.lean`:
 import GebLeanDocs.Probe
 
 open Verso.Genre.Manual
+
+/-! # Probe generator entry point
+
+Provisional; Task 1.2 replaces it.
+-/
 
 /-- Generate the probe document. -/
 def main (args : List String) : IO UInt32 :=
@@ -419,7 +443,7 @@ GebLean.Ramified.FreeAlg.recurse
 def probeHelper (n : Nat) : Nat := n + 1
 ```
 
-:::table (header := true)
+:::table +header
 * - Column
   - Column
 * - Cell
@@ -484,11 +508,12 @@ introduces. Tasks 1.1 and 1.3 read these lists.
 cd /home/terence/git-workspaces/geb
 jj restore geb-lean/lakefile.toml
 rm -f geb-lean/GebLeanDocs.lean geb-lean/GebLeanDocsMain.lean
-rm -rf geb-lean/GebLeanDocs
+rm -rf geb-lean/GebLeanDocs geb-lean/_out
 ```
 
-Expected: `jj status` shows only `geb-lean/lake-manifest.json`
-modified, from Task 0.1. The lakefile is rewritten properly in Task
+Expected: `jj status` shows `geb-lean/lake-manifest.json` modified,
+from Task 0.1, and `geb-lean/.gitignore` modified, from Step 1. The lakefile
+is rewritten properly in Task
 1.1; keep `.lake/` as built, so Verso is not rebuilt from source.
 
 ---
@@ -523,7 +548,7 @@ rev = "v4.29.0-rc6"
 
 - [ ] **Step 2: Append the library and executable**
 
-At the **end** of `geb-lean/lakefile.toml` — after the trailing
+At the end of `geb-lean/lakefile.toml` — after the trailing
 `[lean_lib.leanOptions]` subtable that binds to `GebLeanAxiomChecks`,
 so that subtable is not rebound:
 
@@ -618,8 +643,11 @@ chapters.
 Create `GebLeanDocs/Bibliography.lean`. Every field of Verso's
 `Article` and `InProceedings` that takes a `Doc.Inline Manual` is
 written `inlines!"…"`: Verso defines no `Coe String
-(Doc.Inline Manual)`, so a bare string does not elaborate. `pages` is
-`Option (Nat × Nat)`. Neither structure has a DOI field, so the DOI
+(Doc.Inline Manual)`, so a bare string does not elaborate. `pages`, on
+`Article` only, is `Option (Nat × Nat)`; `InProceedings`
+has no `pages` field, so the References table's page ranges are
+transcribed for the three `Article` entries alone. Neither structure
+has a DOI field, so the DOI
 goes in `url`. `month` is `Option`, so `none` is a legal value, but
 the field carries no default and must be written. `InProceedings`
 requires `booktitle`; `Article` requires `journal`, `volume` and
@@ -798,7 +826,7 @@ here — that is `lake lint`, in Task 1.3.
 cd /home/terence/git-workspaces/geb/geb-lean && lake exe geblean-docs 2>&1 | tail -20
 ```
 
-Expected: exit code 0, output under `_out/html-multi/`. Confirm:
+Expected: exit code 0, with output under `_out`. Confirm:
 
 ```bash
 cd /home/terence/git-workspaces/geb/geb-lean
@@ -841,7 +869,7 @@ children with {include}."
 - Consumes: Task 0.2's recorded `(linter, declaration)` pairs and
   Task 1.2's fifteen document modules.
 - Produces: a `lake lint -- GebLeanDocs` that reports nothing, which
-  Task 1.4's guard and Task 1.5's CI step depend on.
+  Task 1.4's CI step and Task 1.5's guard depend on.
 
 - [ ] **Step 1: Observe the reports**
 
@@ -864,7 +892,7 @@ Add one two-element array per reported pair to
 ["docBlame", "GebLeanDocs.Tutorial.Ch1.«the canonical document object name»"]
 ```
 
-and so on for all fifteen. Do **not** run `runLinter --update`: it
+and so on for all fifteen. Do not run `runLinter --update`: it
 rewrites the file wholesale from the current run and would discard
 every existing entry (§3.3).
 
@@ -901,7 +929,8 @@ existing entries."
 
 **Files:**
 
-- Modify: `/home/terence/git-workspaces/geb/.github/workflows/lean_action_ci.yml`
+- Modify:
+`/home/terence/git-workspaces/geb/.github/workflows/lean_action_ci.yml`
 
 **Interfaces:**
 
@@ -1007,8 +1036,8 @@ bash scripts/tests/test-lint-driver.sh; echo "exit=$?"
 rm GebLeanDocs/Orphan.lean
 ```
 
-Expected: non-zero exit naming `GebLeanDocs.Orphan`. This is the
-guard's whole purpose; if it passes, the check is not wired.
+Expected: non-zero exit naming `GebLeanDocs.Orphan`. A passing run
+means the check is not reaching the new library.
 
 - [ ] **Step 5: Commit**
 
@@ -1143,8 +1172,9 @@ Discount those three by inspection.
 
 - [ ] **Step 2: Apply the selection rule, one module per step**
 
-Work module by module, ticking each as its list is written into
-Appendix B: `AlgSig`, `Algebras`, `SortedSig`, `RType`, `Term`,
+Work module by module, recording each module's list in Appendix B
+before starting the next, so a reviewer can see the rule applied
+incrementally: `AlgSig`, `Algebras`, `SortedSig`, `RType`, `Term`,
 `Interp`, `SynCat`, `HigherOrder`, `OmegaShift`, `Examples`. Then a
 final pass over `Soundness/Collapse.lean` and `Characterization.lean`
 for the seven endpoint declarations, which §4.3 places outside the
@@ -1177,7 +1207,8 @@ and types themselves are covered.
 Fill Appendix B of this plan with one subsection per Part II chapter,
 each listing its covered declarations by fully qualified name. Expect
 on the order of sixty to a hundred in total (§4.3); if the count falls
-far outside that band, re-read the rule before proceeding.
+outside that band by more than a factor of two, re-read the rule
+before proceeding.
 
 - [ ] **Step 4: Confirm every name resolves**
 
@@ -1190,18 +1221,26 @@ in some docstring.
 ```bash
 cd /home/terence/git-workspaces/geb/geb-lean
 # appendix-b.txt: one fully qualified name per line, from Appendix B.
-{ echo "import GebLean.Ramified.Characterization"
-  echo "import GebLean.Ramified.Examples"
-  while read -r n; do echo "#check @$n"; done < appendix-b.txt
-} > GebLeanTests/AppendixBCheck.lean
+cp GebLeanTests/Ramified/Characterization.lean /tmp/ch-backup.lean
+while read -r n; do echo "#check @$n"; done < appendix-b.txt \
+  >> GebLeanTests/Ramified/Characterization.lean
 lake build GebLeanTests 2>&1 | grep -E "unknown identifier|error" | head -20
-rm GebLeanTests/AppendixBCheck.lean appendix-b.txt
+cp /tmp/ch-backup.lean GebLeanTests/Ramified/Characterization.lean
+rm /tmp/ch-backup.lean appendix-b.txt
 ```
 
 Expected: no output from the `grep`. Any `unknown identifier` names a
-transcription error in the appendix. `GebLeanTests` already sets
+transcription error in the appendix.
+
+The `#check` lines are appended to an existing test module rather
+than written to a new one. `lakefile.toml` declares `GebLeanTests`
+with `roots = ["GebLeanTests"]` and no `globs`, so Lake builds only
+the root module's import closure; a new file nothing imports would
+never be elaborated and the check would pass whatever Appendix B
+contained. `GebLeanTests/Ramified/Characterization.lean` is reachable
+from that root, and the library already sets
 `linter.hashCommand = false`, so the `#check` commands do not trip the
-linter. Remove the scratch files before committing.
+linter. Restore the file before committing.
 
 - [ ] **Step 5: Regenerate this plan's own table of contents**
 
@@ -1237,7 +1276,7 @@ writing begins."
 ## Phase 4: Part I, the tutorial
 
 Each task fills one chapter module created in Task 1.2. Every task
-follows the same five steps, so they are given once here and referred
+follows the same six steps, so they are given once here and referred
 to by each task:
 
 - **Step A:** write the chapter's `#doc` body, with the imports its
@@ -1305,8 +1344,11 @@ to `GebLean.Ramified.ramTwoPow`. No `deftech` definitions.
 **Content (§4.1 item 3):** `RType` as `FreeAlg rTypeSig`; `RType.o`,
 `RType.arrow`, `RType.omega`; `RType.IsObj`, `RType.IsTower`,
 `RType.tower`; `RType.interp`, and Leivant III §2.7's identification of
-every object type's denotation with the same carrier. Carries the
-`deftech` definitions for r-type, object type, `Omega`-type and tier.
+every object type's denotation with the same carrier. Carries the four
+chapter-3 `deftech` definitions of Appendix A:
+r-type, object type, `Omega`-type and tier.
+
+**Depends on:** Appendix A, which fixes the term set.
 The first-order tier reading appears as an aside, illustrated with a
 `lean` block — keep every line at or under 100 columns, the limit
 Task 1.1's `leanOptions` entry sets.
@@ -1385,12 +1427,15 @@ under `GebLean/Ramified/` and note it in the commit (§8).
 
 **Files:** modify `GebLeanDocs/Reference/Ch1.lean`.
 **Imports:** `GebLeanDocs.Bibliography`.
-**Content (§4.2 item 1):** the paper-to-code table, as a `:::table
-(header := true)` directive, with one row per `deftech` term in
+**Content (§4.2 item 1):** the paper-to-code table, as a `:::table +header`
+directive, with one row per `deftech` term in
 Appendix A — seventeen rows, not §6's six, since §4.2 item 1 calls for
 the correspondence for the whole vocabulary and §6's table covers the
 eq. (1) positions alone. Columns: term here, Leivant III's symbol,
-Leivant III's name, Lean declaration. The paper's symbols and names
+Leivant III's name, and where the term lands in the Lean code — a
+declaration name where one corresponds, a position within a
+declaration's type where the term names one, an em dash where
+neither. The paper's symbols and names
 for the eq. (1) rows come from §6's table; rows with no counterpart in
 the paper carry an em dash.
 
@@ -1609,9 +1654,9 @@ Part I chapter 1, from Leivant III eq. (1) (§6):
 | monotonic | Part I ch. 4 |
 | closed | Part I ch. 4 |
 | flat | Part I ch. 4, Part II ch. 4 |
-| monadic word algebra | Part I ch. 6 |
-| polyadic word algebra | Part I ch. 6 |
-| tree algebra | Part I ch. 6 |
+| monadic word algebra | Part I ch. 6, Part II ch. 1 |
+| polyadic word algebra | Part I ch. 6, Part II ch. 1 |
+| tree algebra | Part I ch. 6, Part II ch. 1 |
 
 Part I chapter 3, which cannot be defined before `RType` exists (§6):
 
@@ -1621,10 +1666,17 @@ Part I chapter 3, which cannot be defined before `RType` exists (§6):
 | object type | Part I ch. 4, Part II ch. 2 |
 | `Omega`-type | Part I ch. 4, Part II ch. 4 |
 | tier | Part I ch. 4, ch. 6 |
-| clone | Part II ch. 3 |
 
 Left as plain prose, each being used only where it is introduced:
-Kalmar elementary (Part I ch. 6) and tier erasure (Part I ch. 4).
+Kalmar elementary (Part I ch. 6), tier erasure (Part I ch. 4), and
+clone (Part II ch. 3, where `Tm`'s clone laws are the only occurrence
+in either part).
+
+One exception to the rule: `closed` has no referrer outside Part I
+chapter 1, but it is defined there with `monotonic` and `flat`, which
+do. Leivant III section 2.1 names the three fragments as one
+taxonomy, and splitting it so that two members are defined terms and
+the third is prose would read as an oversight.
 
 ## Appendix B: Part II covered declarations
 
@@ -1641,12 +1693,16 @@ Step 1), verified against Crossref by DOI. `month` is `Option`, so
 | Key | Type | Journal or book | Volume | Number | Pages | Year, month | DOI |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `leivant3` | `Article` | Annals of Pure and Applied Logic | 96 | 1-3 | 209-229 | 1999, March | `10.1016/S0168-0072(98)00040-2` |
-| `leivant1` | `InProceedings` | Feasible Mathematics II | — | — | 320-343 | 1995 | `10.1007/978-1-4612-2566-9_11` |
+| `leivant1` | `InProceedings` | Feasible Mathematics II | — | — | n/a | 1995 | `10.1007/978-1-4612-2566-9_11` |
 | `bellantoniCook` | `Article` | Computational Complexity | 2 | 2 | 97-110 | 1992, June | `10.1007/BF01201998` |
-| `clote` | `InProceedings` | Studies in Logic and the Foundations of Mathematics | — | — | 589-681 | 1999 | `10.1016/S0049-237X(99)80033-0` |
+| `clote` | `InProceedings` | Handbook of Computability Theory | — | — | n/a | 1999 | `10.1016/S0049-237X(99)80033-0` |
 | `ritchie` | `Article` | Transactions of the American Mathematical Society | 106 | 1 | 139-173 | 1963, none | `10.1090/S0002-9947-1963-0158822-2` |
-| `dalLagoMartiniZorzi` | `InProceedings` | Electronic Proceedings in Theoretical Computer Science | — | — | 47-62 | 2010, May | `10.4204/EPTCS.23.4` |
+| `dalLagoMartiniZorzi` | `InProceedings` | Proceedings DICE 2010 (EPTCS 23) | — | — | n/a | 2010 | `10.4204/EPTCS.23.4` |
 
 Author lists and titles are in the spec's References section. The
 `booktitle` for the three `InProceedings` entries is the "Journal or
-book" column above. `url` takes `https://doi.org/<DOI>`.
+book" column above; `clote`'s `series` is "Studies in Logic and the
+Foundations of Mathematics", which Crossref records alongside the
+handbook title. `InProceedings` carries no `pages` field, hence "n/a";
+the page ranges remain in the spec's References section, which is
+prose. `url` takes `https://doi.org/<DOI>`.
