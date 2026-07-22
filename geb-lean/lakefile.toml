@@ -19,6 +19,11 @@ weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
 
 [[require]]
+name = "verso"
+scope = "leanprover"
+rev = "v4.29.0-rc6"
+
+[[require]]
 name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.29.0-rc6"
@@ -65,3 +70,15 @@ roots = ["GebLeanAxiomChecks"]
 
 [lean_lib.leanOptions]
 weak.linter.hashCommand = false
+
+[[lean_lib]]
+name = "GebLeanDocs"
+
+[lean_lib.leanOptions]
+weak.verso.code.warnLineLength = 100
+weak.linter.hashCommand = false
+
+[[lean_exe]]
+name = "geblean-docs"
+root = "GebLeanDocsMain"
+supportInterpreter = true
