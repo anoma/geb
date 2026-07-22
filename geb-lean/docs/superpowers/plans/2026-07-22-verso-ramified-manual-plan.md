@@ -42,6 +42,10 @@
   - [Task 6.2: final verification](#task-62-final-verification)
 - [Appendix A: Part I deftech vocabulary](#appendix-a-part-i-deftech-vocabulary)
 - [Appendix B: Part II covered declarations](#appendix-b-part-ii-covered-declarations)
+  - [Part II chapter 2: signatures, free algebras, ramified types](#part-ii-chapter-2-signatures-free-algebras-ramified-types)
+  - [Part II chapter 3: the Lawvere-theory layer](#part-ii-chapter-3-the-lawvere-theory-layer)
+  - [Part II chapter 4: the higher-order system and its instantiations](#part-ii-chapter-4-the-higher-order-system-and-its-instantiations)
+  - [Part II chapter 5: the characterization](#part-ii-chapter-5-the-characterization)
 - [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -1734,9 +1738,345 @@ the third is prose would read as an oversight.
 
 ## Appendix B: Part II covered declarations
 
-Filled by Task 3.1, one subsection per Part II chapter, each listing
-its covered declarations by fully qualified name. Task 3.1's steps
-give the selection rule, the per-module procedure and the verification.
+The set §4.3's rule selects, one subsection per Part II chapter, by
+fully qualified name. Task 3.1's steps give the selection rule, the
+per-module procedure and the verification; every name below resolves
+under `#check @…` against the `GebLeanTests` import closure.
+
+Part II chapters 1 and 6 render no `{docstring}` block: chapter 1 is
+the paper-to-code table and chapter 6 the transcription map, both
+prose and tables, both referring to declarations through the `name`
+role. Chapters 2 to 5 carry the whole set.
+
+The `Clause` column cites §4.3: `1` type former or field of one, `2`
+operation the paper names or the prose discusses, `3` interpretation
+or denotation function, or interpretation lemma stating such a
+function's value, `4` predicate classifying sorts or identifiers, `5`
+endpoint declaration; `C` the constructor-and-eliminator exception,
+`R` the schema-reduction-rule exception.
+
+Two readings of the rule are fixed here and applied uniformly, since
+§4.3 states them only by example:
+
+- A structure's fields are not listed. §4.3 renders them through the
+  structure's own `{docstring}` block, so `AlgSig.B`, `SortedSig.Op`,
+  `Presentation.std` and their kind carry no entry of their own.
+- A theorem is covered when it states the value of an interpretation
+  or denotation function and its module's `## Main statements` lists
+  it, or when it is a schema reduction rule (`FreeAlg.recurse_mk`,
+  `RIdent.interp_defn`, `RIdent.mrec_interp`), or when it is an
+  endpoint. A `_interp` lemma whose subject declaration is excluded
+  is itself excluded.
+
+Counts: chapter 2, 41; chapter 3, 29; chapter 4, 66; chapter 5, 7;
+143 in total, against 309 candidate declarations in the ten
+documented modules plus the two endpoint modules. §4.3 estimates
+sixty to a hundred; the rule as written selects half again as many,
+driven by `HigherOrder.lean`, where 28 of 38 declarations are
+signatures, schema shapes, or interpretation functions.
+
+### Part II chapter 2: signatures, free algebras, ramified types
+
+`GebLean/Ramified/AlgSig.lean`, 10 of 10 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.AlgSig` | 1 |
+| `GebLean.Ramified.AlgSig.polyEndo` | 1 |
+| `GebLean.Ramified.FreeAlg` | 1 |
+| `GebLean.Ramified.FreeAlg.mk` | C |
+| `GebLean.Ramified.FreeAlg.recurse` | 2 |
+| `GebLean.Ramified.FreeAlg.recurse_mk` | R |
+| `GebLean.Ramified.natAlgSig` | 2 |
+| `GebLean.Ramified.natToFreeAlg` | 3 |
+| `GebLean.Ramified.freeAlgToNat` | 3 |
+| `GebLean.Ramified.freeAlgToNat_natToFreeAlg` | 3 |
+
+`GebLean/Ramified/Algebras.lean`, 16 of 34 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.binWordAlgSig` | 2 |
+| `GebLean.Ramified.treeAlgSig` | 2 |
+| `GebLean.Ramified.binEmpty` | C |
+| `GebLean.Ramified.binCons` | C |
+| `GebLean.Ramified.treeLeaf` | C |
+| `GebLean.Ramified.treeNode` | C |
+| `GebLean.Ramified.binLength` | 2 |
+| `GebLean.Ramified.binTail` | 2 |
+| `GebLean.Ramified.treeSize` | 2 |
+| `GebLean.Ramified.treeLeftChild` | 2 |
+| `GebLean.Ramified.natToFreeAlg_freeAlgToNat` | 3 |
+| `GebLean.Ramified.natFreeAlgEquiv` | 3 |
+| `GebLean.Ramified.natFreeAlgEquiv_apply` | 3 |
+| `GebLean.Ramified.natFreeAlgEquiv_symm_apply` | 3 |
+| `GebLean.Ramified.AlgSigHom` | 1 |
+| `GebLean.Ramified.freeAlgMap` | 2 |
+
+Excluded: the per-clause step functions and clause tables of the four
+smoke recurrences (`binLengthZero`, `binLengthSucc`, `binLengthSteps`,
+`binTailKeep`, `binTailClauses`, `treeSizeLeaf`, `treeSizeNode`,
+`treeSizeSteps`, `treeLeftKeep`, `treeLeftClauses`), the term-level
+constructor abbreviations (`binTmEmpty`, `binTmCons0`, `treeTmLeaf`,
+`treeTmNode`), the transports `AlgSigHom.pullSteps` and
+`interpMapObj`, and the transport lemmas `freeAlgMap_mk` and
+`recurse_freeAlgMap`.
+
+`GebLean/Ramified/SortedSig.lean`, 3 of 3 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.SortedSig` | 1 |
+| `GebLean.Ramified.SortedSig.sum` | 2 |
+| `GebLean.Ramified.constructorSig` | 2 |
+
+`GebLean/Ramified/RType.lean`, 12 of 32 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.RTypeShape` | 1 |
+| `GebLean.Ramified.rTypeSig` | 2 |
+| `GebLean.Ramified.RType` | 1 |
+| `GebLean.Ramified.RType.o` | C |
+| `GebLean.Ramified.RType.arrow` | C |
+| `GebLean.Ramified.RType.omega` | C |
+| `GebLean.Ramified.RType.IsObj` | 4 |
+| `GebLean.Ramified.RType.tower` | 2 |
+| `GebLean.Ramified.RType.IsTower` | 4 |
+| `GebLean.Ramified.RType.IsSimple` | 4 |
+| `GebLean.Ramified.RType.interp` | 3 |
+| `GebLean.Ramified.RType.interp_isObj` | 3 |
+
+Excluded: the three `DecidablePred` instances and the `DecidableEq`
+instance (§4.3 excludes decidability instances by name);
+`RType.interpCongr` with `RType.interpCongr_isObj`,
+`interpCongr_cast` and `interpCongr_arrow`, as the denotation's
+transport along a carrier equivalence; `RType.shape` with its three
+`simp` lemmas, used nowhere outside the module and only to discharge
+injectivity and decidable equality; the injectivity lemmas
+`RType.mk_children_inj`, `RType.arrow_eq_arrow`,
+`RType.omega_eq_omega`; the predicate facts `RType.tower_isObj`,
+`RType.tower_isTower`, `RType.o_isSimple`,
+`RType.arrow_isSimple_iff`; and `oObj`, the base sort paired with its
+`IsObj` witness for use as an argument.
+
+### Part II chapter 3: the Lawvere-theory layer
+
+`GebLean/Ramified/Term.lean`, 11 of 18 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.Ctx` | 1 |
+| `GebLean.Ramified.SortedSig.polyEndo` | 1 |
+| `GebLean.Ramified.Tm` | 1 |
+| `GebLean.Ramified.Tm.var` | C |
+| `GebLean.Ramified.Tm.op` | C |
+| `GebLean.Ramified.Tm.subst` | 2 |
+| `GebLean.Ramified.Tm.subst_id` | 2 |
+| `GebLean.Ramified.Tm.subst_subst` | 2 |
+| `GebLean.Ramified.Tm.var_subst` | 2 |
+| `GebLean.Ramified.Tm.weaken` | 2 |
+| `GebLean.Ramified.QuotRel` | 1 |
+
+The three clone laws enter under clause 2, not clause 3: §4.2 item 3
+makes "`Tm` with its clone laws" the chapter's subject matter, so the
+prose discusses them. §4.3's "substitution fusion lemmas" exclusion
+reaches the remainder — `Tm.subst_reind` and `QuotRel.rel_reind` —
+along with the reindexing transport `Tm.reind` and its three lemmas
+and the one-line variable family `varOver`.
+
+`GebLean/Ramified/Interp.lean`, 8 of 10 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.SortedModel` | 1 |
+| `GebLean.Ramified.SortedModel.Env` | 1 |
+| `GebLean.Ramified.Tm.eval` | 3 |
+| `GebLean.Ramified.Tm.eval_subst` | 3 |
+| `GebLean.Ramified.Presentation` | 1 |
+| `GebLean.Ramified.standardModel` | 1 |
+| `GebLean.Ramified.interpSetoid` | 3 |
+| `GebLean.Ramified.interpQuotRel` | 3 |
+
+`SortedModel.Env` is the environment type former, not one of §4.3's
+excluded "environment constructions", which are the particular
+environments built per recurrence clause. Excluded:
+`Tm.eval_transport`, which the module's implementation notes call
+local to `Tm.eval`, and `Tm.eval_model_morphism`, a transport of
+evaluation along a model morphism.
+
+`GebLean/Ramified/SynCat.lean`, 10 of 45 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.HomTuple` | 1 |
+| `GebLean.Ramified.Hom` | 1 |
+| `GebLean.Ramified.SynCat` | 1 |
+| `GebLean.Ramified.SynCat.instCategory` | 1 |
+| `GebLean.Ramified.SynCat.instCartesianMonoidalCategory` | 1 |
+| `GebLean.Ramified.HomTuple.eval` | 3 |
+| `GebLean.Ramified.Hom.eval` | 3 |
+| `GebLean.Ramified.Hom.eval_mk` | 3 |
+| `GebLean.Ramified.HomTuple.eval_comp` | 3 |
+| `GebLean.Ramified.Hom.eval_comp` | 3 |
+
+The two instances carry the category structure and the chosen finite
+products, so §4.2 item 3's "`SynCat` with its finite products" is
+rendered by them; the components they are assembled from —
+`homSetoid`, `HomTuple.id`, `HomTuple.comp`, `Hom.id`, `Hom.comp`,
+the category laws, `finAppL`, `finAppR` and the `List.get`-of-append
+lemmas, `joinTuple`, `fstTuple`, `sndTuple`, `terminalTuple`,
+`SynProd.fst`, `SynProd.snd`, `SynProd.lift` with their three laws,
+`Hom.terminal`, `synTerminalCone`, `synProdCone` — are excluded as
+assembly and index bookkeeping.
+
+### Part II chapter 4: the higher-order system and its instantiations
+
+`GebLean/Ramified/HigherOrder.lean`, 28 of 38 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.appSig` | 2 |
+| `GebLean.Ramified.stdConstructorInterp` | 3 |
+| `GebLean.Ramified.stdAppInterp` | 3 |
+| `GebLean.Ramified.RType.curried` | 2 |
+| `GebLean.Ramified.curryInterp` | 3 |
+| `GebLean.Ramified.holeSig` | 2 |
+| `GebLean.Ramified.holeConstSig` | 2 |
+| `GebLean.Ramified.defnSig` | 2 |
+| `GebLean.Ramified.DefnShape` | 1 |
+| `GebLean.Ramified.MrecShape` | 1 |
+| `GebLean.Ramified.FrecShape` | 1 |
+| `GebLean.Ramified.IdentShape` | 1 |
+| `GebLean.Ramified.identEndo` | 1 |
+| `GebLean.Ramified.RIdent` | 1 |
+| `GebLean.Ramified.RIdent.defn` | C |
+| `GebLean.Ramified.RIdent.mrec` | C |
+| `GebLean.Ramified.RIdent.frec` | C |
+| `GebLean.Ramified.RIdent.interp` | 3 |
+| `GebLean.Ramified.appChain` | 2 |
+| `GebLean.Ramified.appChain_curryInterp` | 3 |
+| `GebLean.Ramified.appChain_stdConstructorInterp` | 3 |
+| `GebLean.Ramified.RIdent.interp_eq_appChain_curryInterp` | 3 |
+| `GebLean.Ramified.identSig` | 2 |
+| `GebLean.Ramified.identConstSig` | 2 |
+| `GebLean.Ramified.higherOrder` | 2 |
+| `GebLean.Ramified.RMRecCat` | 1 |
+| `GebLean.Ramified.identHom` | 2 |
+| `GebLean.Ramified.identHom_eval` | 3 |
+
+Excluded: `RType.curried_nil` and `RType.curried_cons`, `simp`
+lemmas; `IdentDir` and `identTarget`, the direction and index data of
+`identEndo`; `RIdent.interpStep`, the per-clause step of
+`RIdent.interp`; `defnModel`, `childEnv`, `envHead` and `envLast`,
+model and environment constructions; and `higherOrderModel`, whose
+only role is to be `higherOrder`'s standard-model field, which
+`standardModel` reads off.
+
+`GebLean/Ramified/OmegaShift.lean`, 20 of 65 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.RType.omegaShift` | 2 |
+| `GebLean.Ramified.kappaHatIdent` | 2 |
+| `GebLean.Ramified.kappaHatIdent_interp` | 3 |
+| `GebLean.Ramified.kappaHat` | 2 |
+| `GebLean.Ramified.kappaHat_interp` | 3 |
+| `GebLean.Ramified.RType.objTarget` | 2 |
+| `GebLean.Ramified.RType.domains` | 2 |
+| `GebLean.Ramified.cLiftArrow` | 2 |
+| `GebLean.Ramified.cLiftArrow_interp` | 3 |
+| `GebLean.Ramified.cLift` | 2 |
+| `GebLean.Ramified.kappaHatFull` | 2 |
+| `GebLean.Ramified.kappaHatFull_interp` | 3 |
+| `GebLean.Ramified.canonIdent` | 2 |
+| `GebLean.Ramified.applyCanon` | 2 |
+| `GebLean.Ramified.kappaIdent` | 2 |
+| `GebLean.Ramified.kappaIdent_interp` | 3 |
+| `GebLean.Ramified.deltaIdent` | 2 |
+| `GebLean.Ramified.deltaIdent_interp` | 3 |
+| `GebLean.Ramified.RIdent.interp_defn` | R |
+| `GebLean.Ramified.RIdent.mrec_interp` | R |
+
+`RIdent.interp_defn` and `RIdent.mrec_interp` are the reduction rules
+of the explicit-definition and monotonic-recurrence schemas, so the
+`R` exception covers them where they are declared. Excluded:
+`kappaHatStep` and `kappaHatTuple`, a step function and the tuple
+assembling `kappaHat`, with `kappaHatStep_interp` and
+`kappaHat_recurse_id`; the `*Aux` auxiliaries `cLiftAux` and
+`deltaAux` with their lemmas; the term-level application helpers
+`defnApp`, `appPrefixVars` and `appArgs` with their evaluation
+lemmas; the environment constructions `snocEnv` and its heterogeneous
+lemmas; the cast lemmas `RIdent.mrec_cast`,
+`RIdent.interp_omega_cast`, `RIdent.interp_single_cast`,
+`cast_arrow_apply`, `cast_curryInterp_snoc`; the `RType` structural
+lemmas `mk_arrow_eq`, `mk_omega_eq`, `mk_o_eq`, `curried_domains`,
+`curried_append`, `objTarget_isObj`, `objTarget_of_isObj`,
+`domains_of_isObj`; `get_replicate`; the proof-support lemma
+`Tm.eval_var`, which restates `Tm.eval` at a variable for use inside
+this module; and `applyCanon_interp` and
+`kappaHatFull_eq_kappaHatIdent`, which the module's
+`## Main statements` does not list and which `kappaIdent_interp` and
+`kappaHatFull_interp` supersede for the manual's purposes.
+
+`GebLean/Ramified/Examples.lean`, 18 of 53 candidates:
+
+| Declaration | Clause |
+| --- | --- |
+| `GebLean.Ramified.objToNat` | 3 |
+| `GebLean.Ramified.ramKappa` | 2 |
+| `GebLean.Ramified.ramKappa_interp` | 3 |
+| `GebLean.Ramified.ramDeltaIdent` | 2 |
+| `GebLean.Ramified.ramDeltaIdent_interp` | 3 |
+| `GebLean.Ramified.ramAdd` | 2 |
+| `GebLean.Ramified.ramAdd_interp` | 3 |
+| `GebLean.Ramified.ramMul` | 2 |
+| `GebLean.Ramified.ramMul_interp` | 3 |
+| `GebLean.Ramified.ramSize` | 2 |
+| `GebLean.Ramified.ramSize_interp` | 3 |
+| `GebLean.Ramified.ramFun` | 1 |
+| `GebLean.Ramified.ramComp` | 2 |
+| `GebLean.Ramified.ramSucc` | 2 |
+| `GebLean.Ramified.ramExp` | 2 |
+| `GebLean.Ramified.ramExp_interp` | 3 |
+| `GebLean.Ramified.ramTwoPow` | 2 |
+| `GebLean.Ramified.ramTwoPow_interp` | 3 |
+
+The ten operations and their seven interpretation lemmas are §4.1
+item 5's ladder; `ramFun` enters as the named sort `o → o` at which
+`ramComp`, `ramSucc` and `ramExp` are stated, so that their rendered
+types carry no unrendered name. Excluded: every per-clause step
+identifier and hole-index table (`addZeroStep`, `addSuccStep`,
+`ramAddSteps`, `mulZeroStep`, `mulSuccStep`, `mulSteps`, `mulStep`,
+`mulHoleIdx`, `sizeZeroStep`, `sizeSuccStep`, `sizeSteps`,
+`ramExpBase`, `ramExpStep`, `ramExpSteps`, `ramExpBaseHoleIdx`,
+`ramExpStepHoleIdx`, `ramTwoPowStep`, `deltaHoleIdx`), the
+environments `addEnv`, `mulEnv` and `sizeEnv`, the term
+abbreviations `tmZero` and `tmSucc`, the transport lemmas
+`objToNat_cast` and `objToNat_heq`, and the carrier-level and
+recurrence-level stages of the interpretation proofs
+(`freeAlgToNat_ramAdd_recurse`, `ramAdd_interp_env`,
+`ramAdd_interp_carrier` and their `ramMul`, `ramSize`, `ramExp` and
+`ramTwoPow` counterparts, and `kappaHatIdent_objToNat`).
+
+### Part II chapter 5: the characterization
+
+`GebLean/Ramified/Soundness/Collapse.lean` and
+`GebLean/Ramified/Characterization.lean`, endpoint declarations only,
+7 in total, all under clause 5:
+
+| Declaration | Module |
+| --- | --- |
+| `GebLean.Ramified.SynCatFO` | `Soundness/Collapse.lean` |
+| `GebLean.Ramified.collapseFunctor` | `Soundness/Collapse.lean` |
+| `GebLean.Ramified.collapseFunctor_faithful` | `Soundness/Collapse.lean` |
+| `GebLean.Ramified.ramified_definability` | `Characterization.lean` |
+| `GebLean.Ramified.collapseKFunctor` | `Characterization.lean` |
+| `GebLean.Ramified.collapseKFunctor_faithful` | `Characterization.lean` |
+| `GebLean.Ramified.ramified_definability_kSim` | `Characterization.lean` |
+
+No other declaration of either module is covered; §4.3 places their
+internals outside Part II.
 
 ## References
 
