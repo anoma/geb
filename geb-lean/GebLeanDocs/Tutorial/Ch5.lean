@@ -38,8 +38,8 @@ the way to the base object sort.
 
 Both interpretation lemmas record that these coercions denote the identity on the
 carrier. {name GebLean.Ramified.ramKappa_interp}`ramKappa_interp` reads the denotation of
-`ramKappa m` on an environment `ρ` at context `[RType.tower (m + 1)]` as the numeric
-reading of `ρ 0` at the lower tower sort;
+`ramKappa m` on an environment `ρ` at context `[RType.tower (m + 1)]`, at the lower
+tower sort, as the numeric reading of `ρ 0` at the higher tower sort;
 {name GebLean.Ramified.ramDeltaIdent_interp}`ramDeltaIdent_interp` reads the denotation
 of `ramDeltaIdent m`, directly by `freeAlgToNat` since its result sort is `RType.o`, as
 that same numeric reading of `ρ 0`. Both readings pass through the carrier-copy
