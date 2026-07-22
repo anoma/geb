@@ -1533,9 +1533,10 @@ here through the `name` role, not a second `docstring`.
 
 ### Task 5.4a: chapter 4, the higher-order system
 
-Appendix B gives chapter 4 sixty-six declarations, twice any sibling
-chapter, so it is written in two reviewed passes over the same module.
-This pass covers the system proper.
+Appendix B gives chapter 4 roughly twice as many declarations as any
+sibling chapter, so it is written in two reviewed passes over the same
+module. This pass covers the system proper. Take the exact set from
+Appendix B; no count is restated here.
 
 **Files:** modify `GebLeanDocs/Reference/Ch4.lean`.
 **Imports:** `GebLeanDocs.Bibliography`,
@@ -1543,7 +1544,7 @@ This pass covers the system proper.
 **Content (§4.2 item 4, first half):** `appSig`, `RIdent`,
 `higherOrder`, `RMRecCat`, `identHom`; `RType.omegaShift`,
 `kappaHat`, `kappaIdent`, `deltaIdent` — Appendix B's declarations
-from `HigherOrder.lean` and `OmegaShift.lean`, forty-eight in all.
+from `HigherOrder.lean` and `OmegaShift.lean`.
 
 - [ ] Steps A–E, C2 included.
 
@@ -1554,7 +1555,7 @@ Task 5.4a wrote.
 **Imports:** add `GebLean.Ramified.Examples`.
 **Content (§4.2 item 4, second half):** the section 2.4 ladder whose
 narrative reading is Part I chapter 5 — Appendix B's declarations from
-`Examples.lean`, eighteen in all.
+`Examples.lean`.
 
 - [ ] Steps A–E, C2 included.
 
@@ -1783,12 +1784,28 @@ Two readings of the rule are fixed here and applied uniformly, since
   endpoint. A `_interp` lemma whose subject declaration is excluded
   is itself excluded.
 
-Counts: chapter 2, 41; chapter 3, 29; chapter 4, 66; chapter 5, 7;
-143 in total, against 309 candidate declarations in the ten
+Counts: chapter 2, 41; chapter 3, 29; chapter 4, 67; chapter 5, 7;
+144 in total, against 309 candidate declarations in the ten
 documented modules plus the two endpoint modules. §4.3 estimates
 sixty to a hundred; the rule as written selects half again as many,
 driven by `HigherOrder.lean`, where 28 of 38 declarations are
 signatures, schema shapes, or interpretation functions.
+
+Two structural consequences of the rule are worth recording for the
+chapter writers, neither a misapplication of it:
+
+- `RIdent.frec` is covered, but its reduction rule
+  `RIdent.interp_frec` lives in
+  `GebLean/Ramified/Polynomial/IdentEquiv.lean`, a module §4.3
+  partitions as absent from Part II. Chapter 4 therefore renders two
+  of the three schema reduction rules (`RIdent.interp_defn`,
+  `RIdent.mrec_interp`), not three.
+- `Algebras.lean` imports `HigherOrder.lean`: chapter 2's
+  `binLength`, `binTail`, `treeSize` and `treeLeftChild` are typed
+  over `RIdent`, the schema-identifier type chapter 4 introduces
+  (`binLength` and `treeSize` also over `RType.omega`, covered later
+  within chapter 2 itself, in the `RType.lean` subsection). Task
+  5.2's writer meets a forward reference to chapter 4 immediately.
 
 ### Part II chapter 2: signatures, free algebras, ramified types
 
@@ -1988,7 +2005,7 @@ model and environment constructions; and `higherOrderModel`, whose
 only role is to be `higherOrder`'s standard-model field, which
 `standardModel` reads off.
 
-`GebLean/Ramified/OmegaShift.lean`, 20 of 65 candidates:
+`GebLean/Ramified/OmegaShift.lean`, 21 of 66 candidates:
 
 | Declaration | Clause |
 | --- | --- |
@@ -2006,6 +2023,7 @@ only role is to be `higherOrder`'s standard-model field, which
 | `GebLean.Ramified.kappaHatFull_interp` | 3 |
 | `GebLean.Ramified.canonIdent` | 2 |
 | `GebLean.Ramified.applyCanon` | 2 |
+| `GebLean.Ramified.applyCanon_interp` | 3 |
 | `GebLean.Ramified.kappaIdent` | 2 |
 | `GebLean.Ramified.kappaIdent_interp` | 3 |
 | `GebLean.Ramified.deltaIdent` | 2 |
@@ -2029,10 +2047,10 @@ lemmas `mk_arrow_eq`, `mk_omega_eq`, `mk_o_eq`, `curried_domains`,
 `curried_append`, `objTarget_isObj`, `objTarget_of_isObj`,
 `domains_of_isObj`; `get_replicate`; the proof-support lemma
 `Tm.eval_var`, which restates `Tm.eval` at a variable for use inside
-this module; and `applyCanon_interp` and
-`kappaHatFull_eq_kappaHatIdent`, which the module's
-`## Main statements` does not list and which `kappaIdent_interp` and
-`kappaHatFull_interp` supersede for the manual's purposes.
+this module; and `kappaHatFull_eq_kappaHatIdent`, which states an
+equality between two identifiers rather than the value of a
+denotation function, so fails the first conjunct of the theorem
+reading above regardless of its module's `## Main statements` entry.
 
 `GebLean/Ramified/Examples.lean`, 18 of 53 candidates:
 
@@ -2059,8 +2077,8 @@ this module; and `applyCanon_interp` and
 
 The ten operations and their seven interpretation lemmas are §4.1
 item 5's ladder; `ramFun` enters as the named sort `o → o` at which
-`ramComp`, `ramSucc` and `ramExp` are stated, so that their rendered
-types carry no unrendered name. Excluded: every per-clause step
+`ramComp` and `ramExp` are stated, so that their rendered types carry
+no unrendered name. Excluded: every per-clause step
 identifier and hole-index table (`addZeroStep`, `addSuccStep`,
 `ramAddSteps`, `mulZeroStep`, `mulSuccStep`, `mulSteps`, `mulStep`,
 `mulHoleIdx`, `sizeZeroStep`, `sizeSuccStep`, `sizeSteps`,
