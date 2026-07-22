@@ -527,7 +527,10 @@ is rewritten properly in Task
 - Modify: `geb-lean/lakefile.toml`
 - Modify: `geb-lean/lake-manifest.json` (regenerated)
 
-`geb-lean/.gitignore` already carries `/_out` from Task 0.2 Step 1.
+`geb-lean/.gitignore` already carries `/_out`, added at Task 0.2
+Step 1, which has no commit of its own. `jj commit` commits the whole
+working copy, so that line lands in this task's commit; the commit
+message names it.
 
 **Interfaces:**
 
@@ -570,7 +573,7 @@ supportInterpreter = true
 Add any further `weak.linter.<name> = false` entries Task 0.2
 recorded, inside the same `[lean_lib.leanOptions]` subtable.
 
-- [ ] **Step 4: Resolve**
+- [ ] **Step 3: Resolve**
 
 ```bash
 cd /home/terence/git-workspaces/geb/geb-lean && lake update 2>&1 | tail -20
@@ -578,7 +581,7 @@ cd /home/terence/git-workspaces/geb/geb-lean && lake update 2>&1 | tail -20
 
 Expected: resolves without conflict.
 
-- [ ] **Step 5: Verify the acceptance criterion**
+- [ ] **Step 4: Verify the acceptance criterion**
 
 ```bash
 cd /home/terence/git-workspaces/geb/geb-lean
@@ -588,7 +591,7 @@ python3 -c "import json;m=json.load(open('lake-manifest.json'));print([p for p i
 Expected: the revision Task 0.1 Step 1 recorded, unchanged. If it
 differs, revert and apply Task 0.1 Step 7 fallback 1.
 
-- [ ] **Step 6: Confirm the existing build is undisturbed**
+- [ ] **Step 5: Confirm the existing build is undisturbed**
 
 ```bash
 cd /home/terence/git-workspaces/geb/geb-lean && lake build 2>&1 | tail -5
@@ -597,7 +600,7 @@ cd /home/terence/git-workspaces/geb/geb-lean && lake build 2>&1 | tail -5
 Expected: `GebLean` builds, from cache, in under a minute. A long
 mathlib rebuild here means the `plausible` pin moved; stop and revert.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 cd /home/terence/git-workspaces/geb
@@ -606,7 +609,8 @@ jj commit -m "chore(deps): add the verso dependency and the GebLeanDocs targets
 Declare the verso require ahead of mathlib so that mathlib's plausible
 pin survives Lake's reverse-order root resolution, and append the
 GebLeanDocs library, its line-length option and the geblean-docs
-executable."
+executable. Carry the /_out ignore line Task 0.2 added, that task
+having no commit of its own."
 ```
 
 ### Task 1.2: the module hierarchy, stubbed
@@ -1052,6 +1056,8 @@ leaving the second unguarded."
 
 - Modify: `GebLean/Ramified/Soundness/Collapse.lean:652`
 - Modify: `GebLean/Ramified/Characterization.lean:195`
+- Modify transiently, restored in Step 3:
+  `GebLeanTests/Ramified/Characterization.lean`
 
 **Interfaces:**
 
@@ -1142,6 +1148,8 @@ unchanged."
 **Files:**
 
 - Modify: this plan file, Appendix B
+- Modify transiently, restored in Step 4:
+  `GebLeanTests/Ramified/Characterization.lean`
 
 **Interfaces:**
 
@@ -1324,7 +1332,7 @@ algebra.
 
 The `signature` block is the one in §7, verbatim.
 
-- [ ] Steps A–E.
+- [ ] Steps A–E, C2 included.
 
 ### Task 4.2: chapter 2, the need to restrict recurrence
 
@@ -1433,14 +1441,18 @@ under `GebLean/Ramified/` and note it in the commit (§8).
 **Content (§4.2 item 1):** the paper-to-code table, as a `:::table +header`
 directive, with one row per `deftech` term in
 Appendix A, whose two tables fix the set — not §6's six rows, which
-cover the eq. (1) positions alone, where §4.2 item 1 calls for the
+cover the eq. (1) positions alone, whereas §4.2 item 1 calls for the
 correspondence across the whole vocabulary. Columns: term here, Leivant III's symbol,
 Leivant III's name, and where the term lands in the Lean code — a
 declaration name where one corresponds, a position within a
 declaration's type where the term names one, an em dash where
-neither. The paper's symbols and names
-for the eq. (1) rows come from §6's table; rows with no counterpart in
-the paper carry an em dash.
+neither. The paper's symbols and names for the eq. (1) rows come from §6's
+table. For the fragment names and the type vocabulary, §6 gives the
+paper's names in prose — the fragments at Leivant III section 2.1, the
+type terms in the chapter-3 paragraph — and the algebra
+classifications take theirs from §4.1 chapter 1. Any cell with no
+counterpart in the paper carries an em dash, which is most of the
+symbol column outside the eq. (1) rows.
 
 Then a paragraph naming the generated terminology index and saying
 that every `tech` reference links into it. Verso generates that index

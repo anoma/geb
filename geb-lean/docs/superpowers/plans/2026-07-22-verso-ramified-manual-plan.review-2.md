@@ -167,8 +167,9 @@ one-line author response.
   binders matching by name.
 - **The counts reproduce**: 312 raw matches with the three wrapped
   docstring lines named, 925 nolints entries so the `>= 940` assertion
-  holds, and Appendix A's twelve plus five rows agree with Task 5.1's
-  seventeen.
+  holds, and Appendix A's row count is corrected at review 3, S1: this
+  round's own S4 fix removed a row, and the claim recorded here
+  described the document before it.
 - **`linter.hashCommand` and `linter.style.longLine` are both in
   `mathlibStandardSet`**, so the option entry and the column-limit
   claim are correct; `linter.style.header` returns early outside
