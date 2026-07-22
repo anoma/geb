@@ -34,7 +34,8 @@
   - [Task 5.1: chapter 1, correspondence](#task-51-chapter-1-correspondence)
   - [Task 5.2: chapter 2, signatures, free algebras, ramified types](#task-52-chapter-2-signatures-free-algebras-ramified-types)
   - [Task 5.3: chapter 3, the Lawvere-theory layer](#task-53-chapter-3-the-lawvere-theory-layer)
-  - [Task 5.4: chapter 4, the higher-order system and its instantiations](#task-54-chapter-4-the-higher-order-system-and-its-instantiations)
+  - [Task 5.4a: chapter 4, the higher-order system](#task-54a-chapter-4-the-higher-order-system)
+  - [Task 5.4b: chapter 4, the instantiations](#task-54b-chapter-4-the-instantiations)
   - [Task 5.5: chapter 5, the characterization](#task-55-chapter-5-the-characterization)
   - [Task 5.6: chapter 6, transcription map and scope](#task-56-chapter-6-transcription-map-and-scope)
 - [Phase 6: documentation amendments](#phase-6-documentation-amendments)
@@ -1530,18 +1531,32 @@ here through the `name` role, not a second `docstring`.
 
 - [ ] Steps A–E.
 
-### Task 5.4: chapter 4, the higher-order system and its instantiations
+### Task 5.4a: chapter 4, the higher-order system
+
+Appendix B gives chapter 4 sixty-six declarations, twice any sibling
+chapter, so it is written in two reviewed passes over the same module.
+This pass covers the system proper.
 
 **Files:** modify `GebLeanDocs/Reference/Ch4.lean`.
 **Imports:** `GebLeanDocs.Bibliography`,
-`GebLean.Ramified.HigherOrder`, `GebLean.Ramified.OmegaShift`,
-`GebLean.Ramified.Examples`.
-**Content (§4.2 item 4):** `appSig`, `RIdent`, `higherOrder`,
-`RMRecCat`, `identHom`; `RType.omegaShift`, `kappaHat`, `kappaIdent`,
-`deltaIdent`; and the §2.4 ladder whose narrative reading is Part I
-chapter 5.
+`GebLean.Ramified.HigherOrder`, `GebLean.Ramified.OmegaShift`.
+**Content (§4.2 item 4, first half):** `appSig`, `RIdent`,
+`higherOrder`, `RMRecCat`, `identHom`; `RType.omegaShift`,
+`kappaHat`, `kappaIdent`, `deltaIdent` — Appendix B's declarations
+from `HigherOrder.lean` and `OmegaShift.lean`, forty-eight in all.
 
-- [ ] Steps A–E.
+- [ ] Steps A–E, C2 included.
+
+### Task 5.4b: chapter 4, the instantiations
+
+**Files:** modify `GebLeanDocs/Reference/Ch4.lean`, appending to what
+Task 5.4a wrote.
+**Imports:** add `GebLean.Ramified.Examples`.
+**Content (§4.2 item 4, second half):** the section 2.4 ladder whose
+narrative reading is Part I chapter 5 — Appendix B's declarations from
+`Examples.lean`, eighteen in all.
+
+- [ ] Steps A–E, C2 included.
 
 ### Task 5.5: chapter 5, the characterization
 
