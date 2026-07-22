@@ -110,6 +110,13 @@ copied verbatim from the spec.
   generation (§6).
 - **No proofs.** The two proof routes are described by shape; every
   result is stated with a citation (Purpose, §12).
+- **A chapter module opens two namespaces.** `open Verso.Genre
+  Manual` reaches `docstring`, `deftech`, `tech`, `margin`, `table`,
+  `citep` and `citet`, but `name`, `signature`, `lean` and `leanTerm`
+  are declared in `Verso.Genre.Manual.InlineLean`, which is not
+  re-exported, so a chapter using any of those four also writes `open
+  Verso.Genre.Manual.InlineLean`. Established empirically by Task 0.2:
+  without it the three constructs fail with `Unknown constant`.
 - **A module docstring precedes every `#doc`.**
   `.claude/rules/lean-coding.md` states twice that a `/-! … -/`
   module docstring is mandatory after imports, and §3.1 confirms it
@@ -697,6 +704,7 @@ import VersoManual
 import GebLeanDocs.Bibliography
 
 open Verso.Genre Manual
+open Verso.Genre.Manual.InlineLean
 
 /-! # Free algebras and recurrence
 
