@@ -509,6 +509,31 @@ the `(linter, declaration)` shapes `scripts/nolints.json` will need —
 one per document module, plus one per declaration a `lean` block
 introduces. Tasks 1.1 and 1.3 read these lists.
 
+**Settled by this task, 2026-07-22.**
+
+*`[lean_lib.leanOptions]` entries needed beyond Step 1's two:* none.
+The probe built clean with `weak.verso.code.warnLineLength = 100` and
+`weak.linter.hashCommand = false` alone.
+
+*`(linter, declaration)` pairs for `scripts/nolints.json`:* `docBlame`
+is the only linter that fires, in three shapes —
+
+| Shape | One per | Example |
+| --- | --- | --- |
+| Generated document object | document module | `GebLeanDocs.Probe.«the canonical document object name»` |
+| Declaration a `lean` block introduces | such declaration | `GebLeanDocs.Probe.probeHelper` |
+| Undocumented top-level `def` | such declaration | `GebLeanDocs.Probe.probeRef` |
+
+The third shape was not predicted. It does not arise where the plan is
+followed, every bibliography entry carrying a declaration docstring
+(Task 1.2 Step 1), but it is the reason that instruction matters.
+
+*Not exercised:* the generation-time diagnostics §3.2 names — an
+undefined `tech`, an unused link or footnote definition, a deprecated
+role or directive argument — did not fire, the probe being internally
+consistent. They remain unverified rather than disproved; Step C2 of
+the Phase 4 and 5 cycle is where they would first appear.
+
 - [ ] **Step 7: Undo the probe**
 
 ```bash
@@ -577,8 +602,8 @@ root = "GebLeanDocsMain"
 supportInterpreter = true
 ```
 
-Add any further `weak.linter.<name> = false` entries Task 0.2
-recorded, inside the same `[lean_lib.leanOptions]` subtable.
+Task 0.2 settled that no further `[lean_lib.leanOptions]` entries are
+needed: the probe built clean with these two alone.
 
 - [ ] **Step 3: Resolve**
 
@@ -886,6 +911,13 @@ cd /home/terence/git-workspaces/geb/geb-lean && lake lint -- GebLeanDocs 2>&1 | 
 Expected: one `docBlame` report per document module — fifteen, being
 the root, the two part indexes and the twelve chapters — each naming
 `<Module>.«the canonical document object name»`.
+
+Task 0.2 established two further shapes this stage does not yet
+exhibit but later phases will: one report per declaration a `lean`
+block introduces, and one per undocumented top-level `def`. No `lean`
+block exists until Task 4.3, and every bibliography entry carries a
+docstring, so fifteen is the expected count here. Step C2 of the
+Phase 4 and 5 cycle collects the rest as they arise.
 
 - [ ] **Step 2: Append the entries manually**
 
