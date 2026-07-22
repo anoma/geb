@@ -135,6 +135,27 @@ lands in `docs/index.md`.
   once Milestone A is signed off (Task A34); the entry is
   removed from `TODO.md` once Milestone B concludes.
 
+### review-artefact-taxonomy
+
+- **Status**: raised by the round-3 adversarial review on the
+  `docs/verso-ramified-manual` branch; not started. The choice
+  between the two resolutions is the user's, both changing
+  repository-wide process or other workstreams' committed
+  artefacts.
+- **Scope**: reconcile the repository's committed adversarial-review
+  artefacts with `docs/process.md` § Defect categorisation. The
+  artefacts under `docs/superpowers/specs/` and
+  `docs/superpowers/plans/` predating that branch use at least four
+  distinct heading vocabularies, of which only the blocker / serious /
+  minor / cosmetic-taste form is defined by that section; against the
+  rest, § Convergence criterion, stated over blocker and serious
+  findings, cannot be evaluated. Either amend `docs/process.md` to
+  admit the forms in use, or re-categorise the artefacts that do not
+  use the blocker / serious / minor / cosmetic-taste headings at all.
+  That set is enumerated when the item is taken up; no count is
+  recorded here, earlier attempts at one having proved
+  unreproducible.
+
 ## To be done in geb-mathlib (not pending here)
 
 Items intentionally deferred until after migration to the
