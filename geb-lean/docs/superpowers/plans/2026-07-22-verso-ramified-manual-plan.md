@@ -560,9 +560,9 @@ is rewritten properly in Task
 - Modify: `geb-lean/lake-manifest.json` (regenerated)
 
 `geb-lean/.gitignore` already carries `/_out`, added at Task 0.2
-Step 1, which has no commit of its own. `jj commit` commits the whole
-working copy, so that line lands in this task's commit; the commit
-message names it.
+Step 1. Whether that line arrives in its own commit or in this task's
+depends on whether anything was committed between the two; run
+`jj status` before committing and describe what is actually there.
 
 **Interfaces:**
 
@@ -641,8 +641,7 @@ jj commit -m "chore(deps): add the verso dependency and the GebLeanDocs targets
 Declare the verso require ahead of mathlib so that mathlib's plausible
 pin survives Lake's reverse-order root resolution, and append the
 GebLeanDocs library, its line-length option and the geblean-docs
-executable. Carry the /_out ignore line Task 0.2 added, that task
-having no commit of its own."
+executable."
 ```
 
 ### Task 1.2: the module hierarchy, stubbed
