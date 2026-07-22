@@ -27,7 +27,7 @@ where the term lands in the code Part II samples. An em dash marks the absence
 of a counterpart.
 
 Leivant III section 2.3 names both the {tech}[object type] and the
-{tech}[`Omega`-type] directly, in the sentence defining ramified functional
+{tech}[`Omega`-type] directly, in the Definition of ramified functional
 types {citep leivant3}[].
 
 :::table +header
@@ -116,7 +116,7 @@ types {citep leivant3}[].
   * {tech}[tier]
   * —
   * —
-  * {name GebLean.Ramified.RType.tower}`RType.tower`
+  * the `Nat` index of {name GebLean.Ramified.RType.tower}`RType.tower`
 :::
 
 Verso collects every `deftech` definition into a domain titled Terminology,
