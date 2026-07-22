@@ -649,7 +649,7 @@ hom-sets): its morphism map factors injectively through the numeric
 denotation. Equal images force equal `collapseHom` transports
 (`collapseHomER_injective`), hence equal underlying homs (`cast_injective`),
 hence equal `SynCatFO` morphisms. -/
-instance : collapseFunctor.Faithful where
+instance collapseFunctor_faithful : collapseFunctor.Faithful where
   map_injective {Γ Δ} {g h} heq := by
     have h1 : collapseHom g = collapseHom h :=
       collapseHomER_injective Γ.toObjCtx.2 Δ.toObjCtx.2 heq
