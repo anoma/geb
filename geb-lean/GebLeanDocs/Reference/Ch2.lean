@@ -168,7 +168,8 @@ sections at a new instance.
 # Object types, tower sorts, and the standard denotation
 
 The object-type predicate marks the r-types eligible to serve as a recurrence
-argument or output: the base type and every `Omega`-type.
+argument or output: the base type and every `Omega`-type. The source declaration below names
+this concept "object sort", which this manual introduces as the {tech}[object type].
 
 {docstring GebLean.Ramified.RType.IsObj}
 

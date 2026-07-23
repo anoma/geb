@@ -34,7 +34,7 @@ step, from `RType.tower (m + 1)` to `RType.tower m` for a natural number `m`: `k
 identifier whose recurrence reconstructs its argument constructor by constructor.
 {name GebLean.Ramified.ramDeltaIdent}`ramDeltaIdent` composes `ramKappa` at every step
 from `RType.tower m` down to `RType.o`, an `m`-fold composite lowering a tower sort all
-the way to the base object sort.
+the way to the base object type.
 
 Both interpretation lemmas record that these coercions denote the identity on the
 carrier. {name GebLean.Ramified.ramKappa_interp}`ramKappa_interp` reads the denotation of

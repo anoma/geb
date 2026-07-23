@@ -59,7 +59,7 @@ invert: applying {name GebLean.Ramified.appChain}`appChain` to a value built by
 recovers `g ρ`. {name GebLean.Ramified.appChain_stdConstructorInterp}`appChain_stdConstructorInterp`
 specializes this at a constructor operation, the semantic constructor node rule: the application
 chain of a curried constructor interpretation, applied to a full argument spine and read at the
-object sort, is the free-algebra node {name GebLean.Ramified.FreeAlg.mk}`FreeAlg.mk` on the
+object type, is the free-algebra node {name GebLean.Ramified.FreeAlg.mk}`FreeAlg.mk` on the
 arguments.
 
 {docstring GebLean.Ramified.RType.curried}
@@ -206,7 +206,7 @@ the r-type's arrow structure. It is a sort-level construction only; no endofunct
 
 {docstring GebLean.Ramified.RType.omegaShift}
 
-# Kappa-hat at object sorts
+# Kappa-hat at object types
 
 Leivant III section 2.4(1) supplies an auxiliary coercion kappa-hat, `kappa-hat_τ : Ω τ → τ`, at
 every r-type `τ`, defined by ramified recurrence through the pointwise constructor lifts of that
@@ -388,17 +388,15 @@ definition applying its two function arguments to its third argument in turn thr
 application former. Its curried combinator form is what the exponentiation step clause below
 uses to compose a recursive result with itself.
 
-Leivant III section 2.4(3) defines an exponentiation `e` by second-order recurrence, the
-ladder's turn: it recurs at the function sort {name GebLean.Ramified.ramFun}`ramFun` rather
+Leivant III section 2.4(3) defines an exponentiation `e` by second-order recurrence: it
+recurs at the function sort {name GebLean.Ramified.ramFun}`ramFun` rather
 than at an {tech}[object type], so its {tech}[recursive results] are themselves functions and
 its recurrence argument sits at `RType.omega ramFun`, one {tech}[tier] above the output.
 {name GebLean.Ramified.ramExp}`ramExp`, at context `[RType.omega ramFun]` and result
 {name GebLean.Ramified.ramFun}`ramFun`, is the recurrence `e (0) = sc` and
 `e (n + 1) = e (n) ∘ e (n)`, where `sc` is
 {name GebLean.Ramified.ramSucc}`ramSucc`'s combinator form and `∘` is
-{name GebLean.Ramified.ramComp}`ramComp`'s; self-composing the recursive result at every step,
-rather than applying the step function once more to it, is what turns `2^n`-fold repetition of
-the successor into `2^{n+1}`-fold repetition.
+{name GebLean.Ramified.ramComp}`ramComp`'s combinator form.
 
 {name GebLean.Ramified.ramExp_interp}`ramExp_interp` states the resulting semantics: for a
 recurrence argument `ρ 0` at `RType.omega ramFun` and an input `x`, the denotation
@@ -444,7 +442,7 @@ denotation does not reduce syntactically to the carrier for a symbolic tier inde
 instantiated at the object type `RType.tower m`, an identifier whose recurrence reconstructs
 its argument constructor by constructor. {name GebLean.Ramified.ramDeltaIdent}`ramDeltaIdent`
 composes {name GebLean.Ramified.ramKappa}`ramKappa` at every step from `RType.tower m` down to
-`RType.o`, an `m`-fold composite lowering a tower sort all the way to the base object sort.
+`RType.o`, an `m`-fold composite lowering a tower sort all the way to the base object type.
 
 {name GebLean.Ramified.ramKappa_interp}`ramKappa_interp` reads the denotation of `ramKappa m`
 on an environment `ρ` at context `[RType.tower (m + 1)]` — at the lower tower sort
