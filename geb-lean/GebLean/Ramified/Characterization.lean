@@ -192,7 +192,7 @@ def collapseKFunctor : SynCatFO ⥤ LawvereKSimDCat 2 :=
 /-- The K-valued soundness functor is faithful: a composite of the faithful
 `collapseFunctor` with `erToKFunctor`, faithful as the functor of the
 equivalence `erKSimEquiv`. -/
-instance : collapseKFunctor.Faithful :=
+instance collapseKFunctor_faithful : collapseKFunctor.Faithful :=
   inferInstanceAs (collapseFunctor ⋙ erToKFunctor).Faithful
 
 /-- Definability transferred to the depth-2 `K^sim` Lawvere theory across

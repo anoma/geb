@@ -92,8 +92,11 @@ open CategoryTheory
 section 2.3): the base type `o`, the binary `arrow`, and the unary
 `omega`. A finite label type, carrying no recursion. -/
 inductive RTypeShape where
+  /-- The nullary shape, underlying the base type `o`. -/
   | o
+  /-- The binary shape, underlying the function type `arrow`. -/
   | arrow
+  /-- The unary shape, underlying the type `omega`. -/
   | omega
   deriving DecidableEq
 

@@ -95,6 +95,13 @@ uses Unicode, and namespace/section nesting violations.
 - Discharging operator: `_left`, `_right`, `_self`, `_of_…`,
   `_iff_…` follow specific positional conventions; check the
   upstream guide for the full table before naming.
+- Exception: `scripts/nolints.json` exempts the six bibliography
+  citation-key definitions in `GebLeanDocs/Bibliography.lean`
+  (`leivant3`, `leivant1`, `bellantoniCook`, `clote`, `ritchie`,
+  `dalLagoMartiniZorzi`) from the `topNamespace` env_linter. They
+  are bare top-level `def`s because Verso's `{citep}`/`{citet}`
+  roles resolve a citation by its short global identifier, so
+  namespacing them would require changing every citation site.
 
 **Adversarial-reviewer instruction**: scan new and modified
 `.lean` content for ALL_CAPS or `snake_case` identifiers (in
@@ -112,6 +119,10 @@ each occurrence with a pointer to the upstream rule.
 - `/-- … -/` declaration docstring is mandatory for every
   `def`, `structure`, `class`, `instance`, every field of a
   `structure`/`class`, and every theorem of public interest.
+- Exception: Verso's `#doc` command emits, per document module, a
+  `def` naming the canonical document object, with no doc comment
+  attachable to it. These are exempted from `docBlame` through
+  `scripts/nolints.json` rather than carrying a docstring.
 - Markdown is supported in docstrings; LaTeX via `$…$` (inline)
   and `$$…$$` (display).
 - Cross-references use `` `Foo.bar` `` for identifiers;
@@ -132,7 +143,9 @@ references inside docstrings, and post-hoc axiom-celebration.
   any), implementation notes, references, tags.
 - `/-- ... -/` declaration docstring is mandatory for every
   `def`, `structure`, `class`, `instance`, and major theorem; and
-  for every field of a `structure` or `class`.
+  for every field of a `structure` or `class`. Exception: Verso's
+  generated document objects (see § Documentation) carry no
+  docstring by construction.
 - Markdown + LaTeX (`$...$`, `$$...$$`) inside docstrings.
 - **No development-history references in docstrings**
   (e.g., "previously this used X; now uses Y"). Such notes belong
@@ -149,6 +162,13 @@ downstream users (typically the case for index/umbrella files
 and for content needed by callers of this module) use
 `public import`; imports whose contents are used only internally
 use plain `import`.
+
+Exception: the `GebLeanDocs` library and its `GebLeanDocsMain`
+executable root carry no `module` keyword. Verso's `#doc` command
+emits a plain, non-`public` `def`; under `module` that definition
+would go unexported, so neither `%doc` nor a cross-module
+`{include}` could reach it. Verso's own document modules carry no
+`module` either.
 
 ## No copyright or author headers in source files
 

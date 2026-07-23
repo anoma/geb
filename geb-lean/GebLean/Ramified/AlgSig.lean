@@ -140,6 +140,10 @@ def freeAlgToNat (t : FreeAlg natAlgSig) : Nat :=
       | false => 0
       | true => rec ⟨0, Nat.zero_lt_one⟩ + 1) () t
 
+/-- The numeric reading of the standard carrier `FreeAlg natAlgSig` is a left
+inverse of the encoding: `freeAlgToNat (natToFreeAlg n) = n`. Together with
+`natToFreeAlg_freeAlgToNat` (`GebLean/Ramified/Algebras.lean`) this makes the
+numeric reading a two-sided inverse. -/
 @[simp] theorem freeAlgToNat_natToFreeAlg (n : Nat) :
     freeAlgToNat (natToFreeAlg n) = n := by
   induction n with

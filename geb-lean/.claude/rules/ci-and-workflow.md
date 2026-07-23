@@ -60,6 +60,19 @@ not required, since the Lean triad's outputs cannot change. The
 full pre-push superset below remains mandatory before every push,
 regardless of which file types changed.
 
+`GebLeanDocs`, the Verso manual library, lies outside all three
+steps: outside `testDriver`'s dependency graph, outside
+`lake lint`'s default-target coverage, and outside the
+`GebLeanAxiomChecks` gates (which name `GebLean`, `GebLeanTests`,
+and the vendored `Geb`). It is built and linted only in CI
+(`lake lint -- GebLeanDocs`, then `lake exe geblean-docs`, in
+`geb/.github/workflows/lean_action_ci.yml`), a deliberate exception
+to `scripts/pre-commit.sh`'s comment instructing that a target
+outside the test driver's dependency graph be added there and to
+`scripts/pre-push.sh` in lockstep, so that no contributor builds
+Verso on every commit or push. The same exception applies to the
+pre-push checklist below.
+
 ## Pre-push checklist
 
 Run by `scripts/pre-push.sh`:
@@ -81,14 +94,18 @@ Run by `scripts/pre-push.sh`:
    gates; a non-standard axiom dependency fails the build. CI
    repeats the build and smoke test in
    `geb/.github/workflows/lean_action_ci.yml`.
-7. `bash scripts/tests/test-lint-driver.sh` passes. The
-   `geb-mathlib` refresh workflow lints the vendored tree with
-   `lake lint -- Geb` (one flat environment); the guard checks
-   that the workflow keeps the root-module invocation and that
-   no vendored `Geb.*` module is orphaned from the `Geb`
-   umbrella (an orphan would silently escape the linter). CI
-   runs the same guard in
-   `geb/.github/workflows/geb-mathlib-refresh.yml`.
+7. `bash scripts/tests/test-lint-driver.sh` passes. The guard
+   covers every library that `lake lint` reaches only by its root
+   module (`batteries/runLinter` loads one flat environment per
+   invocation, so linting per module instead scales memory with
+   module count): the vendored `Geb` tree, linted by
+   `lake lint -- Geb` in
+   `geb/.github/workflows/geb-mathlib-refresh.yml`, and
+   `GebLeanDocs`, linted by `lake lint -- GebLeanDocs` in
+   `geb/.github/workflows/lean_action_ci.yml`. For each, the guard
+   checks that its workflow keeps the root-module invocation and
+   that no module under its root is orphaned from the umbrella (an
+   orphan would silently escape the linter).
 8. User-driven gate reminders surfaced as prompts: `lean4:golf`
    and `lean4:review` ran on changed Lean code; line-by-line
    user diff review of every change about to be pushed; the
