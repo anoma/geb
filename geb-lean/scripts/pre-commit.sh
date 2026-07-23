@@ -26,9 +26,10 @@ step() { printf '\n==> %s\n' "$1"; }
 #
 # `GebLeanDocs`, the Verso manual library, is such a target and is
 # exempted from that instruction by design: its generator step
-# (`lake lint -- GebLeanDocs`, then `lake exe geblean-docs`) runs
-# only in CI (`lean_action_ci.yml`), not here or in pre-push.sh, so
-# that no contributor builds Verso on every push.
+# (`lake build GebLeanDocs`, then `lake lint -- GebLeanDocs`, then
+# `lake exe geblean-docs`) runs only in CI (`lean_action_ci.yml`),
+# not here or in pre-push.sh, so that no contributor builds Verso
+# on every push.
 step "Step 1: lake test"
 lake test
 

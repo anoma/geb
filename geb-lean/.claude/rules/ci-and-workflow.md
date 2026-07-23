@@ -65,7 +65,8 @@ steps: outside `testDriver`'s dependency graph, outside
 `lake lint`'s default-target coverage, and outside the
 `GebLeanAxiomChecks` gates (which name `GebLean`, `GebLeanTests`,
 and the vendored `Geb`). It is built and linted only in CI
-(`lake lint -- GebLeanDocs`, then `lake exe geblean-docs`, in
+(`lake build GebLeanDocs`, then `lake lint -- GebLeanDocs`, then
+`lake exe geblean-docs`, in
 `geb/.github/workflows/lean_action_ci.yml`), a deliberate exception
 to `scripts/pre-commit.sh`'s comment instructing that a target
 outside the test driver's dependency graph be added there and to
