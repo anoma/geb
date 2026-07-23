@@ -23,6 +23,12 @@ step() { printf '\n==> %s\n' "$1"; }
 # Step 2 by design: if a subsequent lakefile addition introduces a
 # target outside the test driver's dependency graph, add `lake build`
 # explicitly here and in pre-push.sh in lockstep.
+#
+# `GebLeanDocs`, the Verso manual library, is such a target and is
+# exempted from that instruction by design: its generator step
+# (`lake lint -- GebLeanDocs`, then `lake exe geblean-docs`) runs
+# only in CI (`lean_action_ci.yml`), not here or in pre-push.sh, so
+# that no contributor builds Verso on every push.
 step "Step 1: lake test"
 lake test
 
