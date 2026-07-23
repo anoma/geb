@@ -331,20 +331,14 @@ second-order recurrence for `e`.
 
 Leivant III section 2.4(2) defines addition and multiplication over
 {name GebLean.Ramified.natAlgSig}`natAlgSig`'s single unary constructor, each a
-{tech}[monotonic] recurrence. {name GebLean.Ramified.ramAdd}`ramAdd`, at context
-`[RType.o, RType.omega RType.o]` and result `RType.o`, recurs on the second argument with the
-first as {tech}[recurrence parameters]: `a + 0 = a` and `a + (n + 1) = (a + n) + 1`.
-{name GebLean.Ramified.ramMul}`ramMul`, at context `[RType.omega RType.o, RType.omega RType.o]`
-and result `RType.o`, recurs on the second argument with the first — itself at
-`RType.omega RType.o` — as parameter: `x * 0 = 0` and `x * (n + 1) = x * n + x`, the inner
-addition supplied by {name GebLean.Ramified.ramAdd}`ramAdd` through a hole.
-
-{name GebLean.Ramified.ramAdd_interp}`ramAdd_interp` states that on natural-number inputs `a`
-and `b` the denotation of {name GebLean.Ramified.ramAdd}`ramAdd` reads out, by
-{name GebLean.Ramified.freeAlgToNat}`freeAlgToNat`, as `a + b`.
-{name GebLean.Ramified.ramMul_interp}`ramMul_interp` states the corresponding fact for
-{name GebLean.Ramified.ramMul}`ramMul`: on inputs `x` and `y` the denotation reads out as
-`x * y`.
+{tech}[monotonic] recurrence; the defining equations and the denotation lemmas are in the
+docstrings below. {name GebLean.Ramified.ramAdd}`ramAdd` : `[o, Ω o] → o` recurs on the second
+argument with the first as {tech}[recurrence parameters].
+{name GebLean.Ramified.ramMul}`ramMul` : `[Ω o, Ω o] → o` recurs on the second argument with the
+first — itself at `Ω o` — as parameter, the inner addition supplied by
+{name GebLean.Ramified.ramAdd}`ramAdd` through a hole.
+{name GebLean.Ramified.ramAdd_interp}`ramAdd_interp` and
+{name GebLean.Ramified.ramMul_interp}`ramMul_interp` state the resulting denotation facts.
 
 {docstring GebLean.Ramified.ramSucc}
 
@@ -359,18 +353,13 @@ and `b` the denotation of {name GebLean.Ramified.ramAdd}`ramAdd` reads out, by
 # The size function
 
 Leivant III section 2.4(6) defines a size function `sz` by a {tech}[monotonic] recurrence with
-no {tech}[recurrence parameters]: its recurrence argument sits at `RType.omega RType.o` and its
-{tech}[recursive results] at `RType.o`. {name GebLean.Ramified.ramSize}`ramSize`, at context
-`[RType.omega RType.o]` and result `RType.o`, is that recurrence: `sz (0) = 0` and
-`sz (n + 1) = sz (n) + 1`. Over the `1 + X` word algebra a recursive result rebuilds the count
-of its subterm at each step, so the recurrence is extensionally the identity; the paper's exact
-typing for `sz` was not independently verified, and the shape rendered here follows the
-schema's general monotonic form.
+no {tech}[recurrence parameters]: its recurrence argument sits at `Ω o` and its
+{tech}[recursive results] at `o`. {name GebLean.Ramified.ramSize}`ramSize` : `[Ω o] → o` is that
+recurrence; the defining equations, the identity-denotation fact, and the typing caveat on `sz`
+are in the docstrings below.
 
-{name GebLean.Ramified.ramSize_interp}`ramSize_interp` states this identity: for a carrier
-element `t`, the denotation of {name GebLean.Ramified.ramSize}`ramSize` on the environment
-carrying `t` reads out, by {name GebLean.Ramified.freeAlgToNat}`freeAlgToNat`, as the count of
-`t` itself.
+{name GebLean.Ramified.ramSize_interp}`ramSize_interp` states the resulting denotation fact for
+a carrier element `t`.
 
 {docstring GebLean.Ramified.ramSize}
 
