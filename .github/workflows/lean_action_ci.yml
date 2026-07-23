@@ -41,5 +41,6 @@ jobs:
         run: bash scripts/tests/test-axiom-linter.sh
       - name: Build and generate the ramified-recurrence manual
         run: |
+          lake build GebLeanDocs
           lake lint -- GebLeanDocs
           lake exe geblean-docs
