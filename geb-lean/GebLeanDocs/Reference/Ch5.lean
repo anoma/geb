@@ -30,8 +30,8 @@ promised formalization, and no proof is rendered here.
 {name GebLean.Ramified.SynCatFO}`SynCatFO` is the full subcategory of
 {name GebLean.Ramified.RMRecCat}`RMRecCat natAlgSig` (Part II chapter 4) on the contexts all of
 whose sorts are {tech}[object type]s — the boundary sorts Theorem 14 quantifies over, as against
-the arbitrary r-types a ramified identifier's internal recurrence may still use. Both routes below
-start from it and read a morphism's standard-model denotation through it, landing at
+the arbitrary {tech}[r-type]s a ramified identifier's internal recurrence may still use. Both
+routes below start from it and read a morphism's standard-model denotation through it, landing at
 {name GebLean.LawvereERCat}`LawvereERCat`, the quotient Lawvere theory of elementary recursive
 functions, once directly and once through a further encoding.
 
@@ -50,8 +50,9 @@ calculus of section 4.1 and lands the translation as a class of
 nothing beyond what the two morphisms' own standard-model denotations already identify.
 {name GebLean.Ramified.ramified_definability}`ramified_definability` closes the equivalence from
 the other direction: every morphism of {name GebLean.LawvereERCat}`LawvereERCat` — every function
-built from the zero, successor, projection, composition, bounded-sum, and bounded-product
-generators — has an object-sort context and a {name GebLean.Ramified.SynCatFO}`SynCatFO` morphism
+built from the zero, successor, projection, cut-off subtraction, composition, bounded-sum, and
+bounded-product generators — has an object-sort context and a
+{name GebLean.Ramified.SynCatFO}`SynCatFO` morphism
 whose collapse denotation recovers it, up to the arity identification `objLen_toSynCatFO`. Its
 witness is obtained by compiling the elementary-recursive morphism to a register-machine
 computation and reading that computation's trace back as a ramified realizer, the route this
