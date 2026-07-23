@@ -514,7 +514,7 @@ per section 4.3, not every declaration in them.
    `collapseKFunctor` with `collapseKFunctor_faithful`, and
    `ramified_definability_kSim`, as endpoint declarations. One
    paragraph each on the shape of the machine route and the
-   normalization route.
+   encoding route.
 6. **Transcription map and scope.** Paper section and equation from
    the design spec section 2.1's table, Lean modules from the area
    document's Modules section; then the modules section 4.3 names as

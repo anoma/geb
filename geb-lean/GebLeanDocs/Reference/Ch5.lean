@@ -64,7 +64,7 @@ section takes its name from.
 
 {docstring GebLean.Ramified.ramified_definability}
 
-# The normalization route
+# The encoding route
 
 {name GebLean.Ramified.collapseKFunctor}`collapseKFunctor`,
 {name GebLean.Ramified.collapseKFunctor_faithful}`collapseKFunctor_faithful`, and
@@ -75,7 +75,10 @@ is categorically equivalent to ({name GebLean.erKSimEquiv}`erKSimEquiv`, Tourlak
 Corollary 0.1.0.44 at `n = 2`). {name GebLean.Ramified.collapseKFunctor}`collapseKFunctor` is the
 composite of {name GebLean.Ramified.collapseFunctor}`collapseFunctor` with the encoding
 {name GebLean.erToKFunctor}`erToKFunctor`; its faithfulness follows from the faithfulness of each
-factor. {name GebLean.Ramified.ramified_definability_kSim}`ramified_definability_kSim` restates
+factor. The route takes its name from this encoding: unlike the machine route, which reads
+Theorem 14's equivalence directly off {name GebLean.Ramified.SynCatFO}`SynCatFO`, this route
+transports it across {name GebLean.erToKFunctor}`erToKFunctor` into `LawvereKSimDCat 2`.
+{name GebLean.Ramified.ramified_definability_kSim}`ramified_definability_kSim` restates
 definability directly for `LawvereKSimDCat 2`: its witnesses are those of
 {name GebLean.Ramified.ramified_definability}`ramified_definability` at the image of the given
 morphism under the converse encoding {name GebLean.kToERFunctor}`kToERFunctor`, whose
