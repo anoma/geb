@@ -97,7 +97,7 @@ unread.
     `GebLean/Ramified/Definability/Bounds.lean`,
     `GebLean/Ramified/Definability/Top.lean`
 *
-  * Applicative calculi `RlMR-omega`, `RlMR-omega_o`
+  * Object-sorted applicative calculus `RlMR-omega_o`
   * section 4.1
   * `GebLean/Ramified/Soundness/Applicative.lean`
 *
