@@ -1,5 +1,6 @@
 import GebLeanTests.Ramified.Polynomial.Characterization
 import GebLeanTests.Ramified.Polynomial.Collapse
+import GebLeanTests.Ramified.Polynomial.Examples
 import GebLeanTests.Ramified.Polynomial.FirstOrder
 import GebLeanTests.Ramified.Polynomial.FreeAlg
 import GebLeanTests.Ramified.Polynomial.HigherOrder
