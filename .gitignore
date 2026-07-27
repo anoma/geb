@@ -20,3 +20,4 @@ geb-idris/opencode.json
 build/
 /docs/common-lisp/html/
 .superpowers/
+/geb-lean/.poolside/settings.local.yaml
