@@ -8,8 +8,9 @@
   - [1. `GebMeta` not vendored](#1-gebmeta-not-vendored)
   - [2. `linter.checkUnivs` configuration absent in v4.29](#2-lintercheckunivs-configuration-absent-in-v429)
   - [3. `ConcreteCategory` redesign (mathlib pull request 34741)](#3-concretecategory-redesign-mathlib-pull-request-34741)
-  - [4. `WType.rec` motive left as an unreduced beta-redex](#4-wtyperec-motive-left-as-an-unreduced-beta-redex)
+  - [4. Eliminator motive left as an unreduced beta-redex](#4-eliminator-motive-left-as-an-unreduced-beta-redex)
   - [5. `simp` rewriting under dependent proof arguments narrowed in v4.33](#5-simp-rewriting-under-dependent-proof-arguments-narrowed-in-v433)
+  - [6. Explicit universe arguments in generalized field notation](#6-explicit-universe-arguments-in-generalized-field-notation)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [The hard wall](#the-hard-wall)
@@ -49,12 +50,15 @@ genuinely new (decide the adaptation, add a category here).
   declaration's docstring and its `structure` or `def` keyword
   (`nolint` is the v4.29-compatible suppression). The affected
   structures are `SliceDomPFunctor` and `SlicePFunctor` in
-  `Slice/Basic.lean` and `PresheafDomPFunctorData`,
+  `Slice/Basic.lean`; `PresheafDomPFunctorData`,
   `PresheafDomPFunctor`, `PresheafPFunctorData`, and `PresheafPFunctor`
-  in `Presheaf/Basic.lean`. The affected definitions in
+  in `Presheaf/Basic.lean`; and `FinitePresheafPFunctor` in
+  `Presheaf/Finite/Basic.lean`. The affected definitions in
   `IndRec/Basic.lean` are `IR.Shape`, `IR.pFunctor`, `IR.Obj`,
   `IR.ObjFst`, `IR.Dest`, `IR.Alg`, the top-level `IR`, and
-  `IR.interpObjIota`.
+  `IR.interpObjIota`; those in `IndRec/Slice.lean` are `IR.sliceCode`,
+  `IR.toSlicePFunctorIota`, `IR.toSlicePFunctorSigma`,
+  `IR.toSlicePFunctorDelta`, and `IR.toSlicePFunctorAlg`.
 - Prose adaptation: the module docstrings of `Presheaf/Basic.lean` and
   `IndRec/Basic.lean` describe the suppression as
   "The `linter.checkUnivs false` option suppresses the ...". Because
@@ -65,11 +69,12 @@ genuinely new (decide the adaptation, add a category here).
 ### 3. `ConcreteCategory` redesign (mathlib pull request 34741)
 
 - Upstream cause: the post-`HasForget` `ConcreteCategory` adds the
-  `ConcreteCategory.hom` accessor and `ConcreteCategory.comp_apply`; in
-  v4.29 an `Over` base map and an `Iᵒᵖ ⥤ Type` presheaf map are already
+  `ConcreteCategory.hom` accessor, `ConcreteCategory.comp_apply`, and
+  `ConcreteCategory.hom_ext`; in v4.29 an `Over` base map, an
+  `Iᵒᵖ ⥤ Type` presheaf map, and a `Type`-category morphism are already
   functions.
 - v4.29 symptom: `Unknown identifier 'ConcreteCategory.hom'` /
-  `'ConcreteCategory.comp_apply'`.
+  `'ConcreteCategory.comp_apply'` / `'ConcreteCategory.hom_ext'`.
 - Adaptation in `Slice/Functor.lean`: drop the `ConcreteCategory.hom`
   wrapper (and its two docstring mentions); rewrite the `over_hom_comp`
   proof to `exact congrFun (Over.w g) z`.
@@ -86,21 +91,32 @@ genuinely new (decide the adaptation, add a category here).
   `(FunctorToTypes.naturality _ _ α f.op _).symm`; the `.symm` is
   needed because this goal is the naturality equation with sides
   reversed.
+- Adaptation in `Univariate/W.lean` (`wElim`, `wUniqueHom`): the algebra
+  structure map and the algebra-morphism component are morphisms of
+  `Type (max uA uB)`, read through `ConcreteCategory.hom` and compared
+  with `ConcreteCategory.hom_ext`. Drop the wrapper, replace
+  `ConcreteCategory.hom_ext _ _` with `funext`, and replace
+  `ConcreteCategory.congr_hom g.h` with `congrFun g.h`: in v4.29 the
+  morphism is the function and its equation is the function equation.
 
-### 4. `WType.rec` motive left as an unreduced beta-redex
+### 4. Eliminator motive left as an unreduced beta-redex
 
-- Upstream cause: `Slice/W.lean`'s `elimData_valid` proves an `↔` by
-  applying the dependent recursor `WType.rec` with an explicit `motive`,
-  entering the minor premise via `fun a f ih => by ...`.
+- Upstream cause: a proof applies a dependent eliminator with an
+  explicit `motive` and enters the minor premise via
+  `fun ... => by ...`. The affected sites are `elimData_valid` in
+  `Slice/W.lean` and `wValidBool_eq_true_iff` in `Slice/Decidable.lean`
+  (both `WType.rec`), and `isHereditarilyNaturalBoolCore_eq_true_iff` in
+  `Presheaf/Decidable.lean` (`SlicePFunctor.W.induction`).
 - v4.29 symptom: the goal is `(fun w => ...) (WType.mk a f)` — the motive
   lambda is not beta-reduced at the constructor — so the opening
-  `rw [F.wValid_mk, elimData_valid_mk]` reports "Did not find an
-  occurrence of the pattern" (the `F.WValid (WType.mk a f)` subterm is
-  hidden inside the unapplied lambda). Later mathlib elaborates the
-  recursor's motive application in reduced form, so upstream needs no
+  `rw` reports "Did not find an occurrence of the pattern" (the rewritten
+  subterm is hidden inside the unapplied lambda). Later mathlib
+  elaborates the motive application in reduced form, so upstream needs no
   such step.
 - Adaptation: prepend `beta_reduce` as the first tactic of the minor
-  premise, exposing `F.WValid (WType.mk a f)` for the existing rewrite.
+  premise, exposing the subterm for the existing rewrite. The induction
+  hypothesis stays in unreduced form, which is harmless: it is used only
+  where its type is needed up to beta.
 
 ### 5. `simp` rewriting under dependent proof arguments narrowed in v4.33
 
@@ -117,6 +133,21 @@ genuinely new (decide the adaptation, add a category here).
 - Adaptation: close with `exact h` (drop the `.trans` bridge). The
   private `wRestrTree_congr` lemma compiles under v4.29 and is left
   unmodified, unused.
+
+### 6. Explicit universe arguments in generalized field notation
+
+- Upstream cause: `Univariate/W.lean`, `Univariate/Initial.lean`, and
+  `Slice/Functor.lean` instantiate `PFunctor.functor` at an explicit
+  universe list written in generalized field notation on a local
+  variable: `P.functor.{uA, uB, max uA uB}` and
+  `F.toPFunctor.functor.{uA, uB, uD}`.
+- v4.29 symptom: ``invalid use of explicit universe parameters, `P` is a
+  local variable``. v4.29 binds the universe list to the local variable
+  the notation is applied to, rather than to the constant the notation
+  resolves to.
+- Adaptation: write the application in prefix form, so the universe list
+  sits on the constant: `PFunctor.functor.{uA, uB, max uA uB} P` and
+  `PFunctor.functor.{uA, uB, uD} F.toPFunctor`.
 
 ## Updating the patch for a new upstream
 

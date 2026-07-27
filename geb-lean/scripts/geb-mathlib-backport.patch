@@ -99,6 +99,82 @@ index 44ebba7..b6df37e 100644
  def interpObjIota (o : O) : FreeCoprodCompDisc.Map.{max uA uB, uI, uO} I O :=
    fun _ ↦ ⟨ULift Unit, fun _ ↦ o⟩
  
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean
+index 7fe4894..9ef672f 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.IndRec.Basic
+@@ -70,12 +71,12 @@ variable (I : Type uI) (O : Type uO)
+ 
+ namespace IR
+ 
+-set_option linter.checkUnivs false in
+ /-- The `IR` code for a slice polynomial functor `F` (Lemma 1 of
+ [HancockMcBrideGhaniMalatestaAltenkirch2013]): a `sigma` over the
+ shapes, then for each shape a `delta` over its directions, then a
+ `sigma` over the compatibility constraint, terminating in `iota` at the
+ output index. -/
++@[nolint checkUnivs]
+ def sliceCode (F : SlicePFunctor.{uA, uB, uI, uO} I O) :
+     IR.{uA, uB, uI, uO} I O :=
+   sigma I O F.toPFunctor.A fun a ↦
+@@ -83,21 +84,21 @@ def sliceCode (F : SlicePFunctor.{uA, uB, uI, uO} I O) :
+       sigma I O (ULift.{uA} (PLift (∀ b, assign b = F.rCurried a b))) fun _ ↦
+         iota I O (F.q a)
+ 
+-set_option linter.checkUnivs false in
+ /-- The constant (`iota`) case of the translation from `IR` codes to
+ `SlicePFunctor`s (Definition 5, clause 1 of
+ [HancockMcBrideGhaniMalatestaAltenkirch2013]): one shape, no directions,
+ output index `o`. -/
++@[nolint checkUnivs]
+ def toSlicePFunctorIota (o : O) :
+     SlicePFunctor.{max uA uB uI, uB, uI, uO} I O :=
+   { toPFunctor := ⟨PUnit, fun _ ↦ PEmpty⟩
+   , r := fun ⟨_, b⟩ ↦ PEmpty.elim b
+   , q := fun _ ↦ o }
+ 
+-set_option linter.checkUnivs false in
+ /-- The dependent sum (`sigma`) case of the translation (Definition 5,
+ clause 2): coproduct of sub-polynomials — shapes, directions, input map,
+ and output map inherited componentwise. -/
++@[nolint checkUnivs]
+ def toSlicePFunctorSigma (A : Type uA)
+     (sub : A → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :
+     SlicePFunctor.{max uA uB uI, uB, uI, uO} I O :=
+@@ -106,11 +107,11 @@ def toSlicePFunctorSigma (A : Type uA)
+   , r := fun ⟨⟨a, sa⟩, p⟩ ↦ (sub a).r ⟨sa, p⟩
+   , q := fun ⟨a, sa⟩ ↦ (sub a).q sa }
+ 
+-set_option linter.checkUnivs false in
+ /-- The dependent product (`delta`) case of the translation (Definition 5,
+ clause 3): shapes indexed by assignments `B → I`, directions are the
+ coproduct of the arity and the sub-directions, the input map is the
+ cotuple `[i, sub.r]`, the output map delegates. -/
++@[nolint checkUnivs]
+ def toSlicePFunctorDelta (B : Type uB)
+     (sub : (B → I) → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :
+     SlicePFunctor.{max uA uB uI, uB, uI, uO} I O :=
+@@ -121,11 +122,11 @@ def toSlicePFunctorDelta (B : Type uB)
+     | Sum.inr p' => (sub i).r ⟨sa, p'⟩
+   , q := fun ⟨i, sa⟩ ↦ (sub i).q sa }
+ 
+-set_option linter.checkUnivs false in
+ /-- The algebra computing one step of the translation from `IR` codes to
+ `SlicePFunctor`s (Definition 5 of
+ [HancockMcBrideGhaniMalatestaAltenkirch2013]), assembling the iota,
+ sigma, and delta cases. -/
++@[nolint checkUnivs]
+ def toSlicePFunctorAlg :
+     Alg.{uA, uB, uI, uO, max (max uA uB uI + 1) (uB + 1) uI uO} I O
+       (SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :=
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 index 004265e..fc173cb 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
@@ -177,8 +253,52 @@ index 004265e..fc173cb 100644
  structure PresheafPFunctor (I : Type uI) [Category.{vI} I]
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J where
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean
+index d7afa37..18a25ba 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.W
+@@ -125,6 +126,7 @@ theorem isHereditarilyNaturalBoolCore_eq_true_iff {I : Type uI} [Category.{vI} I
+     (motive := fun z ↦ F.isHereditarilyNaturalBoolCore decI feI feHom feB decEqW z.1 = true ↔
+       F.IsHereditarilyNatural z)
+     (fun x ih ↦ ?_) z
++  beta_reduce
+   rw [F.isHereditarilyNatural_mk x]
+   simp only [SlicePFunctor.W.mk, isHereditarilyNaturalBoolCore, WType.para_mk]
+   rw [Bool.and_eq_true]
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Finite/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Finite/Basic.lean
+index 46d5bfe..2729e13 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Finite/Basic.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Finite/Basic.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.Decidable
+@@ -61,10 +62,10 @@ open CategoryTheory
+ 
+ universe uI uJ uA uB vI vJ uZ uX
+ 
+-set_option linter.checkUnivs false in
+ /-- A presheaf polynomial functor whose shapes, directions, and domain index
+ category are all finite. Bundles the `FinEnum` evidence the decidability
+ layers consume. -/
++@[nolint checkUnivs]
+ structure FinitePresheafPFunctor (I : Type uI) [Category.{vI} I]
+     (J : Type uJ) [Category.{vJ} J] :
+     Type (max (uA + 1) (uB + 1) uI uJ vI vJ) where
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
-index 415d9f8..aea4009 100644
+index 99b7f6c..dc0ee10 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -189,7 +309,7 @@ index 415d9f8..aea4009 100644
  module
  
  public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
-@@ -424,7 +425,7 @@ theorem isHereditarilyNatural_mk_forgetNode {I : Type uI} [Category.{vI} I]
+@@ -429,7 +430,7 @@ theorem isHereditarilyNatural_mk_forgetNode {I : Type uI} [Category.{vI} I]
      refine ⟨fun i i' g b ↦ ?_, fun b ↦ (n.1.2 b).2.down.2.2⟩
      have h := congrArg (fun u ↦ u.down.1) (hnat g b)
      simp only [value_down F n, map_down F g] at h
@@ -198,7 +318,7 @@ index 415d9f8..aea4009 100644
  
  /-- The fixed-point constructor of the presheaf W-type: the `objPresheaf`-value
  at the carrier presheaf `F.W` maps into `F.W`, fiberwise over `I`. It builds the
-@@ -630,9 +631,7 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
+@@ -635,9 +636,7 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
              hn.2 hn.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q a⟩)) =
            α.app ⟨i'⟩ ((F.objPresheaf Y).map f.op
              ⟨⟨pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) :=
@@ -210,7 +330,7 @@ index 415d9f8..aea4009 100644
            (⟨⟨F.objRestrElt f (pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1) hqi,
              hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
-index b1a1552..6f3e66e 100644
+index 303379b..1da6a1a 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -221,7 +341,7 @@ index b1a1552..6f3e66e 100644
  module
  
  public import Mathlib.Data.PFunctor.Univariate.Basic
-@@ -94,17 +95,17 @@ public section
+@@ -95,17 +96,17 @@ public section
  
  universe uA uB uD uC uX uX' uY uZ
  
@@ -241,8 +361,28 @@ index b1a1552..6f3e66e 100644
  structure SlicePFunctor (dom : Type uD) (cod : Type uC) : Type (max (uA + 1) (uB + 1) uC uD)
      extends SliceDomPFunctor.{uA, uB, uD} dom where
    /-- The shape-output map: each shape is assigned a `cod`-index. -/
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Decidable.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Decidable.lean
+index 121a672..919b61f 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Decidable.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Decidable.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Slice.W
+@@ -115,6 +116,7 @@ theorem wValidBool_eq_true_iff {I : Type uI} (F : SlicePFunctor.{uA, uB, uI, uI}
+     F.wValidBool w = true ↔ F.WValid w :=
+   WType.rec (motive := fun w ↦ F.wValidBool w = true ↔ F.WValid w)
+     (fun a f ih ↦ by
++      beta_reduce
+       rw [F.wValid_mk a f]
+       change ((decide (∀ b, F.wValidBool (f b) = true)) &&
+         decide (∀ b, (F.wValidData (f b)).1 = F.rCurried a b)) = true ↔ _
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
-index 2862e7d..9b3104d 100644
+index 77feb14..8dfbe2d 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -253,16 +393,16 @@ index 2862e7d..9b3104d 100644
  module
  
  public import Geb.Mathlib.Data.PFunctor.Slice.Basic
-@@ -32,7 +33,7 @@ packaging is kept in a separate module from the choice-free core.
- ## Implementation notes
- 
- `domFunctor` reuses the core `obj`/`map`; `Over` structure maps are
--read through `ConcreteCategory.hom`, the slice-morphism hypothesis is
-+read as functions, the slice-morphism hypothesis is
- `SliceDomPFunctor.over_hom_comp` (the function-level form of `Over.w`),
- results promoted with `↾`, the identity law discharged by `ext` and the
- core `map_id`, and the composition law by `ext` and `rfl`. `functor` is
-@@ -64,21 +65,19 @@ open CategoryTheory
+@@ -39,7 +40,7 @@ packaging is kept in a separate module from the choice-free core.
+ cut out by the compatibility predicate, and `domFunctor` reads it as a
+ functor, so the functor laws come from `Subfunctor.toFunctor` and
+ `Subfunctor.ι` is the inclusion into the underlying polynomial functor.
+-`Over` structure maps are read through `ConcreteCategory.hom`, the
++`Over` structure maps are read as functions, the
+ slice-morphism hypothesis is `SliceDomPFunctor.over_hom_comp` (the
+ function-level form of `Over.w`), and the subfunctor's closure condition
+ is the core `map`'s output compatibility. The composite instantiates
+@@ -72,22 +73,20 @@ open CategoryTheory
  namespace SliceDomPFunctor
  
  /-- The function-level form of `Over.w`: a slice morphism `g : Y ⟶ Z`
@@ -277,19 +417,21 @@ index 2862e7d..9b3104d 100644
 -  rw [Function.comp_apply, ← ConcreteCategory.comp_apply, Over.w g]
 +  exact congrFun (Over.w g) z
  
+ /-- The `r`-compatible assignments, as a subfunctor of the underlying
+ polynomial functor pulled back along the forgetful functor. The `obj`
+ field is the compatibility predicate; the `map` field is its closure
+ under the polynomial functor's action, supplied by the core `map`. -/
+ @[expose] def domSubfunctor {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) :
+-    Subfunctor (Over.forget dom ⋙ F.toPFunctor.functor.{uA, uB, uD}) where
+-  obj Y := {x | F.Compatible (ConcreteCategory.hom Y.hom) x.1 x.2}
+-  map i x hx := (F.map (ConcreteCategory.hom i.left) (over_hom_comp i) ⟨x, hx⟩).2
++    Subfunctor (Over.forget dom ⋙ PFunctor.functor.{uA, uB, uD} F.toPFunctor) where
++  obj Y := {x | F.Compatible (Y.hom) x.1 x.2}
++  map i x hx := (F.map (i.left) (over_hom_comp i) ⟨x, hx⟩).2
+ 
  /-- The functor `Over dom ⥤ Type` restricting the `PFunctor`
- interpretation to `r`-compatible assignments; the core maps packaged
- over `Over dom`. -/
- @[expose] def domFunctor {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) :
-     CategoryTheory.Functor (Over dom) (Type (max uA uB uD)) where
--  obj Y := F.Obj (ConcreteCategory.hom Y.hom)
--  map {Y Z} h := ↾(F.map (ConcreteCategory.hom h.left) (over_hom_comp h))
-+  obj Y := F.Obj (Y.hom)
-+  map {Y Z} h := ↾(F.map (h.left) (over_hom_comp h))
-   map_id Y := by
-     ext z
-     exact congrFun (F.map_id _) z
-@@ -98,7 +97,7 @@ private theorem output_triangle {dom : Type uD} {cod : Type (max uA uB uD)}
+ interpretation to `r`-compatible assignments: the subfunctor
+@@ -111,7 +110,7 @@ private theorem output_triangle {dom : Type uD} {cod : Type (max uA uB uD)}
      F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z ↦ F.q z.1.1) =
        (↾fun z ↦ F.q z.1.1) := by
    ext z
@@ -298,7 +440,7 @@ index 2862e7d..9b3104d 100644
      (SliceDomPFunctor.over_hom_comp g) z)
  
  /-- The slice polynomial functor `Over dom ⥤ Over cod`: the
-@@ -121,7 +120,7 @@ theorem functor_comp_forget {dom : Type uD} {cod : Type (max uA uB uD)}
+@@ -134,7 +133,7 @@ theorem functor_comp_forget {dom : Type uD} {cod : Type (max uA uB uD)}
  categorical object map carries no data beyond the core. -/
  theorem functor_obj {dom : Type uD} {cod : Type (max uA uB uD)}
      (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) (Y : Over dom) :
@@ -307,7 +449,7 @@ index 2862e7d..9b3104d 100644
    rfl
  
  /-- `functor.map`'s underlying function is the core `map`. An `Over`
-@@ -130,7 +129,7 @@ morphism map up to its `Prop`-valued commuting condition. -/
+@@ -143,7 +142,7 @@ morphism map up to its `Prop`-valued commuting condition. -/
  theorem functor_map {dom : Type uD} {cod : Type (max uA uB uD)}
      (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) {Y Z : Over dom} (g : Y ⟶ Z) :
      (F.functor.map g).left =
@@ -336,6 +478,91 @@ index 2f62943..568cbe6 100644
        rw [F.wValid_mk a f, elimData_valid_mk F Y p g hg a f]
        exact and_congr (forall_congr' ih)
          (iff_of_eq (congrArg (F.OverInput a)
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/Initial.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/Initial.lean
+index 3e3a14b..b6d465b 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/Initial.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/Initial.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Univariate.W
+@@ -54,13 +55,13 @@ namespace PFunctor
+ of `P.functor`. -/
+ def wIsInitial (P : PFunctor.{uA, uB}) :
+     Limits.IsInitial (P.wAlgebra) :=
+-  haveI (B : Endofunctor.Algebra (P.functor.{uA, uB, max uA uB})) :
++  haveI (B : Endofunctor.Algebra (PFunctor.functor.{uA, uB, max uA uB} P)) :
+       Unique (P.wAlgebra ⟶ B) := P.wUniqueHom B
+   Limits.IsInitial.ofUnique _
+ 
+ /-- The initiality witness's morphism into an algebra is the fold. -/
+ theorem wIsInitial_to (P : PFunctor.{uA, uB})
+-    (B : Endofunctor.Algebra (P.functor.{uA, uB, max uA uB})) :
++    (B : Endofunctor.Algebra (PFunctor.functor.{uA, uB, max uA uB} P)) :
+     (P.wIsInitial).to B = P.wElim B :=
+   haveI := P.wUniqueHom B
+   Subsingleton.elim _ _
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean
+index b0f82d0..72c12a6 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Univariate.Functor
+@@ -69,35 +70,34 @@ namespace PFunctor
+ /-- The W-type of `P` as an algebra of `P.functor`, with the constructor
+ `W.mk` as structure map. -/
+ @[expose] def wAlgebra (P : PFunctor.{uA, uB}) :
+-    Endofunctor.Algebra (P.functor.{uA, uB, max uA uB}) where
++    Endofunctor.Algebra (PFunctor.functor.{uA, uB, max uA uB} P) where
+   a := P.W
+   str := ↾W.mk
+ 
+ /-- The algebra morphism from the W-type algebra into any algebra: the
+ fold of that algebra's structure map. -/
+ @[expose] def wElim (P : PFunctor.{uA, uB})
+-    (B : Endofunctor.Algebra (P.functor.{uA, uB, max uA uB})) :
++    (B : Endofunctor.Algebra (PFunctor.functor.{uA, uB, max uA uB} P)) :
+     P.wAlgebra ⟶ B where
+-  f := ↾(WType.elim B.a (ConcreteCategory.hom B.str))
+-  h := ConcreteCategory.hom_ext _ _ fun ⟨_, _⟩ ↦ rfl
++  f := ↾(WType.elim B.a B.str)
++  h := funext fun ⟨_, _⟩ ↦ rfl
+ 
+ /-- The W-type algebra is initial: the morphism into any algebra is
+ unique. -/
+ @[expose, instance_reducible] def wUniqueHom (P : PFunctor.{uA, uB})
+-    (B : Endofunctor.Algebra (P.functor.{uA, uB, max uA uB})) :
++    (B : Endofunctor.Algebra (PFunctor.functor.{uA, uB, max uA uB} P)) :
+     Unique (P.wAlgebra ⟶ B) where
+   default := P.wElim B
+   uniq g :=
+     Endofunctor.Algebra.Hom.ext
+-      (ConcreteCategory.hom_ext _ _ fun x ↦
+-        congrFun (WType.elim_unique (ConcreteCategory.hom B.str)
+-          (ConcreteCategory.hom g.f)
+-          (fun a f ↦ (ConcreteCategory.congr_hom g.h (⟨a, f⟩ : P.Obj P.W)).symm)) x)
++      (funext fun x ↦
++        congrFun (WType.elim_unique B.str g.f
++          (fun a f ↦ (congrFun g.h (⟨a, f⟩ : P.Obj P.W)).symm)) x)
+ 
+ /-- The structure map of the W-type algebra is an isomorphism: mathlib's
+ fixed-point equivalence, read as an isomorphism of types. -/
+ @[expose] def wStrIso (P : PFunctor.{uA, uB}) :
+-    (P.functor.{uA, uB, max uA uB}).obj P.W ≅ P.W :=
++    (PFunctor.functor.{uA, uB, max uA uB} P).obj P.W ≅ P.W :=
+   (WType.equivSigma P.B).symm.toIso
+ 
+ /-- The isomorphism's forward map is the algebra's structure map. -/
 diff --git a/vendor/geb-mathlib/Geb.lean b/vendor/geb-mathlib/Geb.lean
 index ce78258..2e3e12d 100644
 --- a/vendor/geb-mathlib/Geb.lean

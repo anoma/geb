@@ -7,7 +7,9 @@ Authors: Terence Rokop
 module
 
 public import Geb.Mathlib.Data.PFunctor.Slice.Basic
+public import Geb.Mathlib.Data.PFunctor.Univariate.Functor
 public import Mathlib.CategoryTheory.Comma.Over.Basic
+public import Mathlib.CategoryTheory.Subfunctor.Basic
 
 /-!
 # Slice polynomial functors: categorical wrapper
@@ -19,6 +21,8 @@ packaging is kept in a separate module from the choice-free core.
 
 ## Main definitions
 
+* `SliceDomPFunctor.domSubfunctor` — the compatible assignments as a
+  subfunctor of the underlying polynomial functor.
 * `SliceDomPFunctor.domFunctor` — the functor `Over dom ⥤ Type`.
 * `SlicePFunctor.functor` — the functor `Over dom ⥤ Over cod`.
 
@@ -32,22 +36,26 @@ packaging is kept in a separate module from the choice-free core.
 
 ## Implementation notes
 
-`domFunctor` reuses the core `obj`/`map`; `Over` structure maps are
-read as functions, the slice-morphism hypothesis is
-`SliceDomPFunctor.over_hom_comp` (the function-level form of `Over.w`),
-results promoted with `↾`, the identity law discharged by `ext` and the
-core `map_id`, and the composition law by `ext` and `rfl`. `functor` is
-the `Functor.toOver` lift along the shape-output map `q`; it is
-`@[expose]` so `functor_obj` / `functor_map` can state the definitional
-equalities as exported `rfl` theorems. `cod` is pinned to `domFunctor`'s
-codomain universe `max uA uB uD` because `Functor.toOver` requires its
-over-base
-object to inhabit the codomain category of the lifted functor, so the
-core's `cod`-universe polymorphism cannot survive into the categorical
-layer.
+`domSubfunctor` is the subfunctor of `Over.forget dom ⋙ PFunctor.functor`
+cut out by the compatibility predicate, and `domFunctor` reads it as a
+functor, so the functor laws come from `Subfunctor.toFunctor` and
+`Subfunctor.ι` is the inclusion into the underlying polynomial functor.
+`Over` structure maps are read as functions, the
+slice-morphism hypothesis is `SliceDomPFunctor.over_hom_comp` (the
+function-level form of `Over.w`), and the subfunctor's closure condition
+is the core `map`'s output compatibility. The composite instantiates
+`PFunctor.functor` at `v := uD`, written explicitly as
+`PFunctor.functor.{uA, uB, uD}`. `functor` is the `Functor.toOver` lift
+along the shape-output map `q`; it is `@[expose]` so `functor_obj` /
+`functor_map` can state the definitional equalities as exported `rfl`
+theorems. `cod` is pinned to `domFunctor`'s codomain universe
+`max uA uB uD` because `Functor.toOver` requires its over-base object
+to inhabit the codomain category of the lifted functor, so the core's
+`cod`-universe polymorphism cannot survive into the categorical layer.
 
 ## References
 
+* [AltenkirchGhaniHancockMcBrideMorris2015]
 * [GambinoHyland2004]
 * [GambinoKock2013]
 
@@ -71,17 +79,22 @@ theorem over_hom_comp {dom : Type uD} {Y Z : Over dom} (g : Y ⟶ Z) :
   funext z
   exact congrFun (Over.w g) z
 
+/-- The `r`-compatible assignments, as a subfunctor of the underlying
+polynomial functor pulled back along the forgetful functor. The `obj`
+field is the compatibility predicate; the `map` field is its closure
+under the polynomial functor's action, supplied by the core `map`. -/
+@[expose] def domSubfunctor {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) :
+    Subfunctor (Over.forget dom ⋙ PFunctor.functor.{uA, uB, uD} F.toPFunctor) where
+  obj Y := {x | F.Compatible (Y.hom) x.1 x.2}
+  map i x hx := (F.map (i.left) (over_hom_comp i) ⟨x, hx⟩).2
+
 /-- The functor `Over dom ⥤ Type` restricting the `PFunctor`
-interpretation to `r`-compatible assignments; the core maps packaged
-over `Over dom`. -/
+interpretation to `r`-compatible assignments: the subfunctor
+`domSubfunctor` read as a functor. `Subfunctor.ι` is the inclusion into
+the underlying polynomial functor. -/
 @[expose] def domFunctor {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) :
-    CategoryTheory.Functor (Over dom) (Type (max uA uB uD)) where
-  obj Y := F.Obj (Y.hom)
-  map {Y Z} h := ↾(F.map (h.left) (over_hom_comp h))
-  map_id Y := by
-    ext z
-    exact congrFun (F.map_id _) z
-  map_comp _ _ := rfl
+    CategoryTheory.Functor (Over dom) (Type (max uA uB uD)) :=
+  F.domSubfunctor.toFunctor
 
 end SliceDomPFunctor
 

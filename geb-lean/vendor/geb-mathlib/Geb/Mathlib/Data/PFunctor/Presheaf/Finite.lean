@@ -5,10 +5,9 @@ Authors: Terence Rokop
 -/
 module
 
-public import Geb.Mathlib.Data.FinEnum
-public import Geb.Mathlib.Data.PFunctor
-public import Geb.Mathlib.Data.W
+public import Geb.Mathlib.Data.PFunctor.Presheaf.Finite.Basic
+public import Geb.Mathlib.Data.PFunctor.Presheaf.Finite.W
 
 /-!
-# Data — index
+# Finite — index
 -/

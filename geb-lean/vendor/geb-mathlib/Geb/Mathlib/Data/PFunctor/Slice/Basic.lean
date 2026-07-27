@@ -70,7 +70,8 @@ reuses these — its carrier is `SliceDomPFunctor.Obj` and its `map` the
 `map_comp` delegate to the domain-side ones. `SliceDomPFunctor.Obj` and
 `SlicePFunctor.obj`, both
 namespaces' `map`,
-`SliceDomPFunctor.ofCurried` / `rCurried` / `DirectionOver` / `Direction`,
+`SliceDomPFunctor.Compatible` / `ofCurried` / `rCurried` / `DirectionOver` /
+`Direction`,
 and `SlicePFunctor.ShapeOver` / `Shape` are `@[expose]` so the
 wrapper and tests can unfold them across the module boundary. The fiber
 formers `DirectionOver` / `Direction` / `ShapeOver` / `Shape` are
@@ -118,7 +119,7 @@ namespace SliceDomPFunctor
 /-- A direction assignment `v : F.B a → X` is compatible with a projection
 `p : X → dom` when, as functions `F.B a → dom`, `p ∘ v` equals the
 direction-input map restricted to shape `a`. Pointwise: `p (v b) = r ⟨a, b⟩`. -/
-def Compatible {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X : Type uX}
+@[expose] def Compatible {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X : Type uX}
     (p : X → dom) (a : F.A) (v : F.B a → X) : Prop :=
   p ∘ v = F.r ∘ Sigma.mk a
 
