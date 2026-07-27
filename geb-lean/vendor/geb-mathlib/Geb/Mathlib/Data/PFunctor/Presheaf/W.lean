@@ -57,6 +57,9 @@ computation rule.
   extracted from the fold given the tree's hereditary naturality.
 * `PresheafPFunctor.W.elim` — the eliminator into any presheaf algebra `(Y, α)`,
   a natural transformation `F.W ⟶ Y`.
+* `PresheafPFunctor.MemW` — membership of a raw W-tree in the carrier presheaf's
+  fiber over an index, stated on `F.toPFunctor.W` so that it can be decided by a
+  fold.
 
 ## Main statements
 
@@ -80,6 +83,8 @@ computation rule.
   `NatTrans` naturality), from `elimVal_wRestr`.
 * `PresheafPFunctor.W.elim_mk` — the computation rule: `elim` commutes with `mk`,
   i.e. it is a morphism of presheaf algebras.
+* `PresheafPFunctor.memW_iff_exists_obj` — `MemW` holds exactly of the trees
+  underlying the carrier presheaf's fiber.
 
 ## Implementation notes
 
@@ -811,5 +816,27 @@ theorem elim_mk {I : Type uI} [Category.{vI} I]
   exact Sigma.ext rfl (heq_of_eq (funext fun b ↦ hchild b))
 
 end W
+
+/-- Membership of a raw W-tree in the carrier presheaf's fiber over `j`: the
+tree is admissible, its index is `j`, and it is hereditarily natural. Stated on
+`F.toPFunctor.W` rather than on `W`'s fiber so that a decision procedure has a
+raw tree to fold over; `memW_iff_exists_obj` identifies it with the fiber. -/
+@[expose] def MemW {I : Type uI} [Category.{vI} I]
+    (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I) (j : I)
+    (w : F.toPFunctor.W) : Prop :=
+  ∃ hw : F.toSlicePFunctor.WValid w,
+    F.toSlicePFunctor.wIndex ⟨w, hw⟩ = j ∧ F.IsHereditarilyNatural ⟨w, hw⟩
+
+/-- `MemW` holds exactly of the trees underlying the carrier presheaf's fiber
+over `j`. -/
+theorem memW_iff_exists_obj {I : Type uI} [Category.{vI} I]
+    (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I) (j : I)
+    (w : F.toPFunctor.W) :
+    F.MemW j w ↔ ∃ u : (F.W).obj ⟨j⟩, u.down.1.1 = w := by
+  constructor
+  · rintro ⟨hw, hq, hn⟩
+    exact ⟨ULift.up ⟨⟨w, hw⟩, hq, hn⟩, rfl⟩
+  · rintro ⟨⟨⟨⟨w', hw'⟩, hq, hn⟩⟩, rfl⟩
+    exact ⟨hw', hq, hn⟩
 
 end PresheafPFunctor

@@ -6,6 +6,7 @@ Authors: Terence Rokop
 module
 
 public import Geb.Mathlib.Data.PFunctor.Slice.Basic
+public import Geb.Mathlib.Data.PFunctor.Slice.Decidable
 public import Geb.Mathlib.Data.PFunctor.Slice.Functor
 public import Geb.Mathlib.Data.PFunctor.Slice.W
 

@@ -12,6 +12,7 @@ public import Geb.Mathlib.Data.PFunctor.IndRec.Naturality
 public import Geb.Mathlib.Data.PFunctor.IndRec.Category
 public import Geb.Mathlib.Data.PFunctor.IndRec.Universes
 public import Geb.Mathlib.Data.PFunctor.IndRec.Container
+public import Geb.Mathlib.Data.PFunctor.IndRec.Slice
 
 /-!
 # IndRec — index
