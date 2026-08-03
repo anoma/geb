@@ -519,7 +519,7 @@ but the in-tree consumption would still be credential-free.
 
 ## Risks and open questions
 
-- The hard wall of back-porting. The patch repairs renamed or removed
+- Module exclusion. The patch repairs renamed or removed
   identifiers. When a curated module depends on a mathlib definition or
   theorem that simply does not exist in `v4.29.0-rc6` (a genuinely new
   result, not a rename), no patch hunk and no shim can supply it, and
@@ -527,8 +527,8 @@ but the in-tree consumption would still be credential-free.
   is then impossible, not merely expensive. Decision rule: such a module
   is dropped from the vendored copy by the refresh script's exclusion
   list until either `geb-lean` is forward-migrated or the consuming
-  exploration is deferred. Open question: whether reaching this wall for a module
-  `geb-lean` actually wants is the trigger to schedule the forward
+  exploration is deferred. Open question: whether having to exclude a module
+  that `geb-lean` actually wants is the trigger to schedule the forward
   migration.
 - Patch-maintenance growth. The gap between `geb-mathlib`'s mathlib and
   `geb-lean`'s widens as `geb-mathlib` bumps, so the patch may accrue
