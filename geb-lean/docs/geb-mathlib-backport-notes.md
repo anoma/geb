@@ -16,7 +16,7 @@
   - [9. Subobject classifier moved out of `Topos` in v4.33](#9-subobject-classifier-moved-out-of-topos-in-v433)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
-- [The hard wall](#the-hard-wall)
+- [Module exclusion](#module-exclusion)
 - [Tooling notes](#tooling-notes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -236,7 +236,7 @@ refresh:
    `lake test`, `lake lint -- Geb`, and
    `lake build GebLeanAxiomChecks`. The `Geb` library's
    `globs = ["Geb.*"]` compiles every vendored module whether or not it
-   is imported, so a newly-ingested module that hits the hard wall
+   is imported, so a newly-ingested module that might need to be excluded
    surfaces here rather than silently.
 4. Regenerate the patch as the diff between the pristine fresh source
    and the adapted tree (for example
@@ -258,7 +258,7 @@ stable under a same-inputs re-run. When a refresh changes nothing but
 the mirrored files), the script restores `PROVENANCE.md` so the
 refresh workflow opens no pull request.
 
-## The hard wall
+## Module exclusion
 
 When a vendored module depends on a mathlib definition or theorem that
 does not exist in `v4.29.0-rc6` (a genuinely new result, not a rename),
@@ -268,9 +268,9 @@ until either `geb-lean` is forward-migrated to `v4.33.0-rc1` or the
 consuming exploration is deferred. No module has yet met that condition,
 so the script carries no exclusion list.
 
-An unknown module is not by itself evidence of the hard wall: a
-declaration that moved between modules or namespaces is a rename, and
-category 9 is the worked case. Before excluding a module, locate each
+A reference to an unknown module does not necessarily require a module to be
+excluded: a  declaration that moved between modules or namespaces is a rename,
+and category 9 is the worked case. Before excluding a module, locate each
 name it needs in the v4.29 tree and compare signatures.
 
 ## Tooling notes
