@@ -12,9 +12,10 @@ public import Mathlib.Logic.Equiv.Basic
 
 Extensions of `Mathlib.Logic.Equiv.Basic`: an eliminator for sections
 of sigma-type projections, choice-free congruence and grouping
-equivalences on sigma types, and an equivalence presenting a function
-into a sum type as a classifier together with an assignment on the
-unresolved elements.
+equivalences on sigma types, an equivalence presenting a function into
+a sum type as a classifier together with an assignment on the
+unresolved elements, and a choice-free domain transport for arrow
+types.
 
 ## Main definitions
 
@@ -32,6 +33,8 @@ unresolved elements.
 * `arrowSumEquivSigma` — a function into a sum type is a classifier
   into `X ⊕ PUnit` together with an assignment on the classifier's
   unresolved (right-classified) elements.
+* `Equiv.arrowCongrLeftC` — transport a function type along an
+  equivalence of its domain, choice-free (unlike `Equiv.arrowCongr`).
 
 ## Main statements
 
@@ -40,7 +43,8 @@ unresolved elements.
 
 ## Tags
 
-sigma, section, dependent function, equiv, sum type, classifier
+sigma, section, dependent function, equiv, sum type, classifier, arrow,
+domain transport
 -/
 
 @[expose] public section
@@ -255,3 +259,15 @@ def arrowSumEquivSigma.{w, p} (B : Type u) (X : Type v)
           ((congrFun (funext (fun b ↦ arrowSumClassify_merge q.1 q.2 b)) bp.1).trans bp.2)
           (Sum.inr (q.2 bp))
           (arrowSumMerge_eq q.1 q.2 bp.1 (Sum.inr PUnit.unit) bp.2))
+
+/-- Transport a function type along an equivalence of its domain,
+choice-free (unlike `Equiv.arrowCongr` and the `Equiv.piCongrLeft`
+family, each of which depends on `Classical.choice`). The three
+sorts are independent, matching the polymorphism of the
+`Equiv.arrowCongr` this replaces. -/
+def Equiv.arrowCongrLeftC.{w} {α : Sort u} {β : Sort v} {γ : Sort w}
+    (e : α ≃ β) : (α → γ) ≃ (β → γ) where
+  toFun g := g ∘ e.symm
+  invFun h := h ∘ e
+  left_inv g := funext fun a ↦ congrArg g (e.left_inv a)
+  right_inv h := funext fun b ↦ congrArg h (e.right_inv b)

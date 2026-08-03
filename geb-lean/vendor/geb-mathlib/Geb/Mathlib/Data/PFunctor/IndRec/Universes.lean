@@ -64,7 +64,7 @@ def univSigma.{v} : IR.{v, v, v + 1, v + 1} (Type v) (Type v) :=
 
 /-- The dependent-product-former subcode of a universe code. -/
 def univPi.{v} : IR.{v, v, v + 1, v + 1} (Type v) (Type v) :=
-  univBinder (fun X q ↦ (x : X) → q x)
+  univBinder (fun X q ↦ Π x : X, q x)
 
 variable (K : Type uK) (T : K → Type uT)
 

@@ -49,6 +49,13 @@ categorical packaging is in the sibling `Slice.Functor` module.
   `map_comp` its functoriality.
 * `SlicePFunctor.ShapeOver` / `Shape` — the shape-output-map condition and
   the fiber of `q` over `j`.
+* `SliceDomPFunctor.prod` — the product of two slice-domain polynomial
+  functors; `SliceDomPFunctor.representable` — the one represented by an
+  object of `Type/dom`; `SliceDomPFunctor.prodSlice` — the product of one
+  with a `SlicePFunctor`, formed on the domain side.
+* `SlicePFunctor.coprod` — the coproduct of an indexed family of slice
+  polynomial functors; `SlicePFunctor.ofFamily` — the one assembled from a
+  `cod`-indexed family of `SliceDomPFunctor`s.
 
 ## Main statements
 
@@ -94,7 +101,7 @@ container, PFunctor
 
 public section
 
-universe uA uB uD uC uX uX' uY uZ
+universe uA uA' uB uD uC uX uX' uY uZ
 
 /-- A polynomial functor with a direction-input map `r` assigning each
 `(shape, direction)` pair (an element of `PFunctor.Idx`) a `dom`-index. -/
@@ -152,6 +159,42 @@ of `rCurried a` over `i`. -/
 @[expose, implicit_reducible] def Direction {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
     (a : F.A) (i : dom) : Type uB :=
   Subtype (F.DirectionOver a i)
+
+/-- The product of two slice-domain polynomial functors: a shape is a pair
+of shapes, a direction at that pair is a direction of either factor at its
+own component, and the direction-input map is the cotuple of the factors'.
+This is the product of the functors `Type/dom → Type` they interpret,
+`(Σ a, F.B a → X) × (Σ a', G.B a' → X)` being `Σ (a, a'), F.B a ⊕ G.B a' → X`. -/
+@[expose, nolint checkUnivs] def prod {dom : Type uD}
+    (F G : SliceDomPFunctor.{uA, uB, uD} dom) :
+    SliceDomPFunctor.{uA, uB, uD} dom where
+  toPFunctor := ⟨F.toPFunctor.A × G.toPFunctor.A,
+    fun x ↦ F.toPFunctor.B x.1 ⊕ G.toPFunctor.B x.2⟩
+  r := fun x ↦ Sum.elim (fun b ↦ F.r ⟨x.1.1, b⟩) (fun b ↦ G.r ⟨x.1.2, b⟩) x.2
+
+/-- The slice-domain polynomial functor represented by the object
+`v : V → dom` of `Type/dom`: one shape, whose directions are `V`, with `v`
+as the direction-input map. The functor `Type/dom → Type` it interprets is
+`Hom_{Type/dom} ((V, v), -)`, its value at `(X, p)` being the assignments
+`f : V → X` with `p ∘ f = v`. -/
+@[expose, nolint checkUnivs] def representable {dom : Type uD} (V : Type uB) (v : V → dom) :
+    SliceDomPFunctor.{uA, uB, uD} dom where
+  toPFunctor := ⟨PUnit, fun _ ↦ V⟩
+  r := fun x ↦ v x.2
+
+/-- The product of `G` with a slice polynomial functor `F`, formed on the
+domain side: `prod` on the `SliceDomPFunctor`s, with `F`'s shape-output map
+read off the second shape component. Under the equivalence of `Type/cod`
+with `cod`-indexed families (`SlicePFunctor.ofFamily`), this is the
+`cod`-way product of the products of `G` with each member of `F`'s family;
+forming it here avoids the `Σ` over `cod` that transporting across the
+equivalence would introduce, and with it the raising of the shape universe
+by `cod`'s. -/
+@[expose, nolint checkUnivs] def prodSlice {dom : Type uD} {cod : Type uC}
+    (G : SliceDomPFunctor.{uA, uB, uD} dom) (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) :
+    SlicePFunctor.{uA, uB, uD, uC} dom cod where
+  toSliceDomPFunctor := G.prod F.toSliceDomPFunctor
+  q := fun x ↦ F.q x.2
 
 /-- Value of the domain-restricted functor on `(X, p)`: the
 compatibility subtype of the `PFunctor` interpretation. -/
@@ -239,5 +282,29 @@ is `j`. Point-free as `(· = j) ∘ q`. -/
 @[expose, implicit_reducible] def Shape {dom : Type uD} {cod : Type uC}
     (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) (j : cod) : Type uA :=
   Subtype (F.ShapeOver j)
+
+/-- The coproduct of a family of slice polynomial functors indexed by `A`:
+shapes are the disjoint union of the summands' shapes, and the directions,
+the direction-input map, and the shape-output map are those of the summand
+a shape came from. The index type's universe is independent of the
+summands' shape universe, so the result's shape universe is their maximum. -/
+@[expose, nolint checkUnivs] def coprod {dom : Type uD} {cod : Type uC} (A : Type uA')
+    (sub : A → SlicePFunctor.{uA, uB, uD, uC} dom cod) :
+    SlicePFunctor.{max uA' uA, uB, uD, uC} dom cod where
+  toPFunctor := ⟨Σ a, (sub a).toPFunctor.A, fun x ↦ (sub x.1).toPFunctor.B x.2⟩
+  r := fun x ↦ (sub x.1.1).r ⟨x.1.2, x.2⟩
+  q := fun x ↦ (sub x.1).q x.2
+
+/-- The slice polynomial functor `Type/dom → Type/cod` assembled from a
+`cod`-indexed family of functors `Type/dom → Type`, transporting the family
+across the equivalence of `Type/cod` with `cod`-indexed families: a shape is
+a shape of one member tagged with that member's index, and the shape-output
+map returns the tag. It is the coproduct of the members, each given the
+constant shape-output map at its own index, so the shape universe rises by
+`cod`'s. -/
+@[expose, nolint checkUnivs] def ofFamily {dom : Type uD} {cod : Type uC}
+    (fam : cod → SliceDomPFunctor.{uA, uB, uD} dom) :
+    SlicePFunctor.{max uC uA, uB, uD, uC} dom cod :=
+  coprod cod fun o ↦ { toSliceDomPFunctor := fam o, q := fun _ ↦ o }
 
 end SlicePFunctor

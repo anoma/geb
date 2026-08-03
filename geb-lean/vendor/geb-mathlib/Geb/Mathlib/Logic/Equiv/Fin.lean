@@ -5,9 +5,8 @@ Authors: Terence Rokop
 -/
 module
 
-public import Geb.Mathlib.Logic.Equiv.Basic
-public import Geb.Mathlib.Logic.Equiv.Fin
+public import Geb.Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
-# Equiv — index
+# Equiv Fin — index
 -/

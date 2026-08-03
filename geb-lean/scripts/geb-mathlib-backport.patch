@@ -1,3 +1,134 @@
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean
+index 970932c..df65d6d 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean
+@@ -3,13 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.CategoryTheory.Limits.Constructions.FiniteProductsOfBinaryProducts
+ public import Mathlib.CategoryTheory.Limits.Constructions.LimitsOfProductsAndEqualizers
+ public import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
+ public import Mathlib.CategoryTheory.Monoidal.Closed.Basic
+-public import Mathlib.CategoryTheory.Subobject.Classifier.Defs
++public import Mathlib.CategoryTheory.Topos.Classifier
+ 
+ /-!
+ # Elementary toposes
+@@ -121,7 +122,7 @@ class ElementaryTopos (C : Type u) [Category.{v} C] where
+   /-- Chosen coequalizers. -/
+   coequalizerCocone : ∀ {X Y : C} (f g : X ⟶ Y), ColimitCocone (parallelPair f g)
+   /-- A subobject classifier. -/
+-  classifier : Subobject.Classifier C
++  classifier : Classifier C
+ 
+ namespace ElementaryTopos
+ 
+@@ -142,7 +143,7 @@ attribute [local instance] cartesianMonoidalCategory
+ `Ω₀`. Both are terminal, so this isomorphism is unique. -/
+ def tensorUnitIsoΩ₀ : 𝟙_ C ≅ (classifier (C := C)).Ω₀ :=
+   IsTerminal.uniqueUpToIso CartesianMonoidalCategory.isTerminalTensorUnit
+-    Subobject.Classifier.isTerminalΩ₀
++    Classifier.isTerminalΩ₀
+ 
+ /-- The chosen initial object is initial. -/
+ def isInitial : IsInitial (initialCocone (C := C)).cocone.pt :=
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinCat/Hom2.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinCat/Hom2.lean
+index 6249978..f5f05ad 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinCat/Hom2.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinCat/Hom2.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.CategoryTheory.FinCat.Hom
+@@ -207,7 +208,7 @@ theorem natCheck_total {F G : Hom S T} (α : Hom₂ F G)
+ /-- The mathlib natural transformation a 2-cell specification
+ generates. -/
+ def toNatTrans.{v, u} {F G : Hom S T} (α : Hom₂ F G) :
+-    NatTrans F.toFunctor.{v, u} G.toFunctor.{v, u} where
++    NatTrans (Hom.toFunctor.{v, u} F) (Hom.toFunctor.{v, u} G) where
+   app X := ULift.up (α.app X.idx.down)
+   naturality _ _ f := congrArg ULift.up (α.natCheck_total f.down)
+ 
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Basic.lean
+index 3dedacb..db2037a 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Basic.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Basic.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.Vector.OfFn
+@@ -97,6 +98,8 @@ open CategoryTheory
+   len : ℕ
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprFinSetSkel.repr
++
+ namespace FinSetSkel
+ 
+ /-- The empty finite set is the default object. -/
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Classifier/Instance.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Classifier/Instance.lean
+index 0abc183..4b26167 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Classifier/Instance.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Classifier/Instance.lean
+@@ -3,12 +3,13 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.CategoryTheory.FinSetSkel.Classifier.Core
+ public import Geb.Mathlib.CategoryTheory.FinSetSkel.Mono
+ public import Geb.Mathlib.CategoryTheory.FinSetSkel.Shapes.Instances
+-public import Mathlib.CategoryTheory.Subobject.Classifier.Defs
++public import Mathlib.CategoryTheory.Topos.Classifier
+ 
+ /-!
+ # The subobject classifier of `FinSetSkel`
+@@ -103,8 +104,8 @@ theorem chi_iff_of_isPullback {U X : FinSetSkel.{u}} (m : U ⟶ X)
+   exact ⟨hmp, hmpr⟩
+ 
+ /-- The subobject classifier of `FinSetSkel`. -/
+-def classifier : Subobject.Classifier FinSetSkel.{u} :=
+-  Subobject.Classifier.mkOfTerminalΩ₀ (mk 1) isTerminalOne (mk 2) truth
++def classifier : CategoryTheory.Classifier FinSetSkel.{u} :=
++  CategoryTheory.Classifier.mkOfTerminalΩ₀ (mk 1) isTerminalOne (mk 2) truth
+     (fun m ↦ Classifier.chi m)
+     (fun m _ ↦ by
+       have hinj : Function.Injective m.toVec.get := mono_iff_injective.mp ‹Mono m›
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Exponential/Closed.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Exponential/Closed.lean
+index f9e2f2b..c3b1f96 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Exponential/Closed.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/FinSetSkel/Exponential/Closed.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.CategoryTheory.FinSetSkel.Exponential.Core
+@@ -118,7 +119,7 @@ theorem expHomEquiv_naturality (X : FinSetSkel.{u})
+   have hten : ∀ i : Fin (X ⊗ Z').len,
+       (X ◁ f ≫ g).toVec.get i =
+         g.toVec.get (Fin.pairC (Fin.divNatC i) (f.toVec.get (Fin.modNatC i))) :=
+-    fun i ↦ by rw [comp_get, whiskerLeft_get]
++    fun i ↦ by rw [comp_get, whiskerLeft_get]; rfl
+   exact key g (X ◁ f ≫ g) fun i ↦ hten i
+ 
+ /-- `FinSetSkel` is monoidal closed: the exponential of the object of
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean
 index 44ebba7..b6df37e 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean
@@ -100,7 +231,7 @@ index 44ebba7..b6df37e 100644
    fun _ ↦ ⟨ULift Unit, fun _ ↦ o⟩
  
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean
-index 7fe4894..9ef672f 100644
+index 51af76e..5927206 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -111,7 +242,7 @@ index 7fe4894..9ef672f 100644
  module
  
  public import Geb.Mathlib.Data.PFunctor.IndRec.Basic
-@@ -70,12 +71,12 @@ variable (I : Type uI) (O : Type uO)
+@@ -86,12 +87,12 @@ variable (I : Type uI) (O : Type uO)
  
  namespace IR
  
@@ -125,7 +256,7 @@ index 7fe4894..9ef672f 100644
  def sliceCode (F : SlicePFunctor.{uA, uB, uI, uO} I O) :
      IR.{uA, uB, uI, uO} I O :=
    sigma I O F.toPFunctor.A fun a ↦
-@@ -83,21 +84,21 @@ def sliceCode (F : SlicePFunctor.{uA, uB, uI, uO} I O) :
+@@ -99,43 +100,43 @@ def sliceCode (F : SlicePFunctor.{uA, uB, uI, uO} I O) :
        sigma I O (ULift.{uA} (PLift (∀ b, assign b = F.rCurried a b))) fun _ ↦
          iota I O (F.q a)
  
@@ -143,28 +274,26 @@ index 7fe4894..9ef672f 100644
  
 -set_option linter.checkUnivs false in
  /-- The dependent sum (`sigma`) case of the translation (Definition 5,
- clause 2): coproduct of sub-polynomials — shapes, directions, input map,
- and output map inherited componentwise. -/
+ clause 2): the coproduct of the sub-polynomials over the arity. -/
 +@[nolint checkUnivs]
  def toSlicePFunctorSigma (A : Type uA)
      (sub : A → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :
      SlicePFunctor.{max uA uB uI, uB, uI, uO} I O :=
-@@ -106,11 +107,11 @@ def toSlicePFunctorSigma (A : Type uA)
-   , r := fun ⟨⟨a, sa⟩, p⟩ ↦ (sub a).r ⟨sa, p⟩
-   , q := fun ⟨a, sa⟩ ↦ (sub a).q sa }
+   SlicePFunctor.coprod A sub
  
 -set_option linter.checkUnivs false in
  /-- The dependent product (`delta`) case of the translation (Definition 5,
- clause 3): shapes indexed by assignments `B → I`, directions are the
- coproduct of the arity and the sub-directions, the input map is the
- cotuple `[i, sub.r]`, the output map delegates. -/
+ clause 3): the coproduct, over the assignments `i : B → I`, of the product
+ of the sub-polynomial at `i` with the functor represented by `i` read as an
+ object `(B, i)` of `Type/I`. The representable contributes the one shape
+ and the `B` directions carrying `i` as their direction-input map, so the
+ summand's input map is the cotuple `[i, (sub i).r]`. -/
 +@[nolint checkUnivs]
  def toSlicePFunctorDelta (B : Type uB)
      (sub : (B → I) → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :
      SlicePFunctor.{max uA uB uI, uB, uI, uO} I O :=
-@@ -121,11 +122,11 @@ def toSlicePFunctorDelta (B : Type uB)
-     | Sum.inr p' => (sub i).r ⟨sa, p'⟩
-   , q := fun ⟨i, sa⟩ ↦ (sub i).q sa }
+   SlicePFunctor.coprod (B → I) fun i ↦
+     (SliceDomPFunctor.representable B i).prodSlice (sub i)
  
 -set_option linter.checkUnivs false in
  /-- The algebra computing one step of the translation from `IR` codes to
@@ -330,7 +459,7 @@ index 99b7f6c..dc0ee10 100644
            (⟨⟨F.objRestrElt f (pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1) hqi,
              hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
-index 303379b..1da6a1a 100644
+index 1dce60f..1a30765 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -341,9 +470,9 @@ index 303379b..1da6a1a 100644
  module
  
  public import Mathlib.Data.PFunctor.Univariate.Basic
-@@ -95,17 +96,17 @@ public section
+@@ -102,17 +103,17 @@ public section
  
- universe uA uB uD uC uX uX' uY uZ
+ universe uA uA' uB uD uC uX uX' uY uZ
  
 -set_option linter.checkUnivs false in
  /-- A polynomial functor with a direction-input map `r` assigning each
@@ -361,6 +490,80 @@ index 303379b..1da6a1a 100644
  structure SlicePFunctor (dom : Type uD) (cod : Type uC) : Type (max (uA + 1) (uB + 1) uC uD)
      extends SliceDomPFunctor.{uA, uB, uD} dom where
    /-- The shape-output map: each shape is assigned a `cod`-index. -/
+@@ -159,30 +160,28 @@ of `rCurried a` over `i`. -/
+     (a : F.A) (i : dom) : Type uB :=
+   Subtype (F.DirectionOver a i)
+ 
+-set_option linter.checkUnivs false in
+ /-- The product of two slice-domain polynomial functors: a shape is a pair
+ of shapes, a direction at that pair is a direction of either factor at its
+ own component, and the direction-input map is the cotuple of the factors'.
+ This is the product of the functors `Type/dom → Type` they interpret,
+ `(Σ a, F.B a → X) × (Σ a', G.B a' → X)` being `Σ (a, a'), F.B a ⊕ G.B a' → X`. -/
+-@[expose] def prod {dom : Type uD} (F G : SliceDomPFunctor.{uA, uB, uD} dom) :
++@[expose, nolint checkUnivs] def prod {dom : Type uD}
++    (F G : SliceDomPFunctor.{uA, uB, uD} dom) :
+     SliceDomPFunctor.{uA, uB, uD} dom where
+   toPFunctor := ⟨F.toPFunctor.A × G.toPFunctor.A,
+     fun x ↦ F.toPFunctor.B x.1 ⊕ G.toPFunctor.B x.2⟩
+   r := fun x ↦ Sum.elim (fun b ↦ F.r ⟨x.1.1, b⟩) (fun b ↦ G.r ⟨x.1.2, b⟩) x.2
+ 
+-set_option linter.checkUnivs false in
+ /-- The slice-domain polynomial functor represented by the object
+ `v : V → dom` of `Type/dom`: one shape, whose directions are `V`, with `v`
+ as the direction-input map. The functor `Type/dom → Type` it interprets is
+ `Hom_{Type/dom} ((V, v), -)`, its value at `(X, p)` being the assignments
+ `f : V → X` with `p ∘ f = v`. -/
+-@[expose] def representable {dom : Type uD} (V : Type uB) (v : V → dom) :
++@[expose, nolint checkUnivs] def representable {dom : Type uD} (V : Type uB) (v : V → dom) :
+     SliceDomPFunctor.{uA, uB, uD} dom where
+   toPFunctor := ⟨PUnit, fun _ ↦ V⟩
+   r := fun x ↦ v x.2
+ 
+-set_option linter.checkUnivs false in
+ /-- The product of `G` with a slice polynomial functor `F`, formed on the
+ domain side: `prod` on the `SliceDomPFunctor`s, with `F`'s shape-output map
+ read off the second shape component. Under the equivalence of `Type/cod`
+@@ -191,7 +190,7 @@ with `cod`-indexed families (`SlicePFunctor.ofFamily`), this is the
+ forming it here avoids the `Σ` over `cod` that transporting across the
+ equivalence would introduce, and with it the raising of the shape universe
+ by `cod`'s. -/
+-@[expose] def prodSlice {dom : Type uD} {cod : Type uC}
++@[expose, nolint checkUnivs] def prodSlice {dom : Type uD} {cod : Type uC}
+     (G : SliceDomPFunctor.{uA, uB, uD} dom) (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) :
+     SlicePFunctor.{uA, uB, uD, uC} dom cod where
+   toSliceDomPFunctor := G.prod F.toSliceDomPFunctor
+@@ -284,20 +283,18 @@ is `j`. Point-free as `(· = j) ∘ q`. -/
+     (F : SlicePFunctor.{uA, uB, uD, uC} dom cod) (j : cod) : Type uA :=
+   Subtype (F.ShapeOver j)
+ 
+-set_option linter.checkUnivs false in
+ /-- The coproduct of a family of slice polynomial functors indexed by `A`:
+ shapes are the disjoint union of the summands' shapes, and the directions,
+ the direction-input map, and the shape-output map are those of the summand
+ a shape came from. The index type's universe is independent of the
+ summands' shape universe, so the result's shape universe is their maximum. -/
+-@[expose] def coprod {dom : Type uD} {cod : Type uC} (A : Type uA')
++@[expose, nolint checkUnivs] def coprod {dom : Type uD} {cod : Type uC} (A : Type uA')
+     (sub : A → SlicePFunctor.{uA, uB, uD, uC} dom cod) :
+     SlicePFunctor.{max uA' uA, uB, uD, uC} dom cod where
+   toPFunctor := ⟨Σ a, (sub a).toPFunctor.A, fun x ↦ (sub x.1).toPFunctor.B x.2⟩
+   r := fun x ↦ (sub x.1.1).r ⟨x.1.2, x.2⟩
+   q := fun x ↦ (sub x.1).q x.2
+ 
+-set_option linter.checkUnivs false in
+ /-- The slice polynomial functor `Type/dom → Type/cod` assembled from a
+ `cod`-indexed family of functors `Type/dom → Type`, transporting the family
+ across the equivalence of `Type/cod` with `cod`-indexed families: a shape is
+@@ -305,7 +302,7 @@ a shape of one member tagged with that member's index, and the shape-output
+ map returns the tag. It is the coproduct of the members, each given the
+ constant shape-output map at its own index, so the shape universe rises by
+ `cod`'s. -/
+-@[expose] def ofFamily {dom : Type uD} {cod : Type uC}
++@[expose, nolint checkUnivs] def ofFamily {dom : Type uD} {cod : Type uC}
+     (fam : cod → SliceDomPFunctor.{uA, uB, uD} dom) :
+     SlicePFunctor.{max uC uA, uB, uD, uC} dom cod :=
+   coprod cod fun o ↦ { toSliceDomPFunctor := fam o, q := fun _ ↦ o }
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Decidable.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Decidable.lean
 index 121a672..919b61f 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Decidable.lean
@@ -564,7 +767,7 @@ index b0f82d0..72c12a6 100644
  
  /-- The isomorphism's forward map is the algebra's structure map. -/
 diff --git a/vendor/geb-mathlib/Geb.lean b/vendor/geb-mathlib/Geb.lean
-index ce78258..2e3e12d 100644
+index 4d787e5..93b450b 100644
 --- a/vendor/geb-mathlib/Geb.lean
 +++ b/vendor/geb-mathlib/Geb.lean
 @@ -3,14 +3,13 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.

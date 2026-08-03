@@ -39,6 +39,22 @@ the latter via `IR.elimAlg`.
 
 ## Implementation notes
 
+Definition 5's sigma and delta clauses are both coproducts of slice
+polynomial functors, so both are expressed through `SlicePFunctor.coprod`;
+the delta clause differs only in its summand, the product of the
+sub-polynomial with the functor `SliceDomPFunctor.representable`
+represents. Since the representable has one shape, the summand's shapes are
+`PUnit × (sub i).A` rather than `(sub i).A`; the two are isomorphic, and
+the clause is stated up to that isomorphism.
+
+The summand is equally the `O`-way product, over `SlicePFunctor.ofFamily`'s
+equivalence of `Type/O` with `O`-indexed families, of the products of the
+representable with each member of the sub-polynomial's family. It is formed
+here as `SliceDomPFunctor.prodSlice` instead, because transporting a
+`SlicePFunctor` out to its family and back introduces a `Σ` over `O` and so
+raises the shape universe by `uO`, which the fixed carrier of
+`IR.toSlicePFunctorAlg` does not admit.
+
 The recursive translation stabilizes the universe parameters: shapes at
 `max uA uB uI` (the delta case introduces shapes indexed by `B → I` at
 `Type (max uB uI)`), directions at `uB`. The constraint in
@@ -96,31 +112,25 @@ def toSlicePFunctorIota (o : O) :
   , q := fun _ ↦ o }
 
 /-- The dependent sum (`sigma`) case of the translation (Definition 5,
-clause 2): coproduct of sub-polynomials — shapes, directions, input map,
-and output map inherited componentwise. -/
+clause 2): the coproduct of the sub-polynomials over the arity. -/
 @[nolint checkUnivs]
 def toSlicePFunctorSigma (A : Type uA)
     (sub : A → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :
     SlicePFunctor.{max uA uB uI, uB, uI, uO} I O :=
-  { toPFunctor := ⟨Σ a, (sub a).toPFunctor.A,
-      fun ⟨a, sa⟩ ↦ (sub a).toPFunctor.B sa⟩
-  , r := fun ⟨⟨a, sa⟩, p⟩ ↦ (sub a).r ⟨sa, p⟩
-  , q := fun ⟨a, sa⟩ ↦ (sub a).q sa }
+  SlicePFunctor.coprod A sub
 
 /-- The dependent product (`delta`) case of the translation (Definition 5,
-clause 3): shapes indexed by assignments `B → I`, directions are the
-coproduct of the arity and the sub-directions, the input map is the
-cotuple `[i, sub.r]`, the output map delegates. -/
+clause 3): the coproduct, over the assignments `i : B → I`, of the product
+of the sub-polynomial at `i` with the functor represented by `i` read as an
+object `(B, i)` of `Type/I`. The representable contributes the one shape
+and the `B` directions carrying `i` as their direction-input map, so the
+summand's input map is the cotuple `[i, (sub i).r]`. -/
 @[nolint checkUnivs]
 def toSlicePFunctorDelta (B : Type uB)
     (sub : (B → I) → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :
     SlicePFunctor.{max uA uB uI, uB, uI, uO} I O :=
-  { toPFunctor := ⟨Σ (i : B → I), (sub i).toPFunctor.A,
-      fun ⟨i, sa⟩ ↦ Sum B ((sub i).toPFunctor.B sa)⟩
-  , r := fun ⟨⟨i, sa⟩, p⟩ ↦ match p with
-    | Sum.inl b => i b
-    | Sum.inr p' => (sub i).r ⟨sa, p'⟩
-  , q := fun ⟨i, sa⟩ ↦ (sub i).q sa }
+  SlicePFunctor.coprod (B → I) fun i ↦
+    (SliceDomPFunctor.representable B i).prodSlice (sub i)
 
 /-- The algebra computing one step of the translation from `IR` codes to
 `SlicePFunctor`s (Definition 5 of

@@ -15,7 +15,10 @@ public import Geb.Mathlib
 
 Root index for the `Geb` library. Subindexes:
 
-- `Geb.Mathlib` — upstream-eligible content targeted at mathlib4
+- `Geb.Mathlib` — upstream-eligible content targeted at mathlib4, or at
+  Lean core or Batteries where the subtree import rules leave no
+  alternative (`TODO.md` § Upstream destination of core- and
+  Batteries-targeted content)
 - `Geb.Cslib` — upstream-eligible content targeted at CSLib
 - `Geb.Internal` — downstream-only content
 -/
