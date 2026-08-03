@@ -5,9 +5,10 @@ Authors: Terence Rokop
 -/
 module
 
-public import Geb.Mathlib.Logic.Equiv.Basic
-public import Geb.Mathlib.Logic.Equiv.Fin
+public import Geb.Mathlib.Data.Vector.NodupEquivFin
+public import Geb.Mathlib.Data.Vector.OfFn
+public import Geb.Mathlib.Data.Vector.Scatter
 
 /-!
-# Equiv — index
+# Vector — index
 -/

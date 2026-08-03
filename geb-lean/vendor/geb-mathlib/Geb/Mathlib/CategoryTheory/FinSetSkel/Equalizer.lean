@@ -5,9 +5,9 @@ Authors: Terence Rokop
 -/
 module
 
-public import Geb.Mathlib.Logic.Equiv.Basic
-public import Geb.Mathlib.Logic.Equiv.Fin
+public import Geb.Mathlib.CategoryTheory.FinSetSkel.Equalizer.Core
+public import Geb.Mathlib.CategoryTheory.FinSetSkel.Equalizer.Limits
 
 /-!
-# Equiv — index
+# Equalizer — index
 -/

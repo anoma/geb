@@ -11,6 +11,9 @@
   - [4. Eliminator motive left as an unreduced beta-redex](#4-eliminator-motive-left-as-an-unreduced-beta-redex)
   - [5. `simp` rewriting under dependent proof arguments narrowed in v4.33](#5-simp-rewriting-under-dependent-proof-arguments-narrowed-in-v433)
   - [6. Explicit universe arguments in generalized field notation](#6-explicit-universe-arguments-in-generalized-field-notation)
+  - [7. `rw`'s closing `rfl` runs at reducible transparency](#7-rws-closing-rfl-runs-at-reducible-transparency)
+  - [8. Derived `Repr` instances carry an unused precedence argument](#8-derived-repr-instances-carry-an-unused-precedence-argument)
+  - [9. Subobject classifier moved out of `Topos` in v4.33](#9-subobject-classifier-moved-out-of-topos-in-v433)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [The hard wall](#the-hard-wall)
@@ -48,12 +51,17 @@ genuinely new (decide the adaptation, add a category here).
 - Adaptation: delete the `set_option linter.checkUnivs false in` lines
   and insert an `@[nolint checkUnivs]` attribute between each affected
   declaration's docstring and its `structure` or `def` keyword
-  (`nolint` is the v4.29-compatible suppression). The affected
+  (`nolint` is the v4.29-compatible suppression). Where the
+  declaration already carries an attribute list, the suppression joins
+  it in place (`@[expose, nolint checkUnivs]`). The affected
   structures are `SliceDomPFunctor` and `SlicePFunctor` in
   `Slice/Basic.lean`; `PresheafDomPFunctorData`,
   `PresheafDomPFunctor`, `PresheafPFunctorData`, and `PresheafPFunctor`
   in `Presheaf/Basic.lean`; and `FinitePresheafPFunctor` in
   `Presheaf/Finite/Basic.lean`. The affected definitions in
+  `Slice/Basic.lean` are `SliceDomPFunctor.prod`,
+  `SliceDomPFunctor.representable`, `SliceDomPFunctor.prodSlice`,
+  `SlicePFunctor.coprod`, and `SlicePFunctor.ofFamily`; those in
   `IndRec/Basic.lean` are `IR.Shape`, `IR.pFunctor`, `IR.Obj`,
   `IR.ObjFst`, `IR.Dest`, `IR.Alg`, the top-level `IR`, and
   `IR.interpObjIota`; those in `IndRec/Slice.lean` are `IR.sliceCode`,
@@ -140,14 +148,64 @@ genuinely new (decide the adaptation, add a category here).
   `Slice/Functor.lean` instantiate `PFunctor.functor` at an explicit
   universe list written in generalized field notation on a local
   variable: `P.functor.{uA, uB, max uA uB}` and
-  `F.toPFunctor.functor.{uA, uB, uD}`.
+  `F.toPFunctor.functor.{uA, uB, uD}`; `FinCat/Hom2.lean`'s
+  `Hom₂.toNatTrans` states its result type through
+  `F.toFunctor.{v, u}` on the local variables `F` and `G`.
 - v4.29 symptom: ``invalid use of explicit universe parameters, `P` is a
   local variable``. v4.29 binds the universe list to the local variable
   the notation is applied to, rather than to the constant the notation
   resolves to.
 - Adaptation: write the application in prefix form, so the universe list
-  sits on the constant: `PFunctor.functor.{uA, uB, max uA uB} P` and
-  `PFunctor.functor.{uA, uB, uD} F.toPFunctor`.
+  sits on the constant: `PFunctor.functor.{uA, uB, max uA uB} P`,
+  `PFunctor.functor.{uA, uB, uD} F.toPFunctor`, and
+  `NatTrans (Hom.toFunctor.{v, u} F) (Hom.toFunctor.{v, u} G)`.
+
+### 7. `rw`'s closing `rfl` runs at reducible transparency
+
+- Upstream cause: `FinSetSkel/Exponential/Closed.lean`'s
+  `expHomEquiv_naturality` proves its whiskering step `hten` by
+  `rw [comp_get, whiskerLeft_get]` alone.
+- v4.29 symptom: `unsolved goals`, on a goal whose two sides are the
+  same term at the two spellings `Fin (X ⊗ Z').len` and
+  `Fin (X.len * Z'.len)` of the index type. The two are definitionally
+  equal — `⊗` is `FinSetSkel.prodObj` on the nose — but not reducibly
+  so, and `rw` closes a residual goal only with `with_reducible rfl`.
+- Adaptation: append `rfl`, which runs at default transparency:
+  `rw [comp_get, whiskerLeft_get]; rfl`.
+
+### 8. Derived `Repr` instances carry an unused precedence argument
+
+- Upstream cause: `FinSetSkel/Basic.lean` declares the objects with
+  `deriving DecidableEq, Repr`.
+- v4.29 symptom: the `unusedArguments` env-linter reports
+  `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` under `lake lint`;
+  v4.29's `Repr` deriving handler emits a `repr` that ignores the
+  precedence argument for a structure with one non-recursive field.
+- Adaptation: suppress the linter on the generated declaration,
+  `attribute [nolint unusedArguments] instReprFinSetSkel.repr`, after
+  the structure (the attribute cannot be attached to a `deriving`
+  clause).
+
+### 9. Subobject classifier moved out of `Topos` in v4.33
+
+- Upstream cause: `CategoryTheory/ElementaryTopos.lean` and
+  `FinSetSkel/Classifier/Instance.lean` import
+  `Mathlib.CategoryTheory.Subobject.Classifier.Defs` and name the
+  structure `Subobject.Classifier`.
+- v4.29 symptom: `unknown module` on the import. The declarations
+  themselves are present: v4.29 has the same `Classifier` structure,
+  `Classifier.isTerminalΩ₀`, and a `Classifier.mkOfTerminalΩ₀` of
+  identical signature, in `Mathlib.CategoryTheory.Topos.Classifier`
+  under the namespace `CategoryTheory` rather than
+  `CategoryTheory.Subobject`.
+- Adaptation: import `Mathlib.CategoryTheory.Topos.Classifier` and drop
+  the `Subobject.` qualifier. In `ElementaryTopos.lean` the enclosing
+  `namespace CategoryTheory` leaves `Classifier C` and
+  `Classifier.isTerminalΩ₀` unambiguous; in
+  `FinSetSkel/Classifier/Instance.lean` the surrounding
+  `namespace FinSetSkel` has a `Classifier` namespace of its own, so
+  the mathlib structure is named in full as
+  `CategoryTheory.Classifier`.
 
 ## Updating the patch for a new upstream
 
@@ -174,7 +232,8 @@ refresh:
    carrying the same v4.29 incompatibility, needs the category extended
    by hand.
 3. Build and check the result with the same commands CI runs:
-   `lake build Geb`, `lake test`, `lake lint -- $VMODS`, and
+   `bash scripts/tests/test-lint-driver.sh`, `lake build Geb`,
+   `lake test`, `lake lint -- Geb`, and
    `lake build GebLeanAxiomChecks`. The `Geb` library's
    `globs = ["Geb.*"]` compiles every vendored module whether or not it
    is imported, so a newly-ingested module that hits the hard wall
@@ -206,7 +265,13 @@ does not exist in `v4.29.0-rc6` (a genuinely new result, not a rename),
 no patch hunk can supply it and `sorry`/`admit` are banned. Such a module
 is dropped from the vendored copy via the refresh script's exclusion list
 until either `geb-lean` is forward-migrated to `v4.33.0-rc1` or the
-consuming exploration is deferred.
+consuming exploration is deferred. No module has yet met that condition,
+so the script carries no exclusion list.
+
+An unknown module is not by itself evidence of the hard wall: a
+declaration that moved between modules or namespaces is a rename, and
+category 9 is the worked case. Before excluding a module, locate each
+name it needs in the v4.29 tree and compare signatures.
 
 ## Tooling notes
 

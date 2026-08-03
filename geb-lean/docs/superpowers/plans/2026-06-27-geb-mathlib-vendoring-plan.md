@@ -519,7 +519,7 @@ genuinely new (decide the adaptation, add a category here).
   docstring mentions); rewrite the `over_hom_comp` proof to
   `exact congrFun (Over.w g) z`.
 
-## The hard wall
+## Module exclusion
 
 When a vendored module depends on a mathlib definition or theorem that
 does not exist in `v4.29.0-rc6` (a genuinely new result, not a rename),
