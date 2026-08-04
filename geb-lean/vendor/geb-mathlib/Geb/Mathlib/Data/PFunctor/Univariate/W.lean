@@ -41,7 +41,7 @@ the algebra's carrier, so `P.functor` is instantiated at
 `wUniqueHom` is not an `instance`: as one it would determine `default`
 on the algebra hom-sets out of `wAlgebra`, competing with the identity
 morphism the upstream `Inhabited` gives on endomorphism sets. Consumers
-introduce it with `haveI` where a `Unique` instance is wanted.
+introduce it as a local hypothesis where a `Unique` instance is wanted.
 
 `wStrIso` is mathlib's fixed-point equivalence `WType.equivSigma`
 transported along `Equiv.toIso`. The `Iso` form is preferred to `IsIso`
