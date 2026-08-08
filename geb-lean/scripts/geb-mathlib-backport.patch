@@ -1,3 +1,110 @@
+diff --git a/vendor/geb-mathlib/Geb/Internal/ConcreteSyntax.lean b/vendor/geb-mathlib/Geb/Internal/ConcreteSyntax.lean
+index c40e5fe..6c08797 100644
+--- a/vendor/geb-mathlib/Geb/Internal/ConcreteSyntax.lean
++++ b/vendor/geb-mathlib/Geb/Internal/ConcreteSyntax.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.W.Basic
+@@ -362,6 +363,8 @@ comments, and canonical forms differ over whether they are retained. -/
+   links : List String := []
+   deriving Repr, DecidableEq, Inhabited
+ 
++attribute [nolint unusedArguments] instReprAnn.repr
++
+ /-- An annotated Geb document. -/
+ abbrev Doc (k : Nat) : Type := Tree k Ann
+ 
+@@ -549,7 +552,7 @@ back is the identity on `Ast k`. -/
+ theorem ofRose_toRose {k : Nat} (a : Ast k) : ofRose a.toRose = a :=
+   ind (motive := fun a ↦ ofRose a.toRose = a)
+     (fun i ↦ by simp only [toRose_leaf, ofRose_node, Fin.foldl_zero])
+-    (fun l r ihl ihr ↦ by rw [toRose_fork, ofRose_snoc, ihl, ihr]) a
++    (fun l r ihl ihr ↦ by beta_reduce; rw [toRose_fork, ofRose_snoc, ihl, ihr]) a
+ 
+ /-- The image of a left spine under `toRose`: the fold that `ofRose`
+ performs on a node's children is undone one child at a time, from the
+diff --git a/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Basic.lean b/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Basic.lean
+index b4e0cc6..cbb2cdf 100644
+--- a/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Basic.lean
++++ b/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Basic.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
+@@ -468,8 +469,7 @@ def postcompArityHom (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) (a : F.
+     intro i i' f b
+     change ν.app ⟨i'⟩ (μ.1 i' (F.directionRestr a f b)) = Z'.map f.op (ν.app ⟨i⟩ (μ.1 i b))
+     rw [μ.2 f b]
+-    simp only [← ConcreteCategory.comp_apply]
+-    rw [ν.naturality f.op]⟩
++    exact FunctorToTypes.naturality _ _ ν f.op _⟩
+ 
+ /-- The identity arity hom, of `F` at `a` into `F`'s own arity presheaf. -/
+ def idArityHom (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) (a : F.A) :
+diff --git a/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Codes.lean b/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Codes.lean
+index 20b88f6..2313daf 100644
+--- a/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Codes.lean
++++ b/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Codes.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Internal.PresheafIRProto.Basic
+@@ -447,7 +448,6 @@ def reindexHom (hP : P.IsFunctorial) ⦃j j' : J⦄ (g : j' ⟶ j) :
+   naturality := by
+     intro i i' f
+     ext d
+-    simp only [TypeCat.Fun.toFun_apply, comp_apply, ConcreteCategory.hom_ofHom]
+     exact congrFun (hP.reindex_naturality g f.unop).symm d
+ 
+ /-- Reindexing along an `eqToHom` is the transport along the underlying
+@@ -500,9 +500,13 @@ theorem isFunctorial_pullback (hP : P.IsFunctorial)
+       (eqToHom (F.shapeRestr (𝟙 j) s).2 ≫ (𝟙 j) ≫ eqToHom s.2.symm) =
+         eqToHom (((F.shapeRestr (𝟙 j) s).2).trans s.2.symm) by simp,
+       reindex_eqToHom P hP]
++    rfl
+   reindex_comp := by
+     intro j j' j'' g h s i d
+     simp only [pullback] at d ⊢
++    change _ = P.reindex _ (P.reindex _
++      (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam (F.q u.1)).Dir i)
++        (congrFun (F.isFunctorial.shapeRestr_comp g h) s)) d))
+     rw [reindex_cast_shape (hh := congrFun (F.isFunctorial.shapeRestr_comp g h) s),
+       ← reindex_comp_apply P hP]
+     congr 1
+diff --git a/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Functor.lean b/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Functor.lean
+index d958e4f..0919ac2 100644
+--- a/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Functor.lean
++++ b/vendor/geb-mathlib/Geb/Internal/PresheafIRProto/Functor.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Internal.PresheafIRProto.Basic
+@@ -69,7 +70,7 @@ definitional. -/
+ def arityHomEquivNatTrans (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) (a : F.A)
+     (Z : Iᵒᵖ ⥤ Type uB) : ArityHom F a Z ≃ (arityPresheaf F a ⟶ Z) where
+   toFun μ := natTransOfArityHom F a μ
+-  invFun α := ⟨fun i ↦ α.app ⟨i⟩, fun _ _ f b ↦ NatTrans.naturality_apply α f.op b⟩
++  invFun α := ⟨fun i ↦ α.app ⟨i⟩, fun _ _ f b ↦ FunctorToTypes.naturality _ _ α f.op b⟩
+   left_inv _ := rfl
+   right_inv _ := rfl
+ 
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean
 index 970932c..df65d6d 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean
@@ -710,7 +817,7 @@ index 3e3a14b..b6d465b 100644
    haveI := P.wUniqueHom B
    Subsingleton.elim _ _
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean
-index b0f82d0..72c12a6 100644
+index db2075e..f713039 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
