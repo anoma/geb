@@ -14,6 +14,7 @@
   - [7. `rw`'s closing `rfl` runs at reducible transparency](#7-rws-closing-rfl-runs-at-reducible-transparency)
   - [8. Derived `Repr` instances carry an unused precedence argument](#8-derived-repr-instances-carry-an-unused-precedence-argument)
   - [9. Subobject classifier moved out of `Topos` in v4.33](#9-subobject-classifier-moved-out-of-topos-in-v433)
+  - [10. `simp` leaves a `cast`'s proof argument unfolded](#10-simp-leaves-a-casts-proof-argument-unfolded)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -77,12 +78,18 @@ genuinely new (decide the adaptation, add a category here).
 ### 3. `ConcreteCategory` redesign (mathlib pull request 34741)
 
 - Upstream cause: the post-`HasForget` `ConcreteCategory` adds the
-  `ConcreteCategory.hom` accessor, `ConcreteCategory.comp_apply`, and
-  `ConcreteCategory.hom_ext`; in v4.29 an `Over` base map, an
-  `Iᵒᵖ ⥤ Type` presheaf map, and a `Type`-category morphism are already
-  functions.
+  `ConcreteCategory.hom` accessor, `ConcreteCategory.comp_apply`,
+  `ConcreteCategory.hom_ext`, and `ConcreteCategory.hom_ofHom`; the same
+  redesign routes a `Type`-category morphism through the `TypeCat.Fun`
+  coercion layer, with `TypeCat.Fun.toFun_apply` and
+  `NatTrans.naturality_apply` reading through it. In v4.29 an `Over`
+  base map, an `Iᵒᵖ ⥤ Type` presheaf map, and a `Type`-category
+  morphism are already functions, so neither the accessors nor the
+  coercion layer exist.
 - v4.29 symptom: `Unknown identifier 'ConcreteCategory.hom'` /
-  `'ConcreteCategory.comp_apply'` / `'ConcreteCategory.hom_ext'`.
+  `'ConcreteCategory.comp_apply'` / `'ConcreteCategory.hom_ext'` /
+  `'ConcreteCategory.hom_ofHom'` / `'TypeCat.Fun.toFun_apply'`, or
+  `Unknown constant 'CategoryTheory.NatTrans.naturality_apply'`.
 - Adaptation in `Slice/Functor.lean`: drop the `ConcreteCategory.hom`
   wrapper (and its two docstring mentions); rewrite the `over_hom_comp`
   proof to `exact congrFun (Over.w g) z`.
@@ -106,6 +113,23 @@ genuinely new (decide the adaptation, add a category here).
   `ConcreteCategory.hom_ext _ _` with `funext`, and replace
   `ConcreteCategory.congr_hom g.h` with `congrFun g.h`: in v4.29 the
   morphism is the function and its equation is the function equation.
+- Adaptation in `Internal/PresheafIRProto/Basic.lean`
+  (`postcompArityHom`): the arity-hom naturality proof closes with
+  `simp only [← ConcreteCategory.comp_apply]; rw [ν.naturality f.op]`.
+  Replace both tactics with
+  `exact FunctorToTypes.naturality _ _ ν f.op _`, as in
+  `Presheaf/Basic.lean` above.
+- Adaptation in `Internal/PresheafIRProto/Codes.lean`
+  (`BaseArity.reindexHom`): the naturality proof strips the coercion
+  layers with
+  `simp only [TypeCat.Fun.toFun_apply, comp_apply, ConcreteCategory.hom_ofHom]`
+  before `exact congrFun (hP.reindex_naturality g f.unop).symm d`.
+  Delete the `simp only` line; in v4.29 the goal is already the
+  function equation the `exact` closes.
+- Adaptation in `Internal/PresheafIRProto/Functor.lean`
+  (`arityHomEquivNatTrans`): the backward direction re-states
+  naturality with `NatTrans.naturality_apply α f.op b`. Replace it
+  with `FunctorToTypes.naturality _ _ α f.op b`.
 
 ### 4. Eliminator motive left as an unreduced beta-redex
 
@@ -113,8 +137,9 @@ genuinely new (decide the adaptation, add a category here).
   explicit `motive` and enters the minor premise via
   `fun ... => by ...`. The affected sites are `elimData_valid` in
   `Slice/W.lean` and `wValidBool_eq_true_iff` in `Slice/Decidable.lean`
-  (both `WType.rec`), and `isHereditarilyNaturalBoolCore_eq_true_iff` in
-  `Presheaf/Decidable.lean` (`SlicePFunctor.W.induction`).
+  (both `WType.rec`), `isHereditarilyNaturalBoolCore_eq_true_iff` in
+  `Presheaf/Decidable.lean` (`SlicePFunctor.W.induction`), and
+  `ofRose_toRose` in `Internal/ConcreteSyntax.lean` (`Ast.ind`).
 - v4.29 symptom: the goal is `(fun w => ...) (WType.mk a f)` — the motive
   lambda is not beta-reduced at the constructor — so the opening
   `rw` reports "Did not find an occurrence of the pattern" (the rewritten
@@ -172,18 +197,27 @@ genuinely new (decide the adaptation, add a category here).
   so, and `rw` closes a residual goal only with `with_reducible rfl`.
 - Adaptation: append `rfl`, which runs at default transparency:
   `rw [comp_get, whiskerLeft_get]; rfl`.
+- Second site: `Internal/PresheafIRProto/Codes.lean`'s
+  `isFunctorial_pullback` closes its `reindex_id` field with a `rw`
+  whose residual goal is `cast ⋯ d = cast ⋯ d`. The two transport
+  proofs are definitionally equal by proof irrelevance but not
+  reducibly so. Append `rfl` after the `rw`.
 
 ### 8. Derived `Repr` instances carry an unused precedence argument
 
 - Upstream cause: `FinSetSkel/Basic.lean` declares the objects with
-  `deriving DecidableEq, Repr`.
+  `deriving DecidableEq, Repr`, and `Internal/ConcreteSyntax.lean`
+  declares `Ann` with `deriving Repr, DecidableEq, Inhabited`.
 - v4.29 symptom: the `unusedArguments` env-linter reports
-  `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` under `lake lint`;
-  v4.29's `Repr` deriving handler emits a `repr` that ignores the
-  precedence argument for a structure with one non-recursive field.
+  `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` (respectively
+  `instReprAnn.repr argument 2 prec✝ : ℕ`) under `lake lint`; v4.29's
+  `Repr` deriving handler emits a `repr` that ignores the precedence
+  argument for a structure whose representation needs no
+  parenthesisation.
 - Adaptation: suppress the linter on the generated declaration,
-  `attribute [nolint unusedArguments] instReprFinSetSkel.repr`, after
-  the structure (the attribute cannot be attached to a `deriving`
+  `attribute [nolint unusedArguments] instReprFinSetSkel.repr`
+  (respectively `attribute [nolint unusedArguments] instReprAnn.repr`),
+  after the structure (the attribute cannot be attached to a `deriving`
   clause).
 
 ### 9. Subobject classifier moved out of `Topos` in v4.33
@@ -206,6 +240,37 @@ genuinely new (decide the adaptation, add a category here).
   `namespace FinSetSkel` has a `Classifier` namespace of its own, so
   the mathlib structure is named in full as
   `CategoryTheory.Classifier`.
+
+### 10. `simp` leaves a `cast`'s proof argument unfolded
+
+- Upstream cause: `Internal/PresheafIRProto/Codes.lean`'s
+  `isFunctorial_pullback` proves its `reindex_comp` field by
+  `simp only [pullback] at d ⊢` followed by
+  `rw [reindex_cast_shape (hh := ...), ← reindex_comp_apply P hP]`. The
+  goal carries a `cast` transporting `d` along the shape equality
+  `hh`, and `reindex_cast_shape` states that transport with the motive
+  `fun u ↦ (P.fam (F.q u.1)).Dir i`.
+- v4.29 symptom: `Did not find an occurrence of the pattern`
+  `P.reindex ?k (cast ⋯ ?d)`, on a target that visibly contains such a
+  subterm. The `simp only [pullback]` rewrites the goal but not the
+  proof argument of `cast`, which simp treats as irrelevant, so the
+  goal's motive stays
+  `fun u ↦ ((P.pullback F.toPresheafPFunctorData).fam ↑u).Dir i`. That
+  is the lemma's motive after delta-reducing `BaseArity.pullback`,
+  below the transparency at which `rw` matches.
+- Adaptation: precede the `rw` with a `change` restating the goal's
+  `cast` at the lemma's motive, leaving the rest of the goal to
+  unification:
+
+  ```lean
+  change _ = P.reindex _ (P.reindex _
+    (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam (F.q u.1)).Dir i)
+      (congrFun (F.isFunctorial.shapeRestr_comp g h) s)) d))
+  ```
+
+  `change` rather than `show`: the `show` tactic is restricted by a
+  linter to indicating intermediate goal states, and this restatement
+  is a transparency adjustment.
 
 ## Updating the patch for a new upstream
 
