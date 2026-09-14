@@ -1,8 +1,67 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: 37d8590716954a02c96e8f06caa30b0c62aec6ec
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 bd9087325bf7416c6516de32a81e9f1c0210cc9278a7fb854e9223622fd204ad)
-- Excluded modules: Geb.Prototypes.Computability.TreeScanner. Each is dropped along with its submodules and every import of it; see scripts/refresh-geb-mathlib.sh.
+- Source commit: 17f8f4ccba667eaaa391bcd81b39d1b89fca1be1
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 5ba40a99edbd791eb2c9bff97ef3e5925ce853caa9096beb131a08b7e4e4c073)
+- Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Accounting
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.BitStep
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Bound
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Carry
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Difference
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Execution
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Machine
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Macro
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Representation
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Return
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Simulation
+  - Geb.Prototypes.Computability.BitTree.BinaryMachine.Steps
+  - Geb.Prototypes.Computability.BitTree.Bound
+  - Geb.Prototypes.Computability.BitTree.Elias.Bound
+  - Geb.Prototypes.Computability.BitTree.Elias.Counter
+  - Geb.Prototypes.Computability.BitTree.Elias.Execution
+  - Geb.Prototypes.Computability.BitTree.Elias.Machine
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineAccounting
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineBit
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineConfig
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineCounter
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineEmpty
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineEnd
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineHeader
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineHeaderBound
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineModel
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineNormalize
+  - Geb.Prototypes.Computability.BitTree.Elias.MachinePayload
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineRead
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineSimpleBound
+  - Geb.Prototypes.Computability.BitTree.Elias.MachineSteps
+  - Geb.Prototypes.Computability.BitTree.Elias.Scanner
+  - Geb.Prototypes.Computability.BitTree.Elias.ScannerCorrect
+  - Geb.Prototypes.Computability.BitTree.Elias.ScannerHeader
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Account
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.BitStep
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Bound
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Cost
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Execution
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Increment
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Layout
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.LengthRead
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Machine
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Need
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.PassOne
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Payload
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Represent
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Simple
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.SizeRead
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Steps
+  - Geb.Prototypes.Computability.BitTree.EliasBinary.Zeros
+  - Geb.Prototypes.Computability.BitTree.Machine
+  - Geb.Prototypes.Computability.BitTree.Steps
+  - Geb.Prototypes.Computability.BitTreeScanner
+  - Geb.Prototypes.Computability.Mazzanti.BitTree
+  - Geb.Prototypes.Computability.Mazzanti.Bound
+  - Geb.Prototypes.Computability.Mazzanti.Growth
+  - Geb.Prototypes.Computability.Mazzanti.Words
+  - Geb.Prototypes.Computability.TreeScanner
 - `GebMeta` is not vendored: every import of it is dropped, each `{cite}` docstring role it supplies is rewritten to its escaped bracketed key, and each `{name}` role naming one of its declarations is rewritten to `{lit}`; see scripts/refresh-geb-mathlib.sh.
 - The files under `Geb/` are an unmodified mirror of the source commit except where the back-port patch changes them and where the exclusion above removes them; modified files carry a change notice in their header comment.
