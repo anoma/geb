@@ -14,10 +14,88 @@ SRC_REV="${1:-main}"
 # Name the narrowest module that carries the dependency, so that a
 # sibling added upstream later is ingested rather than silently dropped.
 #
-# Geb.Prototypes.Computability.TreeScanner: imports
+# A module importing an excluded module is excluded in turn, since the
+# import deletion below would otherwise leave it referring to
+# declarations it no longer imports. The one exception is a directory's
+# index module, which carries nothing but imports and survives the
+# deletion.
+#
+# Geb.Prototypes.Computability.TreeScanner, and under
+# Geb.Prototypes.Computability.BitTree the modules Bound, Machine,
+# Steps, BinaryMachine.{Bound,Machine}, Elias.{Bound,Machine}, and
+# EliasBinary.Bound, and Geb.Prototypes.Computability.BitTreeScanner.Machine:
+# import
 # Cslib.Computability.Machines.Turing.MultiTape.{Deterministic,TapeLemmas},
 # added to cslib after the pinned v4.29.0-rc6 revision.
-EXCLUDED_MODULES=(Geb.Prototypes.Computability.TreeScanner)
+#
+# Geb.Prototypes.Computability.BitTreeScanner.Encoding: imports
+# Cslib.Foundations.Data.PFunctor.Free, likewise added after the pin.
+#
+# The remaining entries import one of the above, directly or through
+# a chain of such imports, or are imported only by such modules, which
+# would leave them unreachable from the Geb umbrella
+# (scripts/tests/test-lint-driver.sh reports these).
+EXCLUDED_MODULES=(
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Accounting
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.BitStep
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Bound
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Carry
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Difference
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Execution
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Machine
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Macro
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Representation
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Return
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Simulation
+  Geb.Prototypes.Computability.BitTree.BinaryMachine.Steps
+  Geb.Prototypes.Computability.BitTree.Bound
+  Geb.Prototypes.Computability.BitTree.Elias.Bound
+  Geb.Prototypes.Computability.BitTree.Elias.Counter
+  Geb.Prototypes.Computability.BitTree.Elias.Execution
+  Geb.Prototypes.Computability.BitTree.Elias.Machine
+  Geb.Prototypes.Computability.BitTree.Elias.MachineAccounting
+  Geb.Prototypes.Computability.BitTree.Elias.MachineBit
+  Geb.Prototypes.Computability.BitTree.Elias.MachineConfig
+  Geb.Prototypes.Computability.BitTree.Elias.MachineCounter
+  Geb.Prototypes.Computability.BitTree.Elias.MachineEmpty
+  Geb.Prototypes.Computability.BitTree.Elias.MachineEnd
+  Geb.Prototypes.Computability.BitTree.Elias.MachineHeader
+  Geb.Prototypes.Computability.BitTree.Elias.MachineHeaderBound
+  Geb.Prototypes.Computability.BitTree.Elias.MachineModel
+  Geb.Prototypes.Computability.BitTree.Elias.MachineNormalize
+  Geb.Prototypes.Computability.BitTree.Elias.MachinePayload
+  Geb.Prototypes.Computability.BitTree.Elias.MachineRead
+  Geb.Prototypes.Computability.BitTree.Elias.MachineSimpleBound
+  Geb.Prototypes.Computability.BitTree.Elias.MachineSteps
+  Geb.Prototypes.Computability.BitTree.Elias.Scanner
+  Geb.Prototypes.Computability.BitTree.Elias.ScannerCorrect
+  Geb.Prototypes.Computability.BitTree.Elias.ScannerHeader
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Account
+  Geb.Prototypes.Computability.BitTree.EliasBinary.BitStep
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Bound
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Cost
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Execution
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Increment
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Layout
+  Geb.Prototypes.Computability.BitTree.EliasBinary.LengthRead
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Machine
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Need
+  Geb.Prototypes.Computability.BitTree.EliasBinary.PassOne
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Payload
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Represent
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Simple
+  Geb.Prototypes.Computability.BitTree.EliasBinary.SizeRead
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Steps
+  Geb.Prototypes.Computability.BitTree.EliasBinary.Zeros
+  Geb.Prototypes.Computability.BitTree.Machine
+  Geb.Prototypes.Computability.BitTree.Steps
+  Geb.Prototypes.Computability.BitTreeScanner
+  Geb.Prototypes.Computability.Mazzanti.BitTree
+  Geb.Prototypes.Computability.Mazzanti.Bound
+  Geb.Prototypes.Computability.Mazzanti.Growth
+  Geb.Prototypes.Computability.Mazzanti.Words
+  Geb.Prototypes.Computability.TreeScanner
+)
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"   # geb-lean package root
 VENDOR="$ROOT/vendor/geb-mathlib"
 PATCH="$ROOT/scripts/geb-mathlib-backport.patch"
@@ -34,7 +112,8 @@ git -C "$TMP/gm" checkout --quiet "$SRC_REV"
 # itself when the patch and PROVENANCE.md change in the same commit.
 SRC_SHA="$(git -C "$TMP/gm" rev-parse HEAD)"
 PATCH_SHA256="$(sha256sum "$PATCH" | cut -d' ' -f1)"
-EXCLUDED_RENDERED="${EXCLUDED_MODULES[*]:-(none)}"
+# One sub-list item per entry; a single line would be unreadable.
+EXCLUDED_RENDERED="$(printf '\n  - %s' "${EXCLUDED_MODULES[@]}")"
 
 # Complete overwrite of the Geb namespace (no orphaned files).
 rm -f "$VENDOR/Geb.lean"; rm -rf "$VENDOR/Geb"
@@ -48,7 +127,7 @@ cat > "$VENDOR/PROVENANCE.md" <<EOF
 - Source: $REPO_URL
 - Source commit: $SRC_SHA
 - Back-port patch: scripts/geb-mathlib-backport.patch (sha256 $PATCH_SHA256)
-- Excluded modules: $EXCLUDED_RENDERED. Each is dropped along with its submodules and every import of it; see scripts/refresh-geb-mathlib.sh.
+- Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):$EXCLUDED_RENDERED
 - \`GebMeta\` is not vendored: every import of it is dropped, each \`{cite}\` docstring role it supplies is rewritten to its escaped bracketed key, and each \`{name}\` role naming one of its declarations is rewritten to \`{lit}\`; see scripts/refresh-geb-mathlib.sh.
 - The files under \`Geb/\` are an unmodified mirror of the source commit except where the back-port patch changes them and where the exclusion above removes them; modified files carry a change notice in their header comment.
 EOF

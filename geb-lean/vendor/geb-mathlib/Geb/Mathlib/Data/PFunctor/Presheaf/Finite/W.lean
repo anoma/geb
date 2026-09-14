@@ -14,8 +14,9 @@ For a finite presheaf polynomial endofunctor `F : FinitePresheafPFunctor I I`,
 the `Bool`-valued validator `wValidBool` conjoins slice admissibility and
 hereditary naturality, and `memWBool` adds the index test. Deciding
 `PresheafPFunctor.MemW` — membership of a raw W-tree in the carrier presheaf's
-fiber — is `memWBool`'s correctness lemma read through `decidable_of_iff`, so
-the fiber is decided by a single fold. Forwarding instances supply the bundled
+fiber — is `memWBool`'s correctness lemma read through `decidable_of_iff`.
+The validator combines separate admissibility and naturality folds with the
+root-index test. Forwarding instances supply the bundled
 finiteness evidence to the existing decision procedures.
 
 ## Main definitions
@@ -36,12 +37,12 @@ finiteness evidence to the existing decision procedures.
 
 ## Implementation notes
 
-`wValidBool`'s first conjunct is load-bearing, not merely conjoined:
-`PresheafPFunctor.isHereditarilyNaturalBoolCore` is a total fold that returns
-`true` on an inadmissible tree, because the index guards at each node fail and
-every conjunct is skipped. Its correctness lemma is correspondingly stated only
-for admissible trees. Since `&&` evaluates its left argument first and both
-folds are total, the conjunction is sound and order-independent.
+`PresheafPFunctor.isHereditarilyNaturalBoolCore` skips a local comparison when
+an index guard fails, but other comparisons and child checks may still fail.
+It can return either `true` or `false` on an inadmissible tree; its correctness
+lemma applies only to admissible trees. The separate admissibility fold in
+`wValidBool` therefore ensures that every inadmissible tree is rejected.
+The `&&` short-circuits the naturality fold when admissibility fails.
 
 ## Tags
 
@@ -140,8 +141,8 @@ decidable equality and finitary direction evidence. -/
   @WType.instDecidableEq _ _ F.decidableEqA F.finitary
 
 /-- Membership of a raw W-tree in the carrier presheaf's fiber over `j` is
-decidable: `memWBool`'s correctness lemma read through `decidable_of_iff`, so
-the whole fiber condition is decided by a single fold. -/
+decidable: `memWBool`'s correctness lemma read through `decidable_of_iff`.
+The validator combines the admissibility and naturality folds with the root-index test. -/
 instance decidableMemW (j : I) (w : F.toPresheafPFunctor.toPFunctor.W) :
     Decidable (F.toPresheafPFunctor.MemW j w) :=
   decidable_of_iff _ (F.memWBool_eq_true_iff j w)

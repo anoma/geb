@@ -1198,6 +1198,27 @@ index 99b7f6c..dc0ee10 100644
      change (α.app ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩
            (⟨⟨F.objRestrElt f (pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1) hqi,
              hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
+index f28ba26..2440834 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.W
+@@ -79,7 +80,7 @@ def baseNode (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) (x : (basePFunctor F).Obj (Z.obj 
+     have hg : g = 𝟙 (0 : Fin 2) := Subsingleton.elim _ _
+     subst g
+     rw [congrFun (F.isFunctorial.directionRestr_id x.1.1 0) b]
+-    exact (Z.map_id_apply _ _).symm⟩, x.1.2⟩
++    exact (FunctorToTypes.map_id_apply Z _).symm⟩, x.1.2⟩
+ 
+ /-- The base component depends only on the base of the input presheaf. -/
+ def baseObjEquiv (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) :
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 index 1dce60f..1a30765 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
@@ -1631,6 +1652,55 @@ index 41a116e..712144b 100644
  
  /-- The retraction law for the rose spelling: printing a rose tree and
  parsing the result returns that tree. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean
+index bc21f0e..1d71114 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.BitTree.Encoding
+@@ -52,6 +53,7 @@ theorem length_lengths (t : Tree) : (lengths t).length = (counts t).2.1 :=
+   tree_ind (P := fun t ↦ (lengths t).length = (counts t).2.1)
+     (fun _ ↦ rfl)
+     (fun l r hl hr ↦ by
++      beta_reduce
+       rw [lengths_fork, List.length_append, hl, hr]
+       rfl) t
+ 
+@@ -60,6 +62,7 @@ theorem sum_lengths (t : Tree) : (lengths t).sum = (counts t).2.2 :=
+   tree_ind (P := fun t ↦ (lengths t).sum = (counts t).2.2)
+     (fun _ ↦ Nat.add_zero _)
+     (fun l r hl hr ↦ by
++      beta_reduce
+       rw [lengths_fork, List.sum_append, hl, hr]
+       rfl) t
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Encoding.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Encoding.lean
+index 4915340..7ac58a6 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Encoding.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Encoding.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.BitTree.Scanner
+@@ -102,7 +103,7 @@ theorem foldl_encode (t : Tree) : ∀ n, 0 < n →
+       simp only [encode_fork, List.foldl_cons, step, List.foldl_append, ↓reduceIte]
+       rw [ihl (n + 1) (by omega)]
+       have h : finish (n + 1) = (.tree, n) := by
+-        rw [finish, ite_eq_right (show n + 1 ≠ 1 by omega)]
++        rw [finish, if_neg (show n + 1 ≠ 1 by omega)]
+         rfl
+       rw [h, ihr n hn]) t
+ 
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Degenerate.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Degenerate.lean
 index 020b944..642b42a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Degenerate.lean
@@ -2257,6 +2327,136 @@ index bd7a3b3..7b99890 100644
        dsimp only
        have hcb : c * (buf.length + 1) = c * buf.length + c := by
          rw [Nat.mul_add, Nat.mul_one]
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Derived.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Derived.lean
+index 145f3ab..52adf8e 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Derived.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Derived.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.Mazzanti.Syntax
+@@ -56,7 +57,7 @@ def cond : Expr 3 := recursion (fun _ : Fin 1 ↦ proj 2 0)
+     cond.eval ![n, y, z] = if n = 0 then y else z) rfl ?_ n
+   intro bit m hm _
+   have hn := Nat.bit_ne_zero_iff.mpr hm
+-  rw [ite_eq_right hn]
++  rw [if_neg hn]
+   have he := eval_recursion_bit (fun _ : Fin 1 ↦ proj 2 0)
+     (fun _ ↦ proj 4 2) (fun _ ↦ proj 4 2) 0 bit m hm ![y, z]
+   cases bit <;> exact he
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Diagonal.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Diagonal.lean
+index d5234e2..5e3070d 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Diagonal.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Diagonal.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.Mazzanti.Derived
+@@ -54,9 +55,9 @@ theorem not_universal (code : Expr 1 → ℕ) (universal : Expr 2) :
+   have h := hu diagonal (code diagonal)
+   rw [hd] at h
+   by_cases hz : universal.eval ![code diagonal, code diagonal] = 0
+-  · rw [ite_eq_left hz] at h
++  · rw [if_pos hz] at h
+     omega
+-  · rw [ite_eq_right hz] at h
++  · rw [if_neg hz] at h
+     exact hz h
+ 
+ end Geb.Mazzanti.Expr
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
+index 8ef6183..8924d44 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Computability.Cobham.Basic
+@@ -307,8 +308,8 @@ theorem length_stepEnv_le {a b : ℕ} (v : List Bool) (vals : Fin b → List Boo
+     (hx : ∀ i, (x i).length ≤ m) : ∀ s, (stepEnv v vals x s).length ≤ m :=
+   Fin.cases hv (fun s ↦
+     Fin.addCases (motive := fun s ↦ (stepEnv v vals x s.succ).length ≤ m)
+-      (fun l ↦ by unfold stepEnv; rw [Fin.cons_succ, Fin.append_left]; exact hvals l)
+-      (fun i ↦ by unfold stepEnv; rw [Fin.cons_succ, Fin.append_right]; exact hx i) s)
++      (fun l ↦ by beta_reduce; unfold stepEnv; rw [Fin.cons_succ, Fin.append_left]; exact hvals l)
++      (fun i ↦ by beta_reduce; unfold stepEnv; rw [Fin.cons_succ, Fin.append_right]; exact hx i) s)
+ 
+ /-- Simultaneous recursion on notation preserves the property, with the maximum of
+ the base and step constants: the bitstring form of {cite}`Mazzanti2016` Lemma 2.1's
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
+index 23345aa..3e2ec56 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Combinators
+@@ -155,7 +156,8 @@ empty count. -/
+   ![projOf 1 0, constOf 1 (modeCode .tree), constOf 1 []]
+ 
+ /-- The recursion's steps, the same for either bit of the counter. -/
+-@[expose] def treeStep : Bool → Fin 3 → SOf 5 := fun _ ↦ ![restStep, modeStep, countStep]
++@[expose, nolint unusedArguments] def treeStep : Bool → Fin 3 → SOf 5 :=
++  fun _ ↦ ![restStep, modeStep, countStep]
+ 
+ /-- The three registers of the scan, as expressions of arity two: the counter and
+ the word. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
+index b2efc4e..d0a181a 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Basic
+@@ -123,6 +124,8 @@ structure Account where
+   space : ℕ
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprAccount.repr
++
+ /-- The meaning of an arity with an account. -/
+ @[expose] def SemC (n : ℕ) : Type := (Fin n → List Bool) → Account
+ 
+@@ -622,7 +625,8 @@ theorem time_evalValueC (a : Shape) (c : Direction a → Σ i, SemC i)
+         have hm : m ≤ max m K := Nat.le_max_left _ _
+         have henv := length_stepEnv_le v
+           (fun l ↦ (evalSRNC (srnBasesC c h) (srnStepsC c h) v l (Fin.tail x)).value)
+-          (Fin.tail x) (max m K) (Nat.le_trans hv hm) (fun l ↦ by have := (hvb l).1; omega)
++          (Fin.tail x) (max m K) (Nat.le_trans hv hm)
++          (fun l ↦ by beta_reduce; have := (hvb l).1; omega)
+           (fun i ↦ Nat.le_trans (hy i) hm)
+         have hstep : ∀ l, (srnStepsC c h i l (stepEnv v
+             (fun l ↦ (evalSRNC (srnBasesC c h) (srnStepsC c h) v l (Fin.tail x)).value)
+@@ -662,7 +666,7 @@ theorem isPolyBounded_timePoly : ∀ w : sig.toPFunctor.W, IsPolyBounded (timePo
+     | sbs _ =>
+       have hsbs : IsPolyBounded fun m ↦ 2 * m + 1 :=
+         isPolyBounded_of_le (p := fun m ↦ (m + 1) + (m + 1))
+-          (fun m ↦ by omega)
++          (fun m ↦ by beta_reduce; omega)
+           (isPolyBounded_add isPolyBounded_succ isPolyBounded_succ)
+       exact hsbs
+     | comp n m' =>
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
 index d9ca6f8..7c0966a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean

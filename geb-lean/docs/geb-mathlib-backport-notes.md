@@ -197,6 +197,13 @@ genuinely new (decide the adaptation, add a category here).
   morphism's components back as `⇑(CoGrothendieck.homBase f)` and
   `⇑(CoGrothendieck.homFiber f u)`. Drop the three `⇑` coercions; in
   v4.29 each morphism is the function.
+- Adaptation in `Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean`
+  (`baseNode`): the compatibility proof closes with
+  `exact (Z.map_id_apply _ _).symm` on a presheaf
+  `Z : (Fin 2)ᵒᵖ ⥤ Type uZ`, reported as
+  `` Invalid field `map_id_apply` ``. Replace it with
+  `exact (FunctorToTypes.map_id_apply Z _).symm`, the `Type`-valued
+  identity-law lemma whose statement is the goal.
 
 ### 4. Eliminator motive or functional argument left as an unreduced beta-redex
 
@@ -216,10 +223,21 @@ genuinely new (decide the adaptation, add a category here).
   `RankedAlphabet.Term.induction`),
   `scanFinal_replicate_false` in
   `Prototypes/Computability/CobhamFoldProto/Layout.lean` (`Nat.rec`),
+  `length_lengths` and `sum_lengths` in
+  `Prototypes/Computability/BitTree/Elias/Tree.lean` (`tree_ind`, at an
+  explicit `P`), `length_stepEnv_le` in
+  `Prototypes/Computability/SizeBounded/Basic.lean` (`Fin.addCases`),
   and `Term.fold_map` in
   `Prototypes/Computability/CobhamFoldProto/Fold.lean`, where the
   unreduced application is not a motive but the carrier map
-  `fun t ↦ e (Term.fold R alg t)` supplied to `Term.fold_unique`.
+  `fun t ↦ e (Term.fold R alg t)` supplied to `Term.fold_unique`. Two
+  sites in `Prototypes/Computability/SizeBounded/Cost.lean` are of the
+  latter kind: `time_evalValueC` passes a value family
+  `fun l ↦ (evalSRNC ...).value` to `length_stepEnv_le`, and
+  `isPolyBounded_timePoly` passes `p := fun m ↦ (m + 1) + (m + 1)` to
+  `isPolyBounded_of_le`; in each the bound obligation on the
+  applied lambda is discharged by `omega`, which treats the
+  unreduced application and its reduct as distinct atoms.
 - v4.29 symptom: the goal is `(fun w => ...) (WType.mk a f)` — the motive
   lambda is not beta-reduced at the constructor — so the opening
   `rw` reports "Did not find an occurrence of the pattern" (the rewritten
@@ -286,17 +304,21 @@ genuinely new (decide the adaptation, add a category here).
 ### 8. Derived `Repr` instances carry an unused precedence argument
 
 - Upstream cause: `FinSetSkel/Basic.lean` declares the objects with
-  `deriving DecidableEq, Repr`, and `Prototypes/ConcreteSyntax.lean`
-  declares `Ann` with `deriving Repr, DecidableEq, Inhabited`.
+  `deriving DecidableEq, Repr`, `Prototypes/ConcreteSyntax.lean`
+  declares `Ann` with `deriving Repr, DecidableEq, Inhabited`, and
+  `Prototypes/Computability/SizeBounded/Cost.lean` declares `Account`
+  with `deriving DecidableEq, Repr`.
 - v4.29 symptom: the `unusedArguments` env-linter reports
   `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` (respectively
-  `instReprAnn.repr argument 2 prec✝ : ℕ`) under `lake lint`; v4.29's
+  `instReprAnn.repr argument 2 prec✝ : ℕ` and
+  `instReprAccount.repr argument 2 prec✝ : ℕ`) under `lake lint`; v4.29's
   `Repr` deriving handler emits a `repr` that ignores the precedence
   argument for a structure whose representation needs no
   parenthesisation.
 - Adaptation: suppress the linter on the generated declaration,
   `attribute [nolint unusedArguments] instReprFinSetSkel.repr`
-  (respectively `attribute [nolint unusedArguments] instReprAnn.repr`),
+  (respectively `attribute [nolint unusedArguments] instReprAnn.repr`
+  and `attribute [nolint unusedArguments] instReprAccount.repr`),
   after the structure (the attribute cannot be attached to a `deriving`
   clause).
 
@@ -372,7 +394,10 @@ genuinely new (decide the adaptation, add a category here).
   `Computability/BellantoniCook/Tree.lean`,
   `Computability/Cobham/RankedTree.lean`,
   `Computability/Cobham/Tree.lean`, `Data/Tree/Ranked/Code.lean`,
-  `Data/Tree/Ranked/Preorder.lean`, `Data/W/Basic.lean`, and, under
+  `Data/Tree/Ranked/Preorder.lean`, `Data/W/Basic.lean`,
+  `Prototypes/Computability/BitTree/Encoding.lean`,
+  `Prototypes/Computability/Mazzanti/Derived.lean`,
+  `Prototypes/Computability/Mazzanti/Diagonal.lean`, and, under
   `Prototypes/Computability/CobhamFoldProto/`, `Degenerate.lean`,
   `Destruct.lean`, `Fold.lean`, `Layout.lean`, `SelfDelim.lean`,
   `SmashFree.lean`, and `Variable.lean`. Only a few of them appear in
@@ -420,17 +445,20 @@ genuinely new (decide the adaptation, add a category here).
   argument its type obliges it to take. Constant functions of the same
   kind are `oneFam` and `counterFam` in
   `Prototypes/FinCardUniverse/Value.lean`, `jUnitBool` and `pUnit` in
-  `Prototypes/ParanaturalRank.lean`, and `univR` in
-  `Prototypes/PresheafIRUniv/Basic.lean`.
+  `Prototypes/ParanaturalRank.lean`, `univR` in
+  `Prototypes/PresheafIRUniv/Basic.lean`, and `treeStep` in
+  `Prototypes/Computability/SizeBounded/BitTree.lean`.
 - v4.29 symptom: under `lake lint -- Geb`, the `unusedArguments`
   env-linter reports `Geb.CobhamFold.encUnit argument 1`,
   `Geb.CobhamFold.decUnit argument 1`,
   `Geb.CobhamFold.algUnit argument 3`, and the corresponding report for
-  each of the other five. The declarations are unchanged from upstream;
+  each of the other six. The declarations are unchanged from upstream;
   the report is v4.29's linter.
 - Adaptation: insert `@[nolint unusedArguments]` between each
   declaration's docstring and its `def` keyword, as category 2 does for
-  `checkUnivs`. `Prototypes/ParanaturalRank.lean` imports nothing, so
+  `checkUnivs`; `treeStep` already carries `@[expose]`, which the
+  suppression joins as `@[expose, nolint unusedArguments]`.
+  `Prototypes/ParanaturalRank.lean` imports nothing, so
   the attribute is out of scope there: add
   `public import Batteries.Tactic.Lint` to its import block. The
   umbrella is needed rather than `Batteries.Tactic.Lint.Basic`, which
@@ -612,6 +640,13 @@ under an excluded ancestor would be dropped without a signal, whereas
 under a retained ancestor it is ingested and any incompatibility of its
 own surfaces in the refresh workflow's build.
 
+A module importing an excluded module is excluded in turn: the import
+deletion would otherwise leave it referring to declarations it no
+longer imports. The exception is a directory's index module, which
+carries nothing but imports and survives the deletion of one of them;
+`Geb.Prototypes.Computability` is one, retaining its remaining imports
+after its `TreeScanner` import is deleted.
+
 ### Current exclusions
 
 - `Geb.Prototypes.Computability.TreeScanner` (and its `Machine`, `Steps`,
@@ -628,6 +663,34 @@ own surfaces in the refresh workflow's build.
   anything present at the pin, and the pinned tree contains no
   occurrence of `MultiTape`. Lifting the exclusion requires advancing
   the cslib pin, which the mathlib and toolchain pins govern.
+- Under `Geb.Prototypes.Computability.BitTree`, the modules `Bound`,
+  `Machine`, `Steps`, `BinaryMachine.Bound`, `BinaryMachine.Machine`,
+  `Elias.Bound`, `Elias.Machine`, and `EliasBinary.Bound`, and
+  `Geb.Prototypes.Computability.BitTreeScanner.Machine`, import the
+  same two `MultiTape` modules.
+- `Geb.Prototypes.Computability.BitTreeScanner.Encoding` imports
+  `Cslib.Foundations.Data.PFunctor.Free` and instantiates the
+  `PFunctor.FreeM` it defines, at a `PFunctor` shape, through
+  `PFunctor.FreeM.rec` and `PFunctor.FreeM.liftM`. cslib's history
+  records `PFunctor/Free.lean` as an addition in cslib PR #477
+  (2026-06-12); the pinned revision `9a159ac` (2026-03-12) has no
+  `Cslib/Foundations/Data/PFunctor/` directory. The `Cslib.FreeM` of
+  the pinned `Cslib/Foundations/Control/Monad/Free.lean` (cslib PR
+  #53) is a different structure, the free monad over an arbitrary
+  `F : Type u → Type v` whose `liftBind` constructor takes an
+  operation `op : F ι`, where `PFunctor.FreeM.liftBind` takes a shape
+  `a : P.A` and a continuation on `P.B a`; it is not a rename.
+- The modules importing one of the above, directly or through a chain
+  of such imports, are excluded with them: the rest of
+  `BitTreeScanner`, excluded as a whole since every submodule is such
+  an importer; and, under `BitTree`, the `BinaryMachine` submodules
+  other than `Accounting` and `Difference`, every `Elias.Machine*`
+  module together with `Elias.Execution`, the `EliasBinary` submodules
+  other than `Account`, `Cost`, and `Need`, and `Mazzanti.BitTree`,
+  `Mazzanti.Bound`, `Mazzanti.Growth`, and `Mazzanti.Words`. The index
+  modules `BitTree`, `BitTree.BinaryMachine`, `BitTree.Elias`,
+  `BitTree.EliasBinary`, and `Mazzanti` survive with those imports
+  deleted. `PROVENANCE.md` lists every entry.
 
 ## Tooling notes
 
