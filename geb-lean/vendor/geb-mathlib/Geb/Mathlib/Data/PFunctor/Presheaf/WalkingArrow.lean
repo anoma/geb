@@ -11,8 +11,7 @@ public import Mathlib.CategoryTheory.Category.Preorder
 public import Mathlib.Order.Fin.Basic
 
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Families over ordinary W-types from walking-arrow presheaves
 
@@ -45,6 +44,8 @@ The total-level shapes and their arity reindexing retain the generality of the P
 
 walking arrow, presheaf, parametric right adjoint, W-type, dependent type
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

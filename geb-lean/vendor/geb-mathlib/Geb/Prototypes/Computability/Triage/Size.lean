@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.Triage.Reduction
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Serialized size of one visual triage step
 
@@ -28,6 +27,8 @@ particular, both occurrences of a duplicated argument count in the output.
 
 tree calculus, bitstring, output size, duplication
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

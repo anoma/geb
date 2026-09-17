@@ -21,6 +21,11 @@
   - [14. Declaration reached upstream through a wider import closure](#14-declaration-reached-upstream-through-a-wider-import-closure)
   - [15. `Arrow.mk_eq_mk_iff` states its endpoints through `𝟭 C`](#15-arrowmk_eq_mk_iff-states-its-endpoints-through-%F0%9D%9F%AD-c)
   - [16. `isDefEq` transparency changed in v4.34](#16-isdefeq-transparency-changed-in-v434)
+  - [17. `Mathlib.Logic.IsEmpty` moved under the `Mathlib.Basic` folder](#17-mathliblogicisempty-moved-under-the-mathlibbasic-folder)
+  - [18. `List.sum_le_card_nsmul` renamed to `List.sum_le_length_nsmul`](#18-listsum_le_card_nsmul-renamed-to-listsum_le_length_nsmul)
+  - [19. `ULift.ext` takes its two points implicitly](#19-uliftext-takes-its-two-points-implicitly)
+  - [20. `set_option doc.verso true in` does not scope a module docstring](#20-set_option-docverso-true-in-does-not-scope-a-module-docstring)
+  - [21. `Functor.Elements` refactored into structures](#21-functorelements-refactored-into-structures)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -32,7 +37,7 @@
 
 These notes catalogue the categories of change in
 `scripts/geb-mathlib-backport.patch`, which adapts the vendored
-`geb-mathlib` `Geb` source (mathlib `v4.34.0-rc2`) to compile under this
+`geb-mathlib` `Geb` source (mathlib `v4.35.0-rc2`) to compile under this
 repository's `v4.29.0-rc6`. When a refresh fails, check whether the new
 failure matches a category below (extend the corresponding hunk) or is
 genuinely new (decide the adaptation, add a category here).
@@ -204,6 +209,13 @@ genuinely new (decide the adaptation, add a category here).
   `` Invalid field `map_id_apply` ``. Replace it with
   `exact (FunctorToTypes.map_id_apply Z _).symm`, the `Type`-valued
   identity-law lemma whose statement is the goal.
+- Adaptation in `Prototypes/Typechecker.lean` (`interpretation`,
+  `interpretation_faithful`): the functor's `map` field wraps the
+  restriction in `TypeCat.ofHom`, and faithfulness reads the two
+  morphisms back as functions through
+  `congrArg (fun k : Fiber X ⟶ Fiber Y ↦ (k : Fiber X → Fiber Y))`.
+  Drop the wrapper and pass the hypothesis to `Hom.ext` directly; in
+  v4.29 the morphism is the function.
 
 ### 4. Eliminator motive or functional argument left as an unreduced beta-redex
 
@@ -305,13 +317,16 @@ genuinely new (decide the adaptation, add a category here).
 
 - Upstream cause: `FinSetSkel/Basic.lean` declares the objects with
   `deriving DecidableEq, Repr`, `Prototypes/ConcreteSyntax.lean`
-  declares `Ann` with `deriving Repr, DecidableEq, Inhabited`, and
+  declares `Ann` with `deriving Repr, DecidableEq, Inhabited`,
   `Prototypes/Computability/SizeBounded/Cost.lean` declares `Account`
-  with `deriving DecidableEq, Repr`.
+  with `deriving DecidableEq, Repr`, and
+  `Prototypes/Computability/SizeBounded/Logspace/Rep.lean` declares
+  `Rep` with `deriving DecidableEq, Repr, Inhabited`.
 - v4.29 symptom: the `unusedArguments` env-linter reports
   `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` (respectively
-  `instReprAnn.repr argument 2 prec✝ : ℕ` and
-  `instReprAccount.repr argument 2 prec✝ : ℕ`) under `lake lint`; v4.29's
+  `instReprAnn.repr argument 2 prec✝ : ℕ`,
+  `instReprAccount.repr argument 2 prec✝ : ℕ`, and
+  `instReprRep.repr argument 2 prec✝ : ℕ`) under `lake lint`; v4.29's
   `Repr` deriving handler emits a `repr` that ignores the precedence
   argument for a structure whose representation needs no
   parenthesisation.
@@ -397,7 +412,8 @@ genuinely new (decide the adaptation, add a category here).
   `Data/Tree/Ranked/Preorder.lean`, `Data/W/Basic.lean`,
   `Prototypes/Computability/BitTree/Encoding.lean`,
   `Prototypes/Computability/Mazzanti/Derived.lean`,
-  `Prototypes/Computability/Mazzanti/Diagonal.lean`, and, under
+  `Prototypes/Computability/Mazzanti/Diagonal.lean`,
+  `Prototypes/Computability/SizeBounded/Logspace/Rep.lean`, and, under
   `Prototypes/Computability/CobhamFoldProto/`, `Degenerate.lean`,
   `Destruct.lean`, `Fold.lean`, `Layout.lean`, `SelfDelim.lean`,
   `SmashFree.lean`, and `Variable.lean`. Only a few of them appear in
@@ -553,6 +569,90 @@ genuinely new (decide the adaptation, add a category here).
   `eqToHom ⋯ = eqToHom ⋯` after its `erw [eqToHom_app]`. Append `rfl`
   to each, which runs at default transparency.
 
+### 17. `Mathlib.Logic.IsEmpty` moved under the `Mathlib.Basic` folder
+
+- Upstream cause: mathlib pull request 39703 (2026-08-26) creates a
+  `Basic` top-level folder and moves `Mathlib/Logic/IsEmpty/Defs.lean`
+  to `Mathlib/Basic/IsEmpty/Defs.lean`. The declarations are unchanged;
+  only the module path moves.
+  `Prototypes/Computability/BitTree/Scanner.lean` imports the new path.
+- v4.29 symptom: `unknown module prefix 'Mathlib.Basic'`: the pinned
+  mathlib has no `Mathlib/Basic/` directory, and the module is
+  `Mathlib.Logic.IsEmpty.Defs` there (split from `Mathlib.Logic.IsEmpty`
+  in mathlib pull request 35137).
+- Adaptation: rewrite the import to `Mathlib.Logic.IsEmpty.Defs`.
+
+### 18. `List.sum_le_card_nsmul` renamed to `List.sum_le_length_nsmul`
+
+- Upstream cause: mathlib pull request 43155 (2026-08-27) renames the
+  `card` in lemma names about `List.length` to `length`;
+  `List.prod_le_pow_card` and its additive companion
+  `List.sum_le_card_nsmul` become `List.prod_le_pow_length` and
+  `List.sum_le_length_nsmul`. The statements are unchanged.
+  `Prototypes/Computability/SizeBounded/Iteration.lean`
+  (`srnStorage_le`) uses the additive lemma.
+- v4.29 symptom: ``Unknown constant `List.sum_le_length_nsmul` ``,
+  followed by `unsolved goals`.
+- Adaptation: substitute `List.sum_le_card_nsmul`.
+
+### 19. `ULift.ext` takes its two points implicitly
+
+- Upstream cause: Lean core pull request 15062 (2026-09-08, in
+  `v4.35.0-rc1`) adds `ext` theorems for `ULift`, `PULift`, `PLift`,
+  and `MProd`, with the two points implicit, superseding mathlib's
+  `ULift.ext (x y : ULift α) (h : x.down = y.down)` of
+  `Mathlib/Data/ULift.lean`. Upstream's `subsingleton_arityB` in
+  `Prototypes/PresheafIRProto/Basic.lean` passes the proof as the
+  first explicit argument.
+- v4.29 symptom: `Application type mismatch` at the proof argument,
+  expected to have type `ULift ?m`, followed by an `omega` failure
+  on the goal that the mismatch leaves with metavariables.
+- Adaptation: pass the two points as placeholders, `ULift.ext _ _`.
+
+### 20. `set_option doc.verso true in` does not scope a module docstring
+
+- Upstream cause: the modules under `Prototypes/LargeIR/` with
+  several `/-! ... -/` sections (`Basic`, `Code`, `General`,
+  `Grothendieck`, `Morphism`, `Product`) write the leading module
+  docstring under `set_option doc.verso true in` and set the option
+  globally only after it, since the upstream commit that bumped
+  mathlib to `v4.34.0`. Under `v4.34` the `in` form applies the
+  option to the module docstring that follows it.
+- v4.29 symptom: `Can't add Verso-format module docs because there is
+  already Markdown-format content present`, reported at the first
+  later `/-! ... -/` section: under `v4.29` the `in` form leaves the
+  leading module docstring in Markdown format, and the later sections,
+  under the global option, are Verso-format, and a module's docs are
+  all of one format. A module with only the leading docstring, such as
+  `Prototypes/LargeIR/Binder.lean` or the `Prototypes/Computability/Triage/`
+  modules, is unaffected.
+- Adaptation: set the option globally before the leading module
+  docstring and delete the later global `set_option`, the form these
+  modules had before the bump.
+
+### 21. `Functor.Elements` refactored into structures
+
+- Upstream cause: mathlib pull request 43228 (2026-09-03) makes
+  `Functor.Elements` a structure with fields `obj` and `val` (from the
+  sigma type `Σ c, F.obj c`), makes its morphisms a structure with
+  fields `hom` and `map_val` (from a subtype of the base morphisms),
+  and moves the constructor and extensionality lemma to
+  `Functor.Elements.homMk` (with implicit endpoints) and
+  `Functor.Elements.hom_ext` (from `CategoryOfElements.homMk` with
+  explicit endpoints and `Subtype.ext`).
+  `CategoryTheory/DiscreteFibration/Elements.lean` reads and builds
+  elements and their morphisms through these names.
+- v4.29 symptom: ``Invalid field `obj` `` / `` `val` `` /
+  `` `hom` `` / `` `map_val` `` on `Sigma` and `Subtype` values,
+  ``Unknown constant `CategoryTheory.Functor.Elements.homMk` `` and
+  `` `hom_ext` ``, followed by cascading `Not a definitional equality`
+  and `Type mismatch` errors in every `rfl` proof about them.
+- Adaptation: read the sigma and subtype projections (`.1`, `.2`),
+  build an element as the anonymous constructor `⟨op b, x⟩`, and use
+  `CategoryOfElements.homMk (Opposite.unop y) (Opposite.unop x)` and
+  `Subtype.ext`; the seven sites are the module's `base`, `elt`, `mk`,
+  `homBase`, `map_homBase_elt`, `homMk`, and `hom_ext`.
+
 ## Updating the patch for a new upstream
 
 The vendored tree is a pure function of three committed inputs: the
@@ -691,6 +791,25 @@ after its `TreeScanner` import is deleted.
   modules `BitTree`, `BitTree.BinaryMachine`, `BitTree.Elias`,
   `BitTree.EliasBinary`, and `Mazzanti` survive with those imports
   deleted. `PROVENANCE.md` lists every entry.
+- `Geb.Prototypes.Computability.MultiTape.OutputString` and
+  `Geb.Prototypes.Computability.MultiTape.Rename`, and
+  `Geb.Prototypes.Computability.SizeBounded.Machine.Exec`,
+  `Geb.Prototypes.Computability.SizeBounded.Machine.Program`, and
+  `Geb.Prototypes.Computability.SizeBounded.Machine.Register`, import
+  `Cslib.Computability.Machines.Turing.MultiTape.Configuration`,
+  `Cslib.Computability.Machines.Turing.MultiTape.Deterministic`, or
+  `Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas`, and
+  `Geb.Prototypes.Computability.SizeBounded.WordMachine` imports the
+  excluded `TreeScanner.Machine`. `MultiTape` is excluded as a whole,
+  every submodule being such an importer. Every module under
+  `SizeBounded.Machine` imports `Register`, `Program`, or `Exec`,
+  directly or through a chain, so `SizeBounded.Machine` is excluded as
+  a whole; likewise every module under `SizeBounded.Logspace.Machine`
+  imports a `SizeBounded.Machine` module, so it too is excluded as a
+  whole. `SizeBounded.MachineBound` imports `WordMachine`, and
+  `Kristiansen.MachineBound` imports `SizeBounded.Machine.Main`; both
+  are excluded. The index modules `SizeBounded`, `SizeBounded.Logspace`,
+  and `Kristiansen` survive with those imports deleted.
 
 ## Tooling notes
 

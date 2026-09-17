@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.Triage.Machine
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Correctness of the triage traversal machine
 
@@ -30,6 +29,8 @@ small-step semantics.
 
 tree calculus, abstract machine, simulation, correctness
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

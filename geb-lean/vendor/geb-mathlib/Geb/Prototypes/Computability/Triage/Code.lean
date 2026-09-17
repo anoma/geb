@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.Triage.Syntax
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Decoding constructor symbols of triage calculus
 
@@ -32,6 +31,8 @@ the stem and value-fork cases accept only values as their children.
 
 tree calculus, prefix code, parser, stack, serialization
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

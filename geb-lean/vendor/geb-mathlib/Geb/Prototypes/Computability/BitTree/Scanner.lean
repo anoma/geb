@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Terence Rokop
 -/
+-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
 module
 
 public import Aesop
@@ -11,8 +12,7 @@ public import Mathlib.Tactic.Attr.Core
 public import Mathlib.Tactic.Push
 public import Mathlib.Tactic.ToDual
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # One-pass scanner for binary trees with bitstring leaves
 
@@ -29,6 +29,8 @@ leaf terminators decrease it. Payload bits are read in their own mode.
 
 binary tree, recognizer, finite control, counter
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

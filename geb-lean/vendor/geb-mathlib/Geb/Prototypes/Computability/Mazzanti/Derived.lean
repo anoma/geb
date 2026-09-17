@@ -9,8 +9,7 @@ module
 public import Geb.Prototypes.Computability.Mazzanti.Syntax
 public import Mathlib.Data.Fin.VecNotation
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Derived expressions for numerical branching
 
@@ -31,6 +30,8 @@ projections. They are expressions of the algebra, not additional primitives.
 
 function algebra, binary predecessor, conditional
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

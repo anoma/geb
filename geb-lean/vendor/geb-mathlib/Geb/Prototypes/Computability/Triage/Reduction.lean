@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.Triage.Syntax
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # One branch-first step of triage calculus
 
@@ -39,6 +38,8 @@ evaluating them.
 
 tree calculus, operational semantics, small step, evaluation context
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

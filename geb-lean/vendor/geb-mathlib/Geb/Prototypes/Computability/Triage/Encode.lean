@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.Triage.Code
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Serialization without repeatedly copying subtrees
 
@@ -29,6 +28,8 @@ concatenation of already materialized subtree encodings.
 
 tree calculus, serialization, difference list, bitstring
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

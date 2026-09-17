@@ -9,8 +9,7 @@ public import Mathlib.Data.List.Nodup
 public import Batteries.Data.List.Perm
 public import Geb.Prototypes.Computability.BitTree.Encoding
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Counting lower bound for lossless tree representations
 
@@ -33,6 +32,8 @@ already contains all {lit}`2^B` choices for its last leaf's payload. There are o
 
 binary tree, representation size, counting, information lower bound
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

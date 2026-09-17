@@ -9,8 +9,7 @@ module
 public import Mathlib.Data.W.Basic
 public import Geb.Mathlib.Data.FinEnum
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # The W-type fold and paramorphism: computation rules and uniqueness
 
@@ -65,6 +64,8 @@ proved through that reconstruction.
 
 W-type, fold, initial algebra, polynomial functor
 -/
+
+set_option doc.verso true
 
 public section
 

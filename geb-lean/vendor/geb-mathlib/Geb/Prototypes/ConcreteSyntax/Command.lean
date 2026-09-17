@@ -8,8 +8,7 @@ module
 public import Geb.Prototypes.CanonicalSExpr.IO
 public import Geb.Prototypes.ReadableSExpr.IO
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # S-expression file command
 
@@ -39,6 +38,8 @@ Writes create or truncate the destination and are not atomic.
 
 S-expression, command line, file I/O, binary tree
 -/
+
+set_option doc.verso true
 
 public section
 

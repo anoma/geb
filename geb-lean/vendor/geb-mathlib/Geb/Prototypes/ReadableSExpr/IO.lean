@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.ReadableSExpr
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # File I/O for readable S-expressions
 
@@ -34,6 +33,8 @@ tree; compose {name}`Geb.Ast.toRose` with the writer to serialize one.
 
 readable S-expression, file I/O, binary tree, rose tree
 -/
+
+set_option doc.verso true
 
 public section
 

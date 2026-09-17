@@ -8,9 +8,9 @@ module
 public import Mathlib.Data.Nat.Size
 public import Mathlib.Tactic.Attr.Core
 public import Mathlib.Tactic.Push
+import Mathlib.Util.CompileInductive -- shake: keep; compiles `List.rec`
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Binary counter costs
 
@@ -35,6 +35,8 @@ These are costs of the list algorithm; a Turing-machine bound additionally requi
 
 binary counter, amortized complexity, potential
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

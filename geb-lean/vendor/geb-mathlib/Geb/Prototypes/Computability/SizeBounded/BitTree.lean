@@ -9,8 +9,7 @@ module
 public import Geb.Prototypes.Computability.SizeBounded.Combinators
 public import Geb.Prototypes.Computability.BitTree.Encoding
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # The bit-tree recognizer in the non-size-increasing algebra
 
@@ -19,8 +18,9 @@ of binary trees with bitstrings at the leaves, with a finite control and a
 pending-tree counter — as an expression of {name}`Geb.SizeBounded.S`. The
 expression is correct against the scan on every word, and it is
 non-size-increasing by {name}`Geb.SizeBounded.nsi_eval` with no argument specific
-to it: the polynomial-time, linear-space reading of its membership is
-\[Mazzanti2016\] Theorem 5.7.
+to it: the polynomial-time, linear-space reading of its membership,
+\[Mazzanti2016\] Theorem 5.7, is
+{lit}`Geb.SizeBounded.Machine.computableInTimeAndSpace_sem`.
 
 The scan is a simultaneous recursion with three registers, run over the input
 word used as a counter, with the word itself as the parameter. The first
@@ -88,6 +88,8 @@ is zero in the two terminal modes, where the count is not read.
 non-size-increasing, simultaneous recursion on notation, binary tree, bitstring,
 recognizer, linear time
 -/
+
+set_option doc.verso true
 
 namespace Geb.SizeBounded
 

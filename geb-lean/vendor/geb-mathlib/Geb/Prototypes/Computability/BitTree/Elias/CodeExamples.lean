@@ -7,8 +7,7 @@ module
 
 import Geb.Prototypes.Computability.BitTree.Elias.Tree -- shake: keep
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Elias code boundary examples
 
@@ -19,6 +18,8 @@ complete tree decoding at empty, valid and trailing-input cases.
 
 prefix code, verification
 -/
+
+set_option doc.verso true
 
 open Geb.BitTree.Elias
 

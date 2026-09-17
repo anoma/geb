@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.SizeBounded.Basic
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Expression combinators of the non-size-increasing algebra
 
@@ -67,6 +66,8 @@ prescribes, the latter through
 non-size-increasing, simultaneous recursion on notation, function algebra,
 combinator
 -/
+
+set_option doc.verso true
 
 namespace Geb.SizeBounded
 

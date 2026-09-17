@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.CanonicalSExpr
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # File I/O for canonical S-expressions
 
@@ -37,6 +36,8 @@ to obtain a binary tree, or pass {name}`Geb.Ast.toRose` to the rose writer.
 
 canonical S-expression, file I/O, binary tree, rose tree
 -/
+
+set_option doc.verso true
 
 public section
 

@@ -8,11 +8,12 @@ module
 public import Geb.Prototypes.Computability.Triage.Bitstrings
 public import Geb.Prototypes.Computability.Triage.Resources
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Triage calculus on binary-tree bitstrings
 
 Index for value/application syntax, its recognized encoding, one-step reduction,
 the traversal-machine simulation, and the explicit resource accounting.
 -/
+
+set_option doc.verso true

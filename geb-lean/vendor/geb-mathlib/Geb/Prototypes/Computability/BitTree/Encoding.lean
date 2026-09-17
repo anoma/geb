@@ -9,8 +9,7 @@ module
 public import Geb.Prototypes.Computability.BitTree.Scanner
 public import Mathlib.Data.W.Basic
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Binary trees with bitstrings at the leaves
 
@@ -34,6 +33,8 @@ encoding. A fork is {lit}`1`, a leaf starts with {lit}`0`, each payload bit
 
 binary tree, bitstring, encoding, recognizer, W-type
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

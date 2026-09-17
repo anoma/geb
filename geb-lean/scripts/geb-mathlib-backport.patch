@@ -17,6 +17,64 @@ index 6168814..00c690a 100644
  public import Mathlib.Tactic.Attr.Core
  
  /-!
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/Elements.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/Elements.lean
+index e17f8a9..eeaea83 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/Elements.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/Elements.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.CategoryTheory.DiscreteFibration.Pullback
+@@ -82,13 +83,13 @@ instance category (F : Bᵒᵖ ⥤ Type v₃) : Category.{v₂} F.CoElements :=
+ variable {F : Bᵒᵖ ⥤ Type v₃}
+ 
+ /-- The object of `B` an element lies over. -/
+-def base (x : F.CoElements) : B := (Opposite.unop x).obj.unop
++def base (x : F.CoElements) : B := (Opposite.unop x).1.unop
+ 
+ /-- The element of `F` at `base x`. -/
+-def elt (x : F.CoElements) : F.obj (op x.base) := (Opposite.unop x).val
++def elt (x : F.CoElements) : F.obj (op x.base) := (Opposite.unop x).2
+ 
+ /-- An object of `F.CoElements` from an object of `B` and an element. -/
+-def mk (b : B) (x : F.obj (op b)) : F.CoElements := Opposite.op (F.elementsMk (op b) x)
++def mk (b : B) (x : F.obj (op b)) : F.CoElements := Opposite.op ⟨op b, x⟩
+ 
+ @[simp] theorem base_mk (b : B) (x : F.obj (op b)) : (mk b x).base = b := rfl
+ 
+@@ -98,24 +99,24 @@ def mk (b : B) (x : F.obj (op b)) : F.CoElements := Opposite.op (F.elementsMk (o
+ 
+ /-- The morphism of `B` underlying a morphism of `F.CoElements`. -/
+ def homBase {x y : F.CoElements} (f : x ⟶ y) : x.base ⟶ y.base :=
+-  (Quiver.Hom.unop f).hom.unop
++  (Quiver.Hom.unop f).1.unop
+ 
+ /-- The compatibility equation a morphism of `F.CoElements` satisfies. -/
+ theorem map_homBase_elt {x y : F.CoElements} (f : x ⟶ y) :
+-    F.map (homBase f).op y.elt = x.elt := (Quiver.Hom.unop f).map_val
++    F.map (homBase f).op y.elt = x.elt := (Quiver.Hom.unop f).2
+ 
+ /-- A morphism of `F.CoElements` from a morphism of `B` and the
+ compatibility equation. -/
+ def homMk {x y : F.CoElements} (g : x.base ⟶ y.base)
+     (hg : F.map g.op y.elt = x.elt) : x ⟶ y :=
+-  Quiver.Hom.op (Functor.Elements.homMk (x := Opposite.unop y) (y := Opposite.unop x) g.op hg)
++  Quiver.Hom.op (CategoryOfElements.homMk (Opposite.unop y) (Opposite.unop x) g.op hg)
+ 
+ @[simp] theorem homBase_homMk {x y : F.CoElements} (g : x.base ⟶ y.base)
+     (hg : F.map g.op y.elt = x.elt) : homBase (homMk g hg) = g := rfl
+ 
+ @[ext] theorem hom_ext {x y : F.CoElements} {f g : x ⟶ y}
+     (h : homBase f = homBase g) : f = g :=
+-  Quiver.Hom.unop_inj (Functor.Elements.hom_ext (Quiver.Hom.unop_inj h))
++  Quiver.Hom.unop_inj (Subtype.ext (Quiver.Hom.unop_inj h))
+ 
+ @[simp] theorem homBase_id (x : F.CoElements) : homBase (𝟙 x) = 𝟙 x.base := rfl
+ 
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/FiberPresheaf.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/FiberPresheaf.lean
 index 78839a9..25f674a 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/FiberPresheaf.lean
@@ -1199,7 +1257,7 @@ index 99b7f6c..dc0ee10 100644
            (⟨⟨F.objRestrElt f (pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1) hqi,
              hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
-index f28ba26..2440834 100644
+index a7e684b..aa92c34 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1210,7 +1268,7 @@ index f28ba26..2440834 100644
  module
  
  public import Geb.Mathlib.Data.PFunctor.Presheaf.W
-@@ -79,7 +80,7 @@ def baseNode (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) (x : (basePFunctor F).Obj (Z.obj 
+@@ -80,7 +81,7 @@ def baseNode (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) (x : (basePFunctor F).Obj (Z.obj 
      have hg : g = 𝟙 (0 : Fin 2) := Subsingleton.elim _ _
      subst g
      rw [congrFun (F.isFunctorial.directionRestr_id x.1.1 0) b]
@@ -1606,7 +1664,7 @@ index 7b84564..2aa7b87 100644
  /-- The incomplete block never fills, whether or not the scan has failed.
  Stated unconditionally, which is the form a bitstring layout of the state
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/W/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/W/Basic.lean
-index f158cee..77ee723 100644
+index eacd4cd..7c4ba7b 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/W/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/W/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1617,7 +1675,7 @@ index f158cee..77ee723 100644
  module
  
  public import Mathlib.Data.W.Basic
-@@ -153,11 +154,11 @@ theorem beq_eq_true_iff {α : Type uA} {β : α → Type uB} [DecidableEq α]
+@@ -154,11 +155,11 @@ theorem beq_eq_true_iff {α : Type uA} {β : α → Type uB} [DecidableEq α]
          match ‹DecidableEq α› a a' with
          | isTrue h => by
              subst h
@@ -1653,7 +1711,7 @@ index 41a116e..712144b 100644
  /-- The retraction law for the rose spelling: printing a rose tree and
  parsing the result returns that tree. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean
-index bc21f0e..1d71114 100644
+index a4c80b2..3dc8f3b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1664,7 +1722,7 @@ index bc21f0e..1d71114 100644
  module
  
  public import Geb.Prototypes.Computability.BitTree.Encoding
-@@ -52,6 +53,7 @@ theorem length_lengths (t : Tree) : (lengths t).length = (counts t).2.1 :=
+@@ -53,6 +54,7 @@ theorem length_lengths (t : Tree) : (lengths t).length = (counts t).2.1 :=
    tree_ind (P := fun t ↦ (lengths t).length = (counts t).2.1)
      (fun _ ↦ rfl)
      (fun l r hl hr ↦ by
@@ -1672,7 +1730,7 @@ index bc21f0e..1d71114 100644
        rw [lengths_fork, List.length_append, hl, hr]
        rfl) t
  
-@@ -60,6 +62,7 @@ theorem sum_lengths (t : Tree) : (lengths t).sum = (counts t).2.2 :=
+@@ -61,6 +63,7 @@ theorem sum_lengths (t : Tree) : (lengths t).sum = (counts t).2.2 :=
    tree_ind (P := fun t ↦ (lengths t).sum = (counts t).2.2)
      (fun _ ↦ Nat.add_zero _)
      (fun l r hl hr ↦ by
@@ -1681,7 +1739,7 @@ index bc21f0e..1d71114 100644
        rfl) t
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Encoding.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Encoding.lean
-index 4915340..7ac58a6 100644
+index 8f8eaad..48a6549 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Encoding.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Encoding.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1692,7 +1750,7 @@ index 4915340..7ac58a6 100644
  module
  
  public import Geb.Prototypes.Computability.BitTree.Scanner
-@@ -102,7 +103,7 @@ theorem foldl_encode (t : Tree) : ∀ n, 0 < n →
+@@ -103,7 +104,7 @@ theorem foldl_encode (t : Tree) : ∀ n, 0 < n →
        simp only [encode_fork, List.foldl_cons, step, List.foldl_append, ↓reduceIte]
        rw [ihl (n + 1) (by omega)]
        have h : finish (n + 1) = (.tree, n) := by
@@ -1701,6 +1759,23 @@ index 4915340..7ac58a6 100644
          rfl
        rw [h, ihr n hn]) t
  
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Scanner.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Scanner.lean
+index 2572ac0..7b7acbe 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Scanner.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Scanner.lean
+@@ -3,10 +3,11 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Aesop
+-public import Mathlib.Basic.IsEmpty.Defs
++public import Mathlib.Logic.IsEmpty.Defs
+ public import Mathlib.Tactic.Attr.Core
+ public import Mathlib.Tactic.Push
+ public import Mathlib.Tactic.ToDual
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Degenerate.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Degenerate.lean
 index 020b944..642b42a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Degenerate.lean
@@ -2328,7 +2403,7 @@ index bd7a3b3..7b99890 100644
        have hcb : c * (buf.length + 1) = c * buf.length + c := by
          rw [Nat.mul_add, Nat.mul_one]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Derived.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Derived.lean
-index 145f3ab..52adf8e 100644
+index 9b336b1..6bcd1bc 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Derived.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Derived.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2339,7 +2414,7 @@ index 145f3ab..52adf8e 100644
  module
  
  public import Geb.Prototypes.Computability.Mazzanti.Syntax
-@@ -56,7 +57,7 @@ def cond : Expr 3 := recursion (fun _ : Fin 1 ↦ proj 2 0)
+@@ -57,7 +58,7 @@ def cond : Expr 3 := recursion (fun _ : Fin 1 ↦ proj 2 0)
      cond.eval ![n, y, z] = if n = 0 then y else z) rfl ?_ n
    intro bit m hm _
    have hn := Nat.bit_ne_zero_iff.mpr hm
@@ -2349,7 +2424,7 @@ index 145f3ab..52adf8e 100644
      (fun _ ↦ proj 4 2) (fun _ ↦ proj 4 2) 0 bit m hm ![y, z]
    cases bit <;> exact he
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Diagonal.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Diagonal.lean
-index d5234e2..5e3070d 100644
+index 2563bf1..f638be5 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Diagonal.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/Mazzanti/Diagonal.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2360,7 +2435,7 @@ index d5234e2..5e3070d 100644
  module
  
  public import Geb.Prototypes.Computability.Mazzanti.Derived
-@@ -54,9 +55,9 @@ theorem not_universal (code : Expr 1 → ℕ) (universal : Expr 2) :
+@@ -55,9 +56,9 @@ theorem not_universal (code : Expr 1 → ℕ) (universal : Expr 2) :
    have h := hu diagonal (code diagonal)
    rw [hd] at h
    by_cases hz : universal.eval ![code diagonal, code diagonal] = 0
@@ -2373,7 +2448,7 @@ index d5234e2..5e3070d 100644
  
  end Geb.Mazzanti.Expr
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
-index 8ef6183..8924d44 100644
+index e86425c..98df0ac 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2384,7 +2459,7 @@ index 8ef6183..8924d44 100644
  module
  
  public import Geb.Mathlib.Computability.Cobham.Basic
-@@ -307,8 +308,8 @@ theorem length_stepEnv_le {a b : ℕ} (v : List Bool) (vals : Fin b → List Boo
+@@ -319,8 +320,8 @@ theorem length_stepEnv_le {a b : ℕ} (v : List Bool) (vals : Fin b → List Boo
      (hx : ∀ i, (x i).length ≤ m) : ∀ s, (stepEnv v vals x s).length ≤ m :=
    Fin.cases hv (fun s ↦
      Fin.addCases (motive := fun s ↦ (stepEnv v vals x s.succ).length ≤ m)
@@ -2396,7 +2471,7 @@ index 8ef6183..8924d44 100644
  /-- Simultaneous recursion on notation preserves the property, with the maximum of
  the base and step constants: the bitstring form of {cite}`Mazzanti2016` Lemma 2.1's
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
-index 23345aa..3e2ec56 100644
+index 6333636..41660e9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2407,7 +2482,7 @@ index 23345aa..3e2ec56 100644
  module
  
  public import Geb.Prototypes.Computability.SizeBounded.Combinators
-@@ -155,7 +156,8 @@ empty count. -/
+@@ -157,7 +158,8 @@ empty count. -/
    ![projOf 1 0, constOf 1 (modeCode .tree), constOf 1 []]
  
  /-- The recursion's steps, the same for either bit of the counter. -/
@@ -2418,7 +2493,7 @@ index 23345aa..3e2ec56 100644
  /-- The three registers of the scan, as expressions of arity two: the counter and
  the word. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
-index b2efc4e..d0a181a 100644
+index 370a3a0..a554140 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2429,7 +2504,7 @@ index b2efc4e..d0a181a 100644
  module
  
  public import Geb.Prototypes.Computability.SizeBounded.Basic
-@@ -123,6 +124,8 @@ structure Account where
+@@ -124,6 +125,8 @@ structure Account where
    space : ℕ
    deriving DecidableEq, Repr
  
@@ -2438,7 +2513,7 @@ index b2efc4e..d0a181a 100644
  /-- The meaning of an arity with an account. -/
  @[expose] def SemC (n : ℕ) : Type := (Fin n → List Bool) → Account
  
-@@ -622,7 +625,8 @@ theorem time_evalValueC (a : Shape) (c : Direction a → Σ i, SemC i)
+@@ -649,7 +652,8 @@ theorem time_evalValueC (a : Shape) (c : Direction a → Σ i, SemC i)
          have hm : m ≤ max m K := Nat.le_max_left _ _
          have henv := length_stepEnv_le v
            (fun l ↦ (evalSRNC (srnBasesC c h) (srnStepsC c h) v l (Fin.tail x)).value)
@@ -2448,7 +2523,7 @@ index b2efc4e..d0a181a 100644
            (fun i ↦ Nat.le_trans (hy i) hm)
          have hstep : ∀ l, (srnStepsC c h i l (stepEnv v
              (fun l ↦ (evalSRNC (srnBasesC c h) (srnStepsC c h) v l (Fin.tail x)).value)
-@@ -662,7 +666,7 @@ theorem isPolyBounded_timePoly : ∀ w : sig.toPFunctor.W, IsPolyBounded (timePo
+@@ -689,7 +693,7 @@ theorem isPolyBounded_timePoly : ∀ w : sig.toPFunctor.W, IsPolyBounded (timePo
      | sbs _ =>
        have hsbs : IsPolyBounded fun m ↦ 2 * m + 1 :=
          isPolyBounded_of_le (p := fun m ↦ (m + 1) + (m + 1))
@@ -2457,6 +2532,108 @@ index b2efc4e..d0a181a 100644
            (isPolyBounded_add isPolyBounded_succ isPolyBounded_succ)
        exact hsbs
      | comp n m' =>
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Iteration.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Iteration.lean
+index 1a425fa..4c1be9d 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Iteration.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Iteration.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Basic
+@@ -103,7 +104,7 @@ def srnStorage {b : ℕ} (s : List Bool × Vector (List Bool) b) : ℕ :=
+ theorem srnStorage_le {b : ℕ} (s : List Bool × Vector (List Bool) b) (L : ℕ)
+     (hw : s.1.length ≤ L) (hv : ∀ j, (s.2.get j).length ≤ L) :
+     srnStorage s ≤ (b + 1) * L := by
+-  have hs := List.sum_le_length_nsmul (List.ofFn fun j ↦ (s.2.get j).length) L
++  have hs := List.sum_le_card_nsmul (List.ofFn fun j ↦ (s.2.get j).length) L
+     (fun x hx ↦ by obtain ⟨j, rfl⟩ := List.mem_ofFn.mp hx; exact hv j)
+   simp only [List.length_ofFn, Nat.nsmul_eq_mul] at hs
+   exact (Nat.add_le_add hw hs).trans_eq (by rw [Nat.add_mul, Nat.one_mul, Nat.add_comm])
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
+index 74a3587..8d89c53 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.Basic
+@@ -79,8 +80,8 @@ theorem stepEnv_prop {P : List Bool → Prop} {a b : ℕ} (v : List Bool) (vals
+     ∀ s, P (stepEnv v vals x s) :=
+   Fin.cases hv (fun s ↦
+     Fin.addCases (motive := fun s ↦ P (stepEnv v vals x s.succ))
+-      (fun l ↦ by unfold stepEnv; rw [Fin.cons_succ, Fin.append_left]; exact hvals l)
+-      (fun i ↦ by unfold stepEnv; rw [Fin.cons_succ, Fin.append_right]; exact hx i) s)
++      (fun l ↦ by beta_reduce; unfold stepEnv; rw [Fin.cons_succ, Fin.append_left]; exact hvals l)
++      (fun i ↦ by beta_reduce; unfold stepEnv; rw [Fin.cons_succ, Fin.append_right]; exact hx i) s)
+ 
+ /-- Simultaneous recursion on notation preserves a suffix-closed property its
+ bases and steps preserve: the recursion variable's suffixes satisfy it, so each
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
+index 64ca7e0..cb70aa9 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.Basic
+@@ -92,6 +93,8 @@ structure Rep where
+   suffix : ℕ
+   deriving DecidableEq, Repr, Inhabited
+ 
++attribute [nolint unusedArguments] instReprRep.repr
++
+ /-- The word a representation denotes at an input. -/
+ @[expose] def Rep.den (w : List Bool) (r : Rep) : List Bool := r.word ++ w.rtake r.suffix
+ 
+@@ -154,9 +157,9 @@ theorem den_sbsRep (w : List Bool) (b : Bool) (x y : Rep) :
+     (sbsRep w b x y).den w = sbsSem b (x.den w) (y.den w) := by
+   unfold sbsRep sbsSem
+   by_cases h : (x.den w).length + 1 ≤ (y.den w).length
+-  · rw [ite_eq_left h, ite_eq_left h]
++  · rw [if_pos h, if_pos h]
+     rfl
+-  · rw [ite_eq_right h, ite_eq_right h]
++  · rw [if_neg h, if_neg h]
+ 
+ /-- The environment a step of recursion on representations reads: the cursor,
+ the recursive values and the parameters. -/
+@@ -190,9 +193,9 @@ theorem den_stepEnvRep (w : List Bool) {a b : ℕ} (r : Rep) (v : Fin b → Rep)
+   refine Fin.addCases (motive := fun s ↦ (stepEnvRep r v x s.succ).den w =
+     stepEnv (r.den w) (fun l ↦ (v l).den w) (fun i ↦ (x i).den w) s.succ) (fun l ↦ ?_)
+     (fun i ↦ ?_) s
+-  · unfold stepEnvRep stepEnv
++  · beta_reduce; unfold stepEnvRep stepEnv
+     rw [Fin.cons_succ, Fin.cons_succ, Fin.append_left, Fin.append_left]
+-  · unfold stepEnvRep stepEnv
++  · beta_reduce; unfold stepEnvRep stepEnv
+     rw [Fin.cons_succ, Fin.cons_succ, Fin.append_right, Fin.append_right]
+ 
+ /-- A function on representations keeps the length part within {lit}`n`. -/
+@@ -240,8 +243,10 @@ theorem stepEnvRep_prop {P : Rep → Prop} {a b : ℕ} (r : Rep) (v : Fin b →
+     (hr : P r) (hv : ∀ l, P (v l)) (hx : ∀ i, P (x i)) : ∀ s, P (stepEnvRep r v x s) :=
+   Fin.cases hr (fun s ↦
+     Fin.addCases (motive := fun s ↦ P (stepEnvRep r v x s.succ))
+-      (fun l ↦ by unfold stepEnvRep; rw [Fin.cons_succ, Fin.append_left]; exact hv l)
+-      (fun i ↦ by unfold stepEnvRep; rw [Fin.cons_succ, Fin.append_right]; exact hx i) s)
++      (fun l ↦ by
++        beta_reduce; unfold stepEnvRep; rw [Fin.cons_succ, Fin.append_left]; exact hv l)
++      (fun i ↦ by
++        beta_reduce; unfold stepEnvRep; rw [Fin.cons_succ, Fin.append_right]; exact hx i) s)
+ 
+ /-- The first phase keeps the length part within the input when its bases and
+ steps do, up to the input's length. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
 index d9ca6f8..7c0966a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
@@ -2564,10 +2741,10 @@ index 6474159..ab77451 100644
  /-- The morphism of the counterexample: the unique map from the empty object to
  the singleton. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
-index e486514..69ea92c 100644
+index 3772c32..69ea92c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
  Authors: Terence Rokop
  -/
@@ -2575,7 +2752,24 @@ index e486514..69ea92c 100644
  module
  
  public import Geb.Prototypes.PresheafIRUniv.Basic
-@@ -567,7 +568,7 @@ def ofSliceHom {E E' : Type} {p : E → X} {p' : E' → X} (h : E → E') (hh :
+ meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Prototype: slice polynomial functors as presheaf polynomial endofunctors on the walking arrow
+ 
+@@ -100,8 +102,6 @@ prototype, presheaf, walking arrow, parametric right adjoint, slice polynomial
+ functor, inductive-recursive, free coproduct completion
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ open CategoryTheory PresheafIRUniv
+@@ -568,7 +568,7 @@ def ofSliceHom {E E' : Type} {p : E → X} {p' : E' → X} (h : E → E') (hh :
      match o, o', f with
      | ⟨0⟩, ⟨0⟩, _ => rfl
      | ⟨1⟩, ⟨1⟩, _ => rfl
@@ -2584,11 +2778,41 @@ index e486514..69ea92c 100644
      | ⟨0⟩, ⟨1⟩, f => absurd (leOfHom f.unop) (by decide)
  
  /-- An element of {lit}`E` as an element of the pullback of {lit}`ofSlice p`
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
+index 64d4cac..c0c734c 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
+@@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LargeIR.Basic
+ public import Geb.Mathlib.Data.PFunctor.IndRec.Basic
+ meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Prototype: the transcription read back as a large inductive-recursive code
+ 
+@@ -86,8 +88,6 @@ prototype, presheaf, walking arrow, inductive-recursive, code, free coproduct
+ completion
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ open CategoryTheory PresheafIRUniv IndRec
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
-index 62d9e01..661c6e9 100644
+index d024f6c..661c6e9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
  Authors: Terence Rokop
  -/
@@ -2596,7 +2820,24 @@ index 62d9e01..661c6e9 100644
  module
  
  public import Geb.Prototypes.LargeIR.Code
-@@ -144,13 +145,13 @@ def assign {a : F.A} (g : F.Direction a 0 → Z.obj ⟨0⟩)
+ meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Prototype: base-cartesian presheaf polynomial endofunctors on the walking arrow are codes
+ 
+@@ -83,8 +85,6 @@ prototype, presheaf, walking arrow, parametric right adjoint,
+ inductive-recursive, code, cartesian
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ open CategoryTheory PresheafIRUniv IndRec
+@@ -145,13 +145,13 @@ def assign {a : F.A} (g : F.Direction a 0 → Z.obj ⟨0⟩)
  theorem assign_zero {a : F.A} (g : F.Direction a 0 → Z.obj ⟨0⟩)
      (w : ∀ d : F.Direction a 1, (famOfPsh Z).2 (g (dirRestr F a d))) {b : F.B a}
      (h : F.r ⟨a, b⟩ = 0) : assign F Z g w b = ⟨0, g ⟨b, h⟩⟩ :=
@@ -2613,7 +2854,7 @@ index 62d9e01..661c6e9 100644
  /-- The raw assignment is compatible with the direction-input map. -/
  theorem assign_compatible {a : F.A} (g : F.Direction a 0 → Z.obj ⟨0⟩)
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Grothendieck.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Grothendieck.lean
-index e7772a4..7ce647e 100644
+index 2299cb3..7ce647e 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Grothendieck.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Grothendieck.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2624,7 +2865,26 @@ index e7772a4..7ce647e 100644
  module
  
  public import Geb.Prototypes.LargeIR.Morphism
-@@ -70,7 +71,7 @@ namespace GebProto.LargeIR
+@@ -10,7 +11,8 @@ public import Geb.Mathlib.CategoryTheory.Grothendieck.Basic
+ public import Mathlib.CategoryTheory.Pi.Basic
+ meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Prototype: the free coproduct completion as a Grothendieck construction
+ 
+@@ -57,8 +59,6 @@ prototype, free coproduct completion, Grothendieck construction,
+ inductive-recursive, code
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ open CategoryTheory IndRec
+@@ -71,7 +71,7 @@ namespace GebProto.LargeIR
  families over it and a map of index types to precomposition. -/
  def famFib : Typeᵒᵖ ⥤ Cat.{0, 1} where
    obj U := Cat.of (U.unop → Type)
@@ -2633,7 +2893,7 @@ index e7772a4..7ce647e 100644
    map_id _ := rfl
    map_comp _ _ := rfl
  
-@@ -98,7 +99,7 @@ def objGrEquiv : FreeCoprodCompDisc.{0, 1} Type ≃ FamGr where
+@@ -99,7 +99,7 @@ def objGrEquiv : FreeCoprodCompDisc.{0, 1} Type ≃ FamGr where
  map with a fibre morphism into the precomposed family. -/
  def homGrEquiv (F G : FreeCoprodCompDisc.{0, 1} Type) : FamHom F G ≃ (toGr F ⟶ toGr G) where
    toFun φ := CoGrothendieck.homMk (↾ φ.1) fun u ↦ ↾ φ.2 u
@@ -2643,10 +2903,10 @@ index e7772a4..7ce647e 100644
    right_inv _ := rfl
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
-index df6ab16..eea46d7 100644
+index 6eb1aaa..eea46d7 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
-@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
  Authors: Terence Rokop
  -/
@@ -2654,7 +2914,24 @@ index df6ab16..eea46d7 100644
  module
  
  public import Geb.Prototypes.LargeIR.Code
-@@ -153,7 +154,7 @@ def arrowHom {A A' B B' : Type} {p : B → A} {p' : B' → A'} (h₀ : A → A')
+ meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Prototype: the transcription and the code agree on morphisms
+ 
+@@ -75,8 +77,6 @@ prototype, presheaf, walking arrow, inductive-recursive, code, positive,
+ naturality
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ open CategoryTheory PresheafIRUniv IndRec
+@@ -154,7 +154,7 @@ def arrowHom {A A' B B' : Type} {p : B → A} {p' : B' → A'} (h₀ : A → A')
      match o, o', f with
      | ⟨0⟩, ⟨0⟩, _ => rfl
      | ⟨1⟩, ⟨1⟩, _ => rfl
@@ -2663,6 +2940,37 @@ index df6ab16..eea46d7 100644
      | ⟨0⟩, ⟨1⟩, f => absurd (leOfHom f.unop) (by decide)
  
  /-- A morphism of families as a morphism of the walking-arrow presheaves of
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
+index 3a96c1a..1c87707 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
+@@ -11,7 +12,8 @@ public import Mathlib.CategoryTheory.Category.Preorder
+ public import Mathlib.Order.Fin.Basic
+ meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Prototype: the walking arrow over an index type
+ 
+@@ -83,8 +85,6 @@ prototype, presheaf, walking arrow, indexed inductive-recursive, slice
+ polynomial functor, W-type
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ open CategoryTheory
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/ParanaturalRank.lean b/vendor/geb-mathlib/Geb/Prototypes/ParanaturalRank.lean
 index b7fed2b..1d524db 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/ParanaturalRank.lean
@@ -2694,7 +3002,7 @@ index b7fed2b..1d524db 100644
  
  /-- Evaluation at `false`, which separates the identity from the constant map at
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean
-index b4e0cc6..cbb2cdf 100644
+index 1bcea11..cbb2cdf 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2705,6 +3013,15 @@ index b4e0cc6..cbb2cdf 100644
  module
  
  public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
+@@ -230,7 +231,7 @@ abbrev ArityB (a : Fin 2) : Type := ULift (Fin a.val)
+ /-- Each fibre of `ArityB` is a subsingleton: `Fin 0` is empty and `Fin 1` is a
+ point, so the two elements of any fibre are equal. -/
+ instance subsingleton_arityB (a : Fin 2) : Subsingleton (ArityB a) :=
+-  ⟨fun x y ↦ ULift.ext (Fin.ext (by
++  ⟨fun x y ↦ ULift.ext _ _ (Fin.ext (by
+     have hx := x.down.isLt
+     have hy := y.down.isLt
+     have ha := a.isLt
 @@ -468,8 +469,7 @@ def postcompArityHom (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) (a : F.
      intro i i' f b
      change ν.app ⟨i'⟩ (μ.1 i' (F.directionRestr a f b)) = Z'.map f.op (ν.app ⟨i⟩ (μ.1 i b))
@@ -2865,4 +3182,35 @@ index 03de8f0..5917140 100644
 +          rw [dif_pos i.isLt,
              parseChildren_print _ (List.ofFn ch) (g + 1) rest hchild hfuel,
              Option.map_some, Rose.ofList_ofFn]) r
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
+index cddb207..caa9f71 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.Algebra.Group.End
+@@ -191,7 +192,7 @@ theorem Representative.toHom_comp {X Y Z : Typechecker S b}
+ /-- Interpret each typechecker as its fiber and each morphism as its restriction. -/
+ def interpretation (S : Submonoid (Function.End B)) (b : B) : Typechecker S b ⥤ Type u where
+   obj := Fiber
+-  map f := TypeCat.ofHom f.restrict
++  map f := f.restrict
+   map_id _ := rfl
+   map_comp f g := Quotient.inductionOn₂ f g fun _ _ ↦ rfl
+ 
+@@ -203,8 +204,7 @@ theorem interpretation_map_toHom {X Y : Typechecker S b}
+ 
+ /-- Equality of interpretations is exactly equality in the quotient. -/
+ instance interpretation_faithful : (interpretation S b).Faithful where
+-  map_injective {X Y} _ _ h := Hom.ext
+-    (congrArg (fun k : Fiber X ⟶ Fiber Y ↦ (k : Fiber X → Fiber Y)) h)
++  map_injective h := Hom.ext h
+ 
+ end Typechecker
  

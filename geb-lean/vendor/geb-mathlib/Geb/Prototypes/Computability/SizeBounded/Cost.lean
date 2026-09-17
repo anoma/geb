@@ -8,8 +8,7 @@ module
 
 public import Geb.Prototypes.Computability.SizeBounded.Basic
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # A cost model for the non-size-increasing algebra
 
@@ -88,6 +87,8 @@ bounded by that rather than by {lit}`m`.
 non-size-increasing, simultaneous recursion on notation, polynomial time, linear
 space, cost model
 -/
+
+set_option doc.verso true
 
 namespace Geb.SizeBounded
 
@@ -497,6 +498,32 @@ theorem isPolyBounded_shift {p : ℕ → ℕ} (K : ℕ) (hp : IsPolyBounded p) :
       calc p (max m K) ≤ c * (max m K + 1) ^ d := hd _
         _ ≤ c * ((K + 1) * (m + 1)) ^ d := Nat.mul_le_mul_left c (Nat.pow_le_pow_left h3 d)
         _ = c * (K + 1) ^ d * (m + 1) ^ d := by rw [Nat.mul_pow, Nat.mul_assoc]⟩
+
+/-- The maximum of a finite family is at most its sum. -/
+theorem finMax_le_finSum : ∀ (m : ℕ) (f : Fin m → ℕ), finMax m f ≤ finSum m f :=
+  Nat.rec (fun _ ↦ Nat.le_refl 0) fun _ ih f ↦
+    Nat.max_le.mpr ⟨Nat.le_trans (ih fun i ↦ f i.castSucc) (Nat.le_add_right _ _),
+      Nat.le_add_left _ _⟩
+
+/-- The identity is bounded by a polynomial. -/
+theorem isPolyBounded_id : IsPolyBounded fun m ↦ m :=
+  isPolyBounded_of_le (fun m ↦ Nat.le_succ m) isPolyBounded_succ
+
+/-- The maximum of a finite family of polynomially bounded functions is. -/
+theorem isPolyBounded_finMax (k : ℕ) (p : Fin k → ℕ → ℕ) (hp : ∀ i, IsPolyBounded (p i)) :
+    IsPolyBounded fun m ↦ finMax k fun i ↦ p i m :=
+  isPolyBounded_of_le (fun m ↦ finMax_le_finSum k fun i ↦ p i m) (isPolyBounded_finSum k p hp)
+
+/-- The maximum of two polynomially bounded functions is. -/
+theorem isPolyBounded_max {p q : ℕ → ℕ} (hp : IsPolyBounded p) (hq : IsPolyBounded q) :
+    IsPolyBounded fun m ↦ max (p m) (q m) :=
+  isPolyBounded_of_le (fun _ ↦ Nat.max_le.mpr ⟨Nat.le_add_right _ _, Nat.le_add_left _ _⟩)
+    (isPolyBounded_add hp hq)
+
+/-- A linear function is bounded by a polynomial. -/
+theorem isPolyBounded_linear (c d : ℕ) : IsPolyBounded fun m ↦ c * m + d :=
+  isPolyBounded_add (isPolyBounded_mul (isPolyBounded_const c) isPolyBounded_id)
+    (isPolyBounded_const d)
 
 /-- The polynomial bounding one node's time, from its children's constants and
 polynomials. A base form's is the length it reads and writes; a substitution's

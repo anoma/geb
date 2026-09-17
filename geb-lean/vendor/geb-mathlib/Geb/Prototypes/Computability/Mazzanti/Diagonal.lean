@@ -8,8 +8,7 @@ module
 
 public import Geb.Prototypes.Computability.Mazzanti.Derived
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # No internal universal evaluator
 
@@ -33,6 +32,8 @@ excludes an internal total evaluator satisfying the unrestricted specification.
 
 function algebra, diagonalization, universal evaluator
 -/
+
+set_option doc.verso true
 
 public section
 

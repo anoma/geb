@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.BitTree.Encoding -- shake: keep
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Boundary cases of the binary-tree encoding
 
@@ -25,6 +24,8 @@ terminators, incomplete input and trailing input.
 
 binary tree, encoding, recognizer, boundary cases
 -/
+
+set_option doc.verso true
 
 public section
 

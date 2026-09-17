@@ -31,6 +31,12 @@ SRC_REV="${1:-main}"
 # Geb.Prototypes.Computability.BitTreeScanner.Encoding: imports
 # Cslib.Foundations.Data.PFunctor.Free, likewise added after the pin.
 #
+# Geb.Prototypes.Computability.MultiTape.{OutputString,Rename} and
+# Geb.Prototypes.Computability.SizeBounded.Machine.{Exec,Program,Register}:
+# import the MultiTape modules above and
+# Cslib.Computability.Machines.Turing.MultiTape.Configuration, also
+# added after the pin.
+#
 # The remaining entries import one of the above, directly or through
 # a chain of such imports, or are imported only by such modules, which
 # would leave them unreachable from the Geb umbrella
@@ -90,10 +96,16 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Computability.BitTree.Machine
   Geb.Prototypes.Computability.BitTree.Steps
   Geb.Prototypes.Computability.BitTreeScanner
+  Geb.Prototypes.Computability.Kristiansen.MachineBound
   Geb.Prototypes.Computability.Mazzanti.BitTree
   Geb.Prototypes.Computability.Mazzanti.Bound
   Geb.Prototypes.Computability.Mazzanti.Growth
   Geb.Prototypes.Computability.Mazzanti.Words
+  Geb.Prototypes.Computability.MultiTape
+  Geb.Prototypes.Computability.SizeBounded.Logspace.Machine
+  Geb.Prototypes.Computability.SizeBounded.Machine
+  Geb.Prototypes.Computability.SizeBounded.MachineBound
+  Geb.Prototypes.Computability.SizeBounded.WordMachine
   Geb.Prototypes.Computability.TreeScanner
 )
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"   # geb-lean package root
