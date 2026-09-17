@@ -9,8 +9,7 @@ public import Geb.Prototypes.Computability.BitTree.Elias.Tree
 public import Geb.Prototypes.Computability.BitTree.Elias.RepresentationSize
 public import Geb.Prototypes.Computability.BitTree.Elias.CodeExamples
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Elias-length encoding of bitstring trees
 
@@ -19,3 +18,5 @@ The streaming recognizer has explicit quadratic-time and linear-work-space bound
 Representation redundancy vanishes as average payload length grows, with a counting
 lower bound for every competing lossless representation.
 -/
+
+set_option doc.verso true

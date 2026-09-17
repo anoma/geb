@@ -9,8 +9,7 @@ public import Geb.Prototypes.Computability.Triage.Decode
 public import Geb.Prototypes.Computability.Triage.Simulation
 public import Geb.Prototypes.Computability.Triage.Encode
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # A total bitstring interface to one triage step
 
@@ -34,6 +33,8 @@ a triage expression. The interface performs one step, never normalization.
 
 tree calculus, bitstring, reduction, correctness, progress
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

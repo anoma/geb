@@ -1,8 +1,8 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: 17f8f4ccba667eaaa391bcd81b39d1b89fca1be1
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 5ba40a99edbd791eb2c9bff97ef3e5925ce853caa9096beb131a08b7e4e4c073)
+- Source commit: 87f59897ccd0d6bac738e69cdbe98f83b8d8e324
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 a9a1406bcbf0fcb0a67083e97f690b3e22fc771ad19340cf91e8818651516ce5)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
   - Geb.Prototypes.Computability.BitTree.BinaryMachine.Accounting
   - Geb.Prototypes.Computability.BitTree.BinaryMachine.BitStep
@@ -58,10 +58,16 @@
   - Geb.Prototypes.Computability.BitTree.Machine
   - Geb.Prototypes.Computability.BitTree.Steps
   - Geb.Prototypes.Computability.BitTreeScanner
+  - Geb.Prototypes.Computability.Kristiansen.MachineBound
   - Geb.Prototypes.Computability.Mazzanti.BitTree
   - Geb.Prototypes.Computability.Mazzanti.Bound
   - Geb.Prototypes.Computability.Mazzanti.Growth
   - Geb.Prototypes.Computability.Mazzanti.Words
+  - Geb.Prototypes.Computability.MultiTape
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.Machine
+  - Geb.Prototypes.Computability.SizeBounded.Machine
+  - Geb.Prototypes.Computability.SizeBounded.MachineBound
+  - Geb.Prototypes.Computability.SizeBounded.WordMachine
   - Geb.Prototypes.Computability.TreeScanner
 - `GebMeta` is not vendored: every import of it is dropped, each `{cite}` docstring role it supplies is rewritten to its escaped bracketed key, and each `{name}` role naming one of its declarations is rewritten to `{lit}`; see scripts/refresh-geb-mathlib.sh.
 - The files under `Geb/` are an unmodified mirror of the source commit except where the back-port patch changes them and where the exclusion above removes them; modified files carry a change notice in their header comment.

@@ -7,11 +7,12 @@ module
 
 public import Geb.Prototypes.Computability.Mazzanti.Diagonal
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Mazzanti's non-size-increasing function algebra
 
 Index for numerical syntax, size soundness, the bit-tree recognizer, and
 obstructions to unrestricted evaluation and size-increasing contraction.
 -/
+
+set_option doc.verso true

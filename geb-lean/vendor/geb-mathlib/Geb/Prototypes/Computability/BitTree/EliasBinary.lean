@@ -6,8 +6,7 @@ Authors: Terence Rokop
 module
 
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Binary-counter recognition of the Elias-length encoding
 
@@ -15,3 +14,5 @@ A two-pass machine whose counters are binary and monotone recognizes the Elias-l
 encoding in linear time and logarithmic work space. The size bound of the encoding is that of
 the Elias-length representation itself.
 -/
+
+set_option doc.verso true

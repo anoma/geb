@@ -11,10 +11,11 @@ public import Geb.Prototypes.Computability.BitTree.Examples
 public import Geb.Prototypes.Computability.BitTree.Elias
 public import Geb.Prototypes.Computability.BitTree.EliasBinary
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Binary trees with bitstring leaves
 
 The encoding, unified recognizer, correctness proofs and machine resource bounds.
 -/
+
+set_option doc.verso true

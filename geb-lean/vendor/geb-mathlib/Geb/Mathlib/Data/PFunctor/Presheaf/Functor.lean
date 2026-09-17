@@ -21,9 +21,9 @@ module from the choice-free core. The notation `↾` (`TypeCat.ofHom`) is
 itself choice-free: `objPresheaf` uses `↾` and depends only on `propext`
 and `Quot.sound`. This
 module also relates the core to mathlib's category of elements:
-`elemMap_eq_categoryOfElements_map` proves the choice-free core `elemMap` is
+`elemMap_eq_mapElements` proves the choice-free core `elemMap` is
 the object map of mathlib's `Classical.choice`-dependent
-`CategoryOfElements.map`.
+`NatTrans.mapElements`.
 
 ## Main definitions
 
@@ -37,9 +37,9 @@ the object map of mathlib's `Classical.choice`-dependent
 * `PresheafPFunctor.functor_obj` / `functor_map` — the categorical functor's
   object map is the core `objPresheaf`, and its morphism map is the
   dom `map` restricted to the `q`-indexed fiber.
-* `PresheafDomPFunctorData.elemMap_eq_categoryOfElements_map` — the core's
+* `PresheafDomPFunctorData.elemMap_eq_mapElements` — the core's
   choice-free `elemMap` is the object map of mathlib's
-  `Classical.choice`-dependent `CategoryOfElements.map`, across `toElements`.
+  `Classical.choice`-dependent `NatTrans.mapElements`, across `toElements`.
 
 ## Implementation notes
 
@@ -100,16 +100,16 @@ by `rfl`. -/
 mathlib's `Iᵒᵖ`-indexed category of elements `Z.Elements`, sending `⟨i, z⟩` to
 `⟨op i, z⟩`. -/
 @[expose] def toElements {I : Type uI} [Category.{vI} I] (Z : Iᵒᵖ ⥤ Type uZ) :
-    (Σ i : I, Z.obj ⟨i⟩) → Z.Elements := fun p ↦ ⟨⟨p.1⟩, p.2⟩
+    (Σ i : I, Z.obj ⟨i⟩) → Z.Elements := fun p ↦ Z.elementsMk ⟨p.1⟩ p.2
 
 /-- The core's `elemMap` is the object map of the functor on categories of
-elements that `α` induces — mathlib's `CategoryOfElements.map` — across the
-index bridge `toElements`. `CategoryOfElements.map` consumes a functor-category
+elements that `α` induces — mathlib's `NatTrans.mapElements` — across the
+index bridge `toElements`. `NatTrans.mapElements` consumes a functor-category
 hom and is `Classical.choice`-dependent, so the core takes a bare `NatTrans` and
 defines `elemMap` directly; this theorem certifies the two agree. -/
-theorem elemMap_eq_categoryOfElements_map {I : Type uI} [Category.{vI} I]
+theorem elemMap_eq_mapElements {I : Type uI} [Category.{vI} I]
     {Z Z' : Iᵒᵖ ⥤ Type uZ} (α : NatTrans Z Z') :
-    toElements Z' ∘ elemMap α = (CategoryOfElements.map α).obj ∘ toElements Z :=
+    toElements Z' ∘ elemMap α = (NatTrans.mapElements α).obj ∘ toElements Z :=
   rfl
 
 end PresheafDomPFunctorData

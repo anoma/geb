@@ -7,8 +7,7 @@ module
 
 public import Mathlib.Data.Nat.Size
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Canonical positive binary words
 
@@ -30,6 +29,8 @@ with arbitrary finite bitstrings, read from most to least significant bit.
 
 binary representation, prefix code, parsing
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

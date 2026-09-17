@@ -17,6 +17,7 @@ public import Geb.Prototypes.PresheafIRUniv
 public import Geb.Prototypes.PresheafUniverse
 public import Geb.Prototypes.ReadableSExpr.IO
 public import Geb.Prototypes.RelSeparation
+public import Geb.Prototypes.Typechecker
 public import Geb.Prototypes.UniverseVariance
 
 /-!

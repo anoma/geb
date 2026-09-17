@@ -7,9 +7,9 @@ module
 
 public import Geb.Prototypes.Computability.BitTree.Elias.CodeBits
 import Geb.Prototypes.Computability.BitTree.Counter
+import Mathlib.Util.CompileInductive -- shake: keep
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Elias delta codes for natural numbers
 
@@ -38,6 +38,8 @@ This is the delta code of Section V of \[Elias1975\], shifted to include zero.
 
 Elias delta code, Elias gamma code, prefix code, binary encoding
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

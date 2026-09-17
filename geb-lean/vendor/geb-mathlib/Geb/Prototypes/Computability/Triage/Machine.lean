@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.Triage.Size
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # An explicit traversal machine for one triage step
 
@@ -34,6 +33,8 @@ traversing the serialized state, and does not supply a verified tape compilation
 
 tree calculus, abstract machine, zipper, space complexity
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

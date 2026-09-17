@@ -11,8 +11,7 @@ public import Mathlib.Data.List.MinMax
 public import Mathlib.Order.Nat
 public import Geb.Mathlib.Data.Vector.OfFn
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Non-size-increasing numerical functions
 
@@ -49,6 +48,8 @@ These are size theorems. They do not establish a Turing-machine time or space bo
 
 implicit complexity, non-size-increasing function, simultaneous recursion
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

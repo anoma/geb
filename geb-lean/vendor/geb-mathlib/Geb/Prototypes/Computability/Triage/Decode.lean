@@ -7,8 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.Triage.Code
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Recognizing triage expressions among binary-tree bitstrings
 
@@ -32,6 +31,8 @@ on applications below values. Acceptance requires exactly one complete expressio
 
 tree calculus, bitstring, recognizer, parsing, prefix code
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 

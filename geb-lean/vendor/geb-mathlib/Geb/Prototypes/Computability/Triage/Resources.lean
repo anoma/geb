@@ -8,8 +8,7 @@ module
 public import Geb.Prototypes.Computability.Triage.Machine
 public import Geb.Prototypes.Computability.Triage.Decode
 
-set_option doc.verso true
-
+set_option doc.verso true in
 /-!
 # Traversal resources and concrete serialized storage
 
@@ -42,6 +41,8 @@ necessary before claiming {lit}`ComputableInTimeAndSpace` for the bitstring redu
 
 tree calculus, space complexity, cost semantics, abstract machine
 -/
+
+set_option doc.verso true
 
 @[expose] public section
 
