@@ -23,10 +23,12 @@ import GebLean.EraComplete
 import GebLean.EraCompleteness
 import GebLean.EraHistCodeTerm
 import GebLean.Factorization
+import GebLean.FairMerge
 import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
 import GebLean.FreeToposBT
 import GebLean.InteractionExecution
+import GebLean.InteractionNets
 import GebLean.HexagonCat
 import GebLean.NatArith
 import GebLean.NatElegantPair
