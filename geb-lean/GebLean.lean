@@ -26,6 +26,7 @@ import GebLean.Factorization
 import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
 import GebLean.FreeToposBT
+import GebLean.InteractionExecution
 import GebLean.HexagonCat
 import GebLean.NatArith
 import GebLean.NatElegantPair
