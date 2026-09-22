@@ -1,0 +1,13 @@
+[package]
+name = "geb-succinct-library-experiment"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "libraries"
+path = "libraries.rs"
+
+[dependencies]
+vers-vecs = "=1.10.2"
+sux = { version = "=0.14.0", default-features = false }

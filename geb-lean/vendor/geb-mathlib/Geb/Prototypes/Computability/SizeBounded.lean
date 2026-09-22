@@ -12,6 +12,7 @@ public import Geb.Prototypes.Computability.SizeBounded.Cost
 public import Geb.Prototypes.Computability.SizeBounded.Iteration
 public import Geb.Prototypes.Computability.SizeBounded.Logspace
 public import Geb.Prototypes.Computability.SizeBounded.Polynomial
+public import Geb.Prototypes.Computability.SizeBounded.Sharing
 
 set_option doc.verso true in
 /-!
@@ -20,7 +21,8 @@ set_option doc.verso true in
 Index for the modules on \[Mazzanti2016\]'s algebra {lit}`S(sbs₀, sbs₁)` over
 bitstrings: its syntax and non-size-increase theorem, its expression
 combinators, the bit-tree recognizer written in it, the cost model in
-which every expression runs in polynomial time and linear space, and the
+which every expression runs in polynomial time and linear space, the
+evaluator with sharing that runs on longer words, and the
 machine calculus compiling its expressions into Cslib multi-tape machines,
 and the successor-free subalgebra of \[Kristiansen2005\] characterizing
 logarithmic space.

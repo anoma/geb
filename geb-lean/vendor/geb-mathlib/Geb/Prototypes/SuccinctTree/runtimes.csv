@@ -1,0 +1,4 @@
+runtime,depth,total,minimum,median_wall_seconds,samples
+hvm2-cpu,16,105134,-66,0.610424,3
+hvm2-cuda,16,105134,-66,0.572256,3
+hvm4,12,2332,-529,0.367495,3

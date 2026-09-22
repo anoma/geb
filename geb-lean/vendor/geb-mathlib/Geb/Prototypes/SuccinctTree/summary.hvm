@@ -1,0 +1,19 @@
+// Copyright (c) 2026 Terence Rokop. Apache-2.0; see LICENSE.
+// HVM4 counterpart of summary.bend. Signed summaries are encoded modulo 2^32.
+// Mask seeds to 24 bits to match Bend; signed comparisons flip the sign bit.
+@min = λ&a,&b. (λ{0: b; λunused. a})((a ^ 2147483648) < (b ^ 2147483648))
+@step = λbit,&total. (λ{0: total - 1; λunused. total + 1})(bit)
+@word = λ{
+  0: λword,total,minimum. #S{total, minimum};
+  λ&bits. λ&word,total,minimum.
+    ! &next = @step(word && 1, total);
+    @word(bits - 1, word >> 1, next, @min(next, minimum))
+}
+@append = λ{#S: λ&a,amin. λ{#S: λb,bmin. #S{a + b, @min(amin, a + bmin)}}}
+@summary = λ{
+  0: λseed. @word(24, seed, 0, 0);
+  λ&depth. λ&seed.
+    @append(@summary(depth - 1, (seed * 1664525 + 7271263) && 16777215),
+            @summary(depth - 1, (seed * 5918261 + 1) && 16777215))
+}
+@main = @summary(12, 7919)

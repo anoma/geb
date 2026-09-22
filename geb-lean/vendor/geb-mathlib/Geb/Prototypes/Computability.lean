@@ -10,6 +10,7 @@ public import Geb.Prototypes.Computability.BitTree
 public import Geb.Prototypes.Computability.SizeBounded
 public import Geb.Prototypes.Computability.Mazzanti
 public import Geb.Prototypes.Computability.Kristiansen
+public import Geb.Prototypes.Computability.PresheafScan
 public import Geb.Prototypes.Computability.Triage
 
 /-!

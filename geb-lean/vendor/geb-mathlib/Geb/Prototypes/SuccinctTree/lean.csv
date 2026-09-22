@@ -1,0 +1,15 @@
+implementation,input_units,unit,nanoseconds
+native-scanner,2,bits,281498
+shared-algebra,2,bits,9954186
+native-scanner,6,bits,91133
+shared-algebra,6,bits,78766366
+native-scanner,17,bits,22984
+shared-algebra,17,bits,839716507
+native-scanner,43,bits,28213
+shared-algebra,43,bits,11186035947
+chain-16,85,characters,741224
+wide-16,85,characters,488250
+chain-64,325,characters,5826789
+wide-64,325,characters,4206649
+chain-256,1285,characters,138255660
+wide-256,1285,characters,74168623
