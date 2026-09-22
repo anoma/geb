@@ -26,6 +26,7 @@
   - [19. `ULift.ext` takes its two points implicitly](#19-uliftext-takes-its-two-points-implicitly)
   - [20. `set_option doc.verso true in` does not scope a module docstring](#20-set_option-docverso-true-in-does-not-scope-a-module-docstring)
   - [21. `Functor.Elements` refactored into structures](#21-functorelements-refactored-into-structures)
+  - [22. `PFunctor.Obj.mk` named constructor](#22-pfunctorobjmk-named-constructor)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -321,12 +322,18 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/Computability/SizeBounded/Cost.lean` declares `Account`
   with `deriving DecidableEq, Repr`, and
   `Prototypes/Computability/SizeBounded/Logspace/Rep.lean` declares
-  `Rep` with `deriving DecidableEq, Repr, Inhabited`.
+  `Rep` with `deriving DecidableEq, Repr, Inhabited`; likewise
+  `Prototypes/SuccinctTree.lean` (`Summary`) and, under
+  `Prototypes/Computability/SizeBounded/Logspace/WTree/`,
+  `NumScan.lean` (`Numeral.NState`) and `Positions.lean` (`Loc`,
+  `Node`).
 - v4.29 symptom: the `unusedArguments` env-linter reports
   `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` (respectively
   `instReprAnn.repr argument 2 prec✝ : ℕ`,
-  `instReprAccount.repr argument 2 prec✝ : ℕ`, and
-  `instReprRep.repr argument 2 prec✝ : ℕ`) under `lake lint`; v4.29's
+  `instReprAccount.repr argument 2 prec✝ : ℕ`,
+  `instReprRep.repr argument 2 prec✝ : ℕ`, `instReprSummary.repr`,
+  `instReprNState.repr`, `instReprLoc.repr`, and `instReprNode.repr`)
+  under `lake lint`; v4.29's
   `Repr` deriving handler emits a `repr` that ignores the precedence
   argument for a structure whose representation needs no
   parenthesisation.
@@ -339,16 +346,21 @@ genuinely new (decide the adaptation, add a category here).
 
 ### 9. Subobject classifier moved out of `Topos` in v4.33
 
-- Upstream cause: `CategoryTheory/ElementaryTopos.lean` and
-  `FinSetSkel/Classifier/Instance.lean` import
+- Upstream cause: `CategoryTheory/ElementaryTopos.lean`,
+  `FinSetSkel/Classifier/Instance.lean`, and
+  `Prototypes/Typechecker/Instances.lean` import
   `Mathlib.CategoryTheory.Subobject.Classifier.Defs` and name the
-  structure `Subobject.Classifier`.
-- v4.29 symptom: `unknown module` on the import. The declarations
+  structure `Subobject.Classifier`; the last also names the class
+  `HasSubobjectClassifier`.
+- v4.29 symptom: `unknown module` on the import, and
+  ``Unknown identifier `HasSubobjectClassifier` ``. The declarations
   themselves are present: v4.29 has the same `Classifier` structure,
   `Classifier.isTerminalΩ₀`, and a `Classifier.mkOfTerminalΩ₀` of
   identical signature, in `Mathlib.CategoryTheory.Topos.Classifier`
   under the namespace `CategoryTheory` rather than
-  `CategoryTheory.Subobject`.
+  `CategoryTheory.Subobject`, and the class under the name
+  `HasClassifier`, which upstream retains as a deprecated alias
+  (since 2026-03-06).
 - Adaptation: import `Mathlib.CategoryTheory.Topos.Classifier` and drop
   the `Subobject.` qualifier. In `ElementaryTopos.lean` the enclosing
   `namespace CategoryTheory` leaves `Classifier C` and
@@ -356,7 +368,10 @@ genuinely new (decide the adaptation, add a category here).
   `FinSetSkel/Classifier/Instance.lean` the surrounding
   `namespace FinSetSkel` has a `Classifier` namespace of its own, so
   the mathlib structure is named in full as
-  `CategoryTheory.Classifier`.
+  `CategoryTheory.Classifier`, as it is in
+  `Prototypes/Typechecker/Instances.lean`, whose `DecisionProblem`
+  namespace has a `classifier` definition of its own; there the class
+  is renamed to `HasClassifier`.
 
 ### 10. `simp` leaves a `cast`'s proof argument unfolded
 
@@ -416,7 +431,10 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/Computability/SizeBounded/Logspace/Rep.lean`, and, under
   `Prototypes/Computability/CobhamFoldProto/`, `Degenerate.lean`,
   `Destruct.lean`, `Fold.lean`, `Layout.lean`, `SelfDelim.lean`,
-  `SmashFree.lean`, and `Variable.lean`. Only a few of them appear in
+  `SmashFree.lean`, and `Variable.lean`; and `Prototypes/BitStream.lean`
+  and, under `Prototypes/Computability/SizeBounded/Logspace/WTree/`,
+  `NumScan.lean`, `Numeral.lean`, `Sig.lean`, and `Spell.lean`. Only a
+  few of them appear in
   any one build log: lake does not attempt a module whose imports
   failed.
 - Adaptation: substitute the v4.29 names throughout the vendored tree.
@@ -488,14 +506,19 @@ genuinely new (decide the adaptation, add a category here).
   `CategoryTheory/DiscreteFibration/Basic.lean` uses
   `Sigma.mk.inj_iff` without importing `Mathlib.Data.Sigma.Basic`,
   reaching it through the transitive closure of its
-  `Mathlib.CategoryTheory` imports.
+  `Mathlib.CategoryTheory` imports. `Prototypes/SuccinctTree.lean`
+  (`summarize`) likewise uses `le_min_iff` without importing
+  `Mathlib.Order.MinMax`.
 - v4.29 symptom: `` Unknown constant `Sigma.mk.inj_iff` ``, followed by
   `` Tactic `rcases` failed: `x✝ : ?m…` is not an inductive datatype ``
   wherever the failed term stands as an `obtain` scrutinee. The
   declaration itself is present in v4.29 under the same name, in
   `Mathlib/Data/Sigma/Basic.lean`; only the import closure differs.
-- Adaptation: add `public import Mathlib.Data.Sigma.Basic` to the
-  module's import block, in alphabetical position.
+  Likewise ``Unknown identifier `le_min_iff` `` for
+  `Mathlib/Order/MinMax.lean`.
+- Adaptation: add `public import Mathlib.Data.Sigma.Basic`, or
+  `public import Mathlib.Order.MinMax`, to the module's import block,
+  in alphabetical position.
 
 ### 15. `Arrow.mk_eq_mk_iff` states its endpoints through `𝟭 C`
 
@@ -573,14 +596,20 @@ genuinely new (decide the adaptation, add a category here).
 
 - Upstream cause: mathlib pull request 39703 (2026-08-26) creates a
   `Basic` top-level folder and moves `Mathlib/Logic/IsEmpty/Defs.lean`
-  to `Mathlib/Basic/IsEmpty/Defs.lean`. The declarations are unchanged;
-  only the module path moves.
-  `Prototypes/Computability/BitTree/Scanner.lean` imports the new path.
+  to `Mathlib/Basic/IsEmpty/Defs.lean`, and likewise
+  `Mathlib/Logic/Nontrivial/Defs.lean` to
+  `Mathlib/Basic/Nontrivial/Defs.lean`. The declarations are unchanged;
+  only the module paths move.
+  `Prototypes/Computability/BitTree/Scanner.lean` imports the new
+  `IsEmpty` path and `Prototypes/Typechecker.lean` the new `Nontrivial`
+  path.
 - v4.29 symptom: `unknown module prefix 'Mathlib.Basic'`: the pinned
-  mathlib has no `Mathlib/Basic/` directory, and the module is
-  `Mathlib.Logic.IsEmpty.Defs` there (split from `Mathlib.Logic.IsEmpty`
-  in mathlib pull request 35137).
-- Adaptation: rewrite the import to `Mathlib.Logic.IsEmpty.Defs`.
+  mathlib has no `Mathlib/Basic/` directory, and the modules are
+  `Mathlib.Logic.IsEmpty.Defs` (split from `Mathlib.Logic.IsEmpty`
+  in mathlib pull request 35137) and `Mathlib.Logic.Nontrivial.Defs`
+  there.
+- Adaptation: rewrite the imports to `Mathlib.Logic.IsEmpty.Defs` and
+  `Mathlib.Logic.Nontrivial.Defs`.
 
 ### 18. `List.sum_le_card_nsmul` renamed to `List.sum_le_length_nsmul`
 
@@ -616,7 +645,9 @@ genuinely new (decide the adaptation, add a category here).
   `Grothendieck`, `Morphism`, `Product`) write the leading module
   docstring under `set_option doc.verso true in` and set the option
   globally only after it, since the upstream commit that bumped
-  mathlib to `v4.34.0`. Under `v4.34` the `in` form applies the
+  mathlib to `v4.34.0`; `Prototypes/BitStream.lean` and
+  `Prototypes/BitStream/WConstruction.lean` have that form from their
+  addition. Under `v4.34` the `in` form applies the
   option to the module docstring that follows it.
 - v4.29 symptom: `Can't add Verso-format module docs because there is
   already Markdown-format content present`, reported at the first
@@ -652,6 +683,24 @@ genuinely new (decide the adaptation, add a category here).
   `CategoryOfElements.homMk (Opposite.unop y) (Opposite.unop x)` and
   `Subtype.ext`; the seven sites are the module's `base`, `elt`, `mk`,
   `homBase`, `map_homBase_elt`, `homMk`, and `hom_ext`.
+
+### 22. `PFunctor.Obj.mk` named constructor
+
+- Upstream cause: mathlib pull request 43056 (2026-09-03) adds
+  `PFunctor.Obj.mk`, a `match_pattern` definition wrapping the
+  anonymous constructor, with `PFunctor.Obj.rec` as the `cases`
+  eliminator, so that terms of `P α` no longer rely on the
+  definitional unfolding of `PFunctor.Obj` to a sigma type.
+  `Prototypes/BitStream.lean` (`layerEquiv`) and
+  `Prototypes/BitStream/WConstruction.lean` (`zeroEquiv`) pass
+  `Obj.mk`, with `P` explicit, to `congrArg`.
+- v4.29 symptom: ``Unknown constant `PFunctor.Obj.mk` ``, followed by
+  `Missing cases` on the `nomatch` whose scrutinee's type the failed
+  application leaves undetermined. The anonymous-constructor and
+  `.mk` pattern forms in the same modules elaborate in v4.29 by
+  unfolding `PFunctor.Obj` to `Sigma`; only the explicit name fails.
+- Adaptation: substitute `Sigma.mk` applied to the shape, the
+  expected type of the `congrArg` supplying the index family.
 
 ## Updating the patch for a new upstream
 
@@ -810,6 +859,27 @@ after its `TreeScanner` import is deleted.
   `Kristiansen.MachineBound` imports `SizeBounded.Machine.Main`; both
   are excluded. The index modules `SizeBounded`, `SizeBounded.Logspace`,
   and `Kristiansen` survive with those imports deleted.
+- `Geb.Prototypes.Computability.Oitavem.Machine.SpaceTime` imports
+  `Cslib.Computability.Machines.Turing.MultiTape.ConfigBound`, added to
+  cslib after the pin alongside the other `MultiTape` modules, and
+  `Geb.Prototypes.Computability.Oitavem.Word` imports the excluded
+  `BitTreeScanner.Encoding`. Every other module under `Oitavem` imports
+  `Word`, directly or through a chain, so `Oitavem` is excluded as a
+  whole. Its importers follow: `BitStream.Oitavem` (every submodule
+  imports `Oitavem.Syntax`, so the index is excluded as a whole),
+  `Typechecker.Oitavem`, and `RoseTree.Bits`, with `RoseTree.Spine`
+  (which also imports the excluded `BitTree.EliasBinary.Bound`) and
+  `RoseTree.Packed` importing `Bits` in turn.
+  `SizeBounded.Logspace.EliasTree` is excluded as a whole, each
+  submodule importing an excluded `BitTree.Elias` module or one
+  another; under `SizeBounded.Logspace.WTree`, `Events` imports the
+  excluded `BitTree.Elias.ScannerHeader`, and `BitFold`, `ChildExpr`,
+  `Children`, `ExprBase`, `Machine`, `NodeExpr`, `Nodes`, `NumArith`,
+  `NumScanExpr`, `NumSum`, `Recognize`, `RecognizeExpr`, `SigCheck`,
+  `SigEdge`, `SigLabel`, and `SigMachine` import `Events` or one
+  another. The index modules `Prototypes`, `Computability`,
+  `SizeBounded.Logspace`, `SizeBounded.Logspace.WTree`, and `RoseTree`
+  survive with those imports deleted.
 
 ## Tooling notes
 

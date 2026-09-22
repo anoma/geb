@@ -5,6 +5,8 @@ Authors: Terence Rokop
 -/
 module
 
+public import Geb.Prototypes.BitStream
+public import Geb.Prototypes.BitStream.WConstruction
 public import Geb.Prototypes.CanonicalSExpr.IO
 public import Geb.Prototypes.Computability
 public import Geb.Prototypes.ConcreteSyntax.Command
@@ -17,7 +19,9 @@ public import Geb.Prototypes.PresheafIRUniv
 public import Geb.Prototypes.PresheafUniverse
 public import Geb.Prototypes.ReadableSExpr.IO
 public import Geb.Prototypes.RelSeparation
-public import Geb.Prototypes.Typechecker
+public import Geb.Prototypes.RoseTree
+public import Geb.Prototypes.SuccinctTree
+public import Geb.Prototypes.Typechecker.Instances
 public import Geb.Prototypes.UniverseVariance
 
 /-!

@@ -1689,6 +1689,113 @@ index eacd4cd..7c4ba7b 100644
              exact ⟨fun hb ↦ Bool.noConfusion hb, fun he ↦ absurd (mk.inj he).1 h⟩)
      s t
  
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/BitStream/WConstruction.lean b/vendor/geb-mathlib/Geb/Prototypes/BitStream/WConstruction.lean
+index 090c515..2649183 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/BitStream/WConstruction.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/BitStream/WConstruction.lean
+@@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.BitStream
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.Arrow
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Bitstreams constructed using W-types
+ 
+@@ -67,7 +69,6 @@ theorem. It does not establish why mathlib chose its direct datatype.
+ 
+ W-type, M-type, dependent type, presheaf, bitstream, finite approximation
+ -/
+-set_option doc.verso true
+ 
+ @[expose] public section
+ 
+@@ -196,7 +197,7 @@ def zeroEquiv : Approx zero ≃ Unit :=
+     { toFun := fun _ ↦ ()
+       invFun := fun _ ↦ ⟨⟨(), Empty.elim⟩, funext fun i ↦ nomatch i⟩
+       left_inv := fun ⟨⟨(), _⟩, _⟩ ↦ Subtype.ext
+-        (congrArg (Obj.mk (P := (family false).toPFunctor) ())
++        (congrArg (Sigma.mk ())
+           (funext fun i ↦ nomatch i))
+       right_inv := fun _ ↦ rfl }
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean b/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
+index 14213f0..62408c2 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.Data.PFunctor.Univariate.M
+@@ -11,7 +12,8 @@ public import Mathlib.Logic.Equiv.List
+ public import Mathlib.Logic.Equiv.Option
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # From finite bitstrings to potentially infinite bitstreams
+ 
+@@ -84,7 +86,6 @@ formalize the W-type, M-type, and finite-observation comparisons.
+ 
+ M-type, W-type, polynomial functor, bitstream, finite approximation, corecursion
+ -/
+-set_option doc.verso true
+ 
+ @[expose] public section
+ 
+@@ -124,7 +125,7 @@ def layerEquiv (α : Type*) : sig α ≃ Layer α where
+     | some (b, t) => .mk (some b) fun _ ↦ t
+   left_inv x := by
+     rcases x with ⟨_ | b, f⟩
+-    · exact congrArg (Obj.mk (P := sig) (α := α) none) (funext fun i ↦ nomatch i)
++    · exact congrArg (Sigma.mk none) (funext fun i ↦ nomatch i)
+     · rfl
+   right_inv x := by
+     rcases x with _ | ⟨b, t⟩ <;> rfl
+@@ -475,9 +476,9 @@ theorem take_seqOfObservations (s : Observations) (n : ℕ) :
+   intro i
+   rw [seq_getElem?_take]
+   by_cases h : i < n
+-  · rw [ite_eq_left h]
++  · rw [if_pos h]
+     exact (s.getElem?_atDepth h).symm
+-  · rw [ite_eq_right h]
++  · rw [if_neg h]
+     exact (List.getElem?_eq_none (by have := (s.atDepth n).property; omega)).symm
+ 
+ /-- Compatible bounded prefixes carry exactly the information of a sequence of
+@@ -488,7 +489,7 @@ def observationsEquiv : Observations ≃ Stream'.Seq Bool where
+   left_inv s := Observations.ext (funext fun n ↦ Subtype.ext (take_seqOfObservations s n))
+   right_inv s := Stream'.Seq.ext fun n ↦ by
+     change (s.take (n + 1))[n]? = s.get? n
+-    simp only [seq_getElem?_take, Nat.lt_succ_self, ite_eq_left]
++    simp only [seq_getElem?_take, Nat.lt_succ_self, if_pos]
+ 
+ /-- The M-type is a sequence of optional bits, with no bit after termination.
+ The intermediate equivalence retains the construction by finite approximations. -/
+@@ -545,7 +546,7 @@ theorem seqEquiv_corec {α : Type*} (f : α → sig α) (a : α) :
+     ((take_seqEquiv (M.corec f a) (n + 1)).trans
+       ((congrArg Subtype.val (approxEquiv_sCorec f (n + 1) a)).trans
+         (corecPrefix_eq_take _ (n + 1) a)))
+-  simpa only [seq_getElem?_take, Nat.lt_succ_self, ite_eq_left] using h
++  simpa only [seq_getElem?_take, Nat.lt_succ_self, if_pos] using h
+ 
+ /-- The default M-value is the terminating empty stream. -/
+ theorem seqEquiv_default : seqEquiv (default : sig.M) = Stream'.Seq.nil :=
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/CanonicalSExpr.lean b/vendor/geb-mathlib/Geb/Prototypes/CanonicalSExpr.lean
 index 41a116e..712144b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/CanonicalSExpr.lean
@@ -2634,6 +2741,421 @@ index 64ca7e0..cb70aa9 100644
  
  /-- The first phase keeps the length part within the input when its bases and
  steps do, up to the input's length. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScan.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScan.lean
+index 0f453da..56c975b 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScan.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScan.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Numeral
+@@ -85,6 +86,8 @@ structure NState where
+   endPos : ℕ
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprNState.repr
++
+ /-- The initial state. -/
+ @[expose] def nstart : NState := ⟨.before, 0, 0, 0, false, false, 0⟩
+ 
+@@ -135,7 +138,7 @@ theorem nrunFrom_before (n tp i : ℕ) (u : List Bool) : ∀ (pos : ℕ) (x : NS
+   List.rec (fun pos x _ _ ↦ by rw [nrunFrom]; rfl) (fun b u ih pos x hx hp ↦ by
+     rw [List.length_cons] at hp
+     rw [nrunFrom_cons, show nstep n tp i x pos b = x by
+-      unfold nstep; rw [hx]; dsimp only; rw [ite_eq_right (by omega)], ih (pos + 1) x hx (by omega),
++      unfold nstep; rw [hx]; dsimp only; rw [if_neg (by omega)], ih (pos + 1) x hx (by omega),
+       List.length_cons]
+     rw [Nat.add_assoc, Nat.add_comm 1]) u
+ 
+@@ -188,11 +191,11 @@ theorem nrunFrom_size (n tp i : ℕ) (sb : List Bool) : ∀ (pos z cnt s : ℕ),
+     cases sb with
+     | nil =>
+       change nrunFrom n tp i (if cnt + 1 = z then _ else _) (pos + 1) [] = _
+-      rw [ite_eq_left (by simp only [List.length_nil] at hl; omega), nrunFrom]
++      rw [if_pos (by simp only [List.length_nil] at hl; omega), nrunFrom]
+       rfl
+     | cons c sb =>
+       change nrunFrom n tp i (if cnt + 1 = z then _ else _) (pos + 1) (c :: sb) = _
+-      rw [ite_eq_right (by simp only [List.length_cons] at hl; omega),
++      rw [if_neg (by simp only [List.length_cons] at hl; omega),
+         ih (pos + 1) z (cnt + 1) (min (2 * s + b.toNat) n) (List.cons_ne_nil c sb)
+           (by simp only [List.length_cons] at hl ⊢; omega), List.length_cons, List.length_cons]
+       rw [show pos + 1 + (sb.length + 1) = pos + (sb.length + 1 + 1) by omega]
+@@ -216,21 +219,21 @@ theorem nrunFrom_bits (n tp i : ℕ) (bs : List Bool) :
+     cases bs with
+     | nil =>
+       change nrunFrom n tp i (if cnt + 1 + 1 = s then _ else _) (pos + 1) [] = _
+-      rw [ite_eq_left (by simp only [List.length_nil] at hl; omega), nrunFrom]
++      rw [if_pos (by simp only [List.length_nil] at hl; omega), nrunFrom]
+       simp only [List.foldl_nil, List.getLast_singleton, hitAfter]
+       by_cases hi : i < cnt
+-      · rw [ite_eq_left hi, ite_eq_right (by omega)]
++      · rw [if_pos hi, if_neg (by omega)]
+         rfl
+-      · rw [ite_eq_right hi]
++      · rw [if_neg hi]
+         by_cases hc : cnt = i
+-        · rw [ite_eq_left hc, hc, Nat.sub_self, List.getD_cons_zero]
++        · rw [if_pos hc, hc, Nat.sub_self, List.getD_cons_zero]
+           rfl
+-        · rw [ite_eq_right hc, show i - cnt = i - cnt - 1 + 1 by omega, List.getD_cons_succ,
++        · rw [if_neg hc, show i - cnt = i - cnt - 1 + 1 by omega, List.getD_cons_succ,
+             List.getD_nil]
+           rfl
+     | cons c bs =>
+       change nrunFrom n tp i (if cnt + 1 + 1 = s then _ else _) (pos + 1) (c :: bs) = _
+-      rw [ite_eq_right (by simp only [List.length_cons] at hl; omega),
++      rw [if_neg (by simp only [List.length_cons] at hl; omega),
+         ih (pos + 1) z (cnt + 1) s (if cnt = i then b else hit) (List.cons_ne_nil c bs)
+           (by simp only [List.length_cons] at hl ⊢; omega), List.length_cons, List.length_cons]
+       have hpos : pos + 1 + (bs.length + 1) = pos + (bs.length + 1 + 1) := by omega
+@@ -242,11 +245,11 @@ theorem nrunFrom_bits (n tp i : ℕ) (bs : List Bool) :
+           hitAfter hit cnt i (b :: c :: bs) := by
+         unfold hitAfter
+         by_cases hi : i < cnt
+-        · rw [ite_eq_left (by omega), ite_eq_left hi, ite_eq_right (by omega)]
+-        · rw [ite_eq_right hi]
++        · rw [if_pos (by omega), if_pos hi, if_neg (by omega)]
++        · rw [if_neg hi]
+           by_cases hc : cnt = i
+-          · rw [ite_eq_left (by omega), ite_eq_left hc, hc, Nat.sub_self, List.getD_cons_zero]
+-          · rw [ite_eq_right (by omega), ite_eq_right hc, show i - cnt = i - (cnt + 1) + 1 by omega,
++          · rw [if_pos (by omega), if_pos hc, hc, Nat.sub_self, List.getD_cons_zero]
++          · rw [if_neg (by omega), if_neg hc, show i - cnt = i - (cnt + 1) + 1 by omega,
+               List.getD_cons_succ]
+       rw [hlast, hhit]
+       simp only [List.length_cons, hpos, hcnt]) bs
+@@ -287,7 +290,7 @@ theorem nrunFrom_natCode (n tp i m : ℕ) (hnl : (natCode m).length ≤ n) :
+     change nrunFrom n tp i nstart tp [true] = _
+     rw [nrunFrom_cons]
+     change nrunFrom n tp i (if tp = tp then _ else _) (tp + 1) [] = _
+-    rw [ite_eq_left rfl, nrunFrom]
++    rw [if_pos rfl, nrunFrom]
+     rfl
+   | succ m' =>
+     have hm : m' + 1 ≠ 0 := Nat.succ_ne_zero m'
+@@ -328,14 +331,14 @@ theorem nrunFrom_natCode (n tp i m : ℕ) (hnl : (natCode m).length ≤ n) :
+       simp only [List.cons_append, List.append_assoc]
+     rw [hlen, hsplit, nrunFrom_cons]
+     change nrunFrom n tp i (if tp = tp then _ else _) (tp + 1) _ = _
+-    rw [ite_eq_left rfl, ite_eq_right (show ¬false = true by decide), nrunFrom_append,
++    rw [if_pos rfl, if_neg (show ¬false = true by decide), nrunFrom_append,
+       nrunFrom_zeros, nrunFrom_cons]
+     change nrunFrom n tp i ⟨.size, 1 + k, 0, 1, false, false, 0⟩ (tp + 1 + k + 1) _ = _
+     rw [nrunFrom_append, nrunFrom_size _ _ _ _ _ _ _ _ hpne (by rw [hpl]; omega), hpl, hsat,
+       nrunFrom_bits _ _ _ _ _ _ _ _ _ hbne (by rw [hbl]; omega), hbl, hk]
+     have hhit : hitAfter false 0 i (m' + 1).bits = (m' + 1).bits.getD i false := by
+       unfold hitAfter
+-      rw [ite_eq_right (Nat.not_lt_zero i), Nat.sub_zero]
++      rw [if_neg (Nat.not_lt_zero i), Nat.sub_zero]
+     rw [hhit, getLast_of_canonical _ hbne (canonical_bits _), Nat.zero_add,
+       show 1 + k = k + 1 by omega,
+       show tp + 1 + k + 1 + (k + 1) + (m' + 1).size = tp + (2 * (k + 1) + 1 + (m' + 1).size) by
+@@ -378,12 +381,12 @@ theorem hitAfter_cons (hit : Bool) (cnt i : ℕ) (b : Bool) (bs : List Bool) :
+     hitAfter hit cnt i (b :: bs) = hitAfter (if cnt = i then b else hit) (cnt + 1) i bs := by
+   unfold hitAfter
+   by_cases hi : i < cnt
+-  · rw [ite_eq_left hi, ite_eq_left (show i < cnt + 1 by omega),
+-      ite_eq_right (show ¬cnt = i by omega)]
+-  · rw [ite_eq_right hi]
++  · rw [if_pos hi, if_pos (show i < cnt + 1 by omega),
++      if_neg (show ¬cnt = i by omega)]
++  · rw [if_neg hi]
+     by_cases hc : cnt = i
+-    · rw [hc, Nat.sub_self, List.getD_cons_zero, ite_eq_left (Nat.lt_succ_self i), ite_eq_left rfl]
+-    · rw [ite_eq_right (show ¬i < cnt + 1 by omega), ite_eq_right hc,
++    · rw [hc, Nat.sub_self, List.getD_cons_zero, if_pos (Nat.lt_succ_self i), if_pos rfl]
++    · rw [if_neg (show ¬i < cnt + 1 by omega), if_neg hc,
+         show i - cnt = i - (cnt + 1) + 1 by omega, List.getD_cons_succ]
+ 
+ /-- A run from the zero run that ends done read a zero run and the bit
+@@ -418,9 +421,9 @@ theorem done_of_size (n tp i : ℕ) (v : List Bool) : ∀ (pos z cnt s : ℕ),
+         else ⟨.size, z, cnt + 1, min (2 * s + b.toNat) n, false, false, 0⟩ := rfl
+     rw [nrunFrom_cons, hstep] at h ⊢
+     by_cases hc : cnt + 1 = z
+-    · rw [ite_eq_left hc] at h ⊢
++    · rw [if_pos hc] at h ⊢
+       exact ⟨[b], v, rfl, by rw [List.length_singleton]; exact hc, rfl⟩
+-    · rw [ite_eq_right hc] at h ⊢
++    · rw [if_neg hc] at h ⊢
+       obtain ⟨sb, v', rfl, hl, he⟩ := ih (pos + 1) z (cnt + 1) (min (2 * s + b.toNat) n) h
+       refine ⟨b :: sb, v', rfl, by rw [List.length_cons]; omega, ?_⟩
+       rw [he, List.length_cons, show pos + 1 + sb.length = pos + (sb.length + 1) by omega]
+@@ -441,10 +444,10 @@ theorem done_of_bits (n tp i : ℕ) (v : List Bool) : ∀ (pos z cnt s : ℕ) (h
+           else ⟨.bits, z, cnt + 1, s, if cnt = i then b else hit, false, 0⟩ := rfl
+       rw [nrunFrom_cons, hstep] at h ⊢
+       by_cases hc : cnt + 1 + 1 = s
+-      · rw [ite_eq_left hc] at h ⊢
++      · rw [if_pos hc] at h ⊢
+         refine ⟨[b], v, List.cons_ne_nil b [], rfl, by rw [List.length_singleton]; exact hc, ?_⟩
+         rw [List.length_singleton, List.getLast_singleton, hitAfter_cons, hitAfter_nil]
+-      · rw [ite_eq_right hc] at h ⊢
++      · rw [if_neg hc] at h ⊢
+         obtain ⟨bs, v', hbs, rfl, hl, he⟩ :=
+           ih (pos + 1) z (cnt + 1) s (if cnt = i then b else hit) h
+         refine ⟨b :: bs, v', List.cons_ne_nil b bs, rfl, by rw [List.length_cons]; omega, ?_⟩
+@@ -510,13 +513,13 @@ theorem nrun_done (tp i : ℕ) (w : List Bool) (hd : (nrun tp i w).mode = .done)
+     change ∃ m rest, b :: v = natCode m ++ rest ∧
+       (nrunFrom n tp i (if tp = tp then _ else _) (tp + 1) v).1.endPos = _ ∧
+       (nrunFrom n tp i (if tp = tp then _ else _) (tp + 1) v).1.hit = _
+-    rw [ite_eq_left rfl] at hd hok ⊢
++    rw [if_pos rfl] at hd hok ⊢
+     cases b with
+     | true =>
+       rw [nrunFrom_done n tp i v _ _ rfl]
+       exact ⟨0, v, rfl, rfl, rfl⟩
+     | false =>
+-      rw [ite_eq_right (show ¬false = true by decide)] at hd hok ⊢
++      rw [if_neg (show ¬false = true by decide)] at hd hok ⊢
+       obtain ⟨k, v', rfl, he₁⟩ := done_of_zeros n tp i v (tp + 1) 1 hd
+       rw [he₁] at hd hok ⊢
+       obtain ⟨sb, v'', rfl, hsl, he₂⟩ := done_of_size n tp i v' _ (1 + k) 0 1 hd
+@@ -557,7 +560,7 @@ theorem nrun_done (tp i : ℕ) (w : List Bool) (hd : (nrun tp i w).mode = .done)
+       · change hitAfter false 0 i bs = _
+         rw [hbits]
+         unfold hitAfter
+-        rw [ite_eq_right (Nat.not_lt_zero i), Nat.sub_zero]
++        rw [if_neg (Nat.not_lt_zero i), Nat.sub_zero]
+ 
+ end
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean
+index 285415d..cc363a3 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.BitTree.Elias.Code
+@@ -161,7 +162,7 @@ theorem readNatCode_natCode_append (n : ℕ) (rest : List Bool) :
+   rw [readNatCode, natCode, List.append_assoc,
+     Geb.BitTree.Elias.readGamma_encodeGamma_append (n.size + 1) (Nat.succ_ne_zero _),
+     Option.bind_some, Nat.add_sub_cancel, ← length_bits, readBits_append, Option.bind_some,
+-    canonical_bits, ite_eq_left rfl, fromBits_bits]
++    canonical_bits, if_pos rfl, fromBits_bits]
+ 
+ /-- A successful read identifies the code and the suffix. -/
+ theorem readNatCode_eq_some (w : List Bool) (n : ℕ) (rest : List Bool)
+@@ -176,13 +177,13 @@ theorem readNatCode_eq_some (w : List Bool) (n : ℕ) (rest : List Bool)
+       rcases q with ⟨bs, rest'⟩
+       simp only [readNatCode, hg, Option.bind_some, hb] at h
+       by_cases hc : canonical bs = true
+-      · rw [ite_eq_left hc] at h
++      · rw [if_pos hc] at h
+         obtain ⟨rfl, rfl⟩ := Prod.mk.inj (Option.some.inj h)
+         obtain ⟨hs, hw⟩ := Geb.BitTree.Elias.readGamma_eq_some w s suffix hg
+         obtain ⟨hl, hsuf⟩ := readBits_eq_some (s - 1) suffix bs rest' hb
+         rw [hw, hsuf, natCode, bits_fromBits bs hc, ← length_bits, bits_fromBits bs hc, hl,
+           show s - 1 + 1 = s by omega, List.append_assoc]
+-      · rw [ite_eq_right hc] at h
++      · rw [if_neg hc] at h
+         cases h
+ 
+ /-- The code is injective. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Positions.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Positions.lean
+index daf8f41..452b4e8 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Positions.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Positions.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Spell
+@@ -67,6 +68,8 @@ structure Loc where
+   len : ℕ
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprLoc.repr
++
+ /-- A node: its label's location and its children's, in order. -/
+ structure Node where
+   /-- The label. -/
+@@ -75,6 +78,8 @@ structure Node where
+   children : List Loc
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprNode.repr
++
+ /-- The number of children. -/
+ @[expose] def Node.k (n : Node) : ℕ := n.children.length
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
+index 199b86e..7a94942 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Spell
+@@ -82,12 +83,12 @@ public section
+     else .inr (.inr ⟨j - 2 * b, by omega⟩)
+   left_inv x := by
+     rcases x with i | i | i
+-    · exact dite_eq_left i.2
++    · exact dif_pos i.2
+     · dsimp only
+-      rw [dite_eq_right (by omega), dite_eq_left (by omega)]
++      rw [dif_neg (by omega), dif_pos (by omega)]
+       exact congrArg Sum.inr (congrArg Sum.inl (Fin.ext (Nat.add_sub_cancel_left _ _)))
+     · dsimp only
+-      rw [dite_eq_right (by omega), dite_eq_right (by omega)]
++      rw [dif_neg (by omega), dif_neg (by omega)]
+       exact congrArg Sum.inr (congrArg Sum.inr (Fin.ext (Nat.add_sub_cancel_left _ _)))
+   right_inv j := by
+     dsimp only
+@@ -142,7 +143,7 @@ theorem decode_code : ∀ a, decode (code a) = some a
+     change (readNatCode (natCode i)).bind _ = _
+     rw [← List.append_nil (natCode i), readNatCode_natCode_append, Option.bind_some]
+     dsimp only
+-    rw [ite_eq_left rfl, dite_eq_left i.2]
++    rw [if_pos rfl, dif_pos i.2]
+   | .sbs b => rfl
+   | .comp n m => by
+     change (readNatCode (natCode n ++ natCode m)).bind _ = _
+@@ -150,7 +151,7 @@ theorem decode_code : ∀ a, decode (code a) = some a
+     change (readNatCode (natCode m)).bind _ = _
+     rw [← List.append_nil (natCode m), readNatCode_natCode_append, Option.bind_some]
+     dsimp only
+-    rw [ite_eq_left rfl]
++    rw [if_pos rfl]
+   | .srn a b j => by
+     change (readNatCode (natCode a ++ natCode b ++ natCode j)).bind _ = _
+     rw [List.append_assoc, readNatCode_natCode_append, Option.bind_some]
+@@ -159,7 +160,7 @@ theorem decode_code : ∀ a, decode (code a) = some a
+     change (readNatCode (natCode j)).bind _ = _
+     rw [← List.append_nil (natCode j), readNatCode_natCode_append, Option.bind_some]
+     dsimp only
+-    rw [ite_eq_left rfl, dite_eq_left j.2]
++    rw [if_pos rfl, dif_pos j.2]
+ 
+ /-- A word that decodes is the code of what it decodes to. -/
+ theorem code_of_decode {w : List Bool} {a : Shape} (h : decode w = some a) : code a = w := by
+@@ -184,15 +185,15 @@ theorem code_of_decode {w : List Bool} {a : Shape} (h : decode w = some a) : cod
+       | some q =>
+         rw [hq, Option.bind_some] at h
+         by_cases he : q.2 = []
+-        · rw [ite_eq_left he] at h
++        · rw [if_pos he] at h
+           by_cases hlt : q.1 < p.1
+-          · rw [dite_eq_left hlt] at h
++          · rw [dif_pos hlt] at h
+             obtain rfl := Option.some.inj h
+             change false :: false :: true :: (natCode p.1 ++ natCode q.1) = _
+             rw [readNatCode_eq_some s p.1 p.2 hr, readNatCode_eq_some p.2 q.1 q.2 hq, he,
+               List.append_nil]
+-          · rw [dite_eq_right hlt] at h; cases h
+-        · rw [ite_eq_right he] at h; cases h
++          · rw [dif_neg hlt] at h; cases h
++        · rw [if_neg he] at h; cases h
+   | [false, true, false, b], h =>
+     obtain rfl := Option.some.inj h
+     rfl
+@@ -207,12 +208,12 @@ theorem code_of_decode {w : List Bool} {a : Shape} (h : decode w = some a) : cod
+       | some q =>
+         rw [hq, Option.bind_some] at h
+         by_cases he : q.2 = []
+-        · rw [ite_eq_left he] at h
++        · rw [if_pos he] at h
+           obtain rfl := Option.some.inj h
+           change false :: true :: true :: (natCode p.1 ++ natCode q.1) = _
+           rw [readNatCode_eq_some s p.1 p.2 hr, readNatCode_eq_some p.2 q.1 q.2 hq, he,
+             List.append_nil]
+-        · rw [ite_eq_right he] at h; cases h
++        · rw [if_neg he] at h; cases h
+   | true :: false :: false :: s, h =>
+     change (readNatCode s).bind _ = _ at h
+     cases hr : readNatCode s with
+@@ -228,16 +229,16 @@ theorem code_of_decode {w : List Bool} {a : Shape} (h : decode w = some a) : cod
+         | some r =>
+           rw [hs, Option.bind_some] at h
+           by_cases he : r.2 = []
+-          · rw [ite_eq_left he] at h
++          · rw [if_pos he] at h
+             by_cases hlt : r.1 < q.1
+-            · rw [dite_eq_left hlt] at h
++            · rw [dif_pos hlt] at h
+               obtain rfl := Option.some.inj h
+               change true :: false :: false :: (natCode p.1 ++ natCode q.1 ++ natCode r.1) = _
+               rw [List.append_assoc, readNatCode_eq_some s p.1 p.2 hr,
+                 readNatCode_eq_some p.2 q.1 q.2 hq, readNatCode_eq_some q.2 r.1 r.2 hs, he,
+                 List.append_nil]
+-            · rw [dite_eq_right hlt] at h; cases h
+-          · rw [ite_eq_right he] at h; cases h
++            · rw [dif_neg hlt] at h; cases h
++          · rw [if_neg he] at h; cases h
+ 
+ /-- The algebra's signature as a coded signature. -/
+ @[expose] def sigCoded : CodedSig ℕ where
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean
+index 026ba4d..5f5cee9 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Slice.W
+@@ -260,7 +261,7 @@ theorem close_code (a : C.P.A) (f : C.P.B a → C.P.toPFunctor.W) :
+   unfold close
+   rw [C.decode_code]
+   dsimp only
+-  rw [dite_eq_left List.length_ofFn]
++  rw [dif_pos List.length_ofFn]
+   congr 2
+   funext b
+   rw [List.getElem_ofFn, Fin.eta, C.dir_idx]
+@@ -278,9 +279,9 @@ theorem close_eq_some (s : List Bool) (cs : List C.P.toPFunctor.W) (c : C.P.toPF
+     rw [hd] at hc
+     dsimp only at hc
+     by_cases h : cs.length = C.card a
+-    · rw [dite_eq_left h] at hc
++    · rw [dif_pos h] at hc
+       exact ⟨a, h, rfl, (Option.some.inj hc).symm⟩
+-    · rw [dite_eq_right h] at hc
++    · rw [dif_neg h] at hc
+       cases hc
+ 
+ /-- A label closes over children exactly when it is in order at their number. -/
+@@ -292,10 +293,10 @@ theorem close_isSome_iff (s : List Bool) (cs : List C.P.toPFunctor.W) :
+   | some a =>
+     dsimp only
+     by_cases h : cs.length = C.card a
+-    · rw [dite_eq_left h]
++    · rw [dif_pos h]
+       simp only [decide_eq_true_iff]
+       exact ⟨fun _ ↦ h.symm, fun _ ↦ rfl⟩
+-    · rw [dite_eq_right h]
++    · rw [dif_neg h]
+       simp only [decide_eq_true_iff]
+       exact ⟨fun h' ↦ absurd h' Bool.false_ne_true, fun h' ↦ absurd h'.symm h⟩
+ 
+@@ -511,7 +512,7 @@ theorem wValid_mk_iff (a : C.P.A) (f : C.P.B a → C.P.toPFunctor.W)
+     unfold edgeSpec
+     rw [C.decode_code, C.decode_code]
+     dsimp only
+-    rw [dite_eq_left (show i.1 < C.card a from i.2), decide_eq_true_iff]
++    rw [dif_pos (show i.1 < C.card a from i.2), decide_eq_true_iff]
+     rfl
+ 
+ /-- A W-tree is admissible exactly when the edges of its spelling are in
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
 index d9ca6f8..7c0966a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
@@ -3183,10 +3705,38 @@ index 03de8f0..5917140 100644
              parseChildren_print _ (List.ofFn ch) (g + 1) rest hchild hfuel,
              Option.map_some, Rose.ofList_ofFn]) r
  
-diff --git a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
-index cddb207..caa9f71 100644
---- a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
-+++ b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean b/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean
+index 0c0ab51..d6a4f07 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.Algebra.Group.Basic
+ public import Mathlib.Algebra.Group.Int.Defs
+ public import Mathlib.Data.Int.Order.Basic
+ public import Mathlib.Data.List.Infix
++public import Mathlib.Order.MinMax
+ public import Mathlib.Tactic.Finiteness.Attr
+ meta import GebMeta -- shake: keep
+ 
+@@ -61,6 +63,8 @@ namespace Geb.SuccinctTree
+   minimum : ℤ
+   deriving DecidableEq, Repr, Inhabited
+ 
++attribute [nolint unusedArguments] instReprSummary.repr
++
+ /-- Combine adjacent blocks; the second block's prefixes start at the first block's total. -/
+ def Summary.append (a b : Summary) : Summary :=
+   ⟨a.total + b.total, min a.minimum (a.total + b.minimum)⟩
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Typechecker/Instances.lean b/vendor/geb-mathlib/Geb/Prototypes/Typechecker/Instances.lean
+index 41837e2..20f55ea 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Typechecker/Instances.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Typechecker/Instances.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
  Authors: Terence Rokop
@@ -3194,23 +3744,86 @@ index cddb207..caa9f71 100644
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module
  
+ public import Geb.Prototypes.Typechecker.Coequalizers
+@@ -16,7 +17,7 @@ public import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
+ public import Mathlib.CategoryTheory.Limits.Shapes.Terminal
+ public import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
+ public import Mathlib.CategoryTheory.Monoidal.Closed.Basic
+-public import Mathlib.CategoryTheory.Subobject.Classifier.Defs
++public import Mathlib.CategoryTheory.Topos.Classifier
+ 
+ set_option doc.verso true in
+ /-!
+@@ -314,7 +315,7 @@ theorem image_iff_of_isPullback (hS : HasConstants S) (m : X ⟶ Y) (k : X ⟶ K
+ /-- Every classifier tests mono images by equality with a fixed truth point, provided constants
+ are admissible and some object has an accepted point. The classifier need not be two-valued. -/
+ theorem image_iff_of_classifier (hS : HasConstants S)
+-    (c : Subobject.Classifier (DecisionProblem S t f))
++    (c : CategoryTheory.Classifier (DecisionProblem S t f))
+     {T : DecisionProblem S t f} (a : Fiber T) (m : X ⟶ Y) [Mono m] (y : Fiber Y) :
+     (c.χ m).restrict y = c.truth.restrict ((c.χ₀ T).restrict a) ↔
+       ∃ x : Fiber X, m.restrict x = y := by
+@@ -326,7 +327,7 @@ theorem image_iff_of_classifier (hS : HasConstants S)
+ /-- On accepted target inputs, every mono image is an equality fiber of an admissible
+ endomorphism if a classifier exists. This is a necessary condition on the function subset. -/
+ theorem exists_image_test_of_classifier (hS : HasConstants S)
+-    (c : Subobject.Classifier (DecisionProblem S t f))
++    (c : CategoryTheory.Classifier (DecisionProblem S t f))
+     {T : DecisionProblem S t f} (a : Fiber T) (m : X ⟶ Y) [Mono m] :
+     ∃ r : S, ∃ v : B, ∀ y : Fiber Y,
+       r.val y.val = v ↔ ∃ x : Fiber X, m.restrict x = y := by
+@@ -351,7 +352,7 @@ theorem isPullback (m : X ⟶ Y) [Mono m] :
+   exact IsTerminal.hom_ext (terminalCone d.terminal d.terminal_pass_iff).isLimit _ _
+ 
+ /-- Admissible image tests and image inverses supply the classifier field of an elementary topos. -/
+-def classifier : Subobject.Classifier (DecisionProblem S t f) where
++def classifier : CategoryTheory.Classifier (DecisionProblem S t f) where
+   Ω₀ := d.terminal
+   Ω := d.omega
+   truth := d.truth
+@@ -374,7 +375,7 @@ end ClassifierData
+ 
+ /-- Classification data supplies existence of a subobject classifier. -/
+ instance hasSubobjectClassifier [d : Nonempty (ClassifierData S t f)] :
+-    HasSubobjectClassifier (DecisionProblem S t f) := by
++    HasClassifier (DecisionProblem S t f) := by
+   obtain ⟨d⟩ := d
+   exact ⟨⟨d.classifier⟩⟩
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
+index 9a743f6..fa0049b 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
+@@ -3,11 +3,12 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
  public import Mathlib.Algebra.Group.End
-@@ -191,7 +192,7 @@ theorem Representative.toHom_comp {X Y Z : Typechecker S b}
- /-- Interpret each typechecker as its fiber and each morphism as its restriction. -/
- def interpretation (S : Submonoid (Function.End B)) (b : B) : Typechecker S b ⥤ Type u where
+ public import Mathlib.Algebra.Group.Submonoid.Defs
+-public import Mathlib.Basic.Nontrivial.Defs
++public import Mathlib.Logic.Nontrivial.Defs
+ public import Mathlib.CategoryTheory.SingleObj
+ public import Mathlib.CategoryTheory.Types.Basic
+ public import Mathlib.Data.Setoid.Basic
+@@ -274,7 +275,7 @@ theorem Representative.toHom_comp {X Y Z : DecisionProblem S t f}
+ def interpretation (S : Submonoid (Function.End B)) (t f : B) :
+     DecisionProblem S t f ⥤ Type u where
    obj := Fiber
 -  map f := TypeCat.ofHom f.restrict
 +  map f := f.restrict
    map_id _ := rfl
    map_comp f g := Quotient.inductionOn₂ f g fun _ _ ↦ rfl
  
-@@ -203,8 +204,7 @@ theorem interpretation_map_toHom {X Y : Typechecker S b}
+@@ -286,8 +287,7 @@ theorem interpretation_map_toHom {X Y : DecisionProblem S t f}
  
  /-- Equality of interpretations is exactly equality in the quotient. -/
- instance interpretation_faithful : (interpretation S b).Faithful where
+ instance interpretation_faithful : (interpretation S t f).Faithful where
 -  map_injective {X Y} _ _ h := Hom.ext
 -    (congrArg (fun k : Fiber X ⟶ Fiber Y ↦ (k : Fiber X → Fiber Y)) h)
 +  map_injective h := Hom.ext h
  
- end Typechecker
+ end DecisionProblem
  

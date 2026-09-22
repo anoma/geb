@@ -37,11 +37,22 @@ SRC_REV="${1:-main}"
 # Cslib.Computability.Machines.Turing.MultiTape.Configuration, also
 # added after the pin.
 #
+# Geb.Prototypes.Computability.Oitavem.Machine.SpaceTime: imports
+# Cslib.Computability.Machines.Turing.MultiTape.ConfigBound, likewise
+# added after the pin.
+#
+# Geb.Prototypes.Computability.Oitavem.Word imports
+# BitTreeScanner.Encoding; every other Oitavem module imports Word,
+# so Oitavem is excluded as a whole, and with it its importers
+# BitStream.Oitavem, Typechecker.Oitavem, and RoseTree.Bits (whose
+# importers Spine and Packed follow).
+#
 # The remaining entries import one of the above, directly or through
 # a chain of such imports, or are imported only by such modules, which
 # would leave them unreachable from the Geb umbrella
 # (scripts/tests/test-lint-driver.sh reports these).
 EXCLUDED_MODULES=(
+  Geb.Prototypes.BitStream.Oitavem
   Geb.Prototypes.Computability.BitTree.BinaryMachine.Accounting
   Geb.Prototypes.Computability.BitTree.BinaryMachine.BitStep
   Geb.Prototypes.Computability.BitTree.BinaryMachine.Bound
@@ -102,11 +113,34 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Computability.Mazzanti.Growth
   Geb.Prototypes.Computability.Mazzanti.Words
   Geb.Prototypes.Computability.MultiTape
+  Geb.Prototypes.Computability.Oitavem
+  Geb.Prototypes.Computability.SizeBounded.Logspace.EliasTree
   Geb.Prototypes.Computability.SizeBounded.Logspace.Machine
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.BitFold
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ChildExpr
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Children
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Events
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ExprBase
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Machine
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NodeExpr
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Nodes
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumArith
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScanExpr
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumSum
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Recognize
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.RecognizeExpr
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigCheck
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigEdge
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigLabel
+  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigMachine
   Geb.Prototypes.Computability.SizeBounded.Machine
   Geb.Prototypes.Computability.SizeBounded.MachineBound
   Geb.Prototypes.Computability.SizeBounded.WordMachine
   Geb.Prototypes.Computability.TreeScanner
+  Geb.Prototypes.RoseTree.Bits
+  Geb.Prototypes.RoseTree.Packed
+  Geb.Prototypes.RoseTree.Spine
+  Geb.Prototypes.Typechecker.Oitavem
 )
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"   # geb-lean package root
 VENDOR="$ROOT/vendor/geb-mathlib"

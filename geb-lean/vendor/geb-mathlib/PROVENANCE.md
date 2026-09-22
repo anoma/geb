@@ -1,9 +1,10 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: 87f59897ccd0d6bac738e69cdbe98f83b8d8e324
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 a9a1406bcbf0fcb0a67083e97f690b3e22fc771ad19340cf91e8818651516ce5)
+- Source commit: 7d54d29b10dade8a863d1cc2eb1de223ecdb5baf
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 8d3e4ea116be4d44cf8f7f99cb7219a5d2071faa2fc5d10caea78f44ae1df7ae)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
+  - Geb.Prototypes.BitStream.Oitavem
   - Geb.Prototypes.Computability.BitTree.BinaryMachine.Accounting
   - Geb.Prototypes.Computability.BitTree.BinaryMachine.BitStep
   - Geb.Prototypes.Computability.BitTree.BinaryMachine.Bound
@@ -64,10 +65,33 @@
   - Geb.Prototypes.Computability.Mazzanti.Growth
   - Geb.Prototypes.Computability.Mazzanti.Words
   - Geb.Prototypes.Computability.MultiTape
+  - Geb.Prototypes.Computability.Oitavem
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.EliasTree
   - Geb.Prototypes.Computability.SizeBounded.Logspace.Machine
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.BitFold
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ChildExpr
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Children
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Events
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ExprBase
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Machine
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NodeExpr
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Nodes
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumArith
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScanExpr
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumSum
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Recognize
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.RecognizeExpr
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigCheck
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigEdge
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigLabel
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigMachine
   - Geb.Prototypes.Computability.SizeBounded.Machine
   - Geb.Prototypes.Computability.SizeBounded.MachineBound
   - Geb.Prototypes.Computability.SizeBounded.WordMachine
   - Geb.Prototypes.Computability.TreeScanner
+  - Geb.Prototypes.RoseTree.Bits
+  - Geb.Prototypes.RoseTree.Packed
+  - Geb.Prototypes.RoseTree.Spine
+  - Geb.Prototypes.Typechecker.Oitavem
 - `GebMeta` is not vendored: every import of it is dropped, each `{cite}` docstring role it supplies is rewritten to its escaped bracketed key, and each `{name}` role naming one of its declarations is rewritten to `{lit}`; see scripts/refresh-geb-mathlib.sh.
 - The files under `Geb/` are an unmodified mirror of the source commit except where the back-port patch changes them and where the exclusion above removes them; modified files carry a change notice in their header comment.
