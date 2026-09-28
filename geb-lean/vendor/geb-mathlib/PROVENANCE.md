@@ -1,10 +1,12 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: 7d54d29b10dade8a863d1cc2eb1de223ecdb5baf
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 8d3e4ea116be4d44cf8f7f99cb7219a5d2071faa2fc5d10caea78f44ae1df7ae)
+- Source commit: aef07e55a96854257fb9bd27f8284b89e4ea57e7
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 c7c1bc2f711b7685eaa479c152a242d41adfc87a6e8bb69101c39f0307c72fe4)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
+  - Geb.Cslib
   - Geb.Prototypes.BitStream.Oitavem
+  - Geb.Prototypes.Bootstrap
   - Geb.Prototypes.Computability.BitTree.BinaryMachine.Accounting
   - Geb.Prototypes.Computability.BitTree.BinaryMachine.BitStep
   - Geb.Prototypes.Computability.BitTree.BinaryMachine.Bound
@@ -89,6 +91,14 @@
   - Geb.Prototypes.Computability.SizeBounded.MachineBound
   - Geb.Prototypes.Computability.SizeBounded.WordMachine
   - Geb.Prototypes.Computability.TreeScanner
+  - Geb.Prototypes.Definition
+  - Geb.Prototypes.FreeTopos.Translation
+  - Geb.Prototypes.FreeTopos.TranslationKernel
+  - Geb.Prototypes.FreeTopos.TranslationLibrary
+  - Geb.Prototypes.FreeTopos.TranslationSound
+  - Geb.Prototypes.FreeTopos.TranslationSoundClassical
+  - Geb.Prototypes.Kernel.Command
+  - Geb.Prototypes.Kernel.Image
   - Geb.Prototypes.RoseTree.Bits
   - Geb.Prototypes.RoseTree.Packed
   - Geb.Prototypes.RoseTree.Spine

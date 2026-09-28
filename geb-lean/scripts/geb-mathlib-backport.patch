@@ -1103,7 +1103,7 @@ index 72793cc..a03ffc8 100644
      (z : ((posSlice.{max uA uI, uB, uI, uI} I I γ).interp (wObj.{uA, uB, uI} I γ)).1) :
      wDecode I γ (W.mk.{uA, uB, uI} I γ z) =
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
-index 004265e..fc173cb 100644
+index 2675808..66313c5 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1114,7 +1114,7 @@ index 004265e..fc173cb 100644
  module
  
  public import Geb.Mathlib.Data.PFunctor.Slice.Basic
-@@ -101,7 +102,7 @@ later diamond via `PresheafDomPFunctorData` and `SlicePFunctor`); pinned
+@@ -105,7 +106,7 @@ later diamond via `PresheafDomPFunctorData` and `SlicePFunctor`); pinned
  references to it elsewhere take the synthesized order
  `PresheafDomPFunctorData.{uI, uA, uB, vI}`.
  
@@ -1123,7 +1123,7 @@ index 004265e..fc173cb 100644
  the inherited `PFunctor` universes `uA`/`uB`: they are
  the two `Type` universes of the `PFunctor` parent and appear only together in
  the result `max`, so the linter flags them as a pair that could be unified. The
-@@ -143,10 +144,10 @@ open CategoryTheory
+@@ -147,10 +148,10 @@ open CategoryTheory
  
  universe uI uJ uA uB uZ u v vI vJ uX
  
@@ -1135,7 +1135,7 @@ index 004265e..fc173cb 100644
  structure PresheafDomPFunctorData (I : Type uI) [Category.{vI} I] :
      Type (max (uA + 1) (uB + 1) uI vI)
      extends SliceDomPFunctor.{uA, uB} I where
-@@ -251,8 +252,7 @@ private theorem value_map {I : Type uI} [Category.{vI} I]
+@@ -264,8 +265,7 @@ private theorem value_map {I : Type uI} [Category.{vI} I]
      intro i i' f b
      simp only [value_map]
      refine (congrArg (fun w ↦ α.app ⟨i'⟩ w) (x.2 f b)).trans ?_
@@ -1145,7 +1145,7 @@ index 004265e..fc173cb 100644
  
  /-- Functoriality in the input presheaf: the identity transformation acts as
  the identity. -/
-@@ -281,10 +281,10 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
+@@ -294,10 +294,10 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
  
  end PresheafDomPFunctorData
  
@@ -1157,7 +1157,7 @@ index 004265e..fc173cb 100644
  structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
      Type (max (uA + 1) (uB + 1) uI vI)
      extends PresheafDomPFunctorData.{uI, uA, uB, vI} I where
-@@ -293,10 +293,10 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
+@@ -306,10 +306,10 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
  
  attribute [ext] PresheafDomPFunctorData PresheafDomPFunctor
  
@@ -1169,7 +1169,7 @@ index 004265e..fc173cb 100644
  structure PresheafPFunctorData (I : Type uI) [Category.{vI} I]
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafDomPFunctorData.{uI, uA, uB, vI} I, SlicePFunctor.{uA, uB, uI, uJ} I J where
-@@ -386,9 +386,9 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
+@@ -399,9 +399,9 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
  
  end PresheafPFunctorData
  
@@ -1180,6 +1180,53 @@ index 004265e..fc173cb 100644
  structure PresheafPFunctor (I : Type uI) [Category.{vI} I]
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J where
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
+index 867bd61..b1a2bde 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
+@@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
+ public import Geb.Mathlib.Data.PFunctor.Slice.FixedPoint
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Carrier presheaves of presheaf polynomial endofunctors
+ 
+@@ -84,7 +86,6 @@ and its image under {name}`PresheafPFunctor.objPresheaf` lie in one category.
+ polynomial functor, presheaf, parametric right adjoint, fixed point,
+ naturality, restriction map
+ -/
+-set_option doc.verso true
+ 
+ @[expose] public section
+ 
+@@ -95,7 +96,7 @@ universe uI uA uB vI
+ namespace PresheafPFunctor
+ 
+ variable {I : Type uI} [Category.{vI} I] (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I)
+-  (S : F.toSlicePFunctor.FixedPoint.{max uA uB})
++  (S : SlicePFunctor.FixedPoint.{max uA uB} F.toSlicePFunctor)
+ 
+ /-! ## Root restriction and naturality -/
+ 
+@@ -322,7 +323,7 @@ theorem nodeNatural_forgetNode
+   · intro hnat i i' g b
+     have h := congrArg (fun u ↦ u.down.1) (hnat g b)
+     simp only [value_down n, map_down g] at h
+-    exact h.trans (F.restrTree_congr S g (value_down n b) _ _)
++    exact h
+ 
+ /-- The constructor: the value of {name}`PresheafPFunctor.objPresheaf` at the
+ carrier presheaf maps into it, fibrewise. -/
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean
 index d7afa37..18a25ba 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean
@@ -1225,7 +1272,7 @@ index 46d5bfe..2729e13 100644
      (J : Type uJ) [Category.{vJ} J] :
      Type (max (uA + 1) (uB + 1) uI uJ vI vJ) where
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
-index 99b7f6c..dc0ee10 100644
+index 8696e1d..30eb169 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1235,17 +1282,8 @@ index 99b7f6c..dc0ee10 100644
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module
  
- public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
-@@ -429,7 +430,7 @@ theorem isHereditarilyNatural_mk_forgetNode {I : Type uI} [Category.{vI} I]
-     refine ⟨fun i i' g b ↦ ?_, fun b ↦ (n.1.2 b).2.down.2.2⟩
-     have h := congrArg (fun u ↦ u.down.1) (hnat g b)
-     simp only [value_down F n, map_down F g] at h
--    exact h.trans (wRestrTree_congr F g (value_down F n b) _ _)
-+    exact h
- 
- /-- The fixed-point constructor of the presheaf W-type: the `objPresheaf`-value
- at the carrier presheaf `F.W` maps into `F.W`, fiberwise over `I`. It builds the
-@@ -635,9 +636,7 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.Carrier
+@@ -399,9 +400,7 @@ theorem value_wRestrTree {I : Type uI} [Category.{vI} I]
              hn.2 hn.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q a⟩)) =
            α.app ⟨i'⟩ ((F.objPresheaf Y).map f.op
              ⟨⟨pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1, hn.2 hn.1⟩, rfl⟩) :=
@@ -1528,6 +1566,27 @@ index 3e3a14b..b6d465b 100644
      (P.wIsInitial).to B = P.wElim B :=
    haveI := P.wUniqueHom B
    Subsingleton.elim _ _
+diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/Obj.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/Obj.lean
+index 46cd31e..7442c76 100644
+--- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/Obj.lean
++++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/Obj.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.Data.PFunctor.Univariate.Basic
+@@ -67,7 +68,7 @@ theorem sndOfEq_congr {α : Type u} {x y : P α} (hxy : x = y) {a : P.A} (hx : x
+ 
+ /-- A node is its shape over its {name}`sndOfEq` children. -/
+ theorem mk_sndOfEq {α : Type u} (x : P α) {a : P.A} (h : x.fst = a) :
+-    Obj.mk a (x.sndOfEq h) = x := by
++    Sigma.mk a (x.sndOfEq h) = x := by
+   obtain ⟨a', f⟩ := x
+   subst h
+   rfl
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean
 index db2075e..f713039 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Univariate/W.lean
@@ -1690,10 +1749,10 @@ index eacd4cd..7c4ba7b 100644
      s t
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/BitStream/WConstruction.lean b/vendor/geb-mathlib/Geb/Prototypes/BitStream/WConstruction.lean
-index 090c515..2649183 100644
+index 0ddfcb0..62f9555 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/BitStream/WConstruction.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/BitStream/WConstruction.lean
-@@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
  Authors: Terence Rokop
  -/
@@ -1701,8 +1760,7 @@ index 090c515..2649183 100644
  module
  
  public import Geb.Prototypes.BitStream
- public import Geb.Mathlib.Data.PFunctor.Presheaf.Arrow
- meta import GebMeta -- shake: keep
+ public import Geb.Prototypes.MType.Equiv
  
 -set_option doc.verso true in
 +set_option doc.verso true
@@ -1710,22 +1768,13 @@ index 090c515..2649183 100644
  /-!
  # Bitstreams constructed using W-types
  
-@@ -67,7 +69,6 @@ theorem. It does not establish why mathlib chose its direct datatype.
+@@ -42,7 +44,6 @@ it with that development's bounded prefixes, observations and sequences.
  
- W-type, M-type, dependent type, presheaf, bitstream, finite approximation
+ W-type, M-type, bitstream, finite approximation
  -/
 -set_option doc.verso true
  
  @[expose] public section
- 
-@@ -196,7 +197,7 @@ def zeroEquiv : Approx zero ≃ Unit :=
-     { toFun := fun _ ↦ ()
-       invFun := fun _ ↦ ⟨⟨(), Empty.elim⟩, funext fun i ↦ nomatch i⟩
-       left_inv := fun ⟨⟨(), _⟩, _⟩ ↦ Subtype.ext
--        (congrArg (Obj.mk (P := (family false).toPFunctor) ())
-+        (congrArg (Sigma.mk ())
-           (funext fun i ↦ nomatch i))
-       right_inv := fun _ ↦ rfl }
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean b/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
 index 14213f0..62408c2 100644
@@ -3262,6 +3311,347 @@ index 6474159..ab77451 100644
  
  /-- The morphism of the counterexample: the unique map from the empty object to
  the singleton. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean
+index 391f38b..903c9cc 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean
+@@ -3,8 +3,11 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
++public import Batteries.Tactic.Lint
++
+ set_option doc.verso true in
+ /-!
+ # Toposes with chosen structure
+@@ -49,6 +52,7 @@ universe u v
+ /-- The operations of a topos with chosen structure and the natural numbers, list and rose-tree
+ objects: objects, the arrows between two objects, and the operations of the partial Horn theory
+ of a topos, each on the arrows between the objects its typing names. -/
++@[nolint checkUnivs]
+ structure ToposData : Type (max (u + 1) (v + 1)) where
+   /-- The objects. -/
+   Obj : Type u
+@@ -290,6 +294,7 @@ end ToposData
+ 
+ /-- A topos with chosen structure and the natural numbers, list and rose-tree objects: the
+ operations with their laws. -/
++@[nolint checkUnivs]
+ structure ChosenTopos : Type (max (u + 1) (v + 1)) extends ToposData.{u, v} where
+   /-- The laws. -/
+   laws : toToposData.Laws
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Elementary.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Elementary.lean
+index 71ba9c0..b67b46c 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Elementary.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Elementary.lean
+@@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Chosen
+ public import Geb.Mathlib.CategoryTheory.ElementaryTopos
+ public import Mathlib.CategoryTheory.Endofunctor.Algebra
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # A topos with chosen structure from an elementary topos
+ 
+@@ -62,8 +64,6 @@ so that its objects and arrows are the category's when its laws are proved.
+ elementary topos, chosen structure, initial algebra, natural numbers object, list object
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ universe v u
+@@ -285,6 +285,7 @@ abbrev ClassifierLimits : Type (max u v) :=
+     ((ElementaryTopos.classifier (C := C)).isPullback m).w)
+ 
+ variable (C) in
++set_option backward.isDefEq.respectTransparency false in
+ /-- The operations of the topos with chosen structure of an elementary topos with chosen data
+ objects: its chosen cones and cocones, cartesian and closed structures and subobject
+ classifier, the evaluation and currying of the exponential taken with the exponent on the right
+@@ -385,6 +386,7 @@ theorem chiInv_comp_self {A B : C} (m : A ⟶ B) (hm : (toposData C P D).IsMono
+   have := mono_of_cancel hm
+   exact PullbackCone.IsLimit.lift_fst _ _ _ _
+ 
++set_option backward.isDefEq.respectTransparency false in
+ /-- The square of a monomorphism with truth along an arrow into the classifier, through whose
+ pullback of truth it factors by an arrow with an inverse, is a pullback. -/
+ theorem isPullback_of_iso {A B : C} {m : A ⟶ B} {φ : B ⟶ (ElementaryTopos.classifier (C := C)).Ω}
+@@ -416,6 +418,7 @@ theorem isPullback_of_iso {A B : C} {m : A ⟶ B} {φ : B ⟶ (ElementaryTopos.c
+     rw [(Fork.IsLimit.lift' e _ _).2, Category.assoc, hk, hg]
+ 
+ variable (C) in
++set_option backward.isDefEq.respectTransparency false in
+ /-- The laws of the topos with chosen structure of an elementary topos with chosen data objects
+ and classifier limits. -/
+ theorem laws : (toposData C P D).Laws where
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
+index 5b3e503..c16ab61 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Compile
+@@ -99,7 +100,7 @@ theorem roseParts_eq_some {p a : Tree} {F : Tree → Tree} : roseParts p = some
+       · simp at h
+   · rintro (⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl⟩)
+     · simp [roseParts]
+-    · rw [roseParts, ite_eq_right (lrose_ne_rose a)]
++    · rw [roseParts, if_neg (lrose_ne_rose a)]
+       simp [lrose, op]
+ 
+ /-- The type of labels of a rose-tree object over it is its argument. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean
+index 64f21c3..6aa48e4 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Derivation
+@@ -10,7 +11,8 @@ public import Geb.Prototypes.FreeTopos.Internal.Inversion
+ public import Geb.Prototypes.FreeTopos.Represent
+ public import Geb.Prototypes.FreeTopos.Unfolding
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # The internal language's terms represent Lean's functions
+ 
+@@ -44,8 +46,6 @@ application of a definition represent the functions of the same universal proper
+ internal language, logical relation, representation, compilation, functional relation
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.FreeTopos.Internal
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
+index 95bc7e4..2b9e297 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Derivation
+@@ -499,14 +500,14 @@ theorem rootStep_thm {G : Globals} {E : Array Entry} {n : ℕ} {Γ : List Tree}
+   simp only [rootStep] at h
+   obtain ⟨a, ha, h⟩ := Option.bind_eq_some_iff.mp h
+   by_cases hnil : a.hyps = []
+-  · rw [ite_eq_left hnil] at h
++  · rw [if_pos hnil] at h
+     obtain ⟨lr, hlr, h⟩ := Option.bind_eq_some_iff.mp h
+     by_cases hc : instOk G n Γ a θ σ = true ∧ t = instTerm θ σ (if flip then lr.2 else lr.1)
+-    · rw [ite_eq_left hc] at h
++    · rw [if_pos hc] at h
+       exact ⟨a, lr, ha, hnil, hlr, hc.1, hc.2, (Option.some_inj.mp h).symm⟩
+-    · rw [ite_eq_right hc] at h
++    · rw [if_neg hc] at h
+       cases h
+-  · rw [ite_eq_right hnil] at h
++  · rw [if_neg hnil] at h
+     simp at h
+ 
+ /-- The rewriting by an equation among the hypotheses at a term's root, inverted. -/
+@@ -518,9 +519,9 @@ theorem rootStep_rwHyp {G : Globals} {E : Array Entry} {n : ℕ} {Γ : List Tree
+   obtain ⟨lr, hlr, h⟩ := Option.bind_eq_some_iff.mp h
+   obtain ⟨ψ, hψ, hψlr⟩ := Option.bind_eq_some_iff.mp hlr
+   by_cases hc : t = (if flip then lr.2 else lr.1)
+-  · rw [ite_eq_left hc] at h
++  · rw [if_pos hc] at h
+     exact ⟨ψ, lr, hψ, hψlr, hc, (Option.some_inj.mp h).symm⟩
+-  · rw [ite_eq_right hc] at h
++  · rw [if_neg hc] at h
+     cases h
+ 
+ /-- The checker at a node is its step at the node's children and their results. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Substitution.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Substitution.lean
+index af91f3a..8af5581 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Substitution.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Substitution.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Semantics
+@@ -341,7 +342,7 @@ theorem scoped_of_isTy {n : ℕ} : ∀ A : Tree, IsTy G n A = true → Scoped n
+ /-- Results related pointwise by a function are its images. -/
+ theorem eq_map_of_forall₂ {α : Type} {f : α → α} {rs rs' : List α}
+     (h : List.Forall₂ (fun r r' ↦ r' = f r) rs rs') : rs' = rs.map f :=
+-  h.rec (motive := fun rs rs' _ ↦ rs' = rs.map f) rfl fun hr _ ih ↦ by rw [hr, ih]; rfl
++  h.rec (motive := fun rs rs' _ ↦ rs' = rs.map f) rfl fun hr _ ih ↦ by beta_reduce; rw [hr, ih]; rfl
+ 
+ /-- Substitution in the product of a context's types. -/
+ theorem subst_ctxObj (θ : List Tree) :
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean
+index 1da9d68..7c8f0c1 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean
+@@ -3,14 +3,16 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Chosen
+ public import Geb.Prototypes.RoseTree.Basic
+-public import Mathlib.Basic.Rel
++public import Mathlib.Data.Rel
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Types and functional relations
+ 
+@@ -54,8 +56,6 @@ recursors, each functional and unique by induction.
+ functional relation, topos, unique choice, graph of a function, subobject classifier
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.FreeTopos
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Represent.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Represent.lean
+index 2523dfa..d266912 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Represent.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Represent.lean
+@@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Coproducts
+ public import Geb.Prototypes.FreeTopos.Converse
+ public import Geb.Prototypes.FreeTopos.Relations
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Lean's functions represented by arrows of functional relations
+ 
+@@ -52,8 +54,6 @@ number it enumerates.
+ functional relation, logical relation, representation, model, elementary topos
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.FreeTopos
+@@ -283,6 +283,7 @@ namespace Rep
+ variable {S S' T A A' B : Type}
+ 
+ /-- The representation of the element of the terminal type. -/
++@[nolint unusedArguments]
+ def unit : Unit → Unit → Prop := fun _ _ ↦ True
+ 
+ /-- The representation of pairs, componentwise. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Topos.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Topos.lean
+index 0429465..dbae219 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Topos.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Topos.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Category
+@@ -164,8 +165,8 @@ theorem eq_chiHom_of_isPullback {u x : T.Cat} (m : u ⟶ x) [Mono m] (φ : x ⟶
+     (PullbackCone.IsLimit.lift_fst hl _ _ hc)
+ 
+ /-- The subobject classifier, with the terminal object as the domain of truth. -/
+-def classifier : Subobject.Classifier T.Cat :=
+-  Subobject.Classifier.mkOfTerminalΩ₀ T.one T.terminalCone.isLimit T.omega T.truth
++def classifier : CategoryTheory.Classifier T.Cat :=
++  CategoryTheory.Classifier.mkOfTerminalΩ₀ T.one T.terminalCone.isLimit T.omega T.truth
+     (fun m _ ↦ chiHom m (isMono_of_mono m)) (fun m _ ↦ T.isPullback_chiHom m)
+     (fun m _ φ hφ ↦ T.eq_chiHom_of_isPullback m φ hφ)
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Unfolding.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Unfolding.lean
+index a5046a7..057e86f 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Unfolding.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Unfolding.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Arrows
+@@ -100,7 +101,7 @@ theorem unfoldTerm_op_lt (ds : List Defn) {k : ℕ} (ts : List Tree) :
+     (fun d ds ih S hk ↦ by
+       change unfoldOp S.length d.body (unfoldTerm (S.extend d) ds (op k ts)) = _
+       rw [ih _ (by simp [Sig.extend]; omega), op, unfoldOp_node_succ,
+-        ite_eq_right (Nat.ne_of_lt hk), List.map_map]
++        if_neg (Nat.ne_of_lt hk), List.map_map]
+       rfl)
+ 
+ /-- The unfolding of one definition commutes with a substitution of terms it leaves in place,
+@@ -203,7 +204,7 @@ theorem unfoldTerm_op_defn (ds : List Defn) :
+         have hb := opsBelow_of_sortOf d₀.body hwf.1.sort
+         rw [Nat.add_zero, unfoldTerm_op_lt ds θ _ hlt, unfoldTerm_of_opsBelow ds _ d₀.body
+           (opsBelow_mono hlt.le _ hb), unfoldOp_of_opsBelow _ _ _ hb, op, unfoldOp_node_succ,
+-          ite_eq_left rfl, List.map_map]
++          if_pos rfl, List.map_map]
+         exact congrArg (fun us ↦ subst us d₀.body) ((List.map_congr_left fun u hu ↦
+           (congrArg (unfoldOp _ _) (unfoldTerm_of_opsBelow ds _ u (hθ' u hu))).trans
+             (hθ₀ u hu)).trans θ.map_id)
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
+index 2878790..f101d36 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
+@@ -3,9 +3,10 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+-public import Mathlib.Basic.ExistsUnique
++public import Mathlib.Logic.ExistsUnique
+ meta import GebMeta -- shake: keep
+ 
+ set_option doc.verso true in
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
 index 3772c32..69ea92c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
@@ -3493,6 +3883,123 @@ index 3a96c1a..1c87707 100644
  @[expose] public section
  
  open CategoryTheory
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
+index 9c54145..abc7913 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.MType.Depth
+@@ -82,7 +83,7 @@ def zeroEquiv : Approx Q zero ≃ Unit :=
+     { toFun := fun _ ↦ ()
+       invFun := fun _ ↦ ⟨⟨PUnit.unit, PEmpty.elim⟩, funext fun i ↦ nomatch i⟩
+       left_inv := fun ⟨⟨PUnit.unit, _⟩, _⟩ ↦ Subtype.ext
+-        (congrArg (PFunctor.Obj.mk (P := (Approx.family Q ⟨false⟩).toPFunctor) PUnit.unit)
++        (congrArg (Sigma.mk PUnit.unit)
+           (funext fun i ↦ nomatch i))
+       right_inv := fun _ ↦ rfl }
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
+index 5e47510..2aae0db 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
+@@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.MType.Approx
+ public import Geb.Mathlib.Data.PFunctor.Univariate.Obj
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # The M-type of a polynomial functor
+ 
+@@ -66,7 +68,6 @@ observations.
+ 
+ M-type, W-type, terminal coalgebra, polynomial functor, corecursion
+ -/
+-set_option doc.verso true
+ 
+ @[expose] public section
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Depth.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Depth.lean
+index e2f035c..ae9cf4b 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/MType/Depth.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Depth.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.Data.PFunctor.Univariate.Basic
+@@ -65,10 +66,10 @@ def depthSig : PFunctor.{uA, uB} where
+     | ⟨false⟩ => PEmpty
+     | ⟨true⟩ => PUnit
+ 
+-set_option linter.checkUnivs false in
+ /-- Depths, represented by well-founded unary trees. Both universes are
+ parameters because the base of {lit}`PFunctor.dependent` shares its universes
+ with the dependent part, which here is the polynomial whose M-type is built. -/
++@[nolint checkUnivs]
+ abbrev Depth : Type (max uA uB) := depthSig.{uA, uB}.W
+ 
+ namespace Depth
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
+index f630d99..9ebaff2 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.MType.Slice
+@@ -156,8 +157,7 @@ theorem sliceStep_map ⦃i i' : I⦄ (f : i' ⟶ i) (y : Y.obj ⟨i⟩) :
+     sliceStep F Y α ⟨i', Y.map f.op y⟩ =
+       F.objRestrElt f (sliceStep F Y α ⟨i, y⟩) (α.app ⟨i⟩ y).2 := by
+   have h : α.app ⟨i'⟩ (Y.map f.op y) = (F.objPresheaf Y).map f.op (α.app ⟨i⟩ y) :=
+-    (ConcreteCategory.comp_apply _ _ _).symm.trans
+-      ((ConcreteCategory.congr_hom (α.naturality f.op) y).trans (ConcreteCategory.comp_apply _ _ _))
++    FunctorToTypes.naturality _ _ α f.op y
+   exact congrArg (fun w : (F.objPresheaf Y).obj ⟨i'⟩ ↦ w.1.1) h
+ 
+ /-- The underlying corecursion from a restricted element is the root
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
+index af75260..5b16b56 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.MType.Hereditary
+@@ -156,7 +157,7 @@ variable (F) in
+ /-- {lit}`SliceM F` as a fixed point of the slice endofunctor
+ ({name}`SlicePFunctor.FixedPoint`). Reducible, so that instance resolution sees
+ {lit}`SliceM F` and its index through the fixed point's fields. -/
+-@[reducible] def fixedPoint : F.FixedPoint.{max uA uB} where
++@[reducible] def fixedPoint : SlicePFunctor.FixedPoint.{max uA uB} F where
+   T := SliceM F
+   index := index F
+   mk := mk
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/ParanaturalRank.lean b/vendor/geb-mathlib/Geb/Prototypes/ParanaturalRank.lean
 index b7fed2b..1d524db 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/ParanaturalRank.lean
@@ -3523,6 +4030,105 @@ index b7fed2b..1d524db 100644
    fun _ ↦ ()
  
  /-- Evaluation at `false`, which separates the identity from the constant map at
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
+index 8f05034..5ce8507 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.PartialHorn.Development
+@@ -116,7 +117,7 @@ theorem trans {t u v : Tree} (h : Derivable T E Γ H ⟨t, u⟩) (h' : Derivable
+   refine ⟨Cert.trans p p', ?_⟩
+   simp only [Cert.trans, check_node, checkStep, List.map_cons, List.map_nil]
+   rw [hp, hp', Option.bind_some, Option.bind_some]
+-  exact ite_eq_left rfl
++  exact if_pos rfl
+ 
+ /-- The left side of a derivable equation is derivably defined. -/
+ theorem left {t u : Tree} (h : Derivable T E Γ H ⟨t, u⟩) : Derivable T E Γ H ⟨t, t⟩ :=
+@@ -152,7 +153,7 @@ theorem cong {k : ℕ} {qs : List Eqn}
+   rw [Cert.cong, check_node, List.map_cons]
+   simp only [checkStep]
+   rw [hd, Option.bind_some]
+-  rw [ite_eq_left ⟨Nat.succ_ne_zero k, by rw [List.map_map, op, RoseTree.children_node]; exact hl⟩,
++  rw [if_pos ⟨Nat.succ_ne_zero k, by rw [List.map_map, op, RoseTree.children_node]; exact hl⟩,
+     hr', Option.map_some]
+   rfl
+ 
+@@ -193,7 +194,7 @@ theorem ax {j : ℕ} {a : Seq} (ha : T.axioms[j]? = some a) (hsc : a.Scoped = tr
+     simpa [f, Function.comp_def] using congrArg (List.map (Option.map Eqn.lhs)) hds
+   have hhs' : (hs.map f).map (fun c ↦ c.2 Γ H) = a.hyps.map fun h ↦ some (h.subst ts) := by
+     simpa [f, Function.comp_def] using hhs
+-  exact ite_eq_left ⟨hsc, hts, hds', hhs'⟩
++  exact if_pos ⟨hsc, hts, hds', hhs'⟩
+ 
+ end Derivable
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Definitional.lean b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Definitional.lean
+index ac8ac82..8bac66d 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Definitional.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Definitional.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.PartialHorn.Development
+@@ -163,16 +164,16 @@ abbrev Model.expand (M : Model.{v} S) (d : Defn) (hd : sortOf S d.ctx d.body = s
+     else if k = S.length ∧ args.map Sigma.fst = d.ctx then eval M args d.body else Part.none
+   op_sort {k args w} h := by
+     by_cases hk : k < S.length
+-    · rw [ite_eq_left hk] at h
++    · rw [if_pos hk] at h
+       rw [getElem?_extend_of_lt hk]
+       exact M.op_sort h
+-    · rw [ite_eq_right hk] at h
++    · rw [if_neg hk] at h
+       by_cases he : k = S.length ∧ args.map Sigma.fst = d.ctx
+-      · rw [ite_eq_left he] at h
++      · rw [if_pos he] at h
+         rw [he.1, getElem?_extend_self]
+         simp only [Option.map_some, Option.some.injEq]
+         exact (sort_eval he.2 d.body hd (Part.eq_some_iff.mpr h)).symm
+-      · rw [ite_eq_right he] at h
++      · rw [if_neg he] at h
+         exact absurd h (Part.notMem_none w)
+ 
+ /-- An operation of the extension other than the new one is an operation of the signature. -/
+@@ -352,7 +353,7 @@ theorem sortOf_subst {Γ Δ : List ℕ} {us : List Tree}
+           have hm : sortOf S Δ c ∈ o.1.map some := hcs ▸ List.mem_map_of_mem hc
+           obtain ⟨s', -, hs'⟩ := List.mem_map.mp hm
+           exact (ih c hc hs'.symm).trans hs'
+-        rw [hc, ite_eq_left hcs]
++        rw [hc, if_pos hcs]
+         exact hs
+       · exact absurd hs (by simp)
+ 
+@@ -497,7 +498,7 @@ theorem sortOf_unfold (hd : d.WF S) {Γ : List ℕ} : ∀ t : Tree, ∀ {s : ℕ
+           exact (sortOf_subst hus d.body hd.sort).trans hs
+         · rename_i hk
+           rw [sortOf_node_succ, ← getElem?_extend_of_lt (d := d) (lt_of_getElem?_extend ho hk), ho,
+-            Option.bind_some, List.map_map, hc, ite_eq_left hcs]
++            Option.bind_some, List.map_map, hc, if_pos hcs]
+           exact hs
+       · exact absurd hs (by simp)
+ 
+@@ -645,7 +646,7 @@ theorem unfoldOp_of_opsBelow (n : ℕ) (b : Tree) :
+     rcases l with _ | k
+     · exact unfoldOp_node_zero n b cs
+     · rw [opsBelow_node_succ, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at ht
+-      rw [unfoldOp_node_succ, ite_eq_right (Nat.ne_of_lt ht.1)]
++      rw [unfoldOp_node_succ, if_neg (Nat.ne_of_lt ht.1)]
+       exact congrArg (RoseTree.node (k + 1))
+         ((List.map_congr_left fun c hc ↦ ih c hc (ht.2 c hc)).trans cs.map_id)
+ 
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean
 index 1bcea11..cbb2cdf 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean
@@ -3630,6 +4236,235 @@ index 61de149..36f5865 100644
    fun _ => 0
  
  /-- The shape-output map: `iota`, `sigma`, and `pi` are codes (fibre `0`);
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Basic.lean
+index c3e7124..a05c670 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Basic.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Basic.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
+@@ -158,13 +159,10 @@ theorem termHom_comp_tgtHom {i' i : I} (f : i' ⟶ i) : termHom f ≫ tgtHom i =
+   rw [Category.comp_id, Category.id_comp]
+   rfl
+ 
+-/-- Naturality of a transformation between presheaves of types, at an element. Stated
+-here through {name}`ConcreteCategory.comp_apply` because mathlib's pointwise form
+-depends on {lit}`Classical.choice`. -/
++/-- Naturality of a transformation between presheaves of types, at an element. -/
+ theorem naturality_apply {C : Type u} [Category.{v} C] {F G : C ⥤ Type w} (α : NatTrans F G)
+     {c c' : C} (g : c ⟶ c') (x : F.obj c) : α.app c' (F.map g x) = G.map g (α.app c x) :=
+-  (ConcreteCategory.comp_apply _ _ _).symm.trans
+-    ((ConcreteCategory.congr_hom (α.naturality g) _).trans (ConcreteCategory.comp_apply _ _ _))
++  FunctorToTypes.naturality _ _ α g x
+ 
+ section Graph
+ 
+@@ -188,14 +186,14 @@ def restrEq {i' i : I} (f : i' ⟶ i) : X.obj ⟨eqObj i⟩ → X.obj ⟨eqObj i
+ theorem src_restrEq {i' i : I} (f : i' ⟶ i) (e : X.obj ⟨eqObj i⟩) :
+     src X i' (restrEq X f e) = restr X f (src X i e) := by
+   simp only [src, restrEq, restr]
+-  rw [← Functor.map_comp_apply, ← Functor.map_comp_apply, ← op_comp, ← op_comp,
++  rw [← FunctorToTypes.map_comp_apply, ← FunctorToTypes.map_comp_apply, ← op_comp, ← op_comp,
+     srcHom_comp_eqHom]
+ 
+ /-- The target of a restricted witness is the restriction of its target. -/
+ theorem tgt_restrEq {i' i : I} (f : i' ⟶ i) (e : X.obj ⟨eqObj i⟩) :
+     tgt X i' (restrEq X f e) = restr X f (tgt X i e) := by
+   simp only [tgt, restrEq, restr]
+-  rw [← Functor.map_comp_apply, ← Functor.map_comp_apply, ← op_comp, ← op_comp,
++  rw [← FunctorToTypes.map_comp_apply, ← FunctorToTypes.map_comp_apply, ← op_comp, ← op_comp,
+     tgtHom_comp_eqHom]
+ 
+ /-- The restriction of a term along the composite of two morphisms of {lit}`I` is the
+@@ -203,26 +201,26 @@ composite of the restrictions. -/
+ theorem restr_comp {i'' i' i : I} (g : i'' ⟶ i') (f : i' ⟶ i) (t : X.obj ⟨termObj i⟩) :
+     restr X (g ≫ f) t = restr X g (restr X f t) := by
+   simp only [restr]
+-  rw [← Functor.map_comp_apply, ← op_comp]
++  rw [← FunctorToTypes.map_comp_apply, ← op_comp]
+   congr 2
+ 
+ /-- The restriction of a term along an identity is the term. -/
+ theorem restr_id (i : I) (t : X.obj ⟨termObj i⟩) : restr X (𝟙 i) t = t :=
+-  Functor.map_id_apply X ⟨termObj i⟩ t
++  FunctorToTypes.map_id_apply X t
+ 
+ /-- Restricting a witness's source along {lit}`f` is restricting the witness along the
+ morphism {lit}`srcOver f`. -/
+ theorem restr_src {i' i : I} (f : i' ⟶ i) (e : X.obj ⟨eqObj i⟩) :
+     restr X f (src X i e) = X.map (srcOver f).op e := by
+   simp only [restr, src]
+-  rw [← Functor.map_comp_apply, ← op_comp, termHom_comp_srcHom]
++  rw [← FunctorToTypes.map_comp_apply, ← op_comp, termHom_comp_srcHom]
+ 
+ /-- Restricting a witness's target along {lit}`f` is restricting the witness along the
+ morphism {lit}`tgtOver f`. -/
+ theorem restr_tgt {i' i : I} (f : i' ⟶ i) (e : X.obj ⟨eqObj i⟩) :
+     restr X f (tgt X i e) = X.map (tgtOver f).op e := by
+   simp only [restr, tgt]
+-  rw [← Functor.map_comp_apply, ← op_comp, termHom_comp_tgtHom]
++  rw [← FunctorToTypes.map_comp_apply, ← op_comp, termHom_comp_tgtHom]
+ 
+ end Graph
+ 
+@@ -286,11 +284,11 @@ def discrete (P : Iᵒᵖ ⥤ Type w) : (I × WalkingParallelPair)ᵒᵖ ⥤ Typ
+ 
+ /-- The source map of a discrete graph is the identity. -/
+ theorem src_discrete (P : Iᵒᵖ ⥤ Type w) (i : I) (e : P.obj ⟨i⟩) : src (discrete P) i e = e :=
+-  Functor.map_id_apply P ⟨i⟩ e
++  FunctorToTypes.map_id_apply P e
+ 
+ /-- The target map of a discrete graph is the identity. -/
+ theorem tgt_discrete (P : Iᵒᵖ ⥤ Type w) (i : I) (e : P.obj ⟨i⟩) : tgt (discrete P) i e = e :=
+-  Functor.map_id_apply P ⟨i⟩ e
++  FunctorToTypes.map_id_apply P e
+ 
+ /-- The discrete graph on a morphism of presheaves on {lit}`I`: its component at an
+ object is the component at the object's {lit}`I` component. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Congruence.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Congruence.lean
+index 0b9c5bd..de7bf29 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Congruence.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Congruence.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.QuotientPRA.FreeArity
+@@ -120,7 +121,7 @@ theorem unit_eq_iff {c : I × WalkingParallelPair} (hc : c.2 = .zero) (u u' : 
+   obtain ⟨k, x⟩ := c
+   obtain rfl : x = .zero := hc
+   refine (coeqMk_eq_iff 𝐅.W u u').trans
+-    ⟨fun h ↦ Relation.EqvGen.mono ?_ _ _ h, fun h ↦ Relation.EqvGen.mono ?_ _ _ h⟩
++    ⟨fun h ↦ Relation.EqvGen.mono ?_ h, fun h ↦ Relation.EqvGen.mono ?_ h⟩
+   · rintro _ _ ⟨e⟩
+     exact ⟨e, rfl, rfl⟩
+   · rintro _ _ ⟨e, rfl, rfl⟩
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
+index d87e777..4c2894f 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.W
+@@ -74,6 +75,7 @@ universe uC vC uA uB w
+ /-- A presheaf polynomial endofunctor over {lit}`C` with free arities: shapes over
+ objects, arguments over objects, the restriction of shapes along morphisms, and the
+ reindexing of a restricted shape's arguments into the shape's arguments. -/
++@[nolint checkUnivs]
+ structure FreeArity (C : Type uC) [Category.{vC} C] : Type (max uC vC (uA + 1) (uB + 1)) where
+   /-- The shapes. -/
+   A : Type uA
+@@ -171,7 +173,7 @@ def freeNode (Z : Cᵒᵖ ⥤ Type w) (a : S.A) {c : C} (hq : S.q a = c)
+   ⟨⟨⟨⟨a, fun d ↦ ⟨d.2.1, Z.map d.2.2.op (ts d.1)⟩⟩, rfl⟩, by
+     intro i i' f d
+     obtain ⟨⟨b, c, k⟩, rfl⟩ := d
+-    exact Functor.map_comp_apply Z k.op f.op (ts b)⟩, hq⟩
++    exact FunctorToTypes.map_comp_apply Z k.op f.op (ts b)⟩, hq⟩
+ 
+ /-- Restricting a node with given argument values restricts the values along the
+ reindexing morphisms. -/
+@@ -186,7 +188,7 @@ theorem map_freeNode (Z : Cᵒᵖ ⥤ Type w) (a : S.A) {c c' : C} (hq : S.q a =
+   refine Sigma.ext rfl (heq_of_eq ?_)
+   change Z.map (k ≫ (S.reindex g a b).2).op (ts (S.reindex g a b).1) =
+     Z.map k.op (Z.map (S.reindex g a b).2.op (ts (S.reindex g a b).1))
+-  exact Functor.map_comp_apply Z (S.reindex g a b).2.op k.op (ts (S.reindex g a b).1)
++  exact FunctorToTypes.map_comp_apply Z (S.reindex g a b).2.op k.op (ts (S.reindex g a b).1)
+ 
+ /-- The value a node gives an argument at a direction is the restriction, along the
+ direction's morphism, of the value it gives the argument at the argument's object. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
+index da67cce..c1390b3 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.QuotientPRA.Congruence
+@@ -197,7 +198,7 @@ theorem algNode_unit_freeNode (a : S.A) {c : I × WalkingParallelPair} (hq : S.q
+   rw [FreeArity.mapPresheaf_freeNode]
+   refine (congrArg (algTerm hcong a hq hc) (funext fun b ↦ ?_)).trans
+     (algTerm_unit hcong a hq hc ts)
+-  exact Functor.map_id_apply (discrete (quotient 𝐅)) _ _
++  exact FunctorToTypes.map_id_apply (discrete (quotient 𝐅)) _
+ 
+ /-- The algebra on the image of a node over the W-type is the class of the tree the node
+ builds. -/
+@@ -306,6 +307,7 @@ theorem unit_eq_of_isModelHom {h : NatTrans (quotient 𝐅) P}
+       (discreteMap h).app ⟨c⟩ ((coeqUnit 𝐅.W).app ⟨c⟩ t) =
+         (discreteMap (elim 𝐅 P α)).app ⟨c⟩ ((coeqUnit 𝐅.W).app ⟨c⟩ t))
+     (fun a ts ih ↦ by
++      beta_reduce
+       rw [← quotientModel_unit hcong, hh, isModelHom_elim hcong P α,
+         FreeArity.mapPresheaf_freeNode, FreeArity.mapPresheaf_freeNode,
+         FreeArity.mapPresheaf_freeNode]
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
+index 7365cf6..1128905 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.Presheaf.Carrier
+@@ -82,7 +83,7 @@ universe uC uA uB vC uI vI u
+ section Head
+ 
+ variable {C : Type uC} [Category.{vC} C] {F : PresheafPFunctor.{uC, uC, uA, uB, vC, vC} C C}
+-  {S : F.toSlicePFunctor.FixedPoint.{max uA uB}} (N : F.HereditaryNaturality S)
++  {S : SlicePFunctor.FixedPoint.{max uA uB} F.toSlicePFunctor} (N : F.HereditaryNaturality S)
+ 
+ /-- The root shape of a tree of the carrier presheaf. -/
+ def head {c : C} (w : (F.carrier N).obj ⟨c⟩) : F.A := (S.dest w.down.1).1.1
+@@ -107,7 +108,7 @@ end Head
+ variable {I : Type uI} [Category.{vI} I]
+   {F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} (I × WalkingParallelPair)
+     (I × WalkingParallelPair)}
+-  {S : F.toSlicePFunctor.FixedPoint.{max uA uB}} (N : F.HereditaryNaturality S)
++  {S : SlicePFunctor.FixedPoint.{max uA uB} F.toSlicePFunctor} (N : F.HereditaryNaturality S)
+ 
+ /-- Reflexivity is not a witness constructor of fixed shape: a function sending each
+ term to a witness with that term as source, all of one root shape, makes all terms
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
+index 87d9668..7258ba0 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.QuotientPRA.FreeArity
+@@ -266,7 +267,7 @@ abbrev freeNode (Z : Objᵒᵖ ⥤ Type w) (s : Shape P eqns)
+ /-- Restriction of the W-type along an identity is the identity. -/
+ theorem W_map_id_apply {c : Obj} (t : (qpra P eqns).W.obj ⟨c⟩) :
+     (qpra P eqns).W.map (𝟙 c).op t = t := by
+-  rw [op_id, Functor.map_id_apply]
++  rw [op_id, FunctorToTypes.map_id_apply]
+ 
+ /-- The source of an equation's witness is the side its orientation selects, applied to
+ the witness's variables. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/ReadableSExpr.lean b/vendor/geb-mathlib/Geb/Prototypes/ReadableSExpr.lean
 index 03de8f0..5917140 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/ReadableSExpr.lean

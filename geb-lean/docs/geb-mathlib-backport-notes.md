@@ -27,6 +27,7 @@
   - [20. `set_option doc.verso true in` does not scope a module docstring](#20-set_option-docverso-true-in-does-not-scope-a-module-docstring)
   - [21. `Functor.Elements` refactored into structures](#21-functorelements-refactored-into-structures)
   - [22. `PFunctor.Obj.mk` named constructor](#22-pfunctorobjmk-named-constructor)
+  - [23. `Relation.EqvGen.mono` stated as an inclusion of relations](#23-relationeqvgenmono-stated-as-an-inclusion-of-relations)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -38,7 +39,7 @@
 
 These notes catalogue the categories of change in
 `scripts/geb-mathlib-backport.patch`, which adapts the vendored
-`geb-mathlib` `Geb` source (mathlib `v4.35.0-rc2`) to compile under this
+`geb-mathlib` `Geb` source (mathlib `v4.35.0-rc3`) to compile under this
 repository's `v4.29.0-rc6`. When a refresh fails, check whether the new
 failure matches a category below (extend the corresponding hunk) or is
 genuinely new (decide the adaptation, add a category here).
@@ -111,7 +112,18 @@ genuinely new (decide the adaptation, add a category here).
   `IndRec/Indexed.lean` are `IIR.Shape`, `IIR.Direction`,
   `IIR.pFunctor`, `IIR.Obj`, `IIR.Alg`, `IIR.Alg.toHom`, the top-level
   `IIR`, `IIR.FamSlice`, `IIR.interpAlg`, `IIR.interp`, `IIR.toIRAlg`,
-  `IIR.toIR`, `IIR.W`, and `IIR.wDecode`.
+  `IIR.toIR`, `IIR.W`, and `IIR.wDecode`. The affected abbreviation in
+  `Prototypes/MType/Depth.lean` is `Depth`.
+- Further sites, without an upstream suppression: the structures
+  `ToposData` and `ChosenTopos` in `Prototypes/FreeTopos/Chosen.lean`
+  and `FreeArity` in `Prototypes/QuotientPRA/FreeArity.lean` carry no
+  `set_option linter.checkUnivs false in` upstream, and under
+  `lake lint -- Geb` the v4.29 `checkUnivs` env-linter reports each
+  (`universes [u, v] only occur together`, respectively `[uA, uB]`).
+  Each receives the same `@[nolint checkUnivs]` attribute.
+  `Prototypes/FreeTopos/Chosen.lean` imports nothing, so, as for
+  `Prototypes/ParanaturalRank.lean` in category 13, add
+  `public import Batteries.Tactic.Lint` to its import block.
 - Prose adaptation: the module docstrings of `Presheaf/Basic.lean` and
   `IndRec/Basic.lean` describe the suppression as
   "The `linter.checkUnivs false` option suppresses the ...". Because
@@ -210,6 +222,29 @@ genuinely new (decide the adaptation, add a category here).
   `` Invalid field `map_id_apply` ``. Replace it with
   `exact (FunctorToTypes.map_id_apply Z _).symm`, the `Type`-valued
   identity-law lemma whose statement is the goal.
+- Adaptation in `Prototypes/QuotientPRA/Basic.lean`,
+  `Prototypes/QuotientPRA/Signature.lean` (`W_map_id_apply`),
+  `Prototypes/QuotientPRA/InitialModel.lean` (`algNode_unit_freeNode`),
+  and `Prototypes/QuotientPRA/FreeArity.lean` (`freeNode`,
+  `map_freeNode`): the functor laws of a presheaf of types are applied
+  as `Functor.map_comp_apply` and `Functor.map_id_apply`, reported as
+  ``Unknown constant `CategoryTheory.Functor.map_comp_apply` `` and
+  `` `CategoryTheory.Functor.map_id_apply` ``. Substitute
+  `FunctorToTypes.map_comp_apply` and `FunctorToTypes.map_id_apply`,
+  whose statements are the same; the latter takes the object
+  implicitly, so the explicit object argument is dropped
+  (`FunctorToTypes.map_id_apply X t` for
+  `Functor.map_id_apply X ⟨termObj i⟩ t`).
+- Adaptation in `Prototypes/QuotientPRA/Basic.lean`
+  (`naturality_apply`) and `Prototypes/MType/Presheaf.lean`
+  (`sliceStep_map`): the term-mode chain of `ConcreteCategory.comp_apply`
+  and `ConcreteCategory.congr_hom` of `value_wRestrTree` above proves the
+  naturality equation in its own orientation. Replace it with
+  `FunctorToTypes.naturality _ _ α g x` (respectively
+  `_ _ α f.op y`). The docstring of `naturality_apply` names
+  `ConcreteCategory.comp_apply` in a `{name}` role, which fails to
+  resolve under v4.29, to explain the chain; drop that sentence with the
+  chain.
 - Adaptation in `Prototypes/Typechecker.lean` (`interpretation`,
   `interpretation_faithful`): the functor's `map` field wraps the
   restriction in `TypeCat.ofHom`, and faithfulness reads the two
@@ -240,6 +275,10 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/Computability/BitTree/Elias/Tree.lean` (`tree_ind`, at an
   explicit `P`), `length_stepEnv_le` in
   `Prototypes/Computability/SizeBounded/Basic.lean` (`Fin.addCases`),
+  `eq_map_of_forall₂` in
+  `Prototypes/FreeTopos/Internal/Substitution.lean`
+  (`List.Forall₂.rec`), `unit_eq_of_isModelHom` in
+  `Prototypes/QuotientPRA/InitialModel.lean` (`FreeArity.W_induction`),
   and `Term.fold_map` in
   `Prototypes/Computability/CobhamFoldProto/Fold.lean`, where the
   unreduced application is not a motive but the carrier map
@@ -264,19 +303,19 @@ genuinely new (decide the adaptation, add a category here).
 
 ### 5. `simp` rewriting under dependent proof arguments narrowed in v4.33
 
-- Upstream cause: `Presheaf/W.lean`'s `isHereditarilyNatural_mk_forgetNode`
+- Upstream cause: `Presheaf/Carrier.lean`'s `nodeNatural_forgetNode`
   closes its converse direction with
-  `exact h.trans (wRestrTree_congr F g (value_down F n b) _ _)`. The
-  `wRestrTree_congr` bridge compensates for v4.33's `simp`, which no
+  `exact h.trans (F.restrTree_congr S g (value_down n b) _ _)`. The
+  `restrTree_congr` bridge compensates for v4.33's `simp`, which no
   longer rewrites the `value_down` occurrence sitting under
-  `wRestrTree`'s dependent head-index proof argument.
-- v4.29 symptom: `simp only [value_down F n, map_down F g] at h`
+  `restrTree`'s dependent head-index proof argument.
+- v4.29 symptom: `simp only [value_down n, map_down g] at h`
   rewrites that occurrence as well, so the bridge's left-hand side no
   longer occurs in `h`: application type mismatch on the `h.trans`
   argument.
 - Adaptation: close with `exact h` (drop the `.trans` bridge). The
-  private `wRestrTree_congr` lemma compiles under v4.29 and is left
-  unmodified, unused.
+  `restrTree_congr` lemma compiles under v4.29 and is left unmodified;
+  `Prototypes/MType/Presheaf.lean` uses it elsewhere.
 
 ### 6. Explicit universe arguments in generalized field notation
 
@@ -287,6 +326,11 @@ genuinely new (decide the adaptation, add a category here).
   `F.toPFunctor.functor.{uA, uB, uD}`; `FinCat/Hom2.lean`'s
   `Hom₂.toNatTrans` states its result type through
   `F.toFunctor.{v, u}` on the local variables `F` and `G`.
+  `Presheaf/Carrier.lean` and `Prototypes/QuotientPRA/Obstruction.lean`
+  (in two `variable` blocks) bind a fixed point as
+  `S : F.toSlicePFunctor.FixedPoint.{max uA uB}`, and
+  `Prototypes/MType/Slice.lean`'s `fixedPoint` states its type as
+  `F.FixedPoint.{max uA uB}`.
 - v4.29 symptom: ``invalid use of explicit universe parameters, `P` is a
   local variable``. v4.29 binds the universe list to the local variable
   the notation is applied to, rather than to the constant the notation
@@ -294,7 +338,9 @@ genuinely new (decide the adaptation, add a category here).
 - Adaptation: write the application in prefix form, so the universe list
   sits on the constant: `PFunctor.functor.{uA, uB, max uA uB} P`,
   `PFunctor.functor.{uA, uB, uD} F.toPFunctor`, and
-  `NatTrans (Hom.toFunctor.{v, u} F) (Hom.toFunctor.{v, u} G)`.
+  `NatTrans (Hom.toFunctor.{v, u} F) (Hom.toFunctor.{v, u} G)`, and
+  `SlicePFunctor.FixedPoint.{max uA uB} F.toSlicePFunctor` and
+  `SlicePFunctor.FixedPoint.{max uA uB} F`.
 
 ### 7. `rw`'s closing `rfl` runs at reducible transparency
 
@@ -351,7 +397,10 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/Typechecker/Instances.lean` import
   `Mathlib.CategoryTheory.Subobject.Classifier.Defs` and name the
   structure `Subobject.Classifier`; the last also names the class
-  `HasSubobjectClassifier`.
+  `HasSubobjectClassifier`. `Prototypes/FreeTopos/Topos.lean`
+  (`classifier`) names the structure and its `mkOfTerminalΩ₀` through
+  the same qualifier, reaching the module through
+  `CategoryTheory/ElementaryTopos.lean`.
 - v4.29 symptom: `unknown module` on the import, and
   ``Unknown identifier `HasSubobjectClassifier` ``. The declarations
   themselves are present: v4.29 has the same `Classifier` structure,
@@ -371,7 +420,9 @@ genuinely new (decide the adaptation, add a category here).
   `CategoryTheory.Classifier`, as it is in
   `Prototypes/Typechecker/Instances.lean`, whose `DecisionProblem`
   namespace has a `classifier` definition of its own; there the class
-  is renamed to `HasClassifier`.
+  is renamed to `HasClassifier`. `Prototypes/FreeTopos/Topos.lean`,
+  whose `ToposModel` namespace likewise has a `classifier` definition,
+  names the structure in full in the same way.
 
 ### 10. `simp` leaves a `cast`'s proof argument unfolded
 
@@ -433,7 +484,11 @@ genuinely new (decide the adaptation, add a category here).
   `Destruct.lean`, `Fold.lean`, `Layout.lean`, `SelfDelim.lean`,
   `SmashFree.lean`, and `Variable.lean`; and `Prototypes/BitStream.lean`
   and, under `Prototypes/Computability/SizeBounded/Logspace/WTree/`,
-  `NumScan.lean`, `Numeral.lean`, `Sig.lean`, and `Spell.lean`. Only a
+  `NumScan.lean`, `Numeral.lean`, `Sig.lean`, and `Spell.lean`; and,
+  under `Prototypes/FreeTopos/`, `Unfolding.lean`,
+  `Internal/Inversion.lean`, and `Internal/Soundness.lean`, and, under
+  `Prototypes/PartialHorn/`, `Completeness.lean` and
+  `Definitional.lean`. Only a
   few of them appear in
   any one build log: lake does not attempt a module whose imports
   failed.
@@ -480,13 +535,14 @@ genuinely new (decide the adaptation, add a category here).
   kind are `oneFam` and `counterFam` in
   `Prototypes/FinCardUniverse/Value.lean`, `jUnitBool` and `pUnit` in
   `Prototypes/ParanaturalRank.lean`, `univR` in
-  `Prototypes/PresheafIRUniv/Basic.lean`, and `treeStep` in
-  `Prototypes/Computability/SizeBounded/BitTree.lean`.
+  `Prototypes/PresheafIRUniv/Basic.lean`, `treeStep` in
+  `Prototypes/Computability/SizeBounded/BitTree.lean`, and `Rep.unit`
+  in `Prototypes/FreeTopos/Represent.lean`.
 - v4.29 symptom: under `lake lint -- Geb`, the `unusedArguments`
   env-linter reports `Geb.CobhamFold.encUnit argument 1`,
   `Geb.CobhamFold.decUnit argument 1`,
   `Geb.CobhamFold.algUnit argument 3`, and the corresponding report for
-  each of the other six. The declarations are unchanged from upstream;
+  each of the other seven. The declarations are unchanged from upstream;
   the report is v4.29's linter.
 - Adaptation: insert `@[nolint unusedArguments]` between each
   declaration's docstring and its `def` keyword, as category 2 does for
@@ -583,7 +639,17 @@ genuinely new (decide the adaptation, add a category here).
   Setting the option for the whole module instead is not equivalent: it
   makes the `simp only` in `Grothendieck.functorFromDataToFunctorCat`'s
   `map_comp` field close its goal, so the `rfl` after it reports
-  `No goals to be solved`.
+  `No goals to be solved`. `Prototypes/FreeTopos/Elementary.lean` has
+  three such declarations: `toposData`, whose `chiInv` field's
+  `rw [Fork.condition]` does not match the composite with the
+  characteristic map; `isPullback_of_iso`, whose
+  `rw [← hk, Category.assoc, Fork.condition]` reassociates the wrong
+  side and whose `reassoc_of% hkk` reports that `k' ≫ k ≫ ?h` does not
+  occur; and `laws`, whose `ev_curry` and `curry_eta` fields' closing
+  `← Category.assoc` and `MonoidalClosed.curry_uncurry` report patterns
+  that visibly occur. Prepend the same `set_option` to each of the
+  three; each is necessary, the module failing without any one of
+  them.
 - Adaptation, closing `rfl`: two proofs in the module end one
   definitional step short under v4.29, as in category 7.
   `Functor.leftOpEquiv`'s `functor_unitIso_comp` field is left with
@@ -599,17 +665,22 @@ genuinely new (decide the adaptation, add a category here).
   to `Mathlib/Basic/IsEmpty/Defs.lean`, and likewise
   `Mathlib/Logic/Nontrivial/Defs.lean` to
   `Mathlib/Basic/Nontrivial/Defs.lean`. The declarations are unchanged;
-  only the module paths move.
+  only the module paths move. The same pull request moves
+  `Mathlib/Logic/ExistsUnique.lean` to `Mathlib/Basic/ExistsUnique.lean`,
+  and mathlib pull request 43176 (2026-08-31) moves
+  `Mathlib/Data/Rel.lean` to `Mathlib/Basic/Rel.lean`.
   `Prototypes/Computability/BitTree/Scanner.lean` imports the new
-  `IsEmpty` path and `Prototypes/Typechecker.lean` the new `Nontrivial`
-  path.
+  `IsEmpty` path, `Prototypes/Typechecker.lean` the new `Nontrivial`
+  path, `Prototypes/FreeTopos/UniqueChoice.lean` the new `ExistsUnique`
+  path, and `Prototypes/FreeTopos/Relations.lean` the new `Rel` path.
 - v4.29 symptom: `unknown module prefix 'Mathlib.Basic'`: the pinned
   mathlib has no `Mathlib/Basic/` directory, and the modules are
   `Mathlib.Logic.IsEmpty.Defs` (split from `Mathlib.Logic.IsEmpty`
-  in mathlib pull request 35137) and `Mathlib.Logic.Nontrivial.Defs`
-  there.
-- Adaptation: rewrite the imports to `Mathlib.Logic.IsEmpty.Defs` and
-  `Mathlib.Logic.Nontrivial.Defs`.
+  in mathlib pull request 35137), `Mathlib.Logic.Nontrivial.Defs`,
+  `Mathlib.Logic.ExistsUnique`, and `Mathlib.Data.Rel` there.
+- Adaptation: rewrite the imports to `Mathlib.Logic.IsEmpty.Defs`,
+  `Mathlib.Logic.Nontrivial.Defs`, `Mathlib.Logic.ExistsUnique`, and
+  `Mathlib.Data.Rel`.
 
 ### 18. `List.sum_le_card_nsmul` renamed to `List.sum_le_length_nsmul`
 
@@ -647,7 +718,10 @@ genuinely new (decide the adaptation, add a category here).
   globally only after it, since the upstream commit that bumped
   mathlib to `v4.34.0`; `Prototypes/BitStream.lean` and
   `Prototypes/BitStream/WConstruction.lean` have that form from their
-  addition. Under `v4.34` the `in` form applies the
+  addition, as do `Mathlib/Data/PFunctor/Presheaf/Carrier.lean`,
+  `Prototypes/MType/Basic.lean`, and, under `Prototypes/FreeTopos/`,
+  `Elementary.lean`, `Relations.lean`, `Represent.lean`, and
+  `Internal/Represent.lean`. Under `v4.34` the `in` form applies the
   option to the module docstring that follows it.
 - v4.29 symptom: `Can't add Verso-format module docs because there is
   already Markdown-format content present`, reported at the first
@@ -659,7 +733,9 @@ genuinely new (decide the adaptation, add a category here).
   modules, is unaffected.
 - Adaptation: set the option globally before the leading module
   docstring and delete the later global `set_option`, the form these
-  modules had before the bump.
+  modules had before the bump. Where a blank line separates the later
+  `set_option` from the docstring above it, one blank line is deleted
+  with it.
 
 ### 21. `Functor.Elements` refactored into structures
 
@@ -692,15 +768,35 @@ genuinely new (decide the adaptation, add a category here).
   eliminator, so that terms of `P α` no longer rely on the
   definitional unfolding of `PFunctor.Obj` to a sigma type.
   `Prototypes/BitStream.lean` (`layerEquiv`) and
-  `Prototypes/BitStream/WConstruction.lean` (`zeroEquiv`) pass
-  `Obj.mk`, with `P` explicit, to `congrArg`.
+  `Prototypes/MType/Approx.lean` (`zeroEquiv`) pass `Obj.mk`, with `P`
+  explicit, to `congrArg`; `Mathlib/Data/PFunctor/Univariate/Obj.lean`
+  (`mk_sndOfEq`) states an equation whose left-hand side is
+  `Obj.mk a (x.sndOfEq h)`.
 - v4.29 symptom: ``Unknown constant `PFunctor.Obj.mk` ``, followed by
   `Missing cases` on the `nomatch` whose scrutinee's type the failed
   application leaves undetermined. The anonymous-constructor and
   `.mk` pattern forms in the same modules elaborate in v4.29 by
   unfolding `PFunctor.Obj` to `Sigma`; only the explicit name fails.
 - Adaptation: substitute `Sigma.mk` applied to the shape, the
-  expected type of the `congrArg` supplying the index family.
+  expected type of the `congrArg` supplying the index family; in
+  `mk_sndOfEq`, `Sigma.mk a (x.sndOfEq h)`, whose sigma type unifies
+  with the right-hand side's `P α` by the same unfolding.
+
+### 23. `Relation.EqvGen.mono` stated as an inclusion of relations
+
+- Upstream cause: mathlib pull request 30526 (2026-07-01) restates
+  `Relation.EqvGen.mono` from
+  `(hrp : ∀ a b, r a b → p a b) (h : EqvGen r a b) : EqvGen p a b`
+  to `(hrp : r ≤ p) : EqvGen r ≤ EqvGen p`, so that the endpoints
+  become explicit arguments of the inclusion.
+  `Prototypes/QuotientPRA/Congruence.lean` (`unit_eq_iff`) applies it
+  twice as `Relation.EqvGen.mono ?_ _ _ h`.
+- v4.29 symptom: `Function expected at ⋯ but this term has type
+  Relation.EqvGen ...`, followed by `No goals to be solved`.
+- Adaptation: `Relation.EqvGen.mono ?_ h`, the v4.29 form taking the
+  endpoints implicitly. The `rintro` that discharges the hypothesis
+  `?_` introduces the same two points and witness under either
+  statement.
 
 ## Updating the patch for a new upstream
 
@@ -880,6 +976,22 @@ after its `TreeScanner` import is deleted.
   another. The index modules `Prototypes`, `Computability`,
   `SizeBounded.Logspace`, `SizeBounded.Logspace.WTree`, and `RoseTree`
   survive with those imports deleted.
+- `Geb.Cslib.Foundations.Data.PFunctor.Free` issues
+  `compile_inductive% PFunctor.FreeM` over
+  `Cslib.Foundations.Data.PFunctor.Free`, and
+  `Geb.Prototypes.Definition.Basic` imports that cslib module, absent
+  at the pin as recorded for `BitTreeScanner.Encoding` above. The other
+  modules under `Geb.Cslib` are index modules over the former, and every
+  other module under `Geb.Prototypes.Definition` is an index module or
+  imports `Basic`, directly or through a chain, so `Geb.Cslib` and
+  `Geb.Prototypes.Definition` are excluded as a whole.
+  `Geb.Prototypes.Bootstrap` and `Geb.Prototypes.FreeTopos.Translation`
+  import the excluded `Oitavem.Word`, and `FreeTopos.TranslationLibrary`,
+  `TranslationKernel`, `TranslationSound`, and
+  `TranslationSoundClassical` import `Translation` or one another.
+  `Geb.Prototypes.Kernel.Image` imports the excluded `RoseTree.Packed`,
+  and `Kernel.Command` imports `Image`. The index modules `FreeTopos`
+  and `Kernel` survive with those imports deleted.
 
 ## Tooling notes
 

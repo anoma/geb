@@ -7,6 +7,7 @@ module
 
 public import Geb.Mathlib.Data.PFunctor.Presheaf.Arrow
 public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
+public import Geb.Mathlib.Data.PFunctor.Presheaf.Carrier
 public import Geb.Mathlib.Data.PFunctor.Presheaf.Decidable
 public import Geb.Mathlib.Data.PFunctor.Presheaf.Finite
 public import Geb.Mathlib.Data.PFunctor.Presheaf.Functor

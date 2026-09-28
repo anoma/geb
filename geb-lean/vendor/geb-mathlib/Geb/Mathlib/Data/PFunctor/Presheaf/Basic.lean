@@ -74,6 +74,10 @@ reindexes these fibers contravariantly.
   to the output presheaf's restriction maps.
 * `PresheafPFunctor.objRestrElt_id` / `objRestrElt_comp` — the identity and
   composition laws of the element-level restriction `objRestrElt`.
+* `PresheafPFunctor.snd_objRestrElt` / `objRestrElt_congr` — the children of a
+  restricted element, and congruence of the restriction.
+* `PresheafDomPFunctorData.snd_eq_value` — a child is its value over its
+  index.
 
 ## Notation
 
@@ -193,6 +197,15 @@ compatibility of `x` and the constraint condition on `b` to `Z.obj ⟨i⟩`. -/
     (b : F.toSliceDomPFunctor.Direction x.1.1 i) : Z.obj ⟨i⟩ :=
   cast (congrArg (fun k : I ↦ Z.obj ⟨k⟩)
     (((F.compatible_iff (elemProj Z) x.1.1 x.1.2).mp x.2 b.1).trans b.2)) (x.1.2 b.1).2
+
+/-- The child a slice element over `elemProj Z` assigns to a direction is the
+value it gives the direction, placed over the direction's index. -/
+theorem snd_eq_value {I : Type uI} [Category.{vI} I]
+    (F : PresheafDomPFunctorData.{uI, uA, uB, vI} I)
+    {Z : Iᵒᵖ ⥤ Type uZ} (x : F.toSliceDomPFunctor.Obj (elemProj Z)) ⦃i : I⦄
+    (b : F.toSliceDomPFunctor.Direction x.1.1 i) : x.1.2 b.1 = ⟨i, F.value x b⟩ :=
+  Sigma.ext (((F.compatible_iff (elemProj Z) x.1.1 x.1.2).mp x.2 b.1).trans b.2)
+    (cast_heq _ _).symm
 
 /-- The direction-assignment of `x` is a natural transformation `E_T(a) ⟶ Z`,
 where `a := x.1.1`: for every `f : i' ⟶ i` and direction `b` over `i`, the
@@ -422,6 +435,26 @@ private theorem value_objRestrElt {I : Type uI} [Category.{vI} I] {J : Type uJ} 
     ⦃i : I⦄ (b : F.Direction (F.objRestrElt g x hq).1.1 i) :
     F.value (F.objRestrElt g x hq) b = F.value x (F.reindex g ⟨x.1.1, hq⟩ b) := by
   obtain ⟨b1, rfl⟩ := b
+  rfl
+
+/-- The child a restricted element assigns to a direction is the child the
+original assigns to the direction's `reindex`. -/
+theorem snd_objRestrElt {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ} J]
+    (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) {X : Type uX} {p : X → I}
+    ⦃j j' : J⦄ (g : j' ⟶ j) (x : F.toSliceDomPFunctor.Obj p) (hq : F.q x.1.1 = j) ⦃i : I⦄
+    (d : F.Direction (F.objRestrElt g x hq).1.1 i) :
+    (F.objRestrElt g x hq).1.2 d.1 = x.1.2 (F.reindex g ⟨x.1.1, hq⟩ d).1 := by
+  obtain ⟨dv, rfl⟩ := d
+  rfl
+
+/-- `objRestrElt` respects equality of elements; the index witnesses are
+proof-irrelevant. -/
+theorem objRestrElt_congr {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ} J]
+    (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) {X : Type uX} {p : X → I}
+    ⦃j j' : J⦄ (g : j' ⟶ j) {x x' : F.toSliceDomPFunctor.Obj p} (e : x = x')
+    (hq : F.q x.1.1 = j) (hq' : F.q x'.1.1 = j) :
+    F.objRestrElt g x hq = F.objRestrElt g x' hq' := by
+  subst e
   rfl
 
 /-- The restriction action of `objPresheaf` on a `J`-morphism `g`, at the level
