@@ -14,8 +14,8 @@ Extensions of `Mathlib.Logic.Equiv.Basic`: an eliminator for sections
 of sigma-type projections, choice-free congruence and grouping
 equivalences on sigma types, an equivalence presenting a function into
 a sum type as a classifier together with an assignment on the
-unresolved elements, and a choice-free domain transport for arrow
-types.
+unresolved elements, and choice-free domain transports for arrow and
+dependent function types.
 
 ## Main definitions
 
@@ -35,6 +35,8 @@ types.
   unresolved (right-classified) elements.
 * `Equiv.arrowCongrLeftC` — transport a function type along an
   equivalence of its domain, choice-free (unlike `Equiv.arrowCongr`).
+* `Equiv.piCongrLeftC` — transport a dependent function type along an
+  equivalence of its domain, choice-free (unlike `Equiv.piCongrLeft`).
 
 ## Main statements
 
@@ -271,3 +273,18 @@ def Equiv.arrowCongrLeftC.{w} {α : Sort u} {β : Sort v} {γ : Sort w}
   invFun h := h ∘ e
   left_inv g := funext fun a ↦ congrArg g (e.left_inv a)
   right_inv h := funext fun b ↦ congrArg h (e.right_inv b)
+
+/-- Transport a dependent function type along an equivalence of its
+domain, choice-free (unlike `Equiv.piCongrLeft`, which depends on
+`Classical.choice`): a function on `α` valued in `P ∘ e` is a function on
+`β` valued in `P`, the value at `b` read at `e.symm b` and transported
+along `e.apply_symm_apply b`. The three sorts are independent, matching
+the polymorphism of the `Equiv.piCongrLeft` this replaces. -/
+def Equiv.piCongrLeftC.{w} {α : Sort u} {β : Sort v} (P : β → Sort w) (e : α ≃ β) :
+    (∀ a, P (e a)) ≃ ∀ b, P b where
+  toFun f b := cast (congrArg P (e.apply_symm_apply b)) (f (e.symm b))
+  invFun g a := g (e a)
+  left_inv f := funext fun a ↦ eq_of_heq ((cast_heq _ _).trans
+    (congr_arg_heq f (e.symm_apply_apply a)))
+  right_inv g := funext fun b ↦ eq_of_heq ((cast_heq _ _).trans
+    (congr_arg_heq g (e.apply_symm_apply b)))

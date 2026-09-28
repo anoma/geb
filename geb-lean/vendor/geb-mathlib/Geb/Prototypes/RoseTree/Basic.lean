@@ -26,6 +26,9 @@ is a type with a computable isomorphism to {lit}`RoseTree`.
   constructor from a list of children and its two projections.
 * {lit}`RoseTree.elim` — the fold, whose step sees the label and the list of
   the children's results.
+* {lit}`RoseTree.para` — the paramorphism, whose step also sees each child as a
+  tree.
+* {lit}`RoseTree.map` — the functor's action on the labels.
 
 # Main statements
 
@@ -34,6 +37,7 @@ is a type with a computable isomorphism to {lit}`RoseTree`.
   children.
 * {lit}`RoseTree.ind` — induction over nodes and their lists of children.
 * {lit}`RoseTree.elim_node` — the computation rule of the fold.
+* {lit}`RoseTree.para_node` — the computation rule of the paramorphism.
 
 # Tags
 
@@ -55,11 +59,15 @@ abbrev RoseTree (α : Type) : Type := WType (RoseTree.Sig α)
 
 namespace RoseTree
 
-variable {α β : Type}
+universe u
 
-/-- The node with a label over a list of children. -/
+variable {α : Type} {β : Type u}
+
+/-- The node with a label over a list of children. The children are tabulated in an array
+built once, so that each is reached in constant time. -/
 def node (a : α) (cs : List (RoseTree α)) : RoseTree α :=
-  WType.mk (a, cs.length) fun i ↦ cs[i]
+  let arr := cs.toArray
+  WType.mk (a, cs.length) fun i ↦ arr[i.1]'(by simp [arr])
 
 /-- The label of a tree. -/
 def label : RoseTree α → α
@@ -72,7 +80,8 @@ def children : RoseTree α → List (RoseTree α)
 @[simp] theorem label_node (a : α) (cs : List (RoseTree α)) : (node a cs).label = a := rfl
 
 @[simp] theorem children_node (a : α) (cs : List (RoseTree α)) :
-    (node a cs).children = cs := List.ofFn_getElem
+    (node a cs).children = cs := by
+  simp only [children, node, List.getElem_toArray, List.ofFn_getElem]
 
 /-- A node over a list tabulating a direction function is the tree of that
 function. -/
@@ -81,14 +90,22 @@ theorem node_eq_mk (a : α) (cs : List (RoseTree α)) {n : ℕ} (hlen : cs.lengt
     node a cs = WType.mk (a, n) f := by
   subst hlen
   unfold node
+  dsimp only
   congr 1
   funext i
+  rw [List.getElem_toArray]
   exact Option.some.inj ((List.getElem?_eq_getElem i.2).symm.trans (key i))
 
 /-- A tree is the node of its label over its children. -/
 @[simp] theorem node_label_children (t : RoseTree α) : node t.label t.children = t := by
   obtain ⟨⟨a, n⟩, f⟩ := t
   exact node_eq_mk a (List.ofFn f) List.length_ofFn f fun i ↦ by simp
+
+/-- A node is a tree exactly when its label and children are the tree's. -/
+theorem node_eq_iff {a : α} {cs : List (RoseTree α)} {t : RoseTree α} :
+    node a cs = t ↔ a = t.label ∧ cs = t.children :=
+  ⟨fun h ↦ h ▸ ⟨(label_node a cs).symm, (children_node a cs).symm⟩,
+    fun ⟨h₁, h₂⟩ ↦ by rw [h₁, h₂, node_label_children]⟩
 
 /-- Induction: a property of every node over children that have it holds of
 every tree. -/
@@ -109,7 +126,63 @@ def elim (f : α → List β → β) : RoseTree α → β :=
 /-- The computation rule of the fold. -/
 @[simp] theorem elim_node (f : α → List β → β) (a : α) (cs : List (RoseTree α)) :
     elim f (node a cs) = f a (cs.map (elim f)) := by
-  simp [elim, node, WType.elim, List.ofFn_getElem_eq_map]
+  simp [elim, node, WType.elim, List.getElem_toArray, List.ofFn_getElem_eq_map]
+
+/-- The algebra of the paramorphism: rebuild the node from the children's rebuilt subtrees,
+and apply the step to the children paired with their results. -/
+def paraStep (f : α → List (RoseTree α × β) → β) (a : α) (rs : List (RoseTree α × β)) :
+    RoseTree α × β :=
+  (node a (rs.map Prod.fst), f a rs)
+
+/-- The paramorphism: the fold whose step sees each child as a tree together with its
+result. It is the fold at the carrier of pairs, so each child's result is computed once. -/
+def para (f : α → List (RoseTree α × β) → β) (t : RoseTree α) : β :=
+  (elim (paraStep f) t).2
+
+/-- The first component of the paramorphism's carrier rebuilds its input. -/
+theorem elim_paraStep_fst (f : α → List (RoseTree α × β) → β) (t : RoseTree α) :
+    (elim (paraStep f) t).1 = t :=
+  ind (P := fun t ↦ (elim (paraStep f) t).1 = t) (fun a cs ih ↦ by
+    simp only [elim_node, paraStep, List.map_map]
+    exact congrArg (node a) ((List.map_congr_left fun c hc ↦ ih c hc).trans cs.map_id)) t
+
+/-- The computation rule of the paramorphism. -/
+@[simp] theorem para_node (f : α → List (RoseTree α × β) → β) (a : α)
+    (cs : List (RoseTree α)) : para f (node a cs) = f a (cs.map fun c ↦ (c, para f c)) := by
+  simp only [para, elim_node, paraStep]
+  exact congrArg (f a) (List.map_congr_left fun c _ ↦
+    Prod.ext (elim_paraStep_fst f c) rfl)
+
+/-- The tree of the same shape with a function applied at each label: the functor's action. -/
+def map {γ : Type} (f : α → γ) : RoseTree α → RoseTree γ := elim fun a cs ↦ node (f a) cs
+
+/-- The computation rule of the map. -/
+@[simp] theorem map_node {γ : Type} (f : α → γ) (a : α) (cs : List (RoseTree α)) :
+    map f (node a cs) = node (f a) (cs.map (map f)) := by
+  simp [map]
+
+/-- The label of a mapped tree is the mapped label. -/
+@[simp] theorem label_map {γ : Type} (f : α → γ) (t : RoseTree α) :
+    (map f t).label = f t.label := by
+  rw [← node_label_children t, map_node, label_node, label_node]
+
+/-- The children of a mapped tree are the mapped children. -/
+@[simp] theorem children_map {γ : Type} (f : α → γ) (t : RoseTree α) :
+    (map f t).children = t.children.map (map f) := by
+  rw [← node_label_children t, map_node, children_node, children_node]
+
+/-- Mapping twice is mapping by the composite. -/
+theorem map_map {γ δ : Type} (f : α → γ) (g : γ → δ) (t : RoseTree α) :
+    map g (map f t) = map (g ∘ f) t :=
+  ind (P := fun t ↦ map g (map f t) = map (g ∘ f) t) (fun a cs ih ↦ by
+    simp only [map_node, List.map_map]
+    exact congrArg _ (List.map_congr_left fun c hc ↦ ih c hc)) t
+
+/-- Mapping by the identity is the identity. -/
+@[simp] theorem map_id (t : RoseTree α) : map id t = t :=
+  ind (P := fun t ↦ map id t = t) (fun a cs ih ↦ by
+    simp only [map_node, id]
+    exact congrArg _ ((List.map_congr_left fun c hc ↦ ih c hc).trans cs.map_id)) t
 
 end RoseTree
 

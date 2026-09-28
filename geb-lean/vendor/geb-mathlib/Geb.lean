@@ -5,7 +5,6 @@ Authors: Terence Rokop
 -/
 module -- shake: keep-all, shake: keep-downstream
 
-public import Geb.Cslib
 public import Geb.Prototypes
 public import Geb.Mathlib
 

@@ -31,6 +31,13 @@ SRC_REV="${1:-main}"
 # Geb.Prototypes.Computability.BitTreeScanner.Encoding: imports
 # Cslib.Foundations.Data.PFunctor.Free, likewise added after the pin.
 #
+# Geb.Cslib (whose one non-index module compiles the recursor of
+# Cslib.Foundations.Data.PFunctor.Free) and
+# Geb.Prototypes.Definition.Basic import that same module; every other
+# module under Geb.Prototypes.Definition imports Basic, directly or
+# through a chain, so Geb.Cslib and Geb.Prototypes.Definition are
+# excluded as a whole.
+#
 # Geb.Prototypes.Computability.MultiTape.{OutputString,Rename} and
 # Geb.Prototypes.Computability.SizeBounded.Machine.{Exec,Program,Register}:
 # import the MultiTape modules above and
@@ -52,7 +59,9 @@ SRC_REV="${1:-main}"
 # would leave them unreachable from the Geb umbrella
 # (scripts/tests/test-lint-driver.sh reports these).
 EXCLUDED_MODULES=(
+  Geb.Cslib
   Geb.Prototypes.BitStream.Oitavem
+  Geb.Prototypes.Bootstrap
   Geb.Prototypes.Computability.BitTree.BinaryMachine.Accounting
   Geb.Prototypes.Computability.BitTree.BinaryMachine.BitStep
   Geb.Prototypes.Computability.BitTree.BinaryMachine.Bound
@@ -137,6 +146,14 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Computability.SizeBounded.MachineBound
   Geb.Prototypes.Computability.SizeBounded.WordMachine
   Geb.Prototypes.Computability.TreeScanner
+  Geb.Prototypes.Definition
+  Geb.Prototypes.FreeTopos.Translation
+  Geb.Prototypes.FreeTopos.TranslationKernel
+  Geb.Prototypes.FreeTopos.TranslationLibrary
+  Geb.Prototypes.FreeTopos.TranslationSound
+  Geb.Prototypes.FreeTopos.TranslationSoundClassical
+  Geb.Prototypes.Kernel.Command
+  Geb.Prototypes.Kernel.Image
   Geb.Prototypes.RoseTree.Bits
   Geb.Prototypes.RoseTree.Packed
   Geb.Prototypes.RoseTree.Spine
