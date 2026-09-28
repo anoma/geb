@@ -274,7 +274,10 @@ genuinely new (decide the adaptation, add a category here).
   `length_lengths` and `sum_lengths` in
   `Prototypes/Computability/BitTree/Elias/Tree.lean` (`tree_ind`, at an
   explicit `P`), `length_stepEnv_le` in
-  `Prototypes/Computability/SizeBounded/Basic.lean` (`Fin.addCases`),
+  `Prototypes/Computability/SizeBounded/Basic.lean` and `sem_updEnv`
+  and `regs_eq` in
+  `Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean`
+  (all three `Fin.addCases`),
   `eq_map_of_forall₂` in
   `Prototypes/FreeTopos/Internal/Substitution.lean`
   (`List.Forall₂.rec`), `unit_eq_of_isModelHom` in
@@ -369,16 +372,21 @@ genuinely new (decide the adaptation, add a category here).
   with `deriving DecidableEq, Repr`, and
   `Prototypes/Computability/SizeBounded/Logspace/Rep.lean` declares
   `Rep` with `deriving DecidableEq, Repr, Inhabited`; likewise
-  `Prototypes/SuccinctTree.lean` (`Summary`) and, under
+  `Prototypes/SuccinctTree.lean` (`Summary`), under
   `Prototypes/Computability/SizeBounded/Logspace/WTree/`,
-  `NumScan.lean` (`Numeral.NState`) and `Positions.lean` (`Loc`,
-  `Node`).
+  `NumScan.lean` (`Numeral.NState`), `Positions.lean` (`Loc`,
+  `Node`), `Children.lean` (`ChildReg`), `Events.lean` (`Event`), and
+  `Nodes.lean` (`NodeReg`), and
+  `Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean`
+  (`Counters`).
 - v4.29 symptom: the `unusedArguments` env-linter reports
   `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` (respectively
   `instReprAnn.repr argument 2 prec✝ : ℕ`,
   `instReprAccount.repr argument 2 prec✝ : ℕ`,
   `instReprRep.repr argument 2 prec✝ : ℕ`, `instReprSummary.repr`,
-  `instReprNState.repr`, `instReprLoc.repr`, and `instReprNode.repr`)
+  `instReprNState.repr`, `instReprLoc.repr`, `instReprNode.repr`,
+  `instReprChildReg.repr`, `instReprEvent.repr`,
+  `instReprNodeReg.repr`, and `instReprCounters.repr`)
   under `lake lint`; v4.29's
   `Repr` deriving handler emits a `repr` that ignores the precedence
   argument for a structure whose representation needs no
@@ -484,7 +492,13 @@ genuinely new (decide the adaptation, add a category here).
   `Destruct.lean`, `Fold.lean`, `Layout.lean`, `SelfDelim.lean`,
   `SmashFree.lean`, and `Variable.lean`; and `Prototypes/BitStream.lean`
   and, under `Prototypes/Computability/SizeBounded/Logspace/WTree/`,
-  `NumScan.lean`, `Numeral.lean`, `Sig.lean`, and `Spell.lean`; and,
+  `BitFold.lean`, `Children.lean`, `Events.lean`, `ExprBase.lean`,
+  `NodeExpr.lean`, `Nodes.lean`, `NumArith.lean`, `NumScan.lean`,
+  `NumScanExpr.lean`, `Numeral.lean`, `RecognizeExpr.lean`, `Sig.lean`,
+  `SigEdge.lean`, `SigLabel.lean`, and `Spell.lean`; and, under
+  `Prototypes/Computability/`, `BitTree/Elias/Scanner.lean`,
+  `BitTree/Elias/ScannerCorrect.lean`, `BitTree/Elias/ScannerHeader.lean`,
+  and `SizeBounded/Logspace/EliasTree/Scanner.lean`; and,
   under `Prototypes/FreeTopos/`, `Unfolding.lean`,
   `Internal/Inversion.lean`, and `Internal/Soundness.lean`, and, under
   `Prototypes/PartialHorn/`, `Completeness.lean` and
@@ -536,18 +550,23 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/FinCardUniverse/Value.lean`, `jUnitBool` and `pUnit` in
   `Prototypes/ParanaturalRank.lean`, `univR` in
   `Prototypes/PresheafIRUniv/Basic.lean`, `treeStep` in
-  `Prototypes/Computability/SizeBounded/BitTree.lean`, and `Rep.unit`
-  in `Prototypes/FreeTopos/Represent.lean`.
+  `Prototypes/Computability/SizeBounded/BitTree.lean`, `Rep.unit`
+  in `Prototypes/FreeTopos/Represent.lean`, and, under
+  `Prototypes/Computability/SizeBounded/Logspace/`, the recursion steps
+  `treeStep` in `EliasTree/Expr.lean`, `foldStep` in
+  `WTree/BitFold.lean`, and `nsStep` in `WTree/NumScanExpr.lean`, each
+  constant in the counter's bit.
 - v4.29 symptom: under `lake lint -- Geb`, the `unusedArguments`
   env-linter reports `Geb.CobhamFold.encUnit argument 1`,
   `Geb.CobhamFold.decUnit argument 1`,
   `Geb.CobhamFold.algUnit argument 3`, and the corresponding report for
-  each of the other seven. The declarations are unchanged from upstream;
+  each of the other ten. The declarations are unchanged from upstream;
   the report is v4.29's linter.
 - Adaptation: insert `@[nolint unusedArguments]` between each
   declaration's docstring and its `def` keyword, as category 2 does for
-  `checkUnivs`; `treeStep` already carries `@[expose]`, which the
-  suppression joins as `@[expose, nolint unusedArguments]`.
+  `checkUnivs`; `treeStep`, `foldStep`, and `nsStep` already carry
+  `@[expose]`, which the suppression joins as
+  `@[expose, nolint unusedArguments]`.
   `Prototypes/ParanaturalRank.lean` imports nothing, so
   the attribute is out of scope there: add
   `public import Batteries.Tactic.Lint` to its import block. The
@@ -892,106 +911,132 @@ carries nothing but imports and survives the deletion of one of them;
 `Geb.Prototypes.Computability` is one, retaining its remaining imports
 after its `TreeScanner` import is deleted.
 
+A module imported only by excluded modules is excluded as well: the
+`Geb` umbrella would no longer import it, directly or through a chain,
+so `lake lint -- Geb`, which lints the umbrella's import closure, would
+not reach it; `scripts/tests/test-lint-driver.sh` reports such a
+module. The list is the least set of modules closed under these two
+rules and containing each module that imports an unavailable
+dependency, so an entry that a later upstream revision no longer forces
+is removed rather than retained.
+
 ### Current exclusions
 
-- `Geb.Prototypes.Computability.TreeScanner` (and its `Machine`, `Steps`,
-  and `Bound` submodules) imports
-  `Cslib.Computability.Machines.Turing.MultiTape.Deterministic` and
-  `Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas`, and uses
-  the `Turing.MultiTapeTM` namespace those modules introduce. Neither
-  module exists at the pinned cslib revision `9a159ac`
-  (`v4.29.0-rc6`), whose only Turing-machine material is
+`EXCLUDED_MODULES` is the closure of the modules below under the
+importer and orphan rules of [Mechanism](#mechanism), each entry naming
+the narrowest module or subtree the rules exclude; `PROVENANCE.md`
+lists every entry. Module names are relative to
+`Geb.Prototypes.Computability` unless they begin with `Geb`.
+
+The exclusions originate in five cslib modules absent at the pinned
+revision `9a159ac` (`v4.29.0-rc6`). Lifting any of them requires
+advancing the cslib pin, which the mathlib and toolchain pins govern.
+
+- `Cslib.Computability.Machines.Turing.MultiTape.Deterministic` and
+  `Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas`, which
+  introduce the `Turing.MultiTapeTM` namespace. The pinned revision's
+  only Turing-machine material is
   `Cslib.Computability.Machines.SingleTapeTuring.Basic`.
   `git log --follow --name-status` over cslib records both as additions —
   `MultiTape/Deterministic.lean` in cslib PR #384 and
   `MultiTape/TapeLemmas.lean` in cslib PR #768 — not as renames of
   anything present at the pin, and the pinned tree contains no
-  occurrence of `MultiTape`. Lifting the exclusion requires advancing
-  the cslib pin, which the mathlib and toolchain pins govern.
-- Under `Geb.Prototypes.Computability.BitTree`, the modules `Bound`,
-  `Machine`, `Steps`, `BinaryMachine.Bound`, `BinaryMachine.Machine`,
-  `Elias.Bound`, `Elias.Machine`, and `EliasBinary.Bound`, and
-  `Geb.Prototypes.Computability.BitTreeScanner.Machine`, import the
-  same two `MultiTape` modules.
-- `Geb.Prototypes.Computability.BitTreeScanner.Encoding` imports
-  `Cslib.Foundations.Data.PFunctor.Free` and instantiates the
-  `PFunctor.FreeM` it defines, at a `PFunctor` shape, through
-  `PFunctor.FreeM.rec` and `PFunctor.FreeM.liftM`. cslib's history
-  records `PFunctor/Free.lean` as an addition in cslib PR #477
-  (2026-06-12); the pinned revision `9a159ac` (2026-03-12) has no
-  `Cslib/Foundations/Data/PFunctor/` directory. The `Cslib.FreeM` of
-  the pinned `Cslib/Foundations/Control/Monad/Free.lean` (cslib PR
-  #53) is a different structure, the free monad over an arbitrary
-  `F : Type u → Type v` whose `liftBind` constructor takes an
+  occurrence of `MultiTape`. `TreeScanner.Machine`, `TreeScanner.Steps`,
+  `TreeScanner.Bound`, `BitTree.Bound`, `BitTree.BinaryMachine.Bound`,
+  `BitTree.BinaryMachine.Machine`, `BitTree.Elias.Bound`,
+  `BitTree.Elias.Machine`, `BitTree.EliasBinary.Bound`,
+  `BitTreeScanner.Bound`, `BitTreeScanner.Machine`,
+  `MultiTape.OutputString`, `MultiTape.Rename`, `MultiTape.RunFrom`,
+  `SizeBounded.Machine.Exec`, and `SizeBounded.Machine.Program` import
+  one or both.
+- `Cslib.Computability.Machines.Turing.MultiTape.Configuration` and
+  `Cslib.Computability.Machines.Turing.MultiTape.ConfigBound`, added to
+  cslib alongside the other `MultiTape` modules and imported by
+  `SizeBounded.Machine.Register` and `Oitavem.Machine.SpaceTime`
+  respectively.
+- `Cslib.Foundations.Data.PFunctor.Free`, which cslib's history records
+  as an addition in cslib PR #477 (2026-06-12); the pinned revision
+  (2026-03-12) has no `Cslib/Foundations/Data/PFunctor/` directory. The
+  `Cslib.FreeM` of the pinned `Cslib/Foundations/Control/Monad/Free.lean`
+  (cslib PR #53) is a different structure, the free monad over an
+  arbitrary `F : Type u → Type v` whose `liftBind` constructor takes an
   operation `op : F ι`, where `PFunctor.FreeM.liftBind` takes a shape
   `a : P.A` and a continuation on `P.B a`; it is not a rename.
-- The modules importing one of the above, directly or through a chain
-  of such imports, are excluded with them: the rest of
-  `BitTreeScanner`, excluded as a whole since every submodule is such
-  an importer; and, under `BitTree`, the `BinaryMachine` submodules
-  other than `Accounting` and `Difference`, every `Elias.Machine*`
-  module together with `Elias.Execution`, the `EliasBinary` submodules
-  other than `Account`, `Cost`, and `Need`, and `Mazzanti.BitTree`,
-  `Mazzanti.Bound`, `Mazzanti.Growth`, and `Mazzanti.Words`. The index
-  modules `BitTree`, `BitTree.BinaryMachine`, `BitTree.Elias`,
-  `BitTree.EliasBinary`, and `Mazzanti` survive with those imports
-  deleted. `PROVENANCE.md` lists every entry.
-- `Geb.Prototypes.Computability.MultiTape.OutputString` and
-  `Geb.Prototypes.Computability.MultiTape.Rename`, and
-  `Geb.Prototypes.Computability.SizeBounded.Machine.Exec`,
-  `Geb.Prototypes.Computability.SizeBounded.Machine.Program`, and
-  `Geb.Prototypes.Computability.SizeBounded.Machine.Register`, import
-  `Cslib.Computability.Machines.Turing.MultiTape.Configuration`,
-  `Cslib.Computability.Machines.Turing.MultiTape.Deterministic`, or
-  `Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas`, and
-  `Geb.Prototypes.Computability.SizeBounded.WordMachine` imports the
-  excluded `TreeScanner.Machine`. `MultiTape` is excluded as a whole,
-  every submodule being such an importer. Every module under
-  `SizeBounded.Machine` imports `Register`, `Program`, or `Exec`,
-  directly or through a chain, so `SizeBounded.Machine` is excluded as
-  a whole; likewise every module under `SizeBounded.Logspace.Machine`
-  imports a `SizeBounded.Machine` module, so it too is excluded as a
-  whole. `SizeBounded.MachineBound` imports `WordMachine`, and
-  `Kristiansen.MachineBound` imports `SizeBounded.Machine.Main`; both
-  are excluded. The index modules `SizeBounded`, `SizeBounded.Logspace`,
-  and `Kristiansen` survive with those imports deleted.
-- `Geb.Prototypes.Computability.Oitavem.Machine.SpaceTime` imports
-  `Cslib.Computability.Machines.Turing.MultiTape.ConfigBound`, added to
-  cslib after the pin alongside the other `MultiTape` modules, and
-  `Geb.Prototypes.Computability.Oitavem.Word` imports the excluded
-  `BitTreeScanner.Encoding`. Every other module under `Oitavem` imports
-  `Word`, directly or through a chain, so `Oitavem` is excluded as a
-  whole. Its importers follow: `BitStream.Oitavem` (every submodule
-  imports `Oitavem.Syntax`, so the index is excluded as a whole),
-  `Typechecker.Oitavem`, and `RoseTree.Bits`, with `RoseTree.Spine`
-  (which also imports the excluded `BitTree.EliasBinary.Bound`) and
-  `RoseTree.Packed` importing `Bits` in turn.
-  `SizeBounded.Logspace.EliasTree` is excluded as a whole, each
-  submodule importing an excluded `BitTree.Elias` module or one
-  another; under `SizeBounded.Logspace.WTree`, `Events` imports the
-  excluded `BitTree.Elias.ScannerHeader`, and `BitFold`, `ChildExpr`,
-  `Children`, `ExprBase`, `Machine`, `NodeExpr`, `Nodes`, `NumArith`,
-  `NumScanExpr`, `NumSum`, `Recognize`, `RecognizeExpr`, `SigCheck`,
-  `SigEdge`, `SigLabel`, and `SigMachine` import `Events` or one
-  another. The index modules `Prototypes`, `Computability`,
-  `SizeBounded.Logspace`, `SizeBounded.Logspace.WTree`, and `RoseTree`
-  survive with those imports deleted.
-- `Geb.Cslib.Foundations.Data.PFunctor.Free` issues
-  `compile_inductive% PFunctor.FreeM` over
-  `Cslib.Foundations.Data.PFunctor.Free`, and
-  `Geb.Prototypes.Definition.Basic` imports that cslib module, absent
-  at the pin as recorded for `BitTreeScanner.Encoding` above. The other
-  modules under `Geb.Cslib` are index modules over the former, and every
-  other module under `Geb.Prototypes.Definition` is an index module or
-  imports `Basic`, directly or through a chain, so `Geb.Cslib` and
-  `Geb.Prototypes.Definition` are excluded as a whole.
-  `Geb.Prototypes.Bootstrap` and `Geb.Prototypes.FreeTopos.Translation`
-  import the excluded `Oitavem.Word`, and `FreeTopos.TranslationLibrary`,
-  `TranslationKernel`, `TranslationSound`, and
-  `TranslationSoundClassical` import `Translation` or one another.
-  `Geb.Prototypes.Kernel.Image` imports the excluded `RoseTree.Packed`,
-  and `Kernel.Command` imports `Image`. The index modules `FreeTopos`
-  and `Kernel` survive with those imports deleted.
+  `BitTreeScanner.Encoding` instantiates `PFunctor.FreeM` at a
+  `PFunctor` shape through `PFunctor.FreeM.rec` and
+  `PFunctor.FreeM.liftM`, `Geb.Cslib.Foundations.Data.PFunctor.Free`
+  issues `compile_inductive% PFunctor.FreeM`, and
+  `Geb.Prototypes.Definition.Basic` imports the module.
+
+The rules then exclude the following.
+
+- Whole subtrees, together with their index modules: `TreeScanner`,
+  `BitTreeScanner`, and `MultiTape`, whose modules are among those
+  above or import them, directly or through a chain; `Oitavem`, whose
+  `Word` imports `BitTreeScanner.Encoding` and whose every other module
+  imports `Word`, `Machine.SpaceTime`, or an excluded `SizeBounded`
+  machine module, directly or through a chain;
+  `SizeBounded.Logspace.Machine`, every module of which imports a
+  `SizeBounded.Machine` module, directly or through a chain;
+  `SizeBounded.Machine.Loop`, `SizeBounded.Machine.Phase`, and
+  `SizeBounded.Machine.Primitives`, every module of which imports
+  `SizeBounded.Machine.Program`, directly or through a chain;
+  `Geb.Prototypes.BitStream.Oitavem`, whose `Sig` and `Stream` import
+  `Oitavem.Syntax` and whose other modules import those, directly or
+  through a chain; `Geb.Cslib`, whose other modules are index modules
+  over its `PFunctor.Free`; and `Geb.Prototypes.Definition`, every
+  non-index module of which imports `Basic`, directly or through a
+  chain.
+- Importers of an excluded module, individually. Under `BitTree`,
+  `Machine` imports `TreeScanner.Machine` and `Steps` imports
+  `Machine`; the `BinaryMachine` modules `BitStep`, `Carry`,
+  `Execution`, `Macro`, `Representation`, `Return`, `Simulation`, and
+  `Steps`, the `Elias` modules `Execution` and `MachineAccounting`
+  through `MachineSteps`, and the `EliasBinary` modules other than
+  `Bound`, `Account`, `Cost`, and `Need` import
+  `BinaryMachine.Machine`, `Elias.Machine`, `TreeScanner.Steps`,
+  `MultiTape.OutputString`, `BinaryMachine.Representation`, or one
+  another. Under `Mazzanti`, `BitTree` imports `BitTree.Machine`,
+  `Words` imports `Mazzanti.BitTree`, and `Bound` and `Growth` import
+  `Words`. `Kristiansen.MachineBound` imports
+  `SizeBounded.Machine.Main`. Under `SizeBounded`, `WordMachine`
+  imports `TreeScanner.Machine` and `MachineBound` imports
+  `WordMachine`; every module under `SizeBounded.Machine` other than
+  `Exec`, `Program`, and `Register` imports `Program`, directly or
+  through a chain, except the index modules
+  `SizeBounded.Machine` and `SizeBounded.Machine.Compile` and the
+  module `SizeBounded.Machine.Compile.Bound`, which imports only
+  `SizeBounded.Basic`; `Logspace.EliasTree.Machine` and
+  `Logspace.WTree.Machine` import `Logspace.Machine.Main`, and
+  `Logspace.WTree.SigMachine` imports `Logspace.WTree.Machine`. Under
+  `Geb.Prototypes`, `Typechecker.Oitavem` imports
+  `Oitavem.BoundedQuantification` and `Oitavem.Length`;
+  `RoseTree.Bits`, `Bootstrap`, and `FreeTopos.Translation` import
+  `Oitavem.Word`; `RoseTree.Spine` imports `RoseTree.Bits` and
+  `BitTree.EliasBinary.Bound`, `RoseTree.Packed` imports
+  `RoseTree.Spine`, `Kernel.Image` imports `RoseTree.Packed`, and
+  `Kernel.Command` imports `Kernel.Image`; and
+  `FreeTopos.TranslationLibrary`, `FreeTopos.TranslationKernel`,
+  `FreeTopos.TranslationSound`, and
+  `FreeTopos.TranslationSoundClassical` import, in turn, the one
+  before, starting from `FreeTopos.Translation`.
+- Orphans, imported only by excluded modules:
+  `BitTree.BinaryMachine.Accounting` (by `BitStep` and `Execution`),
+  `BitTree.BinaryMachine.Difference` (by `Representation` and `Steps`;
+  its import of `Mathlib.Basic.IsEmpty.Defs` alone would fall under
+  category 17), `BitTree.Elias.Counter` (by `MachineCounter` and
+  `MachineModel`), and `BitTree.EliasBinary.Cost` (by `Represent`),
+  with `BitTree.EliasBinary.Account` (by `Cost`) and
+  `BitTree.EliasBinary.Need` (by `Account`) in turn.
+
+The index modules `Geb`, `Geb.Prototypes`, and, under
+`Geb.Prototypes`, `Computability`, `FreeTopos`, `Kernel`, and
+`RoseTree`, and, under `Geb.Prototypes.Computability`, `BitTree`,
+`BitTree.BinaryMachine`, `BitTree.Elias`, `BitTree.EliasBinary`,
+`Kristiansen`, `Mazzanti`, `SizeBounded`, `SizeBounded.Machine`,
+`SizeBounded.Machine.Compile`, `SizeBounded.Logspace`,
+`SizeBounded.Logspace.EliasTree`, and `SizeBounded.Logspace.WTree`,
+survive with their imports of excluded modules deleted.
 
 ## Tooling notes
 

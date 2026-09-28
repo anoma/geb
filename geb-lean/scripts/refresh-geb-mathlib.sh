@@ -20,44 +20,16 @@ SRC_REV="${1:-main}"
 # index module, which carries nothing but imports and survives the
 # deletion.
 #
-# Geb.Prototypes.Computability.TreeScanner, and under
-# Geb.Prototypes.Computability.BitTree the modules Bound, Machine,
-# Steps, BinaryMachine.{Bound,Machine}, Elias.{Bound,Machine}, and
-# EliasBinary.Bound, and Geb.Prototypes.Computability.BitTreeScanner.Machine:
-# import
+# The entries originate in five cslib modules added after the pinned
+# v4.29.0-rc6 revision:
 # Cslib.Computability.Machines.Turing.MultiTape.{Deterministic,TapeLemmas},
-# added to cslib after the pinned v4.29.0-rc6 revision.
-#
-# Geb.Prototypes.Computability.BitTreeScanner.Encoding: imports
-# Cslib.Foundations.Data.PFunctor.Free, likewise added after the pin.
-#
-# Geb.Cslib (whose one non-index module compiles the recursor of
-# Cslib.Foundations.Data.PFunctor.Free) and
-# Geb.Prototypes.Definition.Basic import that same module; every other
-# module under Geb.Prototypes.Definition imports Basic, directly or
-# through a chain, so Geb.Cslib and Geb.Prototypes.Definition are
-# excluded as a whole.
-#
-# Geb.Prototypes.Computability.MultiTape.{OutputString,Rename} and
-# Geb.Prototypes.Computability.SizeBounded.Machine.{Exec,Program,Register}:
-# import the MultiTape modules above and
-# Cslib.Computability.Machines.Turing.MultiTape.Configuration, also
-# added after the pin.
-#
-# Geb.Prototypes.Computability.Oitavem.Machine.SpaceTime: imports
-# Cslib.Computability.Machines.Turing.MultiTape.ConfigBound, likewise
-# added after the pin.
-#
-# Geb.Prototypes.Computability.Oitavem.Word imports
-# BitTreeScanner.Encoding; every other Oitavem module imports Word,
-# so Oitavem is excluded as a whole, and with it its importers
-# BitStream.Oitavem, Typechecker.Oitavem, and RoseTree.Bits (whose
-# importers Spine and Packed follow).
-#
-# The remaining entries import one of the above, directly or through
-# a chain of such imports, or are imported only by such modules, which
-# would leave them unreachable from the Geb umbrella
-# (scripts/tests/test-lint-driver.sh reports these).
+# Cslib.Computability.Machines.Turing.MultiTape.{Configuration,ConfigBound},
+# and Cslib.Foundations.Data.PFunctor.Free. Every entry imports one of
+# them or an excluded module, directly or through a chain of such
+# imports, or is imported only by excluded modules, which would leave
+# it unreachable from the Geb umbrella (scripts/tests/test-lint-driver.sh
+# reports these). docs/geb-mathlib-backport-notes.md § Current
+# exclusions derives each entry.
 EXCLUDED_MODULES=(
   Geb.Cslib
   Geb.Prototypes.BitStream.Oitavem
@@ -93,9 +65,6 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Computability.BitTree.Elias.MachineRead
   Geb.Prototypes.Computability.BitTree.Elias.MachineSimpleBound
   Geb.Prototypes.Computability.BitTree.Elias.MachineSteps
-  Geb.Prototypes.Computability.BitTree.Elias.Scanner
-  Geb.Prototypes.Computability.BitTree.Elias.ScannerCorrect
-  Geb.Prototypes.Computability.BitTree.Elias.ScannerHeader
   Geb.Prototypes.Computability.BitTree.EliasBinary.Account
   Geb.Prototypes.Computability.BitTree.EliasBinary.BitStep
   Geb.Prototypes.Computability.BitTree.EliasBinary.Bound
@@ -123,26 +92,31 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Computability.Mazzanti.Words
   Geb.Prototypes.Computability.MultiTape
   Geb.Prototypes.Computability.Oitavem
-  Geb.Prototypes.Computability.SizeBounded.Logspace.EliasTree
+  Geb.Prototypes.Computability.SizeBounded.Logspace.EliasTree.Machine
   Geb.Prototypes.Computability.SizeBounded.Logspace.Machine
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.BitFold
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ChildExpr
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Children
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Events
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ExprBase
   Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Machine
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NodeExpr
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Nodes
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumArith
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScanExpr
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumSum
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Recognize
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.RecognizeExpr
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigCheck
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigEdge
-  Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigLabel
   Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigMachine
-  Geb.Prototypes.Computability.SizeBounded.Machine
+  Geb.Prototypes.Computability.SizeBounded.Machine.Bound
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Basic
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Body
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Comp
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Correct
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Family
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.LoopEval
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Srn
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.SrnInit
+  Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Theorem
+  Geb.Prototypes.Computability.SizeBounded.Machine.Emit
+  Geb.Prototypes.Computability.SizeBounded.Machine.Exec
+  Geb.Prototypes.Computability.SizeBounded.Machine.Loop
+  Geb.Prototypes.Computability.SizeBounded.Machine.Main
+  Geb.Prototypes.Computability.SizeBounded.Machine.Phase
+  Geb.Prototypes.Computability.SizeBounded.Machine.Primitives
+  Geb.Prototypes.Computability.SizeBounded.Machine.Program
+  Geb.Prototypes.Computability.SizeBounded.Machine.Register
+  Geb.Prototypes.Computability.SizeBounded.Machine.Seq
+  Geb.Prototypes.Computability.SizeBounded.Machine.SeqFin
+  Geb.Prototypes.Computability.SizeBounded.Machine.Wrapper
   Geb.Prototypes.Computability.SizeBounded.MachineBound
   Geb.Prototypes.Computability.SizeBounded.WordMachine
   Geb.Prototypes.Computability.TreeScanner

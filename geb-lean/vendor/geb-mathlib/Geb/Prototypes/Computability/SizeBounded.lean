@@ -11,6 +11,7 @@ public import Geb.Prototypes.Computability.SizeBounded.Combinators
 public import Geb.Prototypes.Computability.SizeBounded.Cost
 public import Geb.Prototypes.Computability.SizeBounded.Iteration
 public import Geb.Prototypes.Computability.SizeBounded.Logspace
+public import Geb.Prototypes.Computability.SizeBounded.Machine
 public import Geb.Prototypes.Computability.SizeBounded.Polynomial
 public import Geb.Prototypes.Computability.SizeBounded.Sharing
 

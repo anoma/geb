@@ -10,6 +10,7 @@ public import Geb.Prototypes.Computability.SizeBounded.Logspace.EndSegment
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.Rep
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.Combinators
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.SuffixCounter
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.EliasTree
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree
 
 set_option doc.verso true in

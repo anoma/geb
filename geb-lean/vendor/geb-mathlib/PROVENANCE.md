@@ -2,7 +2,7 @@
 
 - Source: https://github.com/rokopt/geb-mathlib.git
 - Source commit: aef07e55a96854257fb9bd27f8284b89e4ea57e7
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 c7c1bc2f711b7685eaa479c152a242d41adfc87a6e8bb69101c39f0307c72fe4)
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 56173b90320e9ef423ce046672763bc757815d88613f14bb03693f60fe56a520)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
   - Geb.Cslib
   - Geb.Prototypes.BitStream.Oitavem
@@ -38,9 +38,6 @@
   - Geb.Prototypes.Computability.BitTree.Elias.MachineRead
   - Geb.Prototypes.Computability.BitTree.Elias.MachineSimpleBound
   - Geb.Prototypes.Computability.BitTree.Elias.MachineSteps
-  - Geb.Prototypes.Computability.BitTree.Elias.Scanner
-  - Geb.Prototypes.Computability.BitTree.Elias.ScannerCorrect
-  - Geb.Prototypes.Computability.BitTree.Elias.ScannerHeader
   - Geb.Prototypes.Computability.BitTree.EliasBinary.Account
   - Geb.Prototypes.Computability.BitTree.EliasBinary.BitStep
   - Geb.Prototypes.Computability.BitTree.EliasBinary.Bound
@@ -68,26 +65,31 @@
   - Geb.Prototypes.Computability.Mazzanti.Words
   - Geb.Prototypes.Computability.MultiTape
   - Geb.Prototypes.Computability.Oitavem
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.EliasTree
+  - Geb.Prototypes.Computability.SizeBounded.Logspace.EliasTree.Machine
   - Geb.Prototypes.Computability.SizeBounded.Logspace.Machine
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.BitFold
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ChildExpr
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Children
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Events
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ExprBase
   - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Machine
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NodeExpr
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Nodes
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumArith
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScanExpr
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumSum
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Recognize
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.RecognizeExpr
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigCheck
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigEdge
-  - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigLabel
   - Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigMachine
-  - Geb.Prototypes.Computability.SizeBounded.Machine
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Bound
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Basic
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Body
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Comp
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Correct
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Family
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.LoopEval
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Srn
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.SrnInit
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Compile.Theorem
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Emit
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Exec
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Loop
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Main
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Phase
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Primitives
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Program
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Register
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Seq
+  - Geb.Prototypes.Computability.SizeBounded.Machine.SeqFin
+  - Geb.Prototypes.Computability.SizeBounded.Machine.Wrapper
   - Geb.Prototypes.Computability.SizeBounded.MachineBound
   - Geb.Prototypes.Computability.SizeBounded.WordMachine
   - Geb.Prototypes.Computability.TreeScanner
