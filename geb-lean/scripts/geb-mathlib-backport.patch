@@ -710,10 +710,18 @@ index cda508b..3e7d009 100644
    fun _ ↦ ⟨ULift Unit, fun _ ↦ o⟩
  
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Indexed.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Indexed.lean
-index f6e0899..2fffec0 100644
+index f6e0899..016629e 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Indexed.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Indexed.lean
-@@ -114,47 +114,47 @@ variable (I : Type uI) (D : I → Type uD) (J : Type uJ) (E : J → Type uE)
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.IndRec.W
+@@ -114,47 +115,47 @@ variable (I : Type uI) (D : I → Type uD) (J : Type uJ) (E : J → Type uE)
  
  namespace IIR
  
@@ -767,7 +775,7 @@ index f6e0899..2fffec0 100644
  def Alg.toHom.{v} (V : Type v)
      (alg : Alg.{uA, uB, uI, uD, uJ, uE, v} I D J E V) :
      Obj.{uA, uB, uI, uD, uJ, uE, v} I D J E V → V :=
-@@ -165,10 +165,10 @@ def Alg.toHom.{v} (V : Type v)
+@@ -165,10 +166,10 @@ def Alg.toHom.{v} (V : Type v)
  
  end IIR
  
@@ -779,7 +787,7 @@ index f6e0899..2fffec0 100644
  def IIR : Type (max (uA + 1) (uB + 1) uI uD uJ uE) :=
    PFunctor.W (IIR.pFunctor.{uA, uB, uI, uD, uJ, uE} I D J E)
  
-@@ -242,19 +242,19 @@ theorem elimAlg_delta.{v} (V : Type v)
+@@ -242,19 +243,19 @@ theorem elimAlg_delta.{v} (V : Type v)
      elimAlg I D J E V alg (delta I D J E P ix c) =
        alg.2.2 P ix fun dv ↦ elimAlg I D J E V alg (c dv) := rfl
  
@@ -801,7 +809,7 @@ index f6e0899..2fffec0 100644
  def interpAlg :
      Alg.{uA, uB, uI, uD, uJ, uE, max (uA + 1) (uB + 1) uI uD uJ uE} I D J E
        (FamSlice.{uA, uB, uI, uD} I D → FamSlice.{uA, uB, uJ, uE} J E) :=
-@@ -266,18 +266,18 @@ def interpAlg :
+@@ -266,18 +267,18 @@ def interpAlg :
        FreeCoprodCompDisc.coprod (E n) ((p : P) → (G (ix p)).1) fun ig ↦
          sub (fun p ↦ (G (ix p)).2 (ig p)) G n⟩
  
@@ -822,7 +830,7 @@ index f6e0899..2fffec0 100644
  def toIRAlg :
      Alg.{uA, uB, uI, uD, uJ, uE, max (uA + 1) (uB + 1) uI uD uJ uE} I D J E
        (IR.{uA, uB, max uI uD, max uJ uE} (Σ i, D i) (Σ j, E j)) :=
-@@ -289,10 +289,10 @@ def toIRAlg :
+@@ -289,10 +290,10 @@ def toIRAlg :
            (ULift.{uA} (PLift (∀ p, (iD p).1 = ix p))) fun h ↦
              c fun p ↦ h.down.down p ▸ (iD p).2⟩
  
@@ -834,7 +842,7 @@ index f6e0899..2fffec0 100644
  def toIR (c : IIR.{uA, uB, uI, uD, uJ, uE} I D J E) :
      IR.{uA, uB, max uI uD, max uJ uE} (Σ i, D i) (Σ j, E j) :=
    elimAlg I D J E _ (toIRAlg I D J E) c
-@@ -301,18 +301,18 @@ end IIR
+@@ -301,18 +302,18 @@ end IIR
  
  namespace IIR
  
@@ -930,10 +938,18 @@ index 51af76e..5927206 100644
      Alg.{uA, uB, uI, uO, max (max uA uB uI + 1) (uB + 1) uI uO} I O
        (SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :=
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/W.lean
-index 72793cc..a03ffc8 100644
+index 72793cc..b962839 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/W.lean
-@@ -95,28 +95,28 @@ namespace IR
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.PFunctor.IndRec.Slice
+@@ -95,28 +96,28 @@ namespace IR
  
  variable (I : Type uI) (O : Type uO)
  
@@ -965,7 +981,7 @@ index 72793cc..a03ffc8 100644
  def posToSliceSigma (A : Type uA)
      (α : A → FreeCoprodCompDisc.Map.{max uA uB, uI, uO} I O)
      (F : A → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O)
-@@ -127,11 +127,11 @@ def posToSliceSigma (A : Type uA)
+@@ -127,11 +128,11 @@ def posToSliceSigma (A : Type uA)
      let w := m z.1 X z.2
      ⟨⟨⟨⟨z.1, w.1.1.1⟩, w.1.1.2⟩, w.1.2⟩, w.2⟩
  
@@ -978,7 +994,7 @@ index 72793cc..a03ffc8 100644
  def posToSliceDelta (B : Type uB)
      (α : (B → I) → FreeCoprodCompDisc.Map.{max uA uB, uI, uO} I O)
      (F : (B → I) → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O)
-@@ -146,13 +146,13 @@ def posToSliceDelta (B : Type uB)
+@@ -146,13 +147,13 @@ def posToSliceDelta (B : Type uB)
            | Sum.inr d => congrFun w.1.2 d⟩,
        w.2⟩
  
@@ -993,7 +1009,7 @@ index 72793cc..a03ffc8 100644
  structure PosSlice : Type (max (uA + 1) (uB + 1) (uI + 1) uO) where
    /-- The interpretation's object map. -/
    interp : FreeCoprodCompDisc.Map.{max uA uB, uI, uO} I O
-@@ -161,44 +161,44 @@ structure PosSlice : Type (max (uA + 1) (uB + 1) (uI + 1) uO) where
+@@ -161,44 +162,44 @@ structure PosSlice : Type (max (uA + 1) (uB + 1) (uI + 1) uO) where
    /-- The presentation of an interpretation node as a functor node. -/
    tr : PosToSliceSig I O interp spf
  
@@ -1044,7 +1060,7 @@ index 72793cc..a03ffc8 100644
  theorem posSlice_interp (γ : IR.{uA, uB, uI, uO} I O) :
      (posSlice I O γ).interp = interpObj I O γ :=
    induction I O (motive := fun γ ↦ (posSlice I O γ).interp = interpObj I O γ)
-@@ -210,8 +210,8 @@ theorem posSlice_interp (γ : IR.{uA, uB, uI, uO} I O) :
+@@ -210,8 +211,8 @@ theorem posSlice_interp (γ : IR.{uA, uB, uI, uO} I O) :
            congrArg (interpObjDelta I O B) (funext fun f ↦ ih (ULift.up f)))
      γ
  
@@ -1054,7 +1070,7 @@ index 72793cc..a03ffc8 100644
  theorem posSlice_spf (γ : IR.{uA, uB, uI, uO} I O) :
      (posSlice I O γ).spf = toSlicePFunctor I O γ :=
    induction I O (motive := fun γ ↦ (posSlice I O γ).spf = toSlicePFunctor I O γ)
-@@ -231,42 +231,42 @@ namespace IR
+@@ -231,42 +232,42 @@ namespace IR
  
  variable (I : Type uI)
  
@@ -1866,6 +1882,113 @@ index 41a116e..712144b 100644
  
  /-- The retraction law for the rose spelling: printing a rose tree and
  parsing the result returns that tree. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Scanner.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Scanner.lean
+index 04a3726..889a110 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Scanner.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Scanner.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Mathlib.Data.Nat.BinaryRec
+@@ -137,7 +138,7 @@ theorem foldl_payload_short (w : List Bool) : ∀ r n, w.length < r →
+     rfl
+   · intro b bs ih r n h
+     have hr : r ≠ 1 := by simp only [List.length_cons] at h; omega
+-    simp only [List.foldl_cons, step, ite_eq_right hr]
++    simp only [List.foldl_cons, step, if_neg hr]
+     rw [ih (r - 1) n (by simp only [List.length_cons] at h; omega)]
+     congr 2
+     simp only [List.length_cons]
+@@ -176,7 +177,7 @@ theorem payload_of_accept (w : List Bool) (m n : ℕ)
+   by_cases hm : m = 0
+   · subst m
+     exact ⟨[], w, rfl, rfl, h⟩
+-  · rw [ite_eq_right hm] at h
++  · rw [if_neg hm] at h
+     by_cases hl : m ≤ w.length
+     · have hs : (w.take m).length = m := List.length_take_of_le hl
+       have hne : w.take m ≠ [] := by
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/ScannerCorrect.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/ScannerCorrect.lean
+index 8340931..5005fd5 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/ScannerCorrect.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/ScannerCorrect.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.BitTree.Elias.ScannerHeader
+@@ -45,14 +46,14 @@ theorem foldl_encode (t : Tree) : ∀ n, 0 < n →
+       cases s with
+       | nil => rfl
+       | cons b bs =>
+-        rw [ite_eq_right (by simp only [List.length_cons]; omega)]
++        rw [if_neg (by simp only [List.length_cons]; omega)]
+         exact foldl_payload (b :: bs) n (by intro h; cases h))
+     (fun l r hl hr n hn ↦ by
+       rw [Elias.encode_fork, List.foldl_cons]
+       change (Elias.encode l ++ Elias.encode r).foldl step (.tree, n + 1) = _
+       rw [List.foldl_append, hl (n + 1) (by omega)]
+       have hf : finish (n + 1) = (.tree, n) := by
+-        rw [finish, ite_eq_right (by omega), Nat.add_sub_cancel]
++        rw [finish, if_neg (by omega), Nat.add_sub_cancel]
+       rw [hf, hr n hn]) t
+ 
+ /-- Acceptance from several pending roots reconstructs an ordered forest. -/
+@@ -101,7 +102,7 @@ theorem forest_of_accept (w : List Bool) (n : ℕ) (hn : 0 < n)
+               rw [he, hrest]
+               simp only [List.append_nil, List.flatMap_cons, List.flatMap_nil,
+                 Elias.encode_leaf]
+-            · rw [finish, ite_eq_right hn1] at hr
++            · rw [finish, if_neg hn1] at hr
+               have hrest : rest.length < k := by
+                 have heLen := congrArg List.length he
+                 simp only [List.length_append] at heLen
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/ScannerHeader.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/ScannerHeader.lean
+index 2193469..2952f60 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/ScannerHeader.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/ScannerHeader.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.BitTree.Elias.Scanner
+@@ -103,7 +104,7 @@ theorem foldl_gamma (k : ℕ) (hk : k ≠ 0) (n : ℕ) :
+     simp only [↓reduceIte] at hf
+     rw [hf]
+     change (Mode.length (fromPayload (payload k) - 1) 1, n) = _
+-    rw [fromPayload_payload k hk, ite_eq_right hk1]
++    rw [fromPayload_payload k hk, if_neg hk1]
+ 
+ /-- Scanning a complete delta code sets its raw-payload countdown. -/
+ theorem foldl_encodeNat (m n : ℕ) :
+@@ -125,7 +126,7 @@ theorem foldl_encodeNat (m n : ℕ) :
+       rw [length_payload, he]
+     have hf := foldl_field false (payload (m + 1 + 1)) 1 n hnil
+     simp only [Bool.false_eq_true, ↓reduceIte] at hf
+-    rw [encodeNat, List.foldl_append, foldl_gamma _ hs n, ite_eq_right hs1,
++    rw [encodeNat, List.foldl_append, foldl_gamma _ hs n, if_neg hs1,
+       ← length_payload, hf]
+     change (Mode.payload (fromPayload (payload (m + 1 + 1)) - 1), n) = _
+     rw [fromPayload_payload _ hp]
+@@ -200,7 +201,7 @@ theorem header_reject (w : List Bool) (n : ℕ) (h : readNat w = none) :
+         simp only [readNat, hg, Option.bind_some, hx, reduceCtorEq] at h
+     have hlt := readFixed_none_lt (k - 1) suffix hf
+     have hk1 : k ≠ 1 := by omega
+-    rw [hw, List.foldl_append, foldl_gamma k hk n, ite_eq_right hk1]
++    rw [hw, List.foldl_append, foldl_gamma k hk n, if_neg hk1]
+     have he := foldl_short_field false suffix (k - 1) 1 n hlt
+     simp only [Bool.false_eq_true, ↓reduceIte] at he
+     rw [he]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean
 index a4c80b2..3dc8f3b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Tree.lean
@@ -2709,6 +2832,132 @@ index 1a425fa..4c1be9d 100644
      (fun x hx ↦ by obtain ⟨j, rfl⟩ := List.mem_ofFn.mp hx; exact hv j)
    simp only [List.length_ofFn, Nat.nsmul_eq_mul] at hs
    exact (Nat.add_le_add hw hs).trans_eq (by rw [Nat.add_mul, Nat.one_mul, Nat.add_comm])
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Expr.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Expr.lean
+index c705f48..a90448c 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Expr.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Expr.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.SuffixCounter
+@@ -190,7 +191,7 @@ word for each counter at zero. -/
+     projL 1 0]
+ 
+ /-- The recursion's steps, the same for either bit of the counter. -/
+-@[expose] def treeStep : Bool → Fin 7 → LOf 9 :=
++@[expose, nolint unusedArguments] def treeStep : Bool → Fin 7 → LOf 9 :=
+   fun _ ↦ ![tailAppL restVar, modeStep, forksStep, leavesStep, widthStep, countStep, valueStep]
+ 
+ /-- The seven registers, as expressions of arity two: the counter and the
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean
+index 8868493..d81a9ff 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.BitTree.Elias.Scanner
+@@ -101,6 +102,8 @@ length field and the payload. -/
+   value : ℕ
+   deriving DecidableEq, Repr, Inhabited
+ 
++attribute [nolint unusedArguments] instReprCounters.repr
++
+ /-- A completed leaf: one more leaf, and the completed phase when it closes the
+ last pending subtree, which is when the leaves counted so far equal the
+ forks. -/
+@@ -189,50 +192,50 @@ theorem toState_advance (k : ℕ) (x : Counters) (b : Bool) (h : Valid k x) :
+   case header.true =>
+     change (modeOf (if f = l then .done else .tree) z c v, f + 1 - (l + 1)) = finish (f + 1 - l)
+     by_cases hf : f = l
+-    · rw [ite_eq_left hf, finish, ite_eq_left (show f + 1 - l = 1 by omega),
++    · rw [if_pos hf, finish, if_pos (show f + 1 - l = 1 by omega),
+         show f + 1 - (l + 1) = 0 by omega]
+       rfl
+-    · rw [ite_eq_right hf, finish, ite_eq_right (show ¬f + 1 - l = 1 by omega),
++    · rw [if_neg hf, finish, if_neg (show ¬f + 1 - l = 1 by omega),
+         show f + 1 - (l + 1) = f + 1 - l - 1 by omega]
+       rfl
+   case zeros.false => rfl
+   case zeros.true =>
+     change (Mode.size (z - 0) 1, f + 1 - l) =
+       if z = 0 then finish (f + 1 - l) else (.size z 1, f + 1 - l)
+-    rw [ite_eq_right (show ¬z = 0 by omega), Nat.sub_zero]
++    rw [if_neg (show ¬z = 0 by omega), Nat.sub_zero]
+   case size.false =>
+     change toState (if c + 1 = z then _ else _) = if z - c = 1 then _ else _
+     by_cases he : c + 1 = z
+-    · rw [ite_eq_left he, ite_eq_left (show z - c = 1 by omega), Nat.bit_val]
++    · rw [if_pos he, if_pos (show z - c = 1 by omega), Nat.bit_val]
+       rfl
+-    · rw [ite_eq_right he, ite_eq_right (show ¬z - c = 1 by omega), Nat.bit_val]
++    · rw [if_neg he, if_neg (show ¬z - c = 1 by omega), Nat.bit_val]
+       change (Mode.size (z - (c + 1)) (2 * v + 0), f + 1 - l) =
+         (Mode.size (z - c - 1) (2 * v + 0), f + 1 - l)
+       rw [show z - (c + 1) = z - c - 1 by omega]
+   case size.true =>
+     change toState (if c + 1 = z then _ else _) = if z - c = 1 then _ else _
+     by_cases he : c + 1 = z
+-    · rw [ite_eq_left he, ite_eq_left (show z - c = 1 by omega), Nat.bit_val]
++    · rw [if_pos he, if_pos (show z - c = 1 by omega), Nat.bit_val]
+       rfl
+-    · rw [ite_eq_right he, ite_eq_right (show ¬z - c = 1 by omega), Nat.bit_val]
++    · rw [if_neg he, if_neg (show ¬z - c = 1 by omega), Nat.bit_val]
+       change (Mode.size (z - (c + 1)) (2 * v + 1), f + 1 - l) =
+         (Mode.size (z - c - 1) (2 * v + 1), f + 1 - l)
+       rw [show z - (c + 1) = z - c - 1 by omega]
+   case length.false =>
+     change toState (if c + 1 = z then _ else _) = if z - c = 1 then _ else _
+     by_cases he : c + 1 = z
+-    · rw [ite_eq_left he, ite_eq_left (show z - c = 1 by omega), Nat.bit_val]
++    · rw [if_pos he, if_pos (show z - c = 1 by omega), Nat.bit_val]
+       rfl
+-    · rw [ite_eq_right he, ite_eq_right (show ¬z - c = 1 by omega), Nat.bit_val]
++    · rw [if_neg he, if_neg (show ¬z - c = 1 by omega), Nat.bit_val]
+       change (Mode.length (z - (c + 1)) (2 * v + 0), f + 1 - l) =
+         (Mode.length (z - c - 1) (2 * v + 0), f + 1 - l)
+       rw [show z - (c + 1) = z - c - 1 by omega]
+   case length.true =>
+     change toState (if c + 1 = z then _ else _) = if z - c = 1 then _ else _
+     by_cases he : c + 1 = z
+-    · rw [ite_eq_left he, ite_eq_left (show z - c = 1 by omega), Nat.bit_val]
++    · rw [if_pos he, if_pos (show z - c = 1 by omega), Nat.bit_val]
+       rfl
+-    · rw [ite_eq_right he, ite_eq_right (show ¬z - c = 1 by omega), Nat.bit_val]
++    · rw [if_neg he, if_neg (show ¬z - c = 1 by omega), Nat.bit_val]
+       change (Mode.length (z - (c + 1)) (2 * v + 1), f + 1 - l) =
+         (Mode.length (z - c - 1) (2 * v + 1), f + 1 - l)
+       rw [show z - (c + 1) = z - c - 1 by omega]
+@@ -240,17 +243,17 @@ theorem toState_advance (k : ℕ) (x : Counters) (b : Bool) (h : Valid k x) :
+   all_goals
+     change toState (if c + 1 = z then _ else _) = if z - c = 1 then _ else _
+     by_cases he : c + 1 = z
+-    · rw [ite_eq_left he, ite_eq_left (show z - c = 1 by omega)]
++    · rw [if_pos he, if_pos (show z - c = 1 by omega)]
+       change (modeOf (if f = l then .done else .tree) z (c + 1) v, f + 1 - (l + 1)) =
+         finish (f + 1 - l)
+       by_cases hf : f = l
+-      · rw [ite_eq_left hf, finish, ite_eq_left (show f + 1 - l = 1 by omega),
++      · rw [if_pos hf, finish, if_pos (show f + 1 - l = 1 by omega),
+           show f + 1 - (l + 1) = 0 by omega]
+         rfl
+-      · rw [ite_eq_right hf, finish, ite_eq_right (show ¬f + 1 - l = 1 by omega),
++      · rw [if_neg hf, finish, if_neg (show ¬f + 1 - l = 1 by omega),
+           show f + 1 - (l + 1) = f + 1 - l - 1 by omega]
+         rfl
+-    · rw [ite_eq_right he, ite_eq_right (show ¬z - c = 1 by omega)]
++    · rw [if_neg he, if_neg (show ¬z - c = 1 by omega)]
+       change (Mode.payload (z - (c + 1)), f + 1 - l) = (Mode.payload (z - c - 1), f + 1 - l)
+       rw [show z - (c + 1) = z - c - 1 by omega]
+ 
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
 index 74a3587..8d89c53 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
@@ -2790,6 +3039,443 @@ index 64ca7e0..cb70aa9 100644
  
  /-- The first phase keeps the length part within the input when its bases and
  steps do, up to the input's length. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean
+index 6f23d9e..ae38a4f 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScanExpr
+@@ -163,8 +164,8 @@ theorem payBit_natCode (y u r : List Bool) (m p : ℕ) (hu : u.length = p)
+   have hbl : m.bits.length = m.size := length_bits m
+   rw [payBit, segBit, payMaskStart, hsz]
+   by_cases hi : m.size ≤ i
+-  · rw [ite_eq_left (by omega), getD_of_length_le _ _ (by omega)]
+-  · rw [ite_eq_right (by omega), ← List.drop_drop, drop_payStart_natCode y u r m p hu hy,
++  · rw [if_pos (by omega), getD_of_length_le _ _ (by omega)]
++  · rw [if_neg (by omega), ← List.drop_drop, drop_payStart_natCode y u r m p hu hy,
+       headD_drop, List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
+       List.getElem?_append_left (by omega)]
+ 
+@@ -179,8 +180,8 @@ theorem codeBit_natCode (y u r : List Bool) (m p : ℕ) (hu : u.length = p)
+     omega
+   rw [codeBit, segBit, codeMaskStart, he]
+   by_cases hi : (natCode m).length ≤ i
+-  · rw [ite_eq_left (by omega), getD_of_length_le _ _ hi]
+-  · rw [ite_eq_right (by omega), ← List.drop_drop, drop_natCode y u r m p hu hy, headD_drop,
++  · rw [if_pos (by omega), getD_of_length_le _ _ hi]
++  · rw [if_neg (by omega), ← List.drop_drop, drop_natCode y u r m p hu hy, headD_drop,
+       List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
+       List.getElem?_append_left (by omega)]
+ 
+@@ -293,7 +294,7 @@ word. -/
+ 
+ /-- The recursion's steps: the scanner registers' tails and the registers'
+ updates, the same for either bit of the counter. -/
+-@[expose] def foldStep (upd : Fin k → LOf (k + 4)) :
++@[expose, nolint unusedArguments] def foldStep (upd : Fin k → LOf (k + 4)) :
+     Bool → Fin (6 + k) → LOf (6 + k + 4 + 1) :=
+   fun _ ↦ Fin.append scanStep (regStep upd)
+ 
+@@ -413,17 +414,17 @@ theorem sem_maskedBit (mask ptr : LOf (6 + k + 4 + 1)) (z : Fin (6 + k + 4 + 1)
+       boolWord (if y.length ≤ ms then false else true) := by
+     rw [andOkAt, sem_cond4L, hm, sem_constL, sem_constL, EliasTree.cond4Sem_same]
+     by_cases hl : y.length ≤ ms
+-    · rw [ite_eq_left (List.drop_eq_nil_iff.mpr hl), ite_eq_left hl]
++    · rw [if_pos (List.drop_eq_nil_iff.mpr hl), if_pos hl]
+       rfl
+-    · rw [ite_eq_right fun h ↦ hl (List.drop_eq_nil_iff.mp h), ite_eq_right hl]
++    · rw [if_neg fun h ↦ hl (List.drop_eq_nil_iff.mp h), if_neg hl]
+       rfl
+   rw [maskedBit, sem_cond4L, hs, hmask]
+   by_cases hl : y.length ≤ ms
+-  · simp only [ite_eq_left hl]
++  · simp only [if_pos hl]
+     cases hd : y.drop ps with
+     | nil => rfl
+     | cons c cs => cases c <;> rfl
+-  · simp only [ite_eq_right hl]
++  · simp only [if_neg hl]
+     cases hd : y.drop ps with
+     | nil => rfl
+     | cons c cs => cases c <;> rfl
+@@ -450,8 +451,10 @@ theorem sem_updEnv (v y : List Bool) (pA pB pC i : ℕ) (off : Fin 6 → ℕ)
+         ![boolWord (segBit y (off 0) (off 3) i), boolWord (segBit y (off 1) (off 4) i),
+           boolWord (segBit y (off 2) (off 5) i), y] m)
+     (fun j ↦ ?_) (fun j ↦ ?_) m
+-  · rw [updEnv, Fin.append_left, Fin.append_left, sem_projL, envOf_regSlot, Fin.append_right]
+-  · rw [updEnv, Fin.append_right, Fin.append_right]
++  · beta_reduce
++    rw [updEnv, Fin.append_left, Fin.append_left, sem_projL, envOf_regSlot, Fin.append_right]
++  · beta_reduce
++    rw [updEnv, Fin.append_right, Fin.append_right]
+     match j with
+     | 0 =>
+       change (maskedBit (scanV 3) (scanV 0)).sem _ = boolWord (segBit y (off 0) (off 3) i)
+@@ -514,11 +517,13 @@ theorem regs_eq (scan : Fin 6 → LOf 4) (base : Fin k → LOf 4) (upd : Fin k 
+           (iter upd y (segBit y (off 0) (off 3)) (segBit y (off 1) (off 4))
+             (segBit y (off 2) (off 5)) (regs0 base y pA pB pC) (v.length + 1)) l)
+         (fun j ↦ ?_) (fun j ↦ ?_) l
+-      · rw [foldStep, Fin.append_left, Fin.append_left]
++      · beta_reduce
++        rw [foldStep, Fin.append_left, Fin.append_left]
+         change (tailAppL (scanV j)).sem _ = _
+         rw [sem_tailAppL, scanV, sem_projL, envOf_scanSlot, Fin.append_left]
+         exact List.tail_drop
+-      · rw [foldStep, Fin.append_right, Fin.append_right]
++      · beta_reduce
++        rw [foldStep, Fin.append_right, Fin.append_right]
+         change (regStep upd j).sem _ =
+           updF upd y _ (segBit y (off 0) (off 3) v.length) (segBit y (off 1) (off 4) v.length)
+             (segBit y (off 2) (off 5) v.length) j
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Children.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Children.lean
+index aa7d692..9d9344c 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Children.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Children.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Events
+@@ -90,6 +91,8 @@ structure ChildReg where
+   ok : Bool
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprChildReg.repr
++
+ /-- The registers after a number of children of a node with a given number:
+ done when they are all, else at the next child's fork tags with the counts at
+ zero. -/
+@@ -147,12 +150,12 @@ fork tags. -/
+ theorem afterChildren_of_ne (k j : ℕ) (ok : Bool) (h : j ≠ k) :
+     afterChildren k j ok = ⟨.spine, 0, 0, j, ok⟩ := by
+   unfold afterChildren
+-  rw [ite_eq_right h]
++  rw [if_neg h]
+ 
+ /-- After all the node's children, the scan is done. -/
+ theorem afterChildren_self (k : ℕ) (ok : Bool) : afterChildren k k ok = ⟨.done, 0, 0, k, ok⟩ := by
+   unfold afterChildren
+-  rw [ite_eq_left rfl]
++  rw [if_pos rfl]
+ 
+ variable (target : Loc) (k : ℕ) (edge : Loc → ℕ → Bool)
+ 
+@@ -239,7 +242,7 @@ theorem foldl_child_body : ∀ (t : Tree) (m p fc lc j : ℕ) (ok : Bool), 0 < m
+           Nat.add_zero, childUpd, ↓reduceIte, decide_true, Bool.false_eq_true, counts]
+         rfl
+       | cons b bs =>
+-        rw [ite_eq_right (by simp), foldl_extStep_payload _ (childUpd_silent target k edge)
++        rw [if_neg (by simp), foldl_extStep_payload _ (childUpd_silent target k edge)
+           (b :: bs) m _ _ (List.cons_ne_nil b bs)]
+         simp only [List.length_cons, List.length_append, childUpd, ↓reduceIte,
+           Bool.false_eq_true, decide_false, Nat.add_one_ne_zero, counts]
+@@ -254,16 +257,16 @@ theorem foldl_child_body : ∀ (t : Tree) (m p fc lc j : ℕ) (ok : Bool), 0 < m
+       rw [show childUpd target k edge p ⟨true, false, none, false⟩ ⟨.body, fc, lc, j, ok⟩ =
+         ⟨.body, fc + 1, lc, j, ok⟩ from rfl,
+         ihl (m + 1) (p + 1) (fc + 1) lc j ok (Nat.succ_pos m) (by omega),
+-        ite_eq_right (by omega)]
++        if_neg (by omega)]
+       have hf : finish (m + 1) = (.tree, m) := by
+-        rw [Geb.BitTree.Elias.Scanner.finish, ite_eq_right (by omega), Nat.add_sub_cancel]
++        rw [Geb.BitTree.Elias.Scanner.finish, if_neg (by omega), Nat.add_sub_cancel]
+       rw [hf, ihr m _ _ _ j ok hm (by omega), List.length_cons, List.length_append,
+         Geb.BitTree.counts_fork]
+       by_cases h : lc = fc
+-      · rw [ite_eq_left (by omega), ite_eq_left h]
++      · rw [if_pos (by omega), if_pos h]
+         congr 1
+         omega
+-      · rw [ite_eq_right (by omega), ite_eq_right h]
++      · rw [if_neg (by omega), if_neg h]
+         congr 1
+         · omega
+         · congr 1 <;> omega
+@@ -293,15 +296,15 @@ theorem foldl_child_spine : ∀ (t : Tree) (m p fc j : ℕ) (ok : Bool), 0 < m 
+             p + 1 + (encodeNat (bs.length + 1)).length := by
+           have := Geb.BitTree.Elias.length_encodeNat_pos (bs.length + 1)
+           omega
+-        rw [ite_eq_right (by simp), foldl_extStep_payload _ (childUpd_silent target k edge)
++        rw [if_neg (by simp), foldl_extStep_payload _ (childUpd_silent target k edge)
+           (b :: bs) m _ _ (List.cons_ne_nil b bs)]
+         simp only [List.length_cons, List.length_append, childUpd, ↓reduceIte,
+           Bool.false_eq_true, decide_false, Nat.add_one_ne_zero, counts, hp']
+         by_cases hfc : fc = 0
+-        · rw [ite_eq_left hfc, ite_eq_left hfc.symm]
++        · rw [if_pos hfc, if_pos hfc.symm]
+           congr 1
+           omega
+-        · rw [ite_eq_right hfc, ite_eq_right (Ne.symm hfc)]
++        · rw [if_neg hfc, if_neg (Ne.symm hfc)]
+           congr 1
+           omega)
+     fun l r ihl ihr m p fc j ok hm ↦ by
+@@ -313,16 +316,16 @@ theorem foldl_child_spine : ∀ (t : Tree) (m p fc j : ℕ) (ok : Bool), 0 < m 
+             childUpd target k edge p ⟨true, false, none, false⟩ ⟨.spine, fc, 0, j, ok⟩⟩) = _
+       rw [show childUpd target k edge p ⟨true, false, none, false⟩ ⟨.spine, fc, 0, j, ok⟩ =
+         ⟨.spine, fc + 1, 0, j, ok⟩ from rfl,
+-        ihl (m + 1) (p + 1) (fc + 1) j ok (Nat.succ_pos m), ite_eq_right (Nat.add_one_ne_zero fc)]
++        ihl (m + 1) (p + 1) (fc + 1) j ok (Nat.succ_pos m), if_neg (Nat.add_one_ne_zero fc)]
+       have hf : finish (m + 1) = (.tree, m) := by
+-        rw [Geb.BitTree.Elias.Scanner.finish, ite_eq_right (by omega), Nat.add_sub_cancel]
++        rw [Geb.BitTree.Elias.Scanner.finish, if_neg (by omega), Nat.add_sub_cancel]
+       rw [hf, foldl_child_body target k edge r m _ _ _ j _ hm (by omega), List.length_cons,
+         List.length_append, Geb.BitTree.counts_fork]
+       by_cases h : fc = 0
+-      · rw [ite_eq_left (by omega), ite_eq_left h]
++      · rw [if_pos (by omega), if_pos h]
+         congr 1
+         omega
+-      · rw [ite_eq_right (by omega), ite_eq_right h]
++      · rw [if_neg (by omega), if_neg h]
+         congr 1
+         · omega
+         · congr 1 <;> omega
+@@ -396,7 +399,7 @@ theorem foldl_child_before_miss : ∀ (t : Tree) (m p : ℕ) (x : ChildReg), 0 <
+           have := Geb.BitTree.Elias.length_encodeNat_pos (bs.length + 1)
+           omega
+         rw [List.length_cons] at hne
+-        rw [ite_eq_right (by simp), foldl_extStep_payload _ (childUpd_silent target k edge)
++        rw [if_neg (by simp), foldl_extStep_payload _ (childUpd_silent target k edge)
+           (b :: bs) m _ _ (List.cons_ne_nil b bs)]
+         simp only [List.length_cons, List.length_append, childUpd, hp', hne, ↓reduceIte]
+         congr 1
+@@ -414,7 +417,7 @@ theorem foldl_child_before_miss : ∀ (t : Tree) (m p : ℕ) (x : ChildReg), 0 <
+       rw [show childUpd target k edge p ⟨true, false, none, false⟩ ⟨.before, fc, lc, j, ok⟩ =
+         ⟨.before, fc, lc, j, ok⟩ from rfl, ihl (m + 1) (p + 1) _ (Nat.succ_pos m) rfl hnl]
+       have hf : finish (m + 1) = (.tree, m) := by
+-        rw [Geb.BitTree.Elias.Scanner.finish, ite_eq_right (by omega), Nat.add_sub_cancel]
++        rw [Geb.BitTree.Elias.Scanner.finish, if_neg (by omega), Nat.add_sub_cancel]
+       rw [hf, ihr m _ _ hm rfl hnr, List.length_cons, List.length_append]
+       congr 1
+       omega
+@@ -455,7 +458,7 @@ theorem foldl_child_root : ∀ (t : Tree) (m p : ℕ) (x : ChildReg), 0 < m →
+         have hc : p + 1 + (encodeNat (bs.length + 1)).length - 1 + 1 = target.pos := by
+           have := Geb.BitTree.Elias.length_encodeNat_pos (bs.length + 1)
+           omega
+-        rw [ite_eq_right (by simp), foldl_extStep_payload _ (childUpd_silent target k edge)
++        rw [if_neg (by simp), foldl_extStep_payload _ (childUpd_silent target k edge)
+           (b :: bs) m _ _ (List.cons_ne_nil b bs)]
+         simp only [List.length_cons, List.length_append, childUpd, hc, ↓reduceIte,
+           Bool.false_eq_true, decide_false, edgesAll, List.foldl_nil, Bool.and_true,
+@@ -478,9 +481,9 @@ theorem foldl_child_root : ∀ (t : Tree) (m p : ℕ) (x : ChildReg), 0 < m →
+         ⟨.before, fc, lc, j, ok⟩ from rfl,
+         ihl (m + 1) (p + 1) _ (Nat.succ_pos m) rfl ht (by omega)]
+       have hf : finish (m + 1) = (.tree, m) := by
+-        rw [Geb.BitTree.Elias.Scanner.finish, ite_eq_right (by omega), Nat.add_sub_cancel]
++        rw [Geb.BitTree.Elias.Scanner.finish, if_neg (by omega), Nat.add_sub_cancel]
+       rw [hf, afterChildren_of_ne k (roseAt l (p + 1)).children.length _ (by omega),
+-        foldl_child_spine target k edge r m _ 0 _ _ hm, ite_eq_left rfl, List.length_cons,
++        foldl_child_spine target k edge r m _ 0 _ _ hm, if_pos rfl, List.length_cons,
+         List.length_append, edgesAll_concat, ← Bool.and_assoc]
+       congr 1
+       omega
+@@ -499,7 +502,7 @@ theorem foldl_child_inner : ∀ (t : Tree) (m p : ℕ) (x : ChildReg) (n : Node)
+       change mode = .before at hx
+       subst hx
+       have hf : finish (m + 1) = (.tree, m) := by
+-        rw [Geb.BitTree.Elias.Scanner.finish, ite_eq_right (by omega), Nat.add_sub_cancel]
++        rw [Geb.BitTree.Elias.Scanner.finish, if_neg (by omega), Nat.add_sub_cancel]
+       rw [roseAt_fork] at hn
+       dsimp only at hn
+       rw [Geb.BitTree.Elias.encode_fork, List.foldl_cons, List.foldl_append]
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Events.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Events.lean
+index 9ccc0e3..c10a569 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Events.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Events.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.BitTree.Elias.ScannerHeader
+@@ -75,6 +76,8 @@ structure Event where
+   done : Bool
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprEvent.repr
++
+ /-- No event. -/
+ @[expose] def Event.silent : Event := ⟨false, false, none, false⟩
+ 
+@@ -188,7 +191,7 @@ theorem foldl_extStep_gamma (k : ℕ) (hk : k ≠ 0) (n pos : ℕ) (x : α) :
+       intro he
+       exact hnil (List.eq_nil_of_length_eq_zero he)
+     have hk1 : k ≠ 1 := fun he ↦ hnil (hp.mpr he)
+-    rw [ite_eq_right hk1, encodeGamma, ← Geb.BitTree.Elias.length_payload, List.foldl_append,
++    rw [if_neg hk1, encodeGamma, ← Geb.BitTree.Elias.length_payload, List.foldl_append,
+       foldl_extStep_replicate_false upd hu, List.foldl_cons]
+     simp only [extStep, step, eventS, Nat.zero_add, hlen, ↓reduceIte, hu]
+     have hf := foldl_extStep_field upd hu true (payload k) 1 n (pos + (payload k).length + 1) x hnil
+@@ -222,7 +225,7 @@ theorem foldl_extStep_encodeNat (m n pos : ℕ) (x : α) :
+     have hf := foldl_extStep_field upd hu false (payload (m + 1 + 1)) 1 n
+       (pos + (encodeGamma (m + 1 + 1).size).length) x hnil
+     simp only [Bool.false_eq_true, ↓reduceIte] at hf
+-    rw [encodeNat, List.foldl_append, foldl_extStep_gamma upd hu _ hs, ite_eq_right hs1,
++    rw [encodeNat, List.foldl_append, foldl_extStep_gamma upd hu _ hs, if_neg hs1,
+       ← Geb.BitTree.Elias.length_payload, hf]
+     change (⟨(Mode.payload (Geb.BitTree.Elias.fromPayload (payload (m + 1 + 1)) - 1), n), _,
+       upd _ ⟨false, false, some (Geb.BitTree.Elias.fromPayload (payload (m + 1 + 1)) - 1), false⟩
+@@ -231,7 +234,7 @@ theorem foldl_extStep_encodeNat (m n pos : ℕ) (x : α) :
+     have e₂ : pos + (encodeGamma (m + 1 + 1).size).length + (payload (m + 1 + 1)).length =
+         pos + ((encodeGamma (m + 1 + 1).size).length + (payload (m + 1 + 1)).length) := by omega
+     rw [Geb.BitTree.Elias.fromPayload_payload _ hp, List.length_append, e₁, e₂,
+-      ite_eq_right (Nat.add_one_ne_zero m), decide_eq_false (Nat.add_one_ne_zero m)]
++      if_neg (Nat.add_one_ne_zero m), decide_eq_false (Nat.add_one_ne_zero m)]
+ 
+ /-- A nonempty payload completes the leaf at its last bit. -/
+ theorem foldl_extStep_payload (s : List Bool) (n pos : ℕ) (x : α) (hs : s ≠ []) :
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
+index af2ee5a..5d57879 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.EliasTree.Expr
+@@ -111,10 +112,10 @@ theorem eventC_eq_eventS (k : ℕ) (x : Counters) (b : Bool) (h : Valid k x) :
+     simp only [eventC, toState, EliasTree.modeOf, eventS, Nat.bit_val]
+   all_goals first
+     | rfl
+-    | (rw [ite_eq_right (show ¬z = 0 by omega)])
++    | (rw [if_neg (show ¬z = 0 by omega)])
+     | (by_cases he : c + 1 = z
+-       · rw [ite_eq_left he, ite_eq_left (show z - c = 1 by omega)]
+-       · rw [ite_eq_right he, ite_eq_right (show ¬z - c = 1 by omega)])
++       · rw [if_pos he, if_pos (show z - c = 1 by omega)]
++       · rw [if_neg he, if_neg (show ¬z - c = 1 by omega)])
+ 
+ /-- A header completing with its leaf is the header of an empty payload. -/
+ theorem eventC_payload_of_done (x : Counters) (c : Bool) (L : ℕ)
+@@ -322,13 +323,13 @@ theorem sem_eqSeg {n : ℕ} (a b : LOf n) (x : Fin n → List Bool) (y : List Bo
+     List.drop_eq_nil_iff, List.length_drop]
+   by_cases h : A = B
+   · subst h
+-    rw [ite_eq_left (Nat.le_refl _), ite_eq_left (Nat.le_refl _), decide_eq_true rfl]
++    rw [if_pos (Nat.le_refl _), if_pos (Nat.le_refl _), decide_eq_true rfl]
+     rfl
+   · rw [decide_eq_false h]
+     by_cases h₁ : y.length - B ≤ y.length - A
+-    · rw [ite_eq_left h₁, ite_eq_right (show ¬y.length - A ≤ y.length - B by omega)]
++    · rw [if_pos h₁, if_neg (show ¬y.length - A ≤ y.length - B by omega)]
+       rfl
+-    · rw [ite_eq_right h₁]
++    · rw [if_neg h₁]
+       rfl
+ 
+ /-- The word dropped by a number and by another cut off at the word's length
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NodeExpr.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NodeExpr.lean
+index 49121b0..a12b561 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NodeExpr.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NodeExpr.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ExprBase
+@@ -400,13 +401,13 @@ theorem nodeScanExprSem_eq (check : LOf 4) (y : List Bool) :
+   rw [sem_isDone _ _ _ h1, h8, sem_constL, hc, he]
+   simp only [EliasTree.run_phase_done_iff]
+   by_cases hd : (scan y).1 = .done
+-  · rw [ite_eq_left hd]
++  · rw [if_pos hd]
+     cases (nodeScan (checkB check y) y).extra.ok
+-    · rw [ite_eq_right (fun h ↦ absurd h.2 (by decide))]
++    · rw [if_neg (fun h ↦ absurd h.2 (by decide))]
+       rfl
+-    · rw [ite_eq_left ⟨hd, rfl⟩]
++    · rw [if_pos ⟨hd, rfl⟩]
+       rfl
+-  · rw [ite_eq_right hd, ite_eq_right (fun h ↦ hd h.1)]
++  · rw [if_neg hd, if_neg (fun h ↦ hd h.1)]
+     rfl
+ 
+ end
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Nodes.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Nodes.lean
+index 590df5a..585a1af 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Nodes.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Nodes.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Events
+@@ -59,6 +60,8 @@ structure NodeReg where
+   ok : Bool
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprNodeReg.repr
++
+ /-- The update at an event: a fork tag raises the count, a completed leaf
+ resets it, and a completed header conjoins the check at the label beginning at
+ the next bit, with the count. -/
+@@ -103,7 +106,7 @@ theorem foldl_nodeStep_encode : ∀ (t : Tree) (m p d : ℕ) (ok : Bool), 0 < m
+             Nat.add_zero, nodeUpd, ↓reduceIte, decide_true, Bool.false_eq_true]
+           rfl
+         | cons b bs =>
+-          rw [ite_eq_right (by simp), foldl_extStep_payload (nodeUpd check) (nodeUpd_silent check)
++          rw [if_neg (by simp), foldl_extStep_payload (nodeUpd check) (nodeUpd_silent check)
+             (b :: bs) m _ _ (List.cons_ne_nil b bs)]
+           have hp' : p + 1 + (encodeNat (bs.length + 1)).length - 1 + 1 =
+               p + 1 + (encodeNat (bs.length + 1)).length := by
+@@ -120,7 +123,7 @@ theorem foldl_nodeStep_encode : ∀ (t : Tree) (m p d : ℕ) (ok : Bool), 0 < m
+     fun l r ihl ihr m p d ok hm ↦ by
+       obtain ⟨ok₁, hl, hl'⟩ := ihl (m + 1) (p + 1) (d + 1) ok (Nat.succ_pos m)
+       have hf : finish (m + 1) = (.tree, m) := by
+-        rw [Geb.BitTree.Elias.Scanner.finish, ite_eq_right (by omega), Nat.add_sub_cancel]
++        rw [Geb.BitTree.Elias.Scanner.finish, if_neg (by omega), Nat.add_sub_cancel]
+       rw [hf] at hl
+       obtain ⟨ok₂, hr, hr'⟩ := ihr m (p + 1 + (encode l).length) 0 ok₁ hm
+       refine ⟨ok₂, ?_, ?_⟩
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumArith.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumArith.lean
+index a4d25f2..43d26e2 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumArith.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumArith.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.BitFold
+@@ -266,12 +267,12 @@ theorem ltBits_eq (bA bB : ℕ → Bool) (A B : ℕ) (hhA : ∀ i, bA i = A.test
+       have hA := Nat.mod_lt A (Nat.two_pow_pos n)
+       have hB := Nat.mod_lt B (Nat.two_pow_pos n)
+       cases A.testBit n <;> cases B.testBit n
+-      · rw [ite_eq_left (by decide), Bool.toNat_false, Nat.mul_zero, Nat.add_zero, Nat.add_zero]
+-      · rw [ite_eq_right (by decide), Bool.toNat_false, Bool.toNat_true, Nat.mul_zero, Nat.mul_one,
++      · rw [if_pos (by decide), Bool.toNat_false, Nat.mul_zero, Nat.add_zero, Nat.add_zero]
++      · rw [if_neg (by decide), Bool.toNat_false, Bool.toNat_true, Nat.mul_zero, Nat.mul_one,
+           Nat.add_zero, decide_eq_true (by omega)]
+-      · rw [ite_eq_right (by decide), Bool.toNat_false, Bool.toNat_true, Nat.mul_zero, Nat.mul_one,
++      · rw [if_neg (by decide), Bool.toNat_false, Bool.toNat_true, Nat.mul_zero, Nat.mul_one,
+           Nat.add_zero, decide_eq_false (by omega)]
+-      · rw [ite_eq_left (by decide), Bool.toNat_true, Nat.mul_one]
++      · rw [if_pos (by decide), Bool.toNat_true, Nat.mul_one]
+         by_cases h : A % 2 ^ n < B % 2 ^ n
+         · rw [decide_eq_true h, decide_eq_true (by omega)]
+         · rw [decide_eq_false h, decide_eq_false (by omega)]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScan.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScan.lean
 index 0f453da..56c975b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScan.lean
@@ -2972,6 +3658,39 @@ index 0f453da..56c975b 100644
  
  end
  
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScanExpr.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScanExpr.lean
+index 34f81fc..81c73fc 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScanExpr.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScanExpr.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScan
+@@ -243,7 +244,7 @@ position at zero. -/
+     constL 3 [], projL 3 0]
+ 
+ /-- The recursion's steps, the same for either bit of the counter. -/
+-@[expose] def nsStep : Bool → Fin 8 → LOf 12 :=
++@[expose, nolint unusedArguments] def nsStep : Bool → Fin 8 → LOf 12 :=
+   fun _ ↦ ![restStep, modeStep, zStep, cntStep, sStep, hitStep, okStep, endStep]
+ 
+ /-- The eight registers, as expressions of arity four: the counter, the word,
+@@ -635,9 +636,9 @@ theorem sem_numOk (y : List Bool) (tp i : ℕ) (htp : tp ≤ y.length) (hi : i 
+     sem_numReg 6 y tp i htp hi, sem_constL]
+   change cond4Sem _ [] (boolWord (nrun tp i y).ok) (boolWord (nrun tp i y).ok) = _
+   by_cases hd : (nrun tp i y).mode = .done
+-  · rw [ite_eq_left hd, decide_eq_true hd, Bool.true_and]
++  · rw [if_pos hd, decide_eq_true hd, Bool.true_and]
+     cases (nrun tp i y).ok <;> rfl
+-  · rw [ite_eq_right hd, decide_eq_false hd, Bool.false_and]
++  · rw [if_neg hd, decide_eq_false hd, Bool.false_and]
+     rfl
+ 
+ /-- On a word holding a coded number at the position, the acceptance is set,
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean
 index 285415d..cc363a3 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean
@@ -3039,6 +3758,33 @@ index daf8f41..452b4e8 100644
  /-- The number of children. -/
  @[expose] def Node.k (n : Node) : ℕ := n.children.length
  
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/RecognizeExpr.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/RecognizeExpr.lean
+index e0a5d46..4b24c10 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/RecognizeExpr.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/RecognizeExpr.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NodeExpr
+@@ -232,11 +233,11 @@ theorem recognizeExprSem_eq (label : LOf 4) (edge : LOf 6) (y : List Bool)
+           fun h ↦ absurd (h n hn) (by rw [h₂]; decide)⟩
+     rw [hok]
+     by_cases ho : (nodeScan (C.nodeCheck (encode t)) (encode t)).extra.ok = true
+-    · rw [ite_eq_left ⟨hd, ho⟩, decide_eq_true hd, ho]
++    · rw [if_pos ⟨hd, ho⟩, decide_eq_true hd, ho]
+       rfl
+-    · rw [ite_eq_right (fun h ↦ ho h.2), decide_eq_true hd, Bool.eq_false_iff.mpr ho]
++    · rw [if_neg (fun h ↦ ho h.2), decide_eq_true hd, Bool.eq_false_iff.mpr ho]
+       rfl
+-  · rw [ite_eq_right (fun h ↦ hd h.1), decide_eq_false hd]
++  · rw [if_neg (fun h ↦ hd h.1), decide_eq_false hd]
+     rfl
+ 
+ /-- The expression accepts exactly the words the recognizer accepts, when its
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
 index 199b86e..7a94942 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
@@ -3150,6 +3896,284 @@ index 199b86e..7a94942 100644
  
  /-- The algebra's signature as a coded signature. -/
  @[expose] def sigCoded : CodedSig ℕ where
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigEdge.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigEdge.lean
+index 322a53b..16d2323 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigEdge.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigEdge.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigLabel
+@@ -300,23 +301,23 @@ theorem sem_child_tag (b0 b1 b2 : Bool) (r : List Bool) (h : cL.sem x = b0 :: b1
+   have h2 : (tailAppL (tailAppL cL)).sem x = b2 :: r := by rw [sem_tailAppL, sem_tailAppL, h]; rfl
+   rw [sem_onBitAt _ _ _ _ _ b0 _ h]
+   cases b0
+-  · rw [ite_eq_right (by decide), sem_onBitAt _ _ _ _ _ b1 _ h1]
++  · rw [if_neg (by decide), sem_onBitAt _ _ _ _ _ b1 _ h1]
+     cases b1
+-    · rw [ite_eq_right (by decide), sem_onBitAt _ _ _ _ _ b2 _ h2]
++    · rw [if_neg (by decide), sem_onBitAt _ _ _ _ _ b2 _ h2]
+       cases b2
+-      · rw [ite_eq_right (by decide)]
+-      · rw [ite_eq_left rfl]
+-    · rw [ite_eq_left rfl, sem_onBitAt _ _ _ _ _ b2 _ h2]
++      · rw [if_neg (by decide)]
++      · rw [if_pos rfl]
++    · rw [if_pos rfl, sem_onBitAt _ _ _ _ _ b2 _ h2]
+       cases b2
+-      · rw [ite_eq_right (by decide)]
+-      · rw [ite_eq_left rfl]
+-  · rw [ite_eq_left rfl, sem_onBitAt _ _ _ _ _ b1 _ h1]
++      · rw [if_neg (by decide)]
++      · rw [if_pos rfl]
++  · rw [if_pos rfl, sem_onBitAt _ _ _ _ _ b1 _ h1]
+     cases b1
+-    · rw [ite_eq_right (by decide), sem_onBitAt _ _ _ _ _ b2 _ h2]
++    · rw [if_neg (by decide), sem_onBitAt _ _ _ _ _ b2 _ h2]
+       cases b2
+-      · rw [ite_eq_right (by decide)]
+-      · rw [ite_eq_left rfl]
+-    · rw [ite_eq_left rfl]
++      · rw [if_neg (by decide)]
++      · rw [if_pos rfl]
++    · rw [if_pos rfl]
+ 
+ include hcL hc in
+ /-- The first field of a child's label, at its position, from its code with
+@@ -453,7 +454,7 @@ theorem parent_code (a : Shape) (ha : labelAt y l = sigCoded.code a) :
+ theorem edgeSpec_none (a c : Shape) (h : sigCoded.card a = 0) :
+     (if h : j < sigCoded.card a then
+       decide (sigCoded.P.q c = sigCoded.P.rCurried a (sigCoded.dir a ⟨j, h⟩)) else false) = false :=
+-  dite_eq_right (by rw [h]; exact Nat.not_lt_zero j)
++  dif_neg (by rw [h]; exact Nat.not_lt_zero j)
+ 
+ /-- The word dropped by the position, and by one more, as end segments within
+ the word. -/
+@@ -534,23 +535,23 @@ theorem computesEdge : sigCoded.ComputesEdge edgeOk y := by
+       cond4Sem_drop_length_sub y j (by omega)]
+     cases j with
+     | zero =>
+-      rw [ite_eq_left rfl, sem_arityIs y _ rfl C6 pE1 (tailAppL L6) c l'.pos _ (sem_C6 y l l' 0) hpc
++      rw [if_pos rfl, sem_arityIs y _ rfl C6 pE1 (tailAppL L6) c l'.pos _ (sem_C6 y l l' 0) hpc
+         m' _ _ _ hE1 hu2 (by rw [List.append_assoc]; exact hy2) _ _ _ hz huz hzc h3,
+         isTrueWord_boolWord,
+-        dite_eq_left (show 0 < sigCoded.card (.comp m m') from Nat.succ_pos m'), dir_comp_zero,
++        dif_pos (show 0 < sigCoded.card (.comp m m') from Nat.succ_pos m'), dir_comp_zero,
+         rCurried_comp]
+       simp only [decide_eq_true_eq]
+       exact ⟨fun h ↦ h.2, fun h ↦ ⟨by omega, h⟩⟩
+     | succ i =>
+-      rw [ite_eq_right (Nat.succ_ne_zero i), sem_arityIs y _ rfl C6 pF1 (tailAppL L6) c l'.pos _
++      rw [if_neg (Nat.succ_ne_zero i), sem_arityIs y _ rfl C6 pF1 (tailAppL L6) c l'.pos _
+         (sem_C6 y l l' (i + 1)) hpc m _ _ _ hF1 hu1 (by rw [List.append_assoc]; exact hy1) _ _ _
+         hz huz hzc h3, isTrueWord_boolWord]
+       by_cases hlt : i + 1 < m' + 1
+-      · rw [dite_eq_left (show i + 1 < sigCoded.card (.comp m m') from hlt), dir_comp_succ,
++      · rw [dif_pos (show i + 1 < sigCoded.card (.comp m m') from hlt), dir_comp_succ,
+           rCurried_comp]
+         simp only [decide_eq_true_eq]
+         exact ⟨fun h ↦ h.2, fun h ↦ ⟨by omega, h⟩⟩
+-      · rw [dite_eq_right (show ¬i + 1 < sigCoded.card (.comp m m') from hlt)]
++      · rw [dif_neg (show ¬i + 1 < sigCoded.card (.comp m m') from hlt)]
+         simp only [decide_eq_true_eq]
+         exact ⟨fun h ↦ absurd h.1 (by omega), fun h ↦ absurd h (by decide)⟩
+   | srn a b i0 =>
+@@ -591,23 +592,23 @@ theorem computesEdge : sigCoded.ComputesEdge edgeOk y := by
+       sem_cond4L, sem_leSeg _ _ _ y (j + 1) (min b y.length) (sem_J6_tail y l l' j)
+         (by rw [hV, drop_min_length]), cond4Sem_boolWord_same]
+     by_cases hjb : j < b
+-    · rw [ite_eq_left (decide_eq_true (by omega)), sem_arityIs y _ rfl C6 pF1 L6 c l'.pos _
++    · rw [if_pos (decide_eq_true (by omega)), sem_arityIs y _ rfl C6 pF1 L6 c l'.pos _
+         (sem_C6 y l l' j) hpc a _ _ _ hF1 hu1 (by rw [List.append_assoc]; exact hy1) _ _ _
+         (sem_L6 y l l' j) huz hzc h3, isTrueWord_boolWord,
+-        dite_eq_left (show j < sigCoded.card (.srn a b i0) by change j < 3 * b; omega), rc_dir_srn,
+-        ite_eq_left hjb]
++        dif_pos (show j < sigCoded.card (.srn a b i0) by change j < 3 * b; omega), rc_dir_srn,
++        if_pos hjb]
+       simp only [decide_eq_true_eq]
+       exact ⟨fun h ↦ h.2, fun h ↦ ⟨by omega, h⟩⟩
+-    · rw [ite_eq_right (by rw [decide_eq_true_eq]; omega), sem_arityIsSum y _ rfl C6 pF1 pE1 c
++    · rw [if_neg (by rw [decide_eq_true_eq]; omega), sem_arityIsSum y _ rfl C6 pF1 pE1 c
+         l'.pos _ (sem_C6 y l l' j) hpc a b (l.pos + 3) _ _ _ _ _ hF1 hu1
+         (by rw [List.append_assoc]; exact hy1) hE1 hu2 (by rw [List.append_assoc]; exact hy2) h3,
+         isTrueWord_boolWord]
+       by_cases h3b : j < 3 * b
+-      · rw [dite_eq_left (show j < sigCoded.card (.srn a b i0) from h3b), rc_dir_srn,
+-          ite_eq_right hjb]
++      · rw [dif_pos (show j < sigCoded.card (.srn a b i0) from h3b), rc_dir_srn,
++          if_neg hjb]
+         simp only [decide_eq_true_eq]
+         exact ⟨fun h ↦ h.2, fun h ↦ ⟨by omega, h⟩⟩
+-      · rw [dite_eq_right (show ¬j < sigCoded.card (.srn a b i0) from h3b)]
++      · rw [dif_neg (show ¬j < sigCoded.card (.srn a b i0) from h3b)]
+         simp only [decide_eq_true_eq]
+         exact ⟨fun h ↦ absurd h.1 (by omega), fun h ↦ absurd h (by decide)⟩
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
+index 42917e5..87fc2d4 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Sig
+@@ -70,9 +71,9 @@ variable {n : ℕ}
+ theorem boolWord_decide (P : Prop) [Decidable P] :
+     boolWord (decide P) = if P then [true] else [] := by
+   by_cases h : P
+-  · rw [decide_eq_true h, ite_eq_left h]
++  · rw [decide_eq_true h, if_pos h]
+     rfl
+-  · rw [decide_eq_false h, ite_eq_right h]
++  · rw [decide_eq_false h, if_neg h]
+     rfl
+ 
+ /-- Flags decided by equivalent propositions agree. -/
+@@ -80,8 +81,8 @@ theorem boolWord_decide_congr (P Q : Prop) [Decidable P] [Decidable Q] (h : P 
+     boolWord (decide P) = boolWord (decide Q) := by
+   rw [boolWord_decide, boolWord_decide]
+   by_cases hp : P
+-  · rw [ite_eq_left hp, ite_eq_left (h.mp hp)]
+-  · rw [ite_eq_right hp, ite_eq_right (fun hq ↦ hp (h.mpr hq))]
++  · rw [if_pos hp, if_pos (h.mp hp)]
++  · rw [if_neg hp, if_neg (fun hq ↦ hp (h.mpr hq))]
+ 
+ /-- The emptiness of a word, as a flag. -/
+ @[expose] def isNil (e : LOf n) : LOf n := cond4L e (constL n [true]) (constL n []) (constL n [])
+@@ -100,8 +101,8 @@ theorem sem_notNil (e : LOf n) (x : Fin n → List Bool) :
+     (notNil e).sem x = boolWord (decide (e.sem x ≠ [])) := by
+   rw [notNil, sem_cond4L, sem_constL, sem_constL, EliasTree.cond4Sem_same, boolWord_decide]
+   by_cases h : e.sem x = []
+-  · rw [ite_eq_left h, ite_eq_right (fun h' ↦ h' h)]
+-  · rw [ite_eq_right h, ite_eq_left h]
++  · rw [if_pos h, if_neg (fun h' ↦ h' h)]
++  · rw [if_neg h, if_pos h]
+ 
+ /-- The conjunction of two flags. -/
+ @[expose] def andF (a b : LOf n) : LOf n := andOkAt a b
+@@ -159,11 +160,11 @@ theorem sem_endsAt (E R : LOf n) (x : Fin n → List Bool) (y : List Bool) (e Le
+     (endsAt E R).sem x = boolWord (decide (e = Lend)) := by
+   rw [endsAt, sem_cond4L, hR, EliasTree.cond4Sem_same]
+   rcases hs with hs | hs
+-  · rw [ite_eq_right (by rw [List.drop_eq_nil_iff]; omega),
++  · rw [if_neg (by rw [List.drop_eq_nil_iff]; omega),
+       sem_eqSeg _ _ x y (min (e + 1) y.length) (Lend + 1)
+         (by rw [sem_tailAppL, hE, tail_drop_min]) hR (Nat.min_le_right _ _) (by omega)]
+     refine boolWord_decide_congr _ _ ⟨fun h ↦ by omega, fun h ↦ by omega⟩
+-  · rw [ite_eq_left (by rw [List.drop_eq_nil_iff]; omega), sem_isNil, hE]
++  · rw [if_pos (by rw [List.drop_eq_nil_iff]; omega), sem_isNil, hE]
+     refine boolWord_decide_congr _ _ ?_
+     rw [List.drop_eq_nil_iff]
+     exact ⟨fun h ↦ by omega, fun h ↦ by omega⟩
+@@ -180,11 +181,11 @@ theorem sem_within (E R : LOf n) (x : Fin n → List Bool) (y : List Bool) (e Le
+     (within E R).sem x = boolWord (decide (e ≤ Lend)) := by
+   rw [within, sem_cond4L, hR, EliasTree.cond4Sem_same]
+   rcases hs with hs | hs
+-  · rw [ite_eq_right (by rw [List.drop_eq_nil_iff]; omega),
++  · rw [if_neg (by rw [List.drop_eq_nil_iff]; omega),
+       sem_leSeg _ _ x y (min (e + 1) y.length) (Lend + 1)
+         (by rw [sem_tailAppL, hE, tail_drop_min]) hR]
+     refine boolWord_decide_congr _ _ ⟨fun h ↦ by omega, fun h ↦ by omega⟩
+-  · rw [ite_eq_left (by rw [List.drop_eq_nil_iff]; omega), sem_constL,
++  · rw [if_pos (by rw [List.drop_eq_nil_iff]; omega), sem_constL,
+       show [true] = boolWord (decide (e ≤ Lend)) by rw [decide_eq_true (by omega)]; rfl]
+ 
+ /-- The acceptance of the numeral scanner at a pointer. -/
+@@ -617,9 +618,9 @@ theorem isTrueWord_andF_iff {m : ℕ} (a b : LOf m) (x : Fin m → List Bool) (A
+     isTrueWord ((andF a b).sem x) = true ↔ A = true ∧ isTrueWord (b.sem x) = true := by
+   rw [andF, andOkAt, sem_cond4L, ha, sem_constL, cond4Sem_boolWord_same]
+   cases A
+-  · rw [ite_eq_right (by decide)]
++  · rw [if_neg (by decide)]
+     exact ⟨fun h ↦ absurd h (by decide), fun h ↦ absurd h.1 (by decide)⟩
+-  · rw [ite_eq_left rfl]
++  · rw [if_pos rfl]
+     exact ⟨fun h ↦ ⟨rfl, h⟩, fun h ↦ h.2⟩
+ 
+ /-- A word from a position holds a coded number exactly when the word splits
+@@ -988,9 +989,9 @@ theorem sem_short (h : (y.drop l.pos).length ≤ 2) : labelOk.sem (envL y l k) =
+     cases r0 with
+     | nil =>
+       cases b0
+-      · rw [ite_eq_right (by decide),
++      · rw [if_neg (by decide),
+           sem_onBitAt_nil _ _ _ _ _ (by rw [sem_tailAppL, sem_L4, h0]; rfl), sem_constL]
+-      · rw [ite_eq_left rfl, sem_onBitAt_nil _ _ _ _ _ (by rw [sem_tailAppL, sem_L4, h0]; rfl),
++      · rw [if_pos rfl, sem_onBitAt_nil _ _ _ _ _ (by rw [sem_tailAppL, sem_L4, h0]; rfl),
+           sem_constL]
+     | cons b1 r1 =>
+       cases r1 with
+@@ -1002,14 +1003,14 @@ theorem sem_short (h : (y.drop l.pos).length ≤ 2) : labelOk.sem (envL y l k) =
+           rw [sem_tailAppL, sem_L4, h0]
+           rfl
+         cases b0
+-        · rw [ite_eq_right (by decide), sem_onBitAt _ _ _ _ _ b1 [] h1]
++        · rw [if_neg (by decide), sem_onBitAt _ _ _ _ _ b1 [] h1]
+           cases b1
+-          · rw [ite_eq_right (by decide), sem_onBitAt_nil _ _ _ _ _ h2, sem_constL]
+-          · rw [ite_eq_left rfl, sem_onBitAt_nil _ _ _ _ _ h2, sem_constL]
+-        · rw [ite_eq_left rfl, sem_onBitAt _ _ _ _ _ b1 [] h1]
++          · rw [if_neg (by decide), sem_onBitAt_nil _ _ _ _ _ h2, sem_constL]
++          · rw [if_pos rfl, sem_onBitAt_nil _ _ _ _ _ h2, sem_constL]
++        · rw [if_pos rfl, sem_onBitAt _ _ _ _ _ b1 [] h1]
+           cases b1
+-          · rw [ite_eq_right (by decide), sem_onBitAt_nil _ _ _ _ _ h2, sem_constL]
+-          · rw [ite_eq_left rfl, sem_constL]
++          · rw [if_neg (by decide), sem_onBitAt_nil _ _ _ _ _ h2, sem_constL]
++          · rw [if_pos rfl, sem_constL]
+       | cons b2 r2 =>
+         rw [h0] at h
+         simp only [List.length_cons] at h
+@@ -1037,29 +1038,29 @@ theorem sem_tag (b0 b1 b2 : Bool) (r : List Bool) (h0 : y.drop l.pos = b0 :: b1
+     rfl
+   rw [labelOk, sem_onBitAt _ _ _ _ _ b0 (b1 :: b2 :: r) (by rw [sem_L4, h0])]
+   cases b0
+-  · rw [ite_eq_right (by decide), sem_onBitAt _ _ _ _ _ b1 (b2 :: r) h1]
++  · rw [if_neg (by decide), sem_onBitAt _ _ _ _ _ b1 (b2 :: r) h1]
+     cases b1
+-    · rw [ite_eq_right (by decide), sem_onBitAt _ _ _ _ _ b2 r h2]
++    · rw [if_neg (by decide), sem_onBitAt _ _ _ _ _ b2 r h2]
+       cases b2
+-      · rw [ite_eq_right (by decide)]
++      · rw [if_neg (by decide)]
+         rfl
+-      · rw [ite_eq_left rfl]
++      · rw [if_pos rfl]
+         rfl
+-    · rw [ite_eq_left rfl, sem_onBitAt _ _ _ _ _ b2 r h2]
++    · rw [if_pos rfl, sem_onBitAt _ _ _ _ _ b2 r h2]
+       cases b2
+-      · rw [ite_eq_right (by decide)]
++      · rw [if_neg (by decide)]
+         rfl
+-      · rw [ite_eq_left rfl]
++      · rw [if_pos rfl]
+         rfl
+-  · rw [ite_eq_left rfl, sem_onBitAt _ _ _ _ _ b1 (b2 :: r) h1]
++  · rw [if_pos rfl, sem_onBitAt _ _ _ _ _ b1 (b2 :: r) h1]
+     cases b1
+-    · rw [ite_eq_right (by decide), sem_onBitAt _ _ _ _ _ b2 r h2]
++    · rw [if_neg (by decide), sem_onBitAt _ _ _ _ _ b2 r h2]
+       cases b2
+-      · rw [ite_eq_right (by decide)]
++      · rw [if_neg (by decide)]
+         rfl
+-      · rw [ite_eq_left rfl]
++      · rw [if_pos rfl]
+         rfl
+-    · rw [ite_eq_left rfl]
++    · rw [if_pos rfl]
+       cases b2 <;> rfl
+ 
+ include hs hk in
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean
 index 026ba4d..5f5cee9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean

@@ -6,11 +6,26 @@ Authors: Terence Rokop
 module
 
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Spell
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Events
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Positions
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Nodes
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Children
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Recognize
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ExprBase
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NodeExpr
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.ChildExpr
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.RecognizeExpr
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Numeral
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScan
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScanExpr
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.BitFold
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumBits
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumArith
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumSum
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.Sig
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigLabel
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigEdge
+public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.SigCheck
 
 set_option doc.verso true in
 /-!
