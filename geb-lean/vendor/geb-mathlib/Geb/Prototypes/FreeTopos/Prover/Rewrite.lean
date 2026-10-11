@@ -129,8 +129,7 @@ def applyRule (r : RwRule) (t : Tree) : PM (Tree × Tree) := do
   let some ms := matchPat (← get).sig a.ctx p t ⟨a.ctx.map fun _ ↦ none, []⟩ | failure
   let some σ := ms.σ.mapM id | failure
   let tys ← σ.mapM typeTerm
-  for (o, u) in ms.objs do
-    let _ ← objEq (← typePattern tys o) (← typeTerm u)
+  let _ ← ms.objs.mapM fun (o, u) ↦ do objEq (← typePattern tys o) (← typeTerm u)
   let b ← bridge tys p t
   let hs ← a.hyps.mapM (proveHyp typePattern tys)
   let i := r.src.cert σ (tys.map Ty.dfd) hs

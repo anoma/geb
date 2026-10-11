@@ -20,9 +20,12 @@ definition, and the equality of two terms, a formula, a term of the subobject cl
 type. A type is an object term of the combinators ({name}`Geb.FreeTopos.sig`), and a term
 is a rose tree whose labels carry the types it names; a primitive arrow and a definition are named
 by their indices, at objects. Variables are de Bruijn indices, the innermost binder's
-variable the index zero; the start and the step of a fold are terms of contexts of their own, the
-step's the recursion's value and, for a list, the element, so that a fold's only child in its
-node's context is the datum it folds.
+variable the index zero. The start and the step of the folds of the natural numbers and list
+objects are terms of the fold's context, the step's extended by the recursion's value and, for a
+list, the element before it, and the step of a rose-tree fold a term of the fold's context
+extended by the pair of a label and the list of the children's values, so that a fold may have
+parameters (\[EscardoSimpson2025\], Proposition 2.3;
+\[GoncharovMiliusSchroderTsampasUrbat2022\], the appendix's induction with parameters).
 
 ## Main definitions
 
@@ -34,6 +37,9 @@ node's context is the datum it folds.
 ## References
 
 * \[MacLaneMoerdijk1992\], Section VI.5, for the Mitchell–Bénabou language.
+* \[EscardoSimpson2025\], Proposition 2.3, for the folds with parameters.
+* \[GoncharovMiliusSchroderTsampasUrbat2022\], the appendix's induction with parameters, for
+  the folds of rose trees with parameters.
 
 ## Tags
 
@@ -67,13 +73,14 @@ inductive Label where
   | app
   /-- The application of the primitive arrow of an index, at objects, to a term. -/
   | arr (k : ℕ) (θ : List Tree)
-  /-- The fold of a natural number: a start, a step in the recursion's value, and the number. -/
+  /-- The fold of a natural number: a start, a step in the context extended by the recursion's
+  value, and the number. -/
   | natRec
-  /-- The fold of a list: a start, a step in the recursion's value and the element, and the
-  list. -/
+  /-- The fold of a list: a start, a step in the context extended by the element and the
+  recursion's value, and the list. -/
   | listRec
-  /-- The fold of a rose tree into a type: a step in the pair of a label and the list of the
-  children's values, and the tree. -/
+  /-- The fold of a rose tree into a type: a step in the context extended by the pair of a label
+  and the list of the children's values, and the tree. -/
   | roseRec (c : Tree)
   /-- The application of the definition of an index, at objects, to terms, the last first. -/
   | defn (k : ℕ) (θ : List Tree)
@@ -136,13 +143,12 @@ def renameStep (l : Label) (cs : List (Term × ((ℕ → ℕ) → Term))) (f : �
   match l, cs with
     | .var i, _ => var (f i)
     | .lam a, [(_, t)] => RoseTree.node (.lam a) [t (liftR f)]
-    | .natRec, [(z, _), (s, _), (_, n)] => RoseTree.node .natRec [z, s, n f]
-    | .listRec, [(z, _), (s, _), (_, n)] => RoseTree.node .listRec [z, s, n f]
-    | .roseRec c, [(s, _), (_, n)] => RoseTree.node (.roseRec c) [s, n f]
+    | .natRec, [(_, z), (_, s), (_, n)] => RoseTree.node .natRec [z f, s (liftR f), n f]
+    | .listRec, [(_, z), (_, s), (_, n)] => RoseTree.node .listRec [z f, s (liftR (liftR f)), n f]
+    | .roseRec c, [(_, s), (_, n)] => RoseTree.node (.roseRec c) [s (liftR f), n f]
     | l, cs => RoseTree.node l (cs.map fun c ↦ c.2 f)
 
-/-- The renaming of a term's variables, lifted under each binder; the start and the step of a
-fold, in contexts of their own, are left in place. -/
+/-- The renaming of a term's variables, lifted under each binder. -/
 def rename : Term → (ℕ → ℕ) → Term := RoseTree.para renameStep
 
 /-- The lifting of a substitution under a binder. -/
@@ -156,13 +162,12 @@ def substStep (l : Label) (cs : List (Term × ((ℕ → Term) → Term))) (σ : 
   match l, cs with
     | .var i, _ => σ i
     | .lam a, [(_, t)] => RoseTree.node (.lam a) [t (liftS σ)]
-    | .natRec, [(z, _), (s, _), (_, n)] => RoseTree.node .natRec [z, s, n σ]
-    | .listRec, [(z, _), (s, _), (_, n)] => RoseTree.node .listRec [z, s, n σ]
-    | .roseRec c, [(s, _), (_, n)] => RoseTree.node (.roseRec c) [s, n σ]
+    | .natRec, [(_, z), (_, s), (_, n)] => RoseTree.node .natRec [z σ, s (liftS σ), n σ]
+    | .listRec, [(_, z), (_, s), (_, n)] => RoseTree.node .listRec [z σ, s (liftS (liftS σ)), n σ]
+    | .roseRec c, [(_, s), (_, n)] => RoseTree.node (.roseRec c) [s (liftS σ), n σ]
     | l, cs => RoseTree.node l (cs.map fun c ↦ c.2 σ)
 
-/-- The substitution of terms for a term's variables, lifted under each binder; the start and
-the step of a fold, in contexts of their own, are left in place. -/
+/-- The substitution of terms for a term's variables, lifted under each binder. -/
 def subst : Term → (ℕ → Term) → Term := RoseTree.para substStep
 
 /-- The renaming of a node is its step at its children's renamings. -/
@@ -174,6 +179,26 @@ theorem rename_node (l : Label) (cs : List Term) (f : ℕ → ℕ) :
 theorem subst_node (l : Label) (cs : List Term) (σ : ℕ → Term) :
     subst (RoseTree.node l cs) σ = substStep l (cs.map fun c ↦ (c, subst c)) σ :=
   congrFun (RoseTree.para_node _ l cs) σ
+
+/-- One step of the test whether a variable occurs free in a term, at a node of a label, from the
+tests in its children, at the variable's index under the binders around the node. -/
+def occursStep (l : Label) (cs : List (Term × (ℕ → Bool))) (d : ℕ) : Bool :=
+  match l, cs with
+    | .var i, _ => i == d
+    | .lam _, [(_, t)] => t (d + 1)
+    | .natRec, [(_, z), (_, s), (_, n)] => z d || s (d + 1) || n d
+    | .listRec, [(_, z), (_, s), (_, n)] => z d || s (d + 2) || n d
+    | .roseRec _, [(_, s), (_, n)] => s (d + 1) || n d
+    | _, cs => cs.any fun c ↦ c.2 d
+
+/-- Whether the variable of an index occurs free in a term, its index raised under each
+binder. -/
+def occurs : Term → ℕ → Bool := RoseTree.para occursStep
+
+/-- The test at a node is its step at its children's tests. -/
+theorem occurs_node (l : Label) (cs : List Term) (d : ℕ) :
+    occurs (RoseTree.node l cs) d = occursStep l (cs.map fun c ↦ (c, occurs c)) d :=
+  congrFun (RoseTree.para_node _ l cs) d
 
 /-- The substitution of a list of terms, the variable of index {lit}`i` replaced by the term at
 position {lit}`i`. -/

@@ -220,56 +220,6 @@ def UbsOk (G : Globals) (ubs : List (Option Term)) : Prop :=
 variable (hM : IsModel (ext defs) M)
 include hM
 
-/-- A context's environment of projections is an environment of arrows. -/
-theorem stdEnv_hom {G : Globals} (hO : ObjsHom M G) {ρ : List M.Val} {n : ℕ}
-    (hρ : ρ.map Sigma.fst = List.replicate n obj) :
-    ∀ Γ : List Tree, Γ.all (IsTy G n) = true → EnvHom M ρ G n (ctxObj Γ) (stdEnv Γ) :=
-  List.rec (fun _ ↦ ⟨isObj_one hM, by simp [stdEnv]⟩) fun a Γ ih h ↦ by
-    simp only [List.all_cons, Bool.and_eq_true] at h
-    have hA := isObj_of_isTy hM hO hρ a h.1
-    rcases Γ with _ | ⟨b, Γ⟩
-    · exact ⟨hA, by simpa [stdEnv] using ⟨idt_hom hM hA, h.1⟩⟩
-    · exact (ih h.2).ext hM hA h.1
-
-/-- The projections of a context after a tuple of arrows of its types are the arrows. -/
-theorem proj_tuple {G : Globals} (hO : ObjsHom M G) {ρ : List M.Val} {n : ℕ}
-    (hρ : ρ.map Sigma.fst = List.replicate n obj) {X : Tree} (hX : IsObj M ρ X) :
-    ∀ qs : List (Tree × Tree), (∀ q ∈ qs, Hom M ρ q.1 X q.2 ∧ IsTy G n q.2 = true) →
-      EnvEq M ρ (precomp (tuple X (qs.map Prod.fst)) (stdEnv (qs.map Prod.snd))) qs :=
-  List.rec (fun _ i p hp ↦ by simp [precomp, stdEnv] at hp) fun q qs ih hqs i p hp ↦ by
-    have hq := (hqs q List.mem_cons_self).1
-    rcases qs with _ | ⟨q', qs⟩
-    · -- a single arrow: the identity after it
-      rcases i with _ | j
-      · obtain rfl : (comp (idt q.2) q.1, q.2) = p := by simpa [precomp, stdEnv, tuple] using hp
-        exact ⟨q, rfl, rfl, (idt_comp hM hq).symm⟩
-      · simp [precomp, stdEnv] at hp
-    have hqs' : ∀ r ∈ q' :: qs, Hom M ρ r.1 X r.2 ∧ IsTy G n r.2 = true :=
-      fun r hr ↦ hqs r (List.mem_cons_of_mem _ hr)
-    have hT := tuple_hom hM hX (q' :: qs) fun r hr ↦ (hqs' r hr).1
-    have hΓ : ((q' :: qs).map Prod.snd).all (IsTy G n) = true := by
-      rw [List.all_map, List.all_eq_true]
-      exact fun r hr ↦ (hqs' r hr).2
-    have hstd := stdEnv_hom hM hO hρ _ hΓ
-    rcases i with _ | j
-    · obtain rfl : (comp (snd (ctxObj ((q' :: qs).map Prod.snd)) q.2)
-          (pair (tuple X ((q' :: qs).map Prod.fst)) q.1), q.2) = p := by
-        simpa [precomp, stdEnv, extEnv, tuple] using hp
-      exact ⟨q, rfl, rfl, (snd_pair hM hT hq).symm⟩
-    · change (precomp (pair (tuple X ((q' :: qs).map Prod.fst)) q.1)
-          (extEnv (ctxObj ((q' :: qs).map Prod.snd)) q.2
-            (stdEnv ((q' :: qs).map Prod.snd))))[j + 1]? = some p at hp
-      simp only [precomp, extEnv, List.map_cons, List.getElem?_cons_succ, List.map_map,
-        List.getElem?_map, Option.map_eq_some_iff, Function.comp_apply] at hp
-      obtain ⟨p₀, hp₀, rfl⟩ := hp
-      obtain ⟨q₀, hq₀, h₂, h₁⟩ :=
-        ih hqs' j (comp p₀.1 (tuple X ((q' :: qs).map Prod.fst)), p₀.2)
-          (by simp only [precomp, List.map_cons] at hp₀ ⊢; simp [hp₀])
-      have hp₀h := (hstd.2 p₀ (List.mem_of_getElem? hp₀)).1
-      refine ⟨q₀, by simpa using hq₀, h₂, h₁.trans ?_⟩
-      exact (eval_op₂_congr 3 rfl (fst_pair hM hT hq).symm).trans
-        (comp_assoc hM (pair_hom hM hT hq) (fst_hom hM hT.isObj_cod hq.isObj_cod) hp₀h)
-
 /-- The unfolding of a well-typed term's definitions, by unfolded bodies whose arrows have the
 values of the definitions' operations, has the term's type and an arrow of the same value. -/
 theorem compile_unfold_of {G : Globals} (hG : G.WF) {ubs : List (Option Term)}
@@ -332,43 +282,46 @@ theorem compile_unfold_of {G : Globals} (hG : G.WF) {ubs : List (Option Term)}
     exact ⟨_, compile_arr_iff.mpr ⟨_, rfl, p, hp, g', ht', hl, hθ, rfl⟩, rfl,
       eval_op₂_congr 3 rfl hg⟩
   | natRec =>
-    obtain ⟨z, s, m, rfl, z', c, hz, s', hs, m', hm, rfl⟩ := compile_natRec_iff.mp h
+    obtain ⟨z, s, m, rfl, -⟩ := compile_natRec_iff.mp h
+    obtain ⟨zf, c, sf, mf, hz, hs, hm, hr⟩ := compile_natRec_full hM hG hρ hps hds h he
     rw [unfold_node (by simp)]
-    have hz₀ : EnvHom M ρ G n one [] := ⟨isObj_one hM, by simp⟩
-    obtain ⟨-, hct⟩ := hty z _ _ _ hz hz₀
-    have hC := hobj c hct
-    obtain ⟨⟨z'', c'⟩, hz', rfl, hzv⟩ := ih z (by simp) _ _ _ hz hz₀
-    obtain ⟨⟨s'', c''⟩, hs', rfl, hsv⟩ :=
-      ih s (by simp) _ _ _ hs ⟨hC, by simpa using ⟨idt_hom hM hC, hct⟩⟩
+    obtain ⟨-, hct⟩ := hty z X e _ hz he
+    obtain ⟨⟨z'', c₁⟩, hz', hc₁, hzv⟩ := ih z (by simp) X e _ hz he
+    obtain ⟨⟨s'', c₂⟩, hs', hc₂, hsv⟩ := ih s (by simp) _ _ _ hs (he.ext hM (hobj c hct) hct)
     obtain ⟨⟨m'', t⟩, hm', rfl, hmv⟩ := ih m (by simp) X e _ hm he
-    exact ⟨_, compile_natRec_iff.mpr ⟨_, _, _, rfl, _, _, hz', _, hs', _, hm', rfl⟩, rfl,
-      eval_op₂_congr 3 (eval_op₂_congr 32 hzv hsv) hmv⟩
+    subst hc₁ hc₂
+    obtain ⟨r', hr', hrr⟩ := compile_natRec_of_full hM hG hρ hps hds he hz' hs' hm'
+    exact ⟨r', hr', hrr.1.trans hr.1.symm, hrr.2.trans ((eval_op₂_congr 3
+      (eval_natRecP_congr X _ hzv hsv) (eval_op₂_congr 9 rfl hmv)).trans hr.2.symm)⟩
   | listRec =>
-    obtain ⟨z, s, m, rfl, m', a, hm, z', c, hz, s', hs, rfl⟩ := compile_listRec_iff.mp h
+    obtain ⟨z, s, m, rfl, -⟩ := compile_listRec_iff.mp h
+    obtain ⟨mf, a, zf, c, sf, hm, hz, hs, hr⟩ := compile_listRec_full hM hG hρ hps hds h he
     rw [unfold_node (by simp)]
-    have hz₀ : EnvHom M ρ G n one [] := ⟨isObj_one hM, by simp⟩
     obtain ⟨-, hlt⟩ := hty m X e _ hm he
     rw [isTy_list] at hlt
-    obtain ⟨-, hct⟩ := hty z _ _ _ hz hz₀
-    have hA := hobj a hlt
-    have hC := hobj c hct
+    obtain ⟨-, hct⟩ := hty z X e _ hz he
     obtain ⟨⟨m'', t⟩, hm', rfl, hmv⟩ := ih m (by simp) X e _ hm he
-    obtain ⟨⟨z'', c'⟩, hz', rfl, hzv⟩ := ih z (by simp) _ _ _ hz hz₀
-    obtain ⟨⟨s'', c''⟩, hs', rfl, hsv⟩ := ih s (by simp) _ _ _ hs ⟨isObj_prod hM hA hC, by
-      simpa using ⟨⟨snd_hom hM hA hC, hct⟩, fst_hom hM hA hC, hlt⟩⟩
-    exact ⟨_, compile_listRec_iff.mpr ⟨_, _, _, rfl, _, _, hm', _, _, hz', _, hs', rfl⟩, rfl,
-      eval_op₂_congr 3 (eval_op₃_congr 36 rfl hzv hsv) hmv⟩
+    obtain ⟨⟨z'', c₁⟩, hz', hc₁, hzv⟩ := ih z (by simp) X e _ hz he
+    obtain ⟨⟨s'', c₂⟩, hs', hc₂, hsv⟩ := ih s (by simp) _ _ _ hs
+      ((he.ext hM (hobj a hlt) hlt).ext hM (hobj c hct) hct)
+    subst hc₁ hc₂
+    obtain ⟨r', hr', hrr⟩ := compile_listRec_of_full hM hG hρ hps hds he hm' hz' hs'
+    exact ⟨r', hr', hrr.1.trans hr.1.symm, hrr.2.trans ((eval_op₂_congr 3
+      (eval_listRecP_congr X a _ hzv hsv) (eval_op₂_congr 9 rfl hmv)).trans hr.2.symm)⟩
   | roseRec c =>
-    obtain ⟨s, m, m', t, a, F, s', rfl, hct, hm, ht, hs, rfl⟩ := compile_roseRec_iff.mp h
+    obtain ⟨s, m, -, -, -, -, -, rfl, -⟩ := compile_roseRec_iff.mp h
+    obtain ⟨mf, t, a, F, sf, hct, hm, ht, hs, hr⟩ := compile_roseRec_full hM hG hρ hps hds h he
     rw [unfold_node (by simp)]
     have hat := isTy_of_roseParts ht (hty m X e _ hm he).2
     have hPt : IsTy G n (prod a (list c)) = true := by simp [isTy_prod, isTy_list, hat, hct]
     have hP := hobj _ hPt
-    obtain ⟨⟨s'', c'⟩, hs', rfl, hsv⟩ :=
-      ih s (by simp) _ _ _ hs ⟨hP, by simpa using ⟨idt_hom hM hP, hPt⟩⟩
-    obtain ⟨⟨m'', t'⟩, hm', rfl, hmv⟩ := ih m (by simp) X e _ hm he
-    exact ⟨_, compile_roseRec_iff.mpr ⟨_, _, _, _, _, _, _, rfl, hct, hm', ht, hs', rfl⟩, rfl,
-      eval_op₂_congr 3 (eval_roseParts_congr ht hsv) hmv⟩
+    obtain ⟨⟨s'', c₁⟩, hs', hc₁, hsv⟩ := ih s (by simp) _ _ _ hs (he.ext hM hP hPt)
+    obtain ⟨⟨m'', t'⟩, hm', ht', hmv⟩ := ih m (by simp) X e _ hm he
+    subst hc₁ ht'
+    obtain ⟨r', hr', hrr⟩ := compile_roseRec_of_full hM hG hρ hps hds he hct hm' ht hs'
+    exact ⟨r', hr', hrr.1.trans hr.1.symm, hrr.2.trans ((eval_op₂_congr 3
+      (eval_roseRecP_congr (fun hu ↦ eval_roseParts_congr ht hu) X a _ _ hsv)
+        (eval_op₂_congr 9 rfl hmv)).trans hr.2.symm)⟩
   | eq =>
     obtain ⟨t, u, rfl, f, a, ht, g, hu, rfl⟩ := compile_eq_iff.mp h
     rw [unfold_node (by simp)]
@@ -584,16 +537,6 @@ theorem Globals.WF.take {G : Globals} (hG : G.WF)
     exact hG.prims j p hp
   · simp only [isTy_take_of_noObj hno]
     exact hG.defs j d (getElem?_of_take hd).2
-
-/-- A type is a type of the product of a context of types. -/
-theorem isTy_ctxObj {G : Globals} {n : ℕ} :
-    ∀ Γ : List Tree, Γ.all (IsTy G n) = true → IsTy G n (ctxObj Γ) = true :=
-  List.rec (fun _ ↦ isTy_one) fun a Γ ih h ↦ by
-    simp only [List.all_cons, Bool.and_eq_true] at h
-    rcases Γ with _ | ⟨b, Γ⟩
-    · exact h.1
-    · change IsTy G n (prod (ctxObj (b :: Γ)) a) = true
-      simp [isTy_prod, ih h.2, h.1]
 
 section Values
 

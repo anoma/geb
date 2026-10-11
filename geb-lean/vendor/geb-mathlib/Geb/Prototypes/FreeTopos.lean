@@ -20,8 +20,10 @@ public import Geb.Prototypes.FreeTopos.Internal
 public import Geb.Prototypes.FreeTopos.Model
 public import Geb.Prototypes.FreeTopos.Prover
 public import Geb.Prototypes.FreeTopos.Recursion
+public import Geb.Prototypes.FreeTopos.RoseRecursion
 public import Geb.Prototypes.FreeTopos.Relations
 public import Geb.Prototypes.FreeTopos.Represent
+public import Geb.Prototypes.FreeTopos.Tactics
 public import Geb.Prototypes.FreeTopos.Theory
 public import Geb.Prototypes.FreeTopos.Topos
 public import Geb.Prototypes.FreeTopos.Unfolding
@@ -42,8 +44,8 @@ form, each a model of the theory, among them each elementary topos of the reposi
 with chosen data objects, and the topos of Lean's types and functional relations, in
 which Lean's functions are the graphs, so that the theory's theorems about arrows are Lean's
 about functions, and in which an arrow, its definitions unfolded, represents a Lean function
-between representations of its values; and the translation of the kernel's programs into the
-internal language.
+between representations of its values; the translation of the kernel's programs into the
+internal language; and the tactics composed from the internal language's prover.
 -/
 
 set_option doc.verso true

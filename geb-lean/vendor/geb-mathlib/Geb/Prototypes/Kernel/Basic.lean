@@ -44,8 +44,9 @@ The labels of the constructors, each named in {lit}`Label`:
   list over its elements' type, {lit}`20` the list of a head and a tail, {lit}`21` the right
   fold of lists over the elements' type and the result type, {lit}`22` a primitive over a
   leaf whose label is its index in {lit}`prims`, {lit}`23` a reference over a leaf whose
-  label is its index in the global environment, and {lit}`24` case analysis of lists over
-  the elements' type and the result type.
+  label is its index in the global environment, {lit}`24` case analysis of lists over
+  the elements' type and the result type, and {lit}`25` the fold of trees whose step sees the
+  node itself, over its result type.
 
 ## Main definitions
 
@@ -168,6 +169,9 @@ namespace Label
 
 /-- The label of case analysis of lists. -/
 @[match_pattern] abbrev lcase : ℕ := 24
+
+/-- The label of the fold of trees whose step sees the node itself. -/
+@[match_pattern] abbrev para : ℕ := 25
 
 end Label
 
@@ -346,6 +350,32 @@ the list of its children's results. -/
 def fold {α : Type} (f : Tree → List α → α) : Tree → α :=
   RoseTree.elim fun l rs ↦ f (leaf l) rs
 
+/-- The step of {lit}`para`: the node rebuilt from its children's rebuilt subtrees, beside the step
+applied to it and to the children's results. -/
+def paraStep {α : Type} (f : Tree → List α → α) (l : ℕ) (ps : List (Tree × α)) : Tree × α :=
+  let n := RoseTree.node l (ps.map Prod.fst)
+  (n, f n (ps.map Prod.snd))
+
+/-- The fold of trees whose step sees the node itself: a node's result is the step applied to the
+node and to the list of its children's results. The fold gives a step only its children's
+results, so the carrier's first component rebuilds each node. -/
+def para {α : Type} (f : Tree → List α → α) (t : Tree) : α := (RoseTree.elim (paraStep f) t).2
+
+/-- The first component of {lit}`para`'s carrier rebuilds its input. -/
+theorem elim_paraStep_fst {α : Type} (f : Tree → List α → α) (t : Tree) :
+    (RoseTree.elim (paraStep f) t).1 = t :=
+  RoseTree.ind (P := fun t ↦ (RoseTree.elim (paraStep f) t).1 = t) (fun a cs ih ↦ by
+    simp only [RoseTree.elim_node, paraStep, List.map_map]
+    exact congrArg (RoseTree.node a) ((List.map_congr_left fun c hc ↦ ih c hc).trans cs.map_id)) t
+
+/-- The computation rule of {lit}`para`: the step sees the node and its children's results. -/
+theorem para_node {α : Type} (f : Tree → List α → α) (a : ℕ) (cs : List Tree) :
+    para f (RoseTree.node a cs) = f (RoseTree.node a cs) (cs.map (para f)) := by
+  have h : cs.map (fun c ↦ (RoseTree.elim (paraStep f) c).1) = cs :=
+    (List.map_congr_left fun c _ ↦ elim_paraStep_fst f c).trans cs.map_id
+  simp only [para, RoseTree.elim_node, paraStep, List.map_map, Function.comp_def, h]
+  rfl
+
 /-- Iteration: the step applied as many times as the label of the tree. -/
 def iter {α : Type} (s : α → α) (z : α) (n : Tree) : α := Nat.repeat s n.label z
 
@@ -395,6 +425,10 @@ def lcaseTy (A B : Tree) : Tree :=
 
 /-- Case analysis of lists with elements of type {lit}`A` at result type {lit}`B`. -/
 def lcaseDen (A B : Tree) : Ty.den (lcaseTy A B) := Const.lcase (α := Ty.den A) (β := Ty.den B)
+
+/-- The fold of trees whose step sees the node itself, at result type {lit}`A`: of the type of
+the fold. -/
+def paraDen (A : Tree) : Ty.den (foldTy A) := Const.para (α := Ty.den A)
 
 /-- The type of iteration at result type {lit}`A`. -/
 def iterTy (A : Tree) : Tree := tArrow (tArrow A A) (tArrow A (tArrow tT A))
@@ -465,6 +499,7 @@ def inferStep (l : ℕ) (cs : List (Tree × Sem)) : Sem := fun G Γ ↦
   | Label.ref, [(n, _)] => G[n.label]?.map constant
   | Label.lcase, [(A, _), (B, _)] =>
     if Ty.IsTy A && Ty.IsTy B then some (constant ⟨lcaseTy A B, lcaseDen A B⟩) else none
+  | Label.para, [(A, _)] => if Ty.IsTy A then some (constant ⟨foldTy A, paraDen A⟩) else none
   | _, _ => none
 
 /-- The type checker and evaluator: the type and denotation of a term in a global

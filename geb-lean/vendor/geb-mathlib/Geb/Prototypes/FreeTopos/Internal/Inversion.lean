@@ -196,34 +196,45 @@ theorem compile_arr_iff {k : ℕ} {θ : List Tree} {cs : List Term} {X : Tree}
   rcases cs with _ | ⟨t, _ | ⟨u, cs⟩⟩ <;>
     simp [compileStep, Option.bind_eq_some_iff, Prod.exists, and_assoc]
 
-/-- The compilation of a fold of a natural number. -/
+/-- The compilation of a fold of the natural numbers: its start and step compiled in the
+environments of its parameters. -/
 theorem compile_natRec_iff {cs : List Term} {X : Tree} {e : List (Tree × Tree)}
     {r : Tree × Tree} : compile G n (RoseTree.node .natRec cs) X e = some r ↔
-      ∃ z s m, cs = [z, s, m] ∧ ∃ z' c, compile G n z one [] = some (z', c) ∧
-        ∃ s', compile G n s c [(idt c, c)] = some (s', c) ∧
-        ∃ m', compile G n m X e = some (m', nat) ∧ (comp (natRec z' s') m', c) = r := by
+      ∃ z s m, cs = [z, s, m] ∧ ∃ z' c,
+        compile G n z (foldEnvIn [] 1 e z s).1 (foldEnvIn [] 1 e z s).2 = some (z', c) ∧
+        ∃ s', compile G n s (foldEnvIn [c] 1 e z s).1 (foldEnvIn [c] 1 e z s).2 = some (s', c) ∧
+        ∃ m', compile G n m X e = some (m', nat) ∧
+          (natFold ((foldPs 1 e z s).map Prod.snd) c z' s'
+            (tuple X ((foldPs 1 e z s).map Prod.fst)) m', c) = r := by
   rw [compile_node]
   rcases cs with _ | ⟨z, _ | ⟨s, _ | ⟨m, _ | ⟨v, cs⟩⟩⟩⟩ <;>
     simp [compileStep, Option.bind_eq_some_iff, Prod.exists]
 
-/-- The compilation of a fold of a list. -/
+/-- The compilation of a fold of a list: its start and step compiled in the environments of its
+parameters. -/
 theorem compile_listRec_iff {cs : List Term} {X : Tree} {e : List (Tree × Tree)}
     {r : Tree × Tree} : compile G n (RoseTree.node .listRec cs) X e = some r ↔
       ∃ z s m, cs = [z, s, m] ∧ ∃ m' a, compile G n m X e = some (m', list a) ∧
-        ∃ z' c, compile G n z one [] = some (z', c) ∧
-        ∃ s', compile G n s (prod a c) [(snd a c, c), (fst a c, a)] = some (s', c) ∧
-        (comp (listRec a z' s') m', c) = r := by
+        ∃ z' c,
+        compile G n z (foldEnvIn [] 2 e z s).1 (foldEnvIn [] 2 e z s).2 = some (z', c) ∧
+        ∃ s', compile G n s (foldEnvIn [c, a] 2 e z s).1 (foldEnvIn [c, a] 2 e z s).2 =
+          some (s', c) ∧
+          (listFold ((foldPs 2 e z s).map Prod.snd) a c z' s'
+            (tuple X ((foldPs 2 e z s).map Prod.fst)) m', c) = r := by
   rw [compile_node]
   rcases cs with _ | ⟨z, _ | ⟨s, _ | ⟨m, _ | ⟨v, cs⟩⟩⟩⟩ <;>
     simp [compileStep, Option.bind_eq_some_iff, Prod.exists, listPart_eq_some]
 
-/-- The compilation of a fold of a rose tree. -/
+/-- The compilation of a fold of a rose tree: its step compiled in the environment of its
+parameters extended by the pair of a label and the list of the children's values. -/
 theorem compile_roseRec_iff {c : Tree} {cs : List Term} {X : Tree} {e : List (Tree × Tree)}
     {r : Tree × Tree} : compile G n (RoseTree.node (.roseRec c) cs) X e = some r ↔
       ∃ s m m' t a F s', cs = [s, m] ∧ IsTy G n c = true ∧ compile G n m X e = some (m', t) ∧
         roseParts t = some (a, F) ∧
-        compile G n s (prod a (list c)) [(idt (prod a (list c)), prod a (list c))] =
-          some (s', c) ∧ (comp (F s') m', c) = r := by
+        compile G n s (foldEnvIn [prod a (list c)] 1 e Term.star s).1
+          (foldEnvIn [prod a (list c)] 1 e Term.star s).2 = some (s', c) ∧
+        (roseFold F ((foldPs 1 e Term.star s).map Prod.snd) a t c s'
+          (tuple X ((foldPs 1 e Term.star s).map Prod.fst)) m', c) = r := by
   rw [compile_node]
   rcases cs with _ | ⟨s, _ | ⟨m, _ | ⟨v, cs⟩⟩⟩ <;>
     simp [compileStep, Option.bind_eq_some_iff, Prod.exists]

@@ -197,6 +197,44 @@ theorem subst_nat (θ : List Tree) : subst θ nat = nat := subst_const θ 29
 /-- Substitution leaves the rose-tree object. -/
 theorem subst_rose (θ : List Tree) : subst θ rose = rose := subst_const θ 37
 
+/-- Substitution in a fold of the natural numbers object with a parameter. -/
+theorem subst_natRecP (θ : List Tree) (P C z S : Tree) :
+    subst θ (natRecP P C z S) = natRecP (subst θ P) (subst θ C) (subst θ z) (subst θ S) := by
+  simp only [natRecP, subst_comp, subst_pair, subst_ev, subst_natRec, subst_curry, subst_snd,
+    subst_fst, subst_one, subst_exp, subst_nat]
+
+/-- Substitution in a fold of a list object with a parameter. -/
+theorem subst_listRecP (θ : List Tree) (P A C z S : Tree) :
+    subst θ (listRecP P A C z S) =
+      listRecP (subst θ P) (subst θ A) (subst θ C) (subst θ z) (subst θ S) := by
+  simp only [listRecP, subst_comp, subst_pair, subst_ev, subst_listRec, subst_curry, subst_snd,
+    subst_fst, subst_one, subst_exp, subst_prod, subst_list]
+
+/-- Substitution in the action of a list object with a parameter. -/
+theorem subst_listMapP (θ : List Tree) (P A C f : Tree) :
+    subst θ (listMapP P A C f) =
+      listMapP (subst θ P) (subst θ A) (subst θ C) (subst θ f) := by
+  simp only [listMapP, subst_listRecP, subst_comp, subst_pair, subst_fst, subst_snd, subst_prod,
+    subst_list, subst_bang,
+    show ∀ a, subst θ (nil a) = nil (subst θ a) from fun a ↦ subst_op θ 34 [a],
+    show ∀ a, subst θ (cons a) = cons (subst θ a) from fun a ↦ subst_op θ 35 [a]]
+
+/-- Substitution in the step of a fold of a rose-tree object with a parameter. -/
+theorem subst_roseStepP (θ : List Tree) (P a C S : Tree) :
+    subst θ (roseStepP P a C S) =
+      roseStepP (subst θ P) (subst θ a) (subst θ C) (subst θ S) := by
+  simp only [roseStepP, subst_comp, subst_pair, subst_fst, subst_snd, subst_prod, subst_list,
+    subst_exp, subst_ev, subst_listMapP]
+
+/-- Substitution in a fold of a rose-tree object with a parameter, by a fold without one that
+commutes with substitution. -/
+theorem subst_roseRecP (θ : List Tree) {F F' : Tree → Tree}
+    (hF : ∀ s, subst θ (F s) = F' (subst θ s)) (P a t C S : Tree) :
+    subst θ (roseRecP F P a t C S) =
+      roseRecP F' (subst θ P) (subst θ a) (subst θ t) (subst θ C) (subst θ S) := by
+  simp only [roseRecP, subst_comp, subst_pair, subst_fst, subst_snd, subst_ev, hF, subst_curry,
+    subst_prod, subst_list, subst_exp, subst_roseStepP]
+
 variable {defs : List Defn} {M : Model.{v} (ext defs).sig} {ρ : List M.Val}
 
 /-- Applications of an operation to arguments of equal values have equal values. -/

@@ -1,8 +1,8 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: aef07e55a96854257fb9bd27f8284b89e4ea57e7
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 56173b90320e9ef423ce046672763bc757815d88613f14bb03693f60fe56a520)
+- Source commit: 0325ea707fec8a8340a848bd6d73d5e98893deeb
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 9b85f5871f2774c0c98c4706c3325dac50176e85e321ffcf782cc01d5f5869d2)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
   - Geb.Cslib
   - Geb.Prototypes.BitStream.Oitavem
@@ -94,6 +94,10 @@
   - Geb.Prototypes.Computability.SizeBounded.WordMachine
   - Geb.Prototypes.Computability.TreeScanner
   - Geb.Prototypes.Definition
+  - Geb.Prototypes.FreeTopos.Tactics.Hypotheses
+  - Geb.Prototypes.FreeTopos.Tactics.Induction
+  - Geb.Prototypes.FreeTopos.Tactics.Search
+  - Geb.Prototypes.FreeTopos.Tactics.Trees
   - Geb.Prototypes.FreeTopos.Translation
   - Geb.Prototypes.FreeTopos.TranslationKernel
   - Geb.Prototypes.FreeTopos.TranslationLibrary
@@ -101,6 +105,8 @@
   - Geb.Prototypes.FreeTopos.TranslationSoundClassical
   - Geb.Prototypes.Kernel.Command
   - Geb.Prototypes.Kernel.Image
+  - Geb.Prototypes.Kernel.LoadCommand
+  - Geb.Prototypes.PHOAS
   - Geb.Prototypes.RoseTree.Bits
   - Geb.Prototypes.RoseTree.Packed
   - Geb.Prototypes.RoseTree.Spine

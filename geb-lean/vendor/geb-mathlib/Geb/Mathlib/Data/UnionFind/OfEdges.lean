@@ -82,7 +82,8 @@ def Sized.discrete (n : Nat) : Sized n :=
 
 /-- Merge the classes of two indices. -/
 def Sized.union (v : Sized n) (x y : Fin n) : Sized n :=
-  ⟨v.1.unionN x y v.2.symm, by obtain ⟨u, rfl⟩ := v; exact size_union u x y⟩
+  ⟨v.1.union (x.cast v.2.symm) (y.cast v.2.symm), by
+    obtain ⟨u, rfl⟩ := v; exact size_union u _ _⟩
 
 /-- The representative of an index's class, as an index. -/
 def Sized.root (v : Sized n) (x : Fin n) : Fin n :=

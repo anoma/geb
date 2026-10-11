@@ -140,8 +140,9 @@ theorem compile_weaken_two {s : Term} {X a b : Tree} {e : List (Tree × Tree)}
         (comp_assoc hM hfP hfX (he.2 q₀ (List.mem_of_getElem? hq₀)).1).symm⟩
   exact ⟨r₃, compile_rename (Term.rename s Nat.succ) _ (extEnv (prod X a) b (extEnv X a e)) _
     Nat.succ r₃ (compile_rename s _ ((extEnv X a e).map fun p ↦ (comp p.1 (fst (prod X a) b), p.2))
-      _ Nat.succ r₃ hr₃ fun i _ ↦ by simp [extEnv, Function.comp_def])
-    (fun i _ ↦ by simp [extEnv]), hr₃'⟩
+      _ Nat.succ r₃ hr₃ (fun i _ ↦ by simp [extEnv, Function.comp_def])
+      fun _ _ ↦ Nat.succ_lt_succ)
+    (fun i _ ↦ by simp [extEnv]) (fun _ _ ↦ Nat.succ_lt_succ), hr₃'⟩
 
 include hL
 

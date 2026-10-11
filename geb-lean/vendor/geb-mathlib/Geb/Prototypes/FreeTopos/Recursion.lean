@@ -21,9 +21,9 @@ object of parameters with the natural numbers object that agree at zero and sati
 recursion equation of one step are equal ({lit}`natRec_param_unique`), and likewise from its
 product with a list object ({lit}`listRec_param_unique`). The proof curries the two arrows
 into arrows from the natural numbers object, or from the list object, into the exponential of
-the parameters, which satisfy the equations of one fold without parameters. Such an arrow exists
-({lit}`natRec_param_exists`, {lit}`listRec_param_exists`): the fold into the exponential of the
-parameters, evaluated at the parameter.
+the parameters, which satisfy the equations of one fold without parameters. Such an arrow is the
+fold into the exponential of the parameters, evaluated at the parameter
+({name}`Geb.FreeTopos.natRecP`, {name}`Geb.FreeTopos.listRecP`).
 
 ## Main statements
 
@@ -36,6 +36,7 @@ parameters, evaluated at the parameter.
 * {lit}`listMap_comp`, {lit}`listMap_idt` — the action of a list object is functorial.
 * {lit}`natRec_param_unique`, {lit}`listRec_param_unique` — the uniqueness of the folds with a
   parameter.
+* {lit}`natRecP_spec`, {lit}`listRecP_spec` — the folds with a parameter.
 * {lit}`natRec_param_exists`, {lit}`listRec_param_exists` — the existence of the folds with a
   parameter.
 
@@ -66,6 +67,22 @@ theorem eval_prodMapRight {h L C : Tree} (A : Tree) (hh : Hom M ρ h L C) :
     eval M ρ (prodMapRight A h) = eval M ρ (pair (fst A L) (comp h (snd A L))) :=
   eval_op₂_congr 9 (eval_op₂_congr 7 rfl hh.eval_dom)
     (eval_op₂_congr 3 rfl (eval_op₂_congr 8 rfl hh.eval_dom))
+
+/-- The fold of the natural numbers object with a parameter respects the values of its start and
+step. -/
+theorem eval_natRecP_congr (P C : Tree) {z z' S S' : Tree} (hz : eval M ρ z = eval M ρ z')
+    (hS : eval M ρ S = eval M ρ S') : eval M ρ (natRecP P C z S) = eval M ρ (natRecP P C z' S') :=
+  eval_op₂_congr 3 rfl (eval_op₂_congr 9 (eval_op₂_congr 3 (eval_op₂_congr 32
+    (eval_op₃_congr 24 rfl rfl (eval_op₂_congr 3 hz rfl))
+    (eval_op₃_congr 24 rfl rfl (eval_op₂_congr 3 hS rfl))) rfl) rfl)
+
+/-- The fold of a list object with a parameter respects the values of its start and step. -/
+theorem eval_listRecP_congr (P A C : Tree) {z z' S S' : Tree} (hz : eval M ρ z = eval M ρ z')
+    (hS : eval M ρ S = eval M ρ S') :
+    eval M ρ (listRecP P A C z S) = eval M ρ (listRecP P A C z' S') :=
+  eval_op₂_congr 3 rfl (eval_op₂_congr 9 (eval_op₂_congr 3 (eval_op₃_congr 36 rfl
+    (eval_op₃_congr 24 rfl rfl (eval_op₂_congr 3 hz rfl))
+    (eval_op₃_congr 24 rfl rfl (eval_op₂_congr 3 hS rfl))) rfl) rfl)
 
 section Folds
 
@@ -832,15 +849,17 @@ theorem ev_curry_pair {T h k X A B Y : Tree} (hX : IsObj M ρ X) (hA : IsObj M �
   exact (eval_op₂_congr 3 rfl e₁).trans ((comp_assoc hM hhk hP (ev_hom hM hA hT.isObj_cod)).trans
     (eval_op₂_congr 3 (ev_curry hM hX hA hT) rfl))
 
-/-- The existence of the fold of the natural numbers object with a parameter: an arrow from the
-product of an object of parameters with the natural numbers object that is a given arrow at zero
-and, at a successor, a given step after the parameter paired with its value. -/
-theorem natRec_param_exists {z S P C : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ z P C)
+/-- The fold of the natural numbers object with a parameter is an arrow from the product of the
+object of parameters with the natural numbers object that is its start at zero and, at a
+successor, its step after the parameter paired with its value (\[EscardoSimpson2025\],
+Proposition 2.3). -/
+theorem natRecP_spec {z S P C : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ z P C)
     (hS : Hom M ρ S (prod P C) C) :
-    ∃ f, Hom M ρ f (prod P nat) C ∧
-      eval M ρ (comp f (pair (idt P) (comp zeroN (bang P)))) = eval M ρ z ∧
-      eval M ρ (comp f (pair (fst P nat) (comp succ (snd P nat)))) =
-        eval M ρ (comp S (pair (fst P nat) f)) := by
+    Hom M ρ (natRecP P C z S) (prod P nat) C ∧
+      eval M ρ (comp (natRecP P C z S) (pair (idt P) (comp zeroN (bang P)))) = eval M ρ z ∧
+      eval M ρ (comp (natRecP P C z S) (pair (fst P nat) (comp succ (snd P nat)))) =
+        eval M ρ (comp S (pair (fst P nat) (natRecP P C z S))) := by
+  unfold natRecP
   have hN := isObj_nat (ρ := ρ) hM
   have h1 := isObj_one (ρ := ρ) hM
   have hC := hz.isObj_cod
@@ -856,7 +875,7 @@ theorem natRec_param_exists {z S P C : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ 
   have hsN := snd_hom hM hP hN
   have hRs := comp_hom hM hsN hR
   have hq := pair_hom hM hRs hfN
-  refine ⟨_, comp_hom hM hq hev, ?_, ?_⟩
+  refine ⟨comp_hom hM hq hev, ?_, ?_⟩
   · -- at zero, the curried start's evaluation at the parameter
     have hb := bang_hom hM hP
     have hzb := comp_hom hM hb (zeroN_hom hM)
@@ -895,20 +914,21 @@ theorem natRec_param_exists {z S P C : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ 
         ((comp_assoc hM hq (pair_hom hM hsE hev) hS).symm.trans (eval_op₂_congr 3 rfl
           ((pair_comp hM hsE hev hq).trans (eval_op₂_congr 9 (snd_pair hM hRs hfN) rfl))))))
 
-/-- The existence of the fold of a list object with a parameter: an arrow from the product of an
-object of parameters with the list object that is a given arrow at the empty list and, at a
-construction, a given step after the parameter and the element paired with its value at the
-tail. -/
-theorem listRec_param_exists {z S P A C : Tree} (hP : IsObj M ρ P) (hA : IsObj M ρ A)
+/-- The fold of a list object with a parameter is an arrow from the product of the object of
+parameters with the list object that is its start at the empty list and, at a construction, its
+step after the parameter and the element paired with its value at the tail. -/
+theorem listRecP_spec {z S P A C : Tree} (hP : IsObj M ρ P) (hA : IsObj M ρ A)
     (hz : Hom M ρ z P C) (hS : Hom M ρ S (prod (prod P A) C) C) :
-    ∃ f, Hom M ρ f (prod P (list A)) C ∧
-      eval M ρ (comp f (pair (idt P) (comp (nil A) (bang P)))) = eval M ρ z ∧
-      eval M ρ (comp f (pair (comp (fst P A) (fst (prod P A) (list A)))
+    Hom M ρ (listRecP P A C z S) (prod P (list A)) C ∧
+      eval M ρ (comp (listRecP P A C z S) (pair (idt P) (comp (nil A) (bang P)))) =
+        eval M ρ z ∧
+      eval M ρ (comp (listRecP P A C z S) (pair (comp (fst P A) (fst (prod P A) (list A)))
           (comp (cons A) (pair (comp (snd P A) (fst (prod P A) (list A)))
             (snd (prod P A) (list A)))))) =
         eval M ρ (comp S (pair (fst (prod P A) (list A))
-          (comp f (pair (comp (fst P A) (fst (prod P A) (list A)))
+          (comp (listRecP P A C z S) (pair (comp (fst P A) (fst (prod P A) (list A)))
             (snd (prod P A) (list A)))))) := by
+  unfold listRecP
   have h1 := isObj_one (ρ := ρ) hM
   have hL := isObj_list hM hA
   have hC := hz.isObj_cod
@@ -932,7 +952,7 @@ theorem listRec_param_exists {z S P A C : Tree} (hP : IsObj M ρ P) (hA : IsObj 
   have hsL := snd_hom hM hP hL
   have hRs := comp_hom hM hsL hR
   have hq := pair_hom hM hRs hfL
-  refine ⟨_, comp_hom hM hq hev, ?_, ?_⟩
+  refine ⟨comp_hom hM hq hev, ?_, ?_⟩
   · -- at the empty list, the curried start's evaluation at the parameter
     have hb := bang_hom hM hP
     have hnb := comp_hom hM hb (nil_hom hM hA)
@@ -1059,6 +1079,450 @@ theorem listRec_param_exists {z S P A C : Tree} (hP : IsObj M ρ P) (hA : IsObj 
         eR)) (fst_pair hM hff hcel)))).trans ?_
     exact (ev_curry_pair hM hAE hP hT hn hff).trans ((comp_assoc hM hm hbody hS).symm.trans
       (eval_op₂_congr 3 rfl eB))
+
+/-- The pairing of an arrow after the first projection with the second projection, after a
+pairing, is the pairing of the arrow after the first component with the second. -/
+theorem prodMapLeft_pair {h a b P Y X B : Tree} (hh : Hom M ρ h Y P) (ha : Hom M ρ a X Y)
+    (hb : Hom M ρ b X B) :
+    eval M ρ (comp (pair (comp h (fst Y B)) (snd Y B)) (pair a b)) =
+      eval M ρ (pair (comp h a) b) := by
+  have hf := fst_hom hM hh.isObj_dom hb.isObj_cod
+  have hs := snd_hom hM hh.isObj_dom hb.isObj_cod
+  have hab := pair_hom hM ha hb
+  exact (pair_comp hM (comp_hom hM hf hh) hs hab).trans (eval_op₂_congr 9
+    ((comp_assoc hM hab hf hh).symm.trans (eval_op₂_congr 3 rfl (fst_pair hM ha hb)))
+    (snd_pair hM ha hb))
+
+/-- The pairing of the identity with an arrow, after an arrow, is the pairing of the arrow with
+the composite. -/
+theorem pair_idt_comp {m h X Y N : Tree} (hm : Hom M ρ m X N) (hh : Hom M ρ h Y X) :
+    eval M ρ (comp (pair (idt X) m) h) = eval M ρ (pair h (comp m h)) :=
+  (pair_comp hM (idt_hom hM hm.isObj_dom) hm hh).trans (eval_op₂_congr 9 (idt_comp hM hh) rfl)
+
+/-- The fold of the natural numbers object with a parameter is natural in the parameter: after
+the product of an arrow into the object of parameters with the identity, it is the fold whose
+start is after the arrow and whose step is after its product with the identity. -/
+theorem natRecP_comp {z S P Y C h : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ z P C)
+    (hS : Hom M ρ S (prod P C) C) (hh : Hom M ρ h Y P) :
+    eval M ρ (comp (natRecP P C z S) (pair (comp h (fst Y nat)) (snd Y nat))) =
+      eval M ρ (natRecP Y C (comp z h) (comp S (pair (comp h (fst Y C)) (snd Y C)))) := by
+  have hY := hh.isObj_dom
+  have hN := isObj_nat (ρ := ρ) hM
+  have hC := hz.isObj_cod
+  obtain ⟨hR, hR₀, hR₁⟩ := natRecP_spec hM hP hz hS
+  have hz' := comp_hom hM hh hz
+  have hk := pair_hom hM (comp_hom hM (fst_hom hM hY hC) hh) (snd_hom hM hY hC)
+  have hS' := comp_hom hM hk hS
+  obtain ⟨hR', hR'₀, hR'₁⟩ := natRecP_spec hM hY hz' hS'
+  have hfY := fst_hom hM hY hN
+  have hsY := snd_hom hM hY hN
+  have hkN := pair_hom hM (comp_hom hM hfY hh) hsY
+  have hF := comp_hom hM hkN hR
+  refine natRec_param_unique hM hY hF hR' hS' ?_ ?_ hR'₁
+  · -- at zero, both are the start after the arrow
+    have h0Y := comp_hom hM (bang_hom hM hY) (zeroN_hom hM)
+    have h0P := comp_hom hM (bang_hom hM hP) (zeroN_hom hM)
+    have hp0 := pair_hom hM (idt_hom hM hY) h0Y
+    have hp0P := pair_hom hM (idt_hom hM hP) h0P
+    have e₁ : eval M ρ (comp (pair (comp h (fst Y nat)) (snd Y nat))
+        (pair (idt Y) (comp zeroN (bang Y)))) =
+        eval M ρ (comp (pair (idt P) (comp zeroN (bang P))) h) :=
+      (prodMapLeft_pair hM hh (idt_hom hM hY) h0Y).trans ((eval_op₂_congr 9 (comp_idt hM hh)
+        ((eval_op₂_congr 3 rfl (comp_bang hM hh).symm).trans
+          (comp_assoc hM hh (bang_hom hM hP) (zeroN_hom hM)))).trans
+        (pair_idt_comp hM h0P hh).symm)
+    exact (comp_assoc hM hp0 hkN hR).symm.trans ((eval_op₂_congr 3 rfl e₁).trans
+      ((comp_assoc hM hh hp0P hR).trans ((eval_op₂_congr 3 hR₀ rfl).trans hR'₀.symm)))
+  · -- at a successor, both are the step after the arrow at the parameter and the value
+    have hsc := comp_hom hM hsY (succ_hom hM)
+    have hq := pair_hom hM hfY hsc
+    have hfP := fst_hom hM hP hN
+    have hsP := snd_hom hM hP hN
+    have hqP := pair_hom hM hfP (comp_hom hM hsP (succ_hom hM))
+    have e₂ : eval M ρ (comp (pair (comp h (fst Y nat)) (snd Y nat))
+        (pair (fst Y nat) (comp succ (snd Y nat)))) =
+        eval M ρ (comp (pair (fst P nat) (comp succ (snd P nat)))
+          (pair (comp h (fst Y nat)) (snd Y nat))) :=
+      (prodMapLeft_pair hM hh hfY hsc).trans ((pair_comp hM hfP
+        (comp_hom hM hsP (succ_hom hM)) hkN).trans (eval_op₂_congr 9
+          (fst_pair hM (comp_hom hM hfY hh) hsY) ((comp_assoc hM hkN hsP (succ_hom hM)).symm.trans
+            (eval_op₂_congr 3 rfl (snd_pair hM (comp_hom hM hfY hh) hsY))))).symm
+    have hpR := pair_hom hM hfP hR
+    refine (comp_assoc hM hq hkN hR).symm.trans ((eval_op₂_congr 3 rfl e₂).trans
+      ((comp_assoc hM hkN hqP hR).trans ((eval_op₂_congr 3 hR₁ rfl).trans
+        ((comp_assoc hM hkN hpR hS).symm.trans ((eval_op₂_congr 3 rfl
+          ((pair_comp hM hfP hR hkN).trans (eval_op₂_congr 9
+            (fst_pair hM (comp_hom hM hfY hh) hsY) rfl))).trans ?_)))))
+    exact ((comp_assoc hM (pair_hom hM hfY hF) hk hS).symm.trans (eval_op₂_congr 3 rfl
+      (prodMapLeft_pair hM hh hfY hF))).symm
+
+/-- The fold of a list object with a parameter is natural in the parameter: after the product of
+an arrow into the object of parameters with the identity, it is the fold whose start is after the
+arrow and whose step is after its product with the identities. -/
+theorem listRecP_comp {z S P Y A C h : Tree} (hP : IsObj M ρ P) (hA : IsObj M ρ A)
+    (hz : Hom M ρ z P C) (hS : Hom M ρ S (prod (prod P A) C) C) (hh : Hom M ρ h Y P) :
+    eval M ρ (comp (listRecP P A C z S) (pair (comp h (fst Y (list A))) (snd Y (list A)))) =
+      eval M ρ (listRecP Y A C (comp z h) (comp S (pair (comp (pair (comp h (fst Y A))
+        (snd Y A)) (fst (prod Y A) C)) (snd (prod Y A) C)))) := by
+  have hY := hh.isObj_dom
+  have hL := isObj_list hM hA
+  have hC := hz.isObj_cod
+  have hYA := isObj_prod hM hY hA
+  have hPA := isObj_prod hM hP hA
+  obtain ⟨hR, hR₀, hR₁⟩ := listRecP_spec hM hP hA hz hS
+  have hfYA := fst_hom hM hY hA
+  have hsYA := snd_hom hM hY hA
+  have hkA := pair_hom hM (comp_hom hM hfYA hh) hsYA
+  have hk := pair_hom hM (comp_hom hM (fst_hom hM hYA hC) hkA) (snd_hom hM hYA hC)
+  have hS' := comp_hom hM hk hS
+  have hz' := comp_hom hM hh hz
+  obtain ⟨hR', hR'₀, hR'₁⟩ := listRecP_spec hM hY hA hz' hS'
+  have hfYL := fst_hom hM hY hL
+  have hsYL := snd_hom hM hY hL
+  have hkL := pair_hom hM (comp_hom hM hfYL hh) hsYL
+  have hF := comp_hom hM hkL hR
+  refine listRec_param_unique hM hY hA hF hR' hS' ?_ ?_ hR'₁
+  · -- at the empty list, both are the start after the arrow
+    have h0Y := comp_hom hM (bang_hom hM hY) (nil_hom hM hA)
+    have h0P := comp_hom hM (bang_hom hM hP) (nil_hom hM hA)
+    have hp0 := pair_hom hM (idt_hom hM hY) h0Y
+    have hp0P := pair_hom hM (idt_hom hM hP) h0P
+    have e₁ : eval M ρ (comp (pair (comp h (fst Y (list A))) (snd Y (list A)))
+        (pair (idt Y) (comp (nil A) (bang Y)))) =
+        eval M ρ (comp (pair (idt P) (comp (nil A) (bang P))) h) :=
+      (prodMapLeft_pair hM hh (idt_hom hM hY) h0Y).trans ((eval_op₂_congr 9 (comp_idt hM hh)
+        ((eval_op₂_congr 3 rfl (comp_bang hM hh).symm).trans
+          (comp_assoc hM hh (bang_hom hM hP) (nil_hom hM hA)))).trans
+        (pair_idt_comp hM h0P hh).symm)
+    exact (comp_assoc hM hp0 hkL hR).symm.trans ((eval_op₂_congr 3 rfl e₁).trans
+      ((comp_assoc hM hh hp0P hR).trans ((eval_op₂_congr 3 hR₀ rfl).trans hR'₀.symm)))
+  · -- at a construction, both are the step after the arrow at the parameter, the element and
+    -- the value at the tail
+    have hfQ := fst_hom hM hYA hL
+    have hsQ := snd_hom hM hYA hL
+    have hfQP := fst_hom hM hPA hL
+    have hsQP := snd_hom hM hPA hL
+    have hfPA := fst_hom hM hP hA
+    have hsPA := snd_hom hM hP hA
+    have hkAf := comp_hom hM hfQ hkA
+    have hkAL := pair_hom hM hkAf hsQ
+    have hff := comp_hom hM hfQ hfYA
+    have hsf := comp_hom hM hfQ hsYA
+    have hffP := comp_hom hM hfQP hfPA
+    have hsfP := comp_hom hM hfQP hsPA
+    have ef := fst_pair hM hkAf hsQ
+    have es := snd_pair hM hkAf hsQ
+    have hh₁ := comp_hom hM hfYA hh
+    have eff : eval M ρ (comp (comp (fst P A) (fst (prod P A) (list A)))
+        (pair (comp (pair (comp h (fst Y A)) (snd Y A)) (fst (prod Y A) (list A)))
+          (snd (prod Y A) (list A)))) =
+        eval M ρ (comp h (comp (fst Y A) (fst (prod Y A) (list A)))) :=
+      (comp_assoc hM hkAL hfQP hfPA).symm.trans ((eval_op₂_congr 3 rfl ef).trans
+        ((comp_assoc hM hfQ hkA hfPA).trans ((eval_op₂_congr 3 (fst_pair hM hh₁ hsYA) rfl).trans
+          (comp_assoc hM hfQ hfYA hh).symm)))
+    have esf : eval M ρ (comp (comp (snd P A) (fst (prod P A) (list A)))
+        (pair (comp (pair (comp h (fst Y A)) (snd Y A)) (fst (prod Y A) (list A)))
+          (snd (prod Y A) (list A)))) =
+        eval M ρ (comp (snd Y A) (fst (prod Y A) (list A))) :=
+      (comp_assoc hM hkAL hfQP hsPA).symm.trans ((eval_op₂_congr 3 rfl ef).trans
+        ((comp_assoc hM hfQ hkA hsPA).trans (eval_op₂_congr 3 (snd_pair hM hh₁ hsYA) rfl)))
+    have hpe := pair_hom hM hsf hsQ
+    have hpeP := pair_hom hM hsfP hsQP
+    have hcY := comp_hom hM hpe (cons_hom hM hA)
+    have hcP := comp_hom hM hpeP (cons_hom hM hA)
+    have hqP := pair_hom hM hffP hcP
+    have htP := pair_hom hM hffP hsQP
+    have htY := pair_hom hM hff hsQ
+    -- the construction and the tail after the products with the arrow
+    have ec : eval M ρ (comp (pair (comp h (fst Y (list A))) (snd Y (list A)))
+        (pair (comp (fst Y A) (fst (prod Y A) (list A)))
+          (comp (cons A) (pair (comp (snd Y A) (fst (prod Y A) (list A)))
+            (snd (prod Y A) (list A)))))) =
+        eval M ρ (comp (pair (comp (fst P A) (fst (prod P A) (list A)))
+          (comp (cons A) (pair (comp (snd P A) (fst (prod P A) (list A)))
+            (snd (prod P A) (list A)))))
+          (pair (comp (pair (comp h (fst Y A)) (snd Y A)) (fst (prod Y A) (list A)))
+            (snd (prod Y A) (list A)))) :=
+      (prodMapLeft_pair hM hh hff hcY).trans ((pair_comp hM hffP hcP hkAL).trans
+        (eval_op₂_congr 9 eff ((comp_assoc hM hkAL hpeP (cons_hom hM hA)).symm.trans
+          (eval_op₂_congr 3 rfl ((pair_comp hM hsfP hsQP hkAL).trans
+            (eval_op₂_congr 9 esf es)))))).symm
+    have et : eval M ρ (comp (pair (comp h (fst Y (list A))) (snd Y (list A)))
+        (pair (comp (fst Y A) (fst (prod Y A) (list A))) (snd (prod Y A) (list A)))) =
+        eval M ρ (comp (pair (comp (fst P A) (fst (prod P A) (list A)))
+          (snd (prod P A) (list A)))
+          (pair (comp (pair (comp h (fst Y A)) (snd Y A)) (fst (prod Y A) (list A)))
+            (snd (prod Y A) (list A)))) :=
+      (prodMapLeft_pair hM hh hff hsQ).trans ((pair_comp hM hffP hsQP hkAL).trans
+        (eval_op₂_congr 9 eff es)).symm
+    have hRt := comp_hom hM htP hR
+    have hpR := pair_hom hM hfQP hRt
+    refine (comp_assoc hM (pair_hom hM hff hcY) hkL hR).symm.trans
+      ((eval_op₂_congr 3 rfl ec).trans ((comp_assoc hM hkAL hqP hR).trans
+        ((eval_op₂_congr 3 hR₁ rfl).trans ((comp_assoc hM hkAL hpR hS).symm.trans
+          ((eval_op₂_congr 3 rfl ((pair_comp hM hfQP hRt hkAL).trans (eval_op₂_congr 9 ef
+            ((comp_assoc hM hkAL htP hR).symm.trans ((eval_op₂_congr 3 rfl et.symm).trans
+              (comp_assoc hM htY hkL hR)))))).trans ?_)))))
+    exact ((comp_assoc hM (pair_hom hM hfQ (comp_hom hM htY hF)) hk hS).symm.trans
+      (eval_op₂_congr 3 rfl (prodMapLeft_pair hM hkA hfQ (comp_hom hM htY hF)))).symm
+
+/-- The fold of the natural numbers object with a parameter, at the identity paired with a
+successor, is the step at the identity paired with the fold at the number. -/
+theorem natRecP_succ_at {z S P C g : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ z P C)
+    (hS : Hom M ρ S (prod P C) C) (hg : Hom M ρ g P nat) :
+    eval M ρ (comp (natRecP P C z S) (pair (idt P) (comp succ g))) =
+      eval M ρ (comp S (pair (idt P) (comp (natRecP P C z S) (pair (idt P) g)))) := by
+  have hN := isObj_nat (ρ := ρ) hM
+  obtain ⟨hR, -, hR₁⟩ := natRecP_spec hM hP hz hS
+  have hi := idt_hom hM hP
+  have hq := pair_hom hM hi hg
+  have hf := fst_hom hM hP hN
+  have hs := snd_hom hM hP hN
+  have hc := comp_hom hM hs (succ_hom hM)
+  have eQ : eval M ρ (comp (pair (fst P nat) (comp succ (snd P nat))) (pair (idt P) g)) =
+      eval M ρ (pair (idt P) (comp succ g)) :=
+    (pair_comp hM hf hc hq).trans (eval_op₂_congr 9 (fst_pair hM hi hg)
+      ((comp_assoc hM hq hs (succ_hom hM)).symm.trans
+        (eval_op₂_congr 3 rfl (snd_pair hM hi hg))))
+  exact (eval_op₂_congr 3 rfl eQ.symm).trans ((comp_assoc hM hq (pair_hom hM hf hc) hR).trans
+    ((eval_op₂_congr 3 hR₁ rfl).trans ((comp_assoc hM hq (pair_hom hM hf hR) hS).symm.trans
+      (eval_op₂_congr 3 rfl ((pair_comp hM hf hR hq).trans
+        (eval_op₂_congr 9 (fst_pair hM hi hg) rfl))))))
+
+/-- The fold of a list object with a parameter, at the identity paired with a construction, is
+the step at the identity paired with the element, paired with the fold at the tail. -/
+theorem listRecP_cons_at {z S P A C gh gt : Tree} (hP : IsObj M ρ P) (hA : IsObj M ρ A)
+    (hz : Hom M ρ z P C) (hS : Hom M ρ S (prod (prod P A) C) C) (hgh : Hom M ρ gh P A)
+    (hgt : Hom M ρ gt P (list A)) :
+    eval M ρ (comp (listRecP P A C z S) (pair (idt P) (comp (cons A) (pair gh gt)))) =
+      eval M ρ (comp S (pair (pair (idt P) gh)
+        (comp (listRecP P A C z S) (pair (idt P) gt)))) := by
+  have hL := isObj_list hM hA
+  have hPA := isObj_prod hM hP hA
+  obtain ⟨hR, -, hR₁⟩ := listRecP_spec hM hP hA hz hS
+  have hi := idt_hom hM hP
+  have hpg := pair_hom hM hi hgh
+  have hq := pair_hom hM hpg hgt
+  have hf := fst_hom hM hPA hL
+  have hF1 := comp_hom hM hf (fst_hom hM hP hA)
+  have hF2 := comp_hom hM hf (snd_hom hM hP hA)
+  have hF3 := snd_hom hM hPA hL
+  have hp23 := pair_hom hM hF2 hF3
+  have hp13 := pair_hom hM hF1 hF3
+  have hcF := comp_hom hM hp23 (cons_hom hM hA)
+  have e0 := fst_pair hM hpg hgt
+  have e3 := snd_pair hM hpg hgt
+  have e1 : eval M ρ (comp (comp (fst P A) (fst (prod P A) (list A)))
+      (pair (pair (idt P) gh) gt)) = eval M ρ (idt P) :=
+    (comp_assoc hM hq hf (fst_hom hM hP hA)).symm.trans
+      ((eval_op₂_congr 3 rfl e0).trans (fst_pair hM hi hgh))
+  have e2 : eval M ρ (comp (comp (snd P A) (fst (prod P A) (list A)))
+      (pair (pair (idt P) gh) gt)) = eval M ρ gh :=
+    (comp_assoc hM hq hf (snd_hom hM hP hA)).symm.trans
+      ((eval_op₂_congr 3 rfl e0).trans (snd_pair hM hi hgh))
+  have eQ := (pair_comp hM hF1 hcF hq).trans (eval_op₂_congr 9 e1
+    ((comp_assoc hM hq hp23 (cons_hom hM hA)).symm.trans
+      (eval_op₂_congr 3 rfl ((pair_comp hM hF2 hF3 hq).trans (eval_op₂_congr 9 e2 e3)))))
+  have eT := (pair_comp hM hf (comp_hom hM hp13 hR) hq).trans (eval_op₂_congr 9 e0
+    ((comp_assoc hM hq hp13 hR).symm.trans
+      (eval_op₂_congr 3 rfl ((pair_comp hM hF1 hF3 hq).trans (eval_op₂_congr 9 e1 e3)))))
+  exact (eval_op₂_congr 3 rfl eQ.symm).trans ((comp_assoc hM hq (pair_hom hM hF1 hcF) hR).trans
+    ((eval_op₂_congr 3 hR₁ rfl).trans
+      ((comp_assoc hM hq (pair_hom hM hf (comp_hom hM hp13 hR)) hS).symm.trans
+        (eval_op₂_congr 3 rfl eT))))
+
+/-- The fold of the natural numbers object with a parameter, whose start and step do not depend
+on the parameter, is the fold of the natural numbers object after the number. -/
+theorem natRecP_const {z S P C m : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ z one C)
+    (hS : Hom M ρ S C C) (hm : Hom M ρ m P nat) :
+    eval M ρ (comp (natRecP P C (comp z (bang P)) (comp S (snd P C))) (pair (idt P) m)) =
+      eval M ρ (comp (natRec z S) m) := by
+  have hN := isObj_nat (ρ := ρ) hM
+  have hC := hz.isObj_cod
+  have hi := idt_hom hM hP
+  have hR := natRec_hom hM hz hS
+  have hsPN := snd_hom hM hP hN
+  have hG := comp_hom hM hsPN hR
+  have hS' := comp_hom hM (snd_hom hM hP hC) hS
+  obtain ⟨hF, hF₀, hF₁⟩ := natRecP_spec hM hP (comp_hom hM (bang_hom hM hP) hz) hS'
+  -- at zero, both are the start
+  have h0 := comp_hom hM (bang_hom hM hP) (zeroN_hom hM)
+  have h₀ := hF₀.trans (((comp_assoc hM (pair_hom hM hi h0) hsPN hR).symm.trans
+    ((eval_op₂_congr 3 rfl (snd_pair hM hi h0)).trans
+      ((comp_assoc hM (bang_hom hM hP) (zeroN_hom hM) hR).trans
+        (eval_op₂_congr 3 (natRec_zero hM hz hS) rfl)))).symm)
+  -- at a successor, both are the step at the value at the predecessor
+  have hfPN := fst_hom hM hP hN
+  have hc := comp_hom hM hsPN (succ_hom hM)
+  have hpG := pair_hom hM hfPN hG
+  have eL : eval M ρ (comp (comp (natRec z S) (snd P nat))
+      (pair (fst P nat) (comp succ (snd P nat)))) =
+      eval M ρ (comp S (comp (natRec z S) (snd P nat))) :=
+    (comp_assoc hM (pair_hom hM hfPN hc) hsPN hR).symm.trans
+      ((eval_op₂_congr 3 rfl (snd_pair hM hfPN hc)).trans
+        ((comp_assoc hM hsPN (succ_hom hM) hR).trans
+          ((eval_op₂_congr 3 (natRec_succ hM hz hS) rfl).trans
+            (comp_assoc hM hsPN hR hS).symm)))
+  have eR : eval M ρ (comp (comp S (snd P C)) (pair (fst P nat)
+      (comp (natRec z S) (snd P nat)))) = eval M ρ (comp S (comp (natRec z S) (snd P nat))) :=
+    (comp_assoc hM hpG (snd_hom hM hP hC) hS).symm.trans
+      (eval_op₂_congr 3 rfl (snd_pair hM hfPN hG))
+  have hFG := natRec_param_unique hM hP hF hG hS' h₀ hF₁ (eL.trans eR.symm)
+  exact (eval_op₂_congr 3 hFG rfl).trans ((comp_assoc hM (pair_hom hM hi hm) hsPN hR).symm.trans
+    (eval_op₂_congr 3 rfl (snd_pair hM hi hm)))
+
+/-- The fold of a list object with a parameter, whose start and step do not depend on the
+parameter, is the fold of the list object after the list. -/
+theorem listRecP_const {z S P A C m : Tree} (hP : IsObj M ρ P) (hA : IsObj M ρ A)
+    (hz : Hom M ρ z one C) (hS : Hom M ρ S (prod A C) C) (hm : Hom M ρ m P (list A)) :
+    eval M ρ (comp (listRecP P A C (comp z (bang P))
+      (comp S (pair (comp (snd P A) (fst (prod P A) C)) (snd (prod P A) C)))) (pair (idt P) m)) =
+      eval M ρ (comp (listRec A z S) m) := by
+  have hL := isObj_list hM hA
+  have hC := hz.isObj_cod
+  have hPA := isObj_prod hM hP hA
+  have hi := idt_hom hM hP
+  have hLR := listRec_hom hM hA hz hS
+  have hsPL := snd_hom hM hP hL
+  have hG := comp_hom hM hsPL hLR
+  have hg1 := comp_hom hM (fst_hom hM hPA hC) (snd_hom hM hP hA)
+  have hg2 := snd_hom hM hPA hC
+  have hg := pair_hom hM hg1 hg2
+  have hS' := comp_hom hM hg hS
+  obtain ⟨hR, hR₀, hR₁⟩ := listRecP_spec hM hP hA (comp_hom hM (bang_hom hM hP) hz) hS'
+  -- at the empty list, both are the start
+  have h0 := comp_hom hM (bang_hom hM hP) (nil_hom hM hA)
+  have hp0 := pair_hom hM hi h0
+  have h₀ := hR₀.trans (((comp_assoc hM hp0 hsPL hLR).symm.trans ((eval_op₂_congr 3 rfl
+    (snd_pair hM hi h0)).trans ((comp_assoc hM (bang_hom hM hP) (nil_hom hM hA) hLR).trans
+      (eval_op₂_congr 3 (listRec_nil hM hA hz hS) rfl)))).symm)
+  -- at a construction, both are the step at the element and the value at the tail
+  have hfPAL := fst_hom hM hPA hL
+  have hF1 := comp_hom hM hfPAL (fst_hom hM hP hA)
+  have hF2 := comp_hom hM hfPAL (snd_hom hM hP hA)
+  have hF3 := snd_hom hM hPA hL
+  have hp23 := pair_hom hM hF2 hF3
+  have hp13 := pair_hom hM hF1 hF3
+  have hc := comp_hom hM hp23 (cons_hom hM hA)
+  have hQ := pair_hom hM hF1 hc
+  have hfAL := fst_hom hM hA hL
+  have hsAL := snd_hom hM hA hL
+  have hpAL := pair_hom hM hfAL (comp_hom hM hsAL hLR)
+  have eL : eval M ρ (comp (comp (listRec A z S) (snd P (list A)))
+      (pair (comp (fst P A) (fst (prod P A) (list A)))
+        (comp (cons A) (pair (comp (snd P A) (fst (prod P A) (list A)))
+          (snd (prod P A) (list A)))))) =
+      eval M ρ (comp S (pair (comp (snd P A) (fst (prod P A) (list A)))
+        (comp (listRec A z S) (snd (prod P A) (list A))))) :=
+    (comp_assoc hM hQ hsPL hLR).symm.trans ((eval_op₂_congr 3 rfl (snd_pair hM hF1 hc)).trans
+      ((comp_assoc hM hp23 (cons_hom hM hA) hLR).trans
+        ((eval_op₂_congr 3 (listRec_cons hM hA hz hS) rfl).trans
+          ((comp_assoc hM hp23 hpAL hS).symm.trans (eval_op₂_congr 3 rfl
+            ((pair_comp hM hfAL (comp_hom hM hsAL hLR) hp23).trans (eval_op₂_congr 9
+              (fst_pair hM hF2 hF3) ((comp_assoc hM hp23 hsAL hLR).symm.trans
+                (eval_op₂_congr 3 rfl (snd_pair hM hF2 hF3))))))))))
+  have hGG := comp_hom hM hp13 hG
+  have hpr := pair_hom hM hfPAL hGG
+  have eR : eval M ρ (comp (comp S (pair (comp (snd P A) (fst (prod P A) C)) (snd (prod P A) C)))
+      (pair (fst (prod P A) (list A)) (comp (comp (listRec A z S) (snd P (list A)))
+        (pair (comp (fst P A) (fst (prod P A) (list A))) (snd (prod P A) (list A)))))) =
+      eval M ρ (comp S (pair (comp (snd P A) (fst (prod P A) (list A)))
+        (comp (listRec A z S) (snd (prod P A) (list A))))) :=
+    (comp_assoc hM hpr hg hS).symm.trans (eval_op₂_congr 3 rfl ((pair_comp hM hg1 hg2 hpr).trans
+      (eval_op₂_congr 9 ((comp_assoc hM hpr (fst_hom hM hPA hC) (snd_hom hM hP hA)).symm.trans
+        (eval_op₂_congr 3 rfl (fst_pair hM hfPAL hGG))) ((snd_pair hM hfPAL hGG).trans
+          ((comp_assoc hM hp13 hsPL hLR).symm.trans
+            (eval_op₂_congr 3 rfl (snd_pair hM hF1 hF3)))))))
+  have hFG := listRec_param_unique hM hP hA hR hG hS' h₀ hR₁ (eL.trans eR.symm)
+  exact (eval_op₂_congr 3 hFG rfl).trans ((comp_assoc hM (pair_hom hM hi hm) hsPL hLR).symm.trans
+    (eval_op₂_congr 3 rfl (snd_pair hM hi hm)))
+
+/-- The fold of a list object with a parameter, from the empty list, whose step constructs the
+image of the element under an arrow onto the value, is the list object's action on the arrow
+after the list. -/
+theorem listRecP_map {f P A C m : Tree} (hP : IsObj M ρ P) (hf : Hom M ρ f A C)
+    (hm : Hom M ρ m P (list A)) :
+    eval M ρ (comp (listRecP P A (list C) (comp (nil C) (bang P))
+      (comp (cons C) (pair (comp f (comp (snd P A) (fst (prod P A) (list C))))
+        (snd (prod P A) (list C))))) (pair (idt P) m)) = eval M ρ (comp (listMap f) m) := by
+  have hA := hf.isObj_dom
+  have hC := hf.isObj_cod
+  have h1 := isObj_one (ρ := ρ) hM
+  have hLc := isObj_list hM hC
+  have hPA := isObj_prod hM hP hA
+  have hfA := fst_hom hM hA hLc
+  have hsA := snd_hom hM hA hLc
+  have hff := comp_hom hM hfA hf
+  have hp := pair_hom hM hff hsA
+  have hg1 := comp_hom hM (fst_hom hM hPA hLc) (snd_hom hM hP hA)
+  have hg2 := snd_hom hM hPA hLc
+  have hq := pair_hom hM hg1 hg2
+  exact (eval_op₂_congr 3 (eval_listRecP_congr P A (list C)
+    ((eval_op₂_congr 3 rfl (comp_bang hM (bang_hom hM hP)).symm).trans
+      (comp_assoc hM (bang_hom hM hP) (bang_hom hM h1) (nil_hom hM hC)))
+    ((comp_assoc hM hq hp (cons_hom hM hC)).symm.trans (eval_op₂_congr 3 rfl
+      ((pair_comp hM hff hsA hq).trans (eval_op₂_congr 9
+        ((comp_assoc hM hq hfA hf).symm.trans (eval_op₂_congr 3 rfl (fst_pair hM hg1 hg2)))
+        (snd_pair hM hg1 hg2))))).symm) rfl).trans
+    ((listRecP_const hM hP hA (comp_hom hM (bang_hom hM h1) (nil_hom hM hC))
+      (comp_hom hM hp (cons_hom hM hC)) hm).trans (eval_op₂_congr 3 (eval_listMap hM hf).symm rfl))
+
+/-- The fold of the natural numbers object with a parameter at an arrow into the parameters and a
+number is the fold with the arrow's domain as parameter, its start and step after the arrow, at
+the identity and the number. -/
+theorem natRecP_pair {z S P X C t m : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ z P C)
+    (hS : Hom M ρ S (prod P C) C) (ht : Hom M ρ t X P) (hm : Hom M ρ m X nat) :
+    eval M ρ (comp (natRecP P C z S) (pair t m)) =
+      eval M ρ (comp (natRecP X C (comp z t) (comp S (pair (comp t (fst X C)) (snd X C))))
+        (pair (idt X) m)) := by
+  have hX := ht.isObj_dom
+  have hN := isObj_nat (ρ := ρ) hM
+  have hq := pair_hom hM (comp_hom hM (fst_hom hM hX hN) ht) (snd_hom hM hX hN)
+  have hR := (natRecP_spec hM hP hz hS).1
+  exact (eval_op₂_congr 3 rfl ((eval_op₂_congr 9 (comp_idt hM ht).symm rfl).trans
+    (prodMapLeft_pair hM ht (idt_hom hM hX) hm).symm)).trans
+    ((comp_assoc hM (pair_hom hM (idt_hom hM hX) hm) hq hR).trans
+      (eval_op₂_congr 3 (natRecP_comp hM hP hz hS ht) rfl))
+
+/-- The fold of a list object with a parameter at an arrow into the parameters and a list is the
+fold with the arrow's domain as parameter, its start and step after the arrow, at the identity and
+the list. -/
+theorem listRecP_pair {z S P X A C t m : Tree} (hP : IsObj M ρ P) (hA : IsObj M ρ A)
+    (hz : Hom M ρ z P C) (hS : Hom M ρ S (prod (prod P A) C) C) (ht : Hom M ρ t X P)
+    (hm : Hom M ρ m X (list A)) :
+    eval M ρ (comp (listRecP P A C z S) (pair t m)) =
+      eval M ρ (comp (listRecP X A C (comp z t) (comp S (pair (comp (pair (comp t (fst X A))
+        (snd X A)) (fst (prod X A) C)) (snd (prod X A) C)))) (pair (idt X) m)) := by
+  have hX := ht.isObj_dom
+  have hL := isObj_list hM hA
+  have hq := pair_hom hM (comp_hom hM (fst_hom hM hX hL) ht) (snd_hom hM hX hL)
+  have hR := (listRecP_spec hM hP hA hz hS).1
+  exact (eval_op₂_congr 3 rfl ((eval_op₂_congr 9 (comp_idt hM ht).symm rfl).trans
+    (prodMapLeft_pair hM ht (idt_hom hM hX) hm).symm)).trans
+    ((comp_assoc hM (pair_hom hM (idt_hom hM hX) hm) hq hR).trans
+      (eval_op₂_congr 3 (listRecP_comp hM hP hA hz hS ht) rfl))
+
+/-- The existence of the fold of the natural numbers object with a parameter. -/
+theorem natRec_param_exists {z S P C : Tree} (hP : IsObj M ρ P) (hz : Hom M ρ z P C)
+    (hS : Hom M ρ S (prod P C) C) :
+    ∃ f, Hom M ρ f (prod P nat) C ∧
+      eval M ρ (comp f (pair (idt P) (comp zeroN (bang P)))) = eval M ρ z ∧
+      eval M ρ (comp f (pair (fst P nat) (comp succ (snd P nat)))) =
+        eval M ρ (comp S (pair (fst P nat) f)) :=
+  ⟨_, natRecP_spec hM hP hz hS⟩
+
+/-- The existence of the fold of a list object with a parameter. -/
+theorem listRec_param_exists {z S P A C : Tree} (hP : IsObj M ρ P) (hA : IsObj M ρ A)
+    (hz : Hom M ρ z P C) (hS : Hom M ρ S (prod (prod P A) C) C) :
+    ∃ f, Hom M ρ f (prod P (list A)) C ∧
+      eval M ρ (comp f (pair (idt P) (comp (nil A) (bang P)))) = eval M ρ z ∧
+      eval M ρ (comp f (pair (comp (fst P A) (fst (prod P A) (list A)))
+          (comp (cons A) (pair (comp (snd P A) (fst (prod P A) (list A)))
+            (snd (prod P A) (list A)))))) =
+        eval M ρ (comp S (pair (fst (prod P A) (list A))
+          (comp f (pair (comp (fst P A) (fst (prod P A) (list A)))
+            (snd (prod P A) (list A)))))) :=
+  ⟨_, listRecP_spec hM hP hA hz hS⟩
 
 end Parameters
 

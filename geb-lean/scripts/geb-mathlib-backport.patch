@@ -4229,10 +4229,10 @@ index 026ba4d..5f5cee9 100644
      rfl
  
  /-- A W-tree is admissible exactly when the edges of its spelling are in
-diff --git a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
-index d9ca6f8..7c0966a 100644
---- a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
-+++ b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax/Decimal.lean b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax/Decimal.lean
+index 70b878d..7532129 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax/Decimal.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax/Decimal.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
  Authors: Terence Rokop
@@ -4240,35 +4240,8 @@ index d9ca6f8..7c0966a 100644
 +-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
  module
  
- public import Geb.Mathlib.Data.W.Basic
-@@ -362,6 +363,8 @@ comments, and canonical forms differ over whether they are retained. -/
-   links : List String := []
-   deriving Repr, DecidableEq, Inhabited
- 
-+attribute [nolint unusedArguments] instReprAnn.repr
-+
- /-- An annotated Geb document. -/
- abbrev Doc (k : Nat) : Type := Tree k Ann
- 
-@@ -497,7 +500,7 @@ theorem parseChildren_succ_cons {k : Nat}
-     parseChildren childParse (f + 1) (c :: cs)
-       = (childParse (c :: cs)).bind fun p ↦
-           (parseChildren childParse f p.2).map fun q ↦ (p.1 :: q.1, q.2) :=
--  ite_eq_right h
-+  if_neg h
- 
- end Rose
- 
-@@ -549,7 +552,7 @@ back is the identity on `Ast k`. -/
- theorem ofRose_toRose {k : Nat} (a : Ast k) : ofRose a.toRose = a :=
-   ind (motive := fun a ↦ ofRose a.toRose = a)
-     (fun i ↦ by simp only [toRose_leaf, ofRose_node, Fin.foldl_zero])
--    (fun l r ihl ihr ↦ by rw [toRose_fork, ofRose_snoc, ihl, ihr]) a
-+    (fun l r ihl ihr ↦ by beta_reduce; rw [toRose_fork, ofRose_snoc, ihl, ihr]) a
- 
- /-- The image of a left spine under `toRose`: the fold that `ofRose`
- performs on a node's children is undone one child at a time, from the
-@@ -719,15 +722,15 @@ theorem digitsVal_decOf (n : Nat) : digitsVal (decOf n) = some n := by
+ public import Mathlib.Tactic.ToDual
+@@ -138,15 +139,15 @@ theorem digitsVal_decOf (n : Nat) : digitsVal (decOf n) = some n := by
    · have hlt : ∀ d ∈ (digitsLE n).reverse, d < 10 := by
        intro d hd
        exact digitsLE_lt n d (List.mem_reverse.mp hd)
@@ -4287,7 +4260,7 @@ index d9ca6f8..7c0966a 100644
      obtain ⟨d, hd, rfl⟩ := List.mem_map.mp hc
      have : d < 10 := digitsLE_lt n d (List.mem_reverse.mp hd)
      simp [charDigit_digitChar d this]
-@@ -736,7 +739,7 @@ theorem decOf_ne_nil (n : Nat) : decOf n ≠ [] := by
+@@ -155,7 +156,7 @@ theorem decOf_ne_nil (n : Nat) : decOf n ≠ [] := by
    unfold decOf
    by_cases h : n = 0
    · subst h; simp
@@ -4295,8 +4268,47 @@ index d9ca6f8..7c0966a 100644
 +  · rw [if_neg h]
      simp [digitsLE_ne_nil h]
  
- /-! ### Reading a decimal prefix -/
-@@ -909,7 +912,7 @@ theorem parseAst_printAst {k : Nat} (a : Ast k) :
+ end Geb.Csexp
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
+index 2d27b91..9028c0e 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Mathlib.Data.W.Basic
+@@ -363,6 +364,8 @@ comments, and canonical forms differ over whether they are retained. -/
+   links : List String := []
+   deriving Repr, DecidableEq, Inhabited
+ 
++attribute [nolint unusedArguments] instReprAnn.repr
++
+ /-- An annotated Geb document. -/
+ abbrev Doc (k : Nat) : Type := Tree k Ann
+ 
+@@ -498,7 +501,7 @@ theorem parseChildren_succ_cons {k : Nat}
+     parseChildren childParse (f + 1) (c :: cs)
+       = (childParse (c :: cs)).bind fun p ↦
+           (parseChildren childParse f p.2).map fun q ↦ (p.1 :: q.1, q.2) :=
+-  ite_eq_right h
++  if_neg h
+ 
+ end Rose
+ 
+@@ -550,7 +553,7 @@ back is the identity on `Ast k`. -/
+ theorem ofRose_toRose {k : Nat} (a : Ast k) : ofRose a.toRose = a :=
+   ind (motive := fun a ↦ ofRose a.toRose = a)
+     (fun i ↦ by simp only [toRose_leaf, ofRose_node, Fin.foldl_zero])
+-    (fun l r ihl ihr ↦ by rw [toRose_fork, ofRose_snoc, ihl, ihr]) a
++    (fun l r ihl ihr ↦ by beta_reduce; rw [toRose_fork, ofRose_snoc, ihl, ihr]) a
+ 
+ /-- The image of a left spine under `toRose`: the fold that `ofRose`
+ performs on a node's children is undone one child at a time, from the
+@@ -790,7 +793,7 @@ theorem parseAst_printAst {k : Nat} (a : Ast k) :
            List.append_assoc, List.nil_append]
          rw [readVerbatim_append]
          have hne : forkTok ≠ leafTok := by decide
@@ -4422,7 +4434,7 @@ index 71ba9c0..b67b46c 100644
  and classifier limits. -/
  theorem laws : (toposData C P D).Laws where
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
-index 5b3e503..c16ab61 100644
+index ac67c64..4dcc072 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4442,8 +4454,77 @@ index 5b3e503..c16ab61 100644
        simp [lrose, op]
  
  /-- The type of labels of a rose-tree object over it is its argument. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/ObjectSubst.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/ObjectSubst.lean
+index 6ac84f3..ac9cd17 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/ObjectSubst.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/ObjectSubst.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Substitution
+@@ -79,7 +80,7 @@ theorem substF_node_zero_of_not (τ : ℕ → Tree) {i : Tree} (hi : i.children
+     substF τ (RoseTree.node 0 [i]) = RoseTree.node 0 [i] := by
+   rw [substF, RoseTree.para_node]
+   simp only [List.map_cons, List.map_nil]
+-  rw [ite_eq_right (by rwa [List.isEmpty_iff])]
++  rw [if_neg (by rwa [List.isEmpty_iff])]
+ 
+ /-- The substitution at an operation's node substitutes in the arguments. -/
+ theorem substF_node_succ (τ : ℕ → Tree) (k : ℕ) (cs : List Tree) :
+@@ -178,19 +179,19 @@ theorem objScope_cons (b : Tree) (bs : List Tree) (z : ℕ) :
+     substF (objScope bs) (objAt bs.length (shiftObj bs.length b) z) = objScope (b :: bs) z := by
+   unfold objAt
+   by_cases hlt : z < bs.length
+-  · rw [ite_eq_left hlt, substF_var, objScope, objScope, ite_eq_left hlt,
+-      ite_eq_left (by rw [List.length_cons]; omega), List.reverse_cons,
++  · rw [if_pos hlt, substF_var, objScope, objScope, if_pos hlt,
++      if_pos (by rw [List.length_cons]; omega), List.reverse_cons,
+       List.getElem?_append_left (by rw [List.length_reverse]; exact hlt)]
+   · by_cases heq : z = bs.length
+     · subst heq
+-      rw [ite_eq_right hlt, ite_eq_left rfl, shiftObj, substF_comp, objScope,
+-        ite_eq_left (by rw [List.length_cons]; omega), List.reverse_cons,
++      rw [if_neg hlt, if_pos rfl, shiftObj, substF_comp, objScope,
++        if_pos (by rw [List.length_cons]; omega), List.reverse_cons,
+         List.getElem?_append_right (by rw [List.length_reverse]), List.length_reverse,
+         Nat.sub_self, List.getElem?_cons_zero, Option.getD_some]
+       refine Eq.trans (congrArg (substF · b) (funext fun w ↦ ?_)) (substF_var_id b)
+-      rw [substF_var, objScope, ite_eq_right (by omega), Nat.add_sub_cancel]
+-    · rw [ite_eq_right hlt, ite_eq_right heq, substF_var, objScope, objScope,
+-        ite_eq_right (by omega), ite_eq_right (by rw [List.length_cons]; omega),
++      rw [substF_var, objScope, if_neg (by omega), Nat.add_sub_cancel]
++    · rw [if_neg hlt, if_neg heq, substF_var, objScope, objScope,
++        if_neg (by omega), if_neg (by rw [List.length_cons]; omega),
+         List.length_cons, show z - 1 - bs.length = z - (bs.length + 1) by omega]
+ 
+ /-- The substitution of objects, by a function, in the types and arrows of a label. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Params.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Params.lean
+index e2059e6..2cc691d 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Params.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Params.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Inversion
+@@ -115,7 +116,7 @@ theorem idxOf?_of_pairwise {ws : List ℕ} (hw : ws.Pairwise (· < ·)) {j : ℕ
+       · simp only [List.getElem_cons_zero, List.idxOf?_cons, beq_self_eq_true, ↓reduceIte]
+       · have hj' : j < ws.length := Nat.lt_of_succ_lt_succ hj
+         have hne : (w == ws[j]) = false := Bool.eq_false_iff.mpr fun h ↦
+-          Nat.ne_of_lt (hw.1 _ (List.getElem_mem hj')) (Nat.eq_of_beq_eq_true h)
++          Nat.ne_of_lt (hw.1 _ (List.getElem_mem hj')) (beq_iff_eq.mp h)
+         simp only [List.getElem_cons_succ, List.idxOf?_cons, hne, Bool.false_eq_true, ↓reduceIte,
+           ih hw.2 j hj', Option.map_some])
+     ws hw j hj
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean
-index 64f21c3..6aa48e4 100644
+index 1544bd9..ac5602e 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4454,7 +4535,7 @@ index 64f21c3..6aa48e4 100644
  module
  
  public import Geb.Prototypes.FreeTopos.Internal.Derivation
-@@ -10,7 +11,8 @@ public import Geb.Prototypes.FreeTopos.Internal.Inversion
+@@ -10,7 +11,8 @@ public import Geb.Prototypes.FreeTopos.Internal.Params
  public import Geb.Prototypes.FreeTopos.Represent
  public import Geb.Prototypes.FreeTopos.Unfolding
  
@@ -4474,7 +4555,7 @@ index 64f21c3..6aa48e4 100644
  
  namespace Geb.FreeTopos.Internal
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
-index 95bc7e4..2b9e297 100644
+index 2c290ac..0b21fec 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4485,7 +4566,7 @@ index 95bc7e4..2b9e297 100644
  module
  
  public import Geb.Prototypes.FreeTopos.Internal.Derivation
-@@ -499,14 +500,14 @@ theorem rootStep_thm {G : Globals} {E : Array Entry} {n : ℕ} {Γ : List Tree}
+@@ -484,14 +485,14 @@ theorem rootStep_thm {G : Globals} {E : Array Entry} {n : ℕ} {Γ : List Tree}
    simp only [rootStep] at h
    obtain ⟨a, ha, h⟩ := Option.bind_eq_some_iff.mp h
    by_cases hnil : a.hyps = []
@@ -4504,7 +4585,7 @@ index 95bc7e4..2b9e297 100644
      simp at h
  
  /-- The rewriting by an equation among the hypotheses at a term's root, inverted. -/
-@@ -518,9 +519,9 @@ theorem rootStep_rwHyp {G : Globals} {E : Array Entry} {n : ℕ} {Γ : List Tree
+@@ -503,9 +504,9 @@ theorem rootStep_rwHyp {G : Globals} {E : Array Entry} {n : ℕ} {Γ : List Tree
    obtain ⟨lr, hlr, h⟩ := Option.bind_eq_some_iff.mp h
    obtain ⟨ψ, hψ, hψlr⟩ := Option.bind_eq_some_iff.mp hlr
    by_cases hc : t = (if flip then lr.2 else lr.1)
@@ -4517,7 +4598,7 @@ index 95bc7e4..2b9e297 100644
  
  /-- The checker at a node is its step at the node's children and their results. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Substitution.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Substitution.lean
-index af91f3a..8af5581 100644
+index dd8e0fe..ad2b75b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Substitution.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Substitution.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4528,7 +4609,7 @@ index af91f3a..8af5581 100644
  module
  
  public import Geb.Prototypes.FreeTopos.Internal.Semantics
-@@ -341,7 +342,7 @@ theorem scoped_of_isTy {n : ℕ} : ∀ A : Tree, IsTy G n A = true → Scoped n
+@@ -988,7 +989,7 @@ theorem scoped_of_isTy {n : ℕ} : ∀ A : Tree, IsTy G n A = true → Scoped n
  /-- Results related pointwise by a function are its images. -/
  theorem eq_map_of_forall₂ {α : Type} {f : α → α} {rs rs' : List α}
      (h : List.Forall₂ (fun r r' ↦ r' = f r) rs rs') : rs' = rs.map f :=
@@ -4661,7 +4742,7 @@ index a5046a7..057e86f 100644
            (congrArg (unfoldOp _ _) (unfoldTerm_of_opsBelow ds _ u (hθ' u hu))).trans
              (hθ₀ u hu)).trans θ.map_id)
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
-index 2878790..f101d36 100644
+index c7727f8..91fc0f9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
 @@ -3,9 +3,10 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4673,9 +4754,1072 @@ index 2878790..f101d36 100644
  
 -public import Mathlib.Basic.ExistsUnique
 +public import Mathlib.Logic.ExistsUnique
+ import Lean.DocString.Syntax
  meta import GebMeta -- shake: keep
  
- set_option doc.verso true in
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean
+index 57e7d5d..b93093a 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Identity
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Annotations of identifiers
+ 
+@@ -39,8 +41,6 @@ relation: definitions with equal payloads share an identifier and keep each its
+ annotation, content identity, vertex, re-keying
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel.Identity
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Document.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Document.lean
+index 2df6fb9..78a9b86 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Document.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Document.lean
+@@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.ConcreteSyntax.Decimal
+ public import Geb.Prototypes.RoseTree.Decorated
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Source documents in the authoring profile
+ 
+@@ -85,8 +87,6 @@ end of the list or of the text, takes them as its trivia.
+ S-expression, RFC 9804, comments, trivia, formatter, retraction, lossless syntax tree
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel
+@@ -105,6 +105,8 @@ and before the end of the line. -/
+   text : List Char
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprLine.repr
++
+ /-- The trivia an S-expression is decorated with: the comment lines before it, whether an empty
+ line precedes it, and, for a list, the comment lines before its closing parenthesis. -/
+ @[ext] structure Trivia where
+@@ -116,6 +118,8 @@ line precedes it, and, for a list, the comment lines before its closing parenthe
+   close : List Line
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprTrivia.repr
++
+ /-- An S-expression with comments: a rose tree whose labels are those of
+ {name}`Geb.Kernel.SExp`, an atom's characters or nothing for a list, each decorated with its
+ trivia. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean
+index 9f21cd0..7538033 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Loading
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Evaluation of kernel terms
+ 
+@@ -60,8 +62,6 @@ bootstrap, kernel, evaluation, big-step semantics, closure, fuel, logical relati
+ normalization
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel.Eval
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Identity.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Identity.lean
+index 471e84f..03df1e3 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Identity.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Identity.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Basic
+@@ -10,7 +11,8 @@ public import Geb.Prototypes.Kernel.Blake3
+ public import Geb.Prototypes.Kernel.Strict
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Content identity
+ 
+@@ -56,8 +58,6 @@ linked from ({lit}`migrate_link`), so migrating twice changes nothing ({lit}`mig
+ content identity, CID, multihash, BLAKE3, linking
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel.Identity
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
+index 314aa12..758a2e9 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Reader
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Modules
+ 
+@@ -53,8 +55,6 @@ forms in the program, since a module imports only modules declared before it.
+ module, import, export, parameter, qualified name
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Printer.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Printer.lean
+index de86cc9..30082f8 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Printer.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Printer.lean
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Reader
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # The printer of kernel terms
+ 
+@@ -47,8 +49,6 @@ documents, keeps what a person wrote.
+ printer, reader, retraction, decompilation
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
+index 9e8113f..69bde60 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Document
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # The strict encodings
+ 
+@@ -60,8 +62,6 @@ and reads back to the document ({lit}`readStrictDoc_printAdvancedDoc`).
+ S-expression, RFC 9804, canonical encoding, retraction
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel.Document
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/HSubstRename.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/HSubstRename.lean
+index e73a028..ebe77d5 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/HSubstRename.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/HSubstRename.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LF.HSubst
+@@ -196,6 +197,7 @@ theorem HoleRen.iterate {σ τ : ℕ → ℕ} {j j' : ℕ} (h : HoleRen σ τ j
+     HoleRen (liftR^[b] σ) (liftR^[b] τ) (j + b) (j' + b) :=
+   Nat.rec (motive := fun b ↦ HoleRen (liftR^[b] σ) (liftR^[b] τ) (j + b) (j' + b)) h
+     (fun b ih ↦ by
++      beta_reduce
+       rw [Function.iterate_succ_apply', Function.iterate_succ_apply', Nat.succ_eq_add_one,
+         ← Nat.add_assoc, ← Nat.add_assoc]
+       exact ih.lift) b
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Rename.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Rename.lean
+index a080a7d..5885a06 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Rename.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Rename.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LF.Syntax
+@@ -87,7 +88,7 @@ theorem iterate_liftR_comp (n : ℕ) :
+ /-- Lifting the identity under any number of binders is the identity. -/
+ @[simp] theorem iterate_liftR_id (n : ℕ) : liftR^[n] id = id :=
+   Nat.rec (motive := fun n ↦ liftR^[n] id = id) rfl
+-    (fun n ih ↦ by rw [Function.iterate_succ_apply', ih, liftR_id]) n
++    (fun n ih ↦ by beta_reduce; rw [Function.iterate_succ_apply', ih, liftR_id]) n
+ 
+ /-- A renaming lifted under {lit}`j` binders fixes the {lit}`j` innermost variables and renames
+ the rest above them. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Strengthen.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Strengthen.lean
+index 1895bf9..65fc410 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Strengthen.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Strengthen.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LF.Metatheory.Weakening
+@@ -154,13 +155,6 @@ theorem CtxRenOn.lift {S : ℕ → Bool} {Γ Δ : Ctx} {ρ : ℕ → ℕ} (h : C
+     have := congrArg (fun e ↦ e.rename Nat.succ) hb'e
+     simp only [rename_rename] at this ⊢
+     convert this using 2
+-    · funext x
+-      simp only [Function.comp_apply, Nat.succ_eq_add_one]
+-      omega
+-    · funext x
+-      simp only [Function.comp_apply]
+-      rw [show x + (i + 1 + 1) = x + (i + 1) + 1 by omega]
+-      rfl
+ 
+ /-- The classifier of a renamed head, where its variable satisfies the predicate on which the
+ renaming respects types, is the renamed classifier. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Substitution.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Substitution.lean
+index 1e4f046..c9601cf 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Substitution.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Substitution.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LF.Metatheory.Composition
+@@ -115,11 +116,13 @@ theorem varType_append (Δ Γ : Ctx) (i : ℕ) :
+   Δ.rec (motive := fun Δ ↦ varType (Δ ++ Γ) (Δ.length + i) =
+       (varType Γ i).map fun t ↦ t.rename (· + Δ.length))
+     (by
++      beta_reduce
+       rw [List.nil_append, List.length_nil, Nat.zero_add]
+       cases varType Γ i with
+       | none => rfl
+       | some t => exact congrArg some (rename_add_zero t).symm)
+     (fun a Δ ih ↦ by
++      beta_reduce
+       rw [List.cons_append, List.length_cons, show Δ.length + 1 + i = Δ.length + i + 1 by omega,
+         varType_cons_succ, ih, Option.map_map]
+       congr 1
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Weakening.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Weakening.lean
+index fbfe1f7..6b3903f 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Weakening.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Weakening.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LF.Metatheory.HSubstRename
+@@ -93,13 +94,6 @@ theorem CtxRen.lift {Γ Δ : Ctx} {ρ : ℕ → ℕ} (h : CtxRen Γ Δ ρ) (a :
+     have := congrArg (fun e ↦ e.rename Nat.succ) hb'e
+     simp only [rename_rename] at this ⊢
+     convert this using 2
+-    · funext x
+-      simp only [Function.comp_apply, Nat.succ_eq_add_one]
+-      omega
+-    · funext x
+-      simp only [Function.comp_apply]
+-      rw [show x + (i + 1 + 1) = x + (i + 1) + 1 by omega]
+-      rfl
+ 
+ /-- Weakening by a variable is a renaming that respects types: the successor, into the context
+ extended by the variable's type. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Adequacy.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Adequacy.lean
+index ddee74d..fc6302f 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Adequacy.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Adequacy.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Derivation
+@@ -319,11 +320,11 @@ theorem ExtConst.find?_spec (x : ExtConst) :
+     (fun _ h ↦ nomatch h) (fun y l ih i h ↦ ?_) l
+   change (if y = x then some 0 else (x.find? l).map (· + 1)) = some i at h
+   by_cases hy : y = x
+-  · rw [ite_eq_left hy] at h
++  · rw [if_pos hy] at h
+     obtain rfl := Option.some.inj h
+     rw [hy]
+     rfl
+-  · rw [ite_eq_right hy] at h
++  · rw [if_neg hy] at h
+     obtain ⟨i', hi', rfl⟩ := Option.map_eq_some_iff.mp h
+     exact ih i' hi'
+ 
+@@ -439,10 +440,10 @@ theorem tyOp?_iff {k : PrimIdx} {c m op : ℕ} :
+   · intro h
+     obtain ⟨⟨op', m', c'⟩, -, h⟩ := Option.bind_eq_some_iff.mp h
+     by_cases hc : tyConst? k op' m = some c
+-    · rw [ite_eq_left hc, Option.some.injEq] at h
++    · rw [if_pos hc, Option.some.injEq] at h
+       subst h
+       exact hc
+-    · rw [ite_eq_right hc] at h
++    · rw [if_neg hc] at h
+       exact nomatch h
+   · intro h
+     have hmem := tyConst?_mem h
+@@ -453,7 +454,7 @@ theorem tyOp?_iff {k : PrimIdx} {c m op : ℕ} :
+       fun t' ht' hp' ↦ by
+         rw [Bool.and_eq_true, beq_iff_eq, beq_iff_eq] at hp'
+         exact tyTable_const_inj t' ht' _ hmem hp'.1
+-    rw [tyOp?, find?_of_unique hmem hp hu, Option.bind_some, ite_eq_left h]
++    rw [tyOp?, find?_of_unique hmem hp hu, Option.bind_some, if_pos h]
+ 
+ /-- The operations of the type operations of an extension whose indices name no object
+ definition are unique. -/
+@@ -678,9 +679,9 @@ any variable below the offset. -/
+ theorem encTy_pred {a : PartialHorn.Tree} {off j : ℕ} {A : Expr} (h : encTy k off a = some A)
+     (hj : j < off) :
+     ∃ A', encTy k (off - 1) a = some A' ∧ A = A'.rename (liftR^[j] Nat.succ) := by
+-  refine ⟨_, encTy_rename a off A h (off - 1) (· - 1) fun i hi ↦ by omega, ?_⟩
++  refine ⟨_, encTy_rename a off A h (off - 1) (· - 1) fun i hi ↦ by beta_reduce; omega, ?_⟩
+   have h' := encTy_rename a (off - 1) _ (encTy_rename a off A h (off - 1) (· - 1)
+-    fun i hi ↦ by omega) off (liftR^[j] Nat.succ) fun i hi ↦ by
++    fun i hi ↦ by beta_reduce; omega) off (liftR^[j] Nat.succ) fun i hi ↦ by
+       rw [iterate_liftR_apply]
+       split <;> omega
+   exact Option.some.inj (h.symm.trans h')
+@@ -1472,23 +1473,23 @@ theorem decTm_eq_some {c : ℕ} {cs : List (Expr × (ℕ → Option MTerm))} {of
+       s = RoseTree.node (h.label θ.reverse) args.reverse := by
+   unfold decTm at hs
+   by_cases hc : sig.length ≤ c
+-  · rw [ite_eq_left hc] at hs
++  · rw [if_pos hc] at hs
+     rcases he : k.ext[c - sig.length]? with _ | ⟨_ | ⟨h, m, p⟩ | _ | _ | _⟩ <;> rw [he] at hs <;>
+       dsimp only at hs
+     · exact nomatch hs
+     · exact nomatch hs
+     · by_cases hl : k.fixedHead h = false ∧ cs.length = m + p
+-      · rw [ite_eq_left hl] at hs
++      · rw [if_pos hl] at hs
+         simp only [Option.bind_eq_bind, Option.bind_eq_some_iff, Option.pure_def,
+           Option.some.injEq] at hs
+         obtain ⟨θ, hθ, args, hargs, rfl⟩ := hs
+         exact ⟨h, m, p, θ, args, hc, rfl, hl.1, hl.2, hθ, hargs, rfl⟩
+-      · rw [ite_eq_right hl] at hs
++      · rw [if_neg hl] at hs
+         exact nomatch hs
+     · exact nomatch hs
+     · exact nomatch hs
+     · exact nomatch hs
+-  · rw [ite_eq_right hc] at hs
++  · rw [if_neg hc] at hs
+     exact nomatch hs
+ 
+ /-- The decoding of an application of a constant of the language, from its parts. -/
+@@ -1499,8 +1500,8 @@ theorem decTm_of {c m p : ℕ} {h : TmHead} {cs : List (Expr × (ℕ → Option
+     (hargs : (cs.drop m).mapM (fun x ↦ x.2 off) = some args) :
+     decTm k c cs off = some (RoseTree.node (h.label θ.reverse) args.reverse) := by
+   unfold decTm
+-  rw [ite_eq_left hc, he]
+-  simp only [ite_eq_left (And.intro hf hl), hθ, hargs, Option.bind_eq_bind, Option.bind_some,
++  rw [if_pos hc, he]
++  simp only [if_pos (And.intro hf hl), hθ, hargs, Option.bind_eq_bind, Option.bind_some,
+     Option.pure_def]
+ 
+ end Decoding
+@@ -1584,7 +1585,7 @@ theorem dec_encTm {G : FreeTopos.Internal.Globals} {n : ℕ} {k : PrimIdx} {h :
+   obtain ⟨c, hc, henc⟩ := Option.bind_eq_some_iff.mp henc
+   by_cases hl : θ.length = r.arity ∧
+       (cs.map fun c ↦ (c, enc G n k c)).length = r.params.length
+-  · rw [ite_eq_left hl] at henc
++  · rw [if_pos hl] at henc
+     obtain ⟨Ts, hTs, henc⟩ := Option.bind_eq_some_iff.mp henc
+     obtain ⟨Ms, hMs, henc⟩ := Option.bind_eq_some_iff.mp henc
+     obtain rfl := Option.some.inj henc
+@@ -1605,7 +1606,7 @@ theorem dec_encTm {G : FreeTopos.Internal.Globals} {n : ℕ} {k : PrimIdx} {h :
+         rw [← List.map_reverse, List.mapM_map] at hMs
+         exact mapM_inverse hMs fun x hx M hM ↦ ih x (List.mem_reverse.mp hx) X e M hM),
+       List.reverse_reverse, List.reverse_reverse]
+-  · rw [ite_eq_right hl] at henc
++  · rw [if_neg hl] at henc
+     exact nomatch henc
+ 
+ /-- Decoding inverts encoding. -/
+@@ -1679,9 +1680,9 @@ theorem dec_enc {G : FreeTopos.Internal.Globals} {n : ℕ} {k : PrimIdx} :
+       · simp [encStep] at henc
+     · by_cases hfx : k.fixed j = true
+       swap
+-      · rw [encStep_arr, ite_eq_right hfx] at henc
++      · rw [encStep_arr, if_neg hfx] at henc
+         exact dec_encTm (h := .arr j) (Bool.not_eq_true _ ▸ hfx) (fun c hc ↦ ih c hc) henc
+-      rw [encStep_arr, ite_eq_left hfx] at henc
++      rw [encStep_arr, if_pos hfx] at henc
+       rcases cs with _ | ⟨t, _ | ⟨d, cs⟩⟩
+       · simp [encFixed] at henc
+       · rcases θ with _ | ⟨θ₀, _ | ⟨θ₁, θ⟩⟩
+@@ -2179,7 +2180,7 @@ theorem subst_lnodePrim_cod (a : PartialHorn.Tree) :
+ theorem roseParts_rose :
+     FreeTopos.Internal.roseParts FreeTopos.rose = some (FreeTopos.nat, FreeTopos.roseRec) := by
+   unfold FreeTopos.Internal.roseParts
+-  exact ite_eq_left rfl
++  exact if_pos rfl
+ 
+ /-- The two rose-tree objects differ. -/
+ theorem lrose_ne_rose (a : PartialHorn.Tree) : FreeTopos.lrose a ≠ FreeTopos.rose := fun h ↦ by
+@@ -2191,8 +2192,8 @@ theorem lrose_ne_rose (a : PartialHorn.Tree) : FreeTopos.lrose a ≠ FreeTopos.r
+ theorem roseParts_lrose (a : PartialHorn.Tree) :
+     FreeTopos.Internal.roseParts (FreeTopos.lrose a) = some (a, FreeTopos.lroseRec a) := by
+   unfold FreeTopos.Internal.roseParts
+-  rw [ite_eq_right (lrose_ne_rose a)]
+-  exact ite_eq_left rfl
++  rw [if_neg (lrose_ne_rose a)]
++  exact if_pos rfl
+ 
+ /-- The indices of the empty list and of the construction of valid indices differ. -/
+ theorem PrimIdx.Valid.cons_ne_nil {k : PrimIdx} {G : FreeTopos.Internal.Globals}
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Complete.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Complete.lean
+index 3ab9b62..65ede3c 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Complete.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Complete.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LF.Topos.Telescope
+@@ -108,7 +109,7 @@ theorem enc_checks_tm (hsg : SigExt G k sg) {h : TmHead} {d : Rank} (hd : h.rank
+     rw [← length_of_mapM hrs, ← List.length_map (f := Prod.snd), hrst, List.length_map]
+   simp only [encTm, Option.bind_eq_bind, hd, Option.bind_some] at henc
+   obtain ⟨c, hc, henc⟩ := Option.bind_eq_some_iff.mp henc
+-  rw [ite_eq_left ⟨hθl, by rw [List.length_map]; exact hcl⟩] at henc
++  rw [if_pos ⟨hθl, by rw [List.length_map]; exact hcl⟩] at henc
+   obtain ⟨Ts, hTs, henc⟩ := Option.bind_eq_some_iff.mp henc
+   obtain ⟨Ms, hMs, henc⟩ := Option.bind_eq_some_iff.mp henc
+   obtain rfl := Option.some.inj henc
+@@ -311,12 +312,12 @@ theorem enc_checks (hsg : SigExt G k sg) (hk : k.Valid G) :
+     · obtain ⟨t, rfl, p, hp, g, hct, hl, hθ, rfl⟩ := FreeTopos.Internal.compile_arr_iff.mp hcomp
+       by_cases hfx : k.fixed j = true
+       swap
+-      · rw [encStep_arr, ite_eq_right hfx] at henc
++      · rw [encStep_arr, if_neg hfx] at henc
+         exact enc_checks_tm hsg (h := .arr j) (d := Rank.ofPrim p)
+           (by simp only [TmHead.rank, hp, Option.map_some]) he hΓ
+           (rs := [(g, PartialHorn.subst θ p.dom)]) (by rw [List.mapM_cons, hct]; rfl) hl hθ rfl
+           ih henc
+-      rw [encStep_arr, ite_eq_left hfx] at henc
++      rw [encStep_arr, if_pos hfx] at henc
+       rcases θ with _ | ⟨θ₀, _ | ⟨θ₁, θ⟩⟩
+       · by_cases hkz : j = k.zero
+         · subst hkz
+@@ -753,7 +754,7 @@ theorem tmComplete_inl (hsg : SigExt G k sg) (hk : k.Valid G) {X1 X2 X3 : Expr}
+     simp only [List.map_cons, List.map_nil, decStep, hdt, decTy_encTy _ a X1 ha,
+       decTy_encTy _ b X2 hb, Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+   · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-      ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
++      if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
+     simp only [encFixed, List.map_cons, List.map_nil, ↓reduceIte, ha, hb, het,
+       Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+     rfl
+@@ -789,7 +790,7 @@ theorem tmComplete_inr (hsg : SigExt G k sg) (hk : k.Valid G) {X1 X2 X3 : Expr}
+     simp only [List.map_cons, List.map_nil, decStep, hdt, decTy_encTy _ a X1 ha,
+       decTy_encTy _ b X2 hb, Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+   · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-      ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
++      if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
+     simp only [encFixed, List.map_cons, List.map_nil, hk.inr_ne_inl, ↓reduceIte, ha, hb, het,
+       Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+     rfl
+@@ -833,7 +834,7 @@ theorem tmComplete_case (hsg : SigExt G k sg) (hk : k.Valid G) {X1 X2 X3 X4 : Ex
+       decTy_encTy _ b X2 hb, decTy_encTy _ c X3 hc, Option.bind_eq_bind, Option.bind_some,
+       Option.pure_def]
+   · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-      ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
++      if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
+     simp only [encFixed, List.map_cons, List.map_nil, ↓reduceIte, ha, hb, hc, het,
+       Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+     rfl
+@@ -1012,7 +1013,7 @@ theorem tmComplete (hsg : SigExt G k sg) (hk : k.Valid G) :
+           rw [enc_node, encStep_label G n k hfx]
+           simp only [encTm, Option.bind_eq_bind, hd, Option.bind_some, PrimIdx.tmConst, hfind,
+             Option.map_some]
+-          rw [ite_eq_left ⟨by rw [List.length_reverse, hxl],
++          rw [if_pos ⟨by rw [List.length_reverse, hxl],
+             by rw [List.length_map, List.length_reverse, hssl]⟩, List.reverse_reverse,
+             ← List.map_reverse, List.reverse_reverse, List.mapM_map]
+           simp only [hTs, Option.bind_some, Option.pure_def]
+@@ -1201,7 +1202,7 @@ theorem tmComplete (hsg : SigExt G k sg) (hk : k.Valid G) :
+           simp only [List.map_cons, List.map_nil, decStep, hdt]
+           rfl
+         · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-            ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or]))]
++            if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or]))]
+           simp only [encFixed, List.map_cons, List.map_nil, ↓reduceIte, het]
+           rfl
+       · obtain rfl := Option.some.inj (hC.symm.trans rfl : some C = some
+@@ -1226,7 +1227,7 @@ theorem tmComplete (hsg : SigExt G k sg) (hk : k.Valid G) :
+           simp only [List.map_cons, List.map_nil, decStep, hdt]
+           rfl
+         · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-            ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
++            if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
+           simp only [encFixed, List.map_cons, List.map_nil, hne, ↓reduceIte, het]
+           rfl
+       · obtain rfl := Option.some.inj (hC.symm.trans rfl : some C = some
+@@ -1309,7 +1310,7 @@ theorem tmComplete (hsg : SigExt G k sg) (hk : k.Valid G) :
+           simp only [List.map_cons, List.map_nil, decStep, hdt, decTy_encTy _ a X1 ha,
+             Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+         · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-            ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
++            if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
+           simp only [encFixed, List.map_cons, List.map_nil, ↓reduceIte, ha, het,
+             Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+           rfl
+@@ -1338,7 +1339,7 @@ theorem tmComplete (hsg : SigExt G k sg) (hk : k.Valid G) :
+           simp only [List.map_cons, List.map_nil, decStep, hdt, decTy_encTy _ a X1 ha,
+             Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+         · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-            ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
++            if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
+           simp only [encFixed, List.map_cons, List.map_nil, hk.cons_ne_nil, ↓reduceIte, ha, het,
+             Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+           rfl
+@@ -1409,7 +1410,7 @@ theorem tmComplete (hsg : SigExt G k sg) (hk : k.Valid G) :
+           simp only [List.map_cons, List.map_nil, decStep, hdt]
+           rfl
+         · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-            ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
++            if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
+           simp only [encFixed, List.map_cons, List.map_nil, hk.node_ne.1, hk.node_ne.2, ↓reduceIte,
+             het]
+           rfl
+@@ -1473,7 +1474,7 @@ theorem tmComplete (hsg : SigExt G k sg) (hk : k.Valid G) :
+           simp only [List.map_cons, List.map_nil, decStep, hdt, decTy_encTy _ a X1 ha,
+             Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+         · rw [FreeTopos.Internal.Term.arr, enc_node, encStep_arr,
+-            ite_eq_left (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
++            if_pos (k.fixed_of_mem (by simp only [List.mem_cons, true_or, or_true]))]
+           simp only [encFixed, List.map_cons, List.map_nil, hk.lnode_ne.1, hk.lnode_ne.2,
+             ↓reduceIte, ha, het, Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+           rfl
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Development.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Development.lean
+index d23cb56..ff42fc7 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Development.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Development.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LF.Topos.ProofSound
+@@ -149,10 +150,10 @@ theorem ExtConst.find?_of_nodup (x : ExtConst) :
+   obtain ⟨hy, hnd⟩ := List.nodup_cons.mp hnd
+   rcases i with _ | i
+   · rw [List.getElem?_cons_zero] at h
+-    rw [ite_eq_left (Option.some.inj h)]
++    rw [if_pos (Option.some.inj h)]
+   · rw [List.getElem?_cons_succ] at h
+     have hx : x ∈ l := List.mem_of_getElem? h
+-    rw [ite_eq_right (fun e : y = x ↦ hy (e ▸ hx)), ih i hnd h]
++    rw [if_neg (fun e : y = x ↦ hy (e ▸ hx)), ih i hnd h]
+     rfl
+ 
+ /-- The declaration of a theorem has the head of the family of proofs. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofCheck.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofCheck.lean
+index fe694a3..fc7a700 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofCheck.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofCheck.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Soundness
+@@ -158,7 +159,8 @@ theorem check_cong_same {l : FreeTopos.Internal.Label} {ds : List Deriv} {ts ts'
+     intro x hx
+     obtain ⟨k, hk', rfl⟩ := List.mem_iff_getElem.mp hx
+     simp only [List.length_zipIdx, List.length_map] at hk'
+-    simp only [List.getElem_zipIdx, List.getElem_map, zero_add, Bool.or_eq_true]
++    simp only [List.get_eq_getElem, List.getElem_zipIdx, List.getElem_map, zero_add,
++      Bool.or_eq_true]
+     exact hsame k hk'
+   simp only [checkStep, RoseTree.label_node, RoseTree.children_node,
+     FreeTopos.Internal.congCtxs, hall, ↓reduceIte, Option.bind_eq_bind, Option.bind_some,
+@@ -571,7 +573,7 @@ theorem check_roseIndHyp {Γ₀ : List PartialHorn.Tree} {Φ' : List Term} {φ :
+ theorem coprodParts_coprod (a b : PartialHorn.Tree) :
+     FreeTopos.Internal.coprodParts (FreeTopos.coprod a b) = some (a, b) := by
+   unfold FreeTopos.Internal.coprodParts
+-  exact ite_eq_left rfl
++  exact if_pos rfl
+ 
+ /-- Case analysis on a coproduct at the innermost variable: the formula at the left injection of
+ a variable of the first summand and at the right injection of a variable of the second, under the
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
+index 8bf9680..b22c349 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.LF.Topos.ProofCheck
+@@ -212,7 +213,7 @@ theorem TmCtx.consTm (hc : TmCtx k n ΓLF env Γ) {a : PartialHorn.Tree} {A : Ex
+   enc := by
+     obtain ⟨ΓT, hΓ⟩ := hc.enc
+     exact ⟨_, encCtx_cons (encTy_rename a _ A ha Γ.length (fun i ↦ i - env.length + Γ.length)
+-      fun i hi ↦ by omega) hΓ⟩
++      fun i hi ↦ by beta_reduce; omega) hΓ⟩
+ 
+ variable {G : Globals}
+ 
+@@ -304,7 +305,7 @@ the weakening of its decoding. -/
+ theorem termOf_consTm {F : Expr} {j : ℕ} {φ : MTerm}
+     (h : termOf k env (F.rename (· + j)) = some φ) :
+     termOf k (none :: env) (F.rename (· + (j + 1))) = some (weaken1 φ) := by
+-  have := dec_rename _ (numTm env) (numTm env + 1) (· + 1) φ h fun i _ ↦ by omega
++  have := dec_rename _ (numTm env) (numTm env + 1) (· + 1) φ h fun i _ ↦ by beta_reduce; omega
+   rw [rename_rename, rename_rename] at this
+   rw [termOf, rename_rename]
+   exact this
+@@ -1813,7 +1814,7 @@ theorem sound_funExt (hc : PfCtx G k n ΓLF env Γ Φ) {A B f g dH F : Expr} {φ
+   subst hφ
+   refine ⟨nd .funExt [D'], ?_, check_funExt hft hcheck⟩
+   rw [decPf_const]
+-  simp only [List.map_cons, List.map_nil, decPfStep, decPf_lam, hD', Option.bind_eq_bind,
++  simp only [List.map_cons, List.map_nil, decPfStep.eq_def, decPf_lam, hD', Option.bind_eq_bind,
+     Option.bind_some, Option.pure_def]
+ 
+ include hk hsg in
+@@ -1850,8 +1851,8 @@ theorem sound_propExt (hc : PfCtx G k n ΓLF env Γ Φ) {P Q d₁ d₂ F : Expr}
+   subst hφ
+   refine ⟨nd .propExt [D₁, D₂], ?_, check_propExt hPt hQt hc₁ hc₂⟩
+   rw [decPf_const]
+-  simp only [List.map_cons, List.map_nil, decPfStep, decPf_lam, hD₁, hD₂, Option.bind_eq_bind,
+-    Option.bind_some, Option.pure_def]
++  simp only [List.map_cons, List.map_nil, decPfStep.eq_def, decPf_lam, hD₁, hD₂,
++    Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+ 
+ include hk hsg in
+ /-- The soundness of the decoding of the substitution of equals. -/
+@@ -1925,7 +1926,7 @@ theorem sound_leib (hc : PfCtx G k n ΓLF env Γ Φ) {A P t u dh dp F : Expr} {
+   refine ⟨leibD xa sp st su Φ.length Dh Dp, ?_,
+     check_leibD (hIxa) hpt htt hut hch hcp⟩
+   rw [decPf_const]
+-  simp only [List.map_cons, List.map_nil, decPfStep, termOf_lam, hsp, hst, hsu, hDh, hDp,
++  simp only [List.map_cons, List.map_nil, decPfStep.eq_def, termOf_lam, hsp, hst, hsu, hDh, hDp,
+     decTy_encTy _ xa A hxa, Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam,
+     Option.pure_def]
+ 
+@@ -2029,7 +2030,7 @@ theorem sound_cong (hc : PfCtx G k n ΓLF env Γ Φ) {A B f a b dh F : Expr} {φ
+   rw [hmot] at hcp
+   refine ⟨_, ?_, hcp⟩
+   rw [decPf_const]
+-  simp only [List.map_cons, List.map_nil, decPfStep, termOf_lam, hsfb, hsa, hsb, hDh,
++  simp only [List.map_cons, List.map_nil, decPfStep.eq_def, termOf_lam, hsfb, hsa, hsb, hDh,
+     decTy_encTy _ xa A hxa, Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam,
+     Option.pure_def]
+ 
+@@ -2150,7 +2151,7 @@ theorem sound_natInd (hc : PfCtx G k n ΓLF env Γ Φ) {P d₀ ds N F : Expr} {
+   refine ⟨indD FreeTopos.nat (.natIndHyp k.zero k.succ) sp sn Φ.length [D₀, Ds], ?_,
+     check_natIndD hk.zero hk.succ hpt hnt hc.typed hc₀ hcs⟩
+   rw [decPf_const]
+-  simp only [List.map_cons, List.map_nil, decPfStep, termOf_lam, hsp, hsn, hD₀, decPf_lam,
++  simp only [List.map_cons, List.map_nil, decPfStep.eq_def, termOf_lam, hsp, hsn, hD₀, decPf_lam,
+     hDs', Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody,
+     Term.lam, RoseTree.label_node, RoseTree.children_node, Option.pure_def]
+ 
+@@ -2321,7 +2322,8 @@ theorem sound_listInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P d₀ ds l F : Expr}
+   refine ⟨indD (FreeTopos.list xa) (.listIndHyp k.nil k.cons) sp sl Φ.length [D₀, Ds], ?_,
+     check_listIndD hk.nil hk.cons hIs hpt hlt hc.typed hc₀ (by rw [hw]; exact hcs)⟩
+   rw [decPf_const]
+-  simp only [List.map_cons, List.map_nil, decPfStep, termOf_lam, hsp, hsl, hD₀, decPf_lam, hDs',
++  simp only [List.map_cons, List.map_nil, decPfStep.eq_def, termOf_lam, hsp, hsl, hD₀, decPf_lam,
++    hDs',
+     decTy_encTy _ xa A hxa, Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam,
+     Option.pure_def]
+ 
+@@ -2420,7 +2422,7 @@ theorem sound_roseInd (hc : PfCtx G k n ΓLF env Γ Φ) {P ds t F : Expr} {φ :
+     rw [termOf_hsub₀ hb h₁ h₂]
+     refine congrArg some (Term.subst_rename sp _ _ _ fun i ↦ ?_)
+     rcases i with _ | i
+-    · exact congrArg (Term.arr k.node · _) (ite_eq_left rfl).symm
++    · exact congrArg (Term.arr k.node · _) (if_pos rfl).symm
+     · rfl
+   obtain ⟨body₁, rfl, hb1, hlam⟩ := ihs ΓLF _ _ hds
+   obtain ⟨body₂, rfl, hb2, hlam'⟩ := hlam _ _ _ hb1
+@@ -2439,7 +2441,7 @@ theorem sound_roseInd (hc : PfCtx G k n ΓLF env Γ Φ) {P ds t F : Expr} {φ :
+     check_roseIndD roseParts_rose (.inl ⟨hk.node, rfl⟩) hk.nil hk.cons
+       FreeTopos.Internal.isTy_rose hpt htt hc.typed (by rw [hw]; exact hcs)⟩
+   rw [decPf_const]
+-  simp only [List.map_cons, List.map_nil, decPfStep, termOf_lam, hsp, hst, decPf_lam, hDs',
++  simp only [List.map_cons, List.map_nil, decPfStep.eq_def, termOf_lam, hsp, hst, decPf_lam, hDs',
+     Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam, Option.pure_def]
+ 
+ include hk hsg in
+@@ -2550,7 +2552,7 @@ theorem sound_lroseInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P ds t F : Expr} {φ
+     rw [termOf_hsub₀ hb h₁ h₂]
+     refine congrArg some (Term.subst_rename sp _ _ _ fun i ↦ ?_)
+     rcases i with _ | i
+-    · exact congrArg (Term.arr k.lnode · _) (ite_eq_right (lrose_ne_rose xa)).symm
++    · exact congrArg (Term.arr k.lnode · _) (if_neg (lrose_ne_rose xa)).symm
+     · rfl
+   obtain ⟨body₁, rfl, hb1, hlam⟩ := ihs ΓLF _ _ hds
+   obtain ⟨body₂, rfl, hb2, hlam'⟩ := hlam _ _ _ hb1
+@@ -2570,7 +2572,7 @@ theorem sound_lroseInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P ds t F : Expr} {φ
+       (by rw [FreeTopos.Internal.isTy_lrose]; exact hIxa) hpt htt hc.typed
+       (by rw [hw]; exact hcs)⟩
+   rw [decPf_const]
+-  simp only [List.map_cons, List.map_nil, decPfStep, termOf_lam, hsp, hst, decPf_lam, hDs',
++  simp only [List.map_cons, List.map_nil, decPfStep.eq_def, termOf_lam, hsp, hst, decPf_lam, hDs',
+     decTy_encTy _ xa A hxa, Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam,
+     Option.pure_def]
+ 
+@@ -2605,7 +2607,7 @@ theorem sound_hyp (hc : PfCtx G k n ΓLF env Γ Φ) {i : ℕ} {ms : List Expr} {
+     obtain rfl := Option.some.inj (hφ'.symm.trans hφ)
+     refine ⟨ruleD (.hyp h), ?_, check_hyp hΦ⟩
+     rw [decPf, Expr.app, RoseTree.para_node]
+-    simp only [List.map_nil, decPfStep, he]
++    simp only [List.map_nil, decPfStep.eq_def, he]
+ 
+ /-- The step of the decoding of proofs at a constant past the signature is the decoding of an
+ application of a theorem of the extension. -/
+@@ -2669,7 +2671,8 @@ theorem termOf_inst {a : FreeTopos.Internal.Thm}
+     rw [List.map_map]
+     refine List.map_congr_left fun X hX ↦ ?_
+     obtain ⟨x, hx⟩ := forall₂_left_mem hxs X hX
+-    have h₁ := encTy_rename x 0 _ (hx₀ X x hx) (numTm env) (· + numTm env) fun i _ ↦ by omega
++    have h₁ := encTy_rename x 0 _ (hx₀ X x hx) (numTm env) (· + numTm env) fun i _ ↦ by
++      beta_reduce; omega
+     have h₂ := encTy_rename x env.length X hx (numTm env) (tmIdx env) fun i hi ↦
+       tmIdx_ge env i hi
+     exact Option.some.inj (h₁.symm.trans h₂)
+@@ -2695,14 +2698,14 @@ theorem termOf_inst {a : FreeTopos.Internal.Thm}
+   refine hdh.trans (congrArg some ?_)
+   rw [FreeTopos.Internal.instTerm, Term.osubst_eq_osubstF,
+     Term.osubstF_congr_of_compile (τ' := fun z ↦ xs.reverse[z]?.getD (PartialHorn.var z))
+-      (fun z hz ↦ by rw [FreeTopos.Internal.objScope, ite_eq_left (by rw [hxl]; exact hz)])
++      (fun z hz ↦ by rw [FreeTopos.Internal.objScope, if_pos (by rw [hxl]; exact hz)])
+       s _ _ r hr,
+     Term.subst_rename _ _ _
+       (fun i ↦ scopeSubst σ' (liftR^[a.ctx.length] (· + numTm env) i)) fun _ ↦ rfl]
+   refine Term.subst_congr _ _ _ fun i hi ↦ ?_
+   rw [Term.occurs_osubstF] at hi
+   have hi' := hocc i hi
+-  rw [iterate_liftR_lt _ _ i hi', scopeSubst, ite_eq_left (by rw [hσl]; exact hi')]
++  rw [iterate_liftR_lt _ _ i hi', scopeSubst, if_pos (by rw [hσl]; exact hi')]
+ 
+ include hsg in
+ /-- The leading arguments of a spine, each checking against the kind of types, decode to types
+@@ -2827,7 +2830,7 @@ theorem thm_spine (hc : PfCtx G k n ΓLF env Γ Φ) {cs : List Expr} {a : FreeTo
+           FreeTopos.Internal.substF_comp]
+         refine FreeTopos.Internal.substF_congr (n := a.arity) (fun z hz ↦ ?_) _
+           (FreeTopos.Internal.scoped_of_isTy (G := G) _ hA)
+-        rw [FreeTopos.Internal.objScope, ite_eq_left (by rw [List.length_map, hxl]; exact hz),
++        rw [FreeTopos.Internal.objScope, if_pos (by rw [List.length_map, hxl]; exact hz),
+           ← List.map_reverse, List.getElem?_map,
+           List.getElem?_eq_getElem (by rw [List.length_reverse, hxl]; exact hz)]
+         rfl
+@@ -2899,7 +2902,7 @@ theorem sound_thm (hc : PfCtx G k n ΓLF env Γ Φ) {c j : ℕ} {cs : List Expr}
+       ih p (List.mem_of_mem_drop hp) ΓLF env Γ Φ H _ hc hJ hH
+   obtain ⟨Ds, hDs', hDchk⟩ := mapM_of_forall₂ hproofs
+   refine ⟨_, ?_, check_apply he ?_ rfl hDchk.length_eq fun x hx ↦ ?_⟩
+-  · rw [decPf_const, decPfStep_thm hlt, decPfThm, ite_eq_left hlt, hthm]
++  · rw [decPf_const, decPfStep_thm hlt, decPfThm, if_pos hlt, hthm]
+     simp only [← List.map_take, ← List.map_drop, List.mapM_map, Function.comp_def, hxsM, hσM,
+       hDs', Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+   · simp only [FreeTopos.Internal.instOk, List.length_reverse, hxl, hσlen, decide_true,
+@@ -3008,7 +3011,7 @@ theorem sound_delta (hc : PfCtx G k n ΓLF env Γ Φ) {c kd : ℕ} {d : FreeTopo
+     thm_spine hk hsg hc (deltaThm_wellFormed hd hok hcd) hC hS
+   obtain rfl := Option.some.inj (hφ.symm.trans hF)
+   refine ⟨joinD (ruleD .delta) reflD, ?_, ?_⟩
+-  · rw [decPf_const, decPfStep_thm hlt, decPfThm, ite_eq_left hlt, hext]
++  · rw [decPf_const, decPfStep_thm hlt, decPfThm, if_pos hlt, hext]
+   · have hθl : d.arity = xs.reverse.length := by rw [List.length_reverse, hxl]; rfl
+     have hσl : d.params.length = σ'.reverse.length := by rw [List.length_reverse, hσlen]; rfl
+     change (check G E n (joinD (ruleD .delta) reflD)).2 Γ Φ (FreeTopos.Internal.instTerm
+@@ -3043,8 +3046,8 @@ theorem hsub_quotBody {c₀ j : ℕ} {n Q₀ A Q₁ M R : Expr}
+   obtain ⟨v₂, hv₂, rfl⟩ := hsub_const₁ hb₅
+   obtain ⟨A'', hA', rfl⟩ := hsub_const₁ hA
+   obtain ⟨Q₁'', hQ₁', rfl⟩ := hsub_const₁ hQ₁
+-  have hr : renumber (j + 1 + 1) 1 = 1 := ite_eq_right (by omega)
+-  have hr₀ : renumber (j + 1 + 1) 0 = 0 := ite_eq_right (by omega)
++  have hr : renumber (j + 1 + 1) 1 = 1 := if_neg (by omega)
++  have hr₀ : renumber (j + 1 + 1) 0 = 0 := if_neg (by omega)
+   have hne : ¬ (1 = j + 1 + 1) := by omega
+   rw [hsub_var] at hv₁ hv₂
+   rcases hM : hsub (RoseTree.node (.base c₀) []) n.shift.shift M (j + 1 + 1) with _ | M'
+@@ -3052,11 +3055,11 @@ theorem hsub_quotBody {c₀ j : ℕ} {n Q₀ A Q₁ M R : Expr}
+       Option.bind_none] at hv₁
+     exact nomatch hv₁
+   simp only [List.map_cons, List.map_nil, hM, List.mapM_cons, List.mapM_nil, id,
+-    Option.bind_eq_bind, Option.bind_some, Option.pure_def, ite_eq_right hne, hr,
++    Option.bind_eq_bind, Option.bind_some, Option.pure_def, if_neg hne, hr,
+     Option.some.injEq] at hv₁
+   simp only [List.map_cons, List.map_nil, hsub_var, List.mapM_cons, List.mapM_nil, id,
+-    Option.bind_eq_bind, Option.bind_some, Option.pure_def, ite_eq_right hne, hr, hr₀,
+-    ite_eq_right (show ¬ (0 = j + 1 + 1) by omega), Option.some.injEq] at hv₂
++    Option.bind_eq_bind, Option.bind_some, Option.pure_def, if_neg hne, hr, hr₀,
++    if_neg (show ¬ (0 = j + 1 + 1) by omega), Option.some.injEq] at hv₂
+   subst hv₁ hv₂
+   exact ⟨Q₀', A'', Q₁'', M', hQ₀, hA', hQ₁', rfl, rfl⟩
+ 
+@@ -3142,12 +3145,12 @@ theorem hsubsPre_projApp {c₀ c d : ℕ} (hd : 0 < d) :
+     · have hi' := List.mem_range.mp (List.mem_reverse.mp hi)
+       rw [hsub_var]
+       simp only [List.map_nil, List.mapM_nil, Option.pure_def, Option.bind_some,
+-        ite_eq_right (show ¬ (d + i = ms.length + d) by omega),
+-        show renumber (ms.length + d) (d + i) = d + i from ite_eq_right (by omega)]
++        if_neg (show ¬ (d + i = ms.length + d) by omega),
++        show renumber (ms.length + d) (d + i) = d + i from if_neg (by omega)]
+     · rw [hsub_var]
+       simp only [List.map_nil, List.mapM_nil, Option.pure_def, Option.bind_some,
+-        ite_eq_right (show ¬ (0 = ms.length + d) by omega),
+-        show renumber (ms.length + d) 0 = 0 from ite_eq_right (by omega)]
++        if_neg (show ¬ (0 = ms.length + d) by omega),
++        show renumber (ms.length + d) 0 = 0 from if_neg (by omega)]
+   rw [hsubsPre_cons, hstep, Option.bind_some, ih (Zs ++ [m]), List.append_assoc,
+     List.singleton_append]
+ 
+@@ -3329,7 +3332,7 @@ theorem sound_quotInd (hc : PfCtx G k n ΓLF env Γ Φ) {c kq : ℕ} {p : FreeTo
+   rw [hpc, ← hθl, subst_op_vars] at hchk
+   refine ⟨_, ?_, hchk⟩
+   obtain ⟨sP, hsP, hlb⟩ := Option.bind_eq_some_iff.mp hpb
+-  rw [decPf_const, decPfStep_thm hlt, decPfThm, ite_eq_left hlt, hext]
++  rw [decPf_const, decPfStep_thm hlt, decPfThm, if_pos hlt, hext]
+   dsimp only
+   rw [← List.map_drop, hPdt]
+   simp only [List.map_cons, List.map_nil, ← List.map_take, List.mapM_map, Function.comp_def,
+@@ -3550,7 +3553,7 @@ theorem tmIdx_replicate (n : ℕ) : ∀ i, tmIdx (List.replicate n none) i = i :
+ /-- An environment of term variables alone has as many term variables as entries. -/
+ theorem numTm_replicate (n : ℕ) : numTm (List.replicate n none) = n :=
+   Nat.rec (motive := fun n ↦ numTm (List.replicate n none) = n) rfl
+-    (fun n ih ↦ by rw [List.replicate_succ, numTm_cons_none, ih]) n
++    (fun n ih ↦ by beta_reduce; rw [List.replicate_succ, numTm_cons_none, ih]) n
+ 
+ /-- A renamed expression that is the kind of types is the kind of types. -/
+ theorem tp_rename_inj {T : Expr} {ρ : ℕ → ℕ} (h : T.rename ρ = tp) : T = tp := by
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Telescope.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Telescope.lean
+index 176f7d7..edd6585 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Telescope.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Telescope.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.ObjectSubst
+@@ -180,9 +181,9 @@ theorem holeRen_succ (j : ℕ) : HoleRen Nat.succ Nat.succ j (j + 1) := by
+   refine ⟨rfl, fun i hi ↦ ⟨fun e ↦ hi (Nat.succ.inj e), ?_⟩⟩
+   unfold renumber
+   by_cases h : j < i
+-  · rw [ite_eq_left h, ite_eq_left (Nat.succ_lt_succ h)]
++  · rw [if_pos h, if_pos (Nat.succ_lt_succ h)]
+     omega
+-  · rw [ite_eq_right h, ite_eq_right fun h' ↦ h (Nat.lt_of_succ_lt_succ h')]
++  · rw [if_neg h, if_neg fun h' ↦ h (Nat.lt_of_succ_lt_succ h')]
+ 
+ /-- At a base type the substitution into a weakened expression, of the weakened term for the
+ successor of a variable, has a value only where the substitution into the expression for the
+@@ -415,19 +416,19 @@ theorem dec_hsubs (α : SimpleTy) :
+   refine congrArg (some ∘ Term.subst y) (funext fun i ↦ ?_)
+   simp only [substAt, scopeSubst, List.length_cons, List.reverse_cons, hq, Term.substList]
+   by_cases hlt : i < us.length
+-  · rw [ite_eq_left hlt, ite_eq_left (Nat.lt_succ_of_lt hlt), Term.subst_var, scopeSubst,
+-      ite_eq_left hlt, Term.substList,
++  · rw [if_pos hlt, if_pos (Nat.lt_succ_of_lt hlt), Term.subst_var, scopeSubst,
++      if_pos hlt, Term.substList,
+       List.getElem?_append_left (by rw [List.length_reverse]; exact hlt)]
+   · by_cases heq : i = us.length
+     · subst heq
+-      rw [ite_eq_right hlt, ite_eq_left rfl, ite_eq_left (Nat.lt_succ_self _),
++      rw [if_neg hlt, if_pos rfl, if_pos (Nat.lt_succ_self _),
+         List.getElem?_append_right (by rw [List.length_reverse]), List.length_reverse,
+         Nat.sub_self, List.getElem?_cons_zero, Option.getD_some]
+       rw [Term.subst_rename u _ _ (fun r ↦ Term.var r) fun r ↦ by
+-        rw [scopeSubst, ite_eq_right (by omega), Nat.add_sub_cancel]]
++        rw [scopeSubst, if_neg (by omega), Nat.add_sub_cancel]]
+       exact Term.subst_id u hul _ fun _ ↦ rfl
+-    · rw [ite_eq_right hlt, ite_eq_right heq, ite_eq_right (by omega), Term.subst_var, scopeSubst,
+-        ite_eq_right (by omega), show i - 1 - us.length = i - (us.length + 1) by omega]
++    · rw [if_neg hlt, if_neg heq, if_neg (by omega), Term.subst_var, scopeSubst,
++        if_neg (by omega), show i - 1 - us.length = i - (us.length + 1) by omega]
+ 
+ /-- The substitutions commute with renaming: the renamed terms substituted into the expression
+ renamed past the scope give the renamed result. -/
+@@ -490,7 +491,7 @@ theorem encCtx_closed {G : Globals} :
+   obtain ⟨A, ΓT', hA, hΓ', rfl⟩ := encCtx_cons_inv h
+   have hcl := freeBelow_encTy hA (hty a List.mem_cons_self)
+   refine .cons ⟨A, rfl, hcl, fun off ↦ ?_⟩ (ih hΓ' fun b hb ↦ hty b (List.mem_cons_of_mem _ hb))
+-  rw [encTy_rename a _ A hA off (fun i ↦ i - Γ.length + off) fun i hi ↦ by omega,
++  rw [encTy_rename a _ A hA off (fun i ↦ i - Γ.length + off) fun i hi ↦ by beta_reduce; omega,
+     rename_closed hcl]
+ 
+ /-- Lists related pointwise to a third by values of a partial function: the function has values
+@@ -638,16 +639,16 @@ theorem encTy_hsub_obj {c₀ off j : ℕ} {n : Expr} {b : PartialHorn.Tree}
+         else some (Expr.var (if j < off + i then off + i - 1 else off + i) [])) = some A' at hs
+       unfold objAt
+       by_cases hij : off + i = j
+-      · rw [ite_eq_left hij] at hs
++      · rw [if_pos hij] at hs
+         obtain rfl := Option.some.inj hs
+-        rw [ite_eq_right (by omega), ite_eq_left (by omega)]
++        rw [if_neg (by omega), if_pos (by omega)]
+         exact hb
+-      · rw [ite_eq_right hij] at hs
++      · rw [if_neg hij] at hs
+         obtain rfl := Option.some.inj hs
+         by_cases hlt : i < j - off
+-        · rw [ite_eq_left hlt, ite_eq_right (by omega)]
++        · rw [if_pos hlt, if_neg (by omega)]
+           rfl
+-        · rw [ite_eq_right hlt, ite_eq_right (by omega), ite_eq_left (by omega)]
++        · rw [if_neg hlt, if_neg (by omega), if_pos (by omega)]
+           change some (Expr.var (off + (i - 1))) = _
+           rw [show off + (i - 1) = off + i - 1 by omega]
+     · obtain ⟨As', hAs', rfl⟩ := hsub_const_inv hs
+@@ -756,9 +757,9 @@ theorem dec_hsub_obj {c₀ : ℕ} : ∀ (e n : Expr) (j off : ℕ) (e' : Expr) (
+       have hi : i < off := hocc i (beq_self_eq_true i)
+       rw [show (RoseTree.node (.app (.var i)) [] : Expr) = Expr.var i [] from rfl, hsub_var] at hs
+       simp only [List.map_nil, List.mapM_nil, Option.pure_def, Option.bind_some] at hs
+-      rw [ite_eq_right (show i ≠ j by omega), Option.some.injEq] at hs
++      rw [if_neg (show i ≠ j by omega), Option.some.injEq] at hs
+       subst hs
+-      rw [show renumber j i = i from ite_eq_right (show ¬ j < i by omega), Expr.var, Expr.app,
++      rw [show renumber j i = i from if_neg (show ¬ j < i by omega), Expr.var, Expr.app,
+         dec_node]
+       rfl
+     · next _ _ heq =>
+@@ -1568,9 +1569,9 @@ theorem hsub_encTy_isSome {c₀ off j : ℕ} {n : Expr} :
+       change ∃ A', (if off + i = j then reduce (RoseTree.node (.base c₀) []) n []
+         else some (Expr.var (if j < off + i then off + i - 1 else off + i) [])) = some A'
+       by_cases hij : off + i = j
+-      · rw [ite_eq_left hij]
++      · rw [if_pos hij]
+         exact ⟨n, rfl⟩
+-      · rw [ite_eq_right hij]
++      · rw [if_neg hij]
+         exact ⟨_, rfl⟩
+     · obtain ⟨As', hAs'⟩ := mapM_exists As fun A' hA' ↦ by
+         obtain ⟨c', hc', hA''⟩ := mem_of_mapM hAs A' hA'
+@@ -1711,6 +1712,7 @@ theorem spine_piTele_fwd {Γ : Ctx} {J : Expr → Ctx → Mode → Bool} {Ds : L
+ theorem hsubs_tp_fwd {α : SimpleTy} : ∀ ms : List Expr, hsubs α ms tp = some tp := by
+   intro ms
+   refine List.rec (motive := fun ms ↦ hsubs α ms tp = some tp) rfl (fun m ms ih ↦ ?_) ms
++  beta_reduce
+   rw [hsubs_cons, tp, hsub_const]
+   exact ih
+ 
+@@ -1752,7 +1754,7 @@ theorem substF_objScope_shiftObj {L : ℕ} {xs : List PartialHorn.Tree} {P : Par
+     substF (objScope (xs.map (shiftObj L))) P = shiftObj L (PartialHorn.subst xs.reverse P) := by
+   rw [FreeTopos.Internal.subst_eq_substF, shiftObj, FreeTopos.Internal.substF_comp]
+   refine FreeTopos.Internal.substF_congr (n := xs.length) (fun z hz ↦ ?_) _ hPs
+-  rw [objScope, ite_eq_left (by rw [List.length_map]; exact hz), ← List.map_reverse,
++  rw [objScope, if_pos (by rw [List.length_map]; exact hz), ← List.map_reverse,
+     List.getElem?_map, List.getElem?_eq_getElem (by rw [List.length_reverse]; exact hz)]
+   rfl
+ 
+@@ -1864,6 +1866,7 @@ theorem headDepth_piTele (R : Expr) :
+   intro Ds
+   refine List.rec (motive := fun Ds ↦ (piTele Ds R).headDepth.1 = R.headDepth.1) rfl
+     (fun D Ds ih ↦ ?_) Ds
++  beta_reduce
+   rw [piTele_cons, Expr.pi, headDepth_node]
+   exact ih
+ 
+@@ -1874,8 +1877,10 @@ theorem headDepth_piTele_snd (R : Expr) :
+   intro Ds
+   refine List.rec (motive := fun Ds ↦ (piTele Ds R).headDepth.2 = Ds.length + R.headDepth.2) ?_
+     (fun D Ds ih ↦ ?_) Ds
+-  · rw [List.length_nil, Nat.zero_add]
++  · beta_reduce
++    rw [List.length_nil, Nat.zero_add]
+     rfl
++  beta_reduce
+   rw [piTele_cons, Expr.pi, headDepth_node, List.length_cons]
+   change (piTele Ds R).headDepth.2 + 1 = _
+   omega
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
 index 3772c32..69ea92c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
@@ -5564,6 +6708,26 @@ index 03de8f0..5917140 100644
              parseChildren_print _ (List.ofFn ch) (g + 1) rest hchild hfuel,
              Option.map_some, Rose.ofList_ofFn]) r
  
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/RoseTree/Decorated.lean b/vendor/geb-mathlib/Geb/Prototypes/RoseTree/Decorated.lean
+index ed9adb3..d1ec4a4 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/RoseTree/Decorated.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/RoseTree/Decorated.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.RoseTree.Basic
+@@ -85,6 +86,7 @@ def erase : Decorated A K → RoseTree K := map Prod.snd
+ /-- Redecorating by the decoration at each node changes nothing. -/
+ @[simp] theorem redecorate_extract (t : Decorated A K) : redecorate extract t = t :=
+   ind (P := fun t ↦ redecorate extract t = t) (fun l cs ih ↦ by
++    beta_reduce
+     rw [redecorate_node]
+     exact congrArg₂ node (by simp [extract]) ((List.map_congr_left ih).trans cs.map_id)) t
+ 
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean b/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean
 index 0c0ab51..d6a4f07 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean
@@ -5650,10 +6814,10 @@ index 41837e2..20f55ea 100644
    exact ⟨⟨d.classifier⟩⟩
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
-index 9a743f6..fa0049b 100644
+index d0e48c3..fa0049b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
-@@ -3,11 +3,12 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+@@ -3,14 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
  Released under Apache 2.0 license as described in the file LICENSE.
  Authors: Terence Rokop
  -/
@@ -5666,7 +6830,11 @@ index 9a743f6..fa0049b 100644
 +public import Mathlib.Logic.Nontrivial.Defs
  public import Mathlib.CategoryTheory.SingleObj
  public import Mathlib.CategoryTheory.Types.Basic
- public import Mathlib.Data.Setoid.Basic
+-public import Mathlib.Order.Setoid.Basic
++public import Mathlib.Data.Setoid.Basic
+ 
+ set_option doc.verso true in
+ /-!
 @@ -274,7 +275,7 @@ theorem Representative.toHom_comp {X Y Z : DecisionProblem S t f}
  def interpretation (S : Submonoid (Function.End B)) (t f : B) :
      DecisionProblem S t f ⥤ Type u where

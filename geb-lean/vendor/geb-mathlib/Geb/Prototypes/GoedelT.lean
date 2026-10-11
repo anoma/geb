@@ -11,11 +11,10 @@ set_option doc.verso true in
 /-!
 # Gödel's T over rose trees
 
-The checker of certificates of equations between kernel programs, derived from equational
-hypotheses and proved sound against the kernel's denotation: a variant of Gödel's T, the
-quantifier-free theory of the primitive recursive functionals of finite type, over rose trees.
-The metalogic, the free topos presented as the initial model of a partial Horn theory, retires
-its checker.
+Equations between kernel programs under equational hypotheses, and their validity against the
+kernel's denotation: a variant of Gödel's T, the quantifier-free theory of the primitive recursive
+functionals of finite type, over rose trees. Its statements are proved in the metalogic, about the
+programs' translations.
 -/
 
 set_option doc.verso true
