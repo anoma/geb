@@ -1049,9 +1049,9 @@ theorem DevInv.step {G G' : Globals} {E E' : Array Entry} (h : DevInv M Gf G E) 
           (hEq hf [((relPair p.dom r).1, p.dom)] rfl)
         have hr₁' : compile G p.arity (weaken1 h') (truthEq r)
             [((relPair p.dom r).2, p.dom), ((relPair p.dom r).1, p.dom)] = some (F₁, C₁) :=
-          compile_rename h' _ _ _ _ _ hr₁ fun i hi ↦ by
+          compile_rename h' _ _ _ (· + 1) _ hr₁ (fun i hi ↦ by
             obtain rfl : i = 0 := by simpa using hi
-            rfl
+            rfl) fun _ _ ↦ Nat.succ_lt_succ
         obtain ⟨⟨F₀, C₀⟩, hr₀, hres₀⟩ := compile_precomp hM h.wf hσ hps hds hH hstd1 hg
           (hEq hg [((relPair p.dom r).2, p.dom), ((relPair p.dom r).1, p.dom)] rfl)
         obtain rfl : C₁ = C := hres₁.1

@@ -219,7 +219,16 @@ theorem infer_trav {G : List Glob} {Γ Δ : Ctx} (ρ : Δ.den → Γ.den) (v : �
     simp only [trav, RoseTree.para_node, List.map_cons, List.map_nil, infer_node, inferStep, hg,
       Option.map_some]
     rfl
-  case h_18 => cases h
+  case h_18 A sA heq =>
+    obtain ⟨rfl, rfl⟩ := map_para_eq_one heq
+    split at h
+    · rename_i hA
+      cases h
+      simp only [trav, RoseTree.para_node, List.map_cons, List.map_nil, infer_node, inferStep, hA,
+        ↓reduceIte]
+      rfl
+    · cases h
+  case h_19 => cases h
   case h_3 cf f cx x heq =>
     obtain ⟨rfl, rfl, rfl⟩ := map_para_eq_two heq
     simp only [Option.bind_eq_bind, Option.bind_eq_some_iff] at h

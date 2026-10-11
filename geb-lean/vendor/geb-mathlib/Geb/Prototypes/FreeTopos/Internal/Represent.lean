@@ -7,7 +7,7 @@ Authors: Terence Rokop
 module
 
 public import Geb.Prototypes.FreeTopos.Internal.Derivation
-public import Geb.Prototypes.FreeTopos.Internal.Inversion
+public import Geb.Prototypes.FreeTopos.Internal.Params
 public import Geb.Prototypes.FreeTopos.Represent
 public import Geb.Prototypes.FreeTopos.Unfolding
 
@@ -264,24 +264,20 @@ theorem envRep_ext {X a : Tree} {e : List (Tree × Tree)} (hX : ObjVal ρ (unfol
     simp_unfold
     exact represents_comp (represents_fst hX ha R Ra) h₂
 
-/-- The environment of a list fold's step represents the projections of the pairs of an element
-and the fold's value. -/
-theorem envRep_listStep {a c : Tree} (ha : ObjVal ρ (unfoldTerm sig ds a) A)
-    (hc : ObjVal ρ (unfoldTerm sig ds c) C) (Ra : S → A → Prop) (Rc : T → C → Prop) :
-    EnvRep ds ρ [(snd a c, c), (fst a c, a)] (Rep.prod Ra Rc)
-      [⟨c, T, C, Rc, Prod.snd⟩, ⟨a, S, A, Ra, Prod.fst⟩] := by
-  refine .cons ⟨rfl, ?_⟩ (.cons ⟨rfl, ?_⟩ .nil)
-  · simp_unfold
-    exact represents_snd ha hc Ra Rc
-  · simp_unfold
-    exact represents_fst ha hc Ra Rc
-
 /-- The environment of a rose-tree fold's step represents the identity. -/
 theorem envRep_idt {P : Tree} (hP : ObjVal ρ (unfoldTerm sig ds P) A) (R : S → A → Prop) :
     EnvRep ds ρ [(idt P, P)] R [⟨P, S, A, R, id⟩] := by
   refine .cons ⟨rfl, ?_⟩ .nil
   simp_unfold
   exact represents_idt hP R
+
+/-- The environment of a list fold's step represents the projections of the pairs of an element
+and the fold's value. -/
+theorem envRep_listStep {a c : Tree} (ha : ObjVal ρ (unfoldTerm sig ds a) A)
+    (hc : ObjVal ρ (unfoldTerm sig ds c) C) (Ra : S → A → Prop) (Rc : T → C → Prop) :
+    EnvRep ds ρ (stdEnv [c, a]) (Rep.prod Ra Rc)
+      [⟨c, T, C, Rc, Prod.snd⟩, ⟨a, S, A, Ra, Prod.fst⟩] :=
+  envRep_ext ha hc (envRep_idt ha Ra) Rc
 
 /-! The primitive arrows. -/
 
@@ -382,17 +378,33 @@ theorem repC_listRec {X : Tree} {e : List (Tree × Tree)} {z s m : Term} {a c : 
     {R : S → A → Prop} {Ra : T → A' → Prop} {Rc : T' → C → Prop} {M : S → List T} {Z : Unit → T'}
     {St : T × T' → T'} (hm : RepC G n ds ρ m X e (list a) R (Rep.list Ra) M)
     (hz : RepC G n ds ρ z one [] c Rep.unit Rc Z)
-    (hs : RepC G n ds ρ s (prod a c) [(snd a c, c), (fst a c, a)] c (Rep.prod Ra Rc) Rc St)
+    (hs : RepC G n ds ρ s (prod a c) (stdEnv [c, a]) c (Rep.prod Ra Rc) Rc St)
     (ha : ObjVal ρ (unfoldTerm sig ds a) A') :
     RepC G n ds ρ (Term.listRec z s m) X e c R Rc
-      fun x ↦ List.foldr (fun y r ↦ St (y, r)) (Z ()) (M x) :=
-  let ⟨m', hm', hM⟩ := hm
-  let ⟨z', hz', hZ⟩ := hz
-  let ⟨s', hs', hS⟩ := hs
-  ⟨comp (listRec a z' s') m', compile_listRec_iff.mpr ⟨z, s, m, rfl, m', a, hm', z', c, hz', s',
-      hs', rfl⟩, by
-    simp_unfold
-    exact represents_comp hM (represents_listRec ha hZ hS)⟩
+      fun x ↦ List.foldr (fun y r ↦ St (y, r)) (Z ()) (M x) := by
+  obtain ⟨m', hm', hM⟩ := hm
+  obtain ⟨z', hz', hZ⟩ := hz
+  obtain ⟨s', hs', hS⟩ := hs
+  -- a start in the empty environment and a step in the bound variables' make a fold without
+  -- parameters
+  have hq : ∀ i, (Term.occurs z i || Term.occurs s (i + 2)) = false := fun i ↦ by
+    have h₁ : Term.occurs z i = false := Bool.eq_false_iff.mpr fun h ↦
+      Nat.not_lt_zero _ (compile_occurs_lt z one [] _ hz' i h)
+    have h₂ : Term.occurs s (i + 2) = false := Bool.eq_false_iff.mpr fun h ↦
+      Nat.lt_irrefl 2 (Nat.lt_of_le_of_lt (Nat.le_add_left 2 i) (compile_occurs_lt s _ _ _ hs' _ h))
+    rw [h₁, h₂]
+    rfl
+  have hp : foldParams 2 e.length z s = [] := by
+    unfold foldParams
+    generalize List.range e.length = l
+    exact l.rec rfl fun i l ih ↦ by
+      simp only [List.filter_cons, hq i, Bool.false_eq_true, ↓reduceIte]
+      exact ih
+  refine ⟨comp (listRec a z' s') m', compile_listRec_iff.mpr ⟨z, s, m, rfl, m', a, hm', z', c,
+    by rw [foldEnvIn_closed hp]; exact hz', s', by rw [foldEnvIn_closed hp]; exact hs',
+    by rw [foldPs_closed hp]; rfl⟩, ?_⟩
+  simp_unfold
+  exact represents_comp hM (represents_listRec ha hZ hS)
 
 /-- The fold of a rose tree over a type of labels represents the fold of rose trees. -/
 theorem repC_roseRec {X : Tree} {e : List (Tree × Tree)} {s m : Term} {a c : Tree}
@@ -403,13 +415,26 @@ theorem repC_roseRec {X : Tree} {e : List (Tree × Tree)} {s m : Term} {a c : Tr
       (Rep.prod Ra (Rep.list Rc)) Rc Fn)
     (ha : ObjVal ρ (unfoldTerm sig ds a) A') :
     RepC G n ds ρ (Term.roseRec c s m) X e c R Rc
-      fun x ↦ RoseTree.elim (fun l cs ↦ Fn (l, cs)) (M x) :=
-  let ⟨m', hm', hM⟩ := hm
-  let ⟨s', hs', hS⟩ := hs
-  ⟨comp (lroseRec a s') m', compile_roseRec_iff.mpr ⟨s, m, m', lrose a, a, lroseRec a, s', rfl,
-      htc, hm', roseParts_lrose a, hs', rfl⟩, by
-    simp_unfold
-    exact represents_comp hM (represents_lroseRec ha hS)⟩
+      fun x ↦ RoseTree.elim (fun l cs ↦ Fn (l, cs)) (M x) := by
+  obtain ⟨m', hm', hM⟩ := hm
+  obtain ⟨s', hs', hS⟩ := hs
+  -- a step in the environment of its bound variable alone makes a fold without parameters
+  have hq : ∀ i, (Term.occurs Term.star i || Term.occurs s (i + 1)) = false := fun i ↦ by
+    have h₂ : Term.occurs s (i + 1) = false := Bool.eq_false_iff.mpr fun h ↦
+      Nat.lt_irrefl 1 (Nat.lt_of_le_of_lt (Nat.le_add_left 1 i) (compile_occurs_lt s _ _ _ hs' _ h))
+    rw [occurs_star, h₂]
+    rfl
+  have hp : foldParams 1 e.length Term.star s = [] := by
+    unfold foldParams
+    generalize List.range e.length = l
+    exact l.rec rfl fun i l ih ↦ by
+      simp only [List.filter_cons, hq i, Bool.false_eq_true, ↓reduceIte]
+      exact ih
+  refine ⟨comp (lroseRec a s') m', compile_roseRec_iff.mpr ⟨s, m, m', lrose a, a, lroseRec a, s',
+    rfl, htc, hm', roseParts_lrose a, by rw [foldEnvIn_closed hp]; exact hs',
+    by rw [foldPs_closed hp]; rfl⟩, ?_⟩
+  simp_unfold
+  exact represents_comp hM (represents_lroseRec ha hS)
 
 /-! The application of a definition. -/
 

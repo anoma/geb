@@ -7,6 +7,7 @@ module
 
 public import Geb.Prototypes.Computability.SizeBounded.Logspace.WTree.NumScan
 public import Mathlib.Data.Nat.Bitwise
+import Mathlib.Data.List.GetD
 
 /-!
 # The bits of a number, its remainders and its size

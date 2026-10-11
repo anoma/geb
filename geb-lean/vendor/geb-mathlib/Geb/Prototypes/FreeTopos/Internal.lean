@@ -8,10 +8,13 @@ module
 public import Geb.Prototypes.FreeTopos.Internal.Compile
 public import Geb.Prototypes.FreeTopos.Internal.Completeness
 public import Geb.Prototypes.FreeTopos.Internal.Connectives
+public import Geb.Prototypes.FreeTopos.Internal.Conversion
 public import Geb.Prototypes.FreeTopos.Internal.Derivation
 public import Geb.Prototypes.FreeTopos.Internal.Development
 public import Geb.Prototypes.FreeTopos.Internal.Inversion
 public import Geb.Prototypes.FreeTopos.Internal.Logic
+public import Geb.Prototypes.FreeTopos.Internal.ObjectSubst
+public import Geb.Prototypes.FreeTopos.Internal.Params
 public import Geb.Prototypes.FreeTopos.Internal.Proofs
 public import Geb.Prototypes.FreeTopos.Internal.Prove
 public import Geb.Prototypes.FreeTopos.Internal.Represent

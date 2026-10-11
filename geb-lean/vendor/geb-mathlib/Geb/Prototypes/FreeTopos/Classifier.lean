@@ -5,7 +5,7 @@ Authors: Terence Rokop
 -/
 module
 
-public import Geb.Prototypes.FreeTopos.Recursion
+public import Geb.Prototypes.FreeTopos.RoseRecursion
 
 set_option doc.verso true in
 /-!
@@ -59,8 +59,9 @@ partial operation defined where its body is, the arrow is an operation of the th
 * {lit}`subObj_hom`, {lit}`subObj_lift` — the universal property of the iterated pullback.
 * {lit}`truth_of_natInd`, {lit}`truth_of_listInd` — induction on the natural numbers object
   and on a list object, with parameters.
-* {lit}`truth_of_roseInd` — induction on an initial algebra of the product of an object with the
-  list object, the rose-tree objects'.
+* {lit}`truth_of_roseInd`, {lit}`truth_of_roseInd_param` — induction on an initial algebra of the
+  product of an object with the list object, the rose-tree objects', without and with
+  parameters.
 * {lit}`chi_hom`, {lit}`chiInv_hom`, {lit}`mono_cancel` — the characteristic map of a
   monomorphism, the inverse of its factorization, and its cancellation.
 * {lit}`unique_choice`, {lit}`functional_of_desc` — unique choice and its converse.
@@ -641,6 +642,173 @@ theorem truth_of_roseInd {F r a nd : Tree} {fold : Tree → Tree} (hA : IsObj M 
   have hid := (huniq hnd hif e₁).trans (huniq hnd (idt_hom hM hR) e₂).symm
   exact (comp_idt hM hF).symm.trans ((eval_op₂_congr 3 rfl hid.symm).trans
     ((comp_assoc hM hf hi hF).trans ((eval_op₂_congr 3 hFi rfl).trans (truth_comp hM hf))))
+
+/-- Induction on an initial algebra of the functor taking an object to the product of the object
+{lit}`a` with its list object, with a parameter: an arrow into the subobject classifier from the
+product of an object of parameters with the algebra that is true at the structure map's value at a
+parameter, a label and a list at each of whose elements it is true with the parameter, at every
+such triple of arrows, is true. The arrow curried over the parameters is the function constantly
+true, by induction on the predicate that it is: at a list of elements of its pullback of truth,
+the arrow is true with every parameter, through the uncurrying. -/
+theorem truth_of_roseInd_param {F P r a nd : Tree} {fold : Tree → Tree} (hP : IsObj M ρ P)
+    (hA : IsObj M ρ a) (hnd : Hom M ρ nd (prod a (list r)) r)
+    (hfold : ∀ {S C}, Hom M ρ S (prod a (list C)) C → Hom M ρ (fold S) r C ∧
+      eval M ρ (comp (fold S) nd) = eval M ρ (comp S (prodMapRight a (listMap (fold S)))))
+    (huniq : ∀ {S C h}, Hom M ρ S (prod a (list C)) C → Hom M ρ h r C →
+      eval M ρ (comp h nd) = eval M ρ (comp S (prodMapRight a (listMap h))) →
+      eval M ρ h = eval M ρ (fold S))
+    (hF : Hom M ρ F (prod P r) omega)
+    (h₁ : ∀ {Y p l c : Tree}, Hom M ρ p Y P → Hom M ρ l Y a → Hom M ρ c Y (list r) →
+      eval M ρ (comp (listMapP P r omega F) (pair p c)) =
+        eval M ρ (comp (listMap (comp tru (bang r))) c) →
+      eval M ρ (comp F (pair p (comp nd (pair l c)))) = eval M ρ (comp tru (bang Y))) :
+    eval M ρ F = eval M ρ (comp tru (bang (prod P r))) := by
+  have hR := hnd.isObj_cod
+  have hΩ : IsObj M ρ omega := isObj_omega (ρ := ρ) hM
+  have hE := isObj_exp hM hP hΩ
+  have h1 : IsObj M ρ one := isObj_one (ρ := ρ) hM
+  have h1P := isObj_prod hM h1 hP
+  have hsw := pair_hom hM (snd_hom hM hR hP) (fst_hom hM hR hP)
+  have hFs := comp_hom hM hsw hF
+  -- the arrow curried over the parameters, and the function constantly true
+  have hG := curry_hom hM hR hP hFs
+  have hT₁ := curry_hom hM h1 hP (truth_hom hM h1P)
+  have hT := comp_hom hM (bang_hom hM hR) hT₁
+  have hψ := comp_hom hM (pair_hom hM hG hT) (chi_diag_hom hM hE)
+  -- the curried arrow after an arrow into the trees, uncurried: the arrow with every parameter
+  have uncurried : ∀ {Y k : Tree}, Hom M ρ k Y r →
+      eval M ρ (comp (ev P omega) (pair (comp (comp (curry r P (comp F (pair (snd r P)
+        (fst r P)))) k) (fst Y P)) (snd Y P))) =
+        eval M ρ (comp F (pair (snd Y P) (comp k (fst Y P)))) := fun {Y k} hk ↦ by
+    have hY := hk.isObj_dom
+    have hf₁ := comp_hom hM (fst_hom hM hY hP) hk
+    have hkP := pair_hom hM hf₁ (snd_hom hM hY hP)
+    refine (eval_op₂_congr 3 rfl (eval_op₂_congr 9 (eval_op₂_congr 3
+      (curry_comp hM hP hFs hk) rfl) rfl)).trans ?_
+    refine (ev_curry hM hY hP (comp_hom hM hkP hFs)).trans ?_
+    refine (comp_assoc hM hkP hsw hF).symm.trans (eval_op₂_congr 3 rfl ?_)
+    exact (pair_comp hM (snd_hom hM hR hP) (fst_hom hM hR hP) hkP).trans (eval_op₂_congr 9
+      (snd_pair hM hf₁ (snd_hom hM hY hP)) (fst_pair hM hf₁ (snd_hom hM hY hP)))
+  -- the function constantly true, uncurried, is true
+  have constTrue : ∀ {Z h : Tree}, Hom M ρ h Z one →
+      eval M ρ (comp (ev P omega) (pair (comp (comp (curry one P (comp tru (bang (prod one P))))
+        h) (fst Z P)) (snd Z P))) = eval M ρ (comp tru (bang (prod Z P))) := fun {Z h} hh ↦ by
+    have hZ := hh.isObj_dom
+    have hhP := pair_hom hM (comp_hom hM (fst_hom hM hZ hP) hh) (snd_hom hM hZ hP)
+    refine (eval_op₂_congr 3 rfl (eval_op₂_congr 9 (eval_op₂_congr 3
+      (curry_comp hM hP (truth_hom hM h1P) hh) rfl) rfl)).trans ?_
+    exact (ev_curry hM hZ hP (comp_hom hM hhP (truth_hom hM h1P))).trans (truth_comp hM hhP)
+  -- the predicate after an arrow is true exactly where the curried arrow is the true function
+  have predEq : ∀ {Y k : Tree}, Hom M ρ k Y r →
+      eval M ρ (comp (comp (chi (diag (exp P omega))) (pair (curry r P (comp F (pair (snd r P)
+        (fst r P)))) (comp (curry one P (comp tru (bang (prod one P)))) (bang r)))) k) =
+        eval M ρ (comp (chi (diag (exp P omega))) (pair (comp (curry r P (comp F
+          (pair (snd r P) (fst r P)))) k) (comp (curry one P (comp tru (bang (prod one P))))
+            (comp (bang r) k)))) := fun {Y k} hk ↦
+    (comp_assoc hM hk (pair_hom hM hG hT) (chi_diag_hom hM hE)).symm.trans
+      (eval_op₂_congr 3 rfl ((pair_comp hM hG hT hk).trans
+        (eval_op₂_congr 9 rfl (comp_assoc hM hk (bang_hom hM hR) hT₁).symm)))
+  -- where the predicate is true, the arrow is true with every parameter
+  have trueOf : ∀ {Y k : Tree}, Hom M ρ k Y r →
+      eval M ρ (comp (comp (chi (diag (exp P omega))) (pair (curry r P (comp F (pair (snd r P)
+        (fst r P)))) (comp (curry one P (comp tru (bang (prod one P)))) (bang r)))) k) =
+        eval M ρ (comp tru (bang Y)) →
+      eval M ρ (comp F (pair (snd Y P) (comp k (fst Y P)))) =
+        eval M ρ (comp tru (bang (prod Y P))) := fun {Y k} hk hψk ↦ by
+    have hb := comp_hom hM hk (bang_hom hM hR)
+    have heq := eq_of_chi_diag hM (comp_hom hM hk hG) (comp_hom hM hb hT₁)
+      ((predEq hk).symm.trans hψk)
+    refine (uncurried hk).symm.trans ((eval_op₂_congr 3 rfl (eval_op₂_congr 9
+      (eval_op₂_congr 3 heq rfl) rfl)).trans (constTrue hb))
+  -- where the arrow is true with every parameter, the predicate is true
+  have ofTrue : ∀ {Y k : Tree}, Hom M ρ k Y r →
+      eval M ρ (comp F (pair (snd Y P) (comp k (fst Y P)))) =
+        eval M ρ (comp tru (bang (prod Y P))) →
+      eval M ρ (comp (comp (chi (diag (exp P omega))) (pair (curry r P (comp F (pair (snd r P)
+        (fst r P)))) (comp (curry one P (comp tru (bang (prod one P)))) (bang r)))) k) =
+        eval M ρ (comp tru (bang Y)) := fun {Y k} hk htrue ↦ by
+    have hb := comp_hom hM hk (bang_hom hM hR)
+    have heq := eq_of_uncurry hM hP hΩ (comp_hom hM hk hG) (comp_hom hM hb hT₁)
+      ((uncurried hk).trans (htrue.trans (constTrue hb).symm))
+    exact (predEq hk).trans ((eval_op₂_congr 3 rfl (eval_op₂_congr 9 heq rfl)).trans
+      (chi_diag_pair_self hM (comp_hom hM hb hT₁)))
+  refine Eq.trans ?_ (truth_comp hM (pair_hom hM (snd_hom hM hP hR) (fst_hom hM hP hR)))
+  have hψT := truth_of_roseInd hM hA hnd hfold huniq hψ ?_
+  · -- the arrow, with the parameters exchanged, is true
+    have h := trueOf (idt_hom hM hR) ((comp_idt hM hψ).trans hψT)
+    have hsw' := pair_hom hM (snd_hom hM hP hR) (fst_hom hM hP hR)
+    have hpr := pair_hom hM (snd_hom hM hR hP) (comp_hom hM (fst_hom hM hR hP) (idt_hom hM hR))
+    have hid : eval M ρ (comp (pair (snd r P) (comp (idt r) (fst r P)))
+        (pair (snd P r) (fst P r))) = eval M ρ (idt (prod P r)) := by
+      refine (pair_comp hM (snd_hom hM hR hP) (comp_hom hM (fst_hom hM hR hP) (idt_hom hM hR))
+        hsw').trans (Eq.trans (eval_op₂_congr 9 (snd_pair hM (snd_hom hM hP hR)
+          (fst_hom hM hP hR)) ?_) (pair_fst_snd hM hP hR))
+      exact (comp_assoc hM hsw' (fst_hom hM hR hP) (idt_hom hM hR)).symm.trans
+        ((eval_op₂_congr 3 rfl (fst_pair hM (snd_hom hM hP hR) (fst_hom hM hP hR))).trans
+          (idt_comp hM (snd_hom hM hP hR)))
+    exact (comp_idt hM hF).symm.trans ((eval_op₂_congr 3 rfl hid.symm).trans
+      ((comp_assoc hM hsw' hpr hF).trans (eval_op₂_congr 3 h rfl)))
+  -- at the structure map's value at a list of elements of the predicate's pullback of truth
+  set ψ := comp (chi (diag (exp P omega))) (pair (curry r P (comp F (pair (snd r P) (fst r P))))
+    (comp (curry one P (comp tru (bang (prod one P)))) (bang r))) with hψdef
+  obtain ⟨hi, hψi⟩ := truthIncl_hom hM hψ
+  set S := truthEq ψ with hSdef
+  set i := truthIncl ψ with hidef
+  have hS := hi.isObj_dom
+  have hLS := isObj_list hM hS
+  have hLi := listMap_hom hM hi
+  have hk := prodMapRight_hom hM a hA hLi
+  have hK := comp_hom hM hk hnd
+  have hY := isObj_prod hM hA hLS
+  refine (comp_assoc hM hk hnd hψ).symm.trans (ofTrue hK ?_)
+  have hfY := fst_hom hM hY hP
+  have hsY := snd_hom hM hY hP
+  have hl := comp_hom hM hfY (fst_hom hM hA hLS)
+  have hc₀ := comp_hom hM hfY (snd_hom hM hA hLS)
+  have hc := comp_hom hM hc₀ hLi
+  -- the elements of the pullback are trees at which the arrow is true with every parameter
+  have hSt := trueOf hi hψi
+  have hswS := pair_hom hM (snd_hom hM hP hS) (fst_hom hM hP hS)
+  have hiS := pair_hom hM (snd_hom hM hS hP) (comp_hom hM (fst_hom hM hS hP) hi)
+  have hSt' : eval M ρ (comp F (prodMapRight P i)) =
+      eval M ρ (comp (comp tru (bang S)) (snd P S)) := by
+    refine (eval_op₂_congr 3 rfl (eval_prodMapRight P hi)).trans (Eq.trans ?_
+      (truth_comp hM (snd_hom hM hP hS)).symm)
+    refine Eq.trans (eval_op₂_congr 3 rfl ?_) ((comp_assoc hM hswS hiS hF).trans
+      ((eval_op₂_congr 3 hSt rfl).trans (truth_comp hM hswS)))
+    refine Eq.symm ((pair_comp hM (snd_hom hM hS hP) (comp_hom hM (fst_hom hM hS hP) hi)
+      hswS).trans (eval_op₂_congr 9 (snd_pair hM (snd_hom hM hP hS) (fst_hom hM hP hS)) ?_))
+    exact (comp_assoc hM hswS (fst_hom hM hS hP) hi).symm.trans (eval_op₂_congr 3 rfl
+      (fst_pair hM (snd_hom hM hP hS) (fst_hom hM hP hS)))
+  have hpc : eval M ρ (comp (prodMapRight P (listMap i)) (pair (snd (prod a (list S)) P)
+      (comp (snd a (list S)) (fst (prod a (list S)) P)))) =
+      eval M ρ (pair (snd (prod a (list S)) P)
+        (comp (listMap i) (comp (snd a (list S)) (fst (prod a (list S)) P)))) := by
+    refine (eval_op₂_congr 3 (eval_prodMapRight P hLi) rfl).trans ((pair_comp hM
+      (fst_hom hM hP hLS) (comp_hom hM (snd_hom hM hP hLS) hLi) (pair_hom hM hsY hc₀)).trans
+      (eval_op₂_congr 9 (fst_pair hM hsY hc₀) ?_))
+    exact (comp_assoc hM (pair_hom hM hsY hc₀) (snd_hom hM hP hLS) hLi).symm.trans
+      (eval_op₂_congr 3 rfl (snd_pair hM hsY hc₀))
+  have hpre : eval M ρ (comp (listMapP P r omega F) (pair (snd (prod a (list S)) P)
+      (comp (listMap i) (comp (snd a (list S)) (fst (prod a (list S)) P))))) =
+      eval M ρ (comp (listMap (comp tru (bang r))) (comp (listMap i)
+        (comp (snd a (list S)) (fst (prod a (list S)) P)))) := by
+    refine (eval_op₂_congr 3 rfl hpc.symm).trans ((comp_assoc hM (pair_hom hM hsY hc₀)
+      (prodMapRight_hom hM P hP hLi) (listMapP_hom hM hP hR hF)).trans ?_)
+    refine (eval_op₂_congr 3 ((listMapP_map hM hP hF hi).trans ((eval_listMapP_congr P S omega
+      hSt').trans (listMapP_snd hM hP (truth_hom hM hS)))) rfl).trans ?_
+    refine (comp_assoc hM (pair_hom hM hsY hc₀) (snd_hom hM hP hLS)
+      (listMap_hom hM (truth_hom hM hS))).symm.trans ((eval_op₂_congr 3 rfl
+        (snd_pair hM hsY hc₀)).trans ?_)
+    refine Eq.trans ?_ (comp_assoc hM hc₀ hLi (listMap_hom hM (truth_hom hM hR))).symm
+    exact eval_op₂_congr 3 ((listMap_congr hM (truth_hom hM hS) (comp_hom hM hi (truth_hom hM hR))
+      (truth_comp hM hi).symm).trans (listMap_comp hM hi (truth_hom hM hR)).symm) rfl
+  refine Eq.trans (eval_op₂_congr 3 rfl (eval_op₂_congr 9 rfl ?_)) (h₁ hsY hl hc hpre)
+  refine (comp_assoc hM hfY hk hnd).symm.trans (eval_op₂_congr 3 rfl ?_)
+  refine (eval_op₂_congr 3 (eval_prodMapRight a hLi) rfl).trans ((pair_comp hM
+    (fst_hom hM hA hLS) (comp_hom hM (snd_hom hM hA hLS) hLi) hfY).trans
+    (eval_op₂_congr 9 rfl ?_))
+  exact (comp_assoc hM hfY (snd_hom hM hA hLS) hLi).symm
 
 end Induction
 

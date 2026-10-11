@@ -24,8 +24,9 @@ SRC_REV="${1:-main}"
 # v4.29.0-rc6 revision:
 # Cslib.Computability.Machines.Turing.MultiTape.{Deterministic,TapeLemmas},
 # Cslib.Computability.Machines.Turing.MultiTape.{Configuration,ConfigBound},
-# and Cslib.Foundations.Data.PFunctor.Free. Every entry imports one of
-# them or an excluded module, directly or through a chain of such
+# and Cslib.Foundations.Data.PFunctor.Free; and in one mathlib module
+# added after the pinned revision, Mathlib.CategoryTheory.Limits.Types.End.
+# Every entry imports one of them or an excluded module, directly or through a chain of such
 # imports, or is imported only by excluded modules, which would leave
 # it unreachable from the Geb umbrella (scripts/tests/test-lint-driver.sh
 # reports these). docs/geb-mathlib-backport-notes.md § Current
@@ -121,6 +122,10 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Computability.SizeBounded.WordMachine
   Geb.Prototypes.Computability.TreeScanner
   Geb.Prototypes.Definition
+  Geb.Prototypes.FreeTopos.Tactics.Hypotheses
+  Geb.Prototypes.FreeTopos.Tactics.Induction
+  Geb.Prototypes.FreeTopos.Tactics.Search
+  Geb.Prototypes.FreeTopos.Tactics.Trees
   Geb.Prototypes.FreeTopos.Translation
   Geb.Prototypes.FreeTopos.TranslationKernel
   Geb.Prototypes.FreeTopos.TranslationLibrary
@@ -128,6 +133,8 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.FreeTopos.TranslationSoundClassical
   Geb.Prototypes.Kernel.Command
   Geb.Prototypes.Kernel.Image
+  Geb.Prototypes.Kernel.LoadCommand
+  Geb.Prototypes.PHOAS
   Geb.Prototypes.RoseTree.Bits
   Geb.Prototypes.RoseTree.Packed
   Geb.Prototypes.RoseTree.Spine

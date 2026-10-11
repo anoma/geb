@@ -193,41 +193,58 @@ def typeDefined (patTy : List Ty → Tree → PM Ty) (i s : ℕ) (tys : List Ty)
   memoize ty
   pure ty
 
+/-- The certificate of the definedness of an application of operation {lit}`k` of the signature
+to terms of the given typings, by the operation's rule of definedness, typing the instances of
+axioms' sides with {lit}`patTy`. -/
+def typeOpDfd (patTy : List Ty → Tree → PM Ty) (k : ℕ) (tys : List Ty) : PM Tree := do
+  let ts := tys.map Ty.term
+  match dfdRules[k]? with
+  | some (some (.direct j)) => do
+    let a ← axiomAt j
+    pure (Cert.ax j ts (tys.map Ty.dfd) (← a.hyps.mapM (proveHyp patTy tys)))
+  | some (some (.strict j)) => pure (Cert.strict 0 (Cert.ax j ts (tys.map Ty.dfd) []))
+  | some (some (.rhs j)) =>
+    let q := Cert.ax j [] [] []
+    pure (Cert.trans (Cert.symm q) q)
+  | _ => failure
+
+/-- The typing of an object {lit}`t`, an application of operation {lit}`k` to terms of the given
+typings with definedness certificate {lit}`d`, whose canonical form is the operation applied to
+its arguments' canonical forms. -/
+def typeOpObj (k : ℕ) (t d : Tree) (tys : List Ty) : PM Ty :=
+  let c := op k (tys.map fun ty ↦ if ty.sort == obj then ty.lo else ty.term)
+  if c == t then pure ⟨t, obj, d, t, d, t, d⟩
+  else do
+    let e ← eqCert ⟨t, c⟩
+      (Cert.cong d (tys.map fun ty ↦ if ty.sort == obj then ty.loCert else ty.dfd))
+    pure ⟨t, obj, d, c, e, c, e⟩
+
+/-- The typing of an application {lit}`t` of operation {lit}`k` of the signature, of sort
+{lit}`s`, to terms of the given typings, with definedness certificate {lit}`d`, typing the
+instances of axioms' sides with {lit}`patTy`. -/
+def typeOpTy (patTy : List Ty → Tree → PM Ty) (k s : ℕ) (t d : Tree) (tys : List Ty) :
+    PM Ty :=
+  if s == obj then
+    match k, tys with
+    | 0, [f] => pure ⟨t, obj, d, f.lo, f.loCert, f.lo, f.loCert⟩
+    | 1, [f] => pure ⟨t, obj, d, f.hi, f.hiCert, f.hi, f.hiCert⟩
+    | _, _ => typeOpObj k t d tys
+  else do
+    let some (some jd) := domRules[k]? | failure
+    let some (some jc) := codRules[k]? | failure
+    let (dl, dc) ← bound patTy tys k jd d
+    let (cl, cc) ← bound patTy tys k jc d
+    pure ⟨t, arr, d, dl, ← eqCert ⟨dom t, dl⟩ dc, cl, ← eqCert ⟨cod t, cl⟩ cc⟩
+
 /-- The typing of an application of operation {lit}`k` to terms of the given typings, typing
 the instances of axioms' sides with {lit}`patTy`. -/
 def typeOp (patTy : List Ty → Tree → PM Ty) (k : ℕ) (tys : List Ty) : PM Ty := do
-  let ts := tys.map Ty.term
-  let t := op k ts
   let some (as, s) := (← get).sig[k]? | failure
   guard (tys.map Ty.sort == as)
   if sig.length ≤ k then return ← typeDefined patTy (k - sig.length) s tys
-  let dc ← match dfdRules[k]? with
-    | some (some (.direct j)) => do
-      let a ← axiomAt j
-      pure (Cert.ax j ts (tys.map Ty.dfd) (← a.hyps.mapM (proveHyp patTy tys)))
-    | some (some (.strict j)) => pure (Cert.strict 0 (Cert.ax j ts (tys.map Ty.dfd) []))
-    | some (some (.rhs j)) =>
-      let q := Cert.ax j [] [] []
-      pure (Cert.trans (Cert.symm q) q)
-    | _ => failure
-  let d ← dfdCert t dc
-  let ty ← if s == obj then
-      match k, tys with
-      | 0, [f] => pure ⟨t, obj, d, f.lo, f.loCert, f.lo, f.loCert⟩
-      | 1, [f] => pure ⟨t, obj, d, f.hi, f.hiCert, f.hi, f.hiCert⟩
-      | _, _ =>
-        let c := op k (tys.map fun ty ↦ if ty.sort == obj then ty.lo else ty.term)
-        if c == t then pure ⟨t, obj, d, t, d, t, d⟩
-        else do
-          let e ← eqCert ⟨t, c⟩
-            (Cert.cong d (tys.map fun ty ↦ if ty.sort == obj then ty.loCert else ty.dfd))
-          pure ⟨t, obj, d, c, e, c, e⟩
-    else do
-      let some (some jd) := domRules[k]? | failure
-      let some (some jc) := codRules[k]? | failure
-      let (dl, dc) ← bound patTy tys k jd d
-      let (cl, cc) ← bound patTy tys k jc d
-      pure ⟨t, arr, d, dl, ← eqCert ⟨dom t, dl⟩ dc, cl, ← eqCert ⟨cod t, cl⟩ cc⟩
+  let t := op k (tys.map Ty.term)
+  let d ← dfdCert t (← typeOpDfd patTy k tys)
+  let ty ← typeOpTy patTy k s t d tys
   memoize ty
   pure ty
 
@@ -241,24 +258,28 @@ def typeStep (patTy : List Ty → Tree → PM Ty) (leaf : ℕ → PM Ty) (term :
     typeOp patTy k (← cs.mapM Prod.snd)
   | _, _ => failure
 
+/-- The canonical bound of variable {lit}`i`'s domain ({lit}`o = 0`) or codomain ({lit}`o = 1`):
+the object a hypothesis equates it with, typed by {lit}`termTy` and certified by the checker's
+oracle rule when {lit}`infer` holds, or else itself, certified by axiom {lit}`j`. -/
+def varSide (termTy : Tree → PM Ty) (infer : Bool) (i o j : ℕ) : PM (Tree × Tree) := do
+  let sc ← read
+  match sc.hyps.findIdx? (·.lhs == op o [var i]) with
+  | some h => do
+    let some q := sc.hyps[h]? | failure
+    let r ← termTy q.rhs
+    pure (r.lo, if infer then RoseTree.node Rule.objEq [op o [var i], r.lo]
+      else Cert.trans (Cert.hyp h) r.loCert)
+  | none => pure (op o [var i], Cert.ax j [var i] [Cert.refl i] [])
+
 /-- The typing of a variable of the scope. A domain or codomain that a hypothesis equates with
 an object has that object's canonical form, typed by {lit}`termTy`. -/
 def typeVar (termTy : Tree → PM Ty) (i : ℕ) : PM Ty := do
-  let sc ← read
-  match sc.ctx[i]? with
+  match (← read).ctx[i]? with
   | some obj => pure ⟨var i, obj, Cert.refl i, var i, Cert.refl i, var i, Cert.refl i⟩
   | some arr =>
     let infer := (← get).infer
-    let side (o j : ℕ) : PM (Tree × Tree) :=
-      match sc.hyps.findIdx? (·.lhs == op o [var i]) with
-      | some h => do
-        let some q := sc.hyps[h]? | failure
-        let r ← termTy q.rhs
-        pure (r.lo, if infer then RoseTree.node Rule.objEq [op o [var i], r.lo]
-          else Cert.trans (Cert.hyp h) r.loCert)
-      | none => pure (op o [var i], Cert.ax j [var i] [Cert.refl i] [])
-    let (dl, dc) ← side 0 0
-    let (cl, cc) ← side 1 1
+    let (dl, dc) ← varSide termTy infer i 0 0
+    let (cl, cc) ← varSide termTy infer i 1 1
     pure ⟨var i, arr, Cert.refl i, dl, dc, cl, cc⟩
   | _ => failure
 

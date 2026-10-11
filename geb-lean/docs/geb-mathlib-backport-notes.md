@@ -21,13 +21,17 @@
   - [14. Declaration reached upstream through a wider import closure](#14-declaration-reached-upstream-through-a-wider-import-closure)
   - [15. `Arrow.mk_eq_mk_iff` states its endpoints through `𝟭 C`](#15-arrowmk_eq_mk_iff-states-its-endpoints-through-%F0%9D%9F%AD-c)
   - [16. `isDefEq` transparency changed in v4.34](#16-isdefeq-transparency-changed-in-v434)
-  - [17. `Mathlib.Logic.IsEmpty` moved under the `Mathlib.Basic` folder](#17-mathliblogicisempty-moved-under-the-mathlibbasic-folder)
+  - [17. Mathlib modules moved to new paths](#17-mathlib-modules-moved-to-new-paths)
   - [18. `List.sum_le_card_nsmul` renamed to `List.sum_le_length_nsmul`](#18-listsum_le_card_nsmul-renamed-to-listsum_le_length_nsmul)
   - [19. `ULift.ext` takes its two points implicitly](#19-uliftext-takes-its-two-points-implicitly)
   - [20. `set_option doc.verso true in` does not scope a module docstring](#20-set_option-docverso-true-in-does-not-scope-a-module-docstring)
   - [21. `Functor.Elements` refactored into structures](#21-functorelements-refactored-into-structures)
   - [22. `PFunctor.Obj.mk` named constructor](#22-pfunctorobjmk-named-constructor)
   - [23. `Relation.EqvGen.mono` stated as an inclusion of relations](#23-relationeqvgenmono-stated-as-an-inclusion-of-relations)
+  - [24. `Decidable` restated as a structure in v4.35](#24-decidable-restated-as-a-structure-in-v435)
+  - [25. `convert` closes function-equation goals that upstream leaves open](#25-convert-closes-function-equation-goals-that-upstream-leaves-open)
+  - [26. Equation lemmas of `decPfStep` time out in v4.29](#26-equation-lemmas-of-decpfstep-time-out-in-v429)
+  - [27. A list element surfaces as `List.get` after a `Prod` match](#27-a-list-element-surfaces-as-listget-after-a-prod-match)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -39,7 +43,7 @@
 
 These notes catalogue the categories of change in
 `scripts/geb-mathlib-backport.patch`, which adapts the vendored
-`geb-mathlib` `Geb` source (mathlib `v4.35.0-rc3`) to compile under this
+`geb-mathlib` `Geb` source (mathlib `v4.35.0-rc4`) to compile under this
 repository's `v4.29.0-rc6`. When a refresh fails, check whether the new
 failure matches a category below (extend the corresponding hunk) or is
 genuinely new (decide the adaptation, add a category here).
@@ -292,7 +296,23 @@ genuinely new (decide the adaptation, add a category here).
   `isPolyBounded_timePoly` passes `p := fun m ↦ (m + 1) + (m + 1)` to
   `isPolyBounded_of_le`; in each the bound obligation on the
   applied lambda is discharged by `omega`, which treats the
-  unreduced application and its reduct as distinct atoms.
+  unreduced application and its reduct as distinct atoms. The motive
+  sites further include `redecorate_extract` in
+  `Prototypes/RoseTree/Decorated.lean` (`RoseTree.ind`, at an explicit
+  `P`); `iterate_liftR_id` in `Prototypes/LF/Metatheory/Rename.lean`,
+  `HoleRen.iterate` in `Prototypes/LF/Metatheory/HSubstRename.lean`,
+  and `numTm_replicate` in `Prototypes/LF/Topos/ProofSound.lean` (all
+  three `Nat.rec`); and `varType_append` in
+  `Prototypes/LF/Metatheory/Substitution.lean` and `hsubs_tp_fwd`,
+  `headDepth_piTele`, and `headDepth_piTele_snd` in
+  `Prototypes/LF/Topos/Telescope.lean` (all four `List.rec`;
+  `varType_append` and `headDepth_piTele_snd` in both minor premises).
+  Bound obligations on an applied index map `fun i ↦ ...`, discharged
+  by `omega`, occur in `encCtx_closed` in
+  `Prototypes/LF/Topos/Telescope.lean`, twice in `encTy_pred` in
+  `Prototypes/LF/Topos/Adequacy.lean`, and in `TmCtx.consTm`,
+  `termOf_consTm`, and `termOf_inst` in
+  `Prototypes/LF/Topos/ProofSound.lean`.
 - v4.29 symptom: the goal is `(fun w => ...) (WType.mk a f)` — the motive
   lambda is not beta-reduced at the constructor — so the opening
   `rw` reports "Did not find an occurrence of the pattern" (the rewritten
@@ -378,7 +398,8 @@ genuinely new (decide the adaptation, add a category here).
   `Node`), `Children.lean` (`ChildReg`), `Events.lean` (`Event`), and
   `Nodes.lean` (`NodeReg`), and
   `Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean`
-  (`Counters`).
+  (`Counters`), and `Prototypes/Kernel/Document.lean` (`Line`,
+  `Trivia`).
 - v4.29 symptom: the `unusedArguments` env-linter reports
   `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` (respectively
   `instReprAnn.repr argument 2 prec✝ : ℕ`,
@@ -386,7 +407,8 @@ genuinely new (decide the adaptation, add a category here).
   `instReprRep.repr argument 2 prec✝ : ℕ`, `instReprSummary.repr`,
   `instReprNState.repr`, `instReprLoc.repr`, `instReprNode.repr`,
   `instReprChildReg.repr`, `instReprEvent.repr`,
-  `instReprNodeReg.repr`, and `instReprCounters.repr`)
+  `instReprNodeReg.repr`, `instReprCounters.repr`,
+  `instReprLine.repr`, and `instReprTrivia.repr`)
   under `lake lint`; v4.29's
   `Repr` deriving handler emits a `repr` that ignores the precedence
   argument for a structure whose representation needs no
@@ -502,7 +524,12 @@ genuinely new (decide the adaptation, add a category here).
   under `Prototypes/FreeTopos/`, `Unfolding.lean`,
   `Internal/Inversion.lean`, and `Internal/Soundness.lean`, and, under
   `Prototypes/PartialHorn/`, `Completeness.lean` and
-  `Definitional.lean`. Only a
+  `Definitional.lean`; and `Prototypes/ConcreteSyntax/Decimal.lean`,
+  which upstream split from `Prototypes/ConcreteSyntax.lean`,
+  `Prototypes/FreeTopos/Internal/ObjectSubst.lean`, and, under
+  `Prototypes/LF/Topos/`, `Adequacy.lean`, `Complete.lean`,
+  `Development.lean`, `ProofCheck.lean`, `ProofSound.lean`, and
+  `Telescope.lean`. Only a
   few of them appear in
   any one build log: lake does not attempt a module whose imports
   failed.
@@ -677,7 +704,7 @@ genuinely new (decide the adaptation, add a category here).
   `eqToHom ⋯ = eqToHom ⋯` after its `erw [eqToHom_app]`. Append `rfl`
   to each, which runs at default transparency.
 
-### 17. `Mathlib.Logic.IsEmpty` moved under the `Mathlib.Basic` folder
+### 17. Mathlib modules moved to new paths
 
 - Upstream cause: mathlib pull request 39703 (2026-08-26) creates a
   `Basic` top-level folder and moves `Mathlib/Logic/IsEmpty/Defs.lean`
@@ -687,19 +714,25 @@ genuinely new (decide the adaptation, add a category here).
   only the module paths move. The same pull request moves
   `Mathlib/Logic/ExistsUnique.lean` to `Mathlib/Basic/ExistsUnique.lean`,
   and mathlib pull request 43176 (2026-08-31) moves
-  `Mathlib/Data/Rel.lean` to `Mathlib/Basic/Rel.lean`.
+  `Mathlib/Data/Rel.lean` to `Mathlib/Basic/Rel.lean`. Mathlib pull
+  request 43253 (2026-09-30) moves `Mathlib/Data/Setoid/Basic.lean` to
+  `Mathlib/Order/Setoid/Basic.lean`, leaving a deprecated module at the
+  old path.
   `Prototypes/Computability/BitTree/Scanner.lean` imports the new
   `IsEmpty` path, `Prototypes/Typechecker.lean` the new `Nontrivial`
   path, `Prototypes/FreeTopos/UniqueChoice.lean` the new `ExistsUnique`
-  path, and `Prototypes/FreeTopos/Relations.lean` the new `Rel` path.
+  path, `Prototypes/FreeTopos/Relations.lean` the new `Rel` path, and
+  `Prototypes/Typechecker.lean` the new `Setoid` path.
 - v4.29 symptom: `unknown module prefix 'Mathlib.Basic'`: the pinned
   mathlib has no `Mathlib/Basic/` directory, and the modules are
   `Mathlib.Logic.IsEmpty.Defs` (split from `Mathlib.Logic.IsEmpty`
   in mathlib pull request 35137), `Mathlib.Logic.Nontrivial.Defs`,
-  `Mathlib.Logic.ExistsUnique`, and `Mathlib.Data.Rel` there.
+  `Mathlib.Logic.ExistsUnique`, and `Mathlib.Data.Rel` there. Likewise
+  the pinned mathlib has no `Mathlib/Order/Setoid/` directory, the
+  module being `Mathlib.Data.Setoid.Basic` there.
 - Adaptation: rewrite the imports to `Mathlib.Logic.IsEmpty.Defs`,
-  `Mathlib.Logic.Nontrivial.Defs`, `Mathlib.Logic.ExistsUnique`, and
-  `Mathlib.Data.Rel`.
+  `Mathlib.Logic.Nontrivial.Defs`, `Mathlib.Logic.ExistsUnique`,
+  `Mathlib.Data.Rel`, and `Mathlib.Data.Setoid.Basic`.
 
 ### 18. `List.sum_le_card_nsmul` renamed to `List.sum_le_length_nsmul`
 
@@ -740,7 +773,10 @@ genuinely new (decide the adaptation, add a category here).
   addition, as do `Mathlib/Data/PFunctor/Presheaf/Carrier.lean`,
   `Prototypes/MType/Basic.lean`, and, under `Prototypes/FreeTopos/`,
   `Elementary.lean`, `Relations.lean`, `Represent.lean`, and
-  `Internal/Represent.lean`. Under `v4.34` the `in` form applies the
+  `Internal/Represent.lean`, and, under `Prototypes/Kernel/`,
+  `Annotation.lean`, `Document.lean`, `Eval.lean`, `Identity.lean`,
+  `Modules.lean`, `Printer.lean`, and `Strict.lean`. Under `v4.34` the
+  `in` form applies the
   option to the module docstring that follows it.
 - v4.29 symptom: `Can't add Verso-format module docs because there is
   already Markdown-format content present`, reported at the first
@@ -816,6 +852,78 @@ genuinely new (decide the adaptation, add a category here).
   endpoints implicitly. The `rintro` that discharges the hypothesis
   `?_` introduces the same two points and witness under either
   statement.
+
+### 24. `Decidable` restated as a structure in v4.35
+
+- Upstream cause: Lean core `Init/Prelude.lean` restates `Decidable`
+  from a `class inductive` with constructors `isFalse` and `isTrue` to
+  a `class` structure whose `decide` field is the Boolean, as of
+  `v4.35.0-rc1`, and defines `Nat.decEq` with `decide := beq n m`.
+  Since `==` on `ℕ` is `instBEqOfDecidableEq` in both versions,
+  `(m == n) = true` unfolds by projection to `Nat.beq m n = true` under
+  `v4.35`. `idxOf?_of_pairwise` in
+  `Prototypes/FreeTopos/Internal/Params.lean` passes a hypothesis
+  `h : (w == ws[j]) = true` to `Nat.eq_of_beq_eq_true`, whose
+  statement, `Nat.beq n m = true → n = m`, is the same in both
+  versions.
+- v4.29 symptom: `Application type mismatch: The argument h has type
+  (w == ws[j]) = true but is expected to have type
+  w.beq ws[j] = true`. Under v4.29 `Nat.decEq` is a `match` on
+  `Nat.beq n m` returning `isTrue` or `isFalse`, so no such unfolding
+  exists. Setting `backward.isDefEq.respectTransparency false`
+  (category 16) does not change this.
+- Adaptation: `beq_iff_eq.mp h`, which holds for any `LawfulBEq`
+  instance and is stated for `==` directly.
+
+### 25. `convert` closes function-equation goals that upstream leaves open
+
+- Upstream cause: `CtxRen.lift` in
+  `Prototypes/LF/Metatheory/Weakening.lean` and `CtxRenOn.lift` in
+  `Prototypes/LF/Metatheory/Strengthen.lean` follow
+  `convert this using 2` with two bullets, each proving an equation of
+  renaming functions by `funext` and arithmetic; under upstream's
+  toolchain `convert` leaves both as goals.
+- v4.29 symptom: `No goals to be solved` at the first bullet: under
+  v4.29 `convert this using 2` closes both equations itself.
+- Adaptation: delete the two bullets, keeping `convert this using 2`
+  as the last tactic.
+
+### 26. Equation lemmas of `decPfStep` time out in v4.29
+
+- Upstream cause: `Prototypes/LF/Topos/Proofs.lean` defines
+  `decPfStep` by a `match` on a label and a list of children, with
+  cases at twenty numeric constants and catch-all cases after them.
+  `Prototypes/LF/Topos/ProofSound.lean` unfolds it with
+  `simp only [..., decPfStep, ...]` in `sound_funExt`,
+  `sound_propExt`, `sound_leib`, `sound_cong`, `sound_natInd`,
+  `sound_listInd`, `sound_roseInd`, `sound_lroseInd`, and `sound_hyp`,
+  which makes `simp` generate the per-case equation lemmas
+  `decPfStep.eq_1`, ... under upstream's toolchain.
+- v4.29 symptom: `(deterministic) timeout at whnf, maximum number of
+  heartbeats (200000) has been reached`, three times at the
+  `decPfStep` argument of each of the nine `simp only` calls. The
+  generation runs under the default heartbeat limit whatever
+  `maxHeartbeats` is set to around the theorem or around the
+  definition. `decPfStep.eq_def` is generated without a timeout.
+- Adaptation: name `decPfStep.eq_def` in place of `decPfStep` in each
+  of the nine `simp only` calls; `simp` reduces the unfolded `match`
+  at the concrete label, as `ProofSound.lean` already does for the
+  constants 55 and 56 by `rfl`.
+
+### 27. A list element surfaces as `List.get` after a `Prod` match
+
+- Upstream cause: `check_cong_same` in
+  `Prototypes/LF/Topos/ProofCheck.lean` proves a `List.all` of
+  `fun (d, i) ↦ ...` over a `zipIdx` by introducing an element
+  `l.zipIdx[k]` and rewriting with `List.getElem_zipIdx` and
+  `List.getElem_map`.
+- v4.29 symptom: `Type mismatch` at the closing `exact`, the goal
+  stating the element as `l.zipIdx.get ⟨k, _⟩`, with `This simp
+  argument is unused` reported for `List.getElem_zipIdx`,
+  `List.getElem_map`, and `zero_add`. The
+  `List` instance of `GetElem` is `as.get ⟨i, h⟩` in both versions.
+- Adaptation: add `List.get_eq_getElem` to the `simp only` call,
+  restoring the `getElem` form the lemmas match.
 
 ## Updating the patch for a new upstream
 
@@ -929,8 +1037,9 @@ lists every entry. Module names are relative to
 `Geb.Prototypes.Computability` unless they begin with `Geb`.
 
 The exclusions originate in five cslib modules absent at the pinned
-revision `9a159ac` (`v4.29.0-rc6`). Lifting any of them requires
-advancing the cslib pin, which the mathlib and toolchain pins govern.
+revision `9a159ac` (`v4.29.0-rc6`) and in one mathlib module absent at
+the pinned revision `5c8398d` (2026-03-10). Lifting any of them requires
+advancing the cslib or mathlib pin, which the toolchain pin governs.
 
 - `Cslib.Computability.Machines.Turing.MultiTape.Deterministic` and
   `Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas`, which
@@ -967,6 +1076,14 @@ advancing the cslib pin, which the mathlib and toolchain pins govern.
   `PFunctor.FreeM.liftM`, `Geb.Cslib.Foundations.Data.PFunctor.Free`
   issues `compile_inductive% PFunctor.FreeM`, and
   `Geb.Prototypes.Definition.Basic` imports the module.
+- `Mathlib.CategoryTheory.Limits.Types.End`, which mathlib's history
+  records as an addition in mathlib pull request 38382 (2026-05-12).
+  It supplies the explicit end `Limits.Types.end_` in `Type`, with
+  `Limits.Types.wedge` and `Limits.Types.wedgeIsLimit`. The pinned
+  revision's only end is the `noncomputable` `Limits.end_` of
+  `Mathlib/CategoryTheory/Limits/Shapes/End.lean`, a multiequalizer
+  chosen through `HasEnd`; it is not a rename.
+  `Geb.Prototypes.PHOAS.Category` imports the module.
 
 The rules then exclude the following.
 
@@ -986,7 +1103,10 @@ The rules then exclude the following.
   through a chain; `Geb.Cslib`, whose other modules are index modules
   over its `PFunctor.Free`; and `Geb.Prototypes.Definition`, every
   non-index module of which imports `Basic`, directly or through a
-  chain.
+  chain; and `Geb.Prototypes.PHOAS`, whose `Basic` imports
+  `Geb.Cslib.Foundations.Data.PFunctor.Free`, whose `Category` imports
+  `Mathlib.CategoryTheory.Limits.Types.End`, and whose every module
+  other than `Basic` imports `Basic`, directly or through a chain.
 - Importers of an excluded module, individually. Under `BitTree`,
   `Machine` imports `TreeScanner.Machine` and `Steps` imports
   `Machine`; the `BinaryMachine` modules `BitStep`, `Carry`,
@@ -1015,7 +1135,11 @@ The rules then exclude the following.
   `Oitavem.Word`; `RoseTree.Spine` imports `RoseTree.Bits` and
   `BitTree.EliasBinary.Bound`, `RoseTree.Packed` imports
   `RoseTree.Spine`, `Kernel.Image` imports `RoseTree.Packed`, and
-  `Kernel.Command` imports `Kernel.Image`; and
+  `Kernel.Command` and `Kernel.LoadCommand` import `Kernel.Image`;
+  `FreeTopos.Tactics.Hypotheses` and `FreeTopos.Tactics.Induction`
+  import `FreeTopos.Translation`, `FreeTopos.Tactics.Search` imports
+  both, and `FreeTopos.Tactics.Trees` imports `FreeTopos.Tactics.Search`;
+  and
   `FreeTopos.TranslationLibrary`, `FreeTopos.TranslationKernel`,
   `FreeTopos.TranslationSound`, and
   `FreeTopos.TranslationSoundClassical` import, in turn, the one
@@ -1030,8 +1154,8 @@ The rules then exclude the following.
   `BitTree.EliasBinary.Need` (by `Account`) in turn.
 
 The index modules `Geb`, `Geb.Prototypes`, and, under
-`Geb.Prototypes`, `Computability`, `FreeTopos`, `Kernel`, and
-`RoseTree`, and, under `Geb.Prototypes.Computability`, `BitTree`,
+`Geb.Prototypes`, `Computability`, `FreeTopos`, `FreeTopos.Tactics`,
+`Kernel`, and `RoseTree`, and, under `Geb.Prototypes.Computability`, `BitTree`,
 `BitTree.BinaryMachine`, `BitTree.Elias`, `BitTree.EliasBinary`,
 `Kristiansen`, `Mazzanti`, `SizeBounded`, `SizeBounded.Machine`,
 `SizeBounded.Machine.Compile`, `SizeBounded.Logspace`,

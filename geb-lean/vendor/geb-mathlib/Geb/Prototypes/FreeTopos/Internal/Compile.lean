@@ -12,20 +12,28 @@ set_option doc.verso true in
 /-!
 # The compilation of the internal language to the combinators
 
-The typing of the internal language's terms and their compilation to arrows of the combinators,
-the interpretation of the typed λ-calculus in a cartesian closed category of Part I of
+The typing of the internal language's terms and their compilation to arrows of the combinators, the
+interpretation of the typed λ-calculus in a cartesian closed category of Part I of
 \[LambekScott1986\] and the compilation of the categorical abstract machine of
 \[CousineauCurienMauny1987\], in one pass. A type is an object term built by the terminal
-object, products, the initial object, coproducts, exponentials, the subobject classifier, the
-data objects and the operations of the object definitions of the constants from object variables
+object, products, the initial object, coproducts, exponentials, the subobject classifier, the data
+objects and the operations of the object definitions of the constants from object variables
 ({lit}`IsTy`), so that two types are equal when they are one term. A term is compiled in an
 environment: an object {lit}`X` and, for each variable, an arrow from {lit}`X` and the variable's
-type. A variable compiles to its arrow, a pair to the pairing, a
-component to the projection after the pair, an abstraction to the currying of its body, compiled
-over the product of {lit}`X` and the bound variable's type, an application to evaluation after the
-pairing, a primitive arrow's application to the arrow after its argument, a fold to the composite of
-the combinators' fold with the datum, and the equality of two terms to the characteristic map of the
-diagonal after their pairing. A context's terms are compiled in the environment of its projections
+type. A variable compiles to its arrow, a pair to the pairing, a component to the projection after
+the pair, an abstraction to the currying of its body, compiled over the product of {lit}`X` and the
+bound variable's type, an application to evaluation after the pairing, a primitive arrow's
+application to the arrow after its argument, and a fold of the natural numbers or a list to a fold
+of the combinators after the datum. The parameters of such a fold are the variables of the
+environment its start or its step mentions ({lit}`foldParams`); its start, and its step with its
+bound variables, are compiled over the product of the parameters' types ({lit}`foldEnvIn`), and the
+fold compiles to the combinators' fold when it has no parameters and else to the fold with the
+parameter ({name}`Geb.FreeTopos.natRecP`, {name}`Geb.FreeTopos.listRecP`) after the pairing of the
+tuple of the parameters' arrows with the datum. A rose-tree fold, whose step binds the pair of a
+label and the list of the children's values, compiles likewise, to the fold with the parameter
+({name}`Geb.FreeTopos.roseRecP`) when its step mentions variables of the environment
+({lit}`roseFold`). The equality of two terms compiles to the characteristic map of the diagonal
+after their pairing. A context's terms are compiled in the environment of its projections
 from the product of its types ({lit}`stdEnv`). A primitive arrow is an arrow of the combinators with
 the domain and codomain it names, in object parameters, which the checker's inference confirms once
 ({lit}`Prim.ok`), for every application at objects.
@@ -43,6 +51,8 @@ signature's.
 ## Main definitions
 
 * {lit}`IsTy` — the types.
+* {lit}`foldParams`, {lit}`foldEnvIn` — the parameters of a fold, and the environments its start
+  and its step are compiled in.
 * {lit}`compile` — the type and the arrow of a term in an environment.
 * {lit}`Defn`, {lit}`Definition` — a definition of the internal language, and a definition of
   either kind: of the language or of an object.
@@ -133,6 +143,64 @@ none, and the arrow itself for one. -/
 def tuple (X : Tree) : List Tree → Tree := List.rec (bang X) fun f fs p ↦ match fs with
   | [] => f
   | _ :: _ => pair p f
+
+/-- The parameters of a fold whose start is {lit}`z` and whose step {lit}`s` binds {lit}`k`
+variables, in an environment of {lit}`N` variables: the variables the start or the step
+mentions, in increasing order. -/
+def foldParams (k N : ℕ) (z s : Term) : List ℕ :=
+  (List.range N).filter fun i ↦ Term.occurs z i || Term.occurs s (i + k)
+
+/-- The number of variables of an environment whose variables of the indices {lit}`ws` are its
+entries: one more than the largest index, none for none. -/
+def selBound (ws : List ℕ) : ℕ := ws.foldr (fun i b ↦ max (i + 1) b) 0
+
+/-- The environment over {lit}`P` whose variables of the indices {lit}`ws` are the entries of
+{lit}`E` at their positions in {lit}`ws`, and each other variable below them the identity of
+{lit}`P`, which no term compiled in it mentions. -/
+def selEnv (ws : List ℕ) (P : Tree) (E : List (Tree × Tree)) : List (Tree × Tree) :=
+  (List.range (selBound ws)).map fun i ↦ ((ws.idxOf? i).bind (E[·]?)).getD (idt P, P)
+
+/-- The environment of a fold's start, for the bound types {lit}`bs` none, and of its step, for
+{lit}`bs` the types of the variables it binds, innermost first: over the product of the bound
+types and the types {lit}`Γ` of the parameters {lit}`vs`, the bound variables its innermost
+projections and each parameter the projection of its position. -/
+def foldEnv (bs : List Tree) (vs : List ℕ) (Γ : List Tree) : Tree × List (Tree × Tree) :=
+  (ctxObj (bs ++ Γ), selEnv (List.range bs.length ++ vs.map (· + bs.length)) (ctxObj (bs ++ Γ))
+    (stdEnv (bs ++ Γ)))
+
+/-- The entries of an environment at a fold's parameters, the fold's step binding {lit}`k`
+variables. -/
+def foldPs (k : ℕ) (e : List (Tree × Tree)) (z s : Term) : List (Tree × Tree) :=
+  (foldParams k e.length z s).filterMap (e[·]?)
+
+/-- The environment of a fold's start, for {lit}`bs` none, or of its step, for {lit}`bs` the
+types of the variables it binds, in an environment {lit}`e`, its step binding {lit}`k`
+variables. -/
+def foldEnvIn (bs : List Tree) (k : ℕ) (e : List (Tree × Tree)) (z s : Term) :
+    Tree × List (Tree × Tree) :=
+  foldEnv bs (foldParams k e.length z s) ((foldPs k e z s).map Prod.snd)
+
+/-- The fold of the natural numbers object at the datum {lit}`m`, from the start {lit}`z` and
+the step {lit}`s` of the parameters of the types {lit}`Γ`, at the tuple {lit}`t` of their values:
+for no parameters the fold itself, and else the fold with the parameter. -/
+def natFold (Γ : List Tree) (c z s t m : Tree) : Tree := match Γ with
+  | [] => comp (natRec z s) m
+  | _ :: _ => comp (natRecP (ctxObj Γ) c z s) (pair t m)
+
+/-- The fold of the list object of {lit}`a` at the datum {lit}`m`, from the start {lit}`z` and
+the step {lit}`s` of the parameters of the types {lit}`Γ`, at the tuple {lit}`t` of their values:
+for no parameters the fold itself, and else the fold with the parameter. -/
+def listFold (Γ : List Tree) (a c z s t m : Tree) : Tree := match Γ with
+  | [] => comp (listRec a z s) m
+  | _ :: _ => comp (listRecP (ctxObj Γ) a c z s) (pair t m)
+
+/-- The fold, by its fold {lit}`F` without a parameter, of the rose-tree object {lit}`t` over the
+labels {lit}`a` at the datum {lit}`m`, from the step {lit}`s` of the parameters of the types
+{lit}`Γ`, at the tuple {lit}`u` of their values: for no parameters the fold itself, and else the
+fold with the parameter. -/
+def roseFold (F : Tree → Tree) (Γ : List Tree) (a t c s u m : Tree) : Tree := match Γ with
+  | [] => comp (F s) m
+  | _ :: _ => comp (roseRecP F (ctxObj Γ) a t c s) (pair u m)
 
 /-- A definition of the internal language: the number of its object parameters, the types of
 its term parameters, the last first, the type of its value, and its body. -/
@@ -261,23 +329,33 @@ def compileStep (G : Globals) (n : ℕ) (l : Label)
       if θ.length = p.arity ∧ θ.all (IsTy G n) ∧ d = PartialHorn.subst θ p.dom then
         pure (comp (PartialHorn.subst θ p.arrow) g, PartialHorn.subst θ p.cod)
       else none
-    | .natRec, [(_, z), (_, s), (_, m)] => do
-      let (z', c) ← z one []
-      let (s', c') ← s c [(idt c, c)]
+    | .natRec, [(z₀, z), (s₀, s), (_, m)] => do
+      let ps := foldPs 1 e z₀ s₀
+      let (z', c) ← z (foldEnvIn [] 1 e z₀ s₀).1 (foldEnvIn [] 1 e z₀ s₀).2
+      let (s', c') ← s (foldEnvIn [c] 1 e z₀ s₀).1 (foldEnvIn [c] 1 e z₀ s₀).2
       let (m', t) ← m X e
-      if c' = c ∧ t = nat then pure (comp (natRec z' s') m', c) else none
-    | .listRec, [(_, z), (_, s), (_, m)] => do
+      if c' = c ∧ t = nat then
+        pure (natFold (ps.map Prod.snd) c z' s' (tuple X (ps.map Prod.fst)) m', c)
+      else none
+    | .listRec, [(z₀, z), (s₀, s), (_, m)] => do
       let (m', t) ← m X e
       let a ← listPart t
-      let (z', c) ← z one []
-      let (s', c') ← s (prod a c) [(snd a c, c), (fst a c, a)]
-      if c' = c then pure (comp (listRec a z' s') m', c) else none
-    | .roseRec c, [(_, s), (_, m)] =>
+      let ps := foldPs 2 e z₀ s₀
+      let (z', c) ← z (foldEnvIn [] 2 e z₀ s₀).1 (foldEnvIn [] 2 e z₀ s₀).2
+      let (s', c') ← s (foldEnvIn [c, a] 2 e z₀ s₀).1 (foldEnvIn [c, a] 2 e z₀ s₀).2
+      if c' = c then
+        pure (listFold (ps.map Prod.snd) a c z' s' (tuple X (ps.map Prod.fst)) m', c)
+      else none
+    | .roseRec c, [(s₀, s), (_, m)] =>
       if IsTy G n c then do
         let (m', t) ← m X e
         let (a, fold) ← roseParts t
-        let (s', c') ← s (prod a (list c)) [(idt (prod a (list c)), prod a (list c))]
-        if c' = c then pure (comp (fold s') m', c) else none
+        let ps := foldPs 1 e Term.star s₀
+        let (s', c') ← s (foldEnvIn [prod a (list c)] 1 e Term.star s₀).1
+          (foldEnvIn [prod a (list c)] 1 e Term.star s₀).2
+        if c' = c then
+          pure (roseFold fold (ps.map Prod.snd) a t c s' (tuple X (ps.map Prod.fst)) m', c)
+        else none
       else none
     | .eq, [(_, t), (_, u)] => do
       let (f, a) ← t X e

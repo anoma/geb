@@ -12,7 +12,7 @@ set_option doc.verso true in
 # The laws of renaming and substitution
 
 Renaming and substitution of the internal language's terms, each lifted under a binder and
-leaving the start and the step of a fold in their own contexts, obey the laws of a monad of terms
+leaving the step of a rose-tree fold in its own context, obey the laws of a monad of terms
 over variables: well-scoped λ-terms form a relative monad on the finite sets
 (\[AltenkirchChapmanUustalu2015\], Example 2.1), and the terms here, over all de Bruijn
 indices, obey the same laws. Renaming is a functor: it preserves composites
@@ -65,14 +65,16 @@ namespace Geb.FreeTopos.Internal.Term
 
 open PartialHorn (Tree)
 
-/-- A label at a number of children whose node renames, and substitutes in, each child in the
-node's own context. -/
+/-- A label at a number of children whose node renames, substitutes in, and tests the occurrence
+of a variable in, each child in the node's own context. -/
 def Plain (l : Label) (n : ℕ) : Prop :=
   ∀ cs : List Term, cs.length = n →
     (∀ (F : Term → (ℕ → ℕ) → Term) (f : ℕ → ℕ),
       renameStep l (cs.map fun c ↦ (c, F c)) f = RoseTree.node l (cs.map fun c ↦ F c f)) ∧
-    ∀ (F : Term → (ℕ → Term) → Term) (σ : ℕ → Term),
-      substStep l (cs.map fun c ↦ (c, F c)) σ = RoseTree.node l (cs.map fun c ↦ F c σ)
+    (∀ (F : Term → (ℕ → Term) → Term) (σ : ℕ → Term),
+      substStep l (cs.map fun c ↦ (c, F c)) σ = RoseTree.node l (cs.map fun c ↦ F c σ)) ∧
+    ∀ (F : Term → ℕ → Bool) (d : ℕ),
+      occursStep l (cs.map fun c ↦ (c, F c)) d = cs.any fun c ↦ F c d
 
 /-- Every node is a variable, an abstraction of one body, a fold of a natural number or of a list
 with its start, its step and its argument, a fold of a rose tree with its step and its argument,
@@ -84,8 +86,10 @@ theorem shape (l : Label) (cs : List Term) :
   have plain : ∀ {l : Label} {n : ℕ}, (∀ cs : List Term, cs.length = n →
       (∀ (F : Term → (ℕ → ℕ) → Term) (f : ℕ → ℕ),
         renameStep l (cs.map fun c ↦ (c, F c)) f = RoseTree.node l (cs.map fun c ↦ F c f)) ∧
-      ∀ (F : Term → (ℕ → Term) → Term) (σ : ℕ → Term),
-        substStep l (cs.map fun c ↦ (c, F c)) σ = RoseTree.node l (cs.map fun c ↦ F c σ)) →
+      (∀ (F : Term → (ℕ → Term) → Term) (σ : ℕ → Term),
+        substStep l (cs.map fun c ↦ (c, F c)) σ = RoseTree.node l (cs.map fun c ↦ F c σ)) ∧
+      ∀ (F : Term → ℕ → Bool) (d : ℕ),
+        occursStep l (cs.map fun c ↦ (c, F c)) d = cs.any fun c ↦ F c d) →
       Plain l n := id
   cases l with
   | var i => exact .inl ⟨i, rfl⟩
@@ -99,10 +103,11 @@ theorem shape (l : Label) (cs : List Term) :
       | refine .inr (.inr (.inr (.inr (plain fun cs' h ↦ ?_))))
         rcases cs' with _ | ⟨d₁, _ | ⟨d₂, _ | ⟨d₃, _ | ⟨d₄, cs'⟩⟩⟩⟩
         all_goals first
-          | exact ⟨fun _ _ ↦ rfl, fun _ _ ↦ rfl⟩
+          | exact ⟨fun _ _ ↦ rfl, fun _ _ ↦ rfl, fun _ _ ↦ rfl⟩
           | (exfalso; simp only [List.length_cons, List.length_nil] at h; omega)
-          | (constructor <;> intros <;>
-              simp only [renameStep, substStep, List.map_cons, List.map_map, Function.comp_def])
+          | (refine ⟨?_, ?_, ?_⟩ <;> intros <;>
+              simp only [renameStep, substStep, occursStep, List.map_cons, List.map_map,
+                Function.comp_def, List.any_cons, List.any_map])
 
 /-- A plain node renames each child. -/
 theorem rename_plain {l : Label} {n : ℕ} (hp : Plain l n) {cs : List Term} (hl : cs.length = n)
@@ -114,7 +119,7 @@ theorem rename_plain {l : Label} {n : ℕ} (hp : Plain l n) {cs : List Term} (hl
 theorem subst_plain {l : Label} {n : ℕ} (hp : Plain l n) {cs : List Term} (hl : cs.length = n)
     (σ : ℕ → Term) : subst (RoseTree.node l cs) σ = RoseTree.node l (cs.map fun c ↦ subst c σ) := by
   rw [subst_node]
-  exact (hp cs hl).2 _ σ
+  exact (hp cs hl).2.1 _ σ
 
 /-- Whether a term's variables are leaves, as a term that compiles has them. -/
 def VarLeaves : Term → Bool :=
@@ -131,43 +136,107 @@ theorem varLeaves_node (l : Label) (cs : List Term) :
 theorem rename_rename :
     ∀ (t : Term) (f g h : ℕ → ℕ), (∀ i, g (f i) = h i) → rename (rename t f) g = rename t h :=
   RoseTree.ind fun l cs ih f g h hfg ↦ by
-    have hlift : ∀ i, liftR g (liftR f i) = liftR h i := fun i ↦ by
-      rcases i with _ | j
-      · rfl
-      · simp [liftR, hfg j]
+    have lift : ∀ {f g h : ℕ → ℕ}, (∀ i, g (f i) = h i) → ∀ i, liftR g (liftR f i) = liftR h i :=
+      fun hfg i ↦ by
+        rcases i with _ | j
+        · rfl
+        · simp [liftR, hfg j]
+    have hlift := lift hfg
     rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
       hp
     · simp [rename_node, renameStep, var, hfg i]
     · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
       rw [ih t (by simp) _ _ _ hlift]
-    · rcases hl with rfl | rfl <;>
+    · rcases hl with rfl | rfl
       · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
-        rw [ih m (by simp) f g h hfg]
+        rw [ih z (by simp) f g h hfg, ih s (by simp) _ _ _ hlift, ih m (by simp) f g h hfg]
+      · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
+        rw [ih z (by simp) f g h hfg, ih s (by simp) _ _ _ (lift hlift), ih m (by simp) f g h hfg]
     · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
-      rw [ih m (by simp) f g h hfg]
+      rw [ih s (by simp) _ _ _ hlift, ih m (by simp) f g h hfg]
     · rw [rename_plain hp rfl, rename_plain hp (by simp), rename_plain hp rfl, List.map_map]
       exact congrArg _ (List.map_congr_left fun c hc ↦ ih c hc f g h hfg)
+
+/-- A plain node tests the occurrence of a variable in each child. -/
+theorem occurs_plain {l : Label} {n : ℕ} (hp : Plain l n) {cs : List Term} (hl : cs.length = n)
+    (d : ℕ) : occurs (RoseTree.node l cs) d = cs.any fun c ↦ occurs c d := by
+  rw [occurs_node]
+  exact (hp cs hl).2.2 _ d
+
+/-- A property holds at a variable a lifted renaming takes to a successor exactly when it holds at
+the successor of a variable the renaming takes to the predecessor. -/
+theorem exists_liftR (Q : ℕ → Prop) (f : ℕ → ℕ) (j : ℕ) :
+    (∃ i, Q i ∧ liftR f i = j + 1) ↔ ∃ i, Q (i + 1) ∧ f i = j := by
+  constructor
+  · rintro ⟨_ | i, hq, h⟩
+    · exact (Nat.succ_ne_zero j h.symm).elim
+    · exact ⟨i, hq, Nat.succ.inj h⟩
+  · rintro ⟨i, hq, rfl⟩
+    exact ⟨i + 1, hq, rfl⟩
+
+/-- A variable occurs in a renamed term exactly when it is the renaming of one that occurs in the
+term. -/
+theorem occurs_rename :
+    ∀ (t : Term) (f : ℕ → ℕ) (j : ℕ), occurs (rename t f) j = true ↔
+      ∃ i, occurs t i = true ∧ f i = j :=
+  RoseTree.ind fun l cs ih f j ↦ by
+    rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
+      hp
+    · simp only [rename_node, renameStep, var, occurs_node, occursStep, beq_iff_eq]
+      exact ⟨fun h ↦ ⟨i, rfl, h⟩, fun ⟨_, h, h'⟩ ↦ h ▸ h'⟩
+    · simp only [rename_node, renameStep, occurs_node, occursStep, List.map_cons, List.map_nil]
+      exact (ih t (by simp) _ (j + 1)).trans (exists_liftR (fun i ↦ occurs t i = true) f j)
+    · have hz := ih z (by simp) f j
+      have hm := ih m (by simp) f j
+      rcases hl with rfl | rfl
+      · have hs := (ih s (by simp) _ (j + 1)).trans (exists_liftR (fun i ↦ occurs s i = true) f j)
+        simp only [rename_node, renameStep, occurs_node, occursStep, List.map_cons, List.map_nil,
+          Bool.or_eq_true, hz, hs, hm, or_and_right, exists_or]
+      · have hs := (ih s (by simp) _ (j + 2)).trans
+          ((exists_liftR (fun i ↦ occurs s i = true) _ (j + 1)).trans
+            (exists_liftR (fun i ↦ occurs s (i + 1) = true) f j))
+        simp only [rename_node, renameStep, occurs_node, occursStep, List.map_cons, List.map_nil,
+          Bool.or_eq_true, hz, hs, hm, or_and_right, exists_or]
+    · have hs := (ih s (by simp) _ (j + 1)).trans (exists_liftR (fun i ↦ occurs s i = true) f j)
+      have hm := ih m (by simp) f j
+      simp only [rename_node, renameStep, occurs_node, occursStep, List.map_cons, List.map_nil,
+        Bool.or_eq_true, hs, hm, or_and_right, exists_or]
+    · rw [rename_plain hp rfl, occurs_plain hp (by simp), List.any_map]
+      simp only [List.any_eq_true, Function.comp_apply]
+      constructor
+      · rintro ⟨c, hc, h⟩
+        obtain ⟨i, hi, rfl⟩ := (ih c hc f j).mp h
+        exact ⟨i, by rw [occurs_plain hp rfl, List.any_eq_true]; exact ⟨c, hc, hi⟩, rfl⟩
+      · rintro ⟨i, hi, rfl⟩
+        rw [occurs_plain hp rfl, List.any_eq_true] at hi
+        obtain ⟨c, hc, hi⟩ := hi
+        exact ⟨c, hc, (ih c hc f _).mpr ⟨i, hi, rfl⟩⟩
 
 /-- Renaming by a map that fixes every index leaves a term whose variables are leaves. -/
 theorem rename_id :
     ∀ t : Term, VarLeaves t = true → ∀ f : ℕ → ℕ, (∀ i, f i = i) → rename t f = t :=
   RoseTree.ind fun l cs ih ht f hf ↦ by
     obtain ⟨hv, hcs⟩ := (varLeaves_node l cs).mp ht
-    have hlift : ∀ i, liftR f i = i := fun i ↦ by
+    have lift : ∀ {f : ℕ → ℕ}, (∀ i, f i = i) → ∀ i, liftR f i = i := fun hf i ↦ by
       rcases i with _ | j
       · rfl
       · simp [liftR, hf j]
+    have hlift := lift hf
     rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
       hp
     · obtain rfl := hv i rfl
       simp [rename_node, renameStep, var, hf i]
     · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
       rw [ih t (by simp) (hcs t (by simp)) _ hlift]
-    · rcases hl with rfl | rfl <;>
+    · rcases hl with rfl | rfl
       · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
-        rw [ih m (by simp) (hcs m (by simp)) f hf]
+        rw [ih z (by simp) (hcs z (by simp)) f hf, ih s (by simp) (hcs s (by simp)) _ hlift,
+          ih m (by simp) (hcs m (by simp)) f hf]
+      · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
+        rw [ih z (by simp) (hcs z (by simp)) f hf, ih s (by simp) (hcs s (by simp)) _ (lift hlift),
+          ih m (by simp) (hcs m (by simp)) f hf]
     · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
-      rw [ih m (by simp) (hcs m (by simp)) f hf]
+      rw [ih s (by simp) (hcs s (by simp)) _ hlift, ih m (by simp) (hcs m (by simp)) f hf]
     · rw [rename_plain hp rfl]
       exact congrArg _ ((List.map_congr_left fun c hc ↦ ih c hc (hcs c hc) f hf).trans
         (List.map_id cs))
@@ -188,45 +257,187 @@ theorem subst_id :
     ∀ t : Term, VarLeaves t = true → ∀ σ : ℕ → Term, (∀ i, σ i = var i) → subst t σ = t :=
   RoseTree.ind fun l cs ih ht σ hσ ↦ by
     obtain ⟨hv, hcs⟩ := (varLeaves_node l cs).mp ht
-    have hlift : ∀ i, liftS σ i = var i := fun i ↦ by
+    have lift : ∀ {σ : ℕ → Term}, (∀ i, σ i = var i) → ∀ i, liftS σ i = var i := fun hσ i ↦ by
       rcases i with _ | j
       · rfl
       · simp [liftS, hσ j, var, rename_node, renameStep]
+    have hlift := lift hσ
     rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
       hp
     · obtain rfl := hv i rfl
       exact (subst_var i σ).trans (hσ i)
     · simp only [subst_node, substStep, List.map_cons, List.map_nil]
       rw [ih t (by simp) (hcs t (by simp)) _ hlift]
-    · rcases hl with rfl | rfl <;>
+    · rcases hl with rfl | rfl
       · simp only [subst_node, substStep, List.map_cons, List.map_nil]
-        rw [ih m (by simp) (hcs m (by simp)) σ hσ]
+        rw [ih z (by simp) (hcs z (by simp)) σ hσ, ih s (by simp) (hcs s (by simp)) _ hlift,
+          ih m (by simp) (hcs m (by simp)) σ hσ]
+      · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+        rw [ih z (by simp) (hcs z (by simp)) σ hσ, ih s (by simp) (hcs s (by simp)) _ (lift hlift),
+          ih m (by simp) (hcs m (by simp)) σ hσ]
     · simp only [subst_node, substStep, List.map_cons, List.map_nil]
-      rw [ih m (by simp) (hcs m (by simp)) σ hσ]
+      rw [ih s (by simp) (hcs s (by simp)) _ hlift, ih m (by simp) (hcs m (by simp)) σ hσ]
     · rw [subst_plain hp rfl]
       exact congrArg _ ((List.map_congr_left fun c hc ↦ ih c hc (hcs c hc) σ hσ).trans
         (List.map_id cs))
+
+/-- A node other than a variable whose children's variables are leaves has its variables leaves. -/
+theorem varLeaves_of_children {l : Label} {cs : List Term} (hl : ∀ i, l ≠ .var i)
+    (hc : ∀ c ∈ cs, VarLeaves c = true) : VarLeaves (RoseTree.node l cs) = true :=
+  (varLeaves_node l cs).mpr ⟨fun i h ↦ (hl i h).elim, hc⟩
+
+/-- A variable is a leaf. -/
+theorem varLeaves_var (i : ℕ) : VarLeaves (var i) = true :=
+  (varLeaves_node _ _).mpr ⟨fun _ _ ↦ rfl, by simp⟩
+
+/-- Renaming keeps the variables of a term leaves. -/
+theorem varLeaves_rename :
+    ∀ t : Term, VarLeaves t = true → ∀ f : ℕ → ℕ, VarLeaves (rename t f) = true :=
+  RoseTree.ind fun l cs ih ht f ↦ by
+    obtain ⟨hv, hcs⟩ := (varLeaves_node l cs).mp ht
+    have ch : ∀ c ∈ cs, ∀ f, VarLeaves (rename c f) = true := fun c hc f ↦ ih c hc (hcs c hc) f
+    rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
+      hp
+    · obtain rfl := hv i rfl
+      rw [rename_node]
+      exact varLeaves_var _
+    · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
+      exact varLeaves_of_children (fun _ h ↦ by cases h) (by simpa using ch t (by simp) _)
+    · rcases hl with rfl | rfl
+      · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
+        exact varLeaves_of_children (fun _ h ↦ by cases h)
+          (by simpa using ⟨ch z (by simp) _, ch s (by simp) _, ch m (by simp) _⟩)
+      · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
+        exact varLeaves_of_children (fun _ h ↦ by cases h)
+          (by simpa using ⟨ch z (by simp) _, ch s (by simp) _, ch m (by simp) _⟩)
+    · simp only [rename_node, renameStep, List.map_cons, List.map_nil]
+      exact varLeaves_of_children (fun _ h ↦ by cases h)
+        (by simpa using ⟨ch s (by simp) _, ch m (by simp) _⟩)
+    · rw [rename_plain hp rfl]
+      refine (varLeaves_node _ _).mpr ⟨fun i hi ↦ by rw [hv i hi]; rfl, fun x hx ↦ ?_⟩
+      obtain ⟨c, hc, rfl⟩ := List.mem_map.mp hx
+      exact ch c hc f
+
+/-- Substitution of terms whose variables are leaves keeps the variables of a term leaves. -/
+theorem varLeaves_subst :
+    ∀ t : Term, VarLeaves t = true → ∀ σ : ℕ → Term, (∀ i, VarLeaves (σ i) = true) →
+      VarLeaves (subst t σ) = true :=
+  RoseTree.ind fun l cs ih ht σ hσ ↦ by
+    obtain ⟨hv, hcs⟩ := (varLeaves_node l cs).mp ht
+    have ch : ∀ c ∈ cs, ∀ σ : ℕ → Term, (∀ i, VarLeaves (σ i) = true) →
+        VarLeaves (subst c σ) = true := fun c hc σ hσ ↦ ih c hc (hcs c hc) σ hσ
+    have lift : ∀ {σ : ℕ → Term}, (∀ i, VarLeaves (σ i) = true) →
+        ∀ i, VarLeaves (liftS σ i) = true := fun hσ i ↦ by
+      rcases i with _ | i
+      · exact varLeaves_var 0
+      · exact varLeaves_rename _ (hσ i) _
+    rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
+      hp
+    · obtain rfl := hv i rfl
+      rw [subst_var_node]
+      exact hσ i
+    · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+      exact varLeaves_of_children (fun _ h ↦ by cases h) (by simpa using ch t (by simp) _ (lift hσ))
+    · rcases hl with rfl | rfl
+      · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+        exact varLeaves_of_children (fun _ h ↦ by cases h) (by simpa using
+          ⟨ch z (by simp) _ hσ, ch s (by simp) _ (lift hσ), ch m (by simp) _ hσ⟩)
+      · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+        exact varLeaves_of_children (fun _ h ↦ by cases h) (by simpa using
+          ⟨ch z (by simp) _ hσ, ch s (by simp) _ (lift (lift hσ)), ch m (by simp) _ hσ⟩)
+    · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+      exact varLeaves_of_children (fun _ h ↦ by cases h)
+        (by simpa using ⟨ch s (by simp) _ (lift hσ), ch m (by simp) _ hσ⟩)
+    · rw [subst_plain hp rfl]
+      refine (varLeaves_node _ _).mpr ⟨fun i hi ↦ by rw [hv i hi]; rfl, fun x hx ↦ ?_⟩
+      obtain ⟨c, hc, rfl⟩ := List.mem_map.mp hx
+      exact ch c hc σ hσ
+
+/-- The substitution of no objects leaves a label in place. -/
+theorem _root_.Geb.FreeTopos.Internal.Label.osubst_nil (l : Label) : l.osubst [] = l := by
+  have h : PartialHorn.subst [] = id := funext PartialHorn.subst_nil
+  cases l <;> simp only [Label.osubst, h, List.map_id, id]
+
+/-- The substitution of no objects leaves a term in place. -/
+theorem _root_.Geb.FreeTopos.Internal.Term.osubst_nil : ∀ t : Term, Term.osubst [] t = t :=
+  RoseTree.ind fun l cs ih ↦ by
+    rw [Term.osubst_node, Label.osubst_nil]
+    exact congrArg _ ((List.map_congr_left ih).trans (List.map_id cs))
+
+/-- Substitutions that agree at the variables occurring in a term substitute in it alike. -/
+theorem subst_congr :
+    ∀ (t : Term) (σ τ : ℕ → Term), (∀ i, occurs t i = true → σ i = τ i) → subst t σ = subst t τ :=
+  RoseTree.ind fun l cs ih σ τ hστ ↦ by
+    have lift : ∀ {t : Term} {d : ℕ} {σ τ : ℕ → Term},
+        (∀ i, occurs t (i + 1 + d) = true → σ i = τ i) →
+        ∀ i, occurs t (i + d) = true → liftS σ i = liftS τ i := fun h i hi ↦ by
+      rcases i with _ | j
+      · rfl
+      · simp only [liftS, h j hi]
+    have at_ : ∀ i, occursStep l (cs.map fun c ↦ (c, occurs c)) i = true → σ i = τ i :=
+      fun i hi ↦ hστ i (by rw [occurs_node]; exact hi)
+    have or₂ : ∀ {a b : Bool}, a = true ∨ b = true → (a || b) = true := fun h ↦ by
+      rcases h with rfl | rfl
+      · exact Bool.true_or _
+      · exact Bool.or_true _
+    have or₃ : ∀ {a b c : Bool}, a = true ∨ b = true ∨ c = true → (a || b || c) = true :=
+      fun h ↦ by
+        rcases h with h | h
+        · exact or₂ (.inl (or₂ (.inl h)))
+        · rcases h with h | h
+          · exact or₂ (.inl (or₂ (.inr h)))
+          · exact or₂ (.inr h)
+    rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
+      hp
+    · rw [subst_var_node, subst_var_node]
+      exact at_ i (beq_self_eq_true i)
+    · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+      rw [ih t List.mem_cons_self _ _ (lift (t := t) (d := 0) fun i hi ↦ at_ i hi)]
+    · rcases hl with rfl | rfl
+      · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+        rw [ih z List.mem_cons_self σ τ fun i hi ↦ at_ i (or₃ (.inl hi)),
+          ih s (List.mem_cons_of_mem _ List.mem_cons_self) _ _
+            (lift (t := s) (d := 0) fun i hi ↦ at_ i (or₃ (.inr (.inl hi)))),
+          ih m (List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self)) σ τ
+            fun i hi ↦ at_ i (or₃ (.inr (.inr hi)))]
+      · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+        rw [ih z List.mem_cons_self σ τ fun i hi ↦ at_ i (or₃ (.inl hi)),
+          ih s (List.mem_cons_of_mem _ List.mem_cons_self) _ _ (lift (t := s) (d := 0)
+            (lift (t := s) (d := 1) fun i hi ↦ at_ i (or₃ (.inr (.inl hi))))),
+          ih m (List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self)) σ τ
+            fun i hi ↦ at_ i (or₃ (.inr (.inr hi)))]
+    · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+      rw [ih s List.mem_cons_self _ _
+          (lift (t := s) (d := 0) fun i hi ↦ at_ i (or₂ (.inl hi))),
+        ih m (List.mem_cons_of_mem _ List.mem_cons_self) σ τ fun i hi ↦ at_ i (or₂ (.inr hi))]
+    · rw [subst_plain hp rfl, subst_plain hp rfl]
+      exact congrArg _ (List.map_congr_left fun c hc ↦ ih c hc σ τ fun i hi ↦
+        hστ i (by rw [occurs_plain hp rfl]; exact List.any_eq_true.mpr ⟨c, hc, hi⟩))
 
 /-- Substitution after a renaming is substitution of the renamed indices' terms. -/
 theorem subst_rename :
     ∀ (t : Term) (f : ℕ → ℕ) (σ τ : ℕ → Term), (∀ i, σ (f i) = τ i) →
       subst (rename t f) σ = subst t τ :=
   RoseTree.ind fun l cs ih f σ τ hστ ↦ by
-    have hlift : ∀ i, liftS σ (liftR f i) = liftS τ i := fun i ↦ by
+    have lift : ∀ {f : ℕ → ℕ} {σ τ : ℕ → Term}, (∀ i, σ (f i) = τ i) →
+        ∀ i, liftS σ (liftR f i) = liftS τ i := fun hστ i ↦ by
       rcases i with _ | j
       · rfl
       · simp [liftR, liftS, hστ j]
+    have hlift := lift hστ
     rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
       hp
     · simp only [rename_node, renameStep]
       exact (subst_var (f i) σ).trans ((hστ i).trans (subst_var_node i cs τ).symm)
     · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
       rw [ih t (by simp) _ _ _ hlift]
-    · rcases hl with rfl | rfl <;>
+    · rcases hl with rfl | rfl
       · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
-        rw [ih m (by simp) f σ τ hστ]
+        rw [ih z (by simp) f σ τ hστ, ih s (by simp) _ _ _ hlift, ih m (by simp) f σ τ hστ]
+      · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
+        rw [ih z (by simp) f σ τ hστ, ih s (by simp) _ _ _ (lift hlift), ih m (by simp) f σ τ hστ]
     · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
-      rw [ih m (by simp) f σ τ hστ]
+      rw [ih s (by simp) _ _ _ hlift, ih m (by simp) f σ τ hστ]
     · rw [rename_plain hp rfl, subst_plain hp (by simp), subst_plain hp rfl, List.map_map]
       exact congrArg _ (List.map_congr_left fun c hc ↦ ih c hc f σ τ hστ)
 
@@ -235,23 +446,27 @@ theorem rename_subst :
     ∀ (t : Term) (σ : ℕ → Term) (f : ℕ → ℕ) (τ : ℕ → Term), (∀ i, rename (σ i) f = τ i) →
       rename (subst t σ) f = subst t τ :=
   RoseTree.ind fun l cs ih σ f τ hστ ↦ by
-    have hlift : ∀ i, rename (liftS σ i) (liftR f) = liftS τ i := fun i ↦ by
+    have lift : ∀ {σ : ℕ → Term} {f : ℕ → ℕ} {τ : ℕ → Term}, (∀ i, rename (σ i) f = τ i) →
+        ∀ i, rename (liftS σ i) (liftR f) = liftS τ i := fun {σ f τ} hστ i ↦ by
       rcases i with _ | j
       · simp [liftS, liftR, var, rename_node, renameStep]
       · change rename (rename (σ j) Nat.succ) (liftR f) = rename (τ j) Nat.succ
         rw [← hστ j, rename_rename (σ j) f Nat.succ (fun k ↦ f k + 1) fun _ ↦ rfl]
         exact rename_rename _ _ _ _ fun _ ↦ rfl
+    have hlift := lift hστ
     rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
       hp
     · rw [subst_var_node, subst_var_node]
       exact hστ i
     · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
       rw [ih t (by simp) _ _ _ hlift]
-    · rcases hl with rfl | rfl <;>
+    · rcases hl with rfl | rfl
       · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
-        rw [ih m (by simp) σ f τ hστ]
+        rw [ih z (by simp) σ f τ hστ, ih s (by simp) _ _ _ hlift, ih m (by simp) σ f τ hστ]
+      · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
+        rw [ih z (by simp) σ f τ hστ, ih s (by simp) _ _ _ (lift hlift), ih m (by simp) σ f τ hστ]
     · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
-      rw [ih m (by simp) σ f τ hστ]
+      rw [ih s (by simp) _ _ _ hlift, ih m (by simp) σ f τ hστ]
     · rw [subst_plain hp rfl, rename_plain hp (by simp), subst_plain hp rfl, List.map_map]
       exact congrArg _ (List.map_congr_left fun c hc ↦ ih c hc σ f τ hστ)
 
@@ -261,24 +476,28 @@ theorem subst_subst :
     ∀ (t : Term) (σ τ ρ : ℕ → Term), (∀ i, subst (σ i) τ = ρ i) →
       subst (subst t σ) τ = subst t ρ :=
   RoseTree.ind fun l cs ih σ τ ρ hρ ↦ by
-    have hlift : ∀ i, subst (liftS σ i) (liftS τ) = liftS ρ i := fun i ↦ by
+    have lift : ∀ {σ τ ρ : ℕ → Term}, (∀ i, subst (σ i) τ = ρ i) →
+        ∀ i, subst (liftS σ i) (liftS τ) = liftS ρ i := fun {σ τ ρ} hρ i ↦ by
       rcases i with _ | j
       · exact subst_var 0 _
       · change subst (rename (σ j) Nat.succ) (liftS τ) = rename (ρ j) Nat.succ
         rw [subst_rename (σ j) Nat.succ (liftS τ) (fun k ↦ rename (τ k) Nat.succ) fun _ ↦ rfl,
           ← hρ j]
         exact (rename_subst (σ j) τ Nat.succ _ fun _ ↦ rfl).symm
+    have hlift := lift hρ
     rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
       hp
     · rw [subst_var_node, subst_var_node]
       exact hρ i
     · simp only [subst_node, substStep, List.map_cons, List.map_nil]
       rw [ih t (by simp) _ _ _ hlift]
-    · rcases hl with rfl | rfl <;>
+    · rcases hl with rfl | rfl
       · simp only [subst_node, substStep, List.map_cons, List.map_nil]
-        rw [ih m (by simp) σ τ ρ hρ]
+        rw [ih z (by simp) σ τ ρ hρ, ih s (by simp) _ _ _ hlift, ih m (by simp) σ τ ρ hρ]
+      · simp only [subst_node, substStep, List.map_cons, List.map_nil]
+        rw [ih z (by simp) σ τ ρ hρ, ih s (by simp) _ _ _ (lift hlift), ih m (by simp) σ τ ρ hρ]
     · simp only [subst_node, substStep, List.map_cons, List.map_nil]
-      rw [ih m (by simp) σ τ ρ hρ]
+      rw [ih s (by simp) _ _ _ hlift, ih m (by simp) σ τ ρ hρ]
     · rw [subst_plain hp rfl, subst_plain hp (by simp), subst_plain hp rfl, List.map_map]
       exact congrArg _ (List.map_congr_left fun c hc ↦ ih c hc σ τ ρ hρ)
 
@@ -286,21 +505,25 @@ theorem subst_subst :
 theorem rename_eq_subst :
     ∀ (t : Term) (f : ℕ → ℕ) (σ : ℕ → Term), (∀ i, var (f i) = σ i) → rename t f = subst t σ :=
   RoseTree.ind fun l cs ih f σ hσ ↦ by
-    have hlift : ∀ i, var (liftR f i) = liftS σ i := fun i ↦ by
+    have lift : ∀ {f : ℕ → ℕ} {σ : ℕ → Term}, (∀ i, var (f i) = σ i) →
+        ∀ i, var (liftR f i) = liftS σ i := fun hσ i ↦ by
       rcases i with _ | j
       · rfl
       · simp [liftR, liftS, ← hσ j, var, rename_node, renameStep]
+    have hlift := lift hσ
     rcases shape l cs with ⟨i, rfl⟩ | ⟨a, t, rfl, rfl⟩ | ⟨z, s, m, hl, rfl⟩ | ⟨c, s, m, rfl, rfl⟩ |
       hp
     · rw [subst_var_node, rename_node]
       exact hσ i
     · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
       rw [ih t (by simp) _ _ hlift]
-    · rcases hl with rfl | rfl <;>
+    · rcases hl with rfl | rfl
       · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
-        rw [ih m (by simp) f σ hσ]
+        rw [ih z (by simp) f σ hσ, ih s (by simp) _ _ hlift, ih m (by simp) f σ hσ]
+      · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
+        rw [ih z (by simp) f σ hσ, ih s (by simp) _ _ (lift hlift), ih m (by simp) f σ hσ]
     · simp only [rename_node, subst_node, renameStep, substStep, List.map_cons, List.map_nil]
-      rw [ih m (by simp) f σ hσ]
+      rw [ih s (by simp) _ _ hlift, ih m (by simp) f σ hσ]
     · rw [rename_plain hp rfl, subst_plain hp rfl]
       exact congrArg _ (List.map_congr_left fun c hc ↦ ih c hc f σ hσ)
 
