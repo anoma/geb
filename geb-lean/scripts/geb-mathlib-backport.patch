@@ -1883,7 +1883,7 @@ index 41a116e..712144b 100644
  /-- The retraction law for the rose spelling: printing a rose tree and
  parsing the result returns that tree. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Scanner.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Scanner.lean
-index 04a3726..889a110 100644
+index aea91f7..361e160 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Scanner.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/BitTree/Elias/Scanner.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1894,7 +1894,7 @@ index 04a3726..889a110 100644
  module
  
  public import Mathlib.Data.Nat.BinaryRec
-@@ -137,7 +138,7 @@ theorem foldl_payload_short (w : List Bool) : ∀ r n, w.length < r →
+@@ -140,7 +141,7 @@ theorem foldl_payload_short (w : List Bool) : ∀ r n, w.length < r →
      rfl
    · intro b bs ih r n h
      have hr : r ≠ 1 := by simp only [List.length_cons] at h; omega
@@ -1903,7 +1903,7 @@ index 04a3726..889a110 100644
      rw [ih (r - 1) n (by simp only [List.length_cons] at h; omega)]
      congr 2
      simp only [List.length_cons]
-@@ -176,7 +177,7 @@ theorem payload_of_accept (w : List Bool) (m n : ℕ)
+@@ -179,7 +180,7 @@ theorem payload_of_accept (w : List Bool) (m n : ℕ)
    by_cases hm : m = 0
    · subst m
      exact ⟨[], w, rfl, rfl, h⟩
@@ -3336,7 +3336,7 @@ index 9ccc0e3..c10a569 100644
  /-- A nonempty payload completes the leaf at its last bit. -/
  theorem foldl_extStep_payload (s : List Bool) (n pos : ℕ) (x : α) (hs : s ≠ []) :
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
-index af2ee5a..5d57879 100644
+index 9d5427b..23f138e 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3361,7 +3361,7 @@ index af2ee5a..5d57879 100644
  
  /-- A header completing with its leaf is the header of an empty payload. -/
  theorem eventC_payload_of_done (x : Counters) (c : Bool) (L : ℕ)
-@@ -322,13 +323,13 @@ theorem sem_eqSeg {n : ℕ} (a b : LOf n) (x : Fin n → List Bool) (y : List Bo
+@@ -321,13 +322,13 @@ theorem sem_eqSeg {n : ℕ} (a b : LOf n) (x : Fin n → List Bool) (y : List Bo
      List.drop_eq_nil_iff, List.length_drop]
    by_cases h : A = B
    · subst h
@@ -4742,7 +4742,7 @@ index a5046a7..057e86f 100644
            (congrArg (unfoldOp _ _) (unfoldTerm_of_opsBelow ds _ u (hθ' u hu))).trans
              (hθ₀ u hu)).trans θ.map_id)
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
-index c7727f8..91fc0f9 100644
+index 2878790..f101d36 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
 @@ -3,9 +3,10 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4754,9 +4754,9 @@ index c7727f8..91fc0f9 100644
  
 -public import Mathlib.Basic.ExistsUnique
 +public import Mathlib.Logic.ExistsUnique
- import Lean.DocString.Syntax
  meta import GebMeta -- shake: keep
  
+ set_option doc.verso true in
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean
 index 57e7d5d..b93093a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean
@@ -6814,7 +6814,7 @@ index 41837e2..20f55ea 100644
    exact ⟨⟨d.classifier⟩⟩
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
-index d0e48c3..fa0049b 100644
+index d7eebce..520acb6 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Typechecker.lean
 @@ -3,14 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.

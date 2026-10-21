@@ -152,7 +152,7 @@ theorem adder_step (P AP BP CP SP cin : ℕ) (hAl : AP < P) (hBl : BP < P) (hCl 
   rcases (show t = 0 ∨ t = 1 by omega) with rfl | rfl <;>
     cases a <;> cases b <;> cases c <;> cases cy <;> cases s <;>
     simp only [Bool.toNat_true, Bool.toNat_false] at ih1 hdm ⊢ <;>
-    exact ⟨by omega, ⟨fun h ↦ by obtain ⟨h1, h2⟩ := h; first | exact h2.elim | omega,
+    exact ⟨by omega, ⟨fun h ↦ by obtain ⟨h1, h2⟩ := h; omega,
       fun h ↦ ⟨by omega, by first | trivial | omega⟩⟩⟩
 
 /-- The invariant of the adder over the indices: the carry accounts for the

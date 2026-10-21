@@ -7,7 +7,6 @@ Authors: Terence Rokop
 module
 
 public import Mathlib.Logic.ExistsUnique
-import Lean.DocString.Syntax
 
 set_option doc.verso true in
 /-!
