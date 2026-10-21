@@ -122,7 +122,6 @@ theorem eventC_payload_of_done (x : Counters) (c : Bool) (L : ℕ)
   rcases x with ⟨ph, f, l, z, cnt, v⟩
   cases ph <;> cases c <;> simp only [eventC, Event.silent] at h hd <;> (try split_ifs at h hd) <;>
     first
-      | exact hd.elim
       | exact absurd hd (by decide)
       | (cases h; rfl)
 
@@ -135,9 +134,9 @@ theorem eventC_payload_of_not_done (k : ℕ) (x : Counters) (c : Bool) (L : ℕ)
   cases ph <;> cases c <;> simp only [Valid] at hv <;> simp only [eventC, Event.silent] at h hd <;>
     (try split_ifs at h hd) <;>
     first
-      | exact hd.elim
       | exact absurd hd (by decide)
-      | (cases h <;> dsimp only <;> simp only [Bool.toNat_false, Bool.toNat_true] <;> omega)
+      | exact absurd h.symm (Option.some_ne_none _)
+      | (cases h; dsimp only; simp only [Bool.toNat_false, Bool.toNat_true]; omega)
 
 /-- The six shapes an event takes: the two tags, the header of an empty
 payload completing with its leaf, a header completing without its leaf, a

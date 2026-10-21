@@ -43,7 +43,7 @@
 
 These notes catalogue the categories of change in
 `scripts/geb-mathlib-backport.patch`, which adapts the vendored
-`geb-mathlib` `Geb` source (mathlib `v4.35.0-rc4`) to compile under this
+`geb-mathlib` `Geb` source (mathlib `v4.36.0-rc1`) to compile under this
 repository's `v4.29.0-rc6`. When a refresh fails, check whether the new
 failure matches a category below (extend the corresponding hunk) or is
 genuinely new (decide the adaptation, add a category here).
@@ -1055,6 +1055,7 @@ advancing the cslib or mathlib pin, which the toolchain pin governs.
   `BitTree.BinaryMachine.Machine`, `BitTree.Elias.Bound`,
   `BitTree.Elias.Machine`, `BitTree.EliasBinary.Bound`,
   `BitTreeScanner.Bound`, `BitTreeScanner.Machine`,
+  `MultiTape.Computes`, `MultiTape.OfTr`,
   `MultiTape.OutputString`, `MultiTape.Rename`, `MultiTape.RunFrom`,
   `SizeBounded.Machine.Exec`, and `SizeBounded.Machine.Program` import
   one or both.

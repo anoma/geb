@@ -8,7 +8,6 @@ module
 public import Mathlib.Data.List.Nodup
 public import Mathlib.Logic.Equiv.Basic
 public import Mathlib.Tactic.Finiteness.Attr
-public import Mathlib.Tactic.ToAdditive
 public import Mathlib.Tactic.ToDual
 
 /-!

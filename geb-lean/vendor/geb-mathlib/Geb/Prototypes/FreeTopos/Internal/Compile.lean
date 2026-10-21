@@ -225,14 +225,7 @@ structure Prim where
   dom : Tree
   /-- Its codomain. -/
   cod : Tree
-
-/-- Equality of primitive arrows, decided field by field after a comparison of addresses, which
-settles it at once where the two are one object, as an entry of a table of primitives and the
-constant it lists are. -/
-instance : DecidableEq Prim := fun a b ↦ withPtrEqDecEq a b fun _ ↦
-  if h : a.arity = b.arity ∧ a.arrow = b.arrow ∧ a.dom = b.dom ∧ a.cod = b.cod then
-    isTrue (match a, b, h with | ⟨_, _, _, _⟩, ⟨_, _, _, _⟩, ⟨rfl, rfl, rfl, rfl⟩ => rfl)
-  else isFalse fun e ↦ h (e ▸ ⟨rfl, rfl, rfl, rfl⟩)
+deriving DecidableEq
 
 /-- A definition of a development: a definition of the language, which compiles to a definition
 of the combinators, or an object of the combinators in a number of object parameters, which

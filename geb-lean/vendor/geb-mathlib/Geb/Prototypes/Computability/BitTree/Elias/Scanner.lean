@@ -82,7 +82,10 @@ def Active : State → Prop
 /-- Completing an active leaf preserves the scanner invariant. -/
 theorem active_finish (n : ℕ) (hn : 0 < n) : Active (finish n) := by
   unfold finish
-  split <;> simp only [Active] <;> omega
+  split
+  · simp only [Active]
+  · simp only [Active]
+    omega
 
 /-- Consuming one bit preserves the invariant. -/
 theorem active_step (s : State) (b : Bool) (h : Active s) : Active (step s b) := by

@@ -95,7 +95,7 @@ def CompositionallyClosed (P : (B → B) → Prop) : Prop :=
 /-- The submonoid whose elements are precisely the admissible endomorphisms. -/
 def CompositionallyClosed.toSubmonoid {P : (B → B) → Prop}
     (h : CompositionallyClosed P) : Submonoid (Function.End B) where
-  carrier := P
+  carrier := {f | P f}
   one_mem' := h.1
   mul_mem' hf hg := h.2 hg hf
 
