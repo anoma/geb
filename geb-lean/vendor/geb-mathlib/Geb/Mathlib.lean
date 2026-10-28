@@ -15,7 +15,7 @@ public import Geb.Mathlib.Logic
 
 Modules under this namespace are intended for eventual upstream
 extraction to mathlib4, and import only from `Mathlib.*`,
-`Batteries.*`, `Geb.Mathlib.*` or `GebLang.*`. Where those import
+`Batteries.*` or `Geb.Mathlib.*`. Where those import
 rules leave no alternative, a module here may instead target Lean core
 or Batteries; that destination is open, per `TODO.md` § Upstream
 destination of core- and Batteries-targeted content.

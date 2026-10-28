@@ -32,6 +32,9 @@
   - [25. `convert` closes function-equation goals that upstream leaves open](#25-convert-closes-function-equation-goals-that-upstream-leaves-open)
   - [26. Equation lemmas of `decPfStep` time out in v4.29](#26-equation-lemmas-of-decpfstep-time-out-in-v429)
   - [27. A list element surfaces as `List.get` after a `Prod` match](#27-a-list-element-surfaces-as-listget-after-a-prod-match)
+  - [28. `List.nodup_iff_count_of_mem` added to Lean core](#28-listnodup_iff_count_of_mem-added-to-lean-core)
+  - [29. `unusedArguments` exempts arguments named with a leading underscore](#29-unusedarguments-exempts-arguments-named-with-a-leading-underscore)
+  - [30. `Wiring.force_force` exceeds the default heartbeat limit in v4.29](#30-wiringforce_force-exceeds-the-default-heartbeat-limit-in-v429)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -312,7 +315,12 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/LF/Topos/Telescope.lean`, twice in `encTy_pred` in
   `Prototypes/LF/Topos/Adequacy.lean`, and in `TmCtx.consTm`,
   `termOf_consTm`, and `termOf_inst` in
-  `Prototypes/LF/Topos/ProofSound.lean`.
+  `Prototypes/LF/Topos/ProofSound.lean`. In `left_ne_right` in
+  `Prototypes/InteractionNet/RedexDiamond.lean` the unreduced
+  application is the type of a hypothesis `he`, obtained by
+  `congrArg₂` at the functional argument
+  `fun a b ↦ (s.rule (label a) (label b)).isSome` and rewritten by
+  `rw [ho, q.rule_eq] at he`.
 - v4.29 symptom: the goal is `(fun w => ...) (WType.mk a f)` — the motive
   lambda is not beta-reduced at the constructor — so the opening
   `rw` reports "Did not find an occurrence of the pattern" (the rewritten
@@ -322,7 +330,8 @@ genuinely new (decide the adaptation, add a category here).
 - Adaptation: prepend `beta_reduce` as the first tactic of the minor
   premise, exposing the subterm for the existing rewrite. The induction
   hypothesis stays in unreduced form, which is harmless: it is used only
-  where its type is needed up to beta.
+  where its type is needed up to beta. For the hypothesis in
+  `left_ne_right`, insert `beta_reduce at he` before the rewrite.
 
 ### 5. `simp` rewriting under dependent proof arguments narrowed in v4.33
 
@@ -529,7 +538,10 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/FreeTopos/Internal/ObjectSubst.lean`, and, under
   `Prototypes/LF/Topos/`, `Adequacy.lean`, `Complete.lean`,
   `Development.lean`, `ProofCheck.lean`, `ProofSound.lean`, and
-  `Telescope.lean`. Only a
+  `Telescope.lean`; and, under `Prototypes/InteractionNet/`,
+  `FiniteCells.lean`, `GraphRuntime.lean`, `NamedSplice.lean`,
+  `WiringCancellation.lean`, `WiringRelocation.lean`,
+  `WiringSplice.lean`, and `WiringSubdivision.lean`. Only a
   few of them appear in
   any one build log: lake does not attempt a module whose imports
   failed.
@@ -855,7 +867,8 @@ genuinely new (decide the adaptation, add a category here).
 
 ### 24. `Decidable` restated as a structure in v4.35
 
-- Upstream cause: Lean core `Init/Prelude.lean` restates `Decidable`
+- Upstream cause: Lean pull request 8309 (2026-08-20) restates, in
+  Lean core `Init/Prelude.lean`, `Decidable`
   from a `class inductive` with constructors `isFalse` and `isTrue` to
   a `class` structure whose `decide` field is the Boolean, as of
   `v4.35.0-rc1`, and defines `Nat.decEq` with `decide := beq n m`.
@@ -874,6 +887,27 @@ genuinely new (decide the adaptation, add a category here).
   (category 16) does not change this.
 - Adaptation: `beq_iff_eq.mp h`, which holds for any `LawfulBEq`
   instance and is stated for `==` directly.
+- Upstream cause, `instDecidableEqOfLawfulBEq`: the same pull request
+  redefines this non-instance of `Init/Core.lean` as
+  `Decidable.intro (x == y) ...` and marks it `@[instance_reducible]`.
+  `Prototypes/InteractionNet/NamedWiring.lean` enables it with
+  `attribute [local instance 5] instDecidableEqOfLawfulBEq`, as its
+  docstring directs, and `two_endpoints` closes
+  `(List.filter ((fun x ↦ x == name p) ∘ name) all).length = ends.length`,
+  where `ends` filters by `decide (name q = name p)`, with `rfl`.
+- v4.29 symptom, `instDecidableEqOfLawfulBEq`:
+  ``instance `instDecidableEqOfLawfulBEq` must be marked with
+  `@[reducible]` or `@[implicit_reducible]` `` at the `attribute` line,
+  and ``Tactic `rfl` failed`` at the `rfl`. Under v4.29 the definition
+  is a `match` on `x == y` and carries no reducibility attribute, so
+  `decide (x = y)` does not unfold to `x == y`.
+- Adaptation, `instDecidableEqOfLawfulBEq`: precede the `attribute`
+  line with `attribute [local implicit_reducible]
+  instDecidableEqOfLawfulBEq`, giving the definition upstream's
+  reducibility within the module, and insert
+  `simp only [Function.comp_def, Bool.beq_eq_decide_eq]` before the
+  `rfl`. `Bool.beq_eq_decide_eq` states `(a == b) = decide (a = b)` for
+  any `LawfulBEq` instance.
 
 ### 25. `convert` closes function-equation goals that upstream leaves open
 
@@ -924,6 +958,51 @@ genuinely new (decide the adaptation, add a category here).
   `List` instance of `GetElem` is `as.get ⟨i, h⟩` in both versions.
 - Adaptation: add `List.get_eq_getElem` to the `simp only` call,
   restoring the `getElem` form the lemmas match.
+
+### 28. `List.nodup_iff_count_of_mem` added to Lean core
+
+- Upstream cause: Lean pull request 12166 (2026-07-22) adds
+  `List.nodup_iff_count_of_mem : l.Nodup ↔ ∀ a ∈ l, count a l = 1` to
+  `Init/Data/List/Pairwise.lean`. Mathlib's
+  `List.nodup_iff_count_eq_one` of `Mathlib/Data/List/Nodup.lean`,
+  present at both pins, has the same statement. `nodup_matrix` in
+  `Prototypes/InteractionNet/FiniteSum.lean` uses the core lemma, and
+  the module's v4.29 import closure does not contain
+  `Mathlib.Data.List.Nodup`.
+- v4.29 symptom: ``Unknown constant `List.nodup_iff_count_of_mem.mpr` ``,
+  followed by `No goals to be solved`.
+- Adaptation: substitute `List.nodup_iff_count_eq_one`, and add
+  `import Mathlib.Data.List.Nodup` after
+  `import Mathlib.Data.Fin.SuccPred`, as in category 14. The import is
+  not `public`, since only a proof uses the lemma.
+
+### 29. `unusedArguments` exempts arguments named with a leading underscore
+
+- Upstream cause: batteries pull request 1834 (2026-06-17) makes the
+  `unusedArguments` env-linter skip arguments whose names begin with
+  `_`. `Wiring.gluedFinite` in
+  `Prototypes/InteractionNet/FiniteWiring.lean` and `Wiring.glued` in
+  `Prototypes/InteractionNet/WiringGlue.lean` take a hypothesis
+  `_unique : order.Nodup` that neither body uses.
+- v4.29 symptom: under `lake lint -- Geb`, the `unusedArguments`
+  env-linter reports
+  `@Geb.InteractionNet.Wiring.gluedFinite argument 7 _unique` and
+  `@Geb.InteractionNet.Wiring.glued argument 6 _unique`.
+- Adaptation: insert `@[nolint unusedArguments]` between each
+  declaration's docstring and its `def` keyword, as in category 13.
+
+### 30. `Wiring.force_force` exceeds the default heartbeat limit in v4.29
+
+- Upstream cause: `force_force` in
+  `Prototypes/InteractionNet/WiringSplice.lean`, whose proof ends with
+  `split_ifs <;> simp_all`, elaborates under upstream's toolchain at a
+  `maxHeartbeats` of 200000, the default, and not at 150000.
+- v4.29 symptom: ``(deterministic) timeout at `whnf`, maximum number of
+  heartbeats (200000) has been reached`` at the declaration. Under v4.29
+  the declaration elaborates at 400000 and not at 200000.
+- Adaptation: prepend `set_option maxHeartbeats 400000 in` to the
+  declaration's docstring, followed by the explanatory comment that
+  mathlib's `linter.style.maxHeartbeats` requires.
 
 ## Updating the patch for a new upstream
 
@@ -1075,8 +1154,10 @@ advancing the cslib or mathlib pin, which the toolchain pin governs.
   `BitTreeScanner.Encoding` instantiates `PFunctor.FreeM` at a
   `PFunctor` shape through `PFunctor.FreeM.rec` and
   `PFunctor.FreeM.liftM`, `Geb.Cslib.Foundations.Data.PFunctor.Free`
-  issues `compile_inductive% PFunctor.FreeM`, and
-  `Geb.Prototypes.Definition.Basic` imports the module.
+  issues `compile_inductive% PFunctor.FreeM`,
+  `Geb.Prototypes.Definition.Basic` imports the module, and
+  `Geb.Prototypes.InteractionNet.Term` defines its terms as
+  `PFunctor.FreeM` over a signature's `PFunctor`.
 - `Mathlib.CategoryTheory.Limits.Types.End`, which mathlib's history
   records as an addition in mathlib pull request 38382 (2026-05-12).
   It supplies the explicit end `Limits.Types.end_` in `Type`, with
@@ -1144,7 +1225,12 @@ The rules then exclude the following.
   `FreeTopos.TranslationLibrary`, `FreeTopos.TranslationKernel`,
   `FreeTopos.TranslationSound`, and
   `FreeTopos.TranslationSoundClassical` import, in turn, the one
-  before, starting from `FreeTopos.Translation`.
+  before, starting from `FreeTopos.Translation`; `FreeTopos.Literals`
+  imports `FreeTopos.Translation`, `FreeTopos.Internal.Conversion`
+  imports `FreeTopos.Literals`, and `LF.Topos.ProofsMod` imports
+  `FreeTopos.Internal.Conversion`. Under `Geb.Prototypes.InteractionNet`,
+  117 modules import `Term`, directly or through a chain; the other 51
+  import neither `Term` nor any other excluded module.
 - Orphans, imported only by excluded modules:
   `BitTree.BinaryMachine.Accounting` (by `BitStep` and `Execution`),
   `BitTree.BinaryMachine.Difference` (by `Representation` and `Steps`;
@@ -1155,8 +1241,9 @@ The rules then exclude the following.
   `BitTree.EliasBinary.Need` (by `Account`) in turn.
 
 The index modules `Geb`, `Geb.Prototypes`, and, under
-`Geb.Prototypes`, `Computability`, `FreeTopos`, `FreeTopos.Tactics`,
-`Kernel`, and `RoseTree`, and, under `Geb.Prototypes.Computability`, `BitTree`,
+`Geb.Prototypes`, `Computability`, `FreeTopos`, `FreeTopos.Internal`,
+`FreeTopos.Tactics`, `InteractionNet`, `Kernel`, `LF.Topos`, and
+`RoseTree`, and, under `Geb.Prototypes.Computability`, `BitTree`,
 `BitTree.BinaryMachine`, `BitTree.Elias`, `BitTree.EliasBinary`,
 `Kristiansen`, `Mazzanti`, `SizeBounded`, `SizeBounded.Machine`,
 `SizeBounded.Machine.Compile`, `SizeBounded.Logspace`,
