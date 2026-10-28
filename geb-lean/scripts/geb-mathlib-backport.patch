@@ -4757,6 +4757,307 @@ index 2878790..f101d36 100644
  meta import GebMeta -- shake: keep
  
  set_option doc.verso true in
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteCells.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteCells.lean
+index 55b3cdc..6a54d05 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteCells.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteCells.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.PortNet
+@@ -62,7 +63,7 @@ theorem mem_subtypeCells [FinEnum C] (p : C → Prop) [DecidablePred p] (c : {c
+     c ∈ subtypeCells p := by
+   apply List.mem_filterMap.mpr
+   refine ⟨c.val, FinEnum.mem_toList _, ?_⟩
+-  simp only [selectCell, dite_eq_left c.property]
++  simp only [selectCell, dif_pos c.property]
+ 
+ /-- Filtering a cell enumeration introduces no duplicates. -/
+ theorem nodup_subtypeCells [FinEnum C] (p : C → Prop) [DecidablePred p] :
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteSum.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteSum.lean
+index e3b9e77..c9997b7 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteSum.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteSum.lean
+@@ -3,10 +3,12 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ import Mathlib.Tactic.Finiteness.Attr
+ import Mathlib.Data.Fin.SuccPred
++import Mathlib.Data.List.Nodup
+ public import Mathlib.Data.Nat.Notation
+ meta import GebMeta -- shake: keep
+ 
+@@ -122,7 +124,7 @@ theorem count_matrix {m k : ℕ} (w : Fin m → Fin k → ℕ)
+ theorem nodup_matrix {m k : ℕ} (w : Fin m → Fin k → ℕ)
+     (hw : ∀ i i' j j', w i j = w i' j' ↔ i = i' ∧ j = j') :
+     (List.ofFn fun i ↦ List.ofFn (w i)).flatten.Nodup := by
+-  apply List.nodup_iff_count_of_mem.mpr
++  apply List.nodup_iff_count_eq_one.mpr
+   intro x hx
+   obtain ⟨row, hr, hx⟩ := List.mem_flatten.mp hx
+   obtain ⟨i, rfl⟩ := List.mem_ofFn.mp hr
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteWiring.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteWiring.lean
+index 5d515f8..7d9355a 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteWiring.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/FiniteWiring.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.ArrayWiring
+@@ -62,6 +63,7 @@ theorem glueFinite_eq (ports : I × Bool ↪ P) (order : List I) (s : Wiring P 
+   simpa only [glueFinite, map_symm_map] using he
+ 
+ /-- Execute finite gluing and remove all its detached endpoints. -/
++@[nolint unusedArguments]
+ def gluedFinite (ports : I × Bool ↪ P) (order : List I) (_unique : order.Nodup)
+     (cover : ∀ i, i ∈ order) (s : Wiring P × ℕ) :
+     Wiring {p // ∀ i b, p ≠ ports (i, b)} × ℕ :=
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/GraphRuntime.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/GraphRuntime.lean
+index ed40490..9122f7f 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/GraphRuntime.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/GraphRuntime.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.ArrayContraction
+@@ -124,7 +125,7 @@ theorem redexAt?_isSome {s : PortSystem arity} {n : State arity boundary}
+   have ha : n.2.2.read.wiring.partner (PortNet.principal arity n.2.1 r.left) =
+       PortNet.principal arity n.2.1 r.right := r.active
+   have hr : s.rule (n.2.1 r.left) (n.2.1 r.right) = some r.rhs := r.rule_eq
+-  simp only [redexAt?, dite_eq_left ha]
++  simp only [redexAt?, dif_pos ha]
+   split
+   · rename_i he
+     cases he.symm.trans hr
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/NamedSplice.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/NamedSplice.lean
+index 2b9f40d..f54186a 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/NamedSplice.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/NamedSplice.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.NamedWiring
+@@ -61,7 +62,7 @@ omit [DecidableEq Q] in
+ theorem loopDelta_eq_zero_of_names_ne (w : Wiring P) (name : P → ν)
+     (names : ∀ p, name (w.partner p) = name p) {a b : P} (different : name a ≠ name b) :
+     w.loopDelta a b = 0 := by
+-  apply ite_eq_right
++  apply if_neg
+   intro h
+   exact different ((names a).symm.trans (congrArg name h))
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/NamedWiring.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/NamedWiring.lean
+index 22b04d9..33c15c3 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/NamedWiring.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/NamedWiring.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.Wiring
+@@ -42,6 +43,7 @@ universe u v
+ 
+ variable {P : Type u} {ν : Type v} [DecidableEq P] [BEq ν] [LawfulBEq ν]
+ 
++attribute [local implicit_reducible] instDecidableEqOfLawfulBEq
+ attribute [local instance 5] instDecidableEqOfLawfulBEq
+ 
+ omit [DecidableEq P] in
+@@ -53,6 +55,7 @@ private theorem two_endpoints (all : List P) (unique : all.Nodup)
+   have hlen : ends.length = 2 := by
+     have hm : (all.map name).count (name p) = ends.length := by
+       simp only [List.count, List.countP_eq_length_filter, List.filter_map, List.length_map]
++      simp only [Function.comp_def, Bool.beq_eq_decide_eq]
+       rfl
+     exact hm.symm.trans (two p)
+   obtain ⟨a, b, hab⟩ := List.length_eq_two.mp hlen
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/RedexDiamond.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/RedexDiamond.lean
+index 48c29b2..c8dcebf 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/RedexDiamond.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/RedexDiamond.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.PortSystem
+@@ -67,6 +68,7 @@ theorem left_ne_right (r q : s.Redex n) : r.left ≠ q.right := by
+     (show n.Active r.left q.left by simpa only [h] using PortNet.active_symm q.active)
+   have ho := s.oriented (label r.left) (label r.right) r.rhs r.rule_eq
+   have he := congrArg₂ (fun a b ↦ (s.rule (label a) (label b)).isSome) hb h
++  beta_reduce at he
+   rw [ho, q.rule_eq] at he
+   cases he
+ 
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringCancellation.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringCancellation.lean
+index 5209687..b52037d 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringCancellation.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringCancellation.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.WiringSubdivision
+@@ -110,7 +111,7 @@ theorem closeWire_subdivision (w : Wiring (Bool ⊕ P)) (loops : ℕ) :
+   have ht : e (.inl true) = .inl false := by
+     change (if (Sum.inl true : Bool ⊕ P) = .inl true then (Sum.inl false : Bool ⊕ (Bool ⊕ P))
+       else .inr (.inl true)) = _
+-    exact ite_eq_left rfl
++    exact if_pos rfl
+   rw [he, ht, force_comm v (by intro h; cases h)] at hf
+   have hm := (closeWire_respects w).trans hf
+   have hem : Function.Embedding.inr.trans e =
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
+index 7a60986..5e95efc 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.WiringSplice
+@@ -153,6 +154,7 @@ theorem glue_closed (ports : I × Bool ↪ P) (order : List I) (cover : ∀ i, i
+     exact he.trans hr
+ 
+ /-- Glue every pair exactly once, then remove the detached endpoints. -/
++@[nolint unusedArguments]
+ def glued (ports : I × Bool ↪ P) (order : List I) (_unique : order.Nodup)
+     (cover : ∀ i, i ∈ order)
+     (s : Wiring P × ℕ) : Wiring {p // ∀ i b, p ≠ ports (i, b)} × ℕ :=
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringRelocation.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringRelocation.lean
+index 20cd390..df47fcc 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringRelocation.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringRelocation.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.WiringSubdivision
+@@ -86,7 +87,7 @@ theorem relocation_apply_cut [DecidableEq I] (w : Wiring P) (ports : I × Bool 
+   · subst j
+     simp only [hj, ↓reduceIte, List.mem_append, List.mem_singleton_self, or_true]
+     change (if ports (i, !side) = ports (i, !side) then _ else _) = _
+-    exact ite_eq_left rfl
++    exact if_pos rfl
+   · have ha : ports (i, !side) ≠ ports (j, !side) := pair_ne_of_ne ports he _ _
+     have hb : ports (i, !side) ≠ w.partner (ports (j, side)) := (free j i _).symm
+     have hc : w.partner (ports (i, side)) ≠ w.partner (ports (j, side)) := by
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSplice.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSplice.lean
+index 5366408..982b368 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSplice.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSplice.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.Wiring
+@@ -58,7 +59,7 @@ private theorem exchange_self (a : P) : exchange a a = Equiv.refl P := by
+   change (if p = a then a else if p = a then a else p) = p
+   split_ifs with h <;> simp only [h]
+ 
+-private theorem exchange_left (a b : P) : exchange a b a = b := ite_eq_left rfl
++private theorem exchange_left (a b : P) : exchange a b a = b := if_pos rfl
+ 
+ private theorem exchange_right (a b : P) : exchange a b b = a := by
+   change (if b = a then b else if b = b then a else b) = a
+@@ -67,7 +68,7 @@ private theorem exchange_right (a b : P) : exchange a b b = a := by
+ private theorem exchange_other {a b p : P} (ha : p ≠ a) (hb : p ≠ b) :
+     exchange a b p = p := by
+   change (if p = a then b else if p = b then a else p) = p
+-  rw [ite_eq_right ha, ite_eq_right hb]
++  rw [if_neg ha, if_neg hb]
+ 
+ /-- Isolate two endpoints as a wire, reconnecting their previous partners. -/
+ def force (w : Wiring P) (a b : P) : Wiring P :=
+@@ -131,12 +132,12 @@ theorem force_apply (w : Wiring P) {a b : P} (hab : a ≠ b) (p : P) :
+   by_cases hpb : p = b
+   · subst p
+     simp only [hpa, ↓reduceIte, force_right w hab]
+-  rw [ite_eq_right hpa, ite_eq_right hpb]
++  rw [if_neg hpa, if_neg hpb]
+   by_cases hwa : w.partner p = a
+-  · rw [ite_eq_left hwa, (w.partner_eq_iff.mp hwa), force_partner_left w hab]
++  · rw [if_pos hwa, (w.partner_eq_iff.mp hwa), force_partner_left w hab]
+   by_cases hwb : w.partner p = b
+-  · rw [ite_eq_right hwa, ite_eq_left hwb, (w.partner_eq_iff.mp hwb), force_partner_right w hab]
+-  rw [ite_eq_right hwa, ite_eq_right hwb]
++  · rw [if_neg hwa, if_pos hwb, (w.partner_eq_iff.mp hwb), force_partner_right w hab]
++  rw [if_neg hwa, if_neg hwb]
+   exact force_other w hpa hpb (fun h ↦ hwa (w.partner_eq_iff.mpr h))
+     (fun h ↦ hwb (w.partner_eq_iff.mpr h))
+ 
+@@ -151,9 +152,11 @@ theorem force_comm (w : Wiring P) {a b : P} (hab : a ≠ b) :
+ theorem force_keeps (w : Wiring P) {a b c d : P} (hcd : c ≠ d)
+     (hac : a ≠ c) (had : a ≠ d) (hbc : b ≠ c) (hbd : b ≠ d)
+     (hw : w.partner a = b) : (w.force c d).partner a = b := by
+-  rw [force_apply w hcd, ite_eq_right hac, ite_eq_right had, hw,
+-    ite_eq_right hbc, ite_eq_right hbd]
++  rw [force_apply w hcd, if_neg hac, if_neg had, hw,
++    if_neg hbc, if_neg hbd]
+ 
++set_option maxHeartbeats 400000 in
++-- Elaboration exceeds the default limit under the pinned v4.29 toolchain.
+ /-- Two splices with disjoint endpoint pairs commute on the full endpoint type. -/
+ theorem force_force (w : Wiring P) {a b c d : P} (hab : a ≠ b) (hcd : c ≠ d)
+     (hac : a ≠ c) (had : a ≠ d) (hbc : b ≠ c) (hbd : b ≠ d) :
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSubdivision.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSubdivision.lean
+index 5f2d7f2..e33c4c1 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSubdivision.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSubdivision.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.InteractionNet.WiringEmbedding
+@@ -141,7 +142,7 @@ theorem glue_loops_of_free_side {I : Type*} (ports : I × Bool ↪ P) (order : L
+   refine List.rec (fun _ _ _ ↦ rfl) (fun i order ih unique s free ↦ ?_) order
+   have hn := List.nodup_cons.mp unique
+   have hl : s.1.loopDelta (ports (i, false)) (ports (i, true)) = 0 := by
+-    apply ite_eq_right
++    apply if_neg
+     intro h
+     cases side with
+     | false => exact free i List.mem_cons_self i List.mem_cons_self true h
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean
 index 57e7d5d..b93093a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Annotation.lean

@@ -1,8 +1,8 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: c2a1e041c22568a64c069f39408a111c87621cb6
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 ca812fe3c7bd686f80a2ed3caa8aa830efa25f67c464ad4e4e1ce5b246f40f70)
+- Source commit: 380163c9c948aaf2c4ce9a4e7de17b353c25d1a6
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 c00dbf47faf9bf58c83dc7fce09775ce42897b67152f14cd7e5259089b48f1e4)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
   - Geb.Cslib
   - Geb.Prototypes.BitStream.Oitavem
@@ -94,6 +94,8 @@
   - Geb.Prototypes.Computability.SizeBounded.WordMachine
   - Geb.Prototypes.Computability.TreeScanner
   - Geb.Prototypes.Definition
+  - Geb.Prototypes.FreeTopos.Internal.Conversion
+  - Geb.Prototypes.FreeTopos.Literals
   - Geb.Prototypes.FreeTopos.Tactics.Hypotheses
   - Geb.Prototypes.FreeTopos.Tactics.Induction
   - Geb.Prototypes.FreeTopos.Tactics.Search
@@ -103,9 +105,128 @@
   - Geb.Prototypes.FreeTopos.TranslationLibrary
   - Geb.Prototypes.FreeTopos.TranslationSound
   - Geb.Prototypes.FreeTopos.TranslationSoundClassical
+  - Geb.Prototypes.InteractionNet.Allocation
+  - Geb.Prototypes.InteractionNet.AssemblyEmbedding
+  - Geb.Prototypes.InteractionNet.AssemblyIso
+  - Geb.Prototypes.InteractionNet.BoundaryClosure
+  - Geb.Prototypes.InteractionNet.BoundaryRenaming
+  - Geb.Prototypes.InteractionNet.BoundarySplice
+  - Geb.Prototypes.InteractionNet.Calculus
+  - Geb.Prototypes.InteractionNet.CalculusGraphSimulation
+  - Geb.Prototypes.InteractionNet.CalculusInterface
+  - Geb.Prototypes.InteractionNet.Call
+  - Geb.Prototypes.InteractionNet.ClosedTermReadback
+  - Geb.Prototypes.InteractionNet.ConfigAgentPairContext
+  - Geb.Prototypes.InteractionNet.ConfigAgentPairForest
+  - Geb.Prototypes.InteractionNet.ConfigAppendForest
+  - Geb.Prototypes.InteractionNet.ConfigAppendOccurrences
+  - Geb.Prototypes.InteractionNet.ConfigEliminationAllocation
+  - Geb.Prototypes.InteractionNet.ConfigEliminationContext
+  - Geb.Prototypes.InteractionNet.ConfigEliminationForest
+  - Geb.Prototypes.InteractionNet.ConfigEliminationOccurrences
+  - Geb.Prototypes.InteractionNet.ConfigEliminationSimulation
+  - Geb.Prototypes.InteractionNet.ConfigGraph
+  - Geb.Prototypes.InteractionNet.ConfigGraphBoundary
+  - Geb.Prototypes.InteractionNet.ConfigGraphContext
+  - Geb.Prototypes.InteractionNet.ConfigGraphIso
+  - Geb.Prototypes.InteractionNet.ConfigGraphNormal
+  - Geb.Prototypes.InteractionNet.ConfigGraphPermutation
+  - Geb.Prototypes.InteractionNet.ConfigGraphRenaming
+  - Geb.Prototypes.InteractionNet.ConfigHeadForest
+  - Geb.Prototypes.InteractionNet.ConfigHeadOccurrences
+  - Geb.Prototypes.InteractionNet.ConfigInteractionAllocation
+  - Geb.Prototypes.InteractionNet.ConfigInteractionAssembly
+  - Geb.Prototypes.InteractionNet.ConfigInteractionBoundary
+  - Geb.Prototypes.InteractionNet.ConfigInteractionContext
+  - Geb.Prototypes.InteractionNet.ConfigInteractionEmbedding
+  - Geb.Prototypes.InteractionNet.ConfigInteractionForest
+  - Geb.Prototypes.InteractionNet.ConfigInteractionLeaves
+  - Geb.Prototypes.InteractionNet.ConfigInteractionSimulation
+  - Geb.Prototypes.InteractionNet.ConfigInteractionWiring
+  - Geb.Prototypes.InteractionNet.ConfigNamelessGraph
+  - Geb.Prototypes.InteractionNet.ConfigSubstitutionGraph
+  - Geb.Prototypes.InteractionNet.ConfigVariableEquation
+  - Geb.Prototypes.InteractionNet.ConstructorReadback
+  - Geb.Prototypes.InteractionNet.ContractionCoupling
+  - Geb.Prototypes.InteractionNet.Copying
+  - Geb.Prototypes.InteractionNet.CopyingNormalization
+  - Geb.Prototypes.InteractionNet.CouplingCancellation
+  - Geb.Prototypes.InteractionNet.CouplingComposition
+  - Geb.Prototypes.InteractionNet.CouplingIdentity
+  - Geb.Prototypes.InteractionNet.CouplingWires
+  - Geb.Prototypes.InteractionNet.Data
+  - Geb.Prototypes.InteractionNet.EquationGraph
+  - Geb.Prototypes.InteractionNet.EquationGraphSubstitution
+  - Geb.Prototypes.InteractionNet.Erasure
+  - Geb.Prototypes.InteractionNet.Evaluation
+  - Geb.Prototypes.InteractionNet.Execution
+  - Geb.Prototypes.InteractionNet.ExecutionGraphSimulation
+  - Geb.Prototypes.InteractionNet.Expression
+  - Geb.Prototypes.InteractionNet.ForestAttachment
+  - Geb.Prototypes.InteractionNet.ForestAttachmentContext
+  - Geb.Prototypes.InteractionNet.ForestIso
+  - Geb.Prototypes.InteractionNet.ForestSubstitution
+  - Geb.Prototypes.InteractionNet.GraphAssembly
+  - Geb.Prototypes.InteractionNet.GraphClosure
+  - Geb.Prototypes.InteractionNet.GraphContext
+  - Geb.Prototypes.InteractionNet.HeadPairGraph
+  - Geb.Prototypes.InteractionNet.Kernel
+  - Geb.Prototypes.InteractionNet.KernelAdequacy
+  - Geb.Prototypes.InteractionNet.KernelApplication
+  - Geb.Prototypes.InteractionNet.KernelContext
+  - Geb.Prototypes.InteractionNet.KernelControl
+  - Geb.Prototypes.InteractionNet.KernelEquality
+  - Geb.Prototypes.InteractionNet.KernelEvaluation
+  - Geb.Prototypes.InteractionNet.KernelGraph
+  - Geb.Prototypes.InteractionNet.KernelGraphAdequacy
+  - Geb.Prototypes.InteractionNet.KernelGraphReadback
+  - Geb.Prototypes.InteractionNet.KernelPrimitives
+  - Geb.Prototypes.InteractionNet.KernelRecursors
+  - Geb.Prototypes.InteractionNet.KernelRules
+  - Geb.Prototypes.InteractionNet.KernelSaturation
+  - Geb.Prototypes.InteractionNet.KernelValue
+  - Geb.Prototypes.InteractionNet.KernelValueShape
+  - Geb.Prototypes.InteractionNet.Normalization
+  - Geb.Prototypes.InteractionNet.Observation
+  - Geb.Prototypes.InteractionNet.Output
+  - Geb.Prototypes.InteractionNet.PairReconstruction
+  - Geb.Prototypes.InteractionNet.PairedBoundary
+  - Geb.Prototypes.InteractionNet.PartialClosureCoupling
+  - Geb.Prototypes.InteractionNet.PartialClosureIdentity
+  - Geb.Prototypes.InteractionNet.Preservation
+  - Geb.Prototypes.InteractionNet.Program
+  - Geb.Prototypes.InteractionNet.ProgramCorrect
+  - Geb.Prototypes.InteractionNet.ProgramGraph
+  - Geb.Prototypes.InteractionNet.RuleBoundaryOccurrences
+  - Geb.Prototypes.InteractionNet.RuleGraph
+  - Geb.Prototypes.InteractionNet.RuleInstantiationAllocation
+  - Geb.Prototypes.InteractionNet.RuleInstantiationCancellation
+  - Geb.Prototypes.InteractionNet.RuleInstantiationCells
+  - Geb.Prototypes.InteractionNet.RuleInstantiationForest
+  - Geb.Prototypes.InteractionNet.RuleInstantiationLeaves
+  - Geb.Prototypes.InteractionNet.RuleInstantiationSplices
+  - Geb.Prototypes.InteractionNet.RuleInternalWiring
+  - Geb.Prototypes.InteractionNet.RuleLeafPartition
+  - Geb.Prototypes.InteractionNet.RuleOpenForest
+  - Geb.Prototypes.InteractionNet.SingletonGraph
+  - Geb.Prototypes.InteractionNet.Substitution
+  - Geb.Prototypes.InteractionNet.Tasks
+  - Geb.Prototypes.InteractionNet.Term
+  - Geb.Prototypes.InteractionNet.TermAttachmentAgent
+  - Geb.Prototypes.InteractionNet.TermAttachmentVariable
+  - Geb.Prototypes.InteractionNet.TermCellOrder
+  - Geb.Prototypes.InteractionNet.TermGraph
+  - Geb.Prototypes.InteractionNet.TermGraphAttachment
+  - Geb.Prototypes.InteractionNet.TermGraphNormal
+  - Geb.Prototypes.InteractionNet.TermGraphReadback
+  - Geb.Prototypes.InteractionNet.TermGraphRenaming
+  - Geb.Prototypes.InteractionNet.TermGraphSimulation
+  - Geb.Prototypes.InteractionNet.TermGraphSubstitution
+  - Geb.Prototypes.InteractionNet.TermGraphSum
   - Geb.Prototypes.Kernel.Command
   - Geb.Prototypes.Kernel.Image
   - Geb.Prototypes.Kernel.LoadCommand
+  - Geb.Prototypes.LF.Topos.ProofsMod
   - Geb.Prototypes.PHOAS
   - Geb.Prototypes.RoseTree.Bits
   - Geb.Prototypes.RoseTree.Packed

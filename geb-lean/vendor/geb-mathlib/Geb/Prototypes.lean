@@ -16,6 +16,7 @@ public import Geb.Prototypes.FiniteChoice
 public import Geb.Prototypes.FreeLCCC
 public import Geb.Prototypes.FreeTopos
 public import Geb.Prototypes.GoedelT
+public import Geb.Prototypes.InteractionNet
 public import Geb.Prototypes.Kernel
 public import Geb.Prototypes.LF
 public import Geb.Prototypes.LargeIR
