@@ -1087,7 +1087,7 @@ toListLength : {n : Nat} -> {0 a : Type} ->
   (v : Vect n a) -> length (toList v) = n
 toListLength {n=Z} {a} [] = Refl
 toListLength {n=(S n)} {a} (x :: v) =
-  trans (foldLengthAppend [x] v) (cong S $ toListLength {n} {a} v)
+  cong S $ toListLength {n} {a} v
 
 public export
 predLen : {0 a : Type} -> List a -> Nat
