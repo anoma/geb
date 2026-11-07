@@ -23,9 +23,11 @@ A strict encoding has no comments, so a source document is written in one as a s
 S-expression ({lit}`toStrict`): its S-expressions, each node with trivia written as an
 annotation form {lit}`(*ann node lead gap close)` in its place, its comment lines as lists of
 a flag of an empty line and the line's characters, inside a list headed by {lit}`*doc` with the
-comment lines after the last S-expression. A document no list of which is headed by
+comment lines after the last S-expression. The list's second element is a header, an
+S-expression the document's reader interprets, such as the profile of a durable document
+({lit}`Geb.Kernel.Document.Durable`). A document no list of which is headed by
 {lit}`*ann`, and whose characters are bytes, as every document read is, is read back from that
-form ({lit}`fromStrictDoc_toStrict`), and so from its canonical encoding
+form with its header ({lit}`fromStrictDoc_toStrict`), and so from its canonical encoding
 ({lit}`readStrictDoc_printCanonDoc`). The basic transport encoding is the
 canonical one or the base-64 encoding of it between braces; its printer writes the first. The
 advanced encoding writes the same tokens laid out as the formatter lays out source, a token bare
@@ -335,9 +337,10 @@ def strictOf : SExpr → SExp :=
     else listOf [atomOf kwAnn, RoseTree.node l.2 rs, linesSExp l.1.lead, gapAtom l.1.gap,
       linesSExp l.1.close]
 
-/-- A document in strict form: a list headed by {lit}`*doc` of the comment lines after the last
-S-expression and the S-expressions. -/
-def toStrict (d : Doc) : SExp := listOf (atomOf kwDoc :: linesSExp d.trail :: d.items.map strictOf)
+/-- A document in strict form under a header: a list headed by {lit}`*doc` of the header, the
+comment lines after the last S-expression and the S-expressions. -/
+def toStrict (h : SExp) (d : Doc) : SExp :=
+  listOf (atomOf kwDoc :: h :: linesSExp d.trail :: d.items.map strictOf)
 
 /-- The flag of an empty line an atom spells. -/
 def gapOf? (t : SExp) : Option Bool :=
@@ -381,12 +384,12 @@ def fromStrictStep (a : Option (List Char)) (rs : List (SExp × Option SExpr)) :
 /-- An S-expression read from strict form. -/
 def fromStrict : SExp → Option SExpr := RoseTree.para fromStrictStep
 
-/-- A document read from strict form. -/
-def fromStrictDoc (t : SExp) : Option Doc :=
+/-- A header and a document read from strict form. -/
+def fromStrictDoc (t : SExp) : Option (SExp × Doc) :=
   match t.label, t.children with
-  | none, h :: tr :: items =>
-    if h.label == some kwDoc && h.children.isEmpty then do
-      some ⟨← items.mapM fromStrict, ← linesOf? tr⟩
+  | none, k :: h :: tr :: items =>
+    if k.label == some kwDoc && k.children.isEmpty then do
+      some (h, ⟨← items.mapM fromStrict, ← linesOf? tr⟩)
     else none
   | _, _ => none
 
@@ -399,9 +402,10 @@ def strictWf : SExpr → Bool :=
       | some _ => rs.isEmpty
       | none => !(rs.head?.any fun r ↦ r.1.label == (Trivia.none, some kwAnn))
 
-/-- Whether a document can be written in strict form and read back: its S-expressions can, and
-the characters of its strict form are bytes. -/
-def Doc.strictWf (d : Doc) : Bool := d.items.all Document.strictWf && SExp.bytes (toStrict d)
+/-- Whether a document can be written in strict form under a header and read back: its
+S-expressions can, the header is well formed, and the characters of its strict form are bytes. -/
+def Doc.strictWf (h : SExp) (d : Doc) : Bool :=
+  d.items.all Document.strictWf && (SExp.wf h && SExp.bytes (toStrict h d))
 
 /-- A flag of an empty line reads back. -/
 theorem gapOf?_gapAtom (g : Bool) : gapOf? (gapAtom g) = some g := by
@@ -532,13 +536,15 @@ theorem fromStrict_strictOf : ∀ t : SExpr, strictWf t → fromStrict (strictOf
         RoseTree.children_node, linesOf?_linesSExp, gapOf?_gapAtom]
       rfl
 
-/-- The strict form of a well-formed document reads back to it. -/
-theorem fromStrictDoc_toStrict (d : Doc) (h : d.strictWf) :
-    fromStrictDoc (toStrict d) = some d := by
+/-- The strict form of a well-formed document under a header reads back to the header and the
+document. -/
+theorem fromStrictDoc_toStrict (h : SExp) (d : Doc) (hd : d.strictWf h) :
+    fromStrictDoc (toStrict h d) = some (h, d) := by
+  simp only [Doc.strictWf, Bool.and_eq_true] at hd
   simp only [toStrict, fromStrictDoc, listOf, atomOf, kwDoc, RoseTree.label_node,
     RoseTree.children_node, linesOf?_linesSExp,
     mapM_map_of fromStrict strictOf d.items fun c hc ↦
-      fromStrict_strictOf c (List.all_eq_true.mp (Bool.and_eq_true _ _ ▸ h).1 c hc)]
+      fromStrict_strictOf c (List.all_eq_true.mp hd.1 c hc)]
   rfl
 
 /-- An atom is well formed. -/
@@ -573,27 +579,36 @@ theorem wf_strictOf : ∀ t : SExpr, strictWf t → SExp.wf (strictOf t) :=
     · simp only [listOf, SExp.wf_list, List.all_cons, wf_atomOf, hcore, wf_linesSExp,
         gapAtom, List.all_nil, Bool.and_self]
 
-/-- A document in the canonical encoding. -/
-def printCanonDoc (d : Doc) : List Char := canonOf (toStrict d)
+/-- The strict form of a well-formed document is well formed. -/
+theorem wf_toStrict (h : SExp) (d : Doc) (hd : d.strictWf h) : SExp.wf (toStrict h d) := by
+  simp only [Doc.strictWf, Bool.and_eq_true] at hd
+  simp only [toStrict, listOf, SExp.wf_list, List.all_cons, wf_atomOf, wf_linesSExp, hd.2.1,
+    List.all_map, Bool.true_and, List.all_eq_true, Function.comp_apply]
+  exact fun c hc ↦ wf_strictOf c (List.all_eq_true.mp hd.1 c hc)
 
-/-- A document read from a strict encoding: one S-expression, read from strict form. -/
-def readStrictDoc (text : List Char) : Option Doc :=
+/-- The characters of the strict form of a well-formed document are bytes. -/
+theorem bytes_toStrict (h : SExp) (d : Doc) (hd : d.strictWf h) : SExp.bytes (toStrict h d) := by
+  simp only [Doc.strictWf, Bool.and_eq_true] at hd
+  exact hd.2.2
+
+/-- A document in the canonical encoding under a header. -/
+def printCanonDoc (h : SExp) (d : Doc) : List Char := canonOf (toStrict h d)
+
+/-- A header and a document read from a strict encoding: one S-expression, read from strict
+form. -/
+def readStrictDoc (text : List Char) : Option (SExp × Doc) :=
   (readDoc text).bind fun d ↦
     match d.items, d.trail with
     | [t], [] => fromStrictDoc (RoseTree.erase t)
     | _, _ => none
 
 /-- The retraction law of the canonical encoding of documents. -/
-theorem readStrictDoc_printCanonDoc (d : Doc) (h : d.strictWf) :
-    readStrictDoc (printCanonDoc d) = some d := by
-  have hw : SExp.wf (toStrict d) := by
-    simp only [toStrict, listOf, SExp.wf_list, List.all_cons, wf_atomOf, wf_linesSExp,
-      List.all_map, Bool.true_and, List.all_eq_true, Function.comp_apply]
-    exact fun c hc ↦ wf_strictOf c (List.all_eq_true.mp (Bool.and_eq_true _ _ ▸ h).1 c hc)
-  rw [readStrictDoc, printCanonDoc, readDoc_canonOf _ hw (Bool.and_eq_true _ _ ▸ h).2,
-    Option.bind_some]
+theorem readStrictDoc_printCanonDoc (h : SExp) (d : Doc) (hd : d.strictWf h) :
+    readStrictDoc (printCanonDoc h d) = some (h, d) := by
+  rw [readStrictDoc, printCanonDoc,
+    readDoc_canonOf _ (wf_toStrict h d hd) (bytes_toStrict h d hd), Option.bind_some]
   simp only [erase_plain]
-  exact fromStrictDoc_toStrict d h
+  exact fromStrictDoc_toStrict h d hd
 
 /-! ## The advanced encoding -/
 
@@ -615,28 +630,24 @@ theorem readDoc_advancedOf (L : ℕ → Bool × ℕ) (t : SExp) (ht : SExp.wf t)
   rw [readDoc, lex_advancedOf L t hb, Option.bind_some, foldl_readStep_canonToks t ht _ [] rfl]
   simp [Frame.start, Frame.push]
 
-/-- A document in the advanced encoding, its strict form laid out within a line width by the
-layout policy. The layout is bound outside the function of positions, so that it is computed
-once rather than at every position. -/
-def printAdvancedDoc (lim : ℕ) (d : Doc) : List Char :=
-  let ds := defaultLayout .advanced lim ⟨[plain (toStrict d)], []⟩
-  advancedOf (fun i ↦ ds.getD i (false, 0)) (toStrict d)
+/-- A document in the advanced encoding under a header, its strict form laid out within a line
+width by the layout policy. The layout is bound outside the function of positions, so that it is
+computed once rather than at every position. -/
+def printAdvancedDoc (lim : ℕ) (h : SExp) (d : Doc) : List Char :=
+  let ds := defaultLayout .advanced lim ⟨[plain (toStrict h d)], []⟩
+  advancedOf (fun i ↦ ds.getD i (false, 0)) (toStrict h d)
 
 /-- The retraction law of the advanced encoding of documents. -/
-theorem readStrictDoc_printAdvancedDoc (lim : ℕ) (d : Doc) (h : d.strictWf) :
-    readStrictDoc (printAdvancedDoc lim d) = some d := by
-  have hw : SExp.wf (toStrict d) := by
-    simp only [toStrict, listOf, SExp.wf_list, List.all_cons, wf_atomOf, wf_linesSExp,
-      List.all_map, Bool.true_and, List.all_eq_true, Function.comp_apply]
-    exact fun c hc ↦ wf_strictOf c (List.all_eq_true.mp (Bool.and_eq_true _ _ ▸ h).1 c hc)
-  rw [readStrictDoc, printAdvancedDoc, readDoc_advancedOf _ _ hw (Bool.and_eq_true _ _ ▸ h).2,
-    Option.bind_some]
+theorem readStrictDoc_printAdvancedDoc (lim : ℕ) (h : SExp) (d : Doc) (hd : d.strictWf h) :
+    readStrictDoc (printAdvancedDoc lim h d) = some (h, d) := by
+  rw [readStrictDoc, printAdvancedDoc,
+    readDoc_advancedOf _ _ (wf_toStrict h d hd) (bytes_toStrict h d hd), Option.bind_some]
   simp only [erase_plain]
-  exact fromStrictDoc_toStrict d h
+  exact fromStrictDoc_toStrict h d hd
 
-/-- A document read from the basic transport encoding: the canonical encoding, or its base-64
-encoding between braces, whitespace around them ignored. -/
-def readBasic (text : List Char) : Option Doc :=
+/-- A header and a document read from the basic transport encoding: the canonical encoding, or its
+base-64 encoding between braces, whitespace around them ignored. -/
+def readBasic (text : List Char) : Option (SExp × Doc) :=
   match text.dropWhile isSpace with
   | '{' :: rest =>
     match (rest.dropWhile isSpace).reverse.dropWhile isSpace with
