@@ -1107,12 +1107,17 @@ name it needs in the v4.29 tree and compare signatures.
 
 `EXCLUDED_MODULES` in `scripts/refresh-geb-mathlib.sh` names modules in
 Lean dotted form. For each entry the script removes the module's own
-file and its submodule directory, then deletes every `import` of the
-entry or of one of its submodules from the surviving files, so that no
-bad import remains. The removal runs after `git apply`, so each patch
-hunk still anchors against the pristine upstream text it was generated
-from. `PROVENANCE.md` records the list, the vendored tree being a
-function of it as well as of the upstream commit and the patch.
+file and its submodule directory, then deletes every import of the
+entry or of one of its submodules from the surviving files, in any of
+the module system's four forms (`import`, `public import`,
+`meta import`, `public meta import`) and with or without a trailing
+comment, so that no bad import remains. An import left in place names
+a file that no longer exists, which `lake` reports while computing the
+build's jobs, without naming the importing module. The removal runs
+after `git apply`, so each patch hunk still anchors against the
+pristine upstream text it was generated from. `PROVENANCE.md` records
+the list, the vendored tree being a function of it as well as of the
+upstream commit and the patch.
 
 An entry names the narrowest module carrying the unavailable
 dependency rather than an ancestor namespace: a sibling added upstream
