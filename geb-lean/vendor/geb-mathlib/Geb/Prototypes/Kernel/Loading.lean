@@ -15,17 +15,23 @@ set_option doc.verso true in
 {name}`Geb.Kernel.load` checks and evaluates a program's definitions in order, each in the
 globals the definitions before it load. This module states the loading as a fold of one step
 ({lit}`loadStep`), so that a program's loading can be proved one definition at a time, and reads
-a definition's meaning off a step that appends its global.
+a definition's meaning off a step that appends its global. A step is proved from the definition's
+meaning ({lit}`loadStep_of_infer`), and the meaning from the equations of the checker-evaluator at
+the forms of term ({lit}`Geb/Prototypes/GoedelT/Equations.lean`), with those of a variable, a
+primitive and a reference here. A reference is proved in globals that are a list reversed
+({lit}`infer_ref_reverse`), so that the global it names is reached from the last one appended,
+the list of the globals before a definition being built by appending.
 
 ## Main definitions
 
 * {lit}`loadStep` — the step of loading a program.
-* {lit}`defType` — the type of a definition in the globals before it.
 
 ## Main statements
 
 * {lit}`load_eq_foldl` — loading a program is the fold of its step.
 * {lit}`infer_of_loadStep` — a definition that loads has a meaning at its global's type.
+* {lit}`loadStep_of_infer` — a definition with a meaning loads the global of its meaning.
+* {lit}`infer_ref_reverse` — the meaning of a reference in globals that are a list reversed.
 
 ## Tags
 
@@ -44,10 +50,6 @@ def loadStep (acc : Option (List Glob)) (t : Tree) : Option (List Glob) := do
   let G ← acc
   let m ← infer G [] t
   some (G ++ [⟨m.1, m.2 ()⟩])
-
-/-- The type of a definition in the globals before it, or the type of trees where it is
-ill-typed. -/
-def defType (G : List Glob) (t : Tree) : Tree := ((infer G [] t).map (·.1)).getD tT
 
 /-- A list of globals with one more appended. -/
 def snoc (G : List Glob) (g : Glob) : List Glob := G ++ [g]
@@ -89,6 +91,44 @@ theorem infer_of_loadStep {G : List Glob} {t : Tree} {g : Glob}
 /-- The innermost variable of a context has the context's first type. -/
 theorem infer_var0 (G : List Glob) (Γ : Ctx) (A : Tree) :
     infer G (A :: Γ) (Tm.var 0) = some ⟨A, Prod.fst⟩ := rfl
+
+/-- A definition with a meaning in the globals before it appends the global of its type and its
+value. -/
+theorem loadStep_of_infer {G : List Glob} {t A : Tree} {f : Ctx.den [] → Ty.den A}
+    (h : infer G [] t = some ⟨A, f⟩) : loadStep (some G) t = some (snoc G ⟨A, f ()⟩) := by
+  simp only [loadStep, h, Option.bind_eq_bind, Option.bind_some, snoc]
+
+/-- The denotation of a variable bound in the context: its lookup there. -/
+theorem infer_var_get (G : List Glob) (Γ : Ctx) (i : ℕ) (h : (Γ.var i).isSome = true) :
+    infer G Γ (Tm.var i) = some ⟨((Γ.var i).get h).1, ((Γ.var i).get h).2⟩ := by
+  rw [infer_var, Option.some_get]
+
+/-- The denotation of a primitive: its entry in {name}`prims`. -/
+theorem infer_prim (G : List Glob) (Γ : Ctx) (i : ℕ) (h : i < prims.length) :
+    infer G Γ (mk Label.prim [leaf i]) = some ⟨prims[i].1, fun _ ↦ prims[i].2⟩ := by
+  simp only [mk, infer_node, List.map_cons, List.map_nil, inferStep, leaf, RoseTree.label_node,
+    List.getElem?_eq_getElem h, Option.map_some, constant]
+
+/-- The denotation of a reference, in globals that are a list reversed: the global of that list
+as far from its end as the reference's index is from the start. -/
+theorem infer_ref_reverse {G R : List Glob} (Γ : Ctx) (i j : ℕ) {A : Tree} {a : Ty.den A}
+    (hG : G = R.reverse) (h : i + j + 1 = R.length) (hg : R[i]? = some ⟨A, a⟩) :
+    infer G Γ (mk Label.ref [leaf j]) = some ⟨A, fun _ ↦ a⟩ := by
+  have hj : G[j]? = some ⟨A, a⟩ := by
+    rw [hG, List.getElem?_reverse (by omega), show R.length - 1 - j = i by omega, hg]
+  simp only [mk, infer_node, List.map_cons, List.map_nil, inferStep, leaf, RoseTree.label_node,
+    hj, Option.map_some, constant]
+
+/-- Globals that are a list reversed, with one more appended, are the list with that one before
+it, reversed. -/
+theorem snoc_reverse {G R : List Glob} (g : Glob) (h : G = R.reverse) :
+    snoc G g = (g :: R).reverse := by
+  rw [snoc, h, List.reverse_cons]
+
+/-- The length of a list with one more global before it. -/
+theorem length_cons_of {R : List Glob} {m : ℕ} (g : Glob) (h : R.length = m) :
+    (g :: R).length = m + 1 := by
+  rw [List.length_cons, h]
 
 end Geb.Kernel
 

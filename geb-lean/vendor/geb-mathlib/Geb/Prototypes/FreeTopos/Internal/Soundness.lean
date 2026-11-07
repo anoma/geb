@@ -155,7 +155,7 @@ theorem mapM_compile_of_typeIn {G : Globals} {n : ℕ} {Γ : List Tree} {X : Tre
       rcases Δ with _ | ⟨A, Δ⟩
       · simp at hl
       simp only [List.zip_cons_cons, List.all_cons, Bool.and_eq_true, decide_eq_true_eq] at hall
-      obtain ⟨⟨f₀, A₀⟩, hstd, hA⟩ := Option.map_eq_some_iff.mp hall.1
+      obtain ⟨⟨f₀, A₀⟩, hstd, hA⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hall.1)
       obtain rfl : A₀ = A := hA
       obtain ⟨f, hf⟩ := compile_retype u _ _ _ hstd X e (hΓ.trans (map_snd_stdEnv Γ).symm)
       obtain ⟨rs, hrs, hsnd⟩ := ih Δ (by simpa using hl) hall.2
@@ -539,7 +539,7 @@ theorem childCtxs_isSome {G : Globals} {n : ℕ} {l : Label} {ts : List Term} {�
     obtain ⟨f₀, hf₀⟩ := compile_retype z X e _ hz (ctxObj Γ) (stdEnv Γ)
       (by rw [map_snd_stdEnv, hΓ])
     have hc : typeIn G n Γ z = some c := by
-      change (compile G n z (ctxObj Γ) (stdEnv Γ)).map Prod.snd = some c
+      rw [typeIn_eq_compile]
       rw [hf₀]
       rfl
     refine ⟨[(Γ, Φ), (c :: Γ, Φ.map weaken1), (Γ, Φ)], ?_⟩
@@ -552,13 +552,13 @@ theorem childCtxs_isSome {G : Globals} {n : ℕ} {l : Label} {ts : List Term} {�
     obtain ⟨f₁, hf₁⟩ := compile_retype z X e _ hz (ctxObj Γ) (stdEnv Γ)
       (by rw [map_snd_stdEnv, hΓ])
     have hc : typeIn G n Γ z = some c := by
-      change (compile G n z (ctxObj Γ) (stdEnv Γ)).map Prod.snd = some c
+      rw [typeIn_eq_compile]
       rw [hf₁]
       rfl
     obtain ⟨f₀, hf₀⟩ := compile_retype m X e _ hm (ctxObj Γ) (stdEnv Γ)
       (by rw [map_snd_stdEnv, hΓ])
     have hmt : typeIn G n Γ m = some (list A) := by
-      change (compile G n m (ctxObj Γ) (stdEnv Γ)).map Prod.snd = some (list A)
+      rw [typeIn_eq_compile]
       rw [hf₀]
       rfl
     refine ⟨[(Γ, Φ), (c :: A :: Γ, Φ.map weaken2), (Γ, Φ)], ?_⟩
@@ -570,7 +570,7 @@ theorem childCtxs_isSome {G : Globals} {n : ℕ} {l : Label} {ts : List Term} {�
     obtain ⟨f₀, hf₀⟩ := compile_retype m X e _ hm (ctxObj Γ) (stdEnv Γ)
       (by rw [map_snd_stdEnv, hΓ])
     have hmt : typeIn G n Γ m = some t := by
-      change (compile G n m (ctxObj Γ) (stdEnv Γ)).map Prod.snd = some t
+      rw [typeIn_eq_compile]
       rw [hf₀]
       rfl
     refine ⟨[(prod a (list c) :: Γ, Φ.map weaken1), (Γ, Φ)], ?_⟩
@@ -830,7 +830,7 @@ theorem pairEta_sound {Φ : List Term} (Γ : List Tree) (p : Term) :
 theorem unitEta_sound {Φ : List Term} {Γ : List Tree} {t : Term} (h₁ : typeIn G n Γ t = some one) :
     RwSound M ρ G n Γ Φ t Term.star := by
   intro X e he hΓ _ r h
-  obtain ⟨⟨f₀, A₀⟩, hstd, rfl⟩ := Option.map_eq_some_iff.mp h₁
+  obtain ⟨⟨f₀, A₀⟩, hstd, rfl⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp h₁)
   obtain ⟨f, hf⟩ := compile_retype t _ _ _ hstd X e (hΓ.trans (map_snd_stdEnv Γ).symm)
   obtain rfl := Option.some_inj.mp (h.symm.trans hf)
   exact ⟨_, compile_star_iff.mpr ⟨rfl, rfl⟩, rfl,
@@ -1368,12 +1368,12 @@ theorem Thm.Valid.inst {a : Thm} (ha : a.Valid M G) {θ : List Tree} {σ : List 
   obtain ⟨hpsw, hdsw, hfw⟩ := hv ws hws
   have hstdw := stdEnv_hom hM hdsw.2 hws a.ctx hctx
   -- the conclusion and the hypotheses in the context's environment of projections
-  obtain ⟨⟨C, C'⟩, hC, hC'⟩ := Option.map_eq_some_iff.mp hcon
+  obtain ⟨⟨C, C'⟩, hC, hC'⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hcon)
   obtain rfl : C' = omega := hC'
   obtain ⟨Hs, hHs, hHs'⟩ := exists_mapM_of_forall
     (f := fun h ↦ compile G a.arity h (ctxObj a.ctx) (stdEnv a.ctx))
     (P := fun q ↦ q.2 = omega) a.hyps fun h hh ↦ by
-      obtain ⟨q, hq, hq'⟩ := Option.map_eq_some_iff.mp (hhyps h hh)
+      obtain ⟨q, hq, hq'⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp (hhyps h hh))
       exact ⟨q, hq, hq'⟩
   have hCw : Hom M ws C (ctxObj a.ctx) omega :=
     (compile_hom hM hG hws hpsw hdsw _ _ _ _ hC hstdw).1
@@ -1453,7 +1453,7 @@ theorem thm_inst_sound {a : Thm} (ha : a.Valid M G) (hnil : a.hyps = []) {lr : T
   intro X e he hΓ _ q hq
   have hconcl := eqParts_eq_some hlr
   obtain ⟨-, -, hcon, -⟩ := id ha
-  obtain ⟨⟨C, C'⟩, hC, -⟩ := Option.map_eq_some_iff.mp hcon
+  obtain ⟨⟨C, C'⟩, hC, -⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hcon)
   rw [hconcl] at hC
   obtain ⟨l', r', hlr', f, A, hf, g, hg, -⟩ := compile_eq_iff.mp hC
   simp only [List.cons.injEq, and_true] at hlr'
@@ -1744,7 +1744,7 @@ theorem cong_sound {l : Label} {ts ts' : List Term} {Γ : List Tree} {Φ : List 
     obtain ⟨f₀, hf₀⟩ := compile_retype z X e _ hz (ctxObj Γ) (stdEnv Γ)
       (by rw [map_snd_stdEnv, hΓ])
     have hc : typeIn G n Γ z = some c := by
-      change (compile G n z (ctxObj Γ) (stdEnv Γ)).map Prod.snd = some c
+      rw [typeIn_eq_compile]
       rw [hf₀]
       rfl
     obtain rfl : Γs = [(Γ, Φ), (c :: Γ, Φ.map weaken1), (Γ, Φ)] := by
@@ -1770,13 +1770,13 @@ theorem cong_sound {l : Label} {ts ts' : List Term} {Γ : List Tree} {Φ : List 
     obtain ⟨f₁, hf₁⟩ := compile_retype z X e _ hz (ctxObj Γ) (stdEnv Γ)
       (by rw [map_snd_stdEnv, hΓ])
     have hc : typeIn G n Γ z = some c := by
-      change (compile G n z (ctxObj Γ) (stdEnv Γ)).map Prod.snd = some c
+      rw [typeIn_eq_compile]
       rw [hf₁]
       rfl
     obtain ⟨f₀, hf₀⟩ := compile_retype m X e _ hm (ctxObj Γ) (stdEnv Γ)
       (by rw [map_snd_stdEnv, hΓ])
     have hmt : typeIn G n Γ m = some (list A) := by
-      change (compile G n m (ctxObj Γ) (stdEnv Γ)).map Prod.snd = some (list A)
+      rw [typeIn_eq_compile]
       rw [hf₀]
       rfl
     obtain rfl : Γs = [(Γ, Φ), (c :: A :: Γ, Φ.map weaken2), (Γ, Φ)] := by
@@ -1807,7 +1807,7 @@ theorem cong_sound {l : Label} {ts ts' : List Term} {Γ : List Tree} {Φ : List 
     obtain ⟨f₀, hf₀⟩ := compile_retype m X e _ hm (ctxObj Γ) (stdEnv Γ)
       (by rw [map_snd_stdEnv, hΓ])
     have hmt : typeIn G n Γ m = some t := by
-      change (compile G n m (ctxObj Γ) (stdEnv Γ)).map Prod.snd = some t
+      rw [typeIn_eq_compile]
       rw [hf₀]
       rfl
     obtain rfl : Γs = [(prod a (list c) :: Γ, Φ.map weaken1), (Γ, Φ)] := by

@@ -12,11 +12,13 @@ public import Geb.Prototypes.FreeTopos.Internal.Derivation
 public import Geb.Prototypes.FreeTopos.Internal.Development
 public import Geb.Prototypes.FreeTopos.Internal.Inversion
 public import Geb.Prototypes.FreeTopos.Internal.Logic
+public import Geb.Prototypes.FreeTopos.Internal.Machine
 public import Geb.Prototypes.FreeTopos.Internal.ObjectSubst
 public import Geb.Prototypes.FreeTopos.Internal.Params
 public import Geb.Prototypes.FreeTopos.Internal.Proofs
 public import Geb.Prototypes.FreeTopos.Internal.Prove
 public import Geb.Prototypes.FreeTopos.Internal.ProveChecked
+public import Geb.Prototypes.FreeTopos.Internal.Reduce
 public import Geb.Prototypes.FreeTopos.Internal.Represent
 public import Geb.Prototypes.FreeTopos.Internal.Semantics
 public import Geb.Prototypes.FreeTopos.Internal.Soundness
@@ -25,6 +27,7 @@ public import Geb.Prototypes.FreeTopos.Internal.Square
 public import Geb.Prototypes.FreeTopos.Internal.Substitution
 public import Geb.Prototypes.FreeTopos.Internal.Syntax
 public import Geb.Prototypes.FreeTopos.Internal.SyntaxLaws
+public import Geb.Prototypes.FreeTopos.Internal.Typing
 
 set_option doc.verso true in
 /-!

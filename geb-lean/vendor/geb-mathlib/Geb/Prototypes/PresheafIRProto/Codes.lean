@@ -11,6 +11,7 @@ public import Geb.Mathlib.Data.PFunctor.Slice.W
 public import Mathlib.CategoryTheory.Category.Cat
 public import Mathlib.CategoryTheory.Category.Preorder
 public import Mathlib.Order.Fin.Basic
+public import Aesop
 
 /-!
 # Prototype: code combinators at the presheaf p.r.a. level

@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Terence Rokop
 -/
+-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
 module
 
 public import Geb.Prototypes.FreeTopos.Check
@@ -51,6 +52,12 @@ signature's.
 ## Main definitions
 
 * {lit}`IsTy` — the types.
+* {lit}`isTyStepFast`, {lit}`IsTyFast` — the test of types as compiled, a fold that does not
+  rebuild the subtrees.
+* {lit}`opArgs` — the arguments of an operation, read from a tree's label.
+* {lit}`prodPartsFast`, {lit}`coprodPartsFast`, {lit}`expPartsFast`, {lit}`listPartFast`,
+  {lit}`rosePartsFast` — the parts of the types of the type formers as compiled, found by the
+  label of the former rather than by a comparison of the type with the former at its children.
 * {lit}`foldParams`, {lit}`foldEnvIn` — the parameters of a fold, and the environments its start
   and its step are compiled in.
 * {lit}`compile` — the type and the arrow of a term in an environment.
@@ -62,6 +69,16 @@ signature's.
 * {lit}`Prim`, {lit}`Globals` — the primitive arrows, and the constants a term may apply.
 * {lit}`Prim.wf`, {lit}`Prim.ok`, {lit}`Globals.ok` — the check that the constants are well
   formed and each primitive arrow has the types it names.
+
+## Main statements
+
+* {lit}`isTy_eq_isTyFast` — the test of types is {lit}`IsTyFast`, which the compiler runs.
+* {lit}`eq_op_iff` — a tree is an operation at a list of trees exactly when its label is the
+  operation's and its children are the list.
+* {lit}`prodParts_eq_prodPartsFast`, {lit}`coprodParts_eq_coprodPartsFast`,
+  {lit}`expParts_eq_expPartsFast`, {lit}`listPart_eq_listPartFast`,
+  {lit}`roseParts_eq_rosePartsFast` — the parts of the types are found by their labels, which
+  the compiler runs.
 
 ## References
 
@@ -119,6 +136,80 @@ def roseParts (p : Tree) : Option (Tree × (Tree → Tree)) :=
 def listPart (p : Tree) : Option Tree := match p.children with
   | [a] => if p = list a then some a else none
   | _ => none
+
+/-- The arguments of a tree that is the operation of index {lit}`k` at them, read from its label
+alone: the tree is the operation at its children exactly when its label is the operation's. -/
+def opArgs (k : ℕ) (p : Tree) : Option (List Tree) :=
+  if p.label = k + 1 then some p.children else none
+
+/-- {lit}`prodParts` as compiled, by the label of the product rather than by a comparison of the
+tree with the product of its children. -/
+def prodPartsFast (p : Tree) : Option (Tree × Tree) := match opArgs 6 p with
+  | some [a, b] => some (a, b)
+  | _ => none
+
+/-- {lit}`coprodParts` as compiled, by the label of the coproduct. -/
+def coprodPartsFast (p : Tree) : Option (Tree × Tree) := match opArgs 15 p with
+  | some [a, b] => some (a, b)
+  | _ => none
+
+/-- {lit}`expParts` as compiled, by the label of the exponential. -/
+def expPartsFast (p : Tree) : Option (Tree × Tree) := match opArgs 22 p with
+  | some [a, b] => some (a, b)
+  | _ => none
+
+/-- {lit}`listPart` as compiled, by the label of the list object. -/
+def listPartFast (p : Tree) : Option Tree := match opArgs 33 p with
+  | some [a] => some a
+  | _ => none
+
+/-- {lit}`roseParts` as compiled, by the labels of the rose-tree objects. -/
+def rosePartsFast (p : Tree) : Option (Tree × (Tree → Tree)) := match opArgs 37 p with
+  | some [] => some (nat, roseRec)
+  | _ => match opArgs 40 p with
+    | some [a] => some (a, lroseRec a)
+    | _ => none
+
+/-- A tree is the operation of index {lit}`k` at a list of trees exactly when its label is the
+operation's and its children are the list. -/
+theorem eq_op_iff {p : Tree} {k : ℕ} {cs : List Tree} :
+    p = op k cs ↔ p.label = k + 1 ∧ p.children = cs := by
+  rw [eq_comm, op, RoseTree.node_eq_iff, eq_comm (a := k + 1), eq_comm (a := cs)]
+
+/-- The factors of a product are found by its label, by which the compiler replaces the
+comparison. -/
+@[csimp] theorem prodParts_eq_prodPartsFast : @prodParts = @prodPartsFast := by
+  funext p
+  rcases hc : p.children with _ | ⟨a, _ | ⟨b, _ | ⟨c, cs⟩⟩⟩ <;>
+    simp [prodParts, prodPartsFast, opArgs, prod, eq_op_iff, hc]
+  split <;> simp_all
+
+/-- The summands of a coproduct are found by its label. -/
+@[csimp] theorem coprodParts_eq_coprodPartsFast : @coprodParts = @coprodPartsFast := by
+  funext p
+  rcases hc : p.children with _ | ⟨a, _ | ⟨b, _ | ⟨c, cs⟩⟩⟩ <;>
+    simp [coprodParts, coprodPartsFast, opArgs, coprod, eq_op_iff, hc]
+  split <;> simp_all
+
+/-- The domain and codomain of an exponential are found by its label. -/
+@[csimp] theorem expParts_eq_expPartsFast : @expParts = @expPartsFast := by
+  funext p
+  rcases hc : p.children with _ | ⟨a, _ | ⟨b, _ | ⟨c, cs⟩⟩⟩ <;>
+    simp [expParts, expPartsFast, opArgs, exp, eq_op_iff, hc]
+  split <;> simp_all
+
+/-- The element type of a list object is found by its label. -/
+@[csimp] theorem listPart_eq_listPartFast : @listPart = @listPartFast := by
+  funext p
+  rcases hc : p.children with _ | ⟨a, _ | ⟨b, cs⟩⟩ <;>
+    simp [listPart, listPartFast, opArgs, list, eq_op_iff, hc]
+  split <;> simp_all
+
+/-- The type of labels of a rose-tree object is found by its label. -/
+@[csimp] theorem roseParts_eq_rosePartsFast : @roseParts = @rosePartsFast := by
+  funext p
+  rcases hc : p.children with _ | ⟨a, _ | ⟨b, cs⟩⟩ <;>
+    simp [roseParts, rosePartsFast, opArgs, rose, lrose, eq_op_iff, hc] <;> split <;> simp_all
 
 /-- The product of a context's types, the innermost outermost: the terminal object for the empty
 context, and the type itself for a context of one. -/
@@ -273,6 +364,36 @@ def IsTy (G : Globals) (n : ℕ) : Tree → Bool :=
     | 0, [(i, _)] => i.children.isEmpty && decide (i.label < n)
     | 0, _ => false
     | k + 1, cs => G.isTyOp k cs.length && cs.all Prod.snd
+
+/-- One step of the test of types as compiled, at a node of a label, from what the test reads of
+each child: its label, whether it is a leaf, and whether it is a type. -/
+def isTyStepFast (G : Globals) (n : ℕ) (l : ℕ) (rs : List (ℕ × Bool × Bool)) : ℕ × Bool × Bool :=
+  (l, rs.isEmpty, match l, rs with
+    | 0, [(i, leaf, _)] => leaf && decide (i < n)
+    | 0, _ => false
+    | k + 1, rs => G.isTyOp k rs.length && rs.all fun r ↦ r.2.2)
+
+/-- The test of types as compiled: the fold of {lit}`isTyStepFast`, which does not rebuild each
+subtree as {lit}`IsTy`'s paramorphism does. -/
+def IsTyFast (G : Globals) (n : ℕ) (t : Tree) : Bool := (RoseTree.elim (isTyStepFast G n) t).2.2
+
+/-- The fold of {lit}`isTyStepFast` computes a tree's label, whether it is a leaf, and whether it
+is a type. -/
+theorem elim_isTyStepFast (G : Globals) (n : ℕ) (t : Tree) :
+    RoseTree.elim (isTyStepFast G n) t = (t.label, t.children.isEmpty, IsTy G n t) :=
+  RoseTree.ind (P := fun t ↦
+      RoseTree.elim (isTyStepFast G n) t = (t.label, t.children.isEmpty, IsTy G n t))
+    (fun l cs ih ↦ by
+      beta_reduce
+      rw [RoseTree.elim_node, List.map_congr_left ih, IsTy, RoseTree.para_node]
+      rcases l with _ | k
+      · rcases cs with _ | ⟨i, _ | ⟨j, cs⟩⟩ <;> simp [isTyStepFast]
+      · simp [isTyStepFast, Function.comp_def]) t
+
+/-- The test of types is {lit}`IsTyFast`, by which the compiler replaces it. -/
+@[csimp] theorem isTy_eq_isTyFast : @IsTy = @IsTyFast := by
+  funext G n t
+  rw [IsTyFast, elim_isTyStepFast]
 
 /-- The constants of {lit}`G` are well formed: each primitive arrow is a term in its object
 parameters, and the types each constant names are types in them. -/

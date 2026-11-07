@@ -9,6 +9,7 @@ module
 public import Geb.Prototypes.QuotientPRA.FreeArity
 public import Geb.Prototypes.QuotientPRA.W
 public import Mathlib.CategoryTheory.Discrete.Basic
+public import Aesop
 
 
 set_option doc.verso true in

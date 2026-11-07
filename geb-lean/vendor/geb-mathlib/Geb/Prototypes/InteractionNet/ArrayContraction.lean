@@ -8,6 +8,7 @@ module
 public import Geb.Prototypes.InteractionNet.ArrayNet
 public import Geb.Prototypes.InteractionNet.ArrayReadback
 public import Geb.Prototypes.InteractionNet.FiniteCells
+public import Geb.Prototypes.InteractionNet.RemainingRank
 
 set_option doc.verso true in
 /-!
@@ -46,10 +47,10 @@ universe u v
 variable {α : Type u} {cells rhsCells : ℕ} {Γ : Type v} [FinEnum Γ]
 variable {arity : α → ℕ} {label : Fin cells → α} {labelR : Fin rhsCells → α}
 
-/-- Enumerate the input cells that remain after deleting the selected pair. -/
+/-- Enumerate the input cells that remain after deleting the selected pair by their ranks. -/
 @[instance_reducible] local instance remainingCellsEnum (a b : Fin cells) :
     FinEnum (PortNet.RemainingCell a b) :=
-  PortNet.subtypeEnum (fun c ↦ c ≠ a ∧ c ≠ b)
+  PortNet.remainingEnum a b
 
 /-- The labels of surviving and inserted cells in their new finite ordinal enumeration. -/
 def resultLabel (label : Fin cells → α) (labelR : Fin rhsCells → α) (a b : Fin cells) :

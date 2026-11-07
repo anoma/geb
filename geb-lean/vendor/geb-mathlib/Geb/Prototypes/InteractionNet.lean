@@ -29,6 +29,7 @@ public import Geb.Prototypes.InteractionNet.GraphReadback
 public import Geb.Prototypes.InteractionNet.GraphReadbackBoundary
 public import Geb.Prototypes.InteractionNet.GraphRuntime
 public import Geb.Prototypes.InteractionNet.GraphRuntimeAdequacy
+public import Geb.Prototypes.InteractionNet.InverseTable
 public import Geb.Prototypes.InteractionNet.JoinClosure
 public import Geb.Prototypes.InteractionNet.NamedSplice
 public import Geb.Prototypes.InteractionNet.NamedWiring
@@ -44,6 +45,7 @@ public import Geb.Prototypes.InteractionNet.PortNetSum
 public import Geb.Prototypes.InteractionNet.PortSystem
 public import Geb.Prototypes.InteractionNet.RedexDiamond
 public import Geb.Prototypes.InteractionNet.RemainingCells
+public import Geb.Prototypes.InteractionNet.RemainingRank
 public import Geb.Prototypes.InteractionNet.Schedule
 public import Geb.Prototypes.InteractionNet.Wiring
 public import Geb.Prototypes.InteractionNet.WiringCancellation

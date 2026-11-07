@@ -42,7 +42,9 @@ the function after the two projections.
 
 In every model of the theory extended by the combinators' definitions and those the language's
 definitions compile to, every entry of a development that checks is valid
-({lit}`valid_of_checkDev`). With every definition unfolded, the equation of a theorem without
+({lit}`valid_of_checkDev`). The invariant is kept by any check of declarations in order whose
+every step keeps it ({lit}`devInv_foldlM`), so that a checker of more kinds of declaration is sound
+by its steps alone. With every definition unfolded, the equation of a theorem without
 hypotheses holds in every model of the theory itself ({lit}`valid_unfoldAll_of_checkDev`), as does
 the truth of its formula ({lit}`valid_unfoldAll_holds_of_checkDev`).
 
@@ -57,6 +59,8 @@ the truth of its formula ({lit}`valid_unfoldAll_holds_of_checkDev`).
 * {lit}`Thm.Valid.mono` — a valid theorem stays valid with more constants.
 * {lit}`Prim.val_of_seq` — a primitive arrow whose sequent is valid is an arrow between its types.
 * {lit}`DevInv.step` — each declaration's check keeps the invariant.
+* {lit}`devInv_foldlM`, {lit}`devInv_init` — the invariant at the end of a check by any step that
+  keeps it, and at the start of a development.
 * {lit}`valid_of_checkDev`, {lit}`valid_unfoldAll_of_checkDev`,
   {lit}`valid_unfoldAll_holds_of_checkDev` — the entries of a development that checks are valid,
   in the extension and in the theory.
@@ -95,8 +99,8 @@ theorem Thm.Valid.mono {G G' : Globals} (hG : G.WF) (hle : G.Le G') {a : Thm}
   obtain ⟨hctx, hhyps, hconcl, hv⟩ := ha
   have htype : ∀ {φ : Term}, typeIn G a.arity a.ctx φ = some omega →
       typeIn G' a.arity a.ctx φ = some omega := fun h ↦ by
-    obtain ⟨r, hr, hro⟩ := Option.map_eq_some_iff.mp h
-    exact Option.map_eq_some_iff.mpr ⟨r, compile_mono hle _ _ _ _ hr, hro⟩
+    obtain ⟨r, hr, hro⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp h)
+    exact typeIn_eq_some.mpr (Option.map_eq_some_iff.mpr ⟨r, compile_mono hle _ _ _ _ hr, hro⟩)
   refine ⟨all_isTy_mono hle hctx, fun h hh ↦ htype (hhyps h hh), htype hconcl,
     fun ρ hρ ↦ ⟨hps ρ hρ, hds ρ hρ, ?_⟩⟩
   obtain ⟨hpsG, hdsG, hfm⟩ := hv ρ hρ
@@ -110,7 +114,7 @@ theorem Thm.Valid.mono {G G' : Globals} (hG : G.WF) (hle : G.Le G') {a : Thm}
       ∀ (X : Tree) (e : List (Tree × Tree)), EnvHom M ρ G a.arity X e →
         e.map Prod.snd = a.ctx → ∀ r, compile G' a.arity φ X e = some r →
           compile G a.arity φ X e = some r := fun h X e he hΓ r hr ↦ by
-    obtain ⟨r₀, hr₀, -⟩ := Option.map_eq_some_iff.mp h
+    obtain ⟨r₀, hr₀, -⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp h)
     obtain ⟨r', hr', -⟩ := compile_of_stdEnv hM hG hρ hpsG hdsG hr₀ he hΓ
     rw [hr', Option.some_inj.mp ((compile_mono hle _ _ _ _ hr').symm.trans hr)]
   intro X e he hΓ hH r hr
@@ -362,25 +366,27 @@ theorem Decl.le_of_step {d : Decl} {G G' : Globals} {E E' : Array Entry}
       | exact ⟨List.prefix_refl _, rfl, List.prefix_append _ _⟩
       | exact ⟨List.prefix_append _ _, rfl, List.prefix_refl _⟩
 
-/-- The check of a development of one more declaration first checks it. -/
-theorem checkDev_cons (G : Globals) (E : Array Entry) (d : Decl) (ds : List Decl) :
-    checkDev G E (d :: ds) = (d.step G E).bind fun st ↦ checkDev st.1 st.2 ds := by
-  simp only [checkDev, List.foldlM_cons]
-  rfl
+/-- A check of declarations in order, each by a step from the constants and the entries before
+it, extends the constants where each step does. -/
+theorem le_of_foldlM {δ : Type} (step : δ → Globals → Array Entry → Option (Globals × Array Entry))
+    (hstep : ∀ {d : δ} {G G' : Globals} {E E' : Array Entry}, step d G E = some (G', E') →
+      G.Le G') (ds : List δ) :
+    ∀ {G Gf : Globals} {E Ef : Array Entry},
+      ds.foldlM (fun st d ↦ step d st.1 st.2) (G, E) = some (Gf, Ef) → G.Le Gf :=
+  ds.rec (motive := fun ds ↦ ∀ {G Gf : Globals} {E Ef : Array Entry},
+      ds.foldlM (fun st d ↦ step d st.1 st.2) (G, E) = some (Gf, Ef) → G.Le Gf)
+    (fun h ↦ by
+      simp only [List.foldlM_nil, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+      exact h.1 ▸ Globals.Le.refl _)
+    fun d ds ih G Gf E Ef h ↦ by
+      simp only [List.foldlM_cons, Option.bind_eq_bind, Option.bind_eq_some_iff] at h
+      obtain ⟨⟨G', E'⟩, hs, hr⟩ := h
+      exact (hstep hs).trans (ih hr)
 
 /-- A development's check extends the constants. -/
 theorem le_of_checkDev (ds : List Decl) :
     ∀ {G Gf : Globals} {E Ef : Array Entry}, checkDev G E ds = some (Gf, Ef) → G.Le Gf :=
-  ds.rec (motive := fun ds ↦ ∀ {G Gf : Globals} {E Ef : Array Entry},
-      checkDev G E ds = some (Gf, Ef) → G.Le Gf)
-    (fun h ↦ by
-      simp only [checkDev, List.foldlM_nil, Option.pure_def, Option.some.injEq,
-        Prod.mk.injEq] at h
-      exact h.1 ▸ Globals.Le.refl _)
-    fun d ds ih G Gf E Ef h ↦ by
-      rw [checkDev_cons] at h
-      obtain ⟨⟨G', E'⟩, hs, hr⟩ := Option.bind_eq_some_iff.mp h
-      exact (Decl.le_of_step hs).trans (ih hr)
+  le_of_foldlM (fun (d : Decl) G E ↦ d.step G E) Decl.le_of_step ds
 
 /-- The definitions of constants among the final ones compile to an initial segment of the final
 definitions, after the combinators' own. -/
@@ -911,7 +917,7 @@ theorem DevInv.step {G G' : Globals} {E E' : Array Entry} (h : DevInv M Gf G E) 
         refine ⟨by simp [isTy_mono hle' _ hA], fun ψ hψ ↦ ?_, htype,
           fun ρ hρ ↦ ⟨hps' _ ρ hρ, hds' _ ρ hρ, ?_⟩⟩
         · obtain rfl := List.mem_singleton.mp hψ
-          simp [typeIn, hRG']
+          simp [typeIn_eq_compile, hRG']
         intro X e he hΓ hH res hres
         rcases e with _ | ⟨⟨x₀, A₀⟩, _ | ⟨⟨x₁, A₁⟩, _ | ⟨p₂, e⟩⟩⟩
         · simp at hΓ
@@ -1160,32 +1166,48 @@ theorem DevInv.step {G G' : Globals} {E E' : Array Entry} (h : DevInv M Gf G E) 
       obtain rfl := Option.some_inj.mp hp'
       exact PartialHorn.sortOf_of_prefix (ext_prefix hpre).1 hsrt'
 
+omit hM hF hbase in
+/-- The invariant holds at the end of a check of declarations in order that begins with it, where
+each step extends the constants and keeps the invariant when the constants it ends with are among
+the final ones. -/
+theorem devInv_foldlM {δ : Type}
+    (step : δ → Globals → Array Entry → Option (Globals × Array Entry))
+    (hle : ∀ {d : δ} {G G' : Globals} {E E' : Array Entry}, step d G E = some (G', E') →
+      G.Le G')
+    (hstep : ∀ {d : δ} {G G' : Globals} {E E' : Array Entry}, DevInv M Gf G E →
+      step d G E = some (G', E') → G'.Le Gf → DevInv M Gf G' E')
+    {Ef : Array Entry} (ds : List δ) :
+    ∀ {G : Globals} {E : Array Entry},
+      ds.foldlM (fun st d ↦ step d st.1 st.2) (G, E) = some (Gf, Ef) → DevInv M Gf G E →
+        DevInv M Gf Gf Ef :=
+  ds.rec (motive := fun ds ↦ ∀ {G : Globals} {E : Array Entry},
+      ds.foldlM (fun st d ↦ step d st.1 st.2) (G, E) = some (Gf, Ef) → DevInv M Gf G E →
+        DevInv M Gf Gf Ef)
+    (fun h hinv ↦ by
+      simp only [List.foldlM_nil, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      exact hinv)
+    fun d ds ih G E h hinv ↦ by
+      simp only [List.foldlM_cons, Option.bind_eq_bind, Option.bind_eq_some_iff] at h
+      obtain ⟨⟨G', E'⟩, hs, hr⟩ := h
+      exact ih hr (hstep hinv hs (le_of_foldlM step hle ds hr))
+
 /-- The invariant holds at the end of a development's check that begins with it. -/
 theorem devInv_checkDev {Ef : Array Entry} (ds : List Decl) :
     ∀ {G : Globals} {E : Array Entry}, checkDev G E ds = some (Gf, Ef) → DevInv M Gf G E →
       DevInv M Gf Gf Ef :=
-  ds.rec (motive := fun ds ↦ ∀ {G : Globals} {E : Array Entry},
-      checkDev G E ds = some (Gf, Ef) → DevInv M Gf G E → DevInv M Gf Gf Ef)
-    (fun h hinv ↦ by
-      simp only [checkDev, List.foldlM_nil, Option.pure_def, Option.some.injEq,
-        Prod.mk.injEq] at h
-      obtain ⟨rfl, rfl⟩ := h
-      exact hinv)
-    fun d ds ih G E h hinv ↦ by
-      rw [checkDev_cons] at h
-      obtain ⟨⟨G', E'⟩, hs, hr⟩ := Option.bind_eq_some_iff.mp h
-      exact ih hr (hinv.step hM hF hbase hs (le_of_checkDev ds hr))
+  devInv_foldlM (fun (d : Decl) G E ↦ d.step G E) Decl.le_of_step
+    (fun hinv hs hle ↦ hinv.step hM hF hbase hs hle) ds
 
 end Development
 
-/-- The invariant at the end of a development that checks, from constants the check accepts. -/
-theorem devInv_of_checkDev {pre F : List PartialHorn.Defn} {M : Model.{v} (ext (pre ++ F)).sig}
+/-- The invariant at the start of a development's check, from constants the check accepts, among
+the final ones. -/
+theorem devInv_init {pre F : List PartialHorn.Defn} {M : Model.{v} (ext (pre ++ F)).sig}
     (hM : IsModel (ext (pre ++ F)) M) {G Gf : Globals} {cds : List PartialHorn.Defn}
     (hbase : G.base = sig.length + pre.length) (hok : G.ok (ExtEnv.ofDefs (pre ++ cds)) = true)
-    (hc : compileDefs G = some cds) {ds : List Decl} {Ef : Array Entry}
-    (h : checkDev G #[] ds = some (Gf, Ef)) (hF : compileDefs Gf = some F) :
-    DevInv M Gf Gf Ef := by
-  have hle := le_of_checkDev ds h
+    (hc : compileDefs G = some cds) (hle : G.Le Gf) (hF : compileDefs Gf = some F) :
+    DevInv M Gf G #[] := by
   have hpre := prefix_of_le (pre := pre) hF hle hc
   have hG := Globals.wf_of_ok hok
   have hno := Globals.noObj_of_ok hok
@@ -1197,12 +1219,21 @@ theorem devInv_of_checkDev {pre F : List PartialHorn.Defn} {M : Model.{v} (ext (
     simpa only [List.take_length] using this
   have hok' := hok
   simp only [Globals.ok, Bool.and_eq_true, List.all_eq_true] at hok'
-  exact devInv_checkDev hM hF (hle.2.1.symm.trans hbase) ds h
-    ⟨hle, hG, ⟨cds, hc⟩,
-      fun k p hp ↦ PartialHorn.sortOf_of_prefix (ext_prefix hpre).1 (sortOf_prims_of_ok hok hp),
-      fun k p hp ↦ Prim.val_of_ok hM hpre (hok'.1 p (List.mem_of_getElem? hp)),
-      defsVal_of_defsHom hG hds, defnsVal_of_ok hM hbase hG hno hc hpre hps,
-      fun _ _ hj ↦ by simp at hj⟩
+  exact ⟨hle, hG, ⟨cds, hc⟩,
+    fun k p hp ↦ PartialHorn.sortOf_of_prefix (ext_prefix hpre).1 (sortOf_prims_of_ok hok hp),
+    fun k p hp ↦ Prim.val_of_ok hM hpre (hok'.1 p (List.mem_of_getElem? hp)),
+    defsVal_of_defsHom hG hds, defnsVal_of_ok hM hbase hG hno hc hpre hps,
+    fun _ _ hj ↦ by simp at hj⟩
+
+/-- The invariant at the end of a development that checks, from constants the check accepts. -/
+theorem devInv_of_checkDev {pre F : List PartialHorn.Defn} {M : Model.{v} (ext (pre ++ F)).sig}
+    (hM : IsModel (ext (pre ++ F)) M) {G Gf : Globals} {cds : List PartialHorn.Defn}
+    (hbase : G.base = sig.length + pre.length) (hok : G.ok (ExtEnv.ofDefs (pre ++ cds)) = true)
+    (hc : compileDefs G = some cds) {ds : List Decl} {Ef : Array Entry}
+    (h : checkDev G #[] ds = some (Gf, Ef)) (hF : compileDefs Gf = some F) :
+    DevInv M Gf Gf Ef :=
+  have hle := le_of_checkDev ds h
+  devInv_checkDev hM hF (hle.2.1.symm.trans hbase) ds h (devInv_init hM hbase hok hc hle hF)
 
 /-- The soundness of the internal language's developments: in every model of the theory extended
 by the combinators' definitions and those the language's definitions compile to, every entry of a
@@ -1241,7 +1272,7 @@ theorem valid_unfoldAll_of_checkDev {pre cds F : List PartialHorn.Defn} {G Gf : 
           ⟨List.replicate a.arity obj, [], ⟨f, g⟩⟩).Valid M := by
   have hinv := devInv_of_checkDev (isModel_point_ext hwf) hbase hok hc h hF
   obtain ⟨hctx, -, hcon, -⟩ : a.Valid _ Gf := hinv.entries j _ hp
-  obtain ⟨⟨C, C'⟩, hC, -⟩ := Option.map_eq_some_iff.mp hcon
+  obtain ⟨⟨C, C'⟩, hC, -⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hcon)
   rw [eqParts_eq_some hlr] at hC
   obtain ⟨l', r', hlr', f, A, hf, g, hg, -⟩ := compile_eq_iff.mp hC
   simp only [List.cons.injEq, and_true] at hlr'
@@ -1284,7 +1315,7 @@ theorem valid_unfoldAll_holds_of_checkDev {pre cds F : List PartialHorn.Defn} {G
           ⟨List.replicate a.arity obj, [], ⟨C, comp tru (bang (ctxObj a.ctx))⟩⟩).Valid M := by
   have hinv := devInv_of_checkDev (isModel_point_ext hwf) hbase hok hc h hF
   obtain ⟨hctx, -, hcon, -⟩ : a.Valid _ Gf := hinv.entries j _ hp
-  obtain ⟨⟨C, C'⟩, hC, hC'⟩ := Option.map_eq_some_iff.mp hcon
+  obtain ⟨⟨C, C'⟩, hC, hC'⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hcon)
   obtain rfl : C' = omega := hC'
   refine ⟨C, hC, fun M hM ↦ ?_⟩
   have hbF : Gf.base = sig.length + pre.length := (le_of_checkDev ds h).2.1.symm.trans hbase

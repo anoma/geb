@@ -149,7 +149,7 @@ def ofFunctorFrom (H : Grothendieck F ⥤ E) : FunctorFromData F E where
       simp only [CategoryTheory.Functor.map_id]
       rfl
     have h : (Grothendieck.ιNatTrans (F := F) (𝟙 c)).app x = eqToHom heq := by
-      refine Grothendieck.ext _ _ (by cat_disch) ?_
+      refine Grothendieck.ext _ _ (by simp [Grothendieck.ι]) ?_
       simp only [Functor.comp_obj, Grothendieck.ιNatTrans_app_fiber,
         Grothendieck.fiber_eqToHom]
       exact Category.comp_id _

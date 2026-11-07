@@ -209,7 +209,7 @@ theorem roundTrip_term {G : Globals} (hG : G.WF) {cds : List PartialHorn.Defn}
   have heq := compile_eq_iff.mpr ⟨_, _, rfl, _, _, harr _ _ (map_snd_stdEnv Γ), _, hstd, rfl⟩
   have hφ : typeIn G' n Γ (Term.eq (Term.arr G.prims.length θ (varsTerm Γ 0)) t) =
       some omega := by
-    rw [typeIn]
+    rw [typeIn_eq_compile]
     exact (congrArg (Option.map Prod.snd) heq).trans rfl
   refine exists_certSeq_of_valid hG' (compileDefs_of_prims hle rfl hc) hb hwf
     (a := ⟨n, Γ, [], _⟩) (fun _ h ↦ by simp at h) hφ fun M hM ↦ ?_

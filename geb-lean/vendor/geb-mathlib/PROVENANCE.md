@@ -1,8 +1,8 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: 380163c9c948aaf2c4ce9a4e7de17b353c25d1a6
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 c00dbf47faf9bf58c83dc7fce09775ce42897b67152f14cd7e5259089b48f1e4)
+- Source commit: 51fb2ff273b7af2046353e15f5dad1062cc1d0d4
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 fe0f5c2104be5ff8db206c3f115b60d460270a27d50fb4aa8ed0e1ffcbfcbaac)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
   - Geb.Cslib
   - Geb.Prototypes.BitStream.Oitavem
@@ -94,7 +94,10 @@
   - Geb.Prototypes.Computability.SizeBounded.WordMachine
   - Geb.Prototypes.Computability.TreeScanner
   - Geb.Prototypes.Definition
+  - Geb.Prototypes.FreeTopos.Internal.ByMachine
+  - Geb.Prototypes.FreeTopos.Internal.ConvDevelopment
   - Geb.Prototypes.FreeTopos.Internal.Conversion
+  - Geb.Prototypes.FreeTopos.Internal.MachineSound
   - Geb.Prototypes.FreeTopos.Literals
   - Geb.Prototypes.FreeTopos.Tactics.Hypotheses
   - Geb.Prototypes.FreeTopos.Tactics.Induction

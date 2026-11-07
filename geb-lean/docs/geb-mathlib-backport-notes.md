@@ -35,6 +35,7 @@
   - [28. `List.nodup_iff_count_of_mem` added to Lean core](#28-listnodup_iff_count_of_mem-added-to-lean-core)
   - [29. `unusedArguments` exempts arguments named with a leading underscore](#29-unusedarguments-exempts-arguments-named-with-a-leading-underscore)
   - [30. `Wiring.force_force` exceeds the default heartbeat limit in v4.29](#30-wiringforce_force-exceeds-the-default-heartbeat-limit-in-v429)
+  - [31. `haveI`/`letI` linter module added in v4.36](#31-haveileti-linter-module-added-in-v436)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -46,7 +47,7 @@
 
 These notes catalogue the categories of change in
 `scripts/geb-mathlib-backport.patch`, which adapts the vendored
-`geb-mathlib` `Geb` source (mathlib `v4.36.0-rc1`) to compile under this
+`geb-mathlib` `Geb` source (mathlib `v4.36.0-rc2`) to compile under this
 repository's `v4.29.0-rc6`. When a refresh fails, check whether the new
 failure matches a category below (extend the corresponding hunk) or is
 genuinely new (decide the adaptation, add a category here).
@@ -301,9 +302,10 @@ genuinely new (decide the adaptation, add a category here).
   applied lambda is discharged by `omega`, which treats the
   unreduced application and its reduct as distinct atoms. The motive
   sites further include `redecorate_extract` in
-  `Prototypes/RoseTree/Decorated.lean` (`RoseTree.ind`, at an explicit
-  `P`); `iterate_liftR_id` in `Prototypes/LF/Metatheory/Rename.lean`,
-  `HoleRen.iterate` in `Prototypes/LF/Metatheory/HSubstRename.lean`,
+  `Prototypes/RoseTree/Decorated.lean` and `elim_isTyStepFast` in
+  `Prototypes/FreeTopos/Internal/Compile.lean` (both `RoseTree.ind`, at
+  an explicit `P`); `iterate_liftR_id` in
+  `Prototypes/LF/Metatheory/Rename.lean`, `HoleRen.iterate` in `Prototypes/LF/Metatheory/HSubstRename.lean`,
   and `numTm_replicate` in `Prototypes/LF/Topos/ProofSound.lean` (all
   three `Nat.rec`); and `varType_append` in
   `Prototypes/LF/Metatheory/Substitution.lean` and `hsubs_tp_fwd`,
@@ -499,14 +501,17 @@ genuinely new (decide the adaptation, add a category here).
 - Upstream cause: Lean core `Init/Core.lean` renames `if_pos` to
   `ite_eq_left`, `if_neg` to `ite_eq_right`, `dif_pos` to
   `dite_eq_left`, and `dif_neg` to `dite_eq_right` as of
-  `v4.34.0-rc1`, deprecating the four old names (`since := "2026-07-21"`).
-  The statements are unchanged; only the names move, to read off which
-  branch the conditional collapses to, as the pre-existing
-  `ite_eq_left_iff` / `dite_eq_right_iff` family already did. Upstream
-  `geb-mathlib` sets `weak.warningAsError = true`, so it cannot keep the
-  deprecated names.
+  `v4.34.0-rc1`, deprecating the four old names (`since := "2026-07-21"`);
+  `Init/Data/Option/Lemmas.lean` renames `Option.map_if` to
+  `Option.map_ite` and `Option.map_dif` to `Option.map_dite` under the
+  same deprecation date. The statements are unchanged; only the names
+  move, to read off which branch the conditional collapses to, as the
+  pre-existing `ite_eq_left_iff` / `dite_eq_right_iff` family already
+  did. Upstream `geb-mathlib` sets `weak.warningAsError = true`, so it
+  cannot keep the deprecated names.
 - v4.29 symptom: ``Unknown identifier `ite_eq_right` `` (and the three
-  others), followed by `unsolved goals` wherever the failed `rw` left
+  others), or ``Unknown constant `Option.map_ite` `` in a `simp` lemma
+  list, followed by `unsolved goals` wherever the failed `rw` left
   the goal standing. The affected modules are `Prototypes/CanonicalSExpr.lean`,
   `Prototypes/ConcreteSyntax.lean`, `Prototypes/LargeIR/General.lean`,
   `Prototypes/ReadableSExpr.lean`, `CategoryTheory/FinCat/Basic.lean`,
@@ -535,8 +540,9 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/PartialHorn/`, `Completeness.lean` and
   `Definitional.lean`; and `Prototypes/ConcreteSyntax/Decimal.lean`,
   which upstream split from `Prototypes/ConcreteSyntax.lean`,
-  `Prototypes/FreeTopos/Internal/ObjectSubst.lean`, and, under
-  `Prototypes/LF/Topos/`, `Adequacy.lean`, `Complete.lean`,
+  `Prototypes/FreeTopos/Internal/ObjectSubst.lean`,
+  `Prototypes/FreeTopos/Internal/Typing.lean` (`Option.map_ite`), and,
+  under `Prototypes/LF/Topos/`, `Adequacy.lean`, `Complete.lean`,
   `Development.lean`, `ProofCheck.lean`, `ProofSound.lean`, and
   `Telescope.lean`; and, under `Prototypes/InteractionNet/`,
   `FiniteCells.lean`, `GraphRuntime.lean`, `NamedSplice.lean`,
@@ -550,14 +556,20 @@ genuinely new (decide the adaptation, add a category here).
   source is a re-run rather than a hunk-by-hunk re-anchoring:
 
   ```sh
-  grep -rlZ '\bd\?ite_eq_\(left\|right\)\b' vendor/geb-mathlib | xargs -0 sed -i \
+  grep -rlZ -e '\bd\?ite_eq_\(left\|right\)\b' -e '\bOption\.map_d\?ite\b' \
+      vendor/geb-mathlib | xargs -0 sed -i \
+    -e 's/\bOption\.map_dite\b/Option.map_dif/g' \
+    -e 's/\bOption\.map_ite\b/Option.map_if/g' \
     -e 's/\bdite_eq_left\b/dif_pos/g'  -e 's/\bdite_eq_right\b/dif_neg/g' \
     -e 's/\bite_eq_left\b/if_pos/g'    -e 's/\bite_eq_right\b/if_neg/g'
   ```
 
   The word boundaries keep the `…_iff` lemmas of the same stem
   untouched; substituting the `dite` forms first keeps the `ite` forms
-  from matching inside them.
+  from matching inside them. The substitution is re-run on the adapted
+  tree before the patch is regenerated, and its changes to modules on
+  the exclusion list are discarded, since those files are deleted
+  after the patch applies.
 
 ### 12. `Computability.Encoding` alphabet became a parameter
 
@@ -784,9 +796,9 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/BitStream/WConstruction.lean` have that form from their
   addition, as do `Mathlib/Data/PFunctor/Presheaf/Carrier.lean`,
   `Prototypes/MType/Basic.lean`, and, under `Prototypes/FreeTopos/`,
-  `Elementary.lean`, `Relations.lean`, `Represent.lean`, and
-  `Internal/Represent.lean`, and, under `Prototypes/Kernel/`,
-  `Annotation.lean`, `Document.lean`, `Eval.lean`, `Identity.lean`,
+  `Elementary.lean`, `Relations.lean`, `Represent.lean`,
+  `Internal/Reduce.lean`, and `Internal/Represent.lean`, and, under
+  `Prototypes/Kernel/`, `Annotation.lean`, `Document.lean`, `Eval.lean`, `Identity.lean`,
   `Modules.lean`, `Printer.lean`, and `Strict.lean`. Under `v4.34` the
   `in` form applies the
   option to the module docstring that follows it.
@@ -1003,6 +1015,22 @@ genuinely new (decide the adaptation, add a category here).
 - Adaptation: prepend `set_option maxHeartbeats 400000 in` to the
   declaration's docstring, followed by the explanatory comment that
   mathlib's `linter.style.maxHeartbeats` requires.
+
+### 31. `haveI`/`letI` linter module added in v4.36
+
+- Upstream cause: mathlib pull request 41657 (2026-07-29) adds
+  `Mathlib/Tactic/Linter/HaveILetI.lean`, which registers the
+  `linter.style.haveILetI` option and re-elaborates the `haveI` and
+  `letI` tactics at high priority so as to flag their use on a
+  proposition-valued goal. `Prototypes/Typechecker/Instances.lean`
+  uses the `letI` tactic and imports the module, as mathlib's import
+  minimiser (`lake shake`) requires of a file whose tactics elaborate
+  through it.
+- v4.29 symptom: `unknown module prefix` for
+  `Mathlib.Tactic.Linter.HaveILetI`: the pinned mathlib has no such
+  module, and the `haveI` and `letI` tactics are those of Lean core.
+- Adaptation: delete the import. The module supplies no declaration the
+  file names, and the core tactics elaborate the same terms.
 
 ## Updating the patch for a new upstream
 
@@ -1228,9 +1256,14 @@ The rules then exclude the following.
   before, starting from `FreeTopos.Translation`; `FreeTopos.Literals`
   imports `FreeTopos.Translation`, `FreeTopos.Internal.Conversion`
   imports `FreeTopos.Literals`, and `LF.Topos.ProofsMod` imports
-  `FreeTopos.Internal.Conversion`. Under `Geb.Prototypes.InteractionNet`,
-  117 modules import `Term`, directly or through a chain; the other 51
-  import neither `Term` nor any other excluded module.
+  `FreeTopos.Internal.Conversion`; `FreeTopos.Internal.MachineSound`
+  imports `FreeTopos.Literals`, `FreeTopos.Internal.ConvDevelopment`
+  imports `FreeTopos.Internal.Conversion`, and
+  `FreeTopos.Internal.ByMachine` imports
+  `FreeTopos.Internal.ConvDevelopment`. Under
+  `Geb.Prototypes.InteractionNet`, 117 modules import `Term`, directly
+  or through a chain; the other 53 import neither `Term` nor any other
+  excluded module.
 - Orphans, imported only by excluded modules:
   `BitTree.BinaryMachine.Accounting` (by `BitStep` and `Execution`),
   `BitTree.BinaryMachine.Difference` (by `Representation` and `Steps`;

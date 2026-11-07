@@ -145,7 +145,7 @@ index 74f7b97..4eaea77 100644
        rw [Quiver.Hom.op_unop] at h
        exact congrArg ULift.up h)
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean
-index 970932c..df65d6d 100644
+index df02c4b..ba8166b 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/ElementaryTopos.lean
 @@ -3,13 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -385,7 +385,7 @@ index f9e2f2b..c3b1f96 100644
  
  /-- `FinSetSkel` is monoidal closed: the exponential of the object of
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/Grothendieck/Functor/From.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/Grothendieck/Functor/From.lean
-index c89c886..8a5fc85 100644
+index fbdd58a..d4edd33 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/Grothendieck/Functor/From.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/Grothendieck/Functor/From.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1793,7 +1793,7 @@ index 0ddfcb0..62f9555 100644
  @[expose] public section
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean b/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
-index 14213f0..62408c2 100644
+index ce1eb9e..fab614c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1804,8 +1804,8 @@ index 14213f0..62408c2 100644
  module
  
  public import Mathlib.Data.PFunctor.Univariate.M
-@@ -11,7 +12,8 @@ public import Mathlib.Logic.Equiv.List
- public import Mathlib.Logic.Equiv.Option
+@@ -12,7 +13,8 @@ public import Mathlib.Logic.Equiv.Option
+ public import Mathlib.Tactic.TypeStar
  meta import GebMeta -- shake: keep
  
 -set_option doc.verso true in
@@ -1814,7 +1814,7 @@ index 14213f0..62408c2 100644
  /-!
  # From finite bitstrings to potentially infinite bitstreams
  
-@@ -84,7 +86,6 @@ formalize the W-type, M-type, and finite-observation comparisons.
+@@ -85,7 +87,6 @@ formalize the W-type, M-type, and finite-observation comparisons.
  
  M-type, W-type, polynomial functor, bitstream, finite approximation, corecursion
  -/
@@ -1822,7 +1822,7 @@ index 14213f0..62408c2 100644
  
  @[expose] public section
  
-@@ -124,7 +125,7 @@ def layerEquiv (α : Type*) : sig α ≃ Layer α where
+@@ -125,7 +126,7 @@ def layerEquiv (α : Type*) : sig α ≃ Layer α where
      | some (b, t) => .mk (some b) fun _ ↦ t
    left_inv x := by
      rcases x with ⟨_ | b, f⟩
@@ -1831,7 +1831,7 @@ index 14213f0..62408c2 100644
      · rfl
    right_inv x := by
      rcases x with _ | ⟨b, t⟩ <;> rfl
-@@ -475,9 +476,9 @@ theorem take_seqOfObservations (s : Observations) (n : ℕ) :
+@@ -476,9 +477,9 @@ theorem take_seqOfObservations (s : Observations) (n : ℕ) :
    intro i
    rw [seq_getElem?_take]
    by_cases h : i < n
@@ -1843,7 +1843,7 @@ index 14213f0..62408c2 100644
      exact (List.getElem?_eq_none (by have := (s.atDepth n).property; omega)).symm
  
  /-- Compatible bounded prefixes carry exactly the information of a sequence of
-@@ -488,7 +489,7 @@ def observationsEquiv : Observations ≃ Stream'.Seq Bool where
+@@ -489,7 +490,7 @@ def observationsEquiv : Observations ≃ Stream'.Seq Bool where
    left_inv s := Observations.ext (funext fun n ↦ Subtype.ext (take_seqOfObservations s n))
    right_inv s := Stream'.Seq.ext fun n ↦ by
      change (s.take (n + 1))[n]? = s.get? n
@@ -1852,7 +1852,7 @@ index 14213f0..62408c2 100644
  
  /-- The M-type is a sequence of optional bits, with no bit after termination.
  The intermediate equivalence retains the construction by finite approximations. -/
-@@ -545,7 +546,7 @@ theorem seqEquiv_corec {α : Type*} (f : α → sig α) (a : α) :
+@@ -546,7 +547,7 @@ theorem seqEquiv_corec {α : Type*} (f : α → sig α) (a : α) :
      ((take_seqEquiv (M.corec f a) (n + 1)).trans
        ((congrArg Subtype.val (approxEquiv_sCorec f (n + 1) a)).trans
          (corecPrefix_eq_take _ (n + 1) a)))
@@ -4230,7 +4230,7 @@ index 026ba4d..5f5cee9 100644
  
  /-- A W-tree is admissible exactly when the edges of its spelling are in
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax/Decimal.lean b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax/Decimal.lean
-index 70b878d..7532129 100644
+index 79f87f8..593294c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax/Decimal.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/ConcreteSyntax/Decimal.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4241,7 +4241,7 @@ index 70b878d..7532129 100644
  module
  
  public import Mathlib.Tactic.ToDual
-@@ -138,15 +139,15 @@ theorem digitsVal_decOf (n : Nat) : digitsVal (decOf n) = some n := by
+@@ -139,15 +140,15 @@ theorem digitsVal_decOf (n : Nat) : digitsVal (decOf n) = some n := by
    · have hlt : ∀ d ∈ (digitsLE n).reverse, d < 10 := by
        intro d hd
        exact digitsLE_lt n d (List.mem_reverse.mp hd)
@@ -4260,7 +4260,7 @@ index 70b878d..7532129 100644
      obtain ⟨d, hd, rfl⟩ := List.mem_map.mp hc
      have : d < 10 := digitsLE_lt n d (List.mem_reverse.mp hd)
      simp [charDigit_digitChar d this]
-@@ -155,7 +156,7 @@ theorem decOf_ne_nil (n : Nat) : decOf n ≠ [] := by
+@@ -156,7 +157,7 @@ theorem decOf_ne_nil (n : Nat) : decOf n ≠ [] := by
    unfold decOf
    by_cases h : n = 0
    · subst h; simp
@@ -4433,6 +4433,26 @@ index 71ba9c0..b67b46c 100644
  /-- The laws of the topos with chosen structure of an elementary topos with chosen data objects
  and classifier limits. -/
  theorem laws : (toposData C P D).Laws where
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Compile.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Compile.lean
+index 45cc9ca..5793014 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Compile.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Compile.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Check
+@@ -384,6 +385,7 @@ theorem elim_isTyStepFast (G : Globals) (n : ℕ) (t : Tree) :
+   RoseTree.ind (P := fun t ↦
+       RoseTree.elim (isTyStepFast G n) t = (t.label, t.children.isEmpty, IsTy G n t))
+     (fun l cs ih ↦ by
++      beta_reduce
+       rw [RoseTree.elim_node, List.map_congr_left ih, IsTy, RoseTree.para_node]
+       rcases l with _ | k
+       · rcases cs with _ | ⟨i, _ | ⟨j, cs⟩⟩ <;> simp [isTyStepFast]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
 index ac67c64..4dcc072 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
@@ -4523,6 +4543,34 @@ index e2059e6..2cc691d 100644
          simp only [List.getElem_cons_succ, List.idxOf?_cons, hne, Bool.false_eq_true, ↓reduceIte,
            ih hw.2 j hj', Option.map_some])
      ws hw j hj
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean
+index abf52f5..e5e47b6 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean
+@@ -3,11 +3,13 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Prove
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # The prover's reductions, their results alone
+ 
+@@ -38,8 +40,6 @@ and the soundness of such a step is that of the reduction it projects.
+ internal language, prover, normalization, reduction, conversion
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.FreeTopos.Internal
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean
 index 1544bd9..ac5602e 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Represent.lean
@@ -4555,7 +4603,7 @@ index 1544bd9..ac5602e 100644
  
  namespace Geb.FreeTopos.Internal
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
-index 2c290ac..0b21fec 100644
+index 5ac37cc..3ea9191 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Soundness.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4618,6 +4666,27 @@ index dd8e0fe..ad2b75b 100644
  
  /-- Substitution in the product of a context's types. -/
  theorem subst_ctxObj (θ : List Tree) :
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Typing.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Typing.lean
+index af56087..af69775 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Typing.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Typing.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Substitution
+@@ -337,7 +338,7 @@ theorem typeOf_eq_compile (s : Term) :
+     rcases (G.defs[k]?).bind Definition.language? with _ | d
+     · rfl
+     simp only [List.all_eq_true, Option.pure_def, Option.bind_eq_bind, Option.bind_some,
+-      Option.map_bind, Function.comp_apply, Option.map_ite]
++      Option.map_bind, Function.comp_apply, Option.map_if]
+     rcases cs.mapM (fun c ↦ compile G n c X e) with _ | rs <;> simp
+   | lam a =>
+     rw [typeOf_node, compile_node]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean
 index 1da9d68..7c8f0c1 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean
@@ -4936,7 +5005,7 @@ index 5209687..b52037d 100644
    have hm := (closeWire_respects w).trans hf
    have hem : Function.Embedding.inr.trans e =
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
-index 7a60986..5e95efc 100644
+index 982f8af..14298ae 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4947,7 +5016,7 @@ index 7a60986..5e95efc 100644
  module
  
  public import Geb.Prototypes.InteractionNet.WiringSplice
-@@ -153,6 +154,7 @@ theorem glue_closed (ports : I × Bool ↪ P) (order : List I) (cover : ∀ i, i
+@@ -154,6 +155,7 @@ theorem glue_closed (ports : I × Bool ↪ P) (order : List I) (cover : ∀ i, i
      exact he.trans hr
  
  /-- Glue every pair exactly once, then remove the detached endpoints. -/
@@ -4956,7 +5025,7 @@ index 7a60986..5e95efc 100644
      (cover : ∀ i, i ∈ order)
      (s : Wiring P × ℕ) : Wiring {p // ∀ i b, p ≠ ports (i, b)} × ℕ :=
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringRelocation.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringRelocation.lean
-index 20cd390..df47fcc 100644
+index 82015b8..76243e9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringRelocation.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringRelocation.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4967,7 +5036,7 @@ index 20cd390..df47fcc 100644
  module
  
  public import Geb.Prototypes.InteractionNet.WiringSubdivision
-@@ -86,7 +87,7 @@ theorem relocation_apply_cut [DecidableEq I] (w : Wiring P) (ports : I × Bool 
+@@ -87,7 +88,7 @@ theorem relocation_apply_cut [DecidableEq I] (w : Wiring P) (ports : I × Bool 
    · subst j
      simp only [hj, ↓reduceIte, List.mem_append, List.mem_singleton_self, or_true]
      change (if ports (i, !side) = ports (i, !side) then _ else _) = _
@@ -5702,7 +5771,7 @@ index d23cb56..ff42fc7 100644
  
  /-- The declaration of a theorem has the head of the family of proofs. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofCheck.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofCheck.lean
-index fe694a3..fc7a700 100644
+index 33103d5..e2e9479 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofCheck.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofCheck.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5723,7 +5792,7 @@ index fe694a3..fc7a700 100644
      exact hsame k hk'
    simp only [checkStep, RoseTree.label_node, RoseTree.children_node,
      FreeTopos.Internal.congCtxs, hall, ↓reduceIte, Option.bind_eq_bind, Option.bind_some,
-@@ -571,7 +573,7 @@ theorem check_roseIndHyp {Γ₀ : List PartialHorn.Tree} {Φ' : List Term} {φ :
+@@ -573,7 +575,7 @@ theorem check_roseIndHyp {Γ₀ : List PartialHorn.Tree} {Φ' : List Term} {φ :
  theorem coprodParts_coprod (a b : PartialHorn.Tree) :
      FreeTopos.Internal.coprodParts (FreeTopos.coprod a b) = some (a, b) := by
    unfold FreeTopos.Internal.coprodParts
@@ -5733,7 +5802,7 @@ index fe694a3..fc7a700 100644
  /-- Case analysis on a coproduct at the innermost variable: the formula at the left injection of
  a variable of the first summand and at the right injection of a variable of the second, under the
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
-index 8bf9680..b22c349 100644
+index e507358..02397d5 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5744,7 +5813,7 @@ index 8bf9680..b22c349 100644
  module
  
  public import Geb.Prototypes.LF.Topos.ProofCheck
-@@ -212,7 +213,7 @@ theorem TmCtx.consTm (hc : TmCtx k n ΓLF env Γ) {a : PartialHorn.Tree} {A : Ex
+@@ -213,7 +214,7 @@ theorem TmCtx.consTm (hc : TmCtx k n ΓLF env Γ) {a : PartialHorn.Tree} {A : Ex
    enc := by
      obtain ⟨ΓT, hΓ⟩ := hc.enc
      exact ⟨_, encCtx_cons (encTy_rename a _ A ha Γ.length (fun i ↦ i - env.length + Γ.length)
@@ -5753,7 +5822,7 @@ index 8bf9680..b22c349 100644
  
  variable {G : Globals}
  
-@@ -304,7 +305,7 @@ the weakening of its decoding. -/
+@@ -305,7 +306,7 @@ the weakening of its decoding. -/
  theorem termOf_consTm {F : Expr} {j : ℕ} {φ : MTerm}
      (h : termOf k env (F.rename (· + j)) = some φ) :
      termOf k (none :: env) (F.rename (· + (j + 1))) = some (weaken1 φ) := by
@@ -5762,7 +5831,7 @@ index 8bf9680..b22c349 100644
    rw [rename_rename, rename_rename] at this
    rw [termOf, rename_rename]
    exact this
-@@ -1813,7 +1814,7 @@ theorem sound_funExt (hc : PfCtx G k n ΓLF env Γ Φ) {A B f g dH F : Expr} {φ
+@@ -1814,7 +1815,7 @@ theorem sound_funExt (hc : PfCtx G k n ΓLF env Γ Φ) {A B f g dH F : Expr} {φ
    subst hφ
    refine ⟨nd .funExt [D'], ?_, check_funExt hft hcheck⟩
    rw [decPf_const]
@@ -5771,7 +5840,7 @@ index 8bf9680..b22c349 100644
      Option.bind_some, Option.pure_def]
  
  include hk hsg in
-@@ -1850,8 +1851,8 @@ theorem sound_propExt (hc : PfCtx G k n ΓLF env Γ Φ) {P Q d₁ d₂ F : Expr}
+@@ -1851,8 +1852,8 @@ theorem sound_propExt (hc : PfCtx G k n ΓLF env Γ Φ) {P Q d₁ d₂ F : Expr}
    subst hφ
    refine ⟨nd .propExt [D₁, D₂], ?_, check_propExt hPt hQt hc₁ hc₂⟩
    rw [decPf_const]
@@ -5782,7 +5851,7 @@ index 8bf9680..b22c349 100644
  
  include hk hsg in
  /-- The soundness of the decoding of the substitution of equals. -/
-@@ -1925,7 +1926,7 @@ theorem sound_leib (hc : PfCtx G k n ΓLF env Γ Φ) {A P t u dh dp F : Expr} {
+@@ -1926,7 +1927,7 @@ theorem sound_leib (hc : PfCtx G k n ΓLF env Γ Φ) {A P t u dh dp F : Expr} {
    refine ⟨leibD xa sp st su Φ.length Dh Dp, ?_,
      check_leibD (hIxa) hpt htt hut hch hcp⟩
    rw [decPf_const]
@@ -5791,7 +5860,7 @@ index 8bf9680..b22c349 100644
      decTy_encTy _ xa A hxa, Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam,
      Option.pure_def]
  
-@@ -2029,7 +2030,7 @@ theorem sound_cong (hc : PfCtx G k n ΓLF env Γ Φ) {A B f a b dh F : Expr} {φ
+@@ -2030,7 +2031,7 @@ theorem sound_cong (hc : PfCtx G k n ΓLF env Γ Φ) {A B f a b dh F : Expr} {φ
    rw [hmot] at hcp
    refine ⟨_, ?_, hcp⟩
    rw [decPf_const]
@@ -5800,7 +5869,7 @@ index 8bf9680..b22c349 100644
      decTy_encTy _ xa A hxa, Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam,
      Option.pure_def]
  
-@@ -2150,7 +2151,7 @@ theorem sound_natInd (hc : PfCtx G k n ΓLF env Γ Φ) {P d₀ ds N F : Expr} {
+@@ -2151,7 +2152,7 @@ theorem sound_natInd (hc : PfCtx G k n ΓLF env Γ Φ) {P d₀ ds N F : Expr} {
    refine ⟨indD FreeTopos.nat (.natIndHyp k.zero k.succ) sp sn Φ.length [D₀, Ds], ?_,
      check_natIndD hk.zero hk.succ hpt hnt hc.typed hc₀ hcs⟩
    rw [decPf_const]
@@ -5809,7 +5878,7 @@ index 8bf9680..b22c349 100644
      hDs', Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody,
      Term.lam, RoseTree.label_node, RoseTree.children_node, Option.pure_def]
  
-@@ -2321,7 +2322,8 @@ theorem sound_listInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P d₀ ds l F : Expr}
+@@ -2322,7 +2323,8 @@ theorem sound_listInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P d₀ ds l F : Expr}
    refine ⟨indD (FreeTopos.list xa) (.listIndHyp k.nil k.cons) sp sl Φ.length [D₀, Ds], ?_,
      check_listIndD hk.nil hk.cons hIs hpt hlt hc.typed hc₀ (by rw [hw]; exact hcs)⟩
    rw [decPf_const]
@@ -5819,7 +5888,7 @@ index 8bf9680..b22c349 100644
      decTy_encTy _ xa A hxa, Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam,
      Option.pure_def]
  
-@@ -2420,7 +2422,7 @@ theorem sound_roseInd (hc : PfCtx G k n ΓLF env Γ Φ) {P ds t F : Expr} {φ :
+@@ -2421,7 +2423,7 @@ theorem sound_roseInd (hc : PfCtx G k n ΓLF env Γ Φ) {P ds t F : Expr} {φ :
      rw [termOf_hsub₀ hb h₁ h₂]
      refine congrArg some (Term.subst_rename sp _ _ _ fun i ↦ ?_)
      rcases i with _ | i
@@ -5828,7 +5897,7 @@ index 8bf9680..b22c349 100644
      · rfl
    obtain ⟨body₁, rfl, hb1, hlam⟩ := ihs ΓLF _ _ hds
    obtain ⟨body₂, rfl, hb2, hlam'⟩ := hlam _ _ _ hb1
-@@ -2439,7 +2441,7 @@ theorem sound_roseInd (hc : PfCtx G k n ΓLF env Γ Φ) {P ds t F : Expr} {φ :
+@@ -2440,7 +2442,7 @@ theorem sound_roseInd (hc : PfCtx G k n ΓLF env Γ Φ) {P ds t F : Expr} {φ :
      check_roseIndD roseParts_rose (.inl ⟨hk.node, rfl⟩) hk.nil hk.cons
        FreeTopos.Internal.isTy_rose hpt htt hc.typed (by rw [hw]; exact hcs)⟩
    rw [decPf_const]
@@ -5837,7 +5906,7 @@ index 8bf9680..b22c349 100644
      Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam, Option.pure_def]
  
  include hk hsg in
-@@ -2550,7 +2552,7 @@ theorem sound_lroseInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P ds t F : Expr} {φ
+@@ -2551,7 +2553,7 @@ theorem sound_lroseInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P ds t F : Expr} {φ
      rw [termOf_hsub₀ hb h₁ h₂]
      refine congrArg some (Term.subst_rename sp _ _ _ fun i ↦ ?_)
      rcases i with _ | i
@@ -5846,7 +5915,7 @@ index 8bf9680..b22c349 100644
      · rfl
    obtain ⟨body₁, rfl, hb1, hlam⟩ := ihs ΓLF _ _ hds
    obtain ⟨body₂, rfl, hb2, hlam'⟩ := hlam _ _ _ hb1
-@@ -2570,7 +2572,7 @@ theorem sound_lroseInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P ds t F : Expr} {φ
+@@ -2571,7 +2573,7 @@ theorem sound_lroseInd (hc : PfCtx G k n ΓLF env Γ Φ) {A P ds t F : Expr} {φ
        (by rw [FreeTopos.Internal.isTy_lrose]; exact hIxa) hpt htt hc.typed
        (by rw [hw]; exact hcs)⟩
    rw [decPf_const]
@@ -5855,7 +5924,7 @@ index 8bf9680..b22c349 100644
      decTy_encTy _ xa A hxa, Option.map_some, Option.bind_eq_bind, Option.bind_some, lamBody_lam,
      Option.pure_def]
  
-@@ -2605,7 +2607,7 @@ theorem sound_hyp (hc : PfCtx G k n ΓLF env Γ Φ) {i : ℕ} {ms : List Expr} {
+@@ -2606,7 +2608,7 @@ theorem sound_hyp (hc : PfCtx G k n ΓLF env Γ Φ) {i : ℕ} {ms : List Expr} {
      obtain rfl := Option.some.inj (hφ'.symm.trans hφ)
      refine ⟨ruleD (.hyp h), ?_, check_hyp hΦ⟩
      rw [decPf, Expr.app, RoseTree.para_node]
@@ -5864,7 +5933,7 @@ index 8bf9680..b22c349 100644
  
  /-- The step of the decoding of proofs at a constant past the signature is the decoding of an
  application of a theorem of the extension. -/
-@@ -2669,7 +2671,8 @@ theorem termOf_inst {a : FreeTopos.Internal.Thm}
+@@ -2670,7 +2672,8 @@ theorem termOf_inst {a : FreeTopos.Internal.Thm}
      rw [List.map_map]
      refine List.map_congr_left fun X hX ↦ ?_
      obtain ⟨x, hx⟩ := forall₂_left_mem hxs X hX
@@ -5874,7 +5943,7 @@ index 8bf9680..b22c349 100644
      have h₂ := encTy_rename x env.length X hx (numTm env) (tmIdx env) fun i hi ↦
        tmIdx_ge env i hi
      exact Option.some.inj (h₁.symm.trans h₂)
-@@ -2695,14 +2698,14 @@ theorem termOf_inst {a : FreeTopos.Internal.Thm}
+@@ -2696,14 +2699,14 @@ theorem termOf_inst {a : FreeTopos.Internal.Thm}
    refine hdh.trans (congrArg some ?_)
    rw [FreeTopos.Internal.instTerm, Term.osubst_eq_osubstF,
      Term.osubstF_congr_of_compile (τ' := fun z ↦ xs.reverse[z]?.getD (PartialHorn.var z))
@@ -5891,7 +5960,7 @@ index 8bf9680..b22c349 100644
  
  include hsg in
  /-- The leading arguments of a spine, each checking against the kind of types, decode to types
-@@ -2827,7 +2830,7 @@ theorem thm_spine (hc : PfCtx G k n ΓLF env Γ Φ) {cs : List Expr} {a : FreeTo
+@@ -2828,7 +2831,7 @@ theorem thm_spine (hc : PfCtx G k n ΓLF env Γ Φ) {cs : List Expr} {a : FreeTo
            FreeTopos.Internal.substF_comp]
          refine FreeTopos.Internal.substF_congr (n := a.arity) (fun z hz ↦ ?_) _
            (FreeTopos.Internal.scoped_of_isTy (G := G) _ hA)
@@ -5900,7 +5969,7 @@ index 8bf9680..b22c349 100644
            ← List.map_reverse, List.getElem?_map,
            List.getElem?_eq_getElem (by rw [List.length_reverse, hxl]; exact hz)]
          rfl
-@@ -2899,7 +2902,7 @@ theorem sound_thm (hc : PfCtx G k n ΓLF env Γ Φ) {c j : ℕ} {cs : List Expr}
+@@ -2900,7 +2903,7 @@ theorem sound_thm (hc : PfCtx G k n ΓLF env Γ Φ) {c j : ℕ} {cs : List Expr}
        ih p (List.mem_of_mem_drop hp) ΓLF env Γ Φ H _ hc hJ hH
    obtain ⟨Ds, hDs', hDchk⟩ := mapM_of_forall₂ hproofs
    refine ⟨_, ?_, check_apply he ?_ rfl hDchk.length_eq fun x hx ↦ ?_⟩
@@ -5909,7 +5978,7 @@ index 8bf9680..b22c349 100644
      simp only [← List.map_take, ← List.map_drop, List.mapM_map, Function.comp_def, hxsM, hσM,
        hDs', Option.bind_eq_bind, Option.bind_some, Option.pure_def]
    · simp only [FreeTopos.Internal.instOk, List.length_reverse, hxl, hσlen, decide_true,
-@@ -3008,7 +3011,7 @@ theorem sound_delta (hc : PfCtx G k n ΓLF env Γ Φ) {c kd : ℕ} {d : FreeTopo
+@@ -3010,7 +3013,7 @@ theorem sound_delta (hc : PfCtx G k n ΓLF env Γ Φ) {c kd : ℕ} {d : FreeTopo
      thm_spine hk hsg hc (deltaThm_wellFormed hd hok hcd) hC hS
    obtain rfl := Option.some.inj (hφ.symm.trans hF)
    refine ⟨joinD (ruleD .delta) reflD, ?_, ?_⟩
@@ -5918,7 +5987,7 @@ index 8bf9680..b22c349 100644
    · have hθl : d.arity = xs.reverse.length := by rw [List.length_reverse, hxl]; rfl
      have hσl : d.params.length = σ'.reverse.length := by rw [List.length_reverse, hσlen]; rfl
      change (check G E n (joinD (ruleD .delta) reflD)).2 Γ Φ (FreeTopos.Internal.instTerm
-@@ -3043,8 +3046,8 @@ theorem hsub_quotBody {c₀ j : ℕ} {n Q₀ A Q₁ M R : Expr}
+@@ -3045,8 +3048,8 @@ theorem hsub_quotBody {c₀ j : ℕ} {n Q₀ A Q₁ M R : Expr}
    obtain ⟨v₂, hv₂, rfl⟩ := hsub_const₁ hb₅
    obtain ⟨A'', hA', rfl⟩ := hsub_const₁ hA
    obtain ⟨Q₁'', hQ₁', rfl⟩ := hsub_const₁ hQ₁
@@ -5929,7 +5998,7 @@ index 8bf9680..b22c349 100644
    have hne : ¬ (1 = j + 1 + 1) := by omega
    rw [hsub_var] at hv₁ hv₂
    rcases hM : hsub (RoseTree.node (.base c₀) []) n.shift.shift M (j + 1 + 1) with _ | M'
-@@ -3052,11 +3055,11 @@ theorem hsub_quotBody {c₀ j : ℕ} {n Q₀ A Q₁ M R : Expr}
+@@ -3054,11 +3057,11 @@ theorem hsub_quotBody {c₀ j : ℕ} {n Q₀ A Q₁ M R : Expr}
        Option.bind_none] at hv₁
      exact nomatch hv₁
    simp only [List.map_cons, List.map_nil, hM, List.mapM_cons, List.mapM_nil, id,
@@ -5944,7 +6013,7 @@ index 8bf9680..b22c349 100644
    subst hv₁ hv₂
    exact ⟨Q₀', A'', Q₁'', M', hQ₀, hA', hQ₁', rfl, rfl⟩
  
-@@ -3142,12 +3145,12 @@ theorem hsubsPre_projApp {c₀ c d : ℕ} (hd : 0 < d) :
+@@ -3144,12 +3147,12 @@ theorem hsubsPre_projApp {c₀ c d : ℕ} (hd : 0 < d) :
      · have hi' := List.mem_range.mp (List.mem_reverse.mp hi)
        rw [hsub_var]
        simp only [List.map_nil, List.mapM_nil, Option.pure_def, Option.bind_some,
@@ -5961,7 +6030,7 @@ index 8bf9680..b22c349 100644
    rw [hsubsPre_cons, hstep, Option.bind_some, ih (Zs ++ [m]), List.append_assoc,
      List.singleton_append]
  
-@@ -3329,7 +3332,7 @@ theorem sound_quotInd (hc : PfCtx G k n ΓLF env Γ Φ) {c kq : ℕ} {p : FreeTo
+@@ -3331,7 +3334,7 @@ theorem sound_quotInd (hc : PfCtx G k n ΓLF env Γ Φ) {c kq : ℕ} {p : FreeTo
    rw [hpc, ← hθl, subst_op_vars] at hchk
    refine ⟨_, ?_, hchk⟩
    obtain ⟨sP, hsP, hlb⟩ := Option.bind_eq_some_iff.mp hpb
@@ -5970,7 +6039,7 @@ index 8bf9680..b22c349 100644
    dsimp only
    rw [← List.map_drop, hPdt]
    simp only [List.map_cons, List.map_nil, ← List.map_take, List.mapM_map, Function.comp_def,
-@@ -3550,7 +3553,7 @@ theorem tmIdx_replicate (n : ℕ) : ∀ i, tmIdx (List.replicate n none) i = i :
+@@ -3552,7 +3555,7 @@ theorem tmIdx_replicate (n : ℕ) : ∀ i, tmIdx (List.replicate n none) i = i :
  /-- An environment of term variables alone has as many term variables as entries. -/
  theorem numTm_replicate (n : ℕ) : numTm (List.replicate n none) = n :=
    Nat.rec (motive := fun n ↦ numTm (List.replicate n none) = n) rfl
@@ -6630,7 +6699,7 @@ index 1bcea11..cbb2cdf 100644
  /-- The identity arity hom, of `F` at `a` into `F`'s own arity presheaf. -/
  def idArityHom (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) (a : F.A) :
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Codes.lean b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Codes.lean
-index 9bddd32..8f870e4 100644
+index 7c59265..ea6ff41 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Codes.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Codes.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6641,7 +6710,7 @@ index 9bddd32..8f870e4 100644
  module
  
  public import Geb.Prototypes.PresheafIRProto.Basic
-@@ -447,7 +448,6 @@ def reindexHom (hP : P.IsFunctorial) ⦃j j' : J⦄ (g : j' ⟶ j) :
+@@ -448,7 +449,6 @@ def reindexHom (hP : P.IsFunctorial) ⦃j j' : J⦄ (g : j' ⟶ j) :
    naturality := by
      intro i i' f
      ext d
@@ -6649,7 +6718,7 @@ index 9bddd32..8f870e4 100644
      exact congrFun (hP.reindex_naturality g f.unop).symm d
  
  /-- Reindexing along an `eqToHom` is the transport along the underlying
-@@ -500,9 +500,13 @@ theorem isFunctorial_pullback (hP : P.IsFunctorial)
+@@ -501,9 +501,13 @@ theorem isFunctorial_pullback (hP : P.IsFunctorial)
        (eqToHom (F.shapeRestr (𝟙 j) s).2 ≫ (𝟙 j) ≫ eqToHom s.2.symm) =
          eqToHom (((F.shapeRestr (𝟙 j) s).2).trans s.2.symm) by simp,
        reindex_eqToHom P hP]
@@ -6914,7 +6983,7 @@ index 7365cf6..1128905 100644
  /-- Reflexivity is not a witness constructor of fixed shape: a function sending each
  term to a witness with that term as source, all of one root shape, makes all terms
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
-index 87d9668..7258ba0 100644
+index 3cadaff..17183f9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6925,7 +6994,7 @@ index 87d9668..7258ba0 100644
  module
  
  public import Geb.Prototypes.QuotientPRA.FreeArity
-@@ -266,7 +267,7 @@ abbrev freeNode (Z : Objᵒᵖ ⥤ Type w) (s : Shape P eqns)
+@@ -267,7 +268,7 @@ abbrev freeNode (Z : Objᵒᵖ ⥤ Type w) (s : Shape P eqns)
  /-- Restriction of the W-type along an identity is the identity. -/
  theorem W_map_id_apply {c : Obj} (t : (qpra P eqns).W.obj ⟨c⟩) :
      (qpra P eqns).W.map (𝟙 c).op t = t := by
@@ -7058,7 +7127,7 @@ index 0c0ab51..d6a4f07 100644
  def Summary.append (a b : Summary) : Summary :=
    ⟨a.total + b.total, min a.minimum (a.total + b.minimum)⟩
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Typechecker/Instances.lean b/vendor/geb-mathlib/Geb/Prototypes/Typechecker/Instances.lean
-index 41837e2..20f55ea 100644
+index 873dc02..20f55ea 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Typechecker/Instances.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Typechecker/Instances.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -7069,16 +7138,17 @@ index 41837e2..20f55ea 100644
  module
  
  public import Geb.Prototypes.Typechecker.Coequalizers
-@@ -16,7 +17,7 @@ public import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
+@@ -16,8 +17,7 @@ public import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
  public import Mathlib.CategoryTheory.Limits.Shapes.Terminal
  public import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
  public import Mathlib.CategoryTheory.Monoidal.Closed.Basic
 -public import Mathlib.CategoryTheory.Subobject.Classifier.Defs
+-public import Mathlib.Tactic.Linter.HaveILetI
 +public import Mathlib.CategoryTheory.Topos.Classifier
  
  set_option doc.verso true in
  /-!
-@@ -314,7 +315,7 @@ theorem image_iff_of_isPullback (hS : HasConstants S) (m : X ⟶ Y) (k : X ⟶ K
+@@ -315,7 +315,7 @@ theorem image_iff_of_isPullback (hS : HasConstants S) (m : X ⟶ Y) (k : X ⟶ K
  /-- Every classifier tests mono images by equality with a fixed truth point, provided constants
  are admissible and some object has an accepted point. The classifier need not be two-valued. -/
  theorem image_iff_of_classifier (hS : HasConstants S)
@@ -7087,7 +7157,7 @@ index 41837e2..20f55ea 100644
      {T : DecisionProblem S t f} (a : Fiber T) (m : X ⟶ Y) [Mono m] (y : Fiber Y) :
      (c.χ m).restrict y = c.truth.restrict ((c.χ₀ T).restrict a) ↔
        ∃ x : Fiber X, m.restrict x = y := by
-@@ -326,7 +327,7 @@ theorem image_iff_of_classifier (hS : HasConstants S)
+@@ -327,7 +327,7 @@ theorem image_iff_of_classifier (hS : HasConstants S)
  /-- On accepted target inputs, every mono image is an equality fiber of an admissible
  endomorphism if a classifier exists. This is a necessary condition on the function subset. -/
  theorem exists_image_test_of_classifier (hS : HasConstants S)
@@ -7096,7 +7166,7 @@ index 41837e2..20f55ea 100644
      {T : DecisionProblem S t f} (a : Fiber T) (m : X ⟶ Y) [Mono m] :
      ∃ r : S, ∃ v : B, ∀ y : Fiber Y,
        r.val y.val = v ↔ ∃ x : Fiber X, m.restrict x = y := by
-@@ -351,7 +352,7 @@ theorem isPullback (m : X ⟶ Y) [Mono m] :
+@@ -352,7 +352,7 @@ theorem isPullback (m : X ⟶ Y) [Mono m] :
    exact IsTerminal.hom_ext (terminalCone d.terminal d.terminal_pass_iff).isLimit _ _
  
  /-- Admissible image tests and image inverses supply the classifier field of an elementary topos. -/
@@ -7105,7 +7175,7 @@ index 41837e2..20f55ea 100644
    Ω₀ := d.terminal
    Ω := d.omega
    truth := d.truth
-@@ -374,7 +375,7 @@ end ClassifierData
+@@ -375,7 +375,7 @@ end ClassifierData
  
  /-- Classification data supplies existence of a subobject classifier. -/
  instance hasSubobjectClassifier [d : Nonempty (ClassifierData S t f)] :

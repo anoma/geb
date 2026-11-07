@@ -6,6 +6,7 @@ Authors: Terence Rokop
 module
 
 public import Geb.Prototypes.InteractionNet.ArrayWiring
+public import Geb.Prototypes.InteractionNet.InverseTable
 public import Geb.Prototypes.InteractionNet.WiringEmbedding
 
 set_option doc.verso true in
@@ -107,34 +108,14 @@ theorem tableEmbedding_eq (table : Vector (Fin size) live) (e : Fin live ↪ Fin
     (h : ∀ p : Fin live, table[p] = e p) : tableEmbedding table e h = e :=
   Function.Embedding.ext h
 
-/-- Write the compact index at the ambient position of each listed live endpoint. -/
-def inverseEntries (e : Fin live ↪ Fin size) (ps : List (Fin live))
-    (table : Vector (Option (Fin live)) size) : Vector (Option (Fin live)) size :=
-  ps.foldl (fun table p ↦ table.set (e p) (some p)) table
-
-/-- Filling inverse entries records every listed endpoint and retains all unlisted entries. -/
-theorem inverseEntries_get (e : Fin live ↪ Fin size) (ps : List (Fin live))
-    (table : Vector (Option (Fin live)) size) (p : Fin live) :
-    (inverseEntries e ps table)[e p] = if p ∈ ps then some p else table[e p] := by
-  revert table
-  refine List.rec (fun _ ↦ rfl) (fun q qs ih table ↦ ?_) ps
-  change (inverseEntries e qs (table.set (e q) (some q)))[e p] = _
-  rw [ih]
-  simp only [Fin.getElem_fin, Vector.getElem_set, Fin.val_inj, e.injective.eq_iff,
-    List.mem_cons]
-  by_cases hpq : p = q
-  · subst q
-    simp
-  · simp only [hpq, Ne.symm hpq, false_or, ↓reduceIte]
-
 /-- Build an ambient-to-live index table in the explicit live enumeration. -/
 def inverseTable (e : Fin live ↪ Fin size) : Vector (Option (Fin live)) size :=
-  inverseEntries e (List.finRange live) (Vector.replicate size none)
+  InteractionNet.inverseTable e (List.finRange live)
 
 /-- The inverse table decodes every endpoint in the live injection's image. -/
 theorem inverseTable_get (e : Fin live ↪ Fin size) (p : Fin live) :
-    (inverseTable e)[e p] = some p := by
-  simp only [inverseTable, inverseEntries_get, List.mem_finRange, ↓reduceIte]
+    (inverseTable e)[e p] = some p :=
+  InteractionNet.inverseTable_get e (List.mem_finRange p)
 
 /-- Decode a partner using a precomputed inverse table. -/
 def tablePartner (w : ArrayWiring size) (e : Fin live ↪ Fin size) (h : w.Closed e)
