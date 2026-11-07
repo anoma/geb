@@ -8,6 +8,7 @@ module
 
 public import Mathlib.Tactic.ToDual
 public import Mathlib.Util.CompileInductive
+public import Std.Data.DTreeMap.Internal.Operations
 
 /-!
 # Decimal digits

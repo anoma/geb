@@ -148,7 +148,7 @@ def tensorUnitIsoΩ₀ : 𝟙_ C ≅ (classifier (C := C)).Ω₀ :=
 /-- The chosen initial object is initial. -/
 def isInitial : IsInitial (initialCocone (C := C)).cocone.pt :=
   IsColimit.ofIsoColimit initialCocone.isColimit
-    (Cocone.ext (Iso.refl _) (by simp))
+    (Cocone.ext (Iso.refl _) (fun j ↦ j.as.elim))
 
 /-- The initial-object field, as the corresponding `Prop` class. -/
 instance : HasInitial C := IsInitial.hasInitial (isInitial C)

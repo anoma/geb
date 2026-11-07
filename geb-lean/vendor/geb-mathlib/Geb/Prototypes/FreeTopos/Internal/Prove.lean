@@ -30,6 +30,13 @@ functions by extensionality, an equation by case analysis of a variable of a cop
 in the context, and list induction whose premises other proofs prove. The prover is not
 trusted: a derivation it computes is checked.
 
+The compiler replaces the reduction by one proved equal to it ({lit}`eval_eq_evalFast`): the
+hypotheses are passed with the number of binders past which they are weakened and weakened where
+a rule reads one, as the compiled checker weakens them; the rules are indexed once by the label a
+term's root must have for each to apply, so that a node tries only the rules of its label; and
+each equation among the hypotheses is compared with a term by its left side's renaming, folded
+once, without the renaming being built.
+
 ## Main definitions
 
 * {lit}`NormRule` — a rule the normalizer applies at a term's root.
@@ -50,6 +57,17 @@ trusted: a derivation it computes is checked.
   and the normal form reached through it.
 * {lit}`atRoot`, {lit}`headStep`, {lit}`deepStep`, {lit}`evalStep` — the steps of the reduction
   to a depth: the rewriting at the root, the weak head normal form, and the reduction past it.
+* {lit}`evalK`, {lit}`evalStepK` — the reduction under hypotheses weakened past a number of
+  binders, and its step.
+* {lit}`isRename`, {lit}`isWeakening` — whether a term is a pattern renamed, or weakened, decided
+  without the renaming being built.
+* {lit}`indexRules`, {lit}`rootRewriteK` — the rules indexed by the keys of their roots' labels,
+  and the rewriting at the root by the index under weakened hypotheses.
+* {lit}`evalFast` — the reduction the compiler runs in place of {lit}`eval`.
+
+## Main statements
+
+* {lit}`eval_eq_evalFast` — the reduction is {lit}`evalFast`, by which the compiler replaces it.
 
 ## Tags
 
@@ -459,6 +477,481 @@ of recursion of {lit}`fuel`, with its rewriting derivation, marked when it rewri
 head normal form ({lit}`headStep`) and then the reduction past it ({lit}`deepStep`). -/
 def eval (rs : List NormRule) (fuel : ℕ) : Reduction :=
   fuel.rec (fun _ _ _ t ↦ some (t, dRefl)) fun _ rec ↦ evalStep G E n rs rec
+
+/-- A reduction under weakened hypotheses: the reduction of a term to a depth in a context under
+the hypotheses weakened past a number of new innermost variables, from the hypotheses before the
+weakening. -/
+abbrev ReductionK : Type :=
+  Depth → List Tree → ℕ → List Term → Term → Option (Term × Deriv × Bool)
+
+/-- A rewriting at the root under weakened hypotheses: the result and its derivation in a context
+under the hypotheses weakened past a number of new innermost variables, from the hypotheses
+before the weakening. -/
+abbrev RootRewriteK : Type := List Tree → ℕ → List Term → Term → Option (Term × Deriv)
+
+/-- {lit}`atRoot` under weakened hypotheses, by the rewriting at the root {lit}`rw`. -/
+def atRootK (rw : RootRewriteK) (rec : ReductionK) (Γ : List Tree) (k : ℕ) (Φ : List Term)
+    (dp : Depth) (t₁ : Term) (d₁ : Deriv × Bool) : Option (Term × Deriv × Bool) :=
+  match rw Γ k Φ t₁ with
+  | some (t₂, dr) => do
+    let (t₃, d₃) ← rec dp Γ k Φ t₂
+    pure (t₃, dTrans d₁ (dTrans (dr, true) d₃))
+  | none => pure (t₁, d₁)
+
+/-- {lit}`headStep` under weakened hypotheses, by the rewriting at the root {lit}`rw`. -/
+def headStepK (rw : RootRewriteK) (rec : ReductionK) (Γ : List Tree) (k : ℕ) (Φ : List Term)
+    (t : Term) : Option (Term × Deriv × Bool) :=
+  match t.label, t.children with
+  | .app, [f, u] => do
+    let (f', df) ← rec .head Γ k Φ f
+    let (u', du) ← match f'.label, f'.children with
+      | .lam _, [b] => if uses b 0 < 2 then some (u, dRefl) else rec .weak Γ k Φ u
+      | _, _ => rec .head Γ k Φ u
+    atRootK rw rec Γ k Φ .head (Term.app f' u') (dCong [df, du])
+  | l, cs => match rw Γ k Φ t with
+    | some (t₁, dr) => do
+      let (t₂, d₂) ← rec .head Γ k Φ t₁
+      pure (t₂, dTrans (dr, true) d₂)
+    | none => match headChild l cs with
+      | none => some (t, dRefl)
+      | some i => do
+        let c ← cs[i]?
+        let (c', dc) ← rec .head Γ k Φ c
+        if dc.2 then
+          atRootK rw rec Γ k Φ .head (RoseTree.node l (cs.set i c'))
+            (dCong ((List.range cs.length).map fun j ↦ if j = i then dc else dRefl))
+        else some (t, dRefl)
+
+/-- {lit}`deepStep` under weakened hypotheses, by the rewriting at the root {lit}`rw`: a child
+whose context extends the node's has the hypotheses weakened past its new variables, by the
+number {lit}`childBinders` computes, rather than weakened. -/
+def deepStepK (rw : RootRewriteK) (rec : ReductionK) (depth : Depth) (Γ : List Tree) (k : ℕ)
+    (Φ : List Term) (w : Term) (dw : Deriv × Bool) : Option (Term × Deriv × Bool) :=
+  match depth with
+  | .head => pure (w, dw)
+  | .weak => do
+    let cs ← w.children.zipIdx.mapM fun (u, i) ↦
+      if keepsWeak w.label i then some (u, dRefl) else rec .weak Γ k Φ u
+    let t₁ := RoseTree.node w.label (cs.map Prod.fst)
+    let d₁ := dTrans dw (dCong (cs.map Prod.snd))
+    if cs.any (·.2.2) then atRootK rw rec Γ k Φ .weak t₁ d₁ else pure (t₁, d₁)
+  | .open => do
+    let Bs ← childBinders G n w.label w.children Γ
+    let cs ← ((Bs.zip w.children).zipIdx).mapM fun (((Δ, m), u), i) ↦
+      if keepsFold w.label i then some (u, dRefl) else rec .open Δ (k + m) Φ u
+    let t₁ := RoseTree.node w.label (cs.map Prod.fst)
+    let d₁ := dTrans dw (dCong (cs.map Prod.snd))
+    if cs.any (·.2.2) then atRootK rw rec Γ k Φ .open t₁ d₁ else pure (t₁, d₁)
+  | .full => do
+    let Bs ← childBinders G n w.label w.children Γ
+    let cs ← (Bs.zip w.children).mapM fun ((Δ, m), u) ↦ rec .full Δ (k + m) Φ u
+    let t₁ := RoseTree.node w.label (cs.map Prod.fst)
+    let d₁ := dCong (cs.map Prod.snd)
+    match rw Γ k Φ t₁ with
+    | some (t₂, dr) => do
+      let (t₃, d₃) ← rec .full Γ k Φ t₂
+      pure (t₃, dTrans dw (dTrans d₁ (dTrans (dr, true) d₃)))
+    | none => pure (t₁, dTrans dw d₁)
+
+/-- {lit}`evalStep` under weakened hypotheses, by the rewriting at the root {lit}`rw`. -/
+def evalStepK (rw : RootRewriteK) (rec : ReductionK) : ReductionK := fun depth Γ k Φ t ↦ do
+  let (w, dw) ← headStepK rw rec Γ k Φ t
+  deepStepK G n rw rec depth Γ k Φ w dw
+
+/-- {lit}`eval` under weakened hypotheses, by the rewriting at the root {lit}`rw`. -/
+def evalK (rw : RootRewriteK) (fuel : ℕ) : ReductionK :=
+  fuel.rec (fun _ _ _ _ t ↦ some (t, dRefl)) fun _ rec ↦ evalStepK G n rw rec
+
+/-- One step of the reduction under weakened hypotheses is the reduction's step under the
+hypotheses weakened, where its rewriting at the root and its reduction of the subterms are. -/
+theorem evalStepK_eq (rs : List NormRule) (Φ : List Term) (rw : RootRewriteK)
+    (hrw : ∀ Γ k t, rw Γ k Φ t = rootRewrite G E n rs Γ (Φ.map (weakenBy k)) t)
+    (recK : ReductionK) (rec : Reduction)
+    (hrec : ∀ dp Γ k t, recK dp Γ k Φ t = rec dp Γ (Φ.map (weakenBy k)) t)
+    (dp : Depth) (Γ : List Tree) (k : ℕ) (t : Term) :
+    evalStepK G n rw recK dp Γ k Φ t = evalStep G E n rs rec dp Γ (Φ.map (weakenBy k)) t := by
+  -- the step passes on its hypotheses unchanged, so it reads the rewriting and the reduction
+  -- only at them
+  change evalStepK G n (fun Γ k _ t ↦ rw Γ k Φ t) (fun dp Γ k _ t ↦ recK dp Γ k Φ t) dp Γ k Φ t = _
+  rw [show (fun Γ k (_ : List Term) t ↦ rw Γ k Φ t) =
+      fun Γ k _ t ↦ rootRewrite G E n rs Γ (Φ.map (weakenBy k)) t from
+    funext fun Γ ↦ funext fun k ↦ funext fun _ ↦ funext fun t ↦ hrw Γ k t,
+    show (fun dp Γ k (_ : List Term) t ↦ recK dp Γ k Φ t) =
+      fun dp Γ k _ t ↦ rec dp Γ (Φ.map (weakenBy k)) t from
+    funext fun dp ↦ funext fun Γ ↦ funext fun k ↦ funext fun _ ↦ funext fun t ↦ hrec dp Γ k t]
+  change (headStep G E n rs rec Γ (Φ.map (weakenBy k)) t).bind _ =
+    (headStep G E n rs rec Γ (Φ.map (weakenBy k)) t).bind _
+  refine congrArg _ (funext fun (w, dw) ↦ ?_)
+  cases dp
+  · rfl
+  · rfl
+  all_goals
+    simp only [deepStepK, deepStep, childCtxs_weakenBy]
+    rcases childBinders G n w.label w.children Γ with _ | Bs
+    · rfl
+    · simp only [Option.map_some, Option.bind_eq_bind, Option.bind_some, List.zip_map_left,
+        List.zipIdx_map, List.mapM_map]
+      rfl
+
+/-- The reduction under weakened hypotheses is the reduction under the hypotheses weakened, where
+its rewriting at the root is. -/
+theorem evalK_eq (rs : List NormRule) (Φ : List Term) (rw : RootRewriteK)
+    (hrw : ∀ Γ k t, rw Γ k Φ t = rootRewrite G E n rs Γ (Φ.map (weakenBy k)) t) (fuel : ℕ) :
+    ∀ dp Γ k t, evalK G n rw fuel dp Γ k Φ t = eval G E n rs fuel dp Γ (Φ.map (weakenBy k)) t :=
+  Nat.rec (motive := fun fuel ↦ ∀ dp Γ k t,
+      evalK G n rw fuel dp Γ k Φ t = eval G E n rs fuel dp Γ (Φ.map (weakenBy k)) t)
+    (fun _ _ _ _ ↦ rfl) (fun _ ih ↦ evalStepK_eq G E n rs Φ rw hrw _ _ ih) fuel
+
+/-- The renamings of a node's children under a renaming at the node, each lifted past the
+variables the child binds, as {lit}`Term.renameStep` lifts them. -/
+def childRenamings (l : Label) (m : ℕ) (f : ℕ → ℕ) : List (ℕ → ℕ) := match l, m with
+  | .lam _, 1 => [Term.liftR f]
+  | .natRec, 3 => [f, Term.liftR f, f]
+  | .listRec, 3 => [f, Term.liftR (Term.liftR f), f]
+  | .roseRec _, 2 => [Term.liftR f, f]
+  | _, m => List.replicate m f
+
+/-- The images of a list's elements paired with one value. -/
+theorem map_zip_replicate {β γ δ : Type} (g : β → δ → γ) (x : δ) :
+    ∀ cs : List β, (cs.zip (List.replicate cs.length x)).map (fun p ↦ g p.1 p.2) =
+      cs.map (g · x) :=
+  List.rec rfl fun c cs ih ↦ by simp [List.replicate_succ, ih]
+
+/-- The renaming at a node other than a variable is the node of its label over its children
+renamed by {lit}`childRenamings`. -/
+theorem renameStep_eq (l : Label) (cs : List (Term × ((ℕ → ℕ) → Term))) (f : ℕ → ℕ)
+    (hl : ∀ i, l ≠ .var i) :
+    Term.renameStep l cs f =
+      RoseTree.node l ((cs.zip (childRenamings l cs.length f)).map fun p ↦ p.1.2 p.2) := by
+  cases l
+  case var => exact (hl _ rfl).elim
+  all_goals rcases cs with _ | ⟨a, _ | ⟨b, _ | ⟨c, _ | ⟨d, cs⟩⟩⟩⟩ <;>
+    simp [Term.renameStep, childRenamings, List.replicate_succ, map_zip_replicate]
+
+/-- Whether tests hold of a list of terms, the first of the first, and so on, as many terms as
+tests. -/
+def pairsHold (ps : List (Term → Bool)) (us : List Term) : Bool :=
+  ps.length == us.length && (ps.zip us).all fun p ↦ p.1 p.2
+
+/-- Tests that each hold of exactly one term hold of a list exactly when it is the list of
+those terms. -/
+theorem pairsHold_iff {β : Type} (P : β → Term → Bool) (F : β → Term) :
+    ∀ xs : List β, (∀ x ∈ xs, ∀ u, P x u = true ↔ u = F x) →
+      ∀ us, pairsHold (xs.map P) us = true ↔ us = xs.map F :=
+  List.rec (fun _ us ↦ by cases us <;> simp [pairsHold]) fun x xs ih h us ↦ by
+    have ih' := ih fun y hy ↦ h y (List.mem_cons_of_mem x hy)
+    rcases us with _ | ⟨u, us⟩
+    · simp [pairsHold]
+    · have hx := h x List.mem_cons_self u
+      have hs := ih' us
+      simp only [pairsHold, List.map_cons, List.length_cons, List.zip_cons_cons, List.all_cons,
+        Bool.and_eq_true, beq_iff_eq, Nat.add_right_cancel_iff] at hs ⊢
+      rw [List.cons.injEq, ← hx, ← hs]
+      exact ⟨fun ⟨a, b, c⟩ ↦ ⟨b, a, c⟩, fun ⟨b, a, c⟩ ↦ ⟨a, b, c⟩⟩
+
+/-- One step of the test whether a term is a pattern renamed, at a node of the pattern, from its
+children's tests: a variable's renaming, or the node's label over its children each renamed as
+{lit}`childRenamings` lifts the renaming. -/
+def isRenameStep (l : Label) (cs : List ((ℕ → ℕ) → Term → Bool)) (f : ℕ → ℕ) (t : Term) :
+    Bool := match l with
+  | .var i => t.label == .var (f i) && t.children.isEmpty
+  | l => t.label == l &&
+      pairsHold ((cs.zip (childRenamings l cs.length f)).map fun p ↦ p.1 p.2) t.children
+
+/-- Whether a term is a pattern renamed by a renaming, decided without the renaming being built:
+its nodes compared with the pattern's in turn. -/
+def isRename : Term → (ℕ → ℕ) → Term → Bool := RoseTree.elim isRenameStep
+
+/-- The test at a node other than a variable holds of a term exactly when it is the node
+renamed, where the tests at its children hold exactly of their renamings. -/
+theorem isRenameStep_iff (l : Label) (cs : List Term) (hl : ∀ i, l ≠ .var i)
+    (ih : ∀ c ∈ cs, ∀ f t, isRename c f t = true ↔ t = Term.rename c f) (f : ℕ → ℕ) (t : Term) :
+    isRenameStep l (cs.map isRename) f t = true ↔
+      t = Term.renameStep l (cs.map fun c ↦ (c, Term.rename c)) f := by
+  have key (a : Label) (us : List Term) :
+      t = RoseTree.node a us ↔ a = t.label ∧ us = t.children :=
+    eq_comm.trans RoseTree.node_eq_iff
+  rw [renameStep_eq l _ f hl, key, List.length_map]
+  have hs : isRenameStep l (cs.map isRename) f t = (t.label == l &&
+      pairsHold (((cs.zip (childRenamings l cs.length f))).map fun p ↦ isRename p.1 p.2)
+        t.children) := by
+    cases l
+    case var => exact (hl _ rfl).elim
+    all_goals simp [isRenameStep, List.zip_map_left, List.map_map, Function.comp_def]
+  rw [hs, Bool.and_eq_true, beq_iff_eq, eq_comm (a := l),
+    pairsHold_iff (fun p u ↦ isRename p.1 p.2 u) (fun p ↦ Term.rename p.1 p.2) _
+      (fun x hx u ↦ ih x.1 (List.of_mem_zip hx).1 x.2 u), List.zip_map_left, List.map_map,
+    eq_comm (b := t.children)]
+  rfl
+
+/-- The test holds of a term exactly when it is the pattern renamed. -/
+theorem isRename_iff : ∀ (p : Term) (f : ℕ → ℕ) (t : Term),
+    isRename p f t = true ↔ t = Term.rename p f :=
+  RoseTree.ind fun l cs ih f t ↦ by
+    rw [isRename, RoseTree.elim_node, ← isRename, Term.rename_node]
+    cases l
+    case var i =>
+      rw [Term.renameStep, Term.var, show t = RoseTree.node (.var (f i)) [] ↔ _ from
+        eq_comm.trans RoseTree.node_eq_iff]
+      simp only [isRenameStep, Bool.and_eq_true, beq_iff_eq, List.isEmpty_iff]
+      exact ⟨fun h ↦ ⟨h.1.symm, h.2.symm⟩, fun h ↦ ⟨h.1.symm, h.2.symm⟩⟩
+    all_goals exact isRenameStep_iff _ cs (fun _ h ↦ by cases h) ih f t
+
+/-- Whether a term is a pattern weakened past new innermost variables, decided without the
+weakening being built. -/
+def isWeakening (k : ℕ) (p t : Term) : Bool := if k = 0 then t == p else isRename p (· + k) t
+
+/-- The test holds of a term exactly when it is the pattern weakened. -/
+theorem isWeakening_iff (k : ℕ) (p t : Term) : isWeakening k p t = true ↔ t = weakenBy k p := by
+  by_cases hk : k = 0 <;> simp [isWeakening, weakenBy, hk, isRename_iff]
+
+/-- The equations among hypotheses prepared for rewriting: each one's sides, and the test of
+its left side's renamings folded once ({lit}`isRename`). -/
+abbrev PreparedHyps : Type := List (Option (Term × Term × ((ℕ → ℕ) → Term → Bool)))
+
+/-- The hypotheses prepared for rewriting, each equation's test folded here rather than at each
+use. -/
+def prepareHyps (Φ : List Term) : PreparedHyps :=
+  -- the fold applied in full, so that it is computed here rather than at each call
+  Φ.map fun ψ ↦ (eqParts ψ).map fun p ↦ (p.1, p.2, RoseTree.elim isRenameStep p.1)
+
+/-- The rewriting of a term at its root by a rule under weakened hypotheses, the equations among
+them prepared in {lit}`hs`: an equation is weakened only where the term is its left side
+weakened ({lit}`isWeakening`), a rule of the checker by {lit}`rootStepK`, and the other rules
+under none of the hypotheses, which they do not read. -/
+def tryRuleK (Γ : List Tree) (k : ℕ) (Φ : List Term) (hs : PreparedHyps) (t : Term) :
+    NormRule → Option (Term × Deriv)
+  | .rule l => (rootStepK G E n Γ k Φ l t).map fun t' ↦ (t', RoseTree.node l [])
+  | .hyp i => match hs[i]? with
+    | some (some (l, r, test)) => if (if k = 0 then t == l else test (· + k) t) then
+        some (weakenBy k r, RoseTree.node (.rwHyp i false) [])
+      else none
+    | _ => none
+  | r => tryRule G E n Γ [] t r
+
+/-- The rewriting by a rule under weakened hypotheses is the rule's under the hypotheses
+weakened. -/
+theorem tryRuleK_eq (Γ : List Tree) (k : ℕ) (Φ : List Term) (t : Term) (r : NormRule) :
+    tryRuleK G E n Γ k Φ (prepareHyps Φ) t r = tryRule G E n Γ (Φ.map (weakenBy k)) t r := by
+  have h (l : Rule) (hl : rootHyps l k Φ = []) :
+      rootStep G E n Γ [] l t = rootStep G E n Γ (Φ.map (weakenBy k)) l t :=
+    hl ▸ rootStep_rootHyps G E n Γ l k Φ t
+  have hthm (j : ℕ) (θ : List Tree) (σ : List Term) (b : Bool) :=
+    h (.thm j θ σ b) rfl
+  cases r with
+  | rule l => simp only [tryRuleK, tryRule, rootStepK_eq]
+  | hyp i =>
+    simp only [tryRuleK, tryRule, rootStep, prepareHyps, List.getElem?_map]
+    rcases Φ[i]? with _ | ψ
+    · rfl
+    · simp only [Option.map_some, Option.bind_some, eqParts_weakenBy]
+      rcases eqParts ψ with _ | ⟨l, r⟩
+      · rfl
+      · change (if isWeakening k l t then _ else _) = _
+        by_cases hl : t = weakenBy k l
+        · simp [hl, (isWeakening_iff k l _).mpr rfl]
+        · simp [hl, Bool.eq_false_iff.mpr (mt (isWeakening_iff k l t).mp hl)]
+  | delta => simp only [tryRuleK, tryRule, h .delta rfl]
+  | deltaBelow => simp only [tryRuleK, tryRule, h .delta rfl]
+  | unitVar => simp only [tryRuleK, tryRule, h .unitEta rfl]
+  | thm => simp only [tryRuleK, tryRule, hthm]
+  | thmAt => simp only [tryRuleK, tryRule, hthm]
+
+/-- The key of a label that a rule's root must have for the rule to rewrite at it: one for each
+kind of node, and one for each index of a primitive arrow and of a definition. -/
+def Label.rootKey : Label → ℕ
+  | .var _ => 0
+  | .star => 1
+  | .pair => 2
+  | .fst => 3
+  | .snd => 4
+  | .lam _ => 5
+  | .app => 6
+  | .natRec => 7
+  | .listRec => 8
+  | .roseRec _ => 9
+  | .eq => 10
+  | .arr k _ => 11 + 2 * k
+  | .defn k _ => 12 + 2 * k
+
+/-- The key of the labels at which a rule of the checker may rewrite a term at its root, where
+there is one. -/
+def Rule.rootKey? : Rule → Option ℕ
+  | .beta | .caseInl _ _ | .caseInr _ _ => some 6
+  | .fstPair => some 3
+  | .sndPair => some 4
+  | .pairEta => some 2
+  | .natZero _ | .natSucc _ => some 7
+  | .listNil _ | .listCons _ => some 8
+  | .roseNode _ _ _ => some 9
+  | _ => none
+
+/-- The key of the labels at which a pattern of a root label may match, where there is one: every
+label's, where the root is a variable, else its own. -/
+def Label.patternKey? : Label → Option ℕ
+  | .var _ => none
+  | l => some l.rootKey
+
+/-- The key of the labels at which a rule of the normalizer may rewrite a term at its root, where
+there is one: a theorem's is that of the root of its left side. -/
+def NormRule.rootKey? : NormRule → Option ℕ
+  | .rule l => l.rootKey?
+  | .delta k => some (12 + 2 * k)
+  | .unitVar => some 0
+  | .thm j _ => ((E[j]?).bind Entry.language?).bind fun a ↦
+      (eqParts a.concl).bind fun p ↦ p.1.label.patternKey?
+  | .thmAt _ _ root _ _ => root.patternKey?
+  | _ => none
+
+/-- Whether a rule of a key, where it has one, may rewrite at a label of the key {lit}`k`: it has
+no key, or that one. -/
+def keyFits (k : ℕ) : Option ℕ → Bool
+  | none => true
+  | some k' => k' == k
+
+/-- A pattern's root may match a term's only where their keys fit. -/
+theorem sameShape_eq_false (l l' : Label) (h : keyFits l'.rootKey l.patternKey? = false) :
+    sameShape l l' = false := by
+  cases l <;> cases l' <;> simp_all [sameShape, keyFits, Label.patternKey?, Label.rootKey] <;>
+    omega
+
+/-- A rule of the checker rewrites no term at its root of a label its key does not fit. -/
+theorem rootStep_eq_none (Γ : List Tree) (Φ : List Term) (l : Rule) (t : Term)
+    (h : keyFits t.label.rootKey l.rootKey? = false) : rootStep G E n Γ Φ l t = none := by
+  cases l <;> simp only [Rule.rootKey?, keyFits, Bool.true_eq_false] at h <;> unfold rootStep <;>
+    split <;> simp_all [Label.rootKey]
+
+/-- A rule of the normalizer rewrites no term at its root of a label its key does not fit. -/
+theorem tryRule_eq_none (Γ : List Tree) (Φ : List Term) (t : Term) (r : NormRule)
+    (h : keyFits t.label.rootKey (r.rootKey? E) = false) : tryRule G E n Γ Φ t r = none := by
+  cases r with
+  | rule l => simp [tryRule, rootStep_eq_none G E n Γ Φ l t h]
+  | delta k =>
+    simp only [tryRule]
+    cases hl : t.label <;> simp_all [NormRule.rootKey?, keyFits, Label.rootKey]
+    omega
+  | unitVar =>
+    simp only [tryRule]
+    cases hl : t.label <;> simp_all [NormRule.rootKey?, keyFits, Label.rootKey]
+  | thm j θ =>
+    simp only [NormRule.rootKey?] at h
+    cases ha : (E[j]?).bind Entry.language? with
+    | none => simp [tryRule, ha]
+    | some a =>
+      cases hp : eqParts a.concl with
+      | none => simp [tryRule, ha, hp]
+      | some p =>
+        simp only [ha, hp, Option.bind_some] at h
+        simp [tryRule, ha, hp, sameShape_eq_false p.1.label t.label h]
+  | thmAt j θ root m k =>
+    simp [tryRule, sameShape_eq_false root t.label h]
+  | _ => simp [NormRule.rootKey?, keyFits] at h
+
+/-- The matching of a pattern at objects has the shape of the pattern's root. -/
+theorem sameShape_osubst (θ : List Tree) (l l' : Label) :
+    sameShape (l.osubst θ) l' = sameShape l l' := by
+  cases l <;> cases l' <;> rfl
+
+/-- A rule with a theorem's matching prepared beforehand rewrites as the rule does. -/
+theorem tryRule_prepareRule (Γ : List Tree) (Φ : List Term) (t : Term) (r : NormRule) :
+    tryRule G E n Γ Φ t (prepareRule E r) = tryRule G E n Γ Φ t r := by
+  cases r with
+  | thm j θ =>
+    cases ha : (E[j]?).bind Entry.language? with
+    | none => simp only [prepareRule, ha]
+    | some a =>
+      cases hp : eqParts a.concl with
+      | none => simp only [prepareRule, ha, hp]
+      | some p =>
+        have hs : sameShape (if θ.isEmpty then p.1 else Term.osubst θ p.1).label t.label =
+            sameShape p.1.label t.label := by
+          split
+          · rfl
+          · rw [← RoseTree.node_label_children p.1, Term.osubst_node, RoseTree.label_node,
+              sameShape_osubst, RoseTree.label_node]
+        simp only [prepareRule, ha, hp, tryRule, hs, Option.bind_eq_bind, Option.bind_some]
+        rfl
+  | _ => rfl
+
+/-- The first element of a filtered list at which a partial function has a value is the list's,
+where the function has none at the elements the filter drops. -/
+theorem findSome?_filter {α β : Type} (p : α → Bool) (f : α → Option β) :
+    ∀ l : List α, (∀ a ∈ l, p a = false → f a = none) → (l.filter p).findSome? f = l.findSome? f :=
+  List.rec (fun _ ↦ rfl) fun a l ih h ↦ by
+    have ih' := ih fun b hb ↦ h b (List.mem_cons_of_mem a hb)
+    cases hp : p a
+    · rw [List.filter_cons_of_neg (by simp [hp]), ih', List.findSome?_cons,
+        h a List.mem_cons_self hp]
+    · rw [List.filter_cons_of_pos hp, List.findSome?_cons, List.findSome?_cons, ih']
+
+/-- The rules indexed by the keys of the labels at which they may rewrite: for each key of a
+rule, the rules that may rewrite at a label of it, in order, and the rules without a key, which
+alone may rewrite at a label of another key. -/
+def indexRules (rs : List NormRule) : List (ℕ × List NormRule) × List NormRule :=
+  let kr := rs.map fun r ↦ (r.rootKey? E, r)
+  ((kr.filterMap (·.1)).eraseDups.map fun k ↦ (k, (kr.filter (keyFits k ·.1)).map Prod.snd),
+    (kr.filter fun p ↦ p.1.isNone).map Prod.snd)
+
+/-- The rules of an index that may rewrite at a label of a key. -/
+def ruleBucket (idx : List (ℕ × List NormRule) × List NormRule) (k : ℕ) : List NormRule :=
+  (idx.1.lookup k).getD idx.2
+
+/-- The lookup of a key in the list of keys paired with their images. -/
+theorem lookup_map_pair {β : Type} (F : ℕ → β) (k : ℕ) :
+    ∀ ks : List ℕ, (ks.map fun k' ↦ (k', F k')).lookup k = if k ∈ ks then some (F k) else none :=
+  List.rec rfl fun k' ks ih ↦ by
+    by_cases h : k = k'
+    · subst h
+      simp
+    · simp only [List.map_cons, List.lookup, beq_false_of_ne h, ih, List.mem_cons, h, false_or]
+
+/-- The rules of an index that may rewrite at a label of a key are the rules its key fits. -/
+theorem ruleBucket_indexRules (rs : List NormRule) (k : ℕ) :
+    ruleBucket (indexRules E rs) k = rs.filter fun r ↦ keyFits k (r.rootKey? E) := by
+  simp only [ruleBucket, indexRules, lookup_map_pair]
+  split
+  · simp [List.filter_map, Function.comp_def]
+  · rename_i hk
+    simp only [Option.getD_none, List.filter_map, List.map_map, Function.comp_def, List.map_id']
+    refine List.filter_congr fun r hr ↦ ?_
+    rcases h : r.rootKey? E with _ | k'
+    · rfl
+    · have : k' ≠ k := fun e ↦ hk (List.mem_eraseDups.mpr (List.mem_filterMap.mpr
+        ⟨(r.rootKey? E, r), List.mem_map_of_mem hr, by simp [h, e]⟩))
+      simp [keyFits, this]
+
+/-- The rewriting at the root under weakened hypotheses by an index of rules: the first rule
+of the term's label's key that rewrites it. -/
+def rootRewriteK (idx : List (ℕ × List NormRule) × List NormRule) (hs : PreparedHyps) :
+    RootRewriteK :=
+  fun Γ k Φ t ↦ (ruleBucket idx t.label.rootKey).findSome? (tryRuleK G E n Γ k Φ hs t)
+
+/-- The rewriting at the root under weakened hypotheses by the index of the prepared rules is
+the rewriting by the rules under the hypotheses weakened. -/
+theorem rootRewriteK_eq (rs : List NormRule) (Γ : List Tree) (k : ℕ) (Φ : List Term)
+    (t : Term) :
+    rootRewriteK G E n (indexRules E (prepareRules E rs)) (prepareHyps Φ) Γ k Φ t =
+      rootRewrite G E n rs Γ (Φ.map (weakenBy k)) t := by
+  have hk : tryRuleK G E n Γ k Φ (prepareHyps Φ) t = tryRule G E n Γ (Φ.map (weakenBy k)) t :=
+    funext (tryRuleK_eq G E n Γ k Φ t)
+  simp only [rootRewriteK, ruleBucket_indexRules, hk, rootRewrite]
+  rw [findSome?_filter _ _ _ fun r _ h ↦ tryRule_eq_none G E n Γ _ t r h, prepareRules,
+    List.findSome?_map]
+  exact congrArg (List.findSome? · rs) (funext fun r ↦ tryRule_prepareRule G E n Γ _ t r)
+
+/-- The reduction the compiler runs in place of {lit}`eval`: the rules prepared and indexed by
+the keys of their roots once, the hypotheses prepared once, and the hypotheses weakened where a
+rule reads them. -/
+def evalFast (rs : List NormRule) (fuel : ℕ) : Reduction :=
+  let idx := indexRules E (prepareRules E rs)
+  fun dp Γ Φ t ↦ evalK G n (rootRewriteK G E n idx (prepareHyps Φ)) fuel dp Γ 0 Φ t
+
+/-- The reduction is {lit}`evalFast`, by which the compiler replaces it. -/
+@[csimp] theorem eval_eq_evalFast : @eval = @evalFast := by
+  funext G E n rs fuel dp Γ Φ t
+  have h := evalK_eq G E n rs Φ _ (fun Γ k t ↦ rootRewriteK_eq G E n rs Γ k Φ t) fuel dp Γ 0 t
+  rw [map_weakenBy_zero] at h
+  exact h.symm
 
 /-- The weak head normal form of a term, by {lit}`eval`. -/
 def whnf (rs : List NormRule) (fuel : ℕ) :

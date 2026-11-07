@@ -122,7 +122,10 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Computability.SizeBounded.WordMachine
   Geb.Prototypes.Computability.TreeScanner
   Geb.Prototypes.Definition
+  Geb.Prototypes.FreeTopos.Internal.ByMachine
+  Geb.Prototypes.FreeTopos.Internal.ConvDevelopment
   Geb.Prototypes.FreeTopos.Internal.Conversion
+  Geb.Prototypes.FreeTopos.Internal.MachineSound
   Geb.Prototypes.FreeTopos.Literals
   Geb.Prototypes.FreeTopos.Tactics.Hypotheses
   Geb.Prototypes.FreeTopos.Tactics.Induction

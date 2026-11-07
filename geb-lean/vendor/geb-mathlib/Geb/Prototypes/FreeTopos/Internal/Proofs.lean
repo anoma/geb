@@ -101,7 +101,7 @@ the context's types. -/
 theorem compile_of_typeIn {Γ : List Tree} {φ : Term} {A : Tree} (hφ : typeIn G n Γ φ = some A)
     {X : Tree} {e : List (Tree × Tree)} (hΓ : e.map Prod.snd = Γ) :
     ∃ f, compile G n φ X e = some (f, A) := by
-  obtain ⟨⟨f₀, A₀⟩, hstd, rfl⟩ := Option.map_eq_some_iff.mp hφ
+  obtain ⟨⟨f₀, A₀⟩, hstd, rfl⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hφ)
   exact compile_retype φ _ _ _ hstd X e (hΓ.trans (map_snd_stdEnv Γ).symm)
 
 /-- An equation whose sides rewrite soundly to one term holds. -/
@@ -247,7 +247,7 @@ theorem apply_sound {E : Array Entry}
   have hv := hE j a ha
   refine Thm.Valid.inst hM hG hρ hps hds hv hl hθ he hrs hsnd (fun ψ hψ ↦ ?_) r hr
   obtain ⟨h, hh, rfl⟩ := List.mem_map.mp hψ
-  obtain ⟨⟨fh, Ah⟩, hstd, -⟩ := Option.map_eq_some_iff.mp (hv.2.1 h hh)
+  obtain ⟨⟨fh, Ah⟩, hstd, -⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp (hv.2.1 h hh))
   obtain ⟨r', hr', -⟩ := compile_thm_side hM hG hρ hps hds hstd hl hθ he hrs hsnd
   exact ⟨r', hr', hs h hh X e he hΓ hΦ r' hr'⟩
 
@@ -1568,7 +1568,7 @@ theorem Thm.seq_valid {a : Thm} (ha : a.Valid M G) : (a.seq G).Valid M := by
     fun h ↦ by simp [Thm.arrow, h]
   have hform : ∀ {φ : Term}, typeIn G a.arity a.ctx φ = some omega →
       compile G a.arity φ (ctxObj a.ctx) (stdEnv a.ctx) = some (a.arrow G φ, omega) := fun h ↦ by
-    obtain ⟨⟨F, A⟩, hF, rfl⟩ := Option.map_eq_some_iff.mp h
+    obtain ⟨⟨F, A⟩, hF, rfl⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp h)
     rw [hF, harrow hF]
   -- the subobject on which the hypotheses hold
   have hHs : ∀ H ∈ a.hyps.map (a.arrow G), Hom M ρ' H (ctxObj a.ctx) omega := fun H hH ↦ by
@@ -1602,7 +1602,7 @@ theorem Thm.seq_valid {a : Thm} (ha : a.Valid M G) : (a.seq G).Valid M := by
   split
   · rename_i t u htu
     rw [eqParts_eq_some htu] at hconcl
-    obtain ⟨C, hC⟩ := Option.map_eq_some_iff.mp hconcl |>.imp fun _ h ↦ h.1
+    obtain ⟨C, hC⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hconcl) |>.imp fun _ h ↦ h.1
     obtain ⟨t', u', htu', f, A, hf, g, hg, -⟩ := compile_eq_iff.mp hC
     simp only [List.cons.injEq, and_true] at htu'
     obtain ⟨rfl, rfl⟩ := htu'
@@ -1714,7 +1714,7 @@ theorem certSeq_sound {E : Array Entry}
   have hform : ∀ {ψ : Term}, typeIn G n (e.map Prod.snd) ψ = some omega →
       compile G n ψ (ctxObj (e.map Prod.snd)) (stdEnv (e.map Prod.snd)) =
         some (a.arrow G ψ, omega) := fun h ↦ by
-    obtain ⟨⟨F, A⟩, hF, rfl⟩ := Option.map_eq_some_iff.mp h
+    obtain ⟨⟨F, A⟩, hF, rfl⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp h)
     simp [a, Thm.arrow, hF]
   -- the environment's arrow factors through the subobject on which the hypotheses hold
   have hHs : ∀ H ∈ Φ.map (a.arrow G), Hom M ρ H (ctxObj (e.map Prod.snd)) omega ∧
@@ -1741,7 +1741,7 @@ theorem certSeq_sound {E : Array Entry}
     obtain ⟨t, u⟩ := tu
     obtain rfl := eqParts_eq_some hq
     simp only [Thm.seq, a, hq] at hv
-    obtain ⟨C, hC⟩ := Option.map_eq_some_iff.mp hφ |>.imp fun _ h ↦ h.1
+    obtain ⟨C, hC⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hφ) |>.imp fun _ h ↦ h.1
     obtain ⟨t', u', htu', f, A, hf, g, hg, -⟩ := compile_eq_iff.mp hC
     simp only [List.cons.injEq, and_true] at htu'
     obtain ⟨rfl, rfl⟩ := htu'

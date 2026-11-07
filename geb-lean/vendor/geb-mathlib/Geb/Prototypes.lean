@@ -5,6 +5,7 @@ Authors: Terence Rokop
 -/
 module
 
+public import Geb.Prototypes.Affine
 public import Geb.Prototypes.BitStream
 public import Geb.Prototypes.BitStream.WConstruction
 public import Geb.Prototypes.CanonicalSExpr.IO

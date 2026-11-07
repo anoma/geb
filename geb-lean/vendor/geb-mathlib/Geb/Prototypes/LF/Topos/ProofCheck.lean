@@ -45,7 +45,7 @@ set_option doc.verso true
 namespace Geb.LF.Topos
 
 open FreeTopos.Internal (Term Deriv Globals Entry check checkStep rootStep typeIn instVar weaken1
-  check_node ctxObj stdEnv extEnv)
+  check_node ctxObj stdEnv extEnv typeIn_eq_compile typeIn_eq_some)
 
 variable {G : Globals} {E : Array Entry} {n : ℕ} {Γ : List PartialHorn.Tree} {Φ : List Term}
 
@@ -314,22 +314,23 @@ variable {m : ℕ}
 /-- An equation of two terms of one type is a formula. -/
 theorem typeIn_eq {t u : Term} {a : PartialHorn.Tree} (ht : typeIn G m Γ t = some a)
     (hu : typeIn G m Γ u = some a) : typeIn G m Γ (Term.eq t u) = some FreeTopos.omega := by
-  obtain ⟨⟨f, a₁⟩, hf, ha₁⟩ := Option.map_eq_some_iff.mp ht
-  obtain ⟨⟨g, a₂⟩, hg, ha₂⟩ := Option.map_eq_some_iff.mp hu
+  obtain ⟨⟨f, a₁⟩, hf, ha₁⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp ht)
+  obtain ⟨⟨g, a₂⟩, hg, ha₂⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hu)
   dsimp only at ha₁ ha₂
   subst ha₁ ha₂
-  rw [typeIn, Term.eq, FreeTopos.Internal.compile_eq_iff.mpr ⟨t, u, rfl, f, _, hf, g, hg, rfl⟩]
+  rw [typeIn_eq_compile, Term.eq,
+    FreeTopos.Internal.compile_eq_iff.mpr ⟨t, u, rfl, f, _, hf, g, hg, rfl⟩]
   rfl
 
 /-- An application of a function to an argument of its domain is of its codomain. -/
 theorem typeIn_app {f u : Term} {a b : PartialHorn.Tree}
     (hf : typeIn G m Γ f = some (FreeTopos.exp a b)) (hu : typeIn G m Γ u = some a) :
     typeIn G m Γ (Term.app f u) = some b := by
-  obtain ⟨⟨p, c⟩, hp, hc⟩ := Option.map_eq_some_iff.mp hf
-  obtain ⟨⟨g, a₁⟩, hg, ha₁⟩ := Option.map_eq_some_iff.mp hu
+  obtain ⟨⟨p, c⟩, hp, hc⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hf)
+  obtain ⟨⟨g, a₁⟩, hg, ha₁⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hu)
   dsimp only at hc ha₁
   subst hc ha₁
-  rw [typeIn, Term.app,
+  rw [typeIn_eq_compile, Term.app,
     FreeTopos.Internal.compile_app_iff.mpr ⟨f, u, rfl, p, _, b, hp, g, hg, rfl⟩]
   rfl
 
@@ -338,17 +339,18 @@ exponential. -/
 theorem typeIn_lam {a c : PartialHorn.Tree} {b : Term} (ha : FreeTopos.Internal.IsTy G m a = true)
     (hb : typeIn G m (a :: Γ) b = some c) :
     typeIn G m Γ (Term.lam a b) = some (FreeTopos.exp a c) := by
-  obtain ⟨r, hr, hc⟩ := Option.map_eq_some_iff.mp hb
+  obtain ⟨r, hr, hc⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hb)
   subst hc
   obtain ⟨f, hf⟩ := FreeTopos.Internal.compile_retype b _ _ r hr
     (FreeTopos.prod (ctxObj Γ) a) (extEnv (ctxObj Γ) a (stdEnv Γ))
     (by simp [extEnv, List.map_map, Function.comp_def, FreeTopos.Internal.map_snd_stdEnv])
-  rw [typeIn, Term.lam, FreeTopos.Internal.compile_lam_iff.mpr ⟨b, f, r.2, rfl, ha, hf, rfl⟩]
+  rw [typeIn_eq_compile, Term.lam,
+    FreeTopos.Internal.compile_lam_iff.mpr ⟨b, f, r.2, rfl, ha, hf, rfl⟩]
   rfl
 
 /-- The element of the terminal object is of it. -/
 theorem typeIn_star : typeIn G m Γ Term.star = some FreeTopos.one := by
-  rw [typeIn, Term.star, FreeTopos.Internal.compile_star_iff.mpr ⟨rfl, rfl⟩]
+  rw [typeIn_eq_compile, Term.star, FreeTopos.Internal.compile_star_iff.mpr ⟨rfl, rfl⟩]
   rfl
 
 /-- The formula true is a formula. -/
@@ -358,7 +360,7 @@ theorem typeIn_truth : typeIn G m Γ truth = some FreeTopos.omega :=
 /-- A term of a type has variables that are leaves. -/
 theorem varLeaves_of_typeIn {t : Term} {a : PartialHorn.Tree} (h : typeIn G m Γ t = some a) :
     Term.VarLeaves t = true := by
-  obtain ⟨r, hr, -⟩ := Option.map_eq_some_iff.mp h
+  obtain ⟨r, hr, -⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp h)
   exact Term.varLeaves_of_compile t _ _ r hr
 
 /-- A variable is of its type in the context. -/
@@ -369,18 +371,18 @@ theorem typeIn_var {i : ℕ} {a : PartialHorn.Tree} (h : Γ[i]? = some a) :
     exact h
   rw [List.getElem?_map, Option.map_eq_some_iff] at hi
   obtain ⟨p, hp, rfl⟩ := hi
-  rw [typeIn, Term.var, FreeTopos.Internal.compile_var_iff.mpr ⟨rfl, hp⟩]
+  rw [typeIn_eq_compile, Term.var, FreeTopos.Internal.compile_var_iff.mpr ⟨rfl, hp⟩]
   rfl
 
 /-- A pair of terms is of the product of their types. -/
 theorem typeIn_pair {t u : Term} {a b : PartialHorn.Tree} (ht : typeIn G m Γ t = some a)
     (hu : typeIn G m Γ u = some b) : typeIn G m Γ (Term.pair t u) = some (FreeTopos.prod a b) := by
-  obtain ⟨⟨f, a₁⟩, hf, ha₁⟩ := Option.map_eq_some_iff.mp ht
-  obtain ⟨⟨g, b₁⟩, hg, hb₁⟩ := Option.map_eq_some_iff.mp hu
+  obtain ⟨⟨f, a₁⟩, hf, ha₁⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp ht)
+  obtain ⟨⟨g, b₁⟩, hg, hb₁⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hu)
   dsimp only at ha₁ hb₁
   subst ha₁ hb₁
-  rw [typeIn, Term.pair, FreeTopos.Internal.compile_pair_iff.mpr ⟨t, u, f, a₁, g, b₁, rfl, hf, hg,
-    rfl⟩]
+  rw [typeIn_eq_compile, Term.pair,
+    FreeTopos.Internal.compile_pair_iff.mpr ⟨t, u, f, a₁, g, b₁, rfl, hf, hg, rfl⟩]
   rfl
 
 /-- A primitive arrow at objects that are types, applied to a term of its domain at them, is of
@@ -389,11 +391,11 @@ theorem typeIn_arr {k : ℕ} {θ : List PartialHorn.Tree} {t : Term} {p : FreeTo
     (hp : G.prims[k]? = some p) (ht : typeIn G m Γ t = some (PartialHorn.subst θ p.dom))
     (hθ : θ.length = p.arity) (hθt : θ.all (FreeTopos.Internal.IsTy G m) = true) :
     typeIn G m Γ (Term.arr k θ t) = some (PartialHorn.subst θ p.cod) := by
-  obtain ⟨⟨g, a⟩, hg, ha⟩ := Option.map_eq_some_iff.mp ht
+  obtain ⟨⟨g, a⟩, hg, ha⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp ht)
   dsimp only at ha
   subst ha
-  rw [typeIn, Term.arr, FreeTopos.Internal.compile_arr_iff.mpr ⟨t, rfl, p, hp, g, hg, hθ, hθt,
-    rfl⟩]
+  rw [typeIn_eq_compile, Term.arr,
+    FreeTopos.Internal.compile_arr_iff.mpr ⟨t, rfl, p, hp, g, hg, hθ, hθt, rfl⟩]
   rfl
 
 /-- A term renamed by a strictly increasing map into a context whose types at the renamed indices
@@ -401,7 +403,7 @@ are the term's context's is of the type it had. -/
 theorem typeIn_rename {Γ' : List PartialHorn.Tree} {w : Term} {c : PartialHorn.Tree}
     (hw : typeIn G m Γ' w = some c) {ρ : ℕ → ℕ} (hρ : ∀ i < Γ'.length, Γ[ρ i]? = Γ'[i]?)
     (hmono : StrictMono ρ) : typeIn G m Γ (Term.rename w ρ) = some c := by
-  obtain ⟨⟨f, c₁⟩, hf, hc₁⟩ := Option.map_eq_some_iff.mp hw
+  obtain ⟨⟨f, c₁⟩, hf, hc₁⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hw)
   dsimp only at hc₁
   subst hc₁
   -- the environment of the renamed variables
@@ -426,7 +428,7 @@ theorem typeIn_rename {Γ' : List PartialHorn.Tree} {w : Term} {c : PartialHorn.
       rw [List.getElem?_map, he' i hi, hq, Option.map_some, hq₂]
     · rw [List.getElem?_eq_none hi, List.getElem?_eq_none (by simpa [e'] using hi)]
   obtain ⟨f', hf'⟩ := FreeTopos.Internal.compile_retype w _ _ _ hf (ctxObj Γ) e' hsnd
-  rw [typeIn, FreeTopos.Internal.compile_rename w _ _ _ ρ _ hf' (fun i hi ↦
+  rw [typeIn_eq_compile, FreeTopos.Internal.compile_rename w _ _ _ ρ _ hf' (fun i hi ↦
     (he' i (by simpa [e'] using hi)).symm) hmono]
   rfl
 
@@ -435,9 +437,9 @@ element and the value, is of that type. -/
 theorem typeIn_listRec {z s l : Term} {a c : PartialHorn.Tree}
     (hl : typeIn G m Γ l = some (FreeTopos.list a)) (hz : typeIn G m Γ z = some c)
     (hs : typeIn G m (c :: a :: Γ) s = some c) : typeIn G m Γ (Term.listRec z s l) = some c := by
-  obtain ⟨⟨fl, al⟩, hfl, hal⟩ := Option.map_eq_some_iff.mp hl
-  obtain ⟨⟨fz, cz⟩, hfz, hcz⟩ := Option.map_eq_some_iff.mp hz
-  obtain ⟨⟨fs, cs⟩, hfs, hcs⟩ := Option.map_eq_some_iff.mp hs
+  obtain ⟨⟨fl, al⟩, hfl, hal⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hl)
+  obtain ⟨⟨fz, cz⟩, hfz, hcz⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hz)
+  obtain ⟨⟨fs, cs⟩, hfs, hcs⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hs)
   dsimp only at hal hcz hcs
   rw [hal] at hfl
   rw [hcz] at hfz
@@ -447,7 +449,7 @@ theorem typeIn_listRec {z s l : Term} {a c : PartialHorn.Tree}
     (extEnv (FreeTopos.prod (ctxObj Γ) a) c (extEnv (ctxObj Γ) a (stdEnv Γ)))
     (by simp [extEnv, List.map_map, Function.comp_def, FreeTopos.Internal.map_snd_stdEnv])
   obtain ⟨r, hr, hrc⟩ := FreeTopos.Internal.compile_listRec_of_parts hfl hfz hfs'
-  rw [typeIn, hr, Option.map_some, hrc]
+  rw [typeIn_eq_compile, hr, Option.map_some, hrc]
 
 /-- The list of the values at a rose tree's children of a term of a type in the context extended by
 a rose tree, in the context extended by a label and the children, is a list of that type. -/

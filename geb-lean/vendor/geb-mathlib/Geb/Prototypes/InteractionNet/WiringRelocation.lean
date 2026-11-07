@@ -8,6 +8,7 @@ module
 
 public import Geb.Prototypes.InteractionNet.WiringSubdivision
 public import Mathlib.Data.List.Induction
+public import Std.Data.DTreeMap.Internal.Operations
 
 set_option doc.verso true in
 /-!

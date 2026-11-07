@@ -8,6 +8,7 @@ module
 public import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 public import Mathlib.CategoryTheory.EqToHom
 public import Mathlib.Logic.Equiv.Defs
+public import Aesop
 
 /-!
 # Prototype: where the free coproduct completion sits inside presheaves

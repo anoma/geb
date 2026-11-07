@@ -6,6 +6,7 @@ Authors: Terence Rokop
 module
 
 public import Mathlib.Data.FinEnum
+public import Aesop
 
 set_option doc.verso true in
 /-!

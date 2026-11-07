@@ -10,6 +10,7 @@ public import Geb.Mathlib.Logic.Equiv.Basic
 public import Mathlib.Logic.Equiv.Sum
 public import Mathlib.Tactic.Finiteness.Attr
 public import Mathlib.Data.Fin.SuccPred
+public import Mathlib.Tactic.TypeStar
 
 set_option doc.verso true in
 /-!

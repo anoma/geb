@@ -9,6 +9,7 @@ public import Geb.Mathlib.Data.FinEnum
 public import Geb.Mathlib.Data.W.Basic
 public import Geb.Prototypes.RoseTree.Basic
 public import Mathlib.Data.Part
+public import Mathlib.Tactic.TypeStar
 
 set_option doc.verso true in
 /-!
@@ -58,6 +59,10 @@ every model of an extension of its signature in which its axioms hold.
 
 ## Main statements
 
+* {lit}`instDecidableEq_eq_decEqFast` — the equality of W-trees is decided as compiled by
+  {lit}`beqFast`, which compares the children by their indices.
+* {lit}`subst_eq_substFast` — the substitution of no terms leaves the term, which the compiler
+  returns without traversing it.
 * {lit}`eval_subst` — the value of a substitution instance is the value at the substituted
   terms' values.
 * {lit}`sort_eval` — a defined term's value has the term's sort.
@@ -438,6 +443,61 @@ theorem subst_nil : ∀ t : Tree, subst [] t = t :=
           (List.map_congr_left fun c hc ↦ ih c (by simp [hc])).trans (List.map_id cs)]
     · rw [subst_node_succ]
       exact congrArg _ ((List.map_congr_left ih).trans (List.map_id cs))
+
+/-- The substitution as compiled: that of no terms is the term itself, without its traversal. -/
+def substFast (ts : List Tree) (t : Tree) : Tree := if ts.isEmpty then t else subst ts t
+
+/-- The substitution is {lit}`substFast`, by which the compiler replaces it. -/
+@[csimp] theorem subst_eq_substFast : @subst = @substFast := by
+  funext ts t
+  rcases ts with _ | ⟨a, ts⟩
+  · exact subst_nil t
+  · rfl
+
+section DecidableEq
+
+universe uA uB
+
+variable {α : Type uA} {β : α → Type uB} [DecidableEq α] [∀ a, FinEnum (β a)]
+
+/-- {name}`WType.beq` as compiled: the children of two nodes of one shape compared by their
+indices below the number of directions, rather than over a list of the directions built at each
+node. -/
+def beqFast : WType β → WType β → Bool :=
+  WType.elim (WType β → Bool) fun x t' ↦
+    if h : x.1 = (WType.toSigma t').1 then
+      Nat.all (FinEnum.card (β x.1)) fun i hi ↦
+        x.2 (FinEnum.equiv.symm ⟨i, hi⟩) ((WType.toSigma t').2 (h ▸ FinEnum.equiv.symm ⟨i, hi⟩))
+    else false
+
+omit [DecidableEq α] in
+/-- A property holds of every direction exactly when it holds of each one's index. -/
+theorem nat_all_iff_forall {a : α} (p : β a → Bool) :
+    (Nat.all (FinEnum.card (β a)) fun i hi ↦ p (FinEnum.equiv.symm ⟨i, hi⟩)) = true ↔
+      ∀ b, p b = true := by
+  rw [Nat.all_eq_finRange_all, List.all_eq_true]
+  refine ⟨fun h b ↦ ?_, fun h i _ ↦ h _⟩
+  simpa using h (FinEnum.equiv b) (List.mem_finRange _)
+
+/-- The equality of W-trees as compiled is {name}`WType.beq`. -/
+theorem beq_eq_beqFast : @WType.beq α β _ _ = beqFast := by
+  refine congrArg (WType.elim (WType β → Bool)) (funext fun x ↦ funext fun t' ↦ ?_)
+  split
+  · exact Bool.eq_iff_iff.mpr ((decide_eq_true_iff).trans (nat_all_iff_forall _).symm)
+  · rfl
+
+/-- The decision of the equality of W-trees by {lit}`beqFast`. -/
+def decEqFast : DecidableEq (WType β) := fun s t ↦
+  decidable_of_iff (beqFast s t = true) (beq_eq_beqFast (β := β) ▸ WType.beq_eq_true_iff s t)
+
+/-- The decision of the equality of W-trees is {lit}`decEqFast`, by which the compiler replaces
+it. -/
+@[csimp] theorem instDecidableEq_eq_decEqFast :
+    @WType.instDecidableEq.{uA, uB} = @decEqFast.{uA, uB} := by
+  funext α β _ _ s t
+  exact Subsingleton.elim _ _
+
+end DecidableEq
 
 /-- A variable's node is in scope when its index is. -/
 theorem scoped_node_zero (n : ℕ) {i : Tree} (hi : i.children = []) :

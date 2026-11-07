@@ -71,7 +71,8 @@ set_option doc.verso true
 
 namespace Geb.LF.Topos
 
-open FreeTopos.Internal (Term Deriv Globals Entry check typeIn instVar weaken1 ctxObj stdEnv)
+open FreeTopos.Internal (Term Deriv Globals Entry check typeIn instVar weaken1 ctxObj stdEnv
+  typeIn_eq_compile typeIn_eq_some)
 
 /-- An LF context of proofs matches an environment and an internal context in {lit}`n` object
 variables at its term variables: its declarations past the environment's are the {lit}`n` of
@@ -261,18 +262,18 @@ theorem termOf_typed (hk : k.Valid G) (hsg : SigExt G k sg)
     (ctxObj Γ) (stdEnv Γ) ΓT _ (by rw [FreeTopos.Internal.map_snd_stdEnv]; exact hΓT) hj'
   rw [length_stdEnv, hc.numTm] at hd hr
   refine ⟨s, hd, ?_⟩
-  rw [typeIn, hcomp, Option.map_some, encTy_inj hr (hc.numTm ▸ hA')]
+  rw [typeIn_eq_compile, hcomp, Option.map_some, encTy_inj hr (hc.numTm ▸ hA')]
 
 /-- A term weakened by a new innermost variable has, in the context extended by the variable's
 type, the type it had. -/
 theorem typeIn_weaken1 {s : Term} {C a : PartialHorn.Tree} (h : typeIn G n Γ s = some C) :
     typeIn G n (a :: Γ) (weaken1 s) = some C := by
-  obtain ⟨r, hr, rfl⟩ := Option.map_eq_some_iff.mp h
+  obtain ⟨r, hr, rfl⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp h)
   have hsnd : (stdEnv (a :: Γ)).tail.map Prod.snd = (stdEnv Γ).map Prod.snd := by
     rw [List.map_tail, FreeTopos.Internal.map_snd_stdEnv, FreeTopos.Internal.map_snd_stdEnv]
     rfl
   obtain ⟨f, hf⟩ := FreeTopos.Internal.compile_retype s _ _ r hr (ctxObj (a :: Γ)) _ hsnd
-  rw [typeIn, weaken1, FreeTopos.Internal.compile_rename s _ _ _ (· + 1) _ hf
+  rw [typeIn_eq_compile, weaken1, FreeTopos.Internal.compile_rename s _ _ _ (· + 1) _ hf
     (fun i _ ↦ List.getElem?_tail.symm) fun _ _ ↦ Nat.succ_lt_succ]
   rfl
 
@@ -2633,7 +2634,7 @@ theorem termOf_inst {a : FreeTopos.Internal.Thm}
     (hts : FreeTopos.Internal.typeIn G a.arity a.ctx s = some FreeTopos.omega)
     (h : hsubs (RoseTree.node (.base 6) []) (Xs ++ Ms) Y = some Y') :
     termOf k env Y' = some (FreeTopos.Internal.instTerm xs.reverse σ'.reverse s) := by
-  obtain ⟨r, hr, -⟩ := Option.map_eq_some_iff.mp hts
+  obtain ⟨r, hr, -⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hts)
   have hsc := scopedBelow_enc hsg hk hty hΓT hr hY
   have hcl : ∀ ρ, Y.rename (liftR^[a.arity + a.ctx.length] ρ) = Y := fun ρ ↦ by
     rw [Nat.add_comm]
@@ -2839,7 +2840,7 @@ theorem thm_spine (hc : PfCtx G k n ΓLF env Γ Φ) {cs : List Expr} {a : FreeTo
       rw [List.getElem_take, List.getElem_drop]
       obtain rfl := Option.some.inj ((List.getElem?_eq_getElem (by omega)).symm.trans hM)
       obtain ⟨u, hu, hut⟩ := termOf_typed hk hsg hc.toTmCtx h₃ hJ
-      obtain ⟨r, hr, -⟩ := Option.map_eq_some_iff.mp hut
+      obtain ⟨r, hr, -⟩ := Option.map_eq_some_iff.mp (typeIn_eq_some.mp hut)
       exact ⟨u, hu, hut, Term.varLeaves_of_compile u _ _ r hr⟩
   obtain ⟨σ', hσM, hσt⟩ := mapM_of_forall₂ hterms
   have hσf := forall₂_of_mapM hσM
@@ -2959,6 +2960,7 @@ theorem deltaThm_wellFormed {kd : ℕ} {d : Defn} {cd : PartialHorn.Defn}
   rw [hid _ hty] at hdefn
   refine FreeTopos.Internal.Thm.wellFormed_iff.mpr
     ⟨hps, fun h hh ↦ (nomatch (show h ∈ ([] : List Term) from hh)), ?_⟩
+  rw [typeIn_eq_some]
   change (compile G d.arity (Term.eq (Term.defn kd ((List.range d.arity).map PartialHorn.var)
     ((List.range d.params.length).map Term.var)) d.body) (ctxObj d.params)
     (stdEnv d.params)).map Prod.snd = some FreeTopos.omega

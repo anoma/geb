@@ -10,6 +10,7 @@ public import Mathlib.Data.PFunctor.Univariate.M
 public import Mathlib.Data.Seq.Defs
 public import Mathlib.Logic.Equiv.List
 public import Mathlib.Logic.Equiv.Option
+public import Mathlib.Tactic.TypeStar
 
 set_option doc.verso true
 
