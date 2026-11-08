@@ -5,17 +5,19 @@ Authors: Terence Rokop
 -/
 module
 
+public import Geb.Prototypes.Kernel.Durable
 public import Geb.Prototypes.Kernel.Modules
 
 set_option doc.verso true in
 /-!
 # Manifests
 
-A manifest records what a host needs in order to read a program: its name, its edition, its sources
-in order and its entry points. It is one form of the authoring profile,
+A manifest records what a host needs in order to read a program: its name, its edition, the
+profile of its sources ({name}`Geb.Kernel.Document.Profile`), its sources in order and its entry
+points. It is one form of the authoring profile,
 
 ```
-(program NAME (edition N) (sources PATH…) (entries NAME…))
+(program NAME (edition N) (document …) (sources PATH…) (entries NAME…))
 ```
 
 so that it holds comments and the formatter applies to it. In place of {lit}`(sources PATH…)` a
@@ -29,7 +31,9 @@ resolved against the manifest's directory, none of whose components is empty, {l
 working directory nor a scan of a directory decides what a program holds.
 
 An edition fixes the reader, its rules of resolution included, and the elaborator. The host holds
-one edition, {lit}`Geb.Kernel.Manifest.currentEdition`, and rejects a manifest of any other.
+one edition, {lit}`Geb.Kernel.Manifest.currentEdition`, and rejects a manifest of any other. The
+profile fixes the reading of the sources as documents, their notes included, and the host
+rejects a profile it does not read ({name}`Geb.Kernel.Document.Profile.parse`).
 
 ## Main definitions
 
@@ -37,6 +41,8 @@ one edition, {lit}`Geb.Kernel.Manifest.currentEdition`, and rejects a manifest o
 * {lit}`Geb.Kernel.Manifest.parse` — the manifest of a text, or what rejects it.
 * {lit}`Geb.Kernel.Manifest.read` — the manifest of a file.
 * {lit}`Geb.Kernel.Manifest.sourcePaths` — the paths of a manifest's sources.
+* {lit}`Geb.Kernel.Manifest.layerPaths` — the paths of the sources of a manifest's layers up to
+  one of them.
 * {lit}`Geb.Kernel.Manifest.checkEntries` — that a program defines a manifest's entry points.
 
 ## Tags
@@ -63,6 +69,8 @@ structure Manifest where
   name : String
   /-- The program's edition. -/
   edition : Nat
+  /-- The profile of the program's sources. -/
+  profile : Document.Profile
   /-- The program's sources in order, by layer; a program without layers has one, of its name. -/
   layers : List Manifest.Layer
   /-- The definitions applied from outside the program. -/
@@ -129,13 +137,14 @@ def editionOf (e : SExp) : Except String Nat := do
 def parse (text : List Char) : Except String Manifest := do
   let some [e] := readSExps text | throw "the text is not one well-formed form"
   match e.children with
-  | [h, n, ed, src, en] =>
+  | [h, n, ed, doc, src, en] =>
     unless isKw h "program" do throw "the form is not a program"
     let some name := n.label.map String.ofList | throw "the program's name is not an atom"
     let edition ← editionOf ed
+    let profile ← Document.Profile.parse doc
     let layers ← layersOf name src
     let entries ← atoms "the entries" (← field "entries" en)
-    let m : Manifest := ⟨name, edition, layers, entries⟩
+    let m : Manifest := ⟨name, edition, profile, layers, entries⟩
     if m.sources.isEmpty then throw "the program has no sources"
     if let some s := m.sources.find? (!validSource ·) then
       throw s!"the source {s} is not a relative path within the manifest's directory"
@@ -144,7 +153,8 @@ def parse (text : List Char) : Except String Manifest := do
       throw s!"the layer {s} is listed twice"
     if let some s := firstRepeated entries then throw s!"the entry {s} is listed twice"
     return m
-  | _ => throw "a program is (program NAME (edition N) (sources PATH…) (entries NAME…))"
+  | _ => throw "a program is (program NAME (edition N) (document …) (sources PATH…) \
+      (entries NAME…))"
 
 /-- The manifest of a file, read as bytes, one character per byte, raising what rejects it. -/
 def read (path : System.FilePath) : IO Manifest := do
@@ -159,6 +169,14 @@ def resolve (path : System.FilePath) (source : String) : System.FilePath :=
 /-- The paths of a manifest's sources, the manifest being at a path. -/
 def sourcePaths (path : System.FilePath) (m : Manifest) : List System.FilePath :=
   m.sources.map (resolve path)
+
+/-- The paths of the sources of a manifest's layers up to the layer of a name, that layer
+included, the manifest being at a path. -/
+def layerPaths (path : System.FilePath) (m : Manifest) (name : String) :
+    Except String (List System.FilePath) :=
+  match m.layers.findIdx? (·.name == name) with
+  | some i => .ok (((m.layers.take (i + 1)).flatMap (·.sources)).map (resolve path))
+  | none => .error s!"the program has no layer {name}"
 
 /-- That a program with the given definitions defines each of a manifest's entry points. -/
 def checkEntries (m : Manifest) (names : List String) : Except String Unit :=

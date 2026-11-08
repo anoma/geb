@@ -798,8 +798,9 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/MType/Basic.lean`, and, under `Prototypes/FreeTopos/`,
   `Elementary.lean`, `Relations.lean`, `Represent.lean`,
   `Internal/Reduce.lean`, and `Internal/Represent.lean`, and, under
-  `Prototypes/Kernel/`, `Annotation.lean`, `Document.lean`, `Eval.lean`, `Identity.lean`,
-  `Modules.lean`, `Printer.lean`, and `Strict.lean`. Under `v4.34` the
+  `Prototypes/Kernel/`, `Annotation.lean`, `Document.lean`,
+  `Durable.lean`, `Eval.lean`, `Identity.lean`, `Modules.lean`,
+  `Printer.lean`, and `Strict.lean`. Under `v4.34` the
   `in` form applies the
   option to the module docstring that follows it.
 - v4.29 symptom: `Can't add Verso-format module docs because there is
@@ -1245,7 +1246,8 @@ The rules then exclude the following.
   `Oitavem.Word`; `RoseTree.Spine` imports `RoseTree.Bits` and
   `BitTree.EliasBinary.Bound`, `RoseTree.Packed` imports
   `RoseTree.Spine`, `Kernel.Image` imports `RoseTree.Packed`, and
-  `Kernel.Command` and `Kernel.LoadCommand` import `Kernel.Image`;
+  `Kernel.Command` and `Kernel.LoadCommand` import `Kernel.Image`, and
+  `Kernel.ManifestCommand` imports `Kernel.Command`;
   `FreeTopos.Tactics.Hypotheses` and `FreeTopos.Tactics.Induction`
   import `FreeTopos.Translation`, `FreeTopos.Tactics.Search` imports
   both, and `FreeTopos.Tactics.Trees` imports `FreeTopos.Tactics.Search`;

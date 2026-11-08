@@ -5204,6 +5204,35 @@ index 2df6fb9..78a9b86 100644
  /-- An S-expression with comments: a rose tree whose labels are those of
  {name}`Geb.Kernel.SExp`, an atom's characters or nothing for a list, each decorated with its
  trivia. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
+index b52bd68..3172a5d 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Strict
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Durable documents
+ 
+@@ -70,8 +72,6 @@ forms that write them.
+ document, profile, version, annotation, note, retraction
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel.Document
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean
 index 9f21cd0..7538033 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean
@@ -5323,7 +5352,7 @@ index de86cc9..30082f8 100644
  
  namespace Geb.Kernel
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
-index 9e8113f..69bde60 100644
+index 31879a9..6f8ec45 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5342,7 +5371,7 @@ index 9e8113f..69bde60 100644
  /-!
  # The strict encodings
  
-@@ -60,8 +62,6 @@ and reads back to the document ({lit}`readStrictDoc_printAdvancedDoc`).
+@@ -62,8 +64,6 @@ and reads back to the document ({lit}`readStrictDoc_printAdvancedDoc`).
  S-expression, RFC 9804, canonical encoding, retraction
  -/
  
