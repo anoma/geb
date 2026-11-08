@@ -314,10 +314,12 @@ REL="$(realpath --relative-to="$GIT_ROOT" "$ROOT")"
 for mod in "${EXCLUDED_MODULES[@]}"; do
   rm -f "$VENDOR/${mod//.//}.lean"
   rm -rf "$VENDOR/${mod//.//}"
-  # An import of an excluded module or of any of its submodules would
-  # leave the surviving tree with a bad import.
-  find "$VENDOR" -name '*.lean' -exec \
-    sed -i -E "/^(public )?import ${mod}(\.|\$)/d" {} +
+  # An import of an excluded module or of any of its submodules, in any
+  # of the module system's four import forms and with or without a
+  # trailing comment, would leave the surviving tree with a bad import.
+  # The module name's dots are escaped so that each matches only itself.
+  find "$VENDOR" -name '*.lean' -exec sed -i -E \
+    "/^(public[[:space:]]+)?(meta[[:space:]]+)?import[[:space:]]+${mod//./\\.}([.[:space:]]|\$)/d" {} +
 done
 
 # GebMeta is not vendored (its env_linter would mis-audit geb-lean). It
