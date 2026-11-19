@@ -7,13 +7,15 @@ module
 
 public import Geb.Prototypes.RoseTree.Basic
 public import Geb.Prototypes.RoseTree.Decorated
+public import Geb.Prototypes.RoseTree.Unify
 
 set_option doc.verso true in
 /-!
 # Rose trees of bitstrings
 
 The representation of the language's values: the semantic type, the
-candidate representations, and their conversions.
+candidate representations, and their conversions; and first-order unification of rose trees
+with metavariables.
 -/
 
 set_option doc.verso true

@@ -1,8 +1,8 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: 676079511647cf3fcb2f986929a35843ee3a3afb
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 4853b2949355805cbbefcfb781ec7dd5b2dfcd3e33b2aefcf4ddce6fee7c48d8)
+- Source commit: c51a0b4a99364cd6735f8c90c26f9ce345ae9575
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 bfbbcc5b65f284b8bce7a1e203e9dc0b1d1970dc71198d43c3bfa4da1d4d1b45)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
   - Geb.Cslib
   - Geb.Prototypes.BitStream.Oitavem
@@ -94,16 +94,21 @@
   - Geb.Prototypes.Computability.SizeBounded.WordMachine
   - Geb.Prototypes.Computability.TreeScanner
   - Geb.Prototypes.Definition
+  - Geb.Prototypes.FreeTopos.Internal.Accelerate
   - Geb.Prototypes.FreeTopos.Internal.ByMachine
   - Geb.Prototypes.FreeTopos.Internal.ConvDevelopment
   - Geb.Prototypes.FreeTopos.Internal.Conversion
+  - Geb.Prototypes.FreeTopos.Internal.Holes
   - Geb.Prototypes.FreeTopos.Internal.MachineSound
+  - Geb.Prototypes.FreeTopos.Internal.Provers
   - Geb.Prototypes.FreeTopos.Literals
   - Geb.Prototypes.FreeTopos.Tactics.Hypotheses
   - Geb.Prototypes.FreeTopos.Tactics.Induction
+  - Geb.Prototypes.FreeTopos.Tactics.Reduction
   - Geb.Prototypes.FreeTopos.Tactics.Search
   - Geb.Prototypes.FreeTopos.Tactics.Trees
   - Geb.Prototypes.FreeTopos.Translation
+  - Geb.Prototypes.FreeTopos.TranslationExtension
   - Geb.Prototypes.FreeTopos.TranslationKernel
   - Geb.Prototypes.FreeTopos.TranslationLibrary
   - Geb.Prototypes.FreeTopos.TranslationSound
@@ -230,11 +235,12 @@
   - Geb.Prototypes.Kernel.Image
   - Geb.Prototypes.Kernel.LoadCommand
   - Geb.Prototypes.Kernel.ManifestCommand
+  - Geb.Prototypes.Kernel.MarkupVerso
   - Geb.Prototypes.LF.Topos.ProofsMod
   - Geb.Prototypes.PHOAS
   - Geb.Prototypes.RoseTree.Bits
   - Geb.Prototypes.RoseTree.Packed
   - Geb.Prototypes.RoseTree.Spine
   - Geb.Prototypes.Typechecker.Oitavem
-- `GebMeta` is not vendored: every import of it is dropped, each `{cite}` docstring role it supplies is rewritten to its escaped bracketed key, and each `{name}` role naming one of its declarations is rewritten to `{lit}`; see scripts/refresh-geb-mathlib.sh.
+- `GebMeta` is not vendored: every import of it is dropped, each `{citeKey}` docstring role it supplies is rewritten to its escaped bracketed key, and each `{name}` role naming one of its declarations is rewritten to `{lit}`; see scripts/refresh-geb-mathlib.sh.
 - The files under `Geb/` are an unmodified mirror of the source commit except where the back-port patch changes them and where the exclusion above removes them; modified files carry a change notice in their header comment.

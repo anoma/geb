@@ -13,6 +13,7 @@ public import Geb.Prototypes.PartialHorn.Initial
 public import Geb.Prototypes.PartialHorn.Point
 public import Geb.Prototypes.PartialHorn.Share
 public import Geb.Prototypes.PartialHorn.Shared
+public import Geb.Prototypes.PartialHorn.WellFormed
 
 set_option doc.verso true in
 /-!

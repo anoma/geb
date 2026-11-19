@@ -546,6 +546,8 @@ theorem not_mem_formKeywords_of_reserved {n : List Char} (h : n ∉ reservedName
 
 /-- A numeral is no keyword. -/
 theorem decOf_not_mem_formKeywords (n : ℕ) : Csexp.decOf n ∉ formKeywords := fun hm ↦ by
+  -- Decided over the keyword's characters; the instance for `∃ c : Char, _` enumerates `Char`.
+  let _ (k : List Char) : Decidable (∃ c ∈ k, Csexp.charDigit c = none) := List.decidableBEx _ k
   have : ∀ k ∈ formKeywords, ∃ c ∈ k, Csexp.charDigit c = none := by decide
   obtain ⟨c, hc, hn⟩ := this _ hm
   have := Csexp.decOf_all_digits n c hc

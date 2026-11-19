@@ -5,7 +5,6 @@ Authors: Terence Rokop
 -/
 module
 
-public import Geb.Prototypes.FreeTopos.Tactics.Reduction
 
 set_option doc.verso true in
 /-!

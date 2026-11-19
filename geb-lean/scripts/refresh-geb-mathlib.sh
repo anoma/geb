@@ -24,8 +24,10 @@ SRC_REV="${1:-main}"
 # v4.29.0-rc6 revision:
 # Cslib.Computability.Machines.Turing.MultiTape.{Deterministic,TapeLemmas},
 # Cslib.Computability.Machines.Turing.MultiTape.{Configuration,ConfigBound},
-# and Cslib.Foundations.Data.PFunctor.Free; and in one mathlib module
-# added after the pinned revision, Mathlib.CategoryTheory.Limits.Types.End.
+# and Cslib.Foundations.Data.PFunctor.Free; in one mathlib module
+# added after the pinned revision, Mathlib.CategoryTheory.Limits.Types.End;
+# and in one Lean core module added after the pinned toolchain,
+# Lean.DocString.View.
 # Every entry imports one of them or an excluded module, directly or through a chain of such
 # imports, or is imported only by excluded modules, which would leave
 # it unreachable from the Geb umbrella (scripts/tests/test-lint-driver.sh
@@ -122,16 +124,21 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Computability.SizeBounded.WordMachine
   Geb.Prototypes.Computability.TreeScanner
   Geb.Prototypes.Definition
+  Geb.Prototypes.FreeTopos.Internal.Accelerate
   Geb.Prototypes.FreeTopos.Internal.ByMachine
   Geb.Prototypes.FreeTopos.Internal.ConvDevelopment
   Geb.Prototypes.FreeTopos.Internal.Conversion
+  Geb.Prototypes.FreeTopos.Internal.Holes
   Geb.Prototypes.FreeTopos.Internal.MachineSound
+  Geb.Prototypes.FreeTopos.Internal.Provers
   Geb.Prototypes.FreeTopos.Literals
   Geb.Prototypes.FreeTopos.Tactics.Hypotheses
   Geb.Prototypes.FreeTopos.Tactics.Induction
+  Geb.Prototypes.FreeTopos.Tactics.Reduction
   Geb.Prototypes.FreeTopos.Tactics.Search
   Geb.Prototypes.FreeTopos.Tactics.Trees
   Geb.Prototypes.FreeTopos.Translation
+  Geb.Prototypes.FreeTopos.TranslationExtension
   Geb.Prototypes.FreeTopos.TranslationKernel
   Geb.Prototypes.FreeTopos.TranslationLibrary
   Geb.Prototypes.FreeTopos.TranslationSound
@@ -258,6 +265,7 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Kernel.Image
   Geb.Prototypes.Kernel.LoadCommand
   Geb.Prototypes.Kernel.ManifestCommand
+  Geb.Prototypes.Kernel.MarkupVerso
   Geb.Prototypes.LF.Topos.ProofsMod
   Geb.Prototypes.PHOAS
   Geb.Prototypes.RoseTree.Bits
@@ -297,7 +305,7 @@ cat > "$VENDOR/PROVENANCE.md" <<EOF
 - Source commit: $SRC_SHA
 - Back-port patch: scripts/geb-mathlib-backport.patch (sha256 $PATCH_SHA256)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):$EXCLUDED_RENDERED
-- \`GebMeta\` is not vendored: every import of it is dropped, each \`{cite}\` docstring role it supplies is rewritten to its escaped bracketed key, and each \`{name}\` role naming one of its declarations is rewritten to \`{lit}\`; see scripts/refresh-geb-mathlib.sh.
+- \`GebMeta\` is not vendored: every import of it is dropped, each \`{citeKey}\` docstring role it supplies is rewritten to its escaped bracketed key, and each \`{name}\` role naming one of its declarations is rewritten to \`{lit}\`; see scripts/refresh-geb-mathlib.sh.
 - The files under \`Geb/\` are an unmodified mirror of the source commit except where the back-port patch changes them and where the exclusion above removes them; modified files carry a change notice in their header comment.
 EOF
 
@@ -323,10 +331,10 @@ for mod in "${EXCLUDED_MODULES[@]}"; do
 done
 
 # GebMeta is not vendored (its env_linter would mis-audit geb-lean). It
-# supplies the `{cite}` docstring role, which upstream's literate
+# supplies the `{citeKey}` docstring role, which upstream's literate
 # modules use under `doc.verso`; the pinned toolchain supports every
 # other role such a module writes. Drop each import of GebMeta, in any
-# of the module system's four forms; rewrite each `{cite}` span to
+# of the module system's four forms; rewrite each `{citeKey}` span to
 # the escaped bracketed key, `\[Key\]`, the `doc.verso` spelling of
 # mathlib's bare `[Key]` citation form; and rewrite each `{name}` span
 # naming a GebMeta declaration to a `{lit}` span, since `{name}`
@@ -334,7 +342,7 @@ done
 # docs/geb-mathlib-backport-notes.md § 1.
 find "$VENDOR" -name '*.lean' -exec sed -i -E \
   -e '/^(public[[:space:]]+)?(meta[[:space:]]+)?import[[:space:]]+GebMeta([[:space:]]|$)/d' \
-  -e 's/[{]cite[}]`([^`]*)`/\\[\1\\]/g' \
+  -e 's/[{]citeKey[}]`([^`]*)`/\\[\1\\]/g' \
   -e 's/[{]name[}]`(GebMeta\.[^`]*)`/{lit}`\1`/g' {} +
 
 # A refresh that changes no vendored content (an upstream revision

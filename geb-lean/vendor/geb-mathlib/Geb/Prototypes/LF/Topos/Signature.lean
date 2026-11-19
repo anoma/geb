@@ -11,9 +11,9 @@ set_option doc.verso true in
 /-!
 # The internal language of a topos as an LF signature
 
-An LF signature (\[HarperHonsellPlotkin1993\]; \[HarperLicata2007\], Section 3, for the
-method) representing a fragment of the Mitchell–Bénabou language of the free elementary topos with
-a natural numbers object (\[MacLaneMoerdijk1992\], Section VI.5), whose terms and
+An LF signature (\[HarperHonsellPlotkin1993\]; \[HarperLicata2007\], Section 3, for
+the method) representing a fragment of the Mitchell–Bénabou language of the free elementary topos
+with a natural numbers object (\[MacLaneMoerdijk1992\], Section VI.5), whose terms and
 derivations are those of {lit}`Geb.FreeTopos.Internal`: the types built from the terminal object,
 binary products, exponentials, the subobject classifier, the natural numbers object, list objects,
 the rose-tree object of natural-number labels, rose-tree objects of labels of any type, binary

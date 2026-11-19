@@ -278,7 +278,7 @@ theorem childUpd_bounded (target : Loc) (k : ℕ) (edge : Loc → ℕ → Bool) 
   obtain ⟨h₁, h₂, h₃⟩ := h
   rcases z with ⟨m, fc, lc, j, ok⟩
   simp only at h₁ h₂ h₃
-  cases m <;> simp only [childUpd, afterChildren] <;> (try cases e.payload) <;> (try split_ifs) <;>
+  cases m <;> simp only [childUpd, afterChildren] <;> cases e.payload <;> (try split_ifs) <;>
     simp only [ChildReg.Bounded] <;> exact ⟨by omega, by omega, by omega⟩
 
 /-- The registers holding a remaining word, counters and the scan's registers. -/
@@ -482,8 +482,8 @@ theorem m_step (edge : LOf 6) : mStep.sem (stepAtC u y (c :: r) x z target k) =
   rw [mStep, sem_onMode2 _ _ _ _ _ _ _ m rfl]
   cases m <;> dsimp only <;> (try rw [ev, sem_eventStep _ _ _ _ _ _ _ _ _ _ y r c x k₀ hv hk
     (sem_modeV _ _ _ _ _ _ _) (sem_restV _ _ _ _ _ _ _) (sem_fieldEndV _ _ _ _ _ _ _)]) <;>
-    (try rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
-    eval_child <;> (try split_ifs) <;> dsimp only
+    (rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
+    eval_child <;> split_ifs <;> dsimp only
 
 include hv hk hy hb htp hkl in
 /-- The fork count's step on the encoded state is the encoded step of the
@@ -496,8 +496,8 @@ theorem fc_step (edge : LOf 6) : fcStep.sem (stepAtC u y (c :: r) x z target k) 
   rw [fcStep, sem_onMode2 _ _ _ _ _ _ _ m rfl]
   cases m <;> dsimp only <;> (try rw [ev, sem_eventStep _ _ _ _ _ _ _ _ _ _ y r c x k₀ hv hk
     (sem_modeV _ _ _ _ _ _ _) (sem_restV _ _ _ _ _ _ _) (sem_fieldEndV _ _ _ _ _ _ _)]) <;>
-    (try rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
-    eval_child <;> (try split_ifs) <;> (try dsimp only) <;> rfl
+    (rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
+    eval_child <;> split_ifs <;> dsimp only <;> rfl
 
 include hv hk hy hb htp hkl in
 /-- The leaf count's step on the encoded state is the encoded step of the
@@ -510,8 +510,8 @@ theorem lc_step (edge : LOf 6) : lcStep.sem (stepAtC u y (c :: r) x z target k) 
   rw [lcStep, sem_onMode2 _ _ _ _ _ _ _ m rfl]
   cases m <;> dsimp only <;> (try rw [ev, sem_eventStep _ _ _ _ _ _ _ _ _ _ y r c x k₀ hv hk
     (sem_modeV _ _ _ _ _ _ _) (sem_restV _ _ _ _ _ _ _) (sem_fieldEndV _ _ _ _ _ _ _)]) <;>
-    (try rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
-    eval_child <;> (try split_ifs) <;> (try dsimp only) <;> (try rw [List.drop_one]) <;> rfl
+    (rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
+    eval_child <;> split_ifs <;> dsimp only <;> (try rw [List.drop_one]) <;> rfl
 
 include hv hk hy hb htp hkl in
 /-- The step of the number of children completed, on the encoded state. -/
@@ -523,8 +523,8 @@ theorem j_step (edge : LOf 6) : jStep.sem (stepAtC u y (c :: r) x z target k) =
   rw [jStep, sem_onMode2 _ _ _ _ _ _ _ m rfl]
   cases m <;> dsimp only <;> (try rw [ev, sem_eventStep _ _ _ _ _ _ _ _ _ _ y r c x k₀ hv hk
     (sem_modeV _ _ _ _ _ _ _) (sem_restV _ _ _ _ _ _ _) (sem_fieldEndV _ _ _ _ _ _ _)]) <;>
-    (try rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
-    eval_child <;> (try split_ifs) <;> (try dsimp only) <;> rfl
+    (rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
+    eval_child <;> split_ifs <;> dsimp only <;> rfl
 
 include hv hk hy hb htp hkl in
 /-- The flag's step on the encoded state is the encoded step of the flag, the
@@ -537,8 +537,8 @@ theorem ok_step (edge : LOf 6) : (okStep edge).sem (stepAtC u y (c :: r) x z tar
   rw [okStep, sem_onMode2 _ _ _ _ _ _ _ m rfl]
   cases m <;> dsimp only <;> (try rw [ev, sem_eventStep _ _ _ _ _ _ _ _ _ _ y r c x k₀ hv hk
     (sem_modeV _ _ _ _ _ _ _) (sem_restV _ _ _ _ _ _ _) (sem_fieldEndV _ _ _ _ _ _ _)]) <;>
-    (try rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
-    eval_child <;> (try split_ifs) <;> dsimp only
+    (rcases eventC_cases x c with h | h | h | ⟨L, h⟩ | h | h <;> rw [h]) <;>
+    eval_child <;> split_ifs <;> dsimp only
 
 include hv hk hy hb htp hkl in
 /-- One step on the encoded state is the encoded step of the state. -/

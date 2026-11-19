@@ -1197,7 +1197,7 @@ index 2675808..66313c5 100644
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J where
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
-index 867bd61..b1a2bde 100644
+index 5fd87ef..9c67fd7 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
 @@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1311,7 +1311,7 @@ index 8696e1d..30eb169 100644
            (⟨⟨F.objRestrElt f (pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1) hqi,
              hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
-index a7e684b..aa92c34 100644
+index 0963552..17115e9 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1739,7 +1739,7 @@ index 7b84564..2aa7b87 100644
  /-- The incomplete block never fills, whether or not the scan has failed.
  Stated unconditionally, which is the form a bitstring layout of the state
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/W/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/W/Basic.lean
-index eacd4cd..7c4ba7b 100644
+index 6fee432..76c5ba7 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/W/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/W/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1793,7 +1793,7 @@ index 0ddfcb0..62f9555 100644
  @[expose] public section
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean b/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
-index ce1eb9e..fab614c 100644
+index cfd79c2..d3b24f0 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/BitStream.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2727,7 +2727,7 @@ index 2563bf1..f638be5 100644
  
  end Geb.Mazzanti.Expr
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
-index e86425c..98df0ac 100644
+index 8a19f99..6b255e9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2748,9 +2748,9 @@ index e86425c..98df0ac 100644
 +      (fun i ↦ by beta_reduce; unfold stepEnv; rw [Fin.cons_succ, Fin.append_right]; exact hx i) s)
  
  /-- Simultaneous recursion on notation preserves the property, with the maximum of
- the base and step constants: the bitstring form of {cite}`Mazzanti2016` Lemma 2.1's
+ the base and step constants: the bitstring form of {citeKey}`Mazzanti2016` Lemma 2.1's
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
-index 6333636..41660e9 100644
+index 28f6733..4fc9f9c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2772,7 +2772,7 @@ index 6333636..41660e9 100644
  /-- The three registers of the scan, as expressions of arity two: the counter and
  the word. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
-index 370a3a0..a554140 100644
+index 3419013..69c3328 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2812,7 +2812,7 @@ index 370a3a0..a554140 100644
        exact hsbs
      | comp n m' =>
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Iteration.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Iteration.lean
-index 1a425fa..4c1be9d 100644
+index 8125aec..5f3b178 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Iteration.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Iteration.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2833,7 +2833,7 @@ index 1a425fa..4c1be9d 100644
    simp only [List.length_ofFn, Nat.nsmul_eq_mul] at hs
    exact (Nat.add_le_add hw hs).trans_eq (by rw [Nat.add_mul, Nat.one_mul, Nat.add_comm])
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Expr.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Expr.lean
-index c705f48..a90448c 100644
+index f6622bf..0422d90 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Expr.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Expr.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2854,7 +2854,7 @@ index c705f48..a90448c 100644
  
  /-- The seven registers, as expressions of arity two: the counter and the
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean
-index 8868493..d81a9ff 100644
+index ef83dea..61cebc9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2959,7 +2959,7 @@ index 8868493..d81a9ff 100644
        rw [show z - (c + 1) = z - c - 1 by omega]
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
-index 74a3587..8d89c53 100644
+index 72b0622..2e97670 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2982,7 +2982,7 @@ index 74a3587..8d89c53 100644
  /-- Simultaneous recursion on notation preserves a suffix-closed property its
  bases and steps preserve: the recursion variable's suffixes satisfy it, so each
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
-index 64ca7e0..cb70aa9 100644
+index e380b8d..bf5e5f8 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3040,7 +3040,7 @@ index 64ca7e0..cb70aa9 100644
  /-- The first phase keeps the length part within the input when its bases and
  steps do, up to the input's length. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean
-index 6f23d9e..ae38a4f 100644
+index c3bd76c..12f5b2b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/BitFold.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3288,7 +3288,7 @@ index aa7d692..9d9344c 100644
        dsimp only at hn
        rw [Geb.BitTree.Elias.encode_fork, List.foldl_cons, List.foldl_append]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Events.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Events.lean
-index 9ccc0e3..c10a569 100644
+index bfd45ae..0fd3ad8 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Events.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Events.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3336,7 +3336,7 @@ index 9ccc0e3..c10a569 100644
  /-- A nonempty payload completes the leaf at its last bit. -/
  theorem foldl_extStep_payload (s : List Bool) (n pos : ℕ) (x : α) (hs : s ≠ []) :
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
-index 9d5427b..23f138e 100644
+index 1040f94..8e7c0b3 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/ExprBase.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3379,7 +3379,7 @@ index 9d5427b..23f138e 100644
  
  /-- The word dropped by a number and by another cut off at the word's length
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NodeExpr.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NodeExpr.lean
-index 49121b0..a12b561 100644
+index c1feae5..4364ad3 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NodeExpr.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NodeExpr.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3448,7 +3448,7 @@ index 590df5a..585a1af 100644
        obtain ⟨ok₂, hr, hr'⟩ := ihr m (p + 1 + (encode l).length) 0 ok₁ hm
        refine ⟨ok₂, ?_, ?_⟩
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumArith.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumArith.lean
-index a4d25f2..43d26e2 100644
+index 3cd9a49..3875914 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumArith.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumArith.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3659,7 +3659,7 @@ index 0f453da..56c975b 100644
  end
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScanExpr.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScanExpr.lean
-index 34f81fc..81c73fc 100644
+index 6304ff6..4fd6763 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScanExpr.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/NumScanExpr.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3692,7 +3692,7 @@ index 34f81fc..81c73fc 100644
  
  /-- On a word holding a coded number at the position, the acceptance is set,
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean
-index 285415d..cc363a3 100644
+index 8362fd1..c326d13 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Numeral.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3759,7 +3759,7 @@ index daf8f41..452b4e8 100644
  @[expose] def Node.k (n : Node) : ℕ := n.children.length
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/RecognizeExpr.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/RecognizeExpr.lean
-index e0a5d46..4b24c10 100644
+index c679543..88dfe2e 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/RecognizeExpr.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/RecognizeExpr.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3786,7 +3786,7 @@ index e0a5d46..4b24c10 100644
  
  /-- The expression accepts exactly the words the recognizer accepts, when its
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
-index 199b86e..7a94942 100644
+index c49fc47..11beb99 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3897,7 +3897,7 @@ index 199b86e..7a94942 100644
  /-- The algebra's signature as a coded signature. -/
  @[expose] def sigCoded : CodedSig ℕ where
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigEdge.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigEdge.lean
-index 322a53b..16d2323 100644
+index 74b4d99..b7d68ce 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigEdge.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigEdge.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4014,7 +4014,7 @@ index 322a53b..16d2323 100644
          exact ⟨fun h ↦ absurd h.1 (by omega), fun h ↦ absurd h (by decide)⟩
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
-index 42917e5..87fc2d4 100644
+index 6739ba6..3971c71 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4347,6 +4347,29 @@ index 6474159..ab77451 100644
  
  /-- The morphism of the counterexample: the unique map from the empty object to
  the singleton. -/
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/ArrowValue.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/ArrowValue.lean
+index 678755f..a36f037 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/ArrowValue.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/ArrowValue.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Represent
+@@ -79,8 +80,8 @@ theorem exists_arrVal_of_dom_cod {g X Y : Tree}
+     have e₂ := Part.some_injective
+       ((show relTopos.model.op 1 [⟨1, ⟨A', B', φ⟩⟩] = Part.some ⟨obj, ⟨B'⟩⟩ from rfl).symm.trans
+         hop')
+-    obtain rfl : A' = A := congrArg ULift.down (by simpa using e₁)
+-    obtain rfl : B' = B := congrArg ULift.down (by simpa using e₂)
++    obtain rfl : A' = A := congrArg ULift.down.{0} (by simpa using e₁)
++    obtain rfl : B' = B := congrArg ULift.down.{0} (by simpa using e₂)
+     exact ⟨φ, by unfold ArrVal; exact hvs⟩
+   · exact (Part.some_ne_none _
+       (hop.symm.trans (show relTopos.model.op 0 [⟨s + 1 + 1, c⟩] = Part.none from rfl))).elim
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean
 index 391f38b..903c9cc 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean
@@ -4434,7 +4457,7 @@ index 71ba9c0..b67b46c 100644
  and classifier limits. -/
  theorem laws : (toposData C P D).Laws where
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Compile.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Compile.lean
-index 45cc9ca..5793014 100644
+index 2a50453..9d4cc98 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Compile.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Compile.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4453,6 +4476,35 @@ index 45cc9ca..5793014 100644
        rw [RoseTree.elim_node, List.map_congr_left ih, IsTy, RoseTree.para_node]
        rcases l with _ | k
        · rcases cs with _ | ⟨i, _ | ⟨j, cs⟩⟩ <;> simp [isTyStepFast]
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Encoding.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Encoding.lean
+index fef49aa..7139ae6 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Encoding.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Encoding.lean
+@@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.FreeTopos.Internal.Prove
+ public import Geb.Prototypes.Kernel.Basic
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # The internal language's data as trees of numbers
+ 
+@@ -42,8 +44,6 @@ Geb by its Lean counterpart ({lit}`Geb.FreeTopos.Internal.Accelerate`) reads its
+ internal language, encoding, rose tree, agreement
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.FreeTopos.Internal.Encode
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
 index ac67c64..4dcc072 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Inversion.lean
@@ -4544,7 +4596,7 @@ index e2059e6..2cc691d 100644
            ih hw.2 j hj', Option.map_some])
      ws hw j hj
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean
-index abf52f5..e5e47b6 100644
+index fc67300..e1b0c97 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean
 @@ -3,11 +3,13 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4562,7 +4614,7 @@ index abf52f5..e5e47b6 100644
  /-!
  # The prover's reductions, their results alone
  
-@@ -38,8 +40,6 @@ and the soundness of such a step is that of the reduction it projects.
+@@ -43,8 +45,6 @@ and the soundness of such a step is that of the reduction it projects.
  internal language, prover, normalization, reduction, conversion
  -/
  
@@ -4667,7 +4719,7 @@ index dd8e0fe..ad2b75b 100644
  /-- Substitution in the product of a context's types. -/
  theorem subst_ctxObj (θ : List Tree) :
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Typing.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Typing.lean
-index af56087..af69775 100644
+index 3125020..81041be 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Typing.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Typing.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4811,7 +4863,7 @@ index a5046a7..057e86f 100644
            (congrArg (unfoldOp _ _) (unfoldTerm_of_opsBelow ds _ u (hθ' u hu))).trans
              (hθ₀ u hu)).trans θ.map_id)
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
-index 2878790..f101d36 100644
+index 195f23b..ebc4951 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/UniqueChoice.lean
 @@ -3,9 +3,10 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4964,7 +5016,7 @@ index 22b04d9..33c15c3 100644
      exact hm.symm.trans (two p)
    obtain ⟨a, b, hab⟩ := List.length_eq_two.mp hlen
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/RedexDiamond.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/RedexDiamond.lean
-index 48c29b2..c8dcebf 100644
+index 8a06b65..b7a3714 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/RedexDiamond.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/RedexDiamond.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5005,7 +5057,7 @@ index 5209687..b52037d 100644
    have hm := (closeWire_respects w).trans hf
    have hem : Function.Embedding.inr.trans e =
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
-index 982f8af..14298ae 100644
+index 04bcc6c..9ba3ad1 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringGlue.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5046,7 +5098,7 @@ index 82015b8..76243e9 100644
      have hb : ports (i, !side) ≠ w.partner (ports (j, side)) := (free j i _).symm
      have hc : w.partner (ports (i, side)) ≠ w.partner (ports (j, side)) := by
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSplice.lean b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSplice.lean
-index 5366408..982b368 100644
+index 6a56cdd..14baacb 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSplice.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/InteractionNet/WiringSplice.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5157,7 +5209,7 @@ index 57e7d5d..b93093a 100644
  
  namespace Geb.Kernel.Identity
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Document.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Document.lean
-index 2df6fb9..78a9b86 100644
+index 9d82d58..c6c9a6c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Document.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Document.lean
 @@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5205,7 +5257,7 @@ index 2df6fb9..78a9b86 100644
  {name}`Geb.Kernel.SExp`, an atom's characters or nothing for a list, each decorated with its
  trivia. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
-index b52bd68..3172a5d 100644
+index da4072a..262a467 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5234,7 +5286,7 @@ index b52bd68..3172a5d 100644
  
  namespace Geb.Kernel.Document
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean
-index 9f21cd0..7538033 100644
+index e8ac40b..f8544a2 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Eval.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5262,8 +5314,39 @@ index 9f21cd0..7538033 100644
  @[expose] public section
  
  namespace Geb.Kernel.Eval
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Holes.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Holes.lean
+index f7114f1..4a099d8 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Holes.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Holes.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Modules
+@@ -12,7 +13,8 @@ public import Geb.Prototypes.Kernel.Subst
+ public import Geb.Prototypes.RoseTree.Unify
+ meta import GebMeta -- shake: keep
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # Checking a program with holes
+ 
+@@ -98,8 +100,6 @@ definition by a quoted atom beginning with {lit}`?`, which would capture a lifte
+ typed hole, metavariable, contextual modal type theory, type inference, unification, kernel
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel.Holes
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Identity.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Identity.lean
-index 471e84f..03df1e3 100644
+index 6da1992..3a541a0 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Identity.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Identity.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5293,8 +5376,36 @@ index 471e84f..03df1e3 100644
  @[expose] public section
  
  namespace Geb.Kernel.Identity
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Markup.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Markup.lean
+index 7694330..573a1d4 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Markup.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Markup.lean
+@@ -3,11 +3,13 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Durable
+ 
+-set_option doc.verso true in
++set_option doc.verso true
++
+ /-!
+ # The markup of comments
+ 
+@@ -54,8 +56,6 @@ the modules {lit}`M₁ … Mₖ`, the name {lit}`x` refers to the first of {lit}
+ documentation, markup, comment, reference, Verso
+ -/
+ 
+-set_option doc.verso true
+-
+ @[expose] public section
+ 
+ namespace Geb.Kernel.Markup
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
-index 314aa12..758a2e9 100644
+index 6bb7bfe..7b2256e 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5313,7 +5424,7 @@ index 314aa12..758a2e9 100644
  /-!
  # Modules
  
-@@ -53,8 +55,6 @@ forms in the program, since a module imports only modules declared before it.
+@@ -67,8 +69,6 @@ forms in the program, since a module imports only modules declared before it.
  module, import, export, parameter, qualified name
  -/
  
@@ -5323,7 +5434,7 @@ index 314aa12..758a2e9 100644
  
  namespace Geb.Kernel
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Printer.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Printer.lean
-index de86cc9..30082f8 100644
+index 133e108..349fdc1 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Printer.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Printer.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5351,8 +5462,38 @@ index de86cc9..30082f8 100644
  @[expose] public section
  
  namespace Geb.Kernel
+diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/SourceAnnotation.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/SourceAnnotation.lean
+index 229e40c..4c7cd35 100644
+--- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/SourceAnnotation.lean
++++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/SourceAnnotation.lean
+@@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Terence Rokop
+ -/
++-- Modified from geb-mathlib by scripts/geb-mathlib-backport.patch.
+ module
+ 
+ public import Geb.Prototypes.Kernel.Annotation
+@@ -84,6 +85,8 @@ structure Origin where
+   role : Role := .syntax
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprOrigin.repr
++
+ /-- Translate both roots of a correspondence. -/
+ def under (source core : List ℕ) (os : List Origin) : List Origin :=
+   os.map fun o ↦ { o with source := source ++ o.source, core := core ++ o.core }
+@@ -251,6 +254,8 @@ structure Note where
+   trivia : Trivia
+   deriving DecidableEq, Repr
+ 
++attribute [nolint unusedArguments] instReprNote.repr
++
+ /-- A correspondence's source information, without replacing a missing occurrence. -/
+ def noteOf (d : Doc) (o : Origin) : Option Note :=
+   (atForest d.items o.source).map fun s ↦ ⟨o.source, o.role, s.label.2, s.label.1⟩
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
-index 31879a9..6f8ec45 100644
+index 27ad789..410eeea 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Strict.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5381,7 +5522,7 @@ index 31879a9..6f8ec45 100644
  
  namespace Geb.Kernel.Document
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/HSubstRename.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/HSubstRename.lean
-index e73a028..ebe77d5 100644
+index 60c4a11..9dab323 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/HSubstRename.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/HSubstRename.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5422,7 +5563,7 @@ index a080a7d..5885a06 100644
  /-- A renaming lifted under {lit}`j` binders fixes the {lit}`j` innermost variables and renames
  the rest above them. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Strengthen.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Strengthen.lean
-index 1895bf9..65fc410 100644
+index 2411f80..407a837 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Strengthen.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Strengthen.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5448,7 +5589,7 @@ index 1895bf9..65fc410 100644
  /-- The classifier of a renamed head, where its variable satisfies the predicate on which the
  renaming respects types, is the renamed classifier. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Substitution.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Substitution.lean
-index 1e4f046..c9601cf 100644
+index 97650ea..7dbacd8 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Substitution.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Substitution.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5474,7 +5615,7 @@ index 1e4f046..c9601cf 100644
          varType_cons_succ, ih, Option.map_map]
        congr 1
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Weakening.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Weakening.lean
-index fbfe1f7..6b3903f 100644
+index ed12f4b..a59bbc2 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Weakening.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Metatheory/Weakening.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5500,7 +5641,7 @@ index fbfe1f7..6b3903f 100644
  /-- Weakening by a variable is a renaming that respects types: the successor, into the context
  extended by the variable's type. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Adequacy.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Adequacy.lean
-index ddee74d..fc6302f 100644
+index f7612c0..29312db 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Adequacy.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Adequacy.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5649,7 +5790,7 @@ index ddee74d..fc6302f 100644
  /-- The indices of the empty list and of the construction of valid indices differ. -/
  theorem PrimIdx.Valid.cons_ne_nil {k : PrimIdx} {G : FreeTopos.Internal.Globals}
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Complete.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Complete.lean
-index 3ab9b62..65ede3c 100644
+index d83b7c4..501c266 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Complete.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Complete.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5831,7 +5972,7 @@ index 33103d5..e2e9479 100644
  /-- Case analysis on a coproduct at the innermost variable: the formula at the left injection of
  a variable of the first summand and at the right injection of a variable of the second, under the
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
-index e507358..02397d5 100644
+index 37c999f..93aff6d 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/ProofSound.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6078,7 +6219,7 @@ index e507358..02397d5 100644
  /-- A renamed expression that is the kind of types is the kind of types. -/
  theorem tp_rename_inj {T : Expr} {ρ : ℕ → ℕ} (h : T.rename ρ = tp) : T = tp := by
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Telescope.lean b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Telescope.lean
-index 176f7d7..edd6585 100644
+index f33b53b..a9b9366 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Telescope.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LF/Topos/Telescope.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6220,7 +6361,7 @@ index 176f7d7..edd6585 100644
    change (piTele Ds R).headDepth.2 + 1 = _
    omega
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
-index 3772c32..69ea92c 100644
+index fe8e3dc..f822eb8 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6231,7 +6372,7 @@ index 3772c32..69ea92c 100644
  module
  
  public import Geb.Prototypes.PresheafIRUniv.Basic
- meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ meta import GebMeta  -- shake: keep; supplies the citeKey docstring role
  
 -set_option doc.verso true in
 +set_option doc.verso true
@@ -6258,7 +6399,7 @@ index 3772c32..69ea92c 100644
  
  /-- An element of {lit}`E` as an element of the pullback of {lit}`ofSlice p`
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
-index 64d4cac..c0c734c 100644
+index 4ae4840..2cf3a7a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
 @@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6270,7 +6411,7 @@ index 64d4cac..c0c734c 100644
  
  public import Geb.Prototypes.LargeIR.Basic
  public import Geb.Mathlib.Data.PFunctor.IndRec.Basic
- meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ meta import GebMeta  -- shake: keep; supplies the citeKey docstring role
  
 -set_option doc.verso true in
 +set_option doc.verso true
@@ -6288,7 +6429,7 @@ index 64d4cac..c0c734c 100644
  
  open CategoryTheory PresheafIRUniv IndRec
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
-index d024f6c..661c6e9 100644
+index d3b42ad..918ecad 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6299,7 +6440,7 @@ index d024f6c..661c6e9 100644
  module
  
  public import Geb.Prototypes.LargeIR.Code
- meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ meta import GebMeta  -- shake: keep; supplies the citeKey docstring role
  
 -set_option doc.verso true in
 +set_option doc.verso true
@@ -6333,7 +6474,7 @@ index d024f6c..661c6e9 100644
  /-- The raw assignment is compatible with the direction-input map. -/
  theorem assign_compatible {a : F.A} (g : F.Direction a 0 → Z.obj ⟨0⟩)
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Grothendieck.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Grothendieck.lean
-index 2299cb3..7ce647e 100644
+index 391e826..37d256b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Grothendieck.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Grothendieck.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6346,7 +6487,7 @@ index 2299cb3..7ce647e 100644
  public import Geb.Prototypes.LargeIR.Morphism
 @@ -10,7 +11,8 @@ public import Geb.Mathlib.CategoryTheory.Grothendieck.Basic
  public import Mathlib.CategoryTheory.Pi.Basic
- meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ meta import GebMeta  -- shake: keep; supplies the citeKey docstring role
  
 -set_option doc.verso true in
 +set_option doc.verso true
@@ -6382,7 +6523,7 @@ index 2299cb3..7ce647e 100644
    right_inv _ := rfl
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
-index 6eb1aaa..eea46d7 100644
+index 86a1b2b..6ca7a4b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6393,7 +6534,7 @@ index 6eb1aaa..eea46d7 100644
  module
  
  public import Geb.Prototypes.LargeIR.Code
- meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ meta import GebMeta  -- shake: keep; supplies the citeKey docstring role
  
 -set_option doc.verso true in
 +set_option doc.verso true
@@ -6420,7 +6561,7 @@ index 6eb1aaa..eea46d7 100644
  
  /-- A morphism of families as a morphism of the walking-arrow presheaves of
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
-index 3a96c1a..1c87707 100644
+index df18754..5954d83 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6433,7 +6574,7 @@ index 3a96c1a..1c87707 100644
  public import Geb.Mathlib.Data.PFunctor.Presheaf.Basic
 @@ -11,7 +12,8 @@ public import Mathlib.CategoryTheory.Category.Preorder
  public import Mathlib.Order.Fin.Basic
- meta import GebMeta  -- shake: keep; supplies the cite docstring role
+ meta import GebMeta  -- shake: keep; supplies the citeKey docstring role
  
 -set_option doc.verso true in
 +set_option doc.verso true
@@ -6451,7 +6592,7 @@ index 3a96c1a..1c87707 100644
  
  open CategoryTheory
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
-index 9c54145..abc7913 100644
+index f14aa79..f2ce270 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6472,7 +6613,7 @@ index 9c54145..abc7913 100644
        right_inv := fun _ ↦ rfl }
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
-index 5e47510..2aae0db 100644
+index d0cc3f2..6ff272a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
 @@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6501,7 +6642,7 @@ index 5e47510..2aae0db 100644
  @[expose] public section
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Depth.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Depth.lean
-index e2f035c..ae9cf4b 100644
+index 77dd9cb..8d65e3d 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Depth.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Depth.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6525,7 +6666,7 @@ index e2f035c..ae9cf4b 100644
  
  namespace Depth
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
-index f630d99..9ebaff2 100644
+index 7cb949f..ca803e7 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6547,7 +6688,7 @@ index f630d99..9ebaff2 100644
  
  /-- The underlying corecursion from a restricted element is the root
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
-index af75260..5b16b56 100644
+index 39b473d..b5cf7e5 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6598,7 +6739,7 @@ index b7fed2b..1d524db 100644
  
  /-- Evaluation at `false`, which separates the identity from the constant map at
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
-index 8f05034..5ce8507 100644
+index ff1b6b0..6013355 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6637,7 +6778,7 @@ index 8f05034..5ce8507 100644
  end Derivable
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Definitional.lean b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Definitional.lean
-index ac8ac82..8bac66d 100644
+index 6bc7f09..0a10b22 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Definitional.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Definitional.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6804,7 +6945,7 @@ index 61de149..36f5865 100644
  
  /-- The shape-output map: `iota`, `sigma`, and `pi` are codes (fibre `0`);
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Basic.lean
-index c3e7124..a05c670 100644
+index 80dbc60..6b07698 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6894,7 +7035,7 @@ index c3e7124..a05c670 100644
  /-- The discrete graph on a morphism of presheaves on {lit}`I`: its component at an
  object is the component at the object's {lit}`I` component. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Congruence.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Congruence.lean
-index 0b9c5bd..de7bf29 100644
+index 503b5d7..a3aeeba 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Congruence.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Congruence.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6915,7 +7056,7 @@ index 0b9c5bd..de7bf29 100644
      exact ⟨e, rfl, rfl⟩
    · rintro _ _ ⟨e, rfl, rfl⟩
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
-index d87e777..4c2894f 100644
+index 883191a..9b4dc0b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6953,7 +7094,7 @@ index d87e777..4c2894f 100644
  /-- The value a node gives an argument at a direction is the restriction, along the
  direction's morphism, of the value it gives the argument at the argument's object. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
-index da67cce..c1390b3 100644
+index eb54fad..0d12c5d 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6982,7 +7123,7 @@ index da67cce..c1390b3 100644
          FreeArity.mapPresheaf_freeNode, FreeArity.mapPresheaf_freeNode,
          FreeArity.mapPresheaf_freeNode]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
-index 7365cf6..1128905 100644
+index c1f124e..89c11eb 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -7012,7 +7153,7 @@ index 7365cf6..1128905 100644
  /-- Reflexivity is not a witness constructor of fixed shape: a function sending each
  term to a witness with that term as source, all of one root shape, makes all terms
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
-index 3cadaff..17183f9 100644
+index 46f4617..e277e3d 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -7108,7 +7249,7 @@ index 03de8f0..5917140 100644
              Option.map_some, Rose.ofList_ofFn]) r
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/RoseTree/Decorated.lean b/vendor/geb-mathlib/Geb/Prototypes/RoseTree/Decorated.lean
-index ed9adb3..d1ec4a4 100644
+index f197447..b9c18ab 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/RoseTree/Decorated.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/RoseTree/Decorated.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -7128,7 +7269,7 @@ index ed9adb3..d1ec4a4 100644
      exact congrArg₂ node (by simp [extract]) ((List.map_congr_left ih).trans cs.map_id)) t
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean b/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean
-index 0c0ab51..d6a4f07 100644
+index 29d44f5..7b139cc 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/SuccinctTree.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.

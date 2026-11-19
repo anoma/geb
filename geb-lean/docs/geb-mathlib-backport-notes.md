@@ -36,6 +36,7 @@
   - [29. `unusedArguments` exempts arguments named with a leading underscore](#29-unusedarguments-exempts-arguments-named-with-a-leading-underscore)
   - [30. `Wiring.force_force` exceeds the default heartbeat limit in v4.29](#30-wiringforce_force-exceeds-the-default-heartbeat-limit-in-v429)
   - [31. `haveI`/`letI` linter module added in v4.36](#31-haveileti-linter-module-added-in-v436)
+  - [32. Universe level of `ULift.down` left unassigned in v4.29](#32-universe-level-of-uliftdown-left-unassigned-in-v429)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -47,7 +48,7 @@
 
 These notes catalogue the categories of change in
 `scripts/geb-mathlib-backport.patch`, which adapts the vendored
-`geb-mathlib` `Geb` source (mathlib `v4.36.0-rc2`) to compile under this
+`geb-mathlib` `Geb` source (mathlib `v4.36.0`) to compile under this
 repository's `v4.29.0-rc6`. When a refresh fails, check whether the new
 failure matches a category below (extend the corresponding hunk) or is
 genuinely new (decide the adaptation, add a category here).
@@ -59,12 +60,12 @@ genuinely new (decide the adaptation, add a category here).
 - Upstream cause: `GebMeta` is a separate library, not vendored (its
   `@[env_linter]` would mis-audit `geb-lean`). The `Geb` index imports
   it, and each literate module (upstream `docs/rules/lean-coding.md`
-  § Literate modules) carries `meta import GebMeta` for the `{cite}`
+  § Literate modules) carries `meta import GebMeta` for the `{citeKey}`
   docstring role it defines, writing its docstrings as Verso markup
   under `set_option doc.verso true`.
 - v4.29 symptom: `unknown module prefix 'GebMeta'` building the `Geb`
   index or a literate module. The pinned toolchain accepts `doc.verso`
-  and the `{name}`, `{lit}`, and `{option}` roles; only `{cite}` is
+  and the `{name}`, `{lit}`, and `{option}` roles; only `{citeKey}` is
   unknown to it, and a bare `[Key]` under `doc.verso` is a link-syntax
   error. A `{name}` role naming a `GebMeta` declaration, as
   `Prototypes/LargeIR/Grothendieck.lean`'s module docstring does with
@@ -72,7 +73,7 @@ genuinely new (decide the adaptation, add a category here).
   role resolves the constant it names, and the constant is absent.
 - Adaptation: `scripts/refresh-geb-mathlib.sh` deletes every import of
   `GebMeta`, in any of the module system's four import forms; rewrites
-  each ``{cite}`Key` `` span to `\[Key\]`, the `doc.verso` spelling of
+  each ``{citeKey}`Key` `` span to `\[Key\]`, the `doc.verso` spelling of
   mathlib's bare `[Key]` citation form (the conversion upstream's
   `scripts/extract-pr.sh` applies at extraction); and rewrites each
   ``{name}`GebMeta.Decl` `` span to ``{lit}`GebMeta.Decl` ``, which
@@ -409,8 +410,9 @@ genuinely new (decide the adaptation, add a category here).
   `Node`), `Children.lean` (`ChildReg`), `Events.lean` (`Event`), and
   `Nodes.lean` (`NodeReg`), and
   `Prototypes/Computability/SizeBounded/Logspace/EliasTree/Scanner.lean`
-  (`Counters`), and `Prototypes/Kernel/Document.lean` (`Line`,
-  `Trivia`).
+  (`Counters`), `Prototypes/Kernel/Document.lean` (`Line`,
+  `Trivia`), and `Prototypes/Kernel/SourceAnnotation.lean` (`Origin`,
+  `Note`).
 - v4.29 symptom: the `unusedArguments` env-linter reports
   `instReprFinSetSkel.repr argument 2 prec✝ : ℕ` (respectively
   `instReprAnn.repr argument 2 prec✝ : ℕ`,
@@ -419,7 +421,8 @@ genuinely new (decide the adaptation, add a category here).
   `instReprNState.repr`, `instReprLoc.repr`, `instReprNode.repr`,
   `instReprChildReg.repr`, `instReprEvent.repr`,
   `instReprNodeReg.repr`, `instReprCounters.repr`,
-  `instReprLine.repr`, and `instReprTrivia.repr`)
+  `instReprLine.repr`, `instReprTrivia.repr`, `instReprOrigin.repr`,
+  and `instReprNote.repr`)
   under `lake lint`; v4.29's
   `Repr` deriving handler emits a `repr` that ignores the precedence
   argument for a structure whose representation needs no
@@ -797,9 +800,10 @@ genuinely new (decide the adaptation, add a category here).
   addition, as do `Mathlib/Data/PFunctor/Presheaf/Carrier.lean`,
   `Prototypes/MType/Basic.lean`, and, under `Prototypes/FreeTopos/`,
   `Elementary.lean`, `Relations.lean`, `Represent.lean`,
-  `Internal/Reduce.lean`, and `Internal/Represent.lean`, and, under
-  `Prototypes/Kernel/`, `Annotation.lean`, `Document.lean`,
-  `Durable.lean`, `Eval.lean`, `Identity.lean`, `Modules.lean`,
+  `Internal/Encoding.lean`, `Internal/Reduce.lean`, and
+  `Internal/Represent.lean`, and, under `Prototypes/Kernel/`,
+  `Annotation.lean`, `Document.lean`, `Durable.lean`, `Eval.lean`,
+  `Holes.lean`, `Identity.lean`, `Markup.lean`, `Modules.lean`,
   `Printer.lean`, and `Strict.lean`. Under `v4.34` the
   `in` form applies the
   option to the module docstring that follows it.
@@ -1033,6 +1037,20 @@ genuinely new (decide the adaptation, add a category here).
 - Adaptation: delete the import. The module supplies no declaration the
   file names, and the core tactics elaborate the same terms.
 
+### 32. Universe level of `ULift.down` left unassigned in v4.29
+
+- Upstream cause: `Prototypes/FreeTopos/ArrowValue.lean`'s
+  `exists_arrVal_of_dom_cod` recovers a type from the value of an object
+  term, a `ULift` of it, as `congrArg ULift.down (by simpa using e)`.
+  `simpa` closes the equation of the two lifts through the equation of
+  the types, so nothing fixes the universe to which the `ULift` lifts.
+- v4.29 symptom: `declaration ... contains universe level metavariables
+  at the expression ... in the declaration body`.
+- Adaptation: give the level explicitly, `ULift.down.{0}`: the model of
+  `Prototypes/FreeTopos/Converse.lean` lifts the objects of a
+  `ChosenTopos.{u, v}` as `ULift.{v} T.Obj`, and `relTopos` is a
+  `ChosenTopos.{1, 0}`.
+
 ## Updating the patch for a new upstream
 
 The vendored tree is a pure function of three committed inputs: the
@@ -1150,9 +1168,11 @@ lists every entry. Module names are relative to
 `Geb.Prototypes.Computability` unless they begin with `Geb`.
 
 The exclusions originate in five cslib modules absent at the pinned
-revision `9a159ac` (`v4.29.0-rc6`) and in one mathlib module absent at
-the pinned revision `5c8398d` (2026-03-10). Lifting any of them requires
-advancing the cslib or mathlib pin, which the toolchain pin governs.
+revision `9a159ac` (`v4.29.0-rc6`), in one mathlib module absent at
+the pinned revision `5c8398d` (2026-03-10), and in one Lean core module
+absent from the pinned toolchain `v4.29.0-rc6`. Lifting any of them
+requires advancing the toolchain pin, which governs the cslib and
+mathlib pins.
 
 - `Cslib.Computability.Machines.Turing.MultiTape.Deterministic` and
   `Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas`, which
@@ -1200,6 +1220,13 @@ advancing the cslib or mathlib pin, which the toolchain pin governs.
   `Mathlib/CategoryTheory/Limits/Shapes/End.lean`, a multiequalizer
   chosen through `HasEnd`; it is not a rename.
   `Geb.Prototypes.PHOAS.Category` imports the module.
+- `Lean.DocString.View`, which Lean core's history records as an
+  addition in Lean pull request 15064 (2026-09-18), the rewrite of the
+  Verso docstring parser. It supplies `Lean.Doc.InlineView` and
+  `Lean.Doc.BlockView`, views of the parser's syntax; the pinned
+  toolchain's `Lean/DocString/` declares neither name and has no
+  counterpart, so it is not a rename. `Geb.Prototypes.Kernel.MarkupVerso`
+  imports the module.
 
 The rules then exclude the following.
 
@@ -1222,7 +1249,12 @@ The rules then exclude the following.
   chain; and `Geb.Prototypes.PHOAS`, whose `Basic` imports
   `Geb.Cslib.Foundations.Data.PFunctor.Free`, whose `Category` imports
   `Mathlib.CategoryTheory.Limits.Types.End`, and whose every module
-  other than `Basic` imports `Basic`, directly or through a chain.
+  other than `Basic` imports `Basic`, directly or through a chain;
+  and `Geb.Prototypes.FreeTopos.Internal.Holes`, which imports
+  `Geb.Cslib.Foundations.Data.PFunctor.Free` and
+  `Geb.Prototypes.FreeTopos.Internal.Conversion`, whose `Conditional`
+  imports it, whose `Closed` and `Rose` import `Conditional`, and whose
+  `Sequent` is imported only by `Closed`.
 - Importers of an excluded module, individually. Under `BitTree`,
   `Machine` imports `TreeScanner.Machine` and `Steps` imports
   `Machine`; the `BinaryMachine` modules `BitStep`, `Carry`,
@@ -1267,7 +1299,12 @@ The rules then exclude the following.
   imports `FreeTopos.Literals`, `FreeTopos.Internal.ConvDevelopment`
   imports `FreeTopos.Internal.Conversion`, and
   `FreeTopos.Internal.ByMachine` imports
-  `FreeTopos.Internal.ConvDevelopment`. Under
+  `FreeTopos.Internal.ConvDevelopment`; `FreeTopos.Internal.Accelerate`
+  and `FreeTopos.Internal.Provers` import
+  `FreeTopos.Internal.Conversion`, and `FreeTopos.Tactics.Reduction`
+  imports `FreeTopos.Internal.Provers`; and
+  `FreeTopos.TranslationExtension` imports `FreeTopos.TranslationSound`.
+  Under
   `Geb.Prototypes.InteractionNet`, 117 modules import `Term`, directly
   or through a chain; the other 53 import neither `Term` nor any other
   excluded module.
