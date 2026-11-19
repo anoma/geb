@@ -22,12 +22,9 @@ and steps, or to the normal form. The rules are the language's equations, the un
 definitions below an index, a variable of the terminal type as its element, the earlier
 theorems, whose instances it finds by matching their left sides, and the hypotheses; a rule is
 tried again at a node whose children a reduction rewrote.
-It proves an equation by normalizing both sides to one term, by induction on the innermost
-variable with a step it is given, and by induction on a rose tree in the form of the uniqueness
-of its fold, each premise by normalization; with the induction hypothesis, it normalizes the
-hypothesis, cuts in the normal form, and rewrites the step by it. Proofs compose: an equation of
-functions by extensionality, an equation by case analysis of a variable of a coproduct anywhere
-in the context, and list induction whose premises other proofs prove. The prover is not
+The proofs of an equation built from these reductions, by normalization, by induction and from
+proofs of others, are those of {lit}`Geb.FreeTopos.Internal.Provers`: certificates of the
+conversion checker, which name each reduction rather than hold its derivation. A reduction is not
 trusted: a derivation it computes is checked.
 
 The compiler replaces the reduction by one proved equal to it ({lit}`eval_eq_evalFast`): the
@@ -44,14 +41,10 @@ once, without the renaming being built.
   the first of a list that applies.
 * {lit}`prepareRule`, {lit}`prepareRules` — the rules with each theorem's matching prepared
   once.
+* {lit}`NormRule.unprepare` — a rule as a certificate names it, a prepared theorem as the
+  theorem.
 * {lit}`normStep` — one step of the normalization innermost first.
 * {lit}`normalize` — the normal form of a term and its rewriting derivation.
-* {lit}`byNorm`, {lit}`byNatInd`, {lit}`byListInd`, {lit}`byNatIndHyp`, {lit}`byListIndHyp`,
-  {lit}`byRoseInd`, {lit}`byNormW` — the proofs of an equation.
-* {lit}`byFunExt`, {lit}`bySplit`, {lit}`byListIndWith`, {lit}`byRoseIndHyp` — the proofs of an
-  equation from proofs of others: of functions by extensionality, by case analysis of a variable
-  of a coproduct anywhere in the context, and by list induction and rose-tree induction with each
-  premise proved by a prover.
 * {lit}`Depth`, {lit}`eval`, {lit}`whnf`, {lit}`normalizeW` — the depths of reduction, the
   reduction to a depth, sharing an argument's value among its uses, the weak head normal form,
   and the normal form reached through it.
@@ -64,6 +57,7 @@ once, without the renaming being built.
 * {lit}`indexRules`, {lit}`rootRewriteK` — the rules indexed by the keys of their roots' labels,
   and the rewriting at the root by the index under weakened hypotheses.
 * {lit}`evalFast` — the reduction the compiler runs in place of {lit}`eval`.
+* {lit}`abstractVar` — the abstraction of a term over one of its variables.
 
 ## Main statements
 
@@ -71,7 +65,7 @@ once, without the renaming being built.
 
 ## Tags
 
-internal language, prover, normalization, induction
+internal language, prover, normalization, reduction
 -/
 
 set_option doc.verso true
@@ -233,6 +227,12 @@ def prepareRule : NormRule → NormRule
 /-- The rules with each theorem's matching prepared beforehand ({lit}`prepareRule`). -/
 def prepareRules (rs : List NormRule) : List NormRule := rs.map (prepareRule E)
 
+/-- A rule as a certificate names it: a theorem whose matching is prepared as the theorem, whose
+matching the reader of the certificate prepares again, and any other rule itself. -/
+def NormRule.unprepare : NormRule → NormRule
+  | .thmAt j θ _ _ _ => .thm j θ
+  | r => r
+
 /-- One step of the normalization innermost first, the subterms normalized by {lit}`rec`: the
 children, each in its own context, then the first rule that rewrites the root and the result
 normalized. -/
@@ -256,79 +256,6 @@ a depth of {lit}`fuel`, with its rewriting derivation, marked when it rewrites. 
 def normalize (rs : List NormRule) (fuel : ℕ) :
     List Tree → List Term → Term → Option (Term × Deriv × Bool) :=
   fuel.rec (fun _ _ t ↦ some (t, dRefl)) fun _ rec ↦ normStep G E n rs rec
-
-/-- The proof of an equation by normalizing both sides to one term. -/
-def byNorm (rs : List NormRule) (fuel : ℕ) (Γ : List Tree) (Φ : List Term) (t u : Term) :
-    Option Deriv := do
-  let (v, d₁, _) ← normalize G E n rs fuel Γ Φ t
-  let (v', d₂, _) ← normalize G E n rs fuel Γ Φ u
-  if v = v' then some (RoseTree.node .join [d₁, d₂]) else none
-
-/-- The proof of an equation in a context of a natural number variable by induction on it, with
-the step {lit}`s`, each premise by normalization. -/
-def byNatInd (kz ks : ℕ) (s : Term) (rs : List NormRule) (fuel : ℕ) (Γ : List Tree)
-    (Φ : List Term) (t u : Term) : Option Deriv := match Γ with
-  | _ :: Γ' => do
-    let Φ' ← lowerHyps G n Γ' Φ
-    let p₀ ← byNorm G E n rs fuel Γ' Φ' (Term.subst t (instVar (Term.arr kz [] Term.star)))
-      (Term.subst u (instVar (Term.arr kz [] Term.star)))
-    let p₁ ← byNorm G E n rs fuel Γ Φ (natSuccAt ks t) (Term.subst s (atVar0 t))
-    let p₂ ← byNorm G E n rs fuel Γ Φ (natSuccAt ks u) (Term.subst s (atVar0 u))
-    pure (RoseTree.node (.natInd kz ks s) [p₀, p₁, p₂])
-  | [] => none
-
-/-- The proof of an equation in a context of a list variable by induction on it, with the step
-{lit}`s`, each premise by normalization. -/
-def byListInd (kn kc : ℕ) (s : Term) (rs : List NormRule) (fuel : ℕ) (Γ : List Tree)
-    (Φ : List Term) (t u : Term) : Option Deriv := match Γ with
-  | c :: Γ' => do
-    let a ← listPart c
-    let Φ' ← lowerHyps G n Γ' Φ
-    let p₀ ← byNorm G E n rs fuel Γ' Φ' (Term.subst t (instVar (Term.arr kn [a] Term.star)))
-      (Term.subst u (instVar (Term.arr kn [a] Term.star)))
-    let p₁ ← byNorm G E n rs fuel (c :: a :: Γ') (Φ'.map weaken2) (listConsAt kc a t)
-      (Term.subst s (atVar0 (weakenElem t)))
-    let p₂ ← byNorm G E n rs fuel (c :: a :: Γ') (Φ'.map weaken2) (listConsAt kc a u)
-      (Term.subst s (atVar0 (weakenElem u)))
-    pure (RoseTree.node (.listInd kn kc s) [p₀, p₁, p₂])
-  | [] => none
-
-/-- The proof of an equation in a context of a natural number variable by induction on it with
-the induction hypothesis: each premise by normalization, the step's after the induction
-hypothesis, normalized, is cut in as a hypothesis to rewrite by. -/
-def byNatIndHyp (kz ks : ℕ) (rs : List NormRule) (fuel : ℕ) (Γ : List Tree) (Φ : List Term)
-    (t u : Term) : Option Deriv := match Γ with
-  | _ :: Γ' => do
-    let Φ' ← lowerHyps G n Γ' Φ
-    let p₀ ← byNorm G E n rs fuel Γ' Φ' (Term.subst t (instVar (Term.arr kz [] Term.star)))
-      (Term.subst u (instVar (Term.arr kz [] Term.star)))
-    let Φ₁ := Φ ++ [Term.eq t u]
-    let (ψ, dψ, _) ← normalize G E n rs fuel Γ Φ₁ (Term.eq t u)
-    let q ← byNorm G E n (rs ++ [.hyp (Φ₁.length)]) fuel Γ (Φ₁ ++ [ψ]) (natSuccAt ks t)
-      (natSuccAt ks u)
-    let ih := RoseTree.node (.convFrom (Term.eq t u)) [dψ, RoseTree.node (.hyp Φ.length) []]
-    pure (RoseTree.node (.natIndHyp kz ks) [p₀, RoseTree.node (.cut ψ) [ih, q]])
-  | [] => none
-
-/-- The proof of an equation in a context of a list variable by induction on it with the
-induction hypothesis: each premise by normalization, the step's after the induction hypothesis,
-normalized, is cut in as a hypothesis to rewrite by. -/
-def byListIndHyp (kn kc : ℕ) (rs : List NormRule) (fuel : ℕ) (Γ : List Tree) (Φ : List Term)
-    (t u : Term) : Option Deriv := match Γ with
-  | c :: Γ' => do
-    let a ← listPart c
-    let Φ' ← lowerHyps G n Γ' Φ
-    let p₀ ← byNorm G E n rs fuel Γ' Φ' (Term.subst t (instVar (Term.arr kn [a] Term.star)))
-      (Term.subst u (instVar (Term.arr kn [a] Term.star)))
-    let Δ := c :: a :: Γ'
-    let Φ₁ := Φ'.map weaken2 ++ [weakenElem (Term.eq t u)]
-    let (ψ, dψ, _) ← normalize G E n rs fuel Δ Φ₁ (weakenElem (Term.eq t u))
-    let q ← byNorm G E n (rs ++ [.hyp (Φ₁.length)]) fuel Δ (Φ₁ ++ [ψ]) (listConsAt kc a t)
-      (listConsAt kc a u)
-    let ih := RoseTree.node (.convFrom (weakenElem (Term.eq t u)))
-      [dψ, RoseTree.node (.hyp Φ'.length) []]
-    pure (RoseTree.node (.listIndHyp kn kc) [p₀, RoseTree.node (.cut ψ) [ih, q]])
-  | [] => none
 
 /-- The child of a node other than an application whose normalization can enable a rule at the
 node's root: the pair of a component, and the datum of a fold. -/
@@ -964,90 +891,10 @@ def normalizeW (rs : List NormRule) (fuel : ℕ) :
     List Tree → List Term → Term → Option (Term × Deriv × Bool) :=
   eval G E n rs fuel .full
 
-/-- The proof of an equation by normalizing both sides, weak head normal forms first, to one
-term. -/
-def byNormW (rs : List NormRule) (fuel : ℕ) (Γ : List Tree) (Φ : List Term) (t u : Term) :
-    Option Deriv := do
-  let (v, d₁, _) ← normalizeW G E n rs fuel Γ Φ t
-  let (v', d₂, _) ← normalizeW G E n rs fuel Γ Φ u
-  if v = v' then some (RoseTree.node .join [d₁, d₂]) else none
-
-/-- A prover of equations: a derivation of the equation of two terms in a context under
-hypotheses. -/
-abbrev Prover : Type := List Tree → List Term → Term → Term → Option Deriv
-
 /-- The abstraction of a term over its variable of index {lit}`i`, of the type {lit}`c`: the
 function whose application to that variable is the term. -/
 def abstractVar (i : ℕ) (c : Tree) (t : Term) : Term :=
   Term.lam c (Term.subst (weaken1 t) fun j ↦ if j = i + 1 then Term.var 0 else Term.var j)
-
-/-- The proof of an equation of functions by the proof, by {lit}`prove`, of the equation of
-their applications to a new variable. -/
-def byFunExt (prove : Prover) : Prover := fun Γ Φ f g ↦ do
-  let (a, _) ← (typeIn G n Γ f).bind expParts
-  let d ← prove (a :: Γ) (Φ.map weaken1) (Term.app (weaken1 f) (Term.var 0))
-    (Term.app (weaken1 g) (Term.var 0))
-  pure (RoseTree.node .funExt [d])
-
-/-- The proof of an equation by case analysis on the variable of index {lit}`i`, of a coproduct
-whose injections are the primitives of indices {lit}`kl` and {lit}`kr`, each case proved by
-{lit}`prove`: the sides abstracted over the variable are equal functions, by extensionality and
-the case analysis of the new, innermost variable, and the equation follows, cut in as a
-hypothesis, by applying them to the variable. -/
-def bySplit (kl kr i : ℕ) (prove : Prover) : Prover := fun Γ Φ t u ↦ do
-  let c ← Γ[i]?
-  let (a, b) ← coprodParts c
-  let F := abstractVar i c t
-  let H := abstractVar i c u
-  let inj (k : ℕ) (s : Term) : Term := Term.app (weaken1 s) (Term.arr k [a, b] (Term.var 0))
-  let q₀ ← prove (a :: Γ) (Φ.map weaken1) (inj kl F) (inj kl H)
-  let q₁ ← prove (b :: Γ) (Φ.map weaken1) (inj kr F) (inj kr H)
-  let pψ := RoseTree.node .funExt [RoseTree.node (.coprodInd kl kr) [q₀, q₁]]
-  let dχ := RoseTree.node .cong [RoseTree.node .beta [], RoseTree.node .beta []]
-  let pχ := RoseTree.node .join [RoseTree.node .cong
-    [RoseTree.node (.rwHyp Φ.length false) [], RoseTree.node .refl []], RoseTree.node .refl []]
-  let χ := Term.eq (Term.app F (Term.var i)) (Term.app H (Term.var i))
-  pure (RoseTree.node (.cut (Term.eq F H)) [pψ, RoseTree.node (.convFrom χ) [dχ, pχ]])
-
-/-- The proof of an equation in a context of a list variable by induction on it with the
-induction hypothesis, each premise by its prover: the empty list's, and the construction's
-with the induction hypothesis the last of its hypotheses. -/
-def byListIndWith (kn kc : ℕ) (p₀ p₁ : Prover) : Prover := fun Γ Φ t u ↦ match Γ with
-  | c :: Γ' => do
-    let a ← listPart c
-    let Φ' ← lowerHyps G n Γ' Φ
-    let d₀ ← p₀ Γ' Φ' (Term.subst t (instVar (Term.arr kn [a] Term.star)))
-      (Term.subst u (instVar (Term.arr kn [a] Term.star)))
-    let d₁ ← p₁ (c :: a :: Γ') (Φ'.map weaken2 ++ [weakenElem (Term.eq t u)])
-      (listConsAt kc a t) (listConsAt kc a u)
-    pure (RoseTree.node (.listIndHyp kn kc) [d₀, d₁])
-  | [] => none
-
-/-- The proof of an equation in a context of a rose tree alone by induction in the form of the
-uniqueness of the fold, with the step {lit}`s` at the label and the list of the values at the
-children, each premise by normalization. -/
-def byRoseInd (kn kl kc : ℕ) (s : Term) (rs : List NormRule) (fuel : ℕ) (Γ : List Tree)
-    (t u : Term) : Option Deriv := match Γ with
-  | [r] => do
-    let (a, _) ← roseParts r
-    let C ← typeIn G n Γ t
-    let p₁ ← byNorm G E n rs fuel [list r, a] [] (roseNodeAt kn r a t)
-      (Term.subst s (atVar0 (roseMapAt kl kc C t)))
-    let p₂ ← byNorm G E n rs fuel [list r, a] [] (roseNodeAt kn r a u)
-      (Term.subst s (atVar0 (roseMapAt kl kc C u)))
-    pure (RoseTree.node (.roseInd kn kl kc s) [p₁, p₂])
-  | _ => none
-
-/-- The proof of an equation under no hypotheses by induction on the innermost variable, of a
-rose-tree type, with the induction hypothesis, the premise at a construction proved by {lit}`p`
-under the hypothesis that the equation holds at each child. -/
-def byRoseIndHyp (kn kl kc : ℕ) (p : Prover) : Prover := fun Γ Φ t u ↦ match Γ, Φ with
-  | r :: Γ', [] => do
-    let (a, _) ← roseParts r
-    let d ← p (list r :: a :: Γ') [roseHyp kl kc (Term.eq t u)] (roseNodeAt kn r a t)
-      (roseNodeAt kn r a u)
-    pure (RoseTree.node (.roseIndHyp kn kl kc) [d])
-  | _, _ => none
 
 end Geb.FreeTopos.Internal
 

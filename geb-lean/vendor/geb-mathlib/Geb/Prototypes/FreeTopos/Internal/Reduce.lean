@@ -27,6 +27,9 @@ and the soundness of such a step is that of the reduction it projects.
 
 * {lit}`normalizeR` — the innermost normalization's result and mark.
 * {lit}`ResultReduction`, {lit}`evalR` — the reduction to a depth's result and mark.
+* {lit}`normalizeRFast`, {lit}`evalRFast` — the two as the compiler computes them, by the rules
+  prepared once and by the reduction the compiler runs in place of
+  {name}`Geb.FreeTopos.Internal.eval`.
 
 ## Main statements
 
@@ -34,6 +37,8 @@ and the soundness of such a step is that of the reduction it projects.
   {name}`Geb.FreeTopos.Internal.normalize`.
 * {lit}`evalR_eq` — the reduction to a depth's result alone is the projection of
   {name}`Geb.FreeTopos.Internal.eval`.
+* {lit}`normalizeR_eq_normalizeRFast`, {lit}`evalR_eq_evalRFast` — the results alone are the
+  functions the compiler computes them by.
 
 ## Tags
 
@@ -426,6 +431,47 @@ theorem normalizeR_eq (rs : List NormRule) (fuel : ℕ) :
         (normStep G E n rs (normalize G E n rs k) Γ Φ t).map Reduced.result
       funext Γ Φ t
       rw [ih, normStep_result]) fuel
+
+/-! The results alone, as the compiler computes them. -/
+
+/-- The rewriting at the root by the rules with each theorem's matching prepared is the rewriting
+by the rules. -/
+theorem rootRewrite_prepareRules (rs : List NormRule) (Γ : List Tree) (Φ : List Term) (t : Term) :
+    rootRewrite G E n (prepareRules E rs) Γ Φ t = rootRewrite G E n rs Γ Φ t := by
+  rw [rootRewrite, rootRewrite, prepareRules, List.findSome?_map]
+  exact congrArg (List.findSome? · rs) (funext fun r ↦ tryRule_prepareRule G E n Γ Φ t r)
+
+/-- The innermost normalization's result and mark as the compiler computes them: by the rules
+with each theorem's matching prepared once, so that a rule tried at many nodes instantiates and
+folds its left side at none. -/
+def normalizeRFast (rs : List NormRule) (fuel : ℕ) :
+    List Tree → List Term → Term → Option (Term × Bool) :=
+  let rs' := prepareRules E rs
+  fuel.rec (fun _ _ t ↦ some (t, false)) fun _ rec ↦ normStepR G E n rs' rec
+
+/-- The innermost normalization's result alone is {name}`Geb.FreeTopos.Internal.normalizeRFast`,
+by which the compiler replaces it. -/
+@[csimp] theorem normalizeR_eq_normalizeRFast : @normalizeR = @normalizeRFast := by
+  funext G E n rs fuel
+  exact Nat.rec (motive := fun f ↦ normalizeR G E n rs f = normalizeRFast G E n rs f) rfl
+    (fun k ih ↦ by
+      change normStepR G E n rs (normalizeR G E n rs k) =
+        normStepR G E n (prepareRules E rs) (normalizeRFast G E n rs k)
+      rw [ih]
+      funext Γ Φ t
+      simp only [normStepR, rootRewrite_prepareRules]) fuel
+
+/-- The reduction to a depth's result and mark as the compiler computes them: the projection of
+the reduction by the index of the prepared rules
+({name}`Geb.FreeTopos.Internal.evalFast`), whose derivation is discarded. -/
+def evalRFast (rs : List NormRule) (fuel : ℕ) : ResultReduction :=
+  (evalFast G E n rs fuel).result
+
+/-- The reduction to a depth's result alone is {name}`Geb.FreeTopos.Internal.evalRFast`, by which
+the compiler replaces it. -/
+@[csimp] theorem evalR_eq_evalRFast : @evalR = @evalRFast := by
+  funext G E n rs fuel
+  rw [evalR_eq, evalRFast, eval_eq_evalFast]
 
 end Geb.FreeTopos.Internal
 

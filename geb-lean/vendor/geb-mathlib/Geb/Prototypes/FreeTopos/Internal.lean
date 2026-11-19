@@ -8,8 +8,10 @@ module
 public import Geb.Prototypes.FreeTopos.Internal.Compile
 public import Geb.Prototypes.FreeTopos.Internal.Completeness
 public import Geb.Prototypes.FreeTopos.Internal.Connectives
+public import Geb.Prototypes.FreeTopos.Internal.Composition
 public import Geb.Prototypes.FreeTopos.Internal.Derivation
 public import Geb.Prototypes.FreeTopos.Internal.Development
+public import Geb.Prototypes.FreeTopos.Internal.Encoding
 public import Geb.Prototypes.FreeTopos.Internal.Inversion
 public import Geb.Prototypes.FreeTopos.Internal.Logic
 public import Geb.Prototypes.FreeTopos.Internal.Machine
@@ -20,6 +22,10 @@ public import Geb.Prototypes.FreeTopos.Internal.Prove
 public import Geb.Prototypes.FreeTopos.Internal.ProveChecked
 public import Geb.Prototypes.FreeTopos.Internal.Reduce
 public import Geb.Prototypes.FreeTopos.Internal.Represent
+public import Geb.Prototypes.FreeTopos.Internal.RepresentEq
+public import Geb.Prototypes.FreeTopos.Internal.RepresentLift
+public import Geb.Prototypes.FreeTopos.Internal.RepresentLogic
+public import Geb.Prototypes.FreeTopos.Internal.RepresentNat
 public import Geb.Prototypes.FreeTopos.Internal.Semantics
 public import Geb.Prototypes.FreeTopos.Internal.Soundness
 public import Geb.Prototypes.FreeTopos.Internal.Sorting
@@ -28,6 +34,7 @@ public import Geb.Prototypes.FreeTopos.Internal.Substitution
 public import Geb.Prototypes.FreeTopos.Internal.Syntax
 public import Geb.Prototypes.FreeTopos.Internal.SyntaxLaws
 public import Geb.Prototypes.FreeTopos.Internal.Typing
+public import Geb.Prototypes.FreeTopos.Internal.Unfolded
 
 set_option doc.verso true in
 /-!
@@ -41,8 +48,10 @@ agrees, in every model, with unfolding the language's definitions and compiling;
 of formulas under hypotheses, their checker and a prover, the proofs that the checker is sound
 and, citing certificates of the combinators, complete, and that the prover's rewritings check,
 with the checker with a step of conversion admitted by them; its connectives, defined from
-equality, with their rules derived, their meaning in every model, and description; and the
-representation of Lean's functions by its terms in the topos of types and functional relations.
+equality, with their rules derived, their meaning in every model, and description; the
+representation of Lean's functions by its terms in the topos of types and functional relations;
+and the representation of its data as trees of numbers, with the environment machine run in
+place of the machine written in Geb at those representations.
 -/
 
 set_option doc.verso true

@@ -222,7 +222,7 @@ theorem mapM_map_option {α β γ : Type} (g : α → Option β) (h : β → γ)
   l.rec (by simp) fun a l ih ↦ by
     rcases hg : g a with _ | b
     · simp [List.mapM_cons, hg]
-    · rcases hl : l.mapM g with _ | bs <;> simp_all [List.mapM_cons]
+    · rcases hl : l.mapM g with _ | bs <;> simp [List.mapM_cons, hg, ih, hl]
 
 /-- The results of two partial functions over a list are equal when the functions agree at its
 elements. -/

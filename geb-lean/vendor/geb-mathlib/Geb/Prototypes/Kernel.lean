@@ -8,17 +8,21 @@ module
 public import Geb.Prototypes.Kernel.Annotation
 public import Geb.Prototypes.Kernel.Basic
 public import Geb.Prototypes.Kernel.Blake3
+public import Geb.Prototypes.Kernel.Chains
 public import Geb.Prototypes.Kernel.Hole
+public import Geb.Prototypes.Kernel.Holes
 public import Geb.Prototypes.Kernel.Identity
 public import Geb.Prototypes.Kernel.Document
 public import Geb.Prototypes.Kernel.Durable
 public import Geb.Prototypes.Kernel.Eval
 public import Geb.Prototypes.Kernel.Manifest
+public import Geb.Prototypes.Kernel.Markup
 public import Geb.Prototypes.Kernel.ModuleIdentity
 public import Geb.Prototypes.Kernel.Modules
 public import Geb.Prototypes.Kernel.Printer
 public import Geb.Prototypes.Kernel.Loading
 public import Geb.Prototypes.Kernel.Reader
+public import Geb.Prototypes.Kernel.SourceAnnotation
 public import Geb.Prototypes.Kernel.Strict
 public import Geb.Prototypes.Kernel.Subst
 

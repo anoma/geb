@@ -169,7 +169,7 @@ theorem potential_next_lt (cfg : Cfg) (h : halted cfg = false) :
         cases frame with
         | inl x =>
           cases hx : x.getValue <;> simp [next_seek_value, hx, potential, frameWork]
-          all_goals omega
+          omega
         | inr f =>
           cases hf : f.getValue with
           | none => simp [next_seek_value, hf, potential, frameWork]; omega

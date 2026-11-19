@@ -98,6 +98,12 @@ structure St where
   /-- Whether the typing's certificates are the checker's oracle rules
   ({lit}`checkTopos`) rather than lemmas. -/
   infer : Bool := false
+  /-- Whether intermediate proofs are retained as local cuts instead of extending the theorem
+  environment. Hypotheses are numbered in insertion order; a caller must reindex them when
+  assembling cuts, since the certificate checker prepends each cut hypothesis. -/
+  localProofs : Bool := false
+  /-- Local lemmas, each proved under the original scope and its predecessors. -/
+  localLemmas : List (Eqn × Tree) := []
 
 /-- The prover's monad: a scope, and the state of the development and the typings. -/
 abbrev PM : Type → Type := ReaderT Scope (StateT St Option)
@@ -112,11 +118,14 @@ def axiomAt (j : ℕ) : PM Seq := do
     | none => failure
   | none => failure
 
-/-- A lemma: the conclusion, proved in the scope by the certificate, added to the development;
-the result is its citation. -/
+/-- A lemma: the conclusion, proved in the scope by the certificate, added to the development
+or retained as a local cut. The result cites it as a theorem or a hypothesis, respectively. -/
 def addLemma (q : Eqn) (c : Tree) : PM Tree := do
   let sc ← read
   let st ← get
+  if st.localProofs then
+    set { st with localLemmas := st.localLemmas ++ [(q, c)] }
+    return Cert.hyp (sc.hyps.length + st.localLemmas.length)
   set { st with dev := st.dev.push (sc.seq q, c) }
   pure (sc.cite st.dev.size)
 
