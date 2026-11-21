@@ -172,7 +172,7 @@ mlPolySlObjProj {ar} sl =
 
 public export
 mlPolySlObjToC : (ar : PolyFunc) -> MlPolySlObj ar -> CPFSliceObj ar
-mlPolySlObjToC ar sl@(MPSobj onpos dir ondir) =
+mlPolySlObjToC ar sl =
   (mlPolySlObjTot {ar} sl ** mlPolySlObjProj {ar} sl)
 
 public export
@@ -329,14 +329,12 @@ public export
 0 mlPolySlMorToCP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor {ar} dom cod ->
   CPFSliceMorph ar (mlPolySlObjToC ar dom) (mlPolySlObjToC ar cod)
-mlPolySlMorToCP {ar=ar@(bpos ** bdir)}
-  {dom=dom@(MPSobj dpos ddir dondir)} {cod=cod@(MPSobj cpos cdir condir)}
-  m@(MPSM monpos mondir mondirc) =
-    Element0
-      (mlPolySlMorNT {ar} {dom} {cod} m)
-      (Evidence0
-        (\_ => Refl)
-        (\ij, bd => mondirc (fst ij) (snd ij) bd))
+mlPolySlMorToCP {ar} {dom} {cod} m =
+  Element0
+    (mlPolySlMorNT {ar} {dom} {cod} m)
+    (Evidence0
+      (\_ => Refl)
+      (\ij, bd => mpsmOnDirCommutes m (fst ij) (snd ij) bd))
 
 public export
 0 mlPolySlMorFromCP : {ar : MLArena} -> {dom, cod : CPFSliceObj ar} ->

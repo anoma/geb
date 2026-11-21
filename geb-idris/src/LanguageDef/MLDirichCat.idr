@@ -936,24 +936,10 @@ public export
 0 mlDirichSlMorToCD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
   MlDirichSlMor dom cod ->
   CDFSliceMorph ar (mlDirichSlObjToC dom) (mlDirichSlObjToC cod)
-mlDirichSlMorToCD {ar=(ppos ** pdir)}
-  {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
-  mor@(MDSM monpos mondir)
-      with
-        (DFSliceMorphToC {p=(ppos ** pdir)} {cod=(mlDirichSlObjToC cod)}
-          (mlDirichSlMorToD {dom} {cod} mor))
-  mlDirichSlMorToCD {ar=(ppos ** pdir)}
-    {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
-    mor@(MDSM monpos mondir)
-      | Element0 dmnt@(dmonpos ** dmondir) (Evidence0 opeq odeq) =
-        Element0
-         dmnt
-         (Evidence0
-            opeq
-            $ \i : (DPair ppos donpos),
-               d : (DPair (pdir (fst i)) (ddir (fst i) (snd i))) =>
-                trans (odeq i d)
-                $ case i of (i' ** j') => case d of (d' ** dd') => Refl)
+mlDirichSlMorToCD {ar=(_ ** _)} {dom=MDSobj _ _} {cod=MDSobj _ _}
+  mor@(MDSM _ _) =
+    Element0 (mlDirichSlMorToCBase mor)
+      (Evidence0 (\_ => Refl) (\(_ ** _), (_ ** _) => Refl))
 
 public export
 mlDirichSlMorFromD : {ar : MLArena} -> {cod : CDFSliceObj ar} ->

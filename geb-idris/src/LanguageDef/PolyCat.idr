@@ -3574,7 +3574,7 @@ InterpPolyFuncCofreeCMFromPTree =
 public export
 0 PolyFuncCofreeCMPosNuScaleToPTree : {p : PolyFunc} ->
   PolyFuncCofreeCMPosFromNuScale p -> PolyFuncCofreeCMFromPTreePos p
-PolyFuncCofreeCMPosNuScaleToPTree {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
+PolyFuncCofreeCMPosNuScaleToPTree {p=p@(pos ** dir)} (InPFN (PFNode _ i) d) =
   ?PolyFuncCofreeCMPosNuScaleToPTree_hole
 
 public export
