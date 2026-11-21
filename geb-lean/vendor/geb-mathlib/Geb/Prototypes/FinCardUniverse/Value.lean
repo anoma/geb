@@ -111,14 +111,14 @@ not its code's decoding. -/
 def arityHomEquiv (former : Former) (a : Shp former) (U : Type) (d : U → Card) :
     ArityHom (universeFunctor former) a (famPresheaf U d) ≃
       ((k : Idx a.1) → Σ u : U, (bound a.1 k ⟶ d u)) where
-  toFun α k := α.1 (bound a.1 k) ⟨⟨k, bound a.1 k, 𝟙 _⟩, rfl⟩
+  toFun α k := α.val (bound a.1 k) ⟨⟨k, bound a.1 k, 𝟙 _⟩, rfl⟩
   invFun F :=
-    ⟨fun _i b ↦ ⟨(F b.1.1).1, (eqToHom b.2.symm ≫ b.1.2.2) ≫ (F b.1.1).2⟩,
+    ⟨fun _i b ↦ ⟨(F b.val.1).1, (eqToHom b.property.symm ≫ b.val.2.2) ≫ (F b.val.1).2⟩,
       fun _i _i' _f _b ↦ rfl⟩
   left_inv α := by
     refine Subtype.ext (funext fun i ↦ funext fun b ↦ ?_)
     obtain ⟨⟨k, v, φ⟩, rfl⟩ := b
-    exact (α.2 φ ⟨⟨k, bound a.1 k, 𝟙 _⟩, rfl⟩).symm
+    exact (α.property φ ⟨⟨k, bound a.1 k, 𝟙 _⟩, rfl⟩).symm
   right_inv _F := rfl
 
 /-! ## A code with no inductive-recursive counterpart -/

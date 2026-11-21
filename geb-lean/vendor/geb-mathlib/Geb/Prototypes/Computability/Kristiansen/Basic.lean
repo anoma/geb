@@ -61,10 +61,10 @@ public section
   WType.elim Prop fun x ↦ AllowedShape x.1 ∧ ∀ d, x.2 d
 
 /-- Expressions of the word algebra of \[Kristiansen2005\] at arity {lit}`n`. -/
-@[expose] def LOf (n : ℕ) : Type := { e : SizeBounded.SOf n // Allowed e.1.1 }
+@[expose] def LOf (n : ℕ) : Type := { e : SizeBounded.SOf n // Allowed e.val.val }
 
 /-- The binary-word interpretation, inherited from the containing algebra. -/
-@[expose] def LOf.sem {n : ℕ} (e : LOf n) : Cobham.Sem n := e.1.sem
+@[expose] def LOf.sem {n : ℕ} (e : LOf n) : Cobham.Sem n := e.val.sem
 
 /-- A constant word, with unused arguments admitted by nullary composition. -/
 @[expose] def constOf (n : ℕ) (w : List Bool) : LOf n :=
@@ -76,19 +76,19 @@ public section
 
 /-- Composition of expressions in the fragment. -/
 @[expose] def compOf {n m : ℕ} (h : LOf m) (g : Fin m → LOf n) : LOf n :=
-  ⟨SizeBounded.compOf h.1 (fun i ↦ (g i).1), trivial,
+  ⟨SizeBounded.compOf h.val (fun i ↦ (g i).val), trivial,
     fun d ↦ match d with
-    | .inl () => h.2
-    | .inr i => (g i).2⟩
+    | .inl () => h.property
+    | .inr i => (g i).property⟩
 
 /-- Component {lit}`j` of simultaneous recursion on notation. -/
 @[expose] def srnOf {a b : ℕ} (g : Fin b → LOf a)
     (h : Bool → Fin b → LOf (b + a + 1)) (j : Fin b) : LOf (a + 1) :=
-  ⟨SizeBounded.srnOf (fun l ↦ (g l).1) (fun i l ↦ (h i l).1) j, trivial,
+  ⟨SizeBounded.srnOf (fun l ↦ (g l).val) (fun i l ↦ (h i l).val) j, trivial,
     fun d ↦ match d with
-    | .inl l => (g l).2
-    | .inr (.inl l) => (h false l).2
-    | .inr (.inr l) => (h true l).2⟩
+    | .inl l => (g l).property
+    | .inr (.inl l) => (h false l).property
+    | .inr (.inr l) => (h true l).property⟩
 
 /-- A constant's value. -/
 theorem sem_constOf (n : ℕ) (w : List Bool) (x : Fin n → List Bool) :

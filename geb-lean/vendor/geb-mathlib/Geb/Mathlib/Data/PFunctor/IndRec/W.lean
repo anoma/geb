@@ -105,7 +105,7 @@ def PosToSliceSig (α : FreeCoprodCompDisc.Map.{max uA uB, uI, uO} I O)
     (F : SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :
     Type (max (uA + 1) (uB + 1) uI) :=
   (X : FreeCoprodCompDisc.{max uA uB, uI} I) → (z : (α X).1) →
-    { y : F.toSliceDomPFunctor.Obj X.2 // F.q y.1.1 = (α X).2 z }
+    { y : F.toSliceDomPFunctor.Obj X.2 // F.q y.val.1 = (α X).2 z }
 
 /-- The constant (`iota`) step of `IR.posToSlice`: the one shape of
 `IR.toSlicePFunctorIota`, with the empty direction assignment. -/
@@ -126,7 +126,7 @@ def posToSliceSigma (A : Type uA)
       (toSlicePFunctorSigma.{uA, uB, uI, uO} I O A F) :=
   fun X z ↦
     let w := m z.1 X z.2
-    ⟨⟨⟨⟨z.1, w.1.1.1⟩, w.1.1.2⟩, w.1.2⟩, w.2⟩
+    ⟨⟨⟨⟨z.1, w.val.val.1⟩, w.val.val.2⟩, w.val.property⟩, w.property⟩
 
 /-- The dependent product (`delta`) step of `IR.posToSlice`: the node's
 recursive fields become the directions of the representable factor of the
@@ -141,11 +141,11 @@ def posToSliceDelta (B : Type uB)
       (toSlicePFunctorDelta.{uA, uB, uI, uO} I O B F) :=
   fun X z ↦
     let w := m (X.2 ∘ z.1) X z.2
-    ⟨⟨⟨⟨X.2 ∘ z.1, ⟨PUnit.unit, w.1.1.1⟩⟩, Sum.elim z.1 w.1.1.2⟩,
+    ⟨⟨⟨⟨X.2 ∘ z.1, ⟨PUnit.unit, w.val.val.1⟩⟩, Sum.elim z.1 w.val.val.2⟩,
         funext fun b ↦ match b with
           | Sum.inl _ => rfl
-          | Sum.inr d => congrFun w.1.2 d⟩,
-      w.2⟩
+          | Sum.inr d => congrFun w.val.property d⟩,
+      w.property⟩
 
 /-- The interpretation of a code, the code's slice polynomial functor, and
 the presentation of the former's nodes as the latter's, folded together.
@@ -263,7 +263,7 @@ with `IR.interpObj γ (IR.wObj I γ)`. -/
 def W.mk (γ : IR.{max uA uI, uB, uI, uI} I I)
     (z : ((posSlice.{max uA uI, uB, uI, uI} I I γ).interp (wObj.{uA, uB, uI} I γ)).1) :
     W.{uA, uB, uI} I γ :=
-  SlicePFunctor.W.mk ((posSlice.{max uA uI, uB, uI, uI} I I γ).tr (wObj I γ) z).1
+  SlicePFunctor.W.mk ((posSlice.{max uA uI, uB, uI, uI} I I γ).tr (wObj I γ) z).val
 
 /-- The decoder of a constructed element is the interpretation's decoding
 of the node it was constructed from: the algebra law of `IR.W.mk`. -/
@@ -272,7 +272,7 @@ theorem wDecode_mk (γ : IR.{max uA uI, uB, uI, uI} I I)
     (z : ((posSlice.{max uA uI, uB, uI, uI} I I γ).interp (wObj.{uA, uB, uI} I γ)).1) :
     wDecode I γ (W.mk.{uA, uB, uI} I γ z) =
       ((posSlice I I γ).interp (wObj I γ)).2 z :=
-  ((posSlice I I γ).tr (wObj I γ) z).2
+  ((posSlice I I γ).tr (wObj I γ) z).property
 
 end IR
 

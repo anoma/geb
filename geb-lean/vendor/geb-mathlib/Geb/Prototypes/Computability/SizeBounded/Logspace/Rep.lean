@@ -384,9 +384,9 @@ theorem wordBounded_evalSRNRep {k : ℕ} {a b : ℕ} {g : Fin b → RepSem a}
 slice over {lit}`ℕ`. -/
 @[expose] def evalRepStep (w : List Bool) :
     sig.toSliceDomPFunctor.Obj (Sigma.fst (β := RepSem)) → Σ i, RepSem i :=
-  fun z ↦ ⟨sig.q z.1.1,
-    evalRepValue w z.1.1 z.1.2
-      ((sig.toSliceDomPFunctor.compatible_iff _ z.1.1 z.1.2).mp z.2)⟩
+  fun z ↦ ⟨sig.q z.val.1,
+    evalRepValue w z.val.1 z.val.2
+      ((sig.toSliceDomPFunctor.compatible_iff _ z.val.1 z.val.2).mp z.property)⟩
 
 /-- The interpretation of a tree on representations at an input: its arity
 together with its meaning at that arity. -/
@@ -404,10 +404,11 @@ theorem fst_evalRep (w : List Bool) (z : S) : (evalRep w z).1 = arity z :=
   repTransport ((fst_evalRep w e).trans he) (evalRep w e).2
 
 /-- The meaning of an expression of a given arity on representations. -/
-@[expose] def SOf.repSem (w : List Bool) {n : ℕ} (e : SOf n) : RepSem n := repSemAt w n e.1 e.2
+@[expose] def SOf.repSem (w : List Bool) {n : ℕ} (e : SOf n) : RepSem n :=
+  repSemAt w n e.val e.property
 
 /-- The meaning of an expression of the subalgebra on representations. -/
-@[expose] def LOf.repSem (w : List Bool) {n : ℕ} (e : LOf n) : RepSem n := SOf.repSem w e.1
+@[expose] def LOf.repSem (w : List Bool) {n : ℕ} (e : LOf n) : RepSem n := SOf.repSem w e.val
 
 /-- Denotation of an indexed pair, the indices agreeing. -/
 @[expose] def DenotesSigma (w : List Bool) (p : Σ i, RepSem i) (m : Σ i, Sem i) : Prop :=
@@ -446,7 +447,7 @@ theorem validAt_evalRepValue (w : List Bool) (a : Shape) (c : Direction a → Σ
 /-- Every expression keeps the length part within the input. -/
 theorem validAt_evalRep (w : List Bool) : ∀ e : S, ValidAt w.length (evalRep w e).2 :=
   SlicePFunctor.W.induction fun x ih ↦
-    validAt_evalRepValue w x.1.1 (fun b ↦ evalRep w (x.1.2 b)) _ ih
+    validAt_evalRepValue w x.val.1 (fun b ↦ evalRep w (x.val.2 b)) _ ih
 
 /-- One node denotes its meaning when its children do and keep the length part
 within the input. -/
@@ -478,8 +479,8 @@ theorem den_evalRepValue (w : List Bool) (a : Shape) (c : Direction a → Σ i, 
 /-- Every expression denotes its meaning on representations. -/
 theorem den_evalRep (w : List Bool) : ∀ e : S, DenotesSigma w (evalRep w e) (eval e) :=
   SlicePFunctor.W.induction fun x ih ↦
-    ⟨rfl, den_evalRepValue w x.1.1 (fun b ↦ evalRep w (x.1.2 b)) _ (fun b ↦ eval (x.1.2 b)) _
-      (fun b ↦ validAt_evalRep w (x.1.2 b)) ih⟩
+    ⟨rfl, den_evalRepValue w x.val.1 (fun b ↦ evalRep w (x.val.2 b)) _ (fun b ↦ eval (x.val.2 b)) _
+      (fun b ↦ validAt_evalRep w (x.val.2 b)) ih⟩
 
 /-- One successor-free node keeps the word part within the constant
 {name}`Geb.SizeBounded.nsiValue` assigns when each child keeps it within the
@@ -528,23 +529,25 @@ theorem wordBounded_evalRepValue (w : List Bool) (a : Shape) (c : Direction a �
 /-- Every successor-free expression keeps the word part within the constant
 {name}`Geb.SizeBounded.nsiConst` reads off its syntax. -/
 theorem wordBounded_evalRep (w : List Bool) :
-    ∀ e : S, sbsFree e.1 = true → WordBounded (nsiConst e.1) (evalRep w e).2 :=
+    ∀ e : S, sbsFree e.val = true → WordBounded (nsiConst e.val) (evalRep w e).2 :=
   SlicePFunctor.W.induction fun x ih hfree ↦
-    wordBounded_evalRepValue w x.1.1 (fun b ↦ evalRep w (x.1.2 b)) _
-      (fun b ↦ sbsFree (x.1.2 b).1) hfree (fun b ↦ nsiConst (x.1.2 b).1) ih
+    wordBounded_evalRepValue w x.val.1 (fun b ↦ evalRep w (x.val.2 b)) _
+      (fun b ↦ sbsFree (x.val.2 b).val) hfree (fun b ↦ nsiConst (x.val.2 b).val) ih
 
 /-- An expression of the subalgebra denotes its meaning on representations. -/
 theorem den_repSem (w : List Bool) {n : ℕ} (e : LOf n) : Denotes w (e.repSem w) e.sem :=
-  (den_evalRep w e.1.1).atArity ((fst_evalRep w e.1.1).trans e.1.2) ((fst_eval e.1.1).trans e.1.2)
+  (den_evalRep w e.val.val).atArity ((fst_evalRep w e.val.val).trans e.val.property)
+    ((fst_eval e.val.val).trans e.val.property)
 
 /-- An expression of the subalgebra keeps the length part within the input. -/
 theorem validAt_repSem (w : List Bool) {n : ℕ} (e : LOf n) : ValidAt w.length (e.repSem w) :=
-  validAt_transport ((fst_evalRep w e.1.1).trans e.1.2) (validAt_evalRep w e.1.1)
+  validAt_transport ((fst_evalRep w e.val.val).trans e.val.property) (validAt_evalRep w e.val.val)
 
 /-- An expression of the subalgebra keeps the word part within its constant. -/
 theorem wordBounded_repSem (w : List Bool) {n : ℕ} (e : LOf n) :
-    WordBounded (nsiConst e.1.1.1) (e.repSem w) :=
-  wordBounded_transport ((fst_evalRep w e.1.1).trans e.1.2) (wordBounded_evalRep w e.1.1 e.2)
+    WordBounded (nsiConst e.val.val.val) (e.repSem w) :=
+  wordBounded_transport ((fst_evalRep w e.val.val).trans e.val.property)
+    (wordBounded_evalRep w e.val.val e.property)
 
 end
 

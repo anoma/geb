@@ -189,7 +189,7 @@ abbrev M : Type (max uA uB) := { w : Bundle Q // Consistent (readBundle w) }
 namespace M
 
 /-- The observation of an element at a depth. -/
-def observe (w : M Q) : ∀ n : Depth.{uA, uB}, Approx Q n := readBundle w.1
+def observe (w : M Q) : ∀ n : Depth.{uA, uB}, Approx Q n := readBundle w.val
 
 /-- Elements with equal observations at every depth are equal. -/
 theorem ext {x y : M Q} (h : ∀ n, x.observe n = y.observe n) : x = y :=
@@ -207,7 +207,7 @@ rule at a successor. -/
 theorem observe_succ (w : M Q) (n : Depth.{uA, uB}) :
     succEquiv Q n (w.observe (succ n)) =
       Q.map (truncate Q n) (succEquiv Q (succ n) (w.observe (succ (succ n)))) :=
-  (congrArg (succEquiv Q n) (w.2 (succ n))).symm.trans (truncate_succ n _)
+  (congrArg (succEquiv Q n) (w.property (succ n))).symm.trans (truncate_succ n _)
 
 /-!
 ## The constructor
@@ -229,7 +229,7 @@ theorem mkApprox_consistent (x : Q.Obj (M Q)) : Consistent (mkApprox x) := by
   refine Depth.induction rfl fun n _ ↦ (succEquiv Q n).injective ?_
   rw [truncate_succ, mkApprox_succ, mkApprox_succ]
   obtain ⟨a, f⟩ := x
-  exact congrArg (Sigma.mk a) (funext fun b ↦ (f b).2 n)
+  exact congrArg (Sigma.mk a) (funext fun b ↦ (f b).property n)
 
 /-- The constructor: the element with root layer {lit}`x`. -/
 def mk (x : Q.Obj (M Q)) : M Q := ⟨bundle (mkApprox x), mkApprox_consistent x⟩

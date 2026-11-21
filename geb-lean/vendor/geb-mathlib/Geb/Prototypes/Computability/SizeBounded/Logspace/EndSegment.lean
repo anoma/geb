@@ -142,31 +142,31 @@ preserves a suffix-closed property holding of every word within {lit}`m`: the
 form of \[Kristiansen2005\] Lemma 4.5's induction. -/
 theorem preserves_eval {P : List Bool → Prop} (hP : SuffixClosed P) {m : ℕ}
     (hm : ∀ w : List Bool, w.length ≤ m → P w) :
-    ∀ e : S, sbsFree e.1 = true → nsiConst e.1 ≤ m → Preserves P (eval e).2 :=
+    ∀ e : S, sbsFree e.val = true → nsiConst e.val ≤ m → Preserves P (eval e).2 :=
   SlicePFunctor.W.induction fun x ih hfree hk ↦
-    preserves_evalValue hP hm x.1.1 (fun b ↦ eval (x.1.2 b)) _ (fun b ↦ sbsFree (x.1.2 b).1)
-      hfree (fun b ↦ nsiConst (x.1.2 b).1) hk ih
+    preserves_evalValue hP hm x.val.1 (fun b ↦ eval (x.val.2 b)) _ (fun b ↦ sbsFree (x.val.2 b).val)
+      hfree (fun b ↦ nsiConst (x.val.2 b).val) hk ih
 
 /-- Every value of an expression of the subalgebra is no longer than the
 expression's constant or a suffix of one of the arguments. -/
 theorem length_le_or_suffix {n : ℕ} (e : LOf n) (x : Fin n → List Bool) :
-    (e.sem x).length ≤ nsiConst e.1.1.1 ∨ ∃ i, e.sem x <:+ x i := by
-  have hP : SuffixClosed fun w ↦ w.length ≤ nsiConst e.1.1.1 ∨ ∃ i, w <:+ x i := by
+    (e.sem x).length ≤ nsiConst e.val.val.val ∨ ∃ i, e.sem x <:+ x i := by
+  have hP : SuffixClosed fun w ↦ w.length ≤ nsiConst e.val.val.val ∨ ∃ i, w <:+ x i := by
     intro c w hw
     cases hw with
     | inl hl => exact Or.inl (by rw [List.length_cons] at hl; omega)
     | inr hs =>
       obtain ⟨i, hi⟩ := hs
       exact Or.inr ⟨i, (List.suffix_cons c w).trans hi⟩
-  have hx : ∀ i, (fun w ↦ w.length ≤ nsiConst e.1.1.1 ∨ ∃ i, w <:+ x i) (x i) :=
+  have hx : ∀ i, (fun w ↦ w.length ≤ nsiConst e.val.val.val ∨ ∃ i, w <:+ x i) (x i) :=
     fun i ↦ Or.inr ⟨i, List.suffix_refl _⟩
-  exact preserves_transport _ (preserves_eval hP (fun _ h ↦ Or.inl h) e.1.1 e.2 (Nat.le_refl _))
-    x hx
+  exact preserves_transport _
+    (preserves_eval hP (fun _ h ↦ Or.inl h) e.val.val e.property (Nat.le_refl _)) x hx
 
 /-- \[Kristiansen2005\] Lemma 4.5: a value longer than the expression's
 constant is a suffix of one of the arguments. -/
 theorem suffix_of_lt_length {n : ℕ} (e : LOf n) (x : Fin n → List Bool)
-    (h : nsiConst e.1.1.1 < (e.sem x).length) : ∃ i, e.sem x <:+ x i := by
+    (h : nsiConst e.val.val.val < (e.sem x).length) : ∃ i, e.sem x <:+ x i := by
   cases length_le_or_suffix e x with
   | inl hl => omega
   | inr hs => exact hs

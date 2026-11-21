@@ -188,7 +188,7 @@ abbrev failV : Val := vnode .fail []
 /-- The delayed value of a computation, the value {lit}`src` its source: the node whose first
 child the runtime computes when it is first read, and keeps. -/
 def delayed (th : Thunk (Option Val)) (src : Val) : Val :=
-  WType.mk (.delay, 2) fun i ↦ if i.1 = 0 then th.get.getD failV else src
+  WType.mk (.delay, 2) fun i ↦ if i.val = 0 then th.get.getD failV else src
 
 /-- The label of a value's node of a label of a term whose children are values in the term's
 environment: the pair, the components, the application, the primitive arrows and the

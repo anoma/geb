@@ -251,9 +251,9 @@ the shape's own output index as the first component makes the eliminator's
 coherence obligation hold by `rfl`. -/
 @[expose] def evalStep :
     sig.toSliceDomPFunctor.Obj (Sigma.fst (β := Sem)) → Σ i, Sem i :=
-  fun z ↦ ⟨sig.q z.1.1,
-    evalValue z.1.1 z.1.2
-      ((sig.toSliceDomPFunctor.compatible_iff _ z.1.1 z.1.2).mp z.2)⟩
+  fun z ↦ ⟨sig.q z.val.1,
+    evalValue z.val.1 z.val.2
+      ((sig.toSliceDomPFunctor.compatible_iff _ z.val.1 z.val.2).mp z.property)⟩
 
 /-- The interpretation of an expression: its arity pair together with its
 meaning at that pair, by the slice W-type's eliminator. -/

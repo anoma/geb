@@ -312,9 +312,9 @@ own output index as the first component makes the eliminator's coherence obligat
 hold by `rfl`. -/
 @[expose] def evalStep :
     sig.toSliceDomPFunctor.Obj (Sigma.fst (β := Sem)) → Σ i, Sem i :=
-  fun z ↦ ⟨sig.q z.1.1,
-    evalValue z.1.1 z.1.2
-      ((sig.toSliceDomPFunctor.compatible_iff _ z.1.1 z.1.2).mp z.2)⟩
+  fun z ↦ ⟨sig.q z.val.1,
+    evalValue z.val.1 z.val.2
+      ((sig.toSliceDomPFunctor.compatible_iff _ z.val.1 z.val.2).mp z.property)⟩
 
 /-- The interpretation of a `sig`-tree: its arity together with its meaning at that
 arity, by the slice W-type's eliminator. -/
@@ -362,9 +362,9 @@ is the node's compatibility (`SliceDomPFunctor.compatible_iff`) composed with
 its interpretation carries. -/
 @[expose] def RecBounded : sig.W → Prop :=
   SlicePFunctor.W.RecProp (fun x ih ↦
-    RecBoundedValue x.1.1 x.1.2
-        (fun b ↦ (fst_eval (x.1.2 b)).trans
-          ((sig.toSliceDomPFunctor.compatible_iff _ x.1.1 x.1.2).mp x.2 b)) ∧
+    RecBoundedValue x.val.1 x.val.2
+        (fun b ↦ (fst_eval (x.val.2 b)).trans
+          ((sig.toSliceDomPFunctor.compatible_iff _ x.val.1 x.val.2).mp x.property b)) ∧
       ∀ b, ih b)
 
 /-- One-level unfolding of `RecBounded` on a raw node `⟨WType.mk a f, hv⟩`: the
@@ -384,7 +384,7 @@ respect the length bound. -/
 @[expose] def C : Type := { e : sig.W // RecBounded e }
 
 /-- The arity of an expression, that of the underlying tree. -/
-@[expose] def C.arity (e : C) : ℕ := Cobham.arity e.1
+@[expose] def C.arity (e : C) : ℕ := Cobham.arity e.val
 
 /-- The expressions of a given arity. -/
 @[expose] def COf (n : ℕ) : Type := { e : C // e.arity = n }
@@ -393,7 +393,7 @@ respect the length bound. -/
 interpretation carries the index `eval` computed, equal to the arity by `fst_eval`
 but not definitionally so, hence the `transport`. -/
 @[expose] def C.eval (e : C) : Sem e.arity :=
-  transport (fst_eval e.1) (Cobham.eval e.1).2
+  transport (fst_eval e.val) (Cobham.eval e.val).2
 
 /-- The empty bitstring at an arbitrary arity. -/
 @[expose] def zeroAtRaw (n : ℕ) : sig.toPFunctor.W :=
@@ -458,7 +458,7 @@ the bound child returns `y`; at the empty bitstring the value is empty. -/
         | 0 | 1 | 2 | 3 => exact ⟨trivial, fun d ↦ d.elim0⟩⟩, rfl⟩
 
 /-- The meaning of the predecessor, at arity one. -/
-@[expose] def predSem : Sem 1 := transport pred.2 pred.1.eval
+@[expose] def predSem : Sem 1 := transport pred.property pred.val.eval
 
 /-- The predecessor drops the word's last bit, which is the Lean list's head. -/
 theorem predSem_eq (u : List Bool) : predSem ![u] = u.tail := by
@@ -486,11 +486,11 @@ theorem wValid_predIterRaw (k : ℕ) : sig.WValid (predIterRaw k) :=
   Nat.rec ⟨fun c ↦ c.elim0, funext fun c ↦ c.elim0⟩
     (fun j ih ↦
       ⟨fun d ↦ match d with
-        | .inl () => pred.1.1.2
+        | .inl () => pred.val.val.property
         | .inr _ => ih,
       funext fun d ↦ match d with
         | .inl () =>
-          (sig.wIndexValid_index_eq_wIndexRoot predRaw).trans pred.2
+          (sig.wIndexValid_index_eq_wIndexRoot predRaw).trans pred.property
         | .inr _ =>
           (sig.wIndexValid_index_eq_wIndexRoot (predIterRaw j)).trans
             (wIndexRoot_predIterRaw j)⟩)
@@ -502,7 +502,7 @@ theorem recBounded_predIterRaw (k : ℕ) :
     RecBounded ⟨predIterRaw k, wValid_predIterRaw k⟩ :=
   Nat.rec ⟨trivial, fun c ↦ c.elim0⟩
     (fun _ ih ↦ ⟨trivial, fun d ↦ match d with
-      | .inl () => pred.1.2
+      | .inl () => pred.val.property
       | .inr _ => ih⟩)
     k
 
@@ -556,19 +556,19 @@ theorem recBounded_prependRaw (n : ℕ) (e : sig.toPFunctor.W)
 
 /-- A fixed word prepended to an expression. -/
 @[expose] def prepend {n : ℕ} (u : List Bool) (e : COf n) : C :=
-  ⟨⟨prependRaw n u e.1.1.1, wValid_prependRaw n _ e.1.1.2 e.2 u⟩,
-    recBounded_prependRaw n _ e.1.1.2 e.2 e.1.2 u⟩
+  ⟨⟨prependRaw n u e.val.val.val, wValid_prependRaw n _ e.val.val.property e.property u⟩,
+    recBounded_prependRaw n _ e.val.val.property e.property e.val.property u⟩
 
 /-- `prepend` at its declared arity. -/
 @[expose] def prependOf {n : ℕ} (u : List Bool) (e : COf n) : COf n :=
-  ⟨prepend u e, wIndexRoot_prependRaw n u e.1.1.1 e.2⟩
+  ⟨prepend u e, wIndexRoot_prependRaw n u e.val.val.val e.property⟩
 
 /-- The constant word at a given arity. -/
 @[expose] def constAt (n : ℕ) (u : List Bool) : C := prepend u (zeroAtOf n)
 
 /-- `constAt` at its declared arity. -/
 @[expose] def constAtOf (n : ℕ) (u : List Bool) : COf n :=
-  ⟨constAt n u, wIndexRoot_prependRaw n u _ (zeroAtOf n).2⟩
+  ⟨constAt n u, wIndexRoot_prependRaw n u _ (zeroAtOf n).property⟩
 
 /-- A binary expression applied to its sole argument in both positions. -/
 @[expose] def diagRaw (e : sig.toPFunctor.W) : sig.toPFunctor.W :=
@@ -594,15 +594,15 @@ theorem wValid_diagRaw (e : sig.toPFunctor.W) (hv : sig.WValid e)
 /-- The diagonal introduces no recursion of its own. -/
 theorem recBounded_diagRaw (e : sig.W) (he : arity e = 2)
     (hr : RecBounded e) :
-    RecBounded ⟨diagRaw e.1, wValid_diagRaw e.1 e.2 he⟩ :=
+    RecBounded ⟨diagRaw e.val, wValid_diagRaw e.val e.property he⟩ :=
   ⟨trivial, fun d ↦ match d with
     | .inl () => hr
     | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩
 
 /-- The diagonal as an expression. -/
 @[expose] def diag (e : COf 2) : C :=
-  ⟨⟨diagRaw e.1.1.1, wValid_diagRaw e.1.1.1 e.1.1.2 e.2⟩,
-    recBounded_diagRaw e.1.1 e.2 e.1.2⟩
+  ⟨⟨diagRaw e.val.val.val, wValid_diagRaw e.val.val.val e.val.val.property e.property⟩,
+    recBounded_diagRaw e.val.val e.property e.val.property⟩
 
 /-- `diag` at its declared arity. -/
 @[expose] def diagOf (e : COf 2) : COf 1 := ⟨diag e, wIndexRoot_diagRaw _⟩
@@ -668,7 +668,7 @@ than their concatenation. -/
             | .inl () | .inr 0 | .inr 1 => exact ⟨trivial, fun c ↦ c.elim0⟩⟩, rfl⟩
 
 /-- The meaning of the conditional, at arity four. -/
-@[expose] def condSem : Sem 4 := transport cond.2 cond.1.eval
+@[expose] def condSem : Sem 4 := transport cond.property cond.val.eval
 
 /-- The conditional returns its second, third or fourth argument according as its
 first is empty, odd or even, the parity being read off the Lean list's head. -/
@@ -692,12 +692,12 @@ theorem condSem_eq (u v w z : List Bool) :
 [Strahm2003] Theorem 1(2) contains in the functions computable
 simultaneously in polynomial time and linear space. Hereditary: a
 top-node test would not exclude `#` from subterms. -/
-@[expose] def SmashFree (e : C) : Prop := smashFreeBool e.1.1 = true
+@[expose] def SmashFree (e : C) : Prop := smashFreeBool e.val.val = true
 
 /-- `SmashFree` is decidable, its `Bool` equation unfolded explicitly since a bare
 `inferInstance` does not see through the definition. -/
 instance (e : C) : Decidable (SmashFree e) :=
-  inferInstanceAs (Decidable (smashFreeBool e.1.1 = true))
+  inferInstanceAs (Decidable (smashFreeBool e.val.val = true))
 
 end
 

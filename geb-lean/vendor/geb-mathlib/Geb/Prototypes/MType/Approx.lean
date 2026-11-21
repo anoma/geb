@@ -91,7 +91,7 @@ of the preceding depth at each of its directions. The redundant index of each
 child, the successor's unique direction, is removed. -/
 def succEquiv (n : Depth.{uA, uB}) : Approx Q (succ n) ≃ Q.Obj (Approx Q n) :=
   (fiberMkEquiv depthSig (Approx.family Q) ⟨true⟩ fun _ ↦ n).trans
-    { toFun := fun x ↦ ⟨x.1.1, fun b ↦ (x.1.2 b).2⟩
+    { toFun := fun x ↦ ⟨x.val.1, fun b ↦ (x.val.2 b).2⟩
       invFun := fun x ↦ ⟨⟨x.1, fun b ↦ ⟨PUnit.unit, x.2 b⟩⟩, rfl⟩
       left_inv := fun _ ↦ rfl
       right_inv := fun _ ↦ rfl }

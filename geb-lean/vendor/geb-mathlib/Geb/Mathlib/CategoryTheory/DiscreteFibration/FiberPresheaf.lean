@@ -77,23 +77,23 @@ include D
 /-- Restriction along `g : b ⟶ b'` of a fiber element `c'` over `b'`: the
 domain of the unique lift of `g` with codomain `c'`. -/
 def restrict {b b' : B} (g : b ⟶ b') (c' : p.Fiber b') : p.Fiber b :=
-  ⟨D.src (g ≫ eqToHom c'.2.symm), D.obj_src _⟩
+  ⟨D.src (g ≫ eqToHom c'.property.symm), D.obj_src _⟩
 
 @[simp] theorem restrict_val {b b' : B} (g : b ⟶ b') (c' : p.Fiber b') :
-    (D.restrict g c').1 = D.src (g ≫ eqToHom c'.2.symm) := rfl
+    (D.restrict g c').val = D.src (g ≫ eqToHom c'.property.symm) := rfl
 
 /-- Restriction along an identity is the identity. -/
 theorem restrict_id {b : B} (c : p.Fiber b) : D.restrict (𝟙 b) c = c :=
-  Subtype.ext (D.src_eq _ (𝟙 c.1) c.2 (by simp))
+  Subtype.ext (D.src_eq _ (𝟙 c.val) c.property (by simp))
 
 /-- Restriction is contravariantly functorial. -/
 theorem restrict_comp {b b' b'' : B} (g : b ⟶ b') (g' : b' ⟶ b'')
     (c : p.Fiber b'') :
     D.restrict (g ≫ g') c = D.restrict g (D.restrict g' c) := by
   apply Subtype.ext
-  exact D.src_eq ((g ≫ g') ≫ eqToHom c.2.symm)
-    (D.hom (g ≫ eqToHom (D.obj_src (g' ≫ eqToHom c.2.symm)).symm) ≫
-      D.hom (g' ≫ eqToHom c.2.symm))
+  exact D.src_eq ((g ≫ g') ≫ eqToHom c.property.symm)
+    (D.hom (g ≫ eqToHom (D.obj_src (g' ≫ eqToHom c.property.symm)).symm) ≫
+      D.hom (g' ≫ eqToHom c.property.symm))
     (D.obj_src _) (by simp [D.map_hom])
 
 /-- The fiber presheaf `b ↦ p⁻¹(b)` of a discrete fibration. -/
@@ -121,8 +121,8 @@ attribute [local simp] eqToHom_map
 restates the fiber element's own property, whose type reads
 `p.obj x.elt.1 = unop (op x.base)`: the `unop (op _)` blocks the `eqToHom`
 composites below from matching. -/
-theorem obj_elt (x : D.fiberPresheaf.CoElements) : p.obj x.elt.1 = x.base :=
-  x.elt.2
+theorem obj_elt (x : D.fiberPresheaf.CoElements) : p.obj x.elt.val = x.base :=
+  x.elt.property
 
 /-- `c ↦ (p c, c)`. -/
 def toElements : C ⥤ D.fiberPresheaf.CoElements where
@@ -144,13 +144,13 @@ def toElements : C ⥤ D.fiberPresheaf.CoElements where
 /-- The object underlying the source of `f` is the domain of the unique
 lift of `homBase f`. -/
 theorem obj_eq_src {x y : D.fiberPresheaf.CoElements} (f : x ⟶ y) :
-    x.elt.1 = D.src (Functor.CoElements.homBase f ≫ eqToHom (D.obj_elt y).symm) :=
+    x.elt.val = D.src (Functor.CoElements.homBase f ≫ eqToHom (D.obj_elt y).symm) :=
   (congrArg Subtype.val (Functor.CoElements.map_homBase_elt f)).symm
 
 /-- The unique lift of `homBase f`, transported to a morphism between the
 underlying objects of `C`. -/
 def ofElementsMap {x y : D.fiberPresheaf.CoElements} (f : x ⟶ y) :
-    x.elt.1 ⟶ y.elt.1 :=
+    x.elt.val ⟶ y.elt.val :=
   eqToHom (D.obj_eq_src f) ≫
     D.hom (Functor.CoElements.homBase f ≫ eqToHom (D.obj_elt y).symm)
 
@@ -164,7 +164,7 @@ theorem map_ofElementsMap {x y : D.fiberPresheaf.CoElements} (f : x ⟶ y) :
 
 /-- `(b, c) ↦ c`. -/
 def ofElements : D.fiberPresheaf.CoElements ⥤ C where
-  obj x := x.elt.1
+  obj x := x.elt.val
   map f := D.ofElementsMap f
   map_id x :=
     D.map_injective (by rw [D.map_ofElementsMap, p.map_id]; simp)
@@ -175,7 +175,7 @@ def ofElements : D.fiberPresheaf.CoElements ⥤ C where
       simp)
 
 @[simp] theorem ofElements_obj (x : D.fiberPresheaf.CoElements) :
-    D.ofElements.obj x = x.elt.1 := rfl
+    D.ofElements.obj x = x.elt.val := rfl
 
 /-- `ofElements` lies over `Functor.CoElements.π`, elementwise on
 morphisms. -/
@@ -213,14 +213,14 @@ theorem ofElements_obj_toElements_obj (c : C) :
 /-- An element of a fiber is `toElements` of its underlying object of
 `C`. -/
 theorem mk_eq_toElements_obj {b : B} (c : p.Fiber b) :
-    Functor.CoElements.mk (F := D.fiberPresheaf) b c = D.toElements.obj c.1 := by
+    Functor.CoElements.mk (F := D.fiberPresheaf) b c = D.toElements.obj c.val := by
   obtain ⟨c, rfl⟩ := c
   rfl
 
 /-- Every object of the category of elements of `fiberPresheaf D` is
 `toElements` of its underlying object of `C`. -/
 theorem coElements_eq_toElements_obj (x : D.fiberPresheaf.CoElements) :
-    x = D.toElements.obj x.elt.1 :=
+    x = D.toElements.obj x.elt.val :=
   (Functor.CoElements.mk_base_elt x).symm.trans (D.mk_eq_toElements_obj x.elt)
 
 /-- `toElements` undoes `ofElements` on morphisms. -/
@@ -245,7 +245,7 @@ variable (F : Bᵒᵖ ⥤ Type v₃)
 `π F` over `b` is in bijection with `F b`. -/
 def fiberPresheafEquiv (b : B) : (π F).Fiber b ≃ F.obj (op b)
     where
-  toFun x := F.map (eqToHom x.2.symm).op x.1.elt
+  toFun x := F.map (eqToHom x.property.symm).op x.val.elt
   invFun y := ⟨mk b y, rfl⟩
   left_inv x := by
     obtain ⟨x, hb⟩ := x

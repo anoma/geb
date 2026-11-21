@@ -678,10 +678,10 @@ theorem congrSource_symm_fst {F G : FreeCoprodCompDisc.Map.{uA, uI, uO} I O}
     {mF mF' : FreeCoprodCompDisc.MapMor I O F} (e : mF = mF')
     (mG : FreeCoprodCompDisc.MapMor I O G)
     (η : FreeCoprodCompDisc.NatTrans I O F G mF' mG) :
-    ((FreeCoprodCompDisc.NatTrans.congrSource e mG).symm η).1 = η.1 :=
+    ((FreeCoprodCompDisc.NatTrans.congrSource e mG).symm η).val = η.val :=
   Eq.rec (motive := fun mF'' e' ↦
       ∀ η' : FreeCoprodCompDisc.NatTrans I O F G mF'' mG,
-        ((FreeCoprodCompDisc.NatTrans.congrSource e' mG).symm η').1 = η'.1)
+        ((FreeCoprodCompDisc.NatTrans.congrSource e' mG).symm η').val = η'.val)
     (fun _ ↦ rfl) e η
 
 /-- The characterizing equation of `IR.interpHomEquiv` at `IR.mk`. -/
@@ -698,14 +698,14 @@ of the unique morphism out of the initial object. -/
 theorem interpHom_iota (o : O) (γ' : IR.{max uA uB, uB, uI, uO} I O)
     (f : InnerHom.{uA, uB, uI, uO} I O o γ')
     (X : FreeCoprodCompDisc.{max uA uB, uI} I) :
-    (interpHom I O (iota.{max uA uB, uB, uI, uO} I O o) γ' f).1 X =
+    (interpHom I O (iota.{max uA uB, uB, uI, uO} I O o) γ' f).val X =
       FreeCoprodCompDisc.Hom.comp O
         ((FreeCoprodCompDisc.homSingletonEquiv O o
             (interpObj I O γ' (FreeCoprodCompDisc.emptyObj I))).symm
           (innerHomEquiv I O o γ' f))
         (interpMor I O γ' (FreeCoprodCompDisc.emptyObj I) X
           (FreeCoprodCompDisc.emptyDesc I X)) :=
-  congrArg (fun e ↦ (e f).1 X)
+  congrArg (fun e ↦ (e f).val X)
     (interpHomEquiv_mk I O (Sum.inl o) PEmpty.elim γ')
 
 /-- The component of `IR.interpHom` at a `σ`-domain: the cotuple of the
@@ -715,11 +715,11 @@ theorem interpHom_sigma (A : Type (max uA uB))
     (γ' : IR.{max uA uB, uB, uI, uO} I O)
     (f : Hom.{uA, uB, uI, uO} I O (sigma I O A K) γ')
     (X : FreeCoprodCompDisc.{max uA uB, uI} I) :
-    (interpHom I O (sigma I O A K) γ' f).1 X =
+    (interpHom I O (sigma I O A K) γ' f).val X =
       FreeCoprodCompDisc.coprodDesc O A (fun a ↦ interpObj I O (K a) X)
         (interpObj I O γ' X)
-        (fun a ↦ (interpHom I O (K a) γ' (f a)).1 X) :=
-  (congrArg (fun e ↦ (e f).1 X)
+        (fun a ↦ (interpHom I O (K a) γ' (f a)).val X) :=
+  (congrArg (fun e ↦ (e f).val X)
       (interpHomEquiv_mk I O (Sum.inr (Sum.inl A)) (K ∘ ULift.down) γ')).trans
     (congrFun
       (congrSource_symm_fst.{max uA uB, uI, uO} I O
@@ -768,10 +768,10 @@ theorem interpHom_delta (B : Type uB)
     (γ' : IR.{max uA uB, uB, uI, uO} I O)
     (f : Hom.{uA, uB, uI, uO} I O (delta I O B c) γ')
     (X : FreeCoprodCompDisc.{max uA uB, uI} I) :
-    (interpHom I O (delta I O B c) γ' f).1 X =
+    (interpHom I O (delta I O B c) γ' f).val X =
       deltaDesc I O B c X (interpObj I O γ' X)
-        (fun i ↦ (interpHomDeltaSummand I O B c γ' i (f i)).1 X) :=
-  congrArg (fun e ↦ (e f).1 X)
+        (fun i ↦ (interpHomDeltaSummand I O B c γ' i (f i)).val X) :=
+  congrArg (fun e ↦ (e f).val X)
     (interpHomEquiv_mk I O (Sum.inr (Sum.inr B)) (c ∘ ULift.down) γ')
 
 /-- `IR.deltaDesc` composes on the right componentwise. -/
@@ -831,8 +831,8 @@ def InterpHomSigmaPushMotive (γ : IR.{max uA uB, uB, uI, uO} I O) : Prop :=
   ∀ (A' : Type (max uA uB)) (K' : A' → IR.{max uA uB, uB, uI, uO} I O)
     (a' : A') (f : Hom.{uA, uB, uI, uO} I O γ (K' a'))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I),
-    (interpHom I O γ (sigma I O A' K') (sigmaPush I O γ A' K' a' f)).1 X =
-      FreeCoprodCompDisc.Hom.comp O ((interpHom I O γ (K' a') f).1 X)
+    (interpHom I O γ (sigma I O A' K') (sigmaPush I O γ A' K' a' f)).val X =
+      FreeCoprodCompDisc.Hom.comp O ((interpHom I O γ (K' a') f).val X)
         (FreeCoprodCompDisc.coprodInj O A' (fun a ↦ interpObj I O (K' a) X) a')
 
 /-- The `ι`-composite of the Theorem 3 step at codomain `γ'`
@@ -869,7 +869,7 @@ theorem homSingletonEquiv_symm_inj (o : O) (A' : Type (max uA uB))
       (interpObj I O (K' a') (FreeCoprodCompDisc.emptyObj I)).2 z = o}) :
     (FreeCoprodCompDisc.homSingletonEquiv O o
         (interpObj I O (sigma I O A' K') (FreeCoprodCompDisc.emptyObj I))).symm
-        ⟨⟨a', z.1⟩, z.2⟩ =
+        ⟨⟨a', z.val⟩, z.property⟩ =
       FreeCoprodCompDisc.Hom.comp O
         ((FreeCoprodCompDisc.homSingletonEquiv O o
             (interpObj I O (K' a') (FreeCoprodCompDisc.emptyObj I))).symm z)
@@ -887,14 +887,14 @@ theorem interpHomIotaCast_sigmaPush (o : O) (A' : Type (max uA uB))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I)
     (ir : IR.{max uA uB, uB, uI, uO} I O)
     (e : iota.{max uA uB, uB, uI, uO} I O o = ir) :
-    ((interpHomIotaCast I O o (sigma I O A' K') ir e) ⟨a', f⟩).1 X =
+    ((interpHomIotaCast I O o (sigma I O A' K') ir e) ⟨a', f⟩).val X =
       FreeCoprodCompDisc.Hom.comp O
-        (((interpHomIotaCast I O o (K' a') ir e) f).1 X)
+        (((interpHomIotaCast I O o (K' a') ir e) f).val X)
         (FreeCoprodCompDisc.coprodInj O A' (fun a ↦ interpObj I O (K' a) X) a') :=
   Eq.rec (motive := fun ir' e' ↦
-      ((interpHomIotaCast I O o (sigma I O A' K') ir' e') ⟨a', f⟩).1 X =
+      ((interpHomIotaCast I O o (sigma I O A' K') ir' e') ⟨a', f⟩).val X =
         FreeCoprodCompDisc.Hom.comp O
-          (((interpHomIotaCast I O o (K' a') ir' e') f).1 X)
+          (((interpHomIotaCast I O o (K' a') ir' e') f).val X)
           (FreeCoprodCompDisc.coprodInj O A'
             (fun a ↦ interpObj I O (K' a) X) a'))
     ((congrArg
@@ -947,10 +947,10 @@ theorem interpHom_sigmaPush_mk_iota (o : O)
   fun A' K' a' f X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inl o) d)
-          (sigma I O A' K') t).1 X)
+          (sigma I O A' K') t).val X)
         (sigmaPush_mk_iota I O o d A' K' a' f)).trans
       ((congrArg (fun e ↦ (e (⟨a', f⟩ :
-            InnerHom.{uA, uB, uI, uO} I O o (sigma I O A' K'))).1 X)
+            InnerHom.{uA, uB, uI, uO} I O o (sigma I O A' K'))).val X)
           (interpHomEquiv_mk I O (Sum.inl o) d (sigma I O A' K'))).trans
         ((interpHomIotaCast_sigmaPush I O o A' K' a' f X
             (mk I O (Sum.inl o) d)
@@ -961,7 +961,7 @@ theorem interpHom_sigmaPush_mk_iota (o : O)
             (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
               (FreeCoprodCompDisc.coprodInj O A'
                 (fun a ↦ interpObj I O (K' a) X) a'))
-            (congrArg (fun e ↦ (e f).1 X)
+            (congrArg (fun e ↦ (e f).val X)
               (interpHomEquiv_mk I O (Sum.inl o) d (K' a'))).symm)))
 
 /-- The `σ`-domain case of the `IR.sigmaPush` characterization:
@@ -976,7 +976,7 @@ theorem interpHom_sigmaPush_mk_sigma (A : Type (max uA uB))
   fun A' K' a' f X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inr (Sum.inl A)) d)
-          (sigma I O A' K') t).1 X)
+          (sigma I O A' K') t).val X)
         (sigmaPush_mk_sigma I O A d A' K' a' f)).trans
       ((interpHom_sigma I O A (fun a ↦ d (ULift.up a)) (sigma I O A' K')
           (fun b ↦ sigmaPush I O (d (ULift.up b)) A' K' a' (f b)) X).trans
@@ -988,7 +988,7 @@ theorem interpHom_sigmaPush_mk_sigma (A : Type (max uA uB))
           ((FreeCoprodCompDisc.coprodDesc_comp O A
               (fun a ↦ interpObj I O (d (ULift.up a)) X)
               (interpObj I O (K' a') X) (interpObj I O (sigma I O A' K') X)
-              (fun b ↦ (interpHom I O (d (ULift.up b)) (K' a') (f b)).1 X)
+              (fun b ↦ (interpHom I O (d (ULift.up b)) (K' a') (f b)).val X)
               (FreeCoprodCompDisc.coprodInj O A'
                 (fun a ↦ interpObj I O (K' a) X) a')).symm.trans
             (congrArg
@@ -1034,25 +1034,25 @@ theorem interpHomDeltaSummand_theta (B : Type uB)
     (u : Hom.{uA, uB, uI, uO} I O (c i) (precomp I O B i (sigma I O A' K')))
     (v : Hom.{uA, uB, uI, uO} I O (c i) (precomp I O B i (K' a')))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I)
-    (hu : (interpHom I O (c i) (precomp I O B i (sigma I O A' K')) u).1 X =
+    (hu : (interpHom I O (c i) (precomp I O B i (sigma I O A' K')) u).val X =
       FreeCoprodCompDisc.Hom.comp O
-        ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+        ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
         (FreeCoprodCompDisc.coprodInj O (ULift.{uB} A')
           (fun x ↦ interpObj I O (precomp I O B i (K' x.down)) X)
           (ULift.up a'))) :
     FreeCoprodCompDisc.Hom.comp O
         (FreeCoprodCompDisc.Hom.comp O
-          ((interpHom I O (c i) (precomp I O B i (sigma I O A' K')) u).1 X)
+          ((interpHom I O (c i) (precomp I O B i (sigma I O A' K')) u).val X)
           (FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIso I O (sigma I O A' K') B i X)))
-        ((plusLiftBridgeNatInv I O B i (sigma I O A' K')).1 X) =
+        ((plusLiftBridgeNatInv I O B i (sigma I O A' K')).val X) =
       FreeCoprodCompDisc.Hom.comp O
         (FreeCoprodCompDisc.Hom.comp O
           (FreeCoprodCompDisc.Hom.comp O
-            ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+            ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
             (FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O (K' a') B i X)))
-          ((plusLiftBridgeNatInv I O B i (K' a')).1 X))
+          ((plusLiftBridgeNatInv I O B i (K' a')).val X))
         (FreeCoprodCompDisc.coprodInj O A'
           (fun a ↦ interpObj I O (K' a)
             (FreeCoprodCompDisc.plus I
@@ -1063,13 +1063,13 @@ theorem interpHomDeltaSummand_theta (B : Type uB)
         (FreeCoprodCompDisc.Hom.comp O t
           (FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIso I O (sigma I O A' K') B i X)))
-        ((plusLiftBridgeNatInv I O B i (sigma I O A' K')).1 X))
+        ((plusLiftBridgeNatInv I O B i (sigma I O A' K')).val X))
       hu).trans
     ((congrArg
         (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
-          ((plusLiftBridgeNatInv I O B i (sigma I O A' K')).1 X))
+          ((plusLiftBridgeNatInv I O B i (sigma I O A' K')).val X))
         ((FreeCoprodCompDisc.Hom.comp_assoc O
-            ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+            ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
             (FreeCoprodCompDisc.coprodInj O (ULift.{uB} A')
               (fun x ↦ interpObj I O (precomp I O B i (K' x.down)) X)
               (ULift.up a'))
@@ -1077,10 +1077,10 @@ theorem interpHomDeltaSummand_theta (B : Type uB)
               (interpPrecompIso I O (sigma I O A' K') B i X))).trans
           ((congrArg
               (FreeCoprodCompDisc.Hom.comp O
-                ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X))
+                ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X))
               (interpPrecompIso_sigma_inj I O A' K' a' B i X)).trans
             (FreeCoprodCompDisc.Hom.comp_assoc O
-              ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+              ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
               (FreeCoprodCompDisc.Iso.hom O
                 (interpPrecompIso I O (K' a') B i X))
               (FreeCoprodCompDisc.coprodInj O A'
@@ -1089,17 +1089,17 @@ theorem interpHomDeltaSummand_theta (B : Type uB)
                 a')).symm))).trans
       ((FreeCoprodCompDisc.Hom.comp_assoc O
           (FreeCoprodCompDisc.Hom.comp O
-            ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+            ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
             (FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O (K' a') B i X)))
           (FreeCoprodCompDisc.coprodInj O A'
             (fun a ↦ interpObj I O (K' a)
               (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨B, i⟩ X)) a')
-          ((plusLiftBridgeNatInv I O B i (sigma I O A' K')).1 X)).trans
+          ((plusLiftBridgeNatInv I O B i (sigma I O A' K')).val X)).trans
         ((congrArg
             (FreeCoprodCompDisc.Hom.comp O
               (FreeCoprodCompDisc.Hom.comp O
-                ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+                ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
                 (FreeCoprodCompDisc.Iso.hom O
                   (interpPrecompIso I O (K' a') B i X))))
             (interpMor_sigma_inj I O A' K' a'
@@ -1109,10 +1109,10 @@ theorem interpHomDeltaSummand_theta (B : Type uB)
               (plusLiftBridgeInvHom I B i X))).trans
           (FreeCoprodCompDisc.Hom.comp_assoc O
             (FreeCoprodCompDisc.Hom.comp O
-              ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+              ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
               (FreeCoprodCompDisc.Iso.hom O
                 (interpPrecompIso I O (K' a') B i X)))
-            ((plusLiftBridgeNatInv I O B i (K' a')).1 X)
+            ((plusLiftBridgeNatInv I O B i (K' a')).val X)
             (FreeCoprodCompDisc.coprodInj O A'
               (fun a ↦ interpObj I O (K' a)
                 (FreeCoprodCompDisc.plus I
@@ -1128,15 +1128,15 @@ theorem interpHomDeltaSummand_inj (B : Type uB)
     (u : Hom.{uA, uB, uI, uO} I O (c i) (precomp I O B i (sigma I O A' K')))
     (v : Hom.{uA, uB, uI, uO} I O (c i) (precomp I O B i (K' a')))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I)
-    (hu : (interpHom I O (c i) (precomp I O B i (sigma I O A' K')) u).1 X =
+    (hu : (interpHom I O (c i) (precomp I O B i (sigma I O A' K')) u).val X =
       FreeCoprodCompDisc.Hom.comp O
-        ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+        ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
         (FreeCoprodCompDisc.coprodInj O (ULift.{uB} A')
           (fun x ↦ interpObj I O (precomp I O B i (K' x.down)) X)
           (ULift.up a'))) :
-    (interpHomDeltaSummand I O B c (sigma I O A' K') i u).1 X =
+    (interpHomDeltaSummand I O B c (sigma I O A' K') i u).val X =
       FreeCoprodCompDisc.Hom.comp O
-        ((interpHomDeltaSummand I O B c (K' a') i v).1 X)
+        ((interpHomDeltaSummand I O B c (K' a') i v).val X)
         (FreeCoprodCompDisc.coprodInj O A'
           (fun a ↦ interpObj I O (K' a) X) a') :=
   (congrArg
@@ -1158,10 +1158,10 @@ theorem interpHomDeltaSummand_inj (B : Type uB)
           ((FreeCoprodCompDisc.Hom.comp_assoc O
               (FreeCoprodCompDisc.Hom.comp O
                 (FreeCoprodCompDisc.Hom.comp O
-                  ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+                  ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
                   (FreeCoprodCompDisc.Iso.hom O
                     (interpPrecompIso I O (K' a') B i X)))
-                ((plusLiftBridgeNatInv I O B i (K' a')).1 X))
+                ((plusLiftBridgeNatInv I O B i (K' a')).val X))
               (FreeCoprodCompDisc.coprodInj O A'
                 (fun a ↦ interpObj I O (K' a)
                   (FreeCoprodCompDisc.plus I
@@ -1177,10 +1177,10 @@ theorem interpHomDeltaSummand_inj (B : Type uB)
                 (FreeCoprodCompDisc.Hom.comp O
                   (FreeCoprodCompDisc.Hom.comp O
                     (FreeCoprodCompDisc.Hom.comp O
-                      ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+                      ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
                       (FreeCoprodCompDisc.Iso.hom O
                         (interpPrecompIso I O (K' a') B i X)))
-                    ((plusLiftBridgeNatInv I O B i (K' a')).1 X)))
+                    ((plusLiftBridgeNatInv I O B i (K' a')).val X)))
                 (interpMor_sigma_inj I O A' K' a'
                   (FreeCoprodCompDisc.plus I
                     (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X)
@@ -1190,10 +1190,10 @@ theorem interpHomDeltaSummand_inj (B : Type uB)
               (FreeCoprodCompDisc.Hom.comp_assoc O
                 (FreeCoprodCompDisc.Hom.comp O
                   (FreeCoprodCompDisc.Hom.comp O
-                    ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+                    ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
                     (FreeCoprodCompDisc.Iso.hom O
                       (interpPrecompIso I O (K' a') B i X)))
-                  ((plusLiftBridgeNatInv I O B i (K' a')).1 X))
+                  ((plusLiftBridgeNatInv I O B i (K' a')).val X))
                 (interpMor I O (K' a')
                   (FreeCoprodCompDisc.plus I
                     (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X)
@@ -1210,10 +1210,10 @@ theorem interpHomDeltaSummand_inj (B : Type uB)
         (fun e ↦ FreeCoprodCompDisc.Hom.comp O
           (FreeCoprodCompDisc.Hom.comp O
             (FreeCoprodCompDisc.Hom.comp O
-              ((interpHom I O (c i) (precomp I O B i (K' a')) v).1 X)
+              ((interpHom I O (c i) (precomp I O B i (K' a')) v).val X)
               (FreeCoprodCompDisc.Iso.hom O
                 (interpPrecompIso I O (K' a') B i X)))
-            ((plusLiftBridgeNatInv I O B i (K' a')).1 X))
+            ((plusLiftBridgeNatInv I O B i (K' a')).val X))
           (interpMor I O (K' a')
             (FreeCoprodCompDisc.plus I
               (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X) X
@@ -1232,7 +1232,7 @@ theorem interpHom_sigmaPush_mk_delta (B : Type uB)
   fun A' K' a' f X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inr (Sum.inr B)) d)
-          (sigma I O A' K') t).1 X)
+          (sigma I O A' K') t).val X)
         (sigmaPush_mk_delta I O B d A' K' a' f)).trans
       ((interpHom_delta I O B (fun j ↦ d (ULift.up j)) (sigma I O A' K')
           (fun i ↦ sigmaPush I O (d (ULift.up i)) (ULift.{uB} A')
@@ -1252,7 +1252,7 @@ theorem interpHom_sigmaPush_mk_delta (B : Type uB)
           ((deltaDesc_comp I O B (fun j ↦ d (ULift.up j)) X
               (interpObj I O (K' a') X) (interpObj I O (sigma I O A' K') X)
               (fun i ↦ (interpHomDeltaSummand I O B (fun j ↦ d (ULift.up j))
-                (K' a') i (f i)).1 X)
+                (K' a') i (f i)).val X)
               (FreeCoprodCompDisc.coprodInj O A'
                 (fun a ↦ interpObj I O (K' a) X) a')).symm.trans
             (congrArg
@@ -1386,13 +1386,13 @@ theorem interpObj_isoOfEq_cast (E : Type uB)
     ∀ (c : E → I) (s : a = c) (s' : a = c)
       (y : (interpObj I O (M a) X).1),
       (FreeCoprodCompDisc.isoOfEq O
-          (congrArg (fun m ↦ interpObj I O (M m) X) s)).1 y =
+          (congrArg (fun m ↦ interpObj I O (M m) X) s)).val y =
         cast (congrArg (fun m ↦ (interpObj I O (M m) X).1) s') y :=
   fun _ s ↦
     Eq.rec (motive := fun c' s'' ↦ ∀ (s' : a = c')
         (y : (interpObj I O (M a) X).1),
         (FreeCoprodCompDisc.isoOfEq O
-            (congrArg (fun m ↦ interpObj I O (M m) X) s'')).1 y =
+            (congrArg (fun m ↦ interpObj I O (M m) X) s'')).val y =
           cast (congrArg (fun m ↦ (interpObj I O (M m) X).1) s') y)
       (fun _ _ ↦ rfl) s
 
@@ -1407,14 +1407,14 @@ def deltaEmptySummandHom (E : Type uB) (e : E → PEmpty.{1})
         (precomp I O Q q (M (precompMerge I Q q (fun x ↦ (e x).elim)
           (fun z : {z : E // (fun x ↦ (e x).elim : E → Q ⊕ PUnit.{uB + 1}) z =
               Sum.inr PUnit.unit} ↦
-            (((e z.1).elim : PEmpty.{1}).elim : I))))) k)
+            (((e z.val).elim : PEmpty.{1}).elim : I))))) k)
       (interpObj I O (M (fun x ↦ (e x).elim))
         (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) :=
   FreeCoprodCompDisc.Hom.comp O
     (FreeCoprodCompDisc.Iso.hom O
       (interpPrecompIso I O
         (M (precompMerge I Q q (fun x ↦ (e x).elim)
-          (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))) Q q k))
+          (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))) Q q k))
     (FreeCoprodCompDisc.Iso.hom O
       (FreeCoprodCompDisc.isoOfEq O
         (congrArg
@@ -1423,7 +1423,7 @@ def deltaEmptySummandHom (E : Type uB) (e : E → PEmpty.{1})
           (funext (fun x ↦ (e x).elim) :
             (fun x ↦ ((e x).elim : I)) =
               precompMerge I Q q (fun x ↦ (e x).elim)
-                (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))).symm)))
+                (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))).symm)))
 
 /-- The name-level computation of the Lemma 4 `δ`-square at the empty
 inclusion, with every empty-derived assignment equality generalized:
@@ -1435,23 +1435,23 @@ theorem deltaEmpty_strip (E : Type uB) (e : E → PEmpty.{1})
     ∀ (j' : {z : E // (fun x ↦ (e x).elim : E → Q ⊕ PUnit.{uB + 1}) z =
         Sum.inr PUnit.unit} → I)
       (hj : (fun z : {z : E // (fun x ↦ (e x).elim : E → Q ⊕ PUnit.{uB + 1}) z =
-          Sum.inr PUnit.unit} ↦ (((e z.1).elim : PEmpty.{1}).elim : I)) = j')
+          Sum.inr PUnit.unit} ↦ (((e z.val).elim : PEmpty.{1}).elim : I)) = j')
       (w₁ : E → Q ⊕ k.1)
       (s₁ : precompMerge I Q q (fun x ↦ (e x).elim) j' = Sum.elim q k.2 ∘ w₁)
       (w₂ : E → Q ⊕ k.1) (_hw : w₁ = w₂)
       (b₂ : E → I)
       (r₂ : precompMerge I Q q (fun x ↦ (e x).elim)
-          (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)) = b₂)
+          (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)) = b₂)
       (s₂ : b₂ = Sum.elim q k.2 ∘ w₂)
       (n : (interpObj I O (precomp I O Q q (M (precompMerge I Q q
         (fun x ↦ (e x).elim)
-        (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) k).1),
+        (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) k).1),
       (⟨w₁, (FreeCoprodCompDisc.isoOfEq O
           (congrArg (fun m ↦ interpObj I O (M m)
-            (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).1
+            (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).val
           ((FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIso I O
-              (M (precompMerge I Q q (fun x ↦ (e x).elim) j')) Q q k)).1
+              (M (precompMerge I Q q (fun x ↦ (e x).elim) j')) Q q k)).val
             (cast (congrArg (fun t ↦ (interpObj I O (precomp I O Q q
               (M (precompMerge I Q q (fun x ↦ (e x).elim) t))) k).1) hj) n))⟩ :
         (interpObj I O (delta I O E M)
@@ -1460,26 +1460,26 @@ theorem deltaEmpty_strip (E : Type uB) (e : E → PEmpty.{1})
           (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1) s₂)
         ((FreeCoprodCompDisc.isoOfEq O
           (congrArg (fun m ↦ interpObj I O (M m)
-            (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) r₂)).1
+            (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) r₂)).val
           ((FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIso I O (M (precompMerge I Q q (fun x ↦ (e x).elim)
-              (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))) Q q k)).1 n))⟩ :=
+              (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))) Q q k)).val n))⟩ :=
   fun _ hj ↦
     Eq.rec (motive := fun j'' hj' ↦ ∀ (w₁ : E → Q ⊕ k.1)
         (s₁ : precompMerge I Q q (fun x ↦ (e x).elim) j'' = Sum.elim q k.2 ∘ w₁)
         (w₂ : E → Q ⊕ k.1) (_hw : w₁ = w₂) (b₂ : E → I)
         (r₂ : precompMerge I Q q (fun x ↦ (e x).elim)
-            (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)) = b₂)
+            (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)) = b₂)
         (s₂ : b₂ = Sum.elim q k.2 ∘ w₂)
         (n : (interpObj I O (precomp I O Q q (M (precompMerge I Q q
           (fun x ↦ (e x).elim)
-          (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) k).1),
+          (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) k).1),
         (⟨w₁, (FreeCoprodCompDisc.isoOfEq O
             (congrArg (fun m ↦ interpObj I O (M m)
-              (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).1
+              (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).val
             ((FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O
-                (M (precompMerge I Q q (fun x ↦ (e x).elim) j'')) Q q k)).1
+                (M (precompMerge I Q q (fun x ↦ (e x).elim) j'')) Q q k)).val
               (cast (congrArg (fun t ↦ (interpObj I O (precomp I O Q q
                 (M (precompMerge I Q q (fun x ↦ (e x).elim) t))) k).1) hj') n))⟩ :
           (interpObj I O (delta I O E M)
@@ -1488,26 +1488,26 @@ theorem deltaEmpty_strip (E : Type uB) (e : E → PEmpty.{1})
             (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1) s₂)
           ((FreeCoprodCompDisc.isoOfEq O
             (congrArg (fun m ↦ interpObj I O (M m)
-              (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) r₂)).1
+              (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) r₂)).val
             ((FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O (M (precompMerge I Q q (fun x ↦ (e x).elim)
-                (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))) Q q k)).1
+                (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))) Q q k)).val
               n))⟩)
       (fun w₁ s₁ _ hw ↦
         Eq.rec (motive := fun w₂' _ ↦ ∀ (b₂ : E → I)
             (r₂ : precompMerge I Q q (fun x ↦ (e x).elim)
-                (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)) = b₂)
+                (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)) = b₂)
             (s₂ : b₂ = Sum.elim q k.2 ∘ w₂')
             (n : (interpObj I O (precomp I O Q q (M (precompMerge I Q q
               (fun x ↦ (e x).elim)
-              (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) k).1),
+              (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) k).1),
             (⟨w₁, (FreeCoprodCompDisc.isoOfEq O
                 (congrArg (fun m ↦ interpObj I O (M m)
-                  (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).1
+                  (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).val
                 ((FreeCoprodCompDisc.Iso.hom O
                   (interpPrecompIso I O (M (precompMerge I Q q
                     (fun x ↦ (e x).elim)
-                    (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))) Q q k)).1
+                    (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))) Q q k)).val
                   n)⟩ :
               (interpObj I O (delta I O E M)
                 (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1) =
@@ -1515,26 +1515,26 @@ theorem deltaEmpty_strip (E : Type uB) (e : E → PEmpty.{1})
                 (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1) s₂)
               ((FreeCoprodCompDisc.isoOfEq O
                 (congrArg (fun m ↦ interpObj I O (M m)
-                  (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) r₂)).1
+                  (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) r₂)).val
                 ((FreeCoprodCompDisc.Iso.hom O
                   (interpPrecompIso I O (M (precompMerge I Q q
                     (fun x ↦ (e x).elim)
-                    (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))) Q q k)).1
+                    (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))) Q q k)).val
                   n))⟩)
           (fun _ r₂ ↦
             Eq.rec (motive := fun b₂' r₂' ↦ ∀ (s₂ : b₂' = Sum.elim q k.2 ∘ w₁)
                 (n : (interpObj I O (precomp I O Q q (M (precompMerge I Q q
                   (fun x ↦ (e x).elim)
-                  (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) k).1),
+                  (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) k).1),
                 (⟨w₁, (FreeCoprodCompDisc.isoOfEq O
                     (congrArg (fun m ↦ interpObj I O (M m)
                       (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k))
-                      s₁)).1
+                      s₁)).val
                     ((FreeCoprodCompDisc.Iso.hom O
                       (interpPrecompIso I O (M (precompMerge I Q q
                         (fun x ↦ (e x).elim)
-                        (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))
-                        Q q k)).1 n)⟩ :
+                        (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))
+                        Q q k)).val n)⟩ :
                   (interpObj I O (delta I O E M)
                     (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1) =
                 ⟨w₁, cast (congrArg (fun m ↦ (interpObj I O (M m)
@@ -1543,12 +1543,12 @@ theorem deltaEmpty_strip (E : Type uB) (e : E → PEmpty.{1})
                   ((FreeCoprodCompDisc.isoOfEq O
                     (congrArg (fun m ↦ interpObj I O (M m)
                       (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k))
-                      r₂')).1
+                      r₂')).val
                     ((FreeCoprodCompDisc.Iso.hom O
                       (interpPrecompIso I O (M (precompMerge I Q q
                         (fun x ↦ (e x).elim)
-                        (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))
-                        Q q k)).1 n))⟩)
+                        (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))
+                        Q q k)).val n))⟩)
               (fun s₂ n ↦
                 congrArg
                   (fun t ↦ (⟨w₁, t⟩ :
@@ -1558,13 +1558,13 @@ theorem deltaEmpty_strip (E : Type uB) (e : E → PEmpty.{1})
                   (interpObj_isoOfEq_cast I O E M
                     (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)
                     (precompMerge I Q q (fun x ↦ (e x).elim)
-                      (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))
+                      (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))
                     (Sum.elim q k.2 ∘ w₁) s₁ s₂
                     ((FreeCoprodCompDisc.Iso.hom O
                       (interpPrecompIso I O (M (precompMerge I Q q
                         (fun x ↦ (e x).elim)
-                        (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))
-                        Q q k)).1 n)))
+                        (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))
+                        Q q k)).val n)))
               r₂)
           hw)
       hj
@@ -1581,7 +1581,7 @@ theorem interpPrecompIso_deltaEmpty_inj (E : Type uB) (e : E → PEmpty.{1})
           (deltaEmptyInj I O
             {z : E // (fun x ↦ (e x).elim : E → Q ⊕ PUnit.{uB + 1}) z =
               Sum.inr PUnit.unit}
-            (fun z ↦ (e z.1).elim)
+            (fun z ↦ (e z.val).elim)
             (fun j ↦ precomp I O Q q
               (M (precompMerge I Q q (fun x ↦ (e x).elim) j)))
             k)
@@ -1603,7 +1603,7 @@ theorem interpPrecompIso_deltaEmpty_inj (E : Type uB) (e : E → PEmpty.{1})
           (deltaEmptyInj I O
             {z : E // (fun x ↦ (e x).elim : E → Q ⊕ PUnit.{uB + 1}) z =
               Sum.inr PUnit.unit}
-            (fun z ↦ (e z.1).elim)
+            (fun z ↦ (e z.val).elim)
             (fun j ↦ precomp I O Q q
               (M (precompMerge I Q q (fun x ↦ (e x).elim) j)))
             k)
@@ -1618,12 +1618,12 @@ theorem interpPrecompIso_deltaEmpty_inj (E : Type uB) (e : E → PEmpty.{1})
       (interpPrecompIso_mk I O (Sum.inr (Sum.inr E)) (M ∘ ULift.down))).trans
     (Subtype.ext (funext (fun n ↦
       deltaEmpty_strip I O E e M Q q k
-        (fun z ↦ k.2 (((e z.1).elim : PEmpty.{1}).elim))
-        (funext (fun z ↦ (e z.1).elim))
+        (fun z ↦ k.2 (((e z.val).elim : PEmpty.{1}).elim))
+        (funext (fun z ↦ (e z.val).elim))
         (arrowSumMerge (fun x ↦ (e x).elim)
-          (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : k.1)))
+          (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : k.1)))
         (precompMerge_elim I Q q k E (fun x ↦ (e x).elim)
-          (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : k.1)))
+          (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : k.1)))
         (fun x ↦ ((e x).elim : Q ⊕ k.1))
         (funext (fun x ↦ (e x).elim))
         (fun x ↦ ((e x).elim : I))
@@ -1639,9 +1639,9 @@ def InterpHomDeltaEmptyPushMotive (γ : IR.{max uA uB, uB, uI, uO} I O) : Prop :
     (M : (E → I) → IR.{max uA uB, uB, uI, uO} I O)
     (f : Hom.{uA, uB, uI, uO} I O γ (M (fun x ↦ (e x).elim)))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I),
-    (interpHom I O γ (delta I O E M) (deltaEmptyPush I O γ E e M f)).1 X =
+    (interpHom I O γ (delta I O E M) (deltaEmptyPush I O γ E e M f)).val X =
       FreeCoprodCompDisc.Hom.comp O
-        ((interpHom I O γ (M (fun x ↦ (e x).elim)) f).1 X)
+        ((interpHom I O γ (M (fun x ↦ (e x).elim)) f).val X)
         (deltaEmptyInj I O E e M X)
 
 /-- The name component of `IR.innerHomEquivCast` at an empty-witnessed
@@ -1654,22 +1654,22 @@ theorem innerHomEquivCast_fst_cast (o : O) (E : Type uB) (e : E → PEmpty.{1})
       (f : InnerHom.{uA, uB, uI, uO} I O o (M (fun b ↦ (e b).elim))),
       ((innerHomEquivCast I O o E (M ∘ ULift.down)
           (fun x ↦ innerHomEquiv I O o ((M ∘ ULift.down) x))
-          (fun b ↦ (e b).elim) j pf) f).1 =
+          (fun b ↦ (e b).elim) j pf) f).val =
         cast
           (congrArg
             (fun t ↦ (interpObj I O (M t) (FreeCoprodCompDisc.emptyObj I)).1) h')
-          ((innerHomEquiv I O o (M (fun b ↦ (e b).elim)) f).1) :=
+          ((innerHomEquiv I O o (M (fun b ↦ (e b).elim)) f).val) :=
   fun _ pf ↦
     Eq.rec (motive := fun j' pf' ↦ ∀ (h' : (fun b ↦ ((e b).elim : I)) = j')
         (f : InnerHom.{uA, uB, uI, uO} I O o (M (fun b ↦ (e b).elim))),
         ((innerHomEquivCast I O o E (M ∘ ULift.down)
             (fun x ↦ innerHomEquiv I O o ((M ∘ ULift.down) x))
-            (fun b ↦ (e b).elim) j' pf') f).1 =
+            (fun b ↦ (e b).elim) j' pf') f).val =
           cast
             (congrArg
               (fun t ↦ (interpObj I O (M t)
                 (FreeCoprodCompDisc.emptyObj I)).1) h')
-            ((innerHomEquiv I O o (M (fun b ↦ (e b).elim)) f).1))
+            ((innerHomEquiv I O o (M (fun b ↦ (e b).elim)) f).val))
       (fun _ _ ↦ rfl) pf
 
 /-- The singleton morphism at the empty-witnessed `δ`-name factors
@@ -1715,14 +1715,14 @@ theorem interpHomIotaCast_deltaEmptyPush (o : O) (E : Type uB)
     (X : FreeCoprodCompDisc.{max uA uB, uI} I)
     (ir : IR.{max uA uB, uB, uI, uO} I O)
     (eIr : iota.{max uA uB, uB, uI, uO} I O o = ir) :
-    ((interpHomIotaCast I O o (delta I O E M) ir eIr) ⟨e, f⟩).1 X =
+    ((interpHomIotaCast I O o (delta I O E M) ir eIr) ⟨e, f⟩).val X =
       FreeCoprodCompDisc.Hom.comp O
-        (((interpHomIotaCast I O o (M (fun x ↦ (e x).elim)) ir eIr) f).1 X)
+        (((interpHomIotaCast I O o (M (fun x ↦ (e x).elim)) ir eIr) f).val X)
         (deltaEmptyInj I O E e M X) :=
   Eq.rec (motive := fun ir' eIr' ↦
-      ((interpHomIotaCast I O o (delta I O E M) ir' eIr') ⟨e, f⟩).1 X =
+      ((interpHomIotaCast I O o (delta I O E M) ir' eIr') ⟨e, f⟩).val X =
         FreeCoprodCompDisc.Hom.comp O
-          (((interpHomIotaCast I O o (M (fun x ↦ (e x).elim)) ir' eIr') f).1 X)
+          (((interpHomIotaCast I O o (M (fun x ↦ (e x).elim)) ir' eIr') f).val X)
           (deltaEmptyInj I O E e M X))
     ((congrArg
         (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
@@ -1765,10 +1765,10 @@ theorem interpHom_deltaEmptyPush_mk_iota (o : O)
   fun E e M f X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inl o) d)
-          (delta I O E M) t).1 X)
+          (delta I O E M) t).val X)
         (deltaEmptyPush_mk_iota I O o d E e M f)).trans
       ((congrArg (fun eq ↦ (eq (⟨e, f⟩ :
-            InnerHom.{uA, uB, uI, uO} I O o (delta I O E M))).1 X)
+            InnerHom.{uA, uB, uI, uO} I O o (delta I O E M))).val X)
           (interpHomEquiv_mk I O (Sum.inl o) d (delta I O E M))).trans
         ((interpHomIotaCast_deltaEmptyPush I O o E e M f X
             (mk I O (Sum.inl o) d)
@@ -1778,7 +1778,7 @@ theorem interpHom_deltaEmptyPush_mk_iota (o : O)
           (congrArg
             (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
               (deltaEmptyInj I O E e M X))
-            (congrArg (fun eq ↦ (eq f).1 X)
+            (congrArg (fun eq ↦ (eq f).val X)
               (interpHomEquiv_mk I O (Sum.inl o) d
                 (M (fun x ↦ (e x).elim)))).symm)))
 
@@ -1794,7 +1794,7 @@ theorem interpHom_deltaEmptyPush_mk_sigma (A : Type (max uA uB))
   fun E e M f X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inr (Sum.inl A)) d)
-          (delta I O E M) t).1 X)
+          (delta I O E M) t).val X)
         (deltaEmptyPush_mk_sigma I O A d E e M f)).trans
       ((interpHom_sigma I O A (fun a ↦ d (ULift.up a)) (delta I O E M)
           (fun b ↦ deltaEmptyPush I O (d (ULift.up b)) E e M (f b)) X).trans
@@ -1808,7 +1808,7 @@ theorem interpHom_deltaEmptyPush_mk_sigma (A : Type (max uA uB))
               (interpObj I O (M (fun x ↦ (e x).elim)) X)
               (interpObj I O (delta I O E M) X)
               (fun b ↦ (interpHom I O (d (ULift.up b))
-                (M (fun x ↦ (e x).elim)) (f b)).1 X)
+                (M (fun x ↦ (e x).elim)) (f b)).val X)
               (deltaEmptyInj I O E e M X)).symm.trans
             (congrArg
               (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
@@ -1830,7 +1830,7 @@ theorem interpHom_deltaEmptySummand_cast (γ : IR.{max uA uB, uB, uI, uO} I O)
       FreeCoprodCompDisc.Hom.comp O
           ((interpHom I O γ (precomp I O Q q (M a))
             (cast (congrArg (fun a' ↦ Hom I O γ (precomp I O Q q (M a'))) h)
-              f)).1 X)
+              f)).val X)
           (FreeCoprodCompDisc.Hom.comp O
             (FreeCoprodCompDisc.Iso.hom O (interpPrecompIso I O (M a) Q q X))
             (FreeCoprodCompDisc.Iso.hom O
@@ -1840,7 +1840,7 @@ theorem interpHom_deltaEmptySummand_cast (γ : IR.{max uA uB, uB, uI, uO} I O)
                     (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ X))
                   h.symm)))) =
         FreeCoprodCompDisc.Hom.comp O
-          ((interpHom I O γ (precomp I O Q q (M (fun x ↦ (e x).elim))) f).1 X)
+          ((interpHom I O γ (precomp I O Q q (M (fun x ↦ (e x).elim))) f).val X)
           (FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIso I O (M (fun x ↦ (e x).elim)) Q q X)) :=
   fun _ h ↦
@@ -1850,7 +1850,7 @@ theorem interpHom_deltaEmptySummand_cast (γ : IR.{max uA uB, uB, uI, uO} I O)
             ((interpHom I O γ (precomp I O Q q (M a'))
               (cast
                 (congrArg (fun a'' ↦ Hom I O γ (precomp I O Q q (M a''))) h')
-                f)).1 X)
+                f)).val X)
             (FreeCoprodCompDisc.Hom.comp O
               (FreeCoprodCompDisc.Iso.hom O
                 (interpPrecompIso I O (M a') Q q X))
@@ -1862,7 +1862,7 @@ theorem interpHom_deltaEmptySummand_cast (γ : IR.{max uA uB, uB, uI, uO} I O)
                     h'.symm)))) =
           FreeCoprodCompDisc.Hom.comp O
             ((interpHom I O γ
-              (precomp I O Q q (M (fun x ↦ (e x).elim))) f).1 X)
+              (precomp I O Q q (M (fun x ↦ (e x).elim))) f).val X)
             (FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O (M (fun x ↦ (e x).elim)) Q q X)))
       (fun _ ↦ rfl) h
@@ -1879,20 +1879,20 @@ theorem interpHomDeltaSummand_deltaEmpty_theta (B : Type uB)
     (w : Hom.{uA, uB, uI, uO} I O (c i)
       (precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim)
         (fun z : {z : E // (fun x ↦ (e x).elim : E → B ⊕ PUnit.{uB + 1}) z =
-            Sum.inr PUnit.unit} ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))))
+            Sum.inr PUnit.unit} ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))))
     (v : Hom.{uA, uB, uI, uO} I O (c i)
       (precomp I O B i (M (fun x ↦ (e x).elim))))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I)
-    (hu : (interpHom I O (c i) (precomp I O B i (delta I O E M)) u).1 X =
+    (hu : (interpHom I O (c i) (precomp I O B i (delta I O E M)) u).val X =
       FreeCoprodCompDisc.Hom.comp O
         ((interpHom I O (c i)
           (precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim)
-            (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) w).1 X)
+            (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) w).val X)
         (FreeCoprodCompDisc.Hom.comp O
           (deltaEmptyInj I O
             {z : E // (fun x ↦ (e x).elim : E → B ⊕ PUnit.{uB + 1}) z =
               Sum.inr PUnit.unit}
-            (fun z ↦ (e z.1).elim)
+            (fun z ↦ (e z.val).elim)
             (fun j ↦ precomp I O B i
               (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
             X)
@@ -1906,27 +1906,27 @@ theorem interpHomDeltaSummand_deltaEmpty_theta (B : Type uB)
     (hv : FreeCoprodCompDisc.Hom.comp O
         ((interpHom I O (c i)
           (precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim)
-            (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) w).1 X)
+            (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) w).val X)
         (deltaEmptySummandHom I O E e M B i X) =
       FreeCoprodCompDisc.Hom.comp O
         ((interpHom I O (c i)
-          (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+          (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
         (FreeCoprodCompDisc.Iso.hom O
           (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X))) :
     FreeCoprodCompDisc.Hom.comp O
         (FreeCoprodCompDisc.Hom.comp O
-          ((interpHom I O (c i) (precomp I O B i (delta I O E M)) u).1 X)
+          ((interpHom I O (c i) (precomp I O B i (delta I O E M)) u).val X)
           (FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIso I O (delta I O E M) B i X)))
-        ((plusLiftBridgeNatInv I O B i (delta I O E M)).1 X) =
+        ((plusLiftBridgeNatInv I O B i (delta I O E M)).val X) =
       FreeCoprodCompDisc.Hom.comp O
         (FreeCoprodCompDisc.Hom.comp O
           (FreeCoprodCompDisc.Hom.comp O
             ((interpHom I O (c i)
-              (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+              (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
             (FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X)))
-          ((plusLiftBridgeNatInv I O B i (M (fun x ↦ (e x).elim))).1 X))
+          ((plusLiftBridgeNatInv I O B i (M (fun x ↦ (e x).elim))).val X))
         (deltaEmptyInj I O E e M
           (FreeCoprodCompDisc.plus I
             (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X)) :=
@@ -1935,20 +1935,20 @@ theorem interpHomDeltaSummand_deltaEmpty_theta (B : Type uB)
         (FreeCoprodCompDisc.Hom.comp O t
           (FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIso I O (delta I O E M) B i X)))
-        ((plusLiftBridgeNatInv I O B i (delta I O E M)).1 X))
+        ((plusLiftBridgeNatInv I O B i (delta I O E M)).val X))
       hu).trans
     ((congrArg
         (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
-          ((plusLiftBridgeNatInv I O B i (delta I O E M)).1 X))
+          ((plusLiftBridgeNatInv I O B i (delta I O E M)).val X))
         ((FreeCoprodCompDisc.Hom.comp_assoc O
             ((interpHom I O (c i)
               (precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim)
-                (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) w).1 X)
+                (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) w).val X)
             (FreeCoprodCompDisc.Hom.comp O
               (deltaEmptyInj I O
                 {z : E // (fun x ↦ (e x).elim : E → B ⊕ PUnit.{uB + 1}) z =
                   Sum.inr PUnit.unit}
-                (fun z ↦ (e z.1).elim)
+                (fun z ↦ (e z.val).elim)
                 (fun j ↦ precomp I O B i
                   (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
                 X)
@@ -1966,15 +1966,15 @@ theorem interpHomDeltaSummand_deltaEmpty_theta (B : Type uB)
                 ((interpHom I O (c i)
                   (precomp I O B i (M (precompMerge I B i
                     (fun x ↦ (e x).elim)
-                    (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))))
-                  w).1 X))
+                    (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))))
+                  w).val X))
               (interpPrecompIso_deltaEmpty_inj I O E e M B i X)).trans
             ((FreeCoprodCompDisc.Hom.comp_assoc O
                 ((interpHom I O (c i)
                   (precomp I O B i (M (precompMerge I B i
                     (fun x ↦ (e x).elim)
-                    (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))))
-                  w).1 X)
+                    (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))))
+                  w).val X)
                 (deltaEmptySummandHom I O E e M B i X)
                 (deltaEmptyInj I O E e M
                   (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I
@@ -1987,17 +1987,17 @@ theorem interpHomDeltaSummand_deltaEmpty_theta (B : Type uB)
       ((FreeCoprodCompDisc.Hom.comp_assoc O
           (FreeCoprodCompDisc.Hom.comp O
             ((interpHom I O (c i)
-              (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+              (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
             (FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X)))
           (deltaEmptyInj I O E e M
             (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨B, i⟩ X))
-          ((plusLiftBridgeNatInv I O B i (delta I O E M)).1 X)).trans
+          ((plusLiftBridgeNatInv I O B i (delta I O E M)).val X)).trans
         ((congrArg
             (FreeCoprodCompDisc.Hom.comp O
               (FreeCoprodCompDisc.Hom.comp O
                 ((interpHom I O (c i)
-                  (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+                  (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
                 (FreeCoprodCompDisc.Iso.hom O
                   (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X))))
             (interpMor_deltaEmpty_inj I O E e M
@@ -2008,10 +2008,10 @@ theorem interpHomDeltaSummand_deltaEmpty_theta (B : Type uB)
           (FreeCoprodCompDisc.Hom.comp_assoc O
             (FreeCoprodCompDisc.Hom.comp O
               ((interpHom I O (c i)
-                (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+                (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
               (FreeCoprodCompDisc.Iso.hom O
                 (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X)))
-            ((plusLiftBridgeNatInv I O B i (M (fun x ↦ (e x).elim))).1 X)
+            ((plusLiftBridgeNatInv I O B i (M (fun x ↦ (e x).elim))).val X)
             (deltaEmptyInj I O E e M
               (FreeCoprodCompDisc.plus I
                 (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩)
@@ -2028,20 +2028,20 @@ theorem interpHomDeltaSummand_deltaEmptyInj (B : Type uB)
     (w : Hom.{uA, uB, uI, uO} I O (c i)
       (precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim)
         (fun z : {z : E // (fun x ↦ (e x).elim : E → B ⊕ PUnit.{uB + 1}) z =
-            Sum.inr PUnit.unit} ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))))
+            Sum.inr PUnit.unit} ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))))
     (v : Hom.{uA, uB, uI, uO} I O (c i)
       (precomp I O B i (M (fun x ↦ (e x).elim))))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I)
-    (hu : (interpHom I O (c i) (precomp I O B i (delta I O E M)) u).1 X =
+    (hu : (interpHom I O (c i) (precomp I O B i (delta I O E M)) u).val X =
       FreeCoprodCompDisc.Hom.comp O
         ((interpHom I O (c i)
           (precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim)
-            (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) w).1 X)
+            (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) w).val X)
         (FreeCoprodCompDisc.Hom.comp O
           (deltaEmptyInj I O
             {z : E // (fun x ↦ (e x).elim : E → B ⊕ PUnit.{uB + 1}) z =
               Sum.inr PUnit.unit}
-            (fun z ↦ (e z.1).elim)
+            (fun z ↦ (e z.val).elim)
             (fun j ↦ precomp I O B i
               (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
             X)
@@ -2055,16 +2055,16 @@ theorem interpHomDeltaSummand_deltaEmptyInj (B : Type uB)
     (hv : FreeCoprodCompDisc.Hom.comp O
         ((interpHom I O (c i)
           (precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim)
-            (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I))))) w).1 X)
+            (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I))))) w).val X)
         (deltaEmptySummandHom I O E e M B i X) =
       FreeCoprodCompDisc.Hom.comp O
         ((interpHom I O (c i)
-          (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+          (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
         (FreeCoprodCompDisc.Iso.hom O
           (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X))) :
-    (interpHomDeltaSummand I O B c (delta I O E M) i u).1 X =
+    (interpHomDeltaSummand I O B c (delta I O E M) i u).val X =
       FreeCoprodCompDisc.Hom.comp O
-        ((interpHomDeltaSummand I O B c (M (fun x ↦ (e x).elim)) i v).1 X)
+        ((interpHomDeltaSummand I O B c (M (fun x ↦ (e x).elim)) i v).val X)
         (deltaEmptyInj I O E e M X) :=
   (congrArg
       (FreeCoprodCompDisc.coprodDesc O
@@ -2087,11 +2087,11 @@ theorem interpHomDeltaSummand_deltaEmptyInj (B : Type uB)
               (FreeCoprodCompDisc.Hom.comp O
                 (FreeCoprodCompDisc.Hom.comp O
                   ((interpHom I O (c i)
-                    (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+                    (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
                   (FreeCoprodCompDisc.Iso.hom O
                     (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X)))
                 ((plusLiftBridgeNatInv I O B i
-                  (M (fun x ↦ (e x).elim))).1 X))
+                  (M (fun x ↦ (e x).elim))).val X))
               (deltaEmptyInj I O E e M
                 (FreeCoprodCompDisc.plus I
                   (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X))
@@ -2106,12 +2106,12 @@ theorem interpHomDeltaSummand_deltaEmptyInj (B : Type uB)
                   (FreeCoprodCompDisc.Hom.comp O
                     (FreeCoprodCompDisc.Hom.comp O
                       ((interpHom I O (c i)
-                        (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+                        (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
                       (FreeCoprodCompDisc.Iso.hom O
                         (interpPrecompIso I O (M (fun x ↦ (e x).elim))
                           B i X)))
                     ((plusLiftBridgeNatInv I O B i
-                      (M (fun x ↦ (e x).elim))).1 X)))
+                      (M (fun x ↦ (e x).elim))).val X)))
                 (interpMor_deltaEmpty_inj I O E e M
                   (FreeCoprodCompDisc.plus I
                     (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X)
@@ -2122,11 +2122,11 @@ theorem interpHomDeltaSummand_deltaEmptyInj (B : Type uB)
                 (FreeCoprodCompDisc.Hom.comp O
                   (FreeCoprodCompDisc.Hom.comp O
                     ((interpHom I O (c i)
-                      (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+                      (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
                     (FreeCoprodCompDisc.Iso.hom O
                       (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X)))
                   ((plusLiftBridgeNatInv I O B i
-                    (M (fun x ↦ (e x).elim))).1 X))
+                    (M (fun x ↦ (e x).elim))).val X))
                 (interpMor I O (M (fun x ↦ (e x).elim))
                   (FreeCoprodCompDisc.plus I
                     (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X)
@@ -2144,10 +2144,10 @@ theorem interpHomDeltaSummand_deltaEmptyInj (B : Type uB)
           (FreeCoprodCompDisc.Hom.comp O
             (FreeCoprodCompDisc.Hom.comp O
               ((interpHom I O (c i)
-                (precomp I O B i (M (fun x ↦ (e x).elim))) v).1 X)
+                (precomp I O B i (M (fun x ↦ (e x).elim))) v).val X)
               (FreeCoprodCompDisc.Iso.hom O
                 (interpPrecompIso I O (M (fun x ↦ (e x).elim)) B i X)))
-            ((plusLiftBridgeNatInv I O B i (M (fun x ↦ (e x).elim))).1 X))
+            ((plusLiftBridgeNatInv I O B i (M (fun x ↦ (e x).elim))).val X))
           (interpMor I O (M (fun x ↦ (e x).elim))
             (FreeCoprodCompDisc.plus I
               (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X) X
@@ -2165,7 +2165,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
   fun E e M f X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inr (Sum.inr B)) d)
-          (delta I O E M) t).1 X)
+          (delta I O E M) t).val X)
         (deltaEmptyPush_mk_delta I O B d E e M f)).trans
       ((interpHom_delta I O B (fun j ↦ d (ULift.up j)) (delta I O E M)
           (fun i ↦ sigmaPush I O (d (ULift.up i))
@@ -2175,7 +2175,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
             (ULift.up (fun x ↦ (e x).elim))
             (deltaEmptyPush I O (d (ULift.up i))
               {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
-              (fun z ↦ (e z.1).elim)
+              (fun z ↦ (e z.val).elim)
               (fun j ↦ precomp I O B i
                 (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
               (cast (congrArg
@@ -2185,7 +2185,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                     (fun x ↦ (e x).elim)
                     (fun z : {z : E // (fun x ↦ (e x).elim) z =
                         Sum.inr PUnit.unit}
-                      ↦ ((e z.1).elim : PEmpty.{1}).elim)))
+                      ↦ ((e z.val).elim : PEmpty.{1}).elim)))
                 (f i)))) X).trans
         ((congrArg
             (deltaDesc I O B (fun j ↦ d (ULift.up j)) X
@@ -2202,7 +2202,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                   (ULift.up (fun x ↦ (e x).elim))
                   (deltaEmptyPush I O (d (ULift.up i))
                     {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
-                    (fun z ↦ (e z.1).elim)
+                    (fun z ↦ (e z.val).elim)
                     (fun j ↦ precomp I O B i
                       (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
                     (cast (congrArg
@@ -2213,7 +2213,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                           (fun x ↦ (e x).elim)
                           (fun z : {z : E // (fun x ↦ (e x).elim) z =
                               Sum.inr PUnit.unit}
-                            ↦ ((e z.1).elim : PEmpty.{1}).elim)))
+                            ↦ ((e z.val).elim : PEmpty.{1}).elim)))
                       (f i))))
                 (cast (congrArg
                   (fun a ↦ Hom I O (d (ULift.up i))
@@ -2223,7 +2223,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                       (fun x ↦ (e x).elim)
                       (fun z : {z : E // (fun x ↦ (e x).elim) z =
                           Sum.inr PUnit.unit}
-                        ↦ ((e z.1).elim : PEmpty.{1}).elim)))
+                        ↦ ((e z.val).elim : PEmpty.{1}).elim)))
                   (f i))
                 (f i) X
                 ((interpHom_sigmaPush I O (d (ULift.up i))
@@ -2235,7 +2235,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                     (ULift.up (fun x ↦ (e x).elim))
                     (deltaEmptyPush I O (d (ULift.up i))
                       {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
-                      (fun z ↦ (e z.1).elim)
+                      (fun z ↦ (e z.val).elim)
                       (fun j ↦ precomp I O B i
                         (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
                       (cast (congrArg
@@ -2246,7 +2246,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                             (fun x ↦ (e x).elim)
                             (fun z : {z : E // (fun x ↦ (e x).elim) z =
                                 Sum.inr PUnit.unit}
-                              ↦ ((e z.1).elim : PEmpty.{1}).elim)))
+                              ↦ ((e z.val).elim : PEmpty.{1}).elim)))
                         (f i))) X).trans
                   ((congrArg
                       (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
@@ -2261,7 +2261,7 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                       (ih (ULift.up i)
                         {z : E // (fun x ↦ (e x).elim :
                           E → B ⊕ PUnit.{uB + 1}) z = Sum.inr PUnit.unit}
-                        (fun z ↦ (e z.1).elim)
+                        (fun z ↦ (e z.val).elim)
                         (fun j ↦ precomp I O B i
                           (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
                         (cast (congrArg
@@ -2272,14 +2272,14 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                               (fun x ↦ (e x).elim)
                               (fun z : {z : E // (fun x ↦ (e x).elim) z =
                                   Sum.inr PUnit.unit}
-                                ↦ ((e z.1).elim : PEmpty.{1}).elim)))
+                                ↦ ((e z.val).elim : PEmpty.{1}).elim)))
                           (f i))
                         X)).trans
                     (FreeCoprodCompDisc.Hom.comp_assoc O
                       ((interpHom I O (d (ULift.up i))
                         (precomp I O B i (M (precompMerge I B i
                           (fun x ↦ (e x).elim)
-                          (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))))
+                          (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))))
                         (cast (congrArg
                           (fun a ↦ Hom I O (d (ULift.up i))
                             (precomp I O B i (M a)))
@@ -2288,12 +2288,12 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                               (fun x ↦ (e x).elim)
                               (fun z : {z : E // (fun x ↦ (e x).elim) z =
                                   Sum.inr PUnit.unit}
-                                ↦ ((e z.1).elim : PEmpty.{1}).elim)))
-                          (f i))).1 X)
+                                ↦ ((e z.val).elim : PEmpty.{1}).elim)))
+                          (f i))).val X)
                       (deltaEmptyInj I O
                         {z : E // (fun x ↦ (e x).elim :
                           E → B ⊕ PUnit.{uB + 1}) z = Sum.inr PUnit.unit}
-                        (fun z ↦ (e z.1).elim)
+                        (fun z ↦ (e z.val).elim)
                         (fun j ↦ precomp I O B i
                           (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
                         X)
@@ -2308,14 +2308,14 @@ theorem interpHom_deltaEmptyPush_mk_delta (B : Type uB)
                 (interpHom_deltaEmptySummand_cast I O (d (ULift.up i))
                   E e M B i X
                   (precompMerge I B i (fun x ↦ (e x).elim)
-                    (fun z ↦ (((e z.1).elim : PEmpty.{1}).elim : I)))
+                    (fun z ↦ (((e z.val).elim : PEmpty.{1}).elim : I)))
                   (funext (fun x ↦ (e x).elim))
                   (f i))))).trans
           ((deltaDesc_comp I O B (fun j ↦ d (ULift.up j)) X
               (interpObj I O (M (fun x ↦ (e x).elim)) X)
               (interpObj I O (delta I O E M) X)
               (fun i ↦ (interpHomDeltaSummand I O B (fun j ↦ d (ULift.up j))
-                (M (fun x ↦ (e x).elim)) i (f i)).1 X)
+                (M (fun x ↦ (e x).elim)) i (f i)).val X)
               (deltaEmptyInj I O E e M X)).symm.trans
             (congrArg
               (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
@@ -2347,9 +2347,9 @@ theorem interpHom_msigmaPush (D : IR.{max uA uB, uB, uI, uO} I O)
     (f : Hom.{uA, uB, uI, uO} I O D (mprecomp I O L (K' a')))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I) :
     (interpHom I O D (mprecomp I O L (sigma I O A' K'))
-        (msigmaPush I O D A' K' a' L f)).1 X =
+        (msigmaPush I O D A' K' a' L f)).val X =
       FreeCoprodCompDisc.Hom.comp O
-        ((interpHom I O D (mprecomp I O L (K' a')) f).1 X)
+        ((interpHom I O D (mprecomp I O L (K' a')) f).val X)
         (FreeCoprodCompDisc.Hom.comp O
           (FreeCoprodCompDisc.Hom.comp O
             (FreeCoprodCompDisc.Iso.hom O
@@ -2363,9 +2363,9 @@ theorem interpHom_msigmaPush (D : IR.{max uA uB, uB, uI, uO} I O)
       (f' : Hom.{uA, uB, uI, uO} I O D (mprecomp I O L' (K'' a'')))
       (X' : FreeCoprodCompDisc.{max uA uB, uI} I),
       (interpHom I O D (mprecomp I O L' (sigma I O A'' K''))
-          (msigmaPush I O D A'' K'' a'' L' f')).1 X' =
+          (msigmaPush I O D A'' K'' a'' L' f')).val X' =
         FreeCoprodCompDisc.Hom.comp O
-          ((interpHom I O D (mprecomp I O L' (K'' a'')) f').1 X')
+          ((interpHom I O D (mprecomp I O L' (K'' a'')) f').val X')
           (FreeCoprodCompDisc.Hom.comp O
             (FreeCoprodCompDisc.Hom.comp O
               (FreeCoprodCompDisc.Iso.hom O
@@ -2382,7 +2382,7 @@ theorem interpHom_msigmaPush (D : IR.{max uA uB, uB, uI, uO} I O)
         (congrArg
           (FreeCoprodCompDisc.Hom.comp O
             ((interpHom I O D
-              (mprecomp I O _L (precomp I O b.1 b.2 (K'' a''))) f').1 X'))
+              (mprecomp I O _L (precomp I O b.1 b.2 (K'' a''))) f').val X'))
           ((congrArg
               (fun t ↦ FreeCoprodCompDisc.Hom.comp O
                 (FreeCoprodCompDisc.Hom.comp O
@@ -2512,14 +2512,14 @@ theorem interpHom_deltaNavBase (D : IR.{max uA uB, uB, uI, uO} I O)
     (f : Hom.{uA, uB, uI, uO} I O D (precomp I O Bout iout (K (iout ∘ g))))
     (X : FreeCoprodCompDisc.{max uA uB, uI} I) :
     (interpHom I O D (precomp I O Bout iout (delta I O Bin K))
-        (deltaNavBase I O D Bout iout Bin K g f)).1 X =
+        (deltaNavBase I O D Bout iout Bin K g f)).val X =
       FreeCoprodCompDisc.Hom.comp O
-        ((interpHom I O D (precomp I O Bout iout (K (iout ∘ g))) f).1 X)
+        ((interpHom I O D (precomp I O Bout iout (K (iout ∘ g))) f).val X)
         (FreeCoprodCompDisc.Hom.comp O
           (deltaEmptyInj I O
             {z : Bin // (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
               Sum.inr PUnit.unit}
-            (fun z ↦ nomatch z.2)
+            (fun z ↦ nomatch z.property)
             (fun j ↦ precomp I O Bout iout
               (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
             X)
@@ -2538,7 +2538,7 @@ theorem interpHom_deltaNavBase (D : IR.{max uA uB, uB, uI, uO} I O)
       (deltaEmptyPush I O D
         {z : Bin // (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
           Sum.inr PUnit.unit}
-        (fun z ↦ nomatch z.2)
+        (fun z ↦ nomatch z.property)
         (fun j ↦ precomp I O Bout iout
           (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
         f)
@@ -2555,16 +2555,16 @@ theorem interpHom_deltaNavBase (D : IR.{max uA uB, uB, uI, uO} I O)
         (interpHom_deltaEmptyPush I O D
           {z : Bin // (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
             Sum.inr PUnit.unit}
-          (fun z ↦ nomatch z.2)
+          (fun z ↦ nomatch z.property)
           (fun j ↦ precomp I O Bout iout
             (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
           f X)).trans
       (FreeCoprodCompDisc.Hom.comp_assoc O
-        ((interpHom I O D (precomp I O Bout iout (K (iout ∘ g))) f).1 X)
+        ((interpHom I O D (precomp I O Bout iout (K (iout ∘ g))) f).val X)
         (deltaEmptyInj I O
           {z : Bin // (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
             Sum.inr PUnit.unit}
-          (fun z ↦ nomatch z.2)
+          (fun z ↦ nomatch z.property)
           (fun j ↦ precomp I O Bout iout
             (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
           X)
@@ -2595,9 +2595,9 @@ theorem deltaNav_strip (Bin : Type uB)
         (precomp I O Q q (K (precompMerge I Q q cl j₀))) k).1),
       (⟨w₁, (FreeCoprodCompDisc.isoOfEq O
           (congrArg (fun m ↦ interpObj I O (K m)
-            (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).1
+            (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).val
           ((FreeCoprodCompDisc.Iso.hom O
-            (interpPrecompIso I O (K (precompMerge I Q q cl j₂)) Q q k)).1
+            (interpPrecompIso I O (K (precompMerge I Q q cl j₂)) Q q k)).val
             (cast (congrArg (fun t ↦ (interpObj I O
               (precomp I O Q q (K (precompMerge I Q q cl t))) k).1) hj) n))⟩ :
         (interpObj I O (delta I O Bin K)
@@ -2605,7 +2605,7 @@ theorem deltaNav_strip (Bin : Type uB)
       ⟨w₂, cast (congrArg (fun m ↦ (interpObj I O (K m)
           (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1) s₂)
         ((FreeCoprodCompDisc.Iso.hom O
-          (interpPrecompIso I O (K b₀) Q q k)).1
+          (interpPrecompIso I O (K b₀) Q q k)).val
           (cast (congrArg (fun t ↦ (interpObj I O
             (precomp I O Q q (K t)) k).1) r₀) n))⟩ :=
   fun j₀ _ hj ↦
@@ -2618,9 +2618,9 @@ theorem deltaNav_strip (Bin : Type uB)
           (precomp I O Q q (K (precompMerge I Q q cl j₀))) k).1),
         (⟨w₁, (FreeCoprodCompDisc.isoOfEq O
             (congrArg (fun m ↦ interpObj I O (K m)
-              (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).1
+              (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)) s₁)).val
             ((FreeCoprodCompDisc.Iso.hom O
-              (interpPrecompIso I O (K (precompMerge I Q q cl j₂')) Q q k)).1
+              (interpPrecompIso I O (K (precompMerge I Q q cl j₂')) Q q k)).val
               (cast (congrArg (fun t ↦ (interpObj I O
                 (precomp I O Q q (K (precompMerge I Q q cl t))) k).1) hj')
                 n))⟩ :
@@ -2629,7 +2629,7 @@ theorem deltaNav_strip (Bin : Type uB)
         ⟨w₂, cast (congrArg (fun m ↦ (interpObj I O (K m)
             (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1) s₂)
           ((FreeCoprodCompDisc.Iso.hom O
-            (interpPrecompIso I O (K b₀) Q q k)).1
+            (interpPrecompIso I O (K b₀) Q q k)).val
             (cast (congrArg (fun t ↦ (interpObj I O
               (precomp I O Q q (K t)) k).1) r₀) n))⟩)
       (fun w₁ s₁ _ hw ↦
@@ -2641,17 +2641,17 @@ theorem deltaNav_strip (Bin : Type uB)
             (⟨w₁, (FreeCoprodCompDisc.isoOfEq O
                 (congrArg (fun m ↦ interpObj I O (K m)
                   (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k))
-                  s₁)).1
+                  s₁)).val
                 ((FreeCoprodCompDisc.Iso.hom O
                   (interpPrecompIso I O (K (precompMerge I Q q cl j₀))
-                    Q q k)).1 n)⟩ :
+                    Q q k)).val n)⟩ :
               (interpObj I O (delta I O Bin K)
                 (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1) =
             ⟨w₂', cast (congrArg (fun m ↦ (interpObj I O (K m)
                 (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1)
                 s₂)
               ((FreeCoprodCompDisc.Iso.hom O
-                (interpPrecompIso I O (K b₀) Q q k)).1
+                (interpPrecompIso I O (K b₀) Q q k)).val
                 (cast (congrArg (fun t ↦ (interpObj I O
                   (precomp I O Q q (K t)) k).1) r₀) n))⟩)
           (fun _ r₀ ↦
@@ -2662,10 +2662,10 @@ theorem deltaNav_strip (Bin : Type uB)
                 (⟨w₁, (FreeCoprodCompDisc.isoOfEq O
                     (congrArg (fun m ↦ interpObj I O (K m)
                       (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k))
-                      s₁)).1
+                      s₁)).val
                     ((FreeCoprodCompDisc.Iso.hom O
                       (interpPrecompIso I O (K (precompMerge I Q q cl j₀))
-                        Q q k)).1 n)⟩ :
+                        Q q k)).val n)⟩ :
                   (interpObj I O (delta I O Bin K)
                     (FreeCoprodCompDisc.plus.{uI, uB, max uA uB}
                       I ⟨Q, q⟩ k)).1) =
@@ -2673,7 +2673,7 @@ theorem deltaNav_strip (Bin : Type uB)
                     (FreeCoprodCompDisc.plus.{uI, uB, max uA uB}
                       I ⟨Q, q⟩ k)).1) s₂)
                   ((FreeCoprodCompDisc.Iso.hom O
-                    (interpPrecompIso I O (K b₀') Q q k)).1
+                    (interpPrecompIso I O (K b₀') Q q k)).val
                     (cast (congrArg (fun t ↦ (interpObj I O
                       (precomp I O Q q (K t)) k).1) r₀') n))⟩)
               (fun s₂ n ↦
@@ -2687,7 +2687,7 @@ theorem deltaNav_strip (Bin : Type uB)
                     (precompMerge I Q q cl j₀) (Sum.elim q k.2 ∘ w₁) s₁ s₂
                     ((FreeCoprodCompDisc.Iso.hom O
                       (interpPrecompIso I O (K (precompMerge I Q q cl j₀))
-                        Q q k)).1 n)))
+                        Q q k)).val n)))
               r₀)
           hw)
       hj
@@ -2705,7 +2705,7 @@ theorem interpPrecompIso_deltaNav_inj (Bout : Type uB) (iout : Bout → I)
           (deltaEmptyInj I O
             {z : Bin // (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
               Sum.inr PUnit.unit}
-            (fun z ↦ nomatch z.2)
+            (fun z ↦ nomatch z.property)
             (fun j ↦ precomp I O Bout iout
               (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
             X)
@@ -2737,7 +2737,7 @@ theorem interpPrecompIso_deltaNav_inj (Bout : Type uB) (iout : Bout → I)
           (deltaEmptyInj I O
             {z : Bin // (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
               Sum.inr PUnit.unit}
-            (fun z ↦ nomatch z.2)
+            (fun z ↦ nomatch z.property)
             (fun j ↦ precomp I O Bout iout
               (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
             X)
@@ -2758,7 +2758,7 @@ theorem interpPrecompIso_deltaNav_inj (Bout : Type uB) (iout : Bout → I)
                 {z : Bin //
                   (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
                     Sum.inr PUnit.unit}
-                (fun z ↦ nomatch z.2)
+                (fun z ↦ nomatch z.property)
                 (fun j ↦ precomp I O Bout iout
                   (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
                 X)
@@ -2772,47 +2772,47 @@ theorem interpPrecompIso_deltaNav_inj (Bout : Type uB) (iout : Bout → I)
             (FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIsoStep I O (Sum.inr (Sum.inr Bin)) (K ∘ ULift.down)
                 (fun x ↦ interpPrecompIso I O ((K ∘ ULift.down) x))
-                Bout iout X))).1 n =
+                Bout iout X))).val n =
           (⟨arrowSumMerge (fun b ↦ Sum.inl (g b))
-            (fun z ↦ ((nomatch z.2 : PEmpty.{1}).elim : X.1)),
+            (fun z ↦ ((nomatch z.property : PEmpty.{1}).elim : X.1)),
           (FreeCoprodCompDisc.isoOfEq O
             (congrArg
               (fun m ↦ interpObj I O (K m)
                 (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Bout, iout⟩ X))
               (precompMerge_elim I Bout iout X Bin (fun b ↦ Sum.inl (g b))
-                (fun z ↦ ((nomatch z.2 : PEmpty.{1}).elim : X.1))))).1
+                (fun z ↦ ((nomatch z.property : PEmpty.{1}).elim : X.1))))).val
             ((FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O
                 (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b))
-                  (fun z ↦ X.2 ((nomatch z.2 : PEmpty.{1}).elim))))
-                Bout iout X)).1
+                  (fun z ↦ X.2 ((nomatch z.property : PEmpty.{1}).elim))))
+                Bout iout X)).val
               (cast
                 (congrArg
                   (fun t ↦ (interpObj I O (precomp I O Bout iout
                     (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) t)))
                     X).1)
-                  (funext (fun z ↦ nomatch z.2) :
+                  (funext (fun z ↦ nomatch z.property) :
                     (fun x : {z : Bin //
                         (fun b ↦ Sum.inl (g b) :
                           Bin → Bout ⊕ PUnit.{uB + 1}) z =
                           Sum.inr PUnit.unit} ↦
-                      ((nomatch x.2 : PEmpty.{1}).elim : I)) =
+                      ((nomatch x.property : PEmpty.{1}).elim : I)) =
                       fun z : {z : Bin //
                         (fun b ↦ Sum.inl (g b) :
                           Bin → Bout ⊕ PUnit.{uB + 1}) z =
                           Sum.inr PUnit.unit} ↦
-                        X.2 ((nomatch z.2 : PEmpty.{1}).elim)))
+                        X.2 ((nomatch z.property : PEmpty.{1}).elim)))
                 n))⟩ :
           (interpObj I O (delta I O Bin K)
             (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Bout, iout⟩ X)).1)).trans
         ((deltaNav_strip I O Bin K Bout iout X (fun b ↦ Sum.inl (g b))
-          (fun x ↦ ((nomatch x.2 : PEmpty.{1}).elim : I))
-          (fun z ↦ X.2 ((nomatch z.2 : PEmpty.{1}).elim))
-          (funext (fun z ↦ nomatch z.2))
+          (fun x ↦ ((nomatch x.property : PEmpty.{1}).elim : I))
+          (fun z ↦ X.2 ((nomatch z.property : PEmpty.{1}).elim))
+          (funext (fun z ↦ nomatch z.property))
           (arrowSumMerge (fun b ↦ Sum.inl (g b))
-            (fun z ↦ ((nomatch z.2 : PEmpty.{1}).elim : X.1)))
+            (fun z ↦ ((nomatch z.property : PEmpty.{1}).elim : X.1)))
           (precompMerge_elim I Bout iout X Bin (fun b ↦ Sum.inl (g b))
-            (fun z ↦ ((nomatch z.2 : PEmpty.{1}).elim : X.1)))
+            (fun z ↦ ((nomatch z.property : PEmpty.{1}).elim : X.1)))
           (fun z ↦ (Sum.inl (g z) : Bout ⊕ X.1))
           rfl
           (iout ∘ g)
@@ -2836,7 +2836,7 @@ theorem interpPrecompIso_deltaNav_inj (Bout : Type uB) (iout : Bout → I)
                 ⟨fun z ↦ Sum.inl (g z.down), rfl⟩))
             (deltaInto I O Bin K (iout ∘ g)
               (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I
-                ⟨Bout, iout⟩ X))).1 n =
+                ⟨Bout, iout⟩ X))).val n =
               (⟨fun z ↦ Sum.inl (g z),
           cast
             (congrArg
@@ -2846,7 +2846,7 @@ theorem interpPrecompIso_deltaNav_inj (Bout : Type uB) (iout : Bout → I)
               (funext (fun _ ↦ rfl) :
                 iout ∘ g = Sum.elim iout X.2 ∘ fun z : Bin ↦ Sum.inl (g z)))
             ((FreeCoprodCompDisc.Iso.hom O
-              (interpPrecompIso I O (K (iout ∘ g)) Bout iout X)).1
+              (interpPrecompIso I O (K (iout ∘ g)) Bout iout X)).val
               (cast
                 (congrArg
                   (fun t ↦ (interpObj I O
@@ -2857,7 +2857,7 @@ theorem interpPrecompIso_deltaNav_inj (Bout : Type uB) (iout : Bout → I)
                           (fun b ↦ Sum.inl (g b) :
                             Bin → Bout ⊕ PUnit.{uB + 1}) z =
                               Sum.inr PUnit.unit} ↦
-                          ((nomatch x.2 : PEmpty.{1}).elim : I)) =
+                          ((nomatch x.property : PEmpty.{1}).elim : I)) =
                       iout ∘ g))
                 n))⟩ :
           (interpObj I O (delta I O Bin K)
@@ -2954,7 +2954,7 @@ def navReindex (Bin : Type uB) (j : Bin → I) (Q : Type uB) :
         ⟨{z : Bin //
             (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) z =
               Sum.inr PUnit.unit},
-          fun z ↦ j z.1⟩) :=
+          fun z ↦ j z.val⟩) :=
   ⟨fun z ↦ ULift.up ⟨z.down, rfl⟩, rfl⟩
 
 /-- `IR.navWeight` at the all-unresolved classifier's subtype,
@@ -2968,7 +2968,7 @@ theorem navWeight_reindex (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
           {z : Bin //
             (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) z =
               Sum.inr PUnit.unit}
-          (fun z ↦ g z.1) X L) =
+          (fun z ↦ g z.val) X L) =
       navWeight I Bout iout Bin g X L :=
   L.rec (motive := fun L' ↦
       FreeCoprodCompDisc.Hom.comp I (navReindex.{uA, uB, uI} I Bin (iout ∘ g) Q)
@@ -2976,7 +2976,7 @@ theorem navWeight_reindex (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
             {z : Bin //
               (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) z =
                 Sum.inr PUnit.unit}
-            (fun z ↦ g z.1) X L') =
+            (fun z ↦ g z.val) X L') =
         navWeight I Bout iout Bin g X L')
     (Subtype.ext rfl)
     (fun a _L ih ↦
@@ -2986,7 +2986,7 @@ theorem navWeight_reindex (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
             {z : Bin //
               (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) z =
                 Sum.inr PUnit.unit}
-            (fun z ↦ g z.1) X _L)
+            (fun z ↦ g z.val) X _L)
           (FreeCoprodCompDisc.coprodPairInr.{uI, uB, max uA uB} I a
             (mplus.{uA, uB, uI} I
               (_L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))).symm.trans
@@ -3009,7 +3009,7 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
       (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I
         ⟨{z : Bin //
           (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) z = Sum.inr PUnit.unit},
-          fun z ↦ j z.1⟩)
+          fun z ↦ j z.val⟩)
       k) :
     FreeCoprodCompDisc.Hom.comp O
         (FreeCoprodCompDisc.Hom.comp O
@@ -3020,7 +3020,7 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
                   ⟨{z : Bin //
                     (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                       z = Sum.inr PUnit.unit},
-                    fun z ↦ j z.1⟩)
+                    fun z ↦ j z.val⟩)
                 k)
               (fun _ ↦ interpObj I O
                 (precomp I O Q q (K (precompMerge I Q q
@@ -3028,14 +3028,14 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
                   (fun z : {z : Bin //
                     (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                       z = Sum.inr PUnit.unit} ↦
-                    j z.1))))
+                    j z.val))))
                 k)
               u)
             (deltaInto I O {z : Bin //
               (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) z = Sum.inr PUnit.unit}
               (fun m ↦ precomp I O Q q (K (precompMerge I Q q
                 (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) m)))
-              (fun z ↦ j z.1) k))
+              (fun z ↦ j z.val) k))
           (FreeCoprodCompDisc.coprodInj O
             (ULift.{max uA uB} (Bin → Q ⊕ PUnit.{uB + 1}))
             (fun cl ↦ interpObj I O
@@ -3069,7 +3069,7 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
                   ⟨{z : Bin //
                     (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                       z = Sum.inr PUnit.unit},
-                    fun z ↦ j z.1⟩)
+                    fun z ↦ j z.val⟩)
                 k)
               (fun _ ↦ interpObj I O
                 (precomp I O Q q (K (precompMerge I Q q
@@ -3077,14 +3077,14 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
                   (fun z : {z : Bin //
                     (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                       z = Sum.inr PUnit.unit} ↦
-                    j z.1))))
+                    j z.val))))
                 k)
               u)
             (deltaInto I O {z : Bin //
               (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) z = Sum.inr PUnit.unit}
               (fun m ↦ precomp I O Q q (K (precompMerge I Q q
                 (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) m)))
-              (fun z ↦ j z.1) k))
+              (fun z ↦ j z.val) k))
           (FreeCoprodCompDisc.coprodInj O
             (ULift.{max uA uB} (Bin → Q ⊕ PUnit.{uB + 1}))
             (fun cl ↦ interpObj I O
@@ -3105,7 +3105,7 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
                       ⟨{z : Bin //
                         (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                           z = Sum.inr PUnit.unit},
-                        fun z ↦ j z.1⟩)
+                        fun z ↦ j z.val⟩)
                     k)
                   (fun _ ↦ interpObj I O
                     (precomp I O Q q (K (precompMerge I Q q
@@ -3113,14 +3113,14 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
                       (fun z : {z : Bin //
                         (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                           z = Sum.inr PUnit.unit} ↦
-                        j z.1))))
+                        j z.val))))
                     k)
                   u)
                 (deltaInto I O {z : Bin //
                   (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) z = Sum.inr PUnit.unit}
                   (fun m ↦ precomp I O Q q (K (precompMerge I Q q
                     (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) m)))
-                  (fun z ↦ j z.1) k))
+                  (fun z ↦ j z.val) k))
               (FreeCoprodCompDisc.coprodInj O
                 (ULift.{max uA uB} (Bin → Q ⊕ PUnit.{uB + 1}))
                 (fun cl ↦ interpObj I O
@@ -3132,51 +3132,51 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
               (interpPrecompIsoStep I O (Sum.inr (Sum.inr Bin))
                 (K ∘ ULift.down)
                 (fun x ↦ interpPrecompIso I O ((K ∘ ULift.down) x))
-                Q q k))).1 n =
+                Q q k))).val n =
           (⟨arrowSumMerge
-            (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) (fun z ↦ u.1 (ULift.up z)),
+            (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) (fun z ↦ u.val (ULift.up z)),
             (FreeCoprodCompDisc.isoOfEq O
               (congrArg
                 (fun m ↦ interpObj I O (K m)
                   (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k))
                 (precompMerge_elim I Q q k Bin
                   (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
-                  (fun z ↦ u.1 (ULift.up z))))).1
+                  (fun z ↦ u.val (ULift.up z))))).val
               ((FreeCoprodCompDisc.Iso.hom O
                 (interpPrecompIso I O
                   (K (precompMerge I Q q (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
-                    (fun z ↦ k.2 (u.1 (ULift.up z)))))
-                  Q q k)).1
+                    (fun z ↦ k.2 (u.val (ULift.up z)))))
+                  Q q k)).val
                 (cast
                   (congrArg
                     (fun t ↦ (interpObj I O (precomp I O Q q
                       (K (precompMerge I Q q
                         (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) t))) k).1)
-                    (funext (fun z ↦ (congrFun u.2 (ULift.up z)).symm) :
+                    (funext (fun z ↦ (congrFun u.property (ULift.up z)).symm) :
                       (fun z : {z : Bin //
                         (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                           z = Sum.inr PUnit.unit} ↦
-                        j z.1) =
+                        j z.val) =
                         fun z : {z : Bin //
                           (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                             z = Sum.inr PUnit.unit} ↦
-                          k.2 (u.1 (ULift.up z))))
+                          k.2 (u.val (ULift.up z))))
                   n))⟩ :
             (interpObj I O (delta I O Bin K)
               (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I ⟨Q, q⟩ k)).1)).trans
         ((deltaNav_strip I O Bin K Q q k (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
-          (fun z ↦ j z.1)
-          (fun z ↦ k.2 (u.1 (ULift.up z)))
-          (funext (fun z ↦ (congrFun u.2 (ULift.up z)).symm))
+          (fun z ↦ j z.val)
+          (fun z ↦ k.2 (u.val (ULift.up z)))
+          (funext (fun z ↦ (congrFun u.property (ULift.up z)).symm))
           (arrowSumMerge
-            (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) (fun z ↦ u.1 (ULift.up z)))
+            (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) (fun z ↦ u.val (ULift.up z)))
           (precompMerge_elim I Q q k Bin
-            (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) (fun z ↦ u.1 (ULift.up z)))
-          (fun b ↦ (Sum.inr (u.1 (ULift.up ⟨b, rfl⟩)) : Q ⊕ k.1))
+            (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1})) (fun z ↦ u.val (ULift.up z)))
+          (fun b ↦ (Sum.inr (u.val (ULift.up ⟨b, rfl⟩)) : Q ⊕ k.1))
           rfl
           j
           (funext (fun _ ↦ rfl))
-          (funext (fun b ↦ (congrFun u.2 (ULift.up ⟨b, rfl⟩)).symm))
+          (funext (fun b ↦ (congrFun u.property (ULift.up ⟨b, rfl⟩)).symm))
           n).trans
           (rfl :
             (FreeCoprodCompDisc.Hom.comp O
@@ -3195,20 +3195,20 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
                         (FreeCoprodCompDisc.coprodPairInr.{uI, uB, max uA uB} I ⟨Q, q⟩ k)))))
                 (deltaInto I O Bin K j
                   (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I
-                    ⟨Q, q⟩ k))).1 n =
-              (⟨fun b ↦ (Sum.inr (u.1 (ULift.up ⟨b, rfl⟩)) : Q ⊕ k.1),
+                    ⟨Q, q⟩ k))).val n =
+              (⟨fun b ↦ (Sum.inr (u.val (ULift.up ⟨b, rfl⟩)) : Q ⊕ k.1),
                 cast
                   (congrArg
                     (fun m ↦ (interpObj I O (K m)
                       (FreeCoprodCompDisc.plus.{uI, uB, max uA uB} I
                         ⟨Q, q⟩ k)).1)
                     (funext
-                      (fun b ↦ (congrFun u.2 (ULift.up ⟨b, rfl⟩)).symm) :
+                      (fun b ↦ (congrFun u.property (ULift.up ⟨b, rfl⟩)).symm) :
                       j = Sum.elim q k.2 ∘
                         fun b : Bin ↦
-                          (Sum.inr (u.1 (ULift.up ⟨b, rfl⟩)) : Q ⊕ k.1)))
+                          (Sum.inr (u.val (ULift.up ⟨b, rfl⟩)) : Q ⊕ k.1)))
                   ((FreeCoprodCompDisc.Iso.hom O
-                    (interpPrecompIso I O (K j) Q q k)).1
+                    (interpPrecompIso I O (K j) Q q k)).val
                     (cast
                       (congrArg
                         (fun t ↦ (interpObj I O
@@ -3219,7 +3219,7 @@ theorem interpPrecompIso_deltaNavAll_inj (Bin : Type uB)
                               (fun z : {z : Bin //
                                 (fun _ : Bin ↦ (Sum.inr PUnit.unit : Q ⊕ PUnit.{uB + 1}))
                                   z = Sum.inr PUnit.unit} ↦
-                                j z.1) =
+                                j z.val) =
                             j))
                       n))⟩ :
                 (interpObj I O (delta I O Bin K)
@@ -3272,7 +3272,7 @@ theorem navInj_nil (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
         (deltaEmptyInj I O
           {z : Bin // (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
             Sum.inr PUnit.unit}
-          (fun z ↦ nomatch z.2)
+          (fun z ↦ nomatch z.property)
           (fun j ↦ precomp I O Bout iout
             (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
           X)
@@ -3293,7 +3293,7 @@ theorem navInj_nil (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
         (deltaEmptyInj I O
           {z : Bin // (fun b ↦ Sum.inl (g b) : Bin → Bout ⊕ PUnit.{uB + 1}) z =
             Sum.inr PUnit.unit}
-          (fun z ↦ nomatch z.2)
+          (fun z ↦ nomatch z.property)
           (fun j ↦ precomp I O Bout iout
             (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
           X)
@@ -3351,7 +3351,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
               Sum.inr PUnit.unit}
           (fun m ↦ precomp I O a.1 a.2 (K (precompMerge I a.1 a.2
             (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m)))
-          (fun z ↦ g z.1) L X)
+          (fun z ↦ g z.val) L X)
         (FreeCoprodCompDisc.Hom.comp O
             (FreeCoprodCompDisc.Hom.comp O
               (FreeCoprodCompDisc.Iso.hom O
@@ -3389,7 +3389,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
               (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I
                 ⟨
                   {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                    Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.1⟩)
+                    Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.val⟩)
               (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
             (fun _ ↦ interpObj I O
               (precomp I O a.1 a.2
@@ -3398,18 +3398,18 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                     (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1}))
                     (fun z :
                       {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                        Sum.inr PUnit.unit} ↦ (iout ∘ g) z.1))))
+                        Sum.inr PUnit.unit} ↦ (iout ∘ g) z.val))))
               (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
             (navWeight I Bout iout
               {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z = Sum.inr
-                PUnit.unit} (fun z ↦ g z.1) X L))
+                PUnit.unit} (fun z ↦ g z.val) X L))
           (deltaInto I O
             {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z = Sum.inr
               PUnit.unit}
             (fun m ↦ precomp I O a.1 a.2
               (K
                 (precompMerge I a.1 a.2 (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1}))
-                  m))) (fun z ↦ (iout ∘ g) z.1)
+                  m))) (fun z ↦ (iout ∘ g) z.val)
             (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))))
       (FreeCoprodCompDisc.Iso.invHom O
         (mprecompIso.{uA, uB, uI, uO} I O (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)])
@@ -3455,7 +3455,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                   (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I
                     ⟨
                       {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                        Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.1⟩)
+                        Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.val⟩)
                   (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
                 (fun _ ↦ interpObj I O
                   (precomp I O a.1 a.2
@@ -3464,11 +3464,11 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                         (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1}))
                         (fun z :
                           {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z
-                            = Sum.inr PUnit.unit} ↦ (iout ∘ g) z.1))))
+                            = Sum.inr PUnit.unit} ↦ (iout ∘ g) z.val))))
                   (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
                 (navWeight I Bout iout
                   {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                    Sum.inr PUnit.unit} (fun z ↦ g z.1) X L))
+                    Sum.inr PUnit.unit} (fun z ↦ g z.val) X L))
               (deltaInto I O
                 {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z = Sum.inr
                   PUnit.unit}
@@ -3476,7 +3476,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                   (K
                     (precompMerge I a.1 a.2
                       (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m)))
-                (fun z ↦ (iout ∘ g) z.1)
+                (fun z ↦ (iout ∘ g) z.val)
                 (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X)))))
         (Eq.trans
           (Eq.symm
@@ -3584,7 +3584,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                 (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I
                   ⟨
                     {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                      Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.1⟩)
+                      Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.val⟩)
                 (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
               (fun _ ↦ interpObj I O
                 (precomp I O a.1 a.2
@@ -3593,11 +3593,11 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                       (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1}))
                       (fun z :
                         {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                          Sum.inr PUnit.unit} ↦ (iout ∘ g) z.1))))
+                          Sum.inr PUnit.unit} ↦ (iout ∘ g) z.val))))
                 (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
               (navWeight I Bout iout
                 {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z = Sum.inr
-                  PUnit.unit} (fun z ↦ g z.1) X L))
+                  PUnit.unit} (fun z ↦ g z.val) X L))
             (deltaInto I O
               {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z = Sum.inr
                 PUnit.unit}
@@ -3605,7 +3605,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                 (K
                   (precompMerge I a.1 a.2
                     (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m)))
-              (fun z ↦ (iout ∘ g) z.1)
+              (fun z ↦ (iout ∘ g) z.val)
               (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X)))
           (FreeCoprodCompDisc.Hom.comp O
             (FreeCoprodCompDisc.coprodInj O (ULift.{max uA uB, uB} (Bin → a.1 ⊕ PUnit.{uB + 1}))
@@ -3633,7 +3633,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                       (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I
                         ⟨
                           {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z
-                            = Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.1⟩)
+                            = Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.val⟩)
                       (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
                     (fun _ ↦ interpObj I O
                       (precomp I O a.1 a.2
@@ -3643,11 +3643,11 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                             (fun z :
                               {z : Bin //
                                 (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                                Sum.inr PUnit.unit} ↦ (iout ∘ g) z.1))))
+                                Sum.inr PUnit.unit} ↦ (iout ∘ g) z.val))))
                       (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
                     (navWeight I Bout iout
                       {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                        Sum.inr PUnit.unit} (fun z ↦ g z.1) X L))
+                        Sum.inr PUnit.unit} (fun z ↦ g z.val) X L))
                   (deltaInto I O
                     {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
                       Sum.inr PUnit.unit}
@@ -3655,7 +3655,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                       (K
                         (precompMerge I a.1 a.2
                           (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m)))
-                    (fun z ↦ (iout ∘ g) z.1)
+                    (fun z ↦ (iout ∘ g) z.val)
                     (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X)))
                 (FreeCoprodCompDisc.coprodInj O (ULift.{max uA uB, uB} (Bin → a.1 ⊕ PUnit.{uB + 1}))
                   (fun cl ↦ interpObj I O
@@ -3690,7 +3690,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                         (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1}))
                         (fun z :
                           {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z
-                            = Sum.inr PUnit.unit} ↦ (iout ∘ g) z.1))))
+                            = Sum.inr PUnit.unit} ↦ (iout ∘ g) z.val))))
                   (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
                 (interpObj I O (precomp I O a.1 a.2 (delta I O Bin K))
                   (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
@@ -3704,7 +3704,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                         (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I
                           ⟨
                             {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1}))
-                              z = Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.1⟩)
+                              z = Sum.inr PUnit.unit}, fun z ↦ (iout ∘ g) z.val⟩)
                         (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
                       (fun _ ↦ interpObj I O
                         (precomp I O a.1 a.2
@@ -3714,11 +3714,11 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                               (fun z :
                                 {z : Bin //
                                   (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                                  Sum.inr PUnit.unit} ↦ (iout ∘ g) z.1))))
+                                  Sum.inr PUnit.unit} ↦ (iout ∘ g) z.val))))
                         (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))
                       (navWeight I Bout iout
                         {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                          Sum.inr PUnit.unit} (fun z ↦ g z.1) X L))
+                          Sum.inr PUnit.unit} (fun z ↦ g z.val) X L))
                     (deltaInto I O
                       {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
                         Sum.inr PUnit.unit}
@@ -3726,7 +3726,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                         (K
                           (precompMerge I a.1 a.2
                             (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m)))
-                      (fun z ↦ (iout ∘ g) z.1)
+                      (fun z ↦ (iout ∘ g) z.val)
                       (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X)))
                   (FreeCoprodCompDisc.coprodInj O
                     (ULift.{max uA uB, uB} (Bin → a.1 ⊕ PUnit.{uB + 1}))
@@ -3752,7 +3752,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                         (FreeCoprodCompDisc.Hom.comp I
                           (navWeight I Bout iout
                             {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1}))
-                              z = Sum.inr PUnit.unit} (fun z ↦ g z.1) X L)
+                              z = Sum.inr PUnit.unit} (fun z ↦ g z.val) X L)
                           (FreeCoprodCompDisc.coprodPairInr.{uI, uB, max uA uB} I a
                             (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X)))))
                             )
@@ -3765,7 +3765,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                   (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X)
                   (navWeight I Bout iout
                     {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                      Sum.inr PUnit.unit} (fun z ↦ g z.1) X L))))
+                      Sum.inr PUnit.unit} (fun z ↦ g z.val) X L))))
             (Eq.trans
               (congrArg
                 (fun w ↦ FreeCoprodCompDisc.Hom.comp O
@@ -3807,7 +3807,7 @@ theorem navInj_cons (Bout : Type uB) (iout : Bout → I) (Bin : Type uB)
                       (navReindex.{uA, uB, uI} I Bin (iout ∘ g) a.1)
                       (navWeight I Bout iout
                         {z : Bin // (fun _ : Bin ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
-                          Sum.inr PUnit.unit} (fun z ↦ g z.1) X L)
+                          Sum.inr PUnit.unit} (fun z ↦ g z.val) X L)
                       (FreeCoprodCompDisc.coprodPairInr.{uI, uB, max uA uB} I a
                         (mplus.{uA, uB, uI} I (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) X))))
                   (congrArg
@@ -3985,11 +3985,11 @@ theorem interpHom_deltaNav (D : IR.{max uA uB, uB, uI, uO} I O)
     (interpHom I O D
         (mprecomp I O (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)])
           (delta I O Bin K))
-        (deltaNav I O D Bout iout Bin K g L f)).1 X =
+        (deltaNav I O D Bout iout Bin K g L f)).val X =
       FreeCoprodCompDisc.Hom.comp O
         ((interpHom I O D
           (mprecomp I O (L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)])
-            (K (iout ∘ g))) f).1 X)
+            (K (iout ∘ g))) f).val X)
         (navInj I O Bout iout Bin K g L X) :=
   L.rec (motive := fun L' : List (SupObj.{uB, uI} I) ↦
       ∀ (Bin' : Type uB) (K' : (Bin' → I) → IR.{max uA uB, uB, uI, uO} I O)
@@ -4001,17 +4001,17 @@ theorem interpHom_deltaNav (D : IR.{max uA uB, uB, uI, uO} I O)
       (interpHom I O D
           (mprecomp I O (L' ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)])
             (delta I O Bin' K'))
-          (deltaNav I O D Bout iout Bin' K' g' L' f')).1 X' =
+          (deltaNav I O D Bout iout Bin' K' g' L' f')).val X' =
         FreeCoprodCompDisc.Hom.comp O
           ((interpHom I O D
             (mprecomp I O (L' ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)])
-              (K' (iout ∘ g'))) f').1 X')
+              (K' (iout ∘ g'))) f').val X')
           (navInj I O Bout iout Bin' K' g' L' X'))
     (fun Bin' K' g' f' X' ↦
       (interpHom_deltaNavBase I O D Bout iout Bin' K' g' f' X').trans
         (congrArg
           (FreeCoprodCompDisc.Hom.comp O
-            ((interpHom I O D (precomp I O Bout iout (K' (iout ∘ g'))) f').1 X'))
+            ((interpHom I O D (precomp I O Bout iout (K' (iout ∘ g'))) f').val X'))
           (navInj_nil I O Bout iout Bin' K' g' X')))
     (fun a _L ih Bin' K' g' f' X' ↦
       Eq.trans (interpHom_msigmaPush I O D (ULift.{max uA uB, uB} (Bin' → a.1 ⊕ PUnit.{uB + 1}))
@@ -4020,7 +4020,7 @@ theorem interpHom_deltaNav (D : IR.{max uA uB, uB, uI, uO} I O)
         (_L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) (deltaNav I O D Bout iout {z : Bin' // (fun _
         : Bin' ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z = Sum.inr PUnit.unit} (fun m ↦
         precomp I O a.1 a.2 (K' (precompMerge I a.1 a.2 (fun _ : Bin' ↦ (Sum.inr PUnit.unit : a.1
-        ⊕ PUnit.{uB + 1})) m))) (fun z ↦ g' z.1) _L f') X') (Eq.trans (congrArg (fun t ↦
+        ⊕ PUnit.{uB + 1})) m))) (fun z ↦ g' z.val) _L f') X') (Eq.trans (congrArg (fun t ↦
         FreeCoprodCompDisc.Hom.comp O t (FreeCoprodCompDisc.Hom.comp O
         (FreeCoprodCompDisc.Hom.comp O (FreeCoprodCompDisc.Iso.hom O (mprecompIso.{uA, uB, uI, uO}
         I O (_L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) (delta I O {z : Bin' // (fun _ : Bin' ↦
@@ -4036,12 +4036,12 @@ theorem interpHom_deltaNav (D : IR.{max uA uB, uB, uI, uO} I O)
         (fun m ↦ precomp I O a.1 a.2 (K' (precompMerge I a.1 a.2 cl.down m))))) X')))) (ih {z :
         Bin' // (fun _ : Bin' ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z = Sum.inr
         PUnit.unit} (fun m ↦ precomp I O a.1 a.2 (K' (precompMerge I a.1 a.2 (fun _ : Bin' ↦
-        (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m))) (fun z ↦ g' z.1) f' X')) (Eq.trans
+        (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m))) (fun z ↦ g' z.val) f' X')) (Eq.trans
         (FreeCoprodCompDisc.Hom.comp_assoc O ((interpHom I O D (mprecomp I O (_L ++ [(⟨Bout, iout⟩
-        : SupObj.{uB, uI} I)]) (precomp I O a.1 a.2 (K' (iout ∘ g')))) f').1 X') (navInj I O Bout
+        : SupObj.{uB, uI} I)]) (precomp I O a.1 a.2 (K' (iout ∘ g')))) f').val X') (navInj I O Bout
         iout {z : Bin' // (fun _ : Bin' ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z =
         Sum.inr PUnit.unit} (fun m ↦ precomp I O a.1 a.2 (K' (precompMerge I a.1 a.2 (fun _ :
-        Bin' ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m))) (fun z ↦ g' z.1) _L X')
+        Bin' ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) m))) (fun z ↦ g' z.val) _L X')
         (FreeCoprodCompDisc.Hom.comp O (FreeCoprodCompDisc.Hom.comp O (FreeCoprodCompDisc.Iso.hom
         O (mprecompIso.{uA, uB, uI, uO} I O (_L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) (delta I
         O {z : Bin' // (fun _ : Bin' ↦ (Sum.inr PUnit.unit : a.1 ⊕ PUnit.{uB + 1})) z = Sum.inr
@@ -4056,7 +4056,7 @@ theorem interpHom_deltaNav (D : IR.{max uA uB, uB, uI, uO} I O)
         cl ↦ delta I O {z : Bin' // cl.down z = Sum.inr PUnit.unit} (fun m ↦ precomp I O a.1 a.2
         (K' (precompMerge I a.1 a.2 cl.down m))))) X')))) (congrArg (FreeCoprodCompDisc.Hom.comp O
         ((interpHom I O D (mprecomp I O (_L ++ [(⟨Bout, iout⟩ : SupObj.{uB, uI} I)]) (precomp I O
-        a.1 a.2 (K' (iout ∘ g')))) f').1 X')) (navInj_cons I O Bout iout Bin' K' g' a _L X')))))
+        a.1 a.2 (K' (iout ∘ g')))) f').val X')) (navInj_cons I O Bout iout Bin' K' g' a _L X')))))
     Bin K g f X
 
 /-! ### The identity-image induction -/
@@ -4066,7 +4066,7 @@ component of `IR.interpHom` at the pre-unit is the semantic pre-unit
 component. -/
 def InterpHomPreUnitMotive (γ : IR.{max uA uB, uB, uI, uO} I O) : Prop :=
   ∀ (L : List (SupObj.{uB, uI} I)) (X : FreeCoprodCompDisc.{max uA uB, uI} I),
-    (interpHom I O γ (mprecomp I O L γ) (preUnitStack I O γ L)).1 X =
+    (interpHom I O γ (mprecomp I O L γ) (preUnitStack I O γ L)).val X =
       preUnitComponent I O γ L X
 
 /-- Elimination of a codomain-code transport inside `IR.interpHom`, by
@@ -4077,19 +4077,19 @@ theorem interpHom_cast_cod (D : IR.{max uA uB, uB, uI, uO} I O)
     (X : FreeCoprodCompDisc.{max uA uB, uI} I) :
     ∀ (γ'' : IR.{max uA uB, uB, uI, uO} I O) (h : γ₀ = γ'')
       (f : Hom.{uA, uB, uI, uO} I O D γ₀),
-      (interpHom I O D γ'' (cast (congrArg (Hom I O D) h) f)).1 X =
-        FreeCoprodCompDisc.Hom.comp O ((interpHom I O D γ₀ f).1 X)
+      (interpHom I O D γ'' (cast (congrArg (Hom I O D) h) f)).val X =
+        FreeCoprodCompDisc.Hom.comp O ((interpHom I O D γ₀ f).val X)
           (FreeCoprodCompDisc.Iso.hom O (FreeCoprodCompDisc.isoOfEq O
             (congrArg (fun cc ↦ interpObj I O cc X) h))) :=
   fun _ h ↦
     Eq.rec (motive := fun γ'' h' ↦
         ∀ f : Hom.{uA, uB, uI, uO} I O D γ₀,
-          (interpHom I O D γ'' (cast (congrArg (Hom I O D) h') f)).1 X =
-            FreeCoprodCompDisc.Hom.comp O ((interpHom I O D γ₀ f).1 X)
+          (interpHom I O D γ'' (cast (congrArg (Hom I O D) h') f)).val X =
+            FreeCoprodCompDisc.Hom.comp O ((interpHom I O D γ₀ f).val X)
               (FreeCoprodCompDisc.Iso.hom O (FreeCoprodCompDisc.isoOfEq O
                 (congrArg (fun cc ↦ interpObj I O cc X) h'))))
       (fun f ↦ (FreeCoprodCompDisc.Hom.comp_id O
-        ((interpHom I O D γ₀ f).1 X)).symm)
+        ((interpHom I O D γ₀ f).val X)).symm)
       h
 
 /-- An object-equality transport of the interpreted argument passes
@@ -4572,7 +4572,7 @@ theorem interpHom_preUnitStack_deltaWeightRight (B : Type uB)
           (deltaNav I O (d (ULift.up i)) B i B (fun i' ↦ d (ULift.up i'))
             _root_.id L
             (preUnitStack I O (d (ULift.up i))
-              (L ++ [(⟨B, i⟩ : SupObj.{uB, uI} I)])))).1 X)
+              (L ++ [(⟨B, i⟩ : SupObj.{uB, uI} I)])))).val X)
         (FreeCoprodCompDisc.Hom.comp O
           (FreeCoprodCompDisc.Iso.hom O
             (mprecompIso.{uA, uB, uI, uO} I O
@@ -4729,12 +4729,12 @@ theorem interpHom_preUnitStack_deltaWeight (B : Type uB)
           (FreeCoprodCompDisc.Hom.comp O
             ((interpHom I O (d (ULift.up i))
               (precomp I O B i (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)))
-              (preUnitDeltaData I O B d L i)).1 X)
+              (preUnitDeltaData I O B d L i)).val X)
             (FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O
                 (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)) B i X)))
           ((plusLiftBridgeNatInv I O B i
-            (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d))).1 X))
+            (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d))).val X))
         (interpMor I O (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d))
           (FreeCoprodCompDisc.plus I
             (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X)
@@ -4757,12 +4757,12 @@ theorem interpHom_preUnitStack_deltaWeight (B : Type uB)
         (FreeCoprodCompDisc.Hom.comp O
           ((interpHom I O (d (ULift.up i))
             (precomp I O B i (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)))
-            (preUnitDeltaData I O B d L i)).1 X)
+            (preUnitDeltaData I O B d L i)).val X)
           (FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIso I O
               (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)) B i X)))
         ((plusLiftBridgeNatInv I O B i
-          (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d))).1 X))
+          (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d))).val X))
       (interpMor I O (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d))
         (FreeCoprodCompDisc.plus I
           (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X)
@@ -4784,7 +4784,7 @@ theorem interpHom_preUnitStack_deltaWeight (B : Type uB)
             ((interpHom I O (d (ULift.up i))
               (precomp I O B i
                 (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)))
-              (preUnitDeltaData I O B d L i)).1 X)
+              (preUnitDeltaData I O B d L i)).val X)
             (FreeCoprodCompDisc.Iso.hom O
               (interpPrecompIso I O
                 (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)) B i X)))
@@ -4805,7 +4805,7 @@ theorem interpHom_preUnitStack_deltaWeight (B : Type uB)
               ((interpHom I O (d (ULift.up i))
                 (precomp I O B i
                   (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)))
-                (preUnitDeltaData I O B d L i)).1 X)
+                (preUnitDeltaData I O B d L i)).val X)
               (FreeCoprodCompDisc.Iso.hom O
                 (interpPrecompIso I O
                   (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)) B i X))))
@@ -4856,7 +4856,7 @@ theorem interpHom_preUnitStack_deltaWeight (B : Type uB)
                   (deltaNav I O (d (ULift.up i)) B i B
                     (fun i' ↦ d (ULift.up i')) _root_.id L
                     (preUnitStack I O (d (ULift.up i))
-                      (L ++ [(⟨B, i⟩ : SupObj.{uB, uI} I)])))).1 X)
+                      (L ++ [(⟨B, i⟩ : SupObj.{uB, uI} I)])))).val X)
                 (FreeCoprodCompDisc.Hom.comp O t
                   (interpMor I O (mk I O (Sum.inr (Sum.inr B)) d)
                     (mplus.{uA, uB, uI} I L
@@ -4878,7 +4878,7 @@ theorem interpHom_preUnitStack_deltaWeight (B : Type uB)
                     (deltaNav I O (d (ULift.up i)) B i B
                       (fun i' ↦ d (ULift.up i')) _root_.id L
                       (preUnitStack I O (d (ULift.up i))
-                        (L ++ [(⟨B, i⟩ : SupObj.{uB, uI} I)])))).1 X)
+                        (L ++ [(⟨B, i⟩ : SupObj.{uB, uI} I)])))).val X)
                   (FreeCoprodCompDisc.Hom.comp O
                     (FreeCoprodCompDisc.Iso.hom O
                       (mprecompIso.{uA, uB, uI, uO} I O
@@ -4913,7 +4913,7 @@ theorem interpHom_preUnitStack_deltaSummand (B : Type uB)
     (i : B → I) :
     (interpHomDeltaSummand I O B (fun j ↦ d (ULift.up j))
         (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)) i
-        (preUnitDeltaData I O B d L i)).1 X =
+        (preUnitDeltaData I O B d L i)).val X =
       FreeCoprodCompDisc.Hom.comp O
         (deltaInto I O B (fun j ↦ d (ULift.up j)) i X)
         (preUnitComponent I O (mk I O (Sum.inr (Sum.inr B)) d) L X) :=
@@ -4944,7 +4944,7 @@ theorem interpHom_preUnitStack_mk_delta (B : Type uB)
   fun L X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inr (Sum.inr B)) d)
-          (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)) t).1 X)
+          (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d)) t).val X)
         (funext (fun i ↦ preUnitStack_mk_delta I O B d L i))).trans
       ((interpHom_delta I O B (fun j ↦ d (ULift.up j))
           (mprecomp I O L (mk I O (Sum.inr (Sum.inr B)) d))
@@ -4974,7 +4974,7 @@ theorem interpHom_preUnitStack_iotaGen (o : O)
         (cast (congrArg (Hom I O (mk I O (Sum.inl o) d)) hh)
           (ULift.up (PLift.up rfl) :
             Hom.{uA, uB, uI, uO} I O (mk I O (Sum.inl o) d)
-              (iota.{max uA uB, uB, uI, uO} I O o)))).1 X = t :=
+              (iota.{max uA uB, uB, uI, uO} I O o)))).val X = t :=
   fun _ hh ↦
     Eq.rec (motive := fun (γ'' : IR.{max uA uB, uB, uI, uO} I O)
         (hh' : iota.{max uA uB, uB, uI, uO} I O o = γ'') ↦
@@ -4984,7 +4984,7 @@ theorem interpHom_preUnitStack_iotaGen (o : O)
             (cast (congrArg (Hom I O (mk I O (Sum.inl o) d)) hh')
               (ULift.up (PLift.up rfl) :
                 Hom.{uA, uB, uI, uO} I O (mk I O (Sum.inl o) d)
-                  (iota.{max uA uB, uB, uI, uO} I O o)))).1 X = t)
+                  (iota.{max uA uB, uB, uI, uO} I O o)))).val X = t)
       (fun _ ↦ Subtype.ext (funext (fun _ ↦ congrArg ULift.up rfl))) hh
 
 /-- The `ι`-domain case of the identity-image equation. -/
@@ -4995,7 +4995,7 @@ theorem interpHom_preUnitStack_mk_iota (o : O)
   fun L X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inl o) d)
-          (mprecomp I O L (mk I O (Sum.inl o) d)) t).1 X)
+          (mprecomp I O L (mk I O (Sum.inl o) d)) t).val X)
         (preUnitStack_mk_iota I O o d L)).trans
       (interpHom_preUnitStack_iotaGen I O o d X
         (mprecomp I O L (mk I O (Sum.inl o) d))
@@ -5015,7 +5015,7 @@ theorem interpHom_preUnitStack_sigmaSummand (A : Type (max uA uB))
     (interpHom I O (d (ULift.up a))
         (mprecomp I O L (mk I O (Sum.inr (Sum.inl A)) d))
         (msigmaPush I O (d (ULift.up a)) A (fun a' ↦ d (ULift.up a')) a L
-          (preUnitStack I O (d (ULift.up a)) L))).1 X =
+          (preUnitStack I O (d (ULift.up a)) L))).val X =
       FreeCoprodCompDisc.Hom.comp O
         (FreeCoprodCompDisc.coprodInj O A
           (fun a' ↦ interpObj I O (d (ULift.up a')) X) a)
@@ -5067,7 +5067,7 @@ theorem interpHom_preUnitStack_mk_sigma (A : Type (max uA uB))
   fun L X ↦
     (congrArg
         (fun t ↦ (interpHom I O (mk I O (Sum.inr (Sum.inl A)) d)
-          (mprecomp I O L (mk I O (Sum.inr (Sum.inl A)) d)) t).1 X)
+          (mprecomp I O L (mk I O (Sum.inr (Sum.inl A)) d)) t).val X)
         (funext (fun a ↦ preUnitStack_mk_sigma I O A d L a))).trans
       ((interpHom_sigma I O A (fun a ↦ d (ULift.up a))
           (mprecomp I O L (mk I O (Sum.inr (Sum.inl A)) d))

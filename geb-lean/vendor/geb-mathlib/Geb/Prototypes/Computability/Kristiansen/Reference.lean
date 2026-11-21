@@ -58,13 +58,13 @@ not a field of the representation. -/
 
 /-- Read the reference, using the external input environment. -/
 @[expose] def Reference.value {n K : ℕ} {x : Fin n → List Bool} : Reference K x → List Bool
-  | .inl w => w.1
+  | .inl w => w.val
   | .inr ⟨i, l⟩ => (x i).drop ((x i).length - l)
 
 /-- The representation uses a status bit, then either the short word or a
 unary-delimited input index followed by a binary suffix length. -/
 @[expose] def Reference.encode {n K : ℕ} {x : Fin n → List Bool} : Reference K x → List Bool
-  | .inl w => false :: w.1
+  | .inl w => false :: w.val
   | .inr ⟨i, l⟩ => true :: (List.replicate i.val false ++ true :: l.val.bits)
 
 /-- A reference occupies at most a constant plus the binary size of the input bound. -/
@@ -73,7 +73,7 @@ theorem Reference.length_encode_le {n K m : ℕ} {x : Fin n → List Bool}
     r.encode.length ≤ K + n + m.size + 2 := by
   cases r with
   | inl w =>
-    have := w.2
+    have := w.property
     simp only [Reference.encode, List.length_cons]
     omega
   | inr p =>
@@ -96,14 +96,15 @@ theorem exists_reference_of_short_or_suffix {n K : ℕ} {x : Fin n → List Bool
 
 /-- The output of any expression can be represented relative to its original inputs. -/
 theorem exists_reference {n : ℕ} (e : LOf n) (x : Fin n → List Bool) :
-    ∃ r : Reference (SizeBounded.nsiConst e.1.1.1) x, r.value = e.sem x :=
+    ∃ r : Reference (SizeBounded.nsiConst e.val.val.val) x, r.value = e.sem x :=
   exists_reference_of_short_or_suffix (short_or_suffix e x)
 
 /-- Algebra outputs admit references whose bit length is logarithmic in the input bound. -/
 theorem exists_reference_bounded {n : ℕ} (e : LOf n) (x : Fin n → List Bool) (m : ℕ)
     (hx : ∀ i, (x i).length ≤ m) :
-    ∃ r : Reference (SizeBounded.nsiConst e.1.1.1) x,
-      r.value = e.sem x ∧ r.encode.length ≤ SizeBounded.nsiConst e.1.1.1 + n + m.size + 2 := by
+    ∃ r : Reference (SizeBounded.nsiConst e.val.val.val) x,
+      r.value = e.sem x ∧
+        r.encode.length ≤ SizeBounded.nsiConst e.val.val.val + n + m.size + 2 := by
   obtain ⟨r, hr⟩ := exists_reference e x
   exact ⟨r, hr, r.length_encode_le hx⟩
 

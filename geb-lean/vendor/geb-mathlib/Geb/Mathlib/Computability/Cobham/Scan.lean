@@ -195,9 +195,9 @@ theorem wValid_scanRaw (base step₀ step₁ : sig.toPFunctor.W) (growth : ℕ)
 /-- The scan node over expressions, carrying its admissibility. -/
 @[expose] def scanW (base : COf 0) (step₀ step₁ : COf 1) (growth : ℕ) :
     sig.W :=
-  ⟨scanRaw base.1.1.1 step₀.1.1.1 step₁.1.1.1 growth,
-    wValid_scanRaw _ _ _ growth base.1.1.2 base.2 step₀.1.1.2 step₀.2
-      step₁.1.1.2 step₁.2⟩
+  ⟨scanRaw base.val.val.val step₀.val.val.val step₁.val.val.val growth,
+    wValid_scanRaw _ _ _ growth base.val.val.property base.property step₀.val.val.property
+      step₀.property step₁.val.val.property step₁.property⟩
 
 /-- The scan node's arity, in the form `fst_eval` composes with. -/
 theorem arity_scanW (base : COf 0) (step₀ step₁ : COf 1) (growth : ℕ) :
@@ -228,12 +228,12 @@ exists. -/
 
 /-- The word a base contributes, read at the raw tree. -/
 @[expose] def baseWord (base : COf 0) : List Bool :=
-  semAt 0 base.1.1 base.2 Fin.elim0
+  semAt 0 base.val.val base.property Fin.elim0
 
 /-- The word a step contributes at the state it reads, read at the raw
 tree. -/
 @[expose] def stepWord (step : COf 1) (r : List Bool) : List Bool :=
-  semAt 1 step.1.1 step.2 ![r]
+  semAt 1 step.val.val step.property ![r]
 
 /-- The semantic step of a scan: the bit selects which step reads the
 state. -/
@@ -245,15 +245,15 @@ state. -/
 a component's arity equation is opaque at a variable, so the transport along
 the composite and the composition of two transports differ. -/
 theorem baseWord_eq_eval (base : COf 0) :
-    baseWord base = transport base.2 base.1.eval Fin.elim0 :=
-  (congrFun (transport_transport (fst_eval base.1.1) base.2 (eval base.1.1).2)
+    baseWord base = transport base.property base.val.eval Fin.elim0 :=
+  (congrFun (transport_transport (fst_eval base.val.val) base.property (eval base.val.val).2)
     Fin.elim0).symm
 
 /-- A step's word is the one its expression of `C` carries, as
 `baseWord_eq_eval` for the base. -/
 theorem stepWord_eq_eval (step : COf 1) (r : List Bool) :
-    stepWord step r = transport step.2 step.1.eval ![r] :=
-  (congrFun (transport_transport (fst_eval step.1.1) step.2 (eval step.1.1).2)
+    stepWord step r = transport step.property step.val.eval ![r] :=
+  (congrFun (transport_transport (fst_eval step.val.val) step.property (eval step.val.val).2)
     ![r]).symm
 
 /-- The scan's value on the empty bitstring is the base's word. -/
@@ -269,10 +269,10 @@ theorem scanSem_cons (base : COf 0) (step₀ step₁ : COf 1) (growth : ℕ)
   have hfun : ∀ r : List Bool, (fun _ : Fin 1 ↦ r) = ![r] :=
     fun r ↦ funext fun i ↦ match i with | ⟨0, _⟩ => rfl
   cases b
-  · change transport ((fst_eval step₀.1.1).trans step₀.2) (eval step₀.1.1).2
+  · change transport ((fst_eval step₀.val.val).trans step₀.property) (eval step₀.val.val).2
       (fun _ ↦ scanSem base step₀ step₁ growth ![w]) = _
     exact congrArg _ (hfun _)
-  · change transport ((fst_eval step₁.1.1).trans step₁.2) (eval step₁.1.1).2
+  · change transport ((fst_eval step₁.val.val).trans step₁.property) (eval step₁.val.val).2
       (fun _ ↦ scanSem base step₀ step₁ growth ![w]) = _
     exact congrArg _ (hfun _)
 
@@ -299,9 +299,9 @@ theorem recBounded_boundRaw (growth : ℕ) :
 /-- A lifted step carries the recursions of what it lifts and no other, the
 `comp` node's own condition being vacuous. -/
 theorem recBounded_liftRaw (step : COf 1) :
-    RecBounded ⟨liftRaw step.1.1.1, wValid_liftRaw _ step.1.1.2 step.2⟩ :=
+    RecBounded ⟨liftRaw step.val.val.val, wValid_liftRaw _ step.val.val.property step.property⟩ :=
   ⟨trivial, fun d ↦ match d with
-    | .inl () => step.1.2
+    | .inl () => step.val.property
     | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩
 
 /-- The scanner as an expression of `C`: the scan node with its recursion
@@ -319,7 +319,7 @@ a value. -/
       exact Nat.le_trans (hbound (x 0)) (Nat.le_of_eq (Nat.add_comm _ _))
     · refine fun b : Fin 4 ↦ ?_
       match b with
-      | 0 => exact base.1.2
+      | 0 => exact base.val.property
       | 1 => exact recBounded_liftRaw step₀
       | 2 => exact recBounded_liftRaw step₁
       | 3 => exact recBounded_boundRaw growth⟩
@@ -337,8 +337,8 @@ are, so this is a `rfl` at variable base, steps and growth. -/
 theorem scanSem_eq_eval (base : COf 0) (step₀ step₁ : COf 1) (growth : ℕ)
     (hbound : ∀ w : List Bool,
       (scanSem base step₀ step₁ growth ![w]).length ≤ w.length + growth) :
-    transport (scanOf base step₀ step₁ growth hbound).2
-      (scanOf base step₀ step₁ growth hbound).1.eval =
+    transport (scanOf base step₀ step₁ growth hbound).property
+      (scanOf base step₀ step₁ growth hbound).val.eval =
       scanSem base step₀ step₁ growth := rfl
 
 end

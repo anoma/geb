@@ -417,11 +417,11 @@ theorem isBitTreeSem_eq_singleton_iff (y : List Bool) :
 
 /-- The recognizer is non-size-increasing, by the algebra's closure theorem
 alone. -/
-theorem nsi_isBitTree : NSI (nsiConst isBitTree.1.1) isBitTree.sem := nsi_sem isBitTree
+theorem nsi_isBitTree : NSI (nsiConst isBitTree.val.val) isBitTree.sem := nsi_sem isBitTree
 
 /-- The recognizer's constant is two: the longest constant in it is a mode
 code. -/
-theorem nsiConst_isBitTree : nsiConst isBitTree.1.1 = 2 := by decide
+theorem nsiConst_isBitTree : nsiConst isBitTree.val.val = 2 := by decide
 
 end
 

@@ -77,12 +77,12 @@ public section
     | .inr (.inl i) => ⟨b + i, by omega⟩
     | .inr (.inr i) => ⟨2 * b + i, by omega⟩
   invFun j :=
-    if h1 : j.1 < b then .inl ⟨j, h1⟩
-    else if h2 : j.1 < 2 * b then .inr (.inl ⟨j - b, by omega⟩)
+    if h1 : j.val < b then .inl ⟨j, h1⟩
+    else if h2 : j.val < 2 * b then .inr (.inl ⟨j - b, by omega⟩)
     else .inr (.inr ⟨j - 2 * b, by omega⟩)
   left_inv x := by
     rcases x with i | i | i
-    · exact dif_pos i.2
+    · exact dif_pos i.isLt
     · dsimp only
       rw [dif_neg (by omega), dif_pos (by omega)]
       exact congrArg Sum.inr (congrArg Sum.inl (Fin.ext (Nat.add_sub_cancel_left _ _)))
@@ -142,7 +142,7 @@ theorem decode_code : ∀ a, decode (code a) = some a
     change (readNatCode (natCode i)).bind _ = _
     rw [← List.append_nil (natCode i), readNatCode_natCode_append, Option.bind_some]
     dsimp only
-    rw [if_pos rfl, dif_pos i.2]
+    rw [if_pos rfl, dif_pos i.isLt]
   | .sbs b => rfl
   | .comp n m => by
     change (readNatCode (natCode n ++ natCode m)).bind _ = _
@@ -159,7 +159,7 @@ theorem decode_code : ∀ a, decode (code a) = some a
     change (readNatCode (natCode j)).bind _ = _
     rw [← List.append_nil (natCode j), readNatCode_natCode_append, Option.bind_some]
     dsimp only
-    rw [if_pos rfl, dif_pos j.2]
+    rw [if_pos rfl, dif_pos j.isLt]
 
 /-- A word that decodes is the code of what it decodes to. -/
 theorem code_of_decode {w : List Bool} {a : Shape} (h : decode w = some a) : code a = w := by

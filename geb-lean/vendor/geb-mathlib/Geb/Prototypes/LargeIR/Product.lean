@@ -147,8 +147,8 @@ private theorem sigma_mk_cast {o o' : Idx X} (z : Z.obj ⟨o⟩) (e : o = o') :
 object, is the element's raw assignment. -/
 theorem sigma_value (F : PresheafDomPFunctorData.{0, 0, 0, 0} (Idx X))
     (x : F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj Z)) ⦃o : Idx X⦄
-    (b : F.Direction x.1.1 o) :
-    (⟨o, F.value x b⟩ : Σ k : Idx X, Z.obj ⟨k⟩) = x.1.2 b.1 := by
+    (b : F.Direction x.val.1 o) :
+    (⟨o, F.value x b⟩ : Σ k : Idx X, Z.obj ⟨k⟩) = x.val.2 b.val := by
   obtain ⟨⟨a, v⟩, hc⟩ := x
   obtain ⟨b, hb⟩ := b
   exact sigma_mk_cast Z (v b).2 (((F.compatible_iff _ a v).mp hc b).trans hb)
@@ -159,8 +159,9 @@ given that direction restriction along identities is the identity. -/
 theorem isNatural_iff (F : PresheafDomPFunctorData.{0, 0, 0, 0} (Idx X))
     (hid : F.DirectionRestrId)
     (x : F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj Z)) :
-    F.IsNatural x ↔ ∀ (x' : X) (d : F.Direction x.1.1 (mkIdx 1 x')),
-      F.value x (F.directionRestr x.1.1 (waHomAt x') d) = Z.map (waHomAt x').op (F.value x d) := by
+    F.IsNatural x ↔ ∀ (x' : X) (d : F.Direction x.val.1 (mkIdx 1 x')),
+      F.value x (F.directionRestr x.val.1 (waHomAt x') d) =
+        Z.map (waHomAt x').op (F.value x d) := by
   refine ⟨fun h x' d ↦ h (waHomAt x') d, fun h o o' f d ↦ ?_⟩
   rcases le_cases (leOfHom f) with rfl | ⟨x', rfl, rfl⟩
   · rw [hom_ext f (𝟙 _), hid, op_id, Z.map_id]
@@ -188,7 +189,7 @@ def assignAux {a : F.A} (g : ∀ x, F.Direction a (mkIdx 0 x) → Z.obj ⟨mkIdx
     (w : ∀ x (d : F.Direction a (mkIdx 1 x)), fibre Z x (g x (dirRestr F a x d))) (b : F.B a) :
     (o : Idx X) → F.r ⟨a, b⟩ = o → Σ o : Idx X, Z.obj ⟨o⟩
   | (0, x), h => ⟨(0, x), g x ⟨b, h⟩⟩
-  | (1, x), h => ⟨(1, x), (w x ⟨b, h⟩).1⟩
+  | (1, x), h => ⟨(1, x), (w x ⟨b, h⟩).val⟩
 
 /-- The raw assignment lies over the direction's object. -/
 theorem assignAux_fst {a : F.A} (g : ∀ x, F.Direction a (mkIdx 0 x) → Z.obj ⟨mkIdx 0 x⟩)
@@ -222,17 +223,17 @@ theorem value_assignObj_zero {a : F.A} (g : ∀ x, F.Direction a (mkIdx 0 x) →
     F.value (assignObj Z F g w) d = g x d :=
   eq_of_heq (Sigma.mk.inj_iff.mp
     ((sigma_value Z F.toPresheafDomPFunctorData (assignObj Z F g w) d).trans
-      (assignAux_congr Z F g w d.1 d.2))).2
+      (assignAux_congr Z F g w d.val d.property))).2
 
 /-- The value the built element gives a level-{lit}`1` direction is the
 level-{lit}`1` assignment. -/
 theorem value_assignObj_one {a : F.A} (g : ∀ x, F.Direction a (mkIdx 0 x) → Z.obj ⟨mkIdx 0 x⟩)
     (w : ∀ x (d : F.Direction a (mkIdx 1 x)), fibre Z x (g x (dirRestr F a x d)))
     (x : X) (d : F.Direction a (mkIdx 1 x)) :
-    F.value (assignObj Z F g w) d = (w x d).1 :=
+    F.value (assignObj Z F g w) d = (w x d).val :=
   eq_of_heq (Sigma.mk.inj_iff.mp
     ((sigma_value Z F.toPresheafDomPFunctorData (assignObj Z F g w) d).trans
-      (assignAux_congr Z F g w d.1 d.2))).2
+      (assignAux_congr Z F g w d.val d.property))).2
 
 /-- Two elements of {lit}`Elem` with the same shape are equal when their base
 assignments agree and their level-{lit}`1` assignments agree in the level-{lit}`1`
@@ -240,7 +241,7 @@ fibres of {lit}`Z`. -/
 theorem gw_ext {a : F.A} {g g' : ∀ x, F.Direction a (mkIdx 0 x) → Z.obj ⟨mkIdx 0 x⟩} (hg : g' = g)
     {w : ∀ x (d : F.Direction a (mkIdx 1 x)), fibre Z x (g x (dirRestr F a x d))}
     {w' : ∀ x (d : F.Direction a (mkIdx 1 x)), fibre Z x (g' x (dirRestr F a x d))}
-    (hw : ∀ x d, (w' x d).1 = (w x d).1) :
+    (hw : ∀ x d, (w' x d).val = (w x d).val) :
     (⟨g', w'⟩ : Σ g : ∀ x, F.Direction a (mkIdx 0 x) → Z.obj ⟨mkIdx 0 x⟩,
       ∀ x (d : F.Direction a (mkIdx 1 x)), fibre Z x (g x (dirRestr F a x d))) = ⟨g, w⟩ := by
   subst hg
@@ -248,17 +249,19 @@ theorem gw_ext {a : F.A} {g g' : ∀ x, F.Direction a (mkIdx 0 x) → Z.obj ⟨m
 
 /-- The value in dependent-type terms of an element. -/
 def toElem (x : F.obj Z) : Elem Z F :=
-  ⟨x.shape, fun _ d ↦ F.value x.1 d, fun x' d ↦ ⟨F.value x.1 d, (x.2 (waHomAt x') d).symm⟩⟩
+  ⟨x.shape, fun _ d ↦ F.value x.val d,
+    fun x' d ↦ ⟨F.value x.val d, (x.property (waHomAt x') d).symm⟩⟩
 
 /-- The raw assignment rebuilt from an element's values is the element's raw
 assignment. -/
 theorem assignAux_value (x : F.obj Z) (b : F.B x.shape) :
     ∀ (o : Idx X) (h : F.r ⟨x.shape, b⟩ = o),
-      assignAux Z F (fun _ (d : F.Direction x.shape (mkIdx 0 _)) ↦ F.value x.1 d)
-        (fun x' (d : F.Direction x.shape (mkIdx 1 x')) ↦ ⟨F.value x.1 d, (x.2 (waHomAt x') d).symm⟩)
-        b o h = x.1.1.2 b
-  | (0, _), h => sigma_value Z F.toPresheafDomPFunctorData x.1 ⟨b, h⟩
-  | (1, _), h => sigma_value Z F.toPresheafDomPFunctorData x.1 ⟨b, h⟩
+      assignAux Z F (fun _ (d : F.Direction x.shape (mkIdx 0 _)) ↦ F.value x.val d)
+        (fun x' (d : F.Direction x.shape (mkIdx 1 x')) ↦
+          ⟨F.value x.val d, (x.property (waHomAt x') d).symm⟩)
+        b o h = x.val.val.2 b
+  | (0, _), h => sigma_value Z F.toPresheafDomPFunctorData x.val ⟨b, h⟩
+  | (1, _), h => sigma_value Z F.toPresheafDomPFunctorData x.val ⟨b, h⟩
 
 /-- The value of {lit}`F` at {lit}`Z` is {lit}`Elem Z F`. -/
 def elemEquiv : F.obj Z ≃ Elem Z F where
@@ -266,7 +269,7 @@ def elemEquiv : F.obj Z ≃ Elem Z F where
   invFun e := ⟨assignObj Z F e.2.1 e.2.2,
     (isNatural_iff Z F.toPresheafDomPFunctorData F.isFunctorial.directionRestr_id _).mpr
       fun x' d ↦ (value_assignObj_zero Z F _ _ _ _).trans
-        ((e.2.2 x' d).2.symm.trans (congrArg _ (value_assignObj_one Z F _ _ x' d).symm))⟩
+        ((e.2.2 x' d).property.symm.trans (congrArg _ (value_assignObj_one Z F _ _ x' d).symm))⟩
   left_inv x :=
     Subtype.ext (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b ↦
       assignAux_value Z F x b _ rfl))))
@@ -372,25 +375,25 @@ theorem reindexDir_over (s : Y ⊕ P.A) (t : Fin 2) (d : pDir P (restrShape P t 
 /-- The direction restriction along a morphism of {lit}`Idx X`. -/
 def directionRestr (s : Y ⊕ P.A) ⦃o o' : Idx X⦄ (f : o' ⟶ o)
     (d : (prodSlice P).Direction s o) : (prodSlice P).Direction s o' :=
-  ⟨restrDir P s o'.1 d.1, by
+  ⟨restrDir P s o'.1 d.val, by
     obtain ⟨i, x⟩ := o
     obtain ⟨i', x'⟩ := o'
     obtain rfl : x' = x := (leOfHom f).2
-    exact restrDir_over P s i' d.1 d.2 (leOfHom f).1⟩
+    exact restrDir_over P s i' d.val d.property (leOfHom f).1⟩
 
 /-- The shape restriction along a morphism of {lit}`Idx Y`. -/
 def shapeRestr ⦃o o' : Idx Y⦄ (g : o' ⟶ o) (s : (prodSlice P).Shape o) :
     (prodSlice P).Shape o' :=
-  ⟨restrShape P o'.1 s.1, by
+  ⟨restrShape P o'.1 s.val, by
     obtain ⟨i, y⟩ := o
     obtain ⟨i', y'⟩ := o'
     obtain rfl : y' = y := (leOfHom g).2
-    exact restrShape_over P i' s.1 s.2 (leOfHom g).1⟩
+    exact restrShape_over P i' s.val s.property (leOfHom g).1⟩
 
 /-- The reindexing of directions along a morphism of {lit}`Idx Y`. -/
 def reindex ⦃o o' : Idx Y⦄ (g : o' ⟶ o) (s : (prodSlice P).Shape o) ⦃p : Idx X⦄
-    (d : (prodSlice P).Direction (shapeRestr P g s).1 p) : (prodSlice P).Direction s.1 p :=
-  ⟨reindexDir P s.1 o'.1 d.1, (reindexDir_over P s.1 o'.1 d.1).trans d.2⟩
+    (d : (prodSlice P).Direction (shapeRestr P g s).val p) : (prodSlice P).Direction s.val p :=
+  ⟨reindexDir P s.val o'.1 d.val, (reindexDir_over P s.val o'.1 d.val).trans d.property⟩
 
 /-- The operations of the transcription. -/
 def prodData : PresheafPFunctorData.{0, 0, 0, 0, 0, 0} (Idx X) (Idx Y) :=
@@ -546,7 +549,7 @@ def sliceObj {E : Type} (p : E → X) : Idx X → Type
 def sliceMap {E : Type} (p : E → X) :
     ∀ (o o' : Idx X), (o' ⟶ o) → sliceObj p o → sliceObj p o'
   | (0, _), (0, _), _ => fun u ↦ u
-  | (1, _), (1, _), f => fun e ↦ ⟨e.1, e.2.trans (leOfHom f).2.symm⟩
+  | (1, _), (1, _), f => fun e ↦ ⟨e.val, e.property.trans (leOfHom f).2.symm⟩
   | (1, _), (0, _), _ => fun _ ↦ ()
   | (0, _), (1, _), f => absurd (leOfHom f).1 (by change ¬ ((1 : Fin 2) ≤ 0); decide)
 
@@ -576,7 +579,7 @@ the identity at level {lit}`0`, the morphism on fibres at level {lit}`1`. -/
 def sliceHomApp {E E' : Type} {p : E → X} {p' : E' → X} (h : E → E') (hh : p' ∘ h = p) :
     ∀ o : Idx X, sliceObj p o → sliceObj p' o
   | (0, _) => fun u ↦ u
-  | (1, _) => fun e ↦ ⟨h e.1, (congrFun hh e.1).trans e.2⟩
+  | (1, _) => fun e ↦ ⟨h e.val, (congrFun hh e.val).trans e.property⟩
 
 /-- A morphism {lit}`h` over {lit}`X`, {lit}`p' ∘ h = p`, as a natural
 transformation {lit}`ofSliceX p ⟶ ofSliceX p'`. -/
@@ -604,24 +607,24 @@ def toSliceObj {E : Type} (p : E → X) (y : Y) (e : ElemOver P p y) :
   match e with
   | ⟨⟨.inl _, _, _⟩, h⟩ => absurd (congrArg Prod.fst h) Fin.zero_ne_one
   | ⟨⟨.inr a, _, w⟩, h⟩ =>
-    ⟨⟨⟨a, fun b ↦ (w (P.r ⟨a, b⟩) ⟨.inr b, rfl⟩).1.1⟩,
-      funext fun b ↦ (w (P.r ⟨a, b⟩) ⟨.inr b, rfl⟩).1.2⟩, congrArg Prod.snd h⟩
+    ⟨⟨⟨a, fun b ↦ (w (P.r ⟨a, b⟩) ⟨.inr b, rfl⟩).val.val⟩,
+      funext fun b ↦ (w (P.r ⟨a, b⟩) ⟨.inr b, rfl⟩).val.property⟩, congrArg Prod.snd h⟩
 
 /-- The level-{lit}`1` assignment of the element built from a value of the
 slice functor: at the level-{lit}`1` copy of a direction, its assigned element
 of the fibre. -/
 def ofSliceObjW {E : Type} (p : E → X) (o : P.toSliceDomPFunctor.Obj p) (x : X)
-    (d : (prodSlice P).Direction (.inr o.1.1) (mkIdx 1 x)) :
+    (d : (prodSlice P).Direction (.inr o.val.1) (mkIdx 1 x)) :
     fibre (ofSliceX p) x () :=
   match d with
   | ⟨.inl _, hd⟩ => absurd (congrArg Prod.fst hd) Fin.zero_ne_one
-  | ⟨.inr b, hd⟩ => ⟨⟨o.1.2 b, (congrFun o.2 b).trans (congrArg Prod.snd hd)⟩, rfl⟩
+  | ⟨.inr b, hd⟩ => ⟨⟨o.val.2 b, (congrFun o.property b).trans (congrArg Prod.snd hd)⟩, rfl⟩
 
 /-- From the slice functor's value over {lit}`y` to an element over
 {lit}`(1, y)`. -/
 def ofSliceObj {E : Type} (p : E → X) (y : Y)
     (o : { o : P.toSliceDomPFunctor.Obj p // P.obj p o = y }) : ElemOver P p y :=
-  ⟨⟨.inr o.1.1.1, fun _ _ ↦ (), fun x d ↦ ofSliceObjW P p o.1 x d⟩, Prod.ext rfl o.2⟩
+  ⟨⟨.inr o.val.val.1, fun _ _ ↦ (), fun x d ↦ ofSliceObjW P p o.val x d⟩, Prod.ext rfl o.property⟩
 
 /-- The level-{lit}`1` value of the transcription at {lit}`ofSliceX p` over
 {lit}`(1, y)`, in dependent-type terms, is the slice functor's value at
@@ -650,10 +653,10 @@ def elemOverEquiv {E : Type} (p : E → X) (y : Y) :
 elements of {lit}`Elem` over it. -/
 def objLevelOne {E : Type} (p : E → X) (y : Y) :
     { t : (prodPsh P).obj (ofSliceX p) // (prodPsh P).q t.shape = mkIdx 1 y } ≃ ElemOver P p y where
-  toFun t := ⟨toElem (ofSliceX p) (prodPsh P) t.1, t.2⟩
-  invFun e := ⟨(elemEquiv (ofSliceX p) (prodPsh P)).symm e.1, e.2⟩
-  left_inv t := Subtype.ext ((elemEquiv (ofSliceX p) (prodPsh P)).left_inv t.1)
-  right_inv e := Subtype.ext ((elemEquiv (ofSliceX p) (prodPsh P)).right_inv e.1)
+  toFun t := ⟨toElem (ofSliceX p) (prodPsh P) t.val, t.property⟩
+  invFun e := ⟨(elemEquiv (ofSliceX p) (prodPsh P)).symm e.val, e.property⟩
+  left_inv t := Subtype.ext ((elemEquiv (ofSliceX p) (prodPsh P)).left_inv t.val)
+  right_inv e := Subtype.ext ((elemEquiv (ofSliceX p) (prodPsh P)).right_inv e.val)
 
 /-- The level-{lit}`1` value of the transcription at {lit}`ofSliceX p` over
 {lit}`(1, y)` is the slice functor's value at {lit}`p` over {lit}`y`. -/
@@ -667,8 +670,8 @@ def levelOneEquiv {E : Type} (p : E → X) (y : Y) :
 theorem elem_zero_ext {E : Type} (p : E → X) (y : Y) (e : Elem (ofSliceX p) (prodPsh P))
     (h : pQ P e.1 = mkIdx 0 y) :
     e = ⟨(Sum.inl y : Y ⊕ P.A),
-      fun x (d : (prodPsh P).Direction (Sum.inl y : Y ⊕ P.A) (mkIdx 0 x)) ↦ PEmpty.elim d.1,
-      fun x (d : (prodPsh P).Direction (Sum.inl y : Y ⊕ P.A) (mkIdx 1 x)) ↦ PEmpty.elim d.1⟩ := by
+      fun x (d : (prodPsh P).Direction (Sum.inl y : Y ⊕ P.A) (mkIdx 0 x)) ↦ PEmpty.elim d.val,
+      fun x (d : (prodPsh P).Direction (Sum.inl y : Y ⊕ P.A) (mkIdx 1 x)) ↦ PEmpty.elim d.val⟩ := by
   obtain ⟨s, g, w⟩ := e
   cases s with
   | inl y' =>
@@ -676,8 +679,8 @@ theorem elem_zero_ext {E : Type} (p : E → X) (y : Y) (e : Elem (ofSliceX p) (p
     subst hy
     exact Sigma.ext rfl (heq_of_eq (gw_ext (ofSliceX p) (prodPsh P)
       (funext fun x ↦ funext
-        fun (d : (prodPsh P).Direction (Sum.inl y' : Y ⊕ P.A) (mkIdx 0 x)) ↦ PEmpty.elim d.1)
-      fun x (d : (prodPsh P).Direction (Sum.inl y' : Y ⊕ P.A) (mkIdx 1 x)) ↦ PEmpty.elim d.1))
+        fun (d : (prodPsh P).Direction (Sum.inl y' : Y ⊕ P.A) (mkIdx 0 x)) ↦ PEmpty.elim d.val)
+      fun x (d : (prodPsh P).Direction (Sum.inl y' : Y ⊕ P.A) (mkIdx 1 x)) ↦ PEmpty.elim d.val))
   | inr _ => exact absurd (congrArg Prod.fst h).symm Fin.zero_ne_one
 
 /-- The transcription's base at {lit}`ofSliceX p` is a point at every index:
@@ -687,18 +690,18 @@ def levelZeroEquiv {E : Type} (p : E → X) (y : Y) :
   toFun _ := ()
   invFun _ := ⟨(elemEquiv (ofSliceX p) (prodPsh P)).symm
     ⟨(Sum.inl y : Y ⊕ P.A),
-      fun x (d : (prodPsh P).Direction (Sum.inl y : Y ⊕ P.A) (mkIdx 0 x)) ↦ PEmpty.elim d.1,
-      fun x (d : (prodPsh P).Direction (Sum.inl y : Y ⊕ P.A) (mkIdx 1 x)) ↦ PEmpty.elim d.1⟩, rfl⟩
+      fun x (d : (prodPsh P).Direction (Sum.inl y : Y ⊕ P.A) (mkIdx 0 x)) ↦ PEmpty.elim d.val,
+      fun x (d : (prodPsh P).Direction (Sum.inl y : Y ⊕ P.A) (mkIdx 1 x)) ↦ PEmpty.elim d.val⟩, rfl⟩
   left_inv t :=
     Subtype.ext ((elemEquiv (ofSliceX p) (prodPsh P)).injective
-      ((elem_zero_ext P p y (toElem (ofSliceX p) (prodPsh P) t.1) t.2).trans
+      ((elem_zero_ext P p y (toElem (ofSliceX p) (prodPsh P) t.val) t.property).trans
         ((elemEquiv (ofSliceX p) (prodPsh P)).apply_symm_apply _).symm).symm)
   right_inv _ := rfl
 
 /-- The comparison map from the slice functor's value to the transcription's
 value: the level-{lit}`1` element with the given assignments. -/
 def cmp {E : Type} (p : E → X) (o : P.toSliceDomPFunctor.Obj p) : (prodPsh P).obj (ofSliceX p) :=
-  ((levelOneEquiv P p (P.obj p o)).symm ⟨o, rfl⟩).1
+  ((levelOneEquiv P p (P.obj p o)).symm ⟨o, rfl⟩).val
 
 /-- The comparison map is natural in the object of {lit}`Type/X`. -/
 theorem map_cmp {E E' : Type} {p : E → X} {p' : E' → X} (h : E → E') (hh : p' ∘ h = p)
@@ -723,12 +726,12 @@ over {lit}`x`: the constructor and destructor of {name}`SlicePFunctor.W`. -/
 def wObjEquiv (x : X) :
     { o : Q.toSliceDomPFunctor.Obj Q.wIndex // Q.obj Q.wIndex o = x } ≃
       { z : Q.W // Q.wIndex z = x } where
-  toFun o := ⟨SlicePFunctor.W.mk o.1, (SlicePFunctor.W.wIndex_mk o.1).trans o.2⟩
-  invFun z := ⟨SlicePFunctor.W.dest z.1,
+  toFun o := ⟨SlicePFunctor.W.mk o.val, (SlicePFunctor.W.wIndex_mk o.val).trans o.property⟩
+  invFun z := ⟨SlicePFunctor.W.dest z.val,
     ((SlicePFunctor.W.wIndex_mk _).symm.trans
-      (congrArg Q.wIndex (SlicePFunctor.W.mk_dest z.1))).trans z.2⟩
-  left_inv o := Subtype.ext (SlicePFunctor.W.dest_mk o.1)
-  right_inv z := Subtype.ext (SlicePFunctor.W.mk_dest z.1)
+      (congrArg Q.wIndex (SlicePFunctor.W.mk_dest z.val))).trans z.property⟩
+  left_inv o := Subtype.ext (SlicePFunctor.W.dest_mk o.val)
+  right_inv z := Subtype.ext (SlicePFunctor.W.mk_dest z.val)
 
 /-- The slice W-type is a fixed point of the transcription: the transcription's
 level-{lit}`1` value at the W-type's presheaf over {lit}`(1, x)` is the W-type's

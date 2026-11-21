@@ -129,7 +129,7 @@ theorem flattenOf_succ (n : ℕ) :
 definitional but the closed form is not, `List.ofFn_succ` itself not being
 `rfl`. -/
 theorem semAt_flattenOf : ∀ (n : ℕ) (x : Fin n → List Bool),
-    semAt n (flattenOf n).1.1 (flattenOf n).2 x = (List.ofFn x).flatten :=
+    semAt n (flattenOf n).val.val (flattenOf n).property x = (List.ofFn x).flatten :=
   Nat.rec (fun x ↦ by rw [List.ofFn_zero, List.flatten_nil]; rfl)
     fun n ih x ↦ by
       rw [flattenOf_succ, semAt_concatCompOf, semAt_projOf, semAt_compOf]
@@ -144,7 +144,7 @@ def mkOf (R : RankedAlphabet) (i : Fin R.card) : COf (R.arity i) :=
 /-- The expression computes the structure map. -/
 theorem semAt_mkOf (R : RankedAlphabet) (i : Fin R.card)
     (f : Fin (R.arity i) → List Bool) :
-    semAt (R.arity i) (mkOf R i).1.1 (mkOf R i).2 f = algMk R i f := by
+    semAt (R.arity i) (mkOf R i).val.val (mkOf R i).property f = algMk R i f := by
   rw [mkOf, semAt_prependOf, semAt_flattenOf, algMk]
 
 /-- The growth condition at the constant `R.width`, which `length_algMk`
@@ -165,7 +165,7 @@ theorem stackSize_algMk_le (R : RankedAlphabet) (w : List Bool) :
 /-- The slot concatenation carries no `smash`: the empty bitstring at arity
 zero, and a `concat` composition of projections at every successor. -/
 theorem smashFreeBool_flattenOf : ∀ n : ℕ,
-    smashFreeBool (flattenOf n).1.1.1 = true :=
+    smashFreeBool (flattenOf n).val.val.val = true :=
   Nat.rec (smashFreeBool_zeroAtOf 0) fun n ih ↦
     smashFreeBool_concatCompOf (n + 1) _ _
       (smashFreeBool_compOf _ _ ih fun i ↦ smashFreeBool_projOf (n + 1) i.succ)
@@ -174,7 +174,7 @@ theorem smashFreeBool_flattenOf : ∀ n : ℕ,
 /-- The structure map's expression carries no `smash`, which is
 `Geb.CobhamFold.smashFree_foldOutExprV`'s hypothesis at this algebra. -/
 theorem smashFreeBool_mkOf (R : RankedAlphabet) (i : Fin R.card) :
-    smashFreeBool (mkOf R i).1.1.1 = true :=
+    smashFreeBool (mkOf R i).val.val.val = true :=
   smashFreeBool_prependOf _ _ (smashFreeBool_flattenOf (R.arity i))
 
 /-- The expression at the structure map returns its own input, spelled by

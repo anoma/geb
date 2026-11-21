@@ -153,11 +153,11 @@ theorem wValid_shiftRaw (e : sig.toPFunctor.W) (he : sig.WValid e)
       match i with
       | 0 =>
         ⟨fun c ↦ match c with
-          | .inl () => pred.1.1.2
+          | .inl () => pred.val.val.property
           | .inr _ => ⟨fun c ↦ c.elim0, funext fun c ↦ c.elim0⟩,
         funext fun c ↦ match c with
           | .inl () =>
-            (sig.wIndexValid_index_eq_wIndexRoot predRaw).trans pred.2
+            (sig.wIndexValid_index_eq_wIndexRoot predRaw).trans pred.property
           | .inr _ => rfl⟩
       | 1 => ⟨fun c ↦ c.elim0, funext fun c ↦ c.elim0⟩,
   funext fun d ↦ match d with
@@ -166,7 +166,7 @@ theorem wValid_shiftRaw (e : sig.toPFunctor.W) (he : sig.WValid e)
 
 /-- A shifted tree, carrying its admissibility. -/
 @[expose] def shiftW (e : sig.W) (he : arity e = 2) : sig.W :=
-  ⟨shiftRaw e.1, wValid_shiftRaw e.1 e.2 he⟩
+  ⟨shiftRaw e.val, wValid_shiftRaw e.val e.property he⟩
 
 /-- A shifted tree's arity, in the form `fst_eval` composes with. -/
 theorem arity_shiftW (e : sig.W) (he : arity e = 2) :
@@ -193,7 +193,7 @@ theorem recBounded_shiftW (e : sig.W) (he : arity e = 2) (hr : RecBounded e) :
     | .inr i =>
       match i with
       | 0 => ⟨trivial, fun c ↦ match c with
-          | .inl () => pred.1.2
+          | .inl () => pred.val.property
           | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩
       | 1 => ⟨trivial, fun c ↦ c.elim0⟩⟩
 
@@ -231,7 +231,7 @@ theorem wValid_casesRaw : ∀ (p : ℕ) (br : (Fin p → Bool) → sig.toPFuncto
   Nat.rec (fun _ hv ha ↦ wValid_liftRaw _ (hv _) (ha _))
     (fun p ih _ hv ha ↦
       ⟨fun d ↦ match d with
-        | .inl () => cond.1.1.2
+        | .inl () => cond.val.val.property
         | .inr i =>
           match i with
           | 0 => ⟨fun c ↦ c.elim0, funext fun c ↦ c.elim0⟩
@@ -242,7 +242,7 @@ theorem wValid_casesRaw : ∀ (p : ℕ) (br : (Fin p → Bool) → sig.toPFuncto
           | 3 => wValid_shiftRaw _ (ih _ (fun _ ↦ hv _) (fun _ ↦ ha _))
               (wIndexRoot_casesRaw p _),
       funext fun d ↦ match d with
-        | .inl () => (sig.wIndexValid_index_eq_wIndexRoot condRaw).trans cond.2
+        | .inl () => (sig.wIndexValid_index_eq_wIndexRoot condRaw).trans cond.property
         | .inr i =>
           match i with
           | 0 => rfl
@@ -255,8 +255,8 @@ theorem wValid_casesRaw : ∀ (p : ℕ) (br : (Fin p → Bool) → sig.toPFuncto
 
 /-- The case tree over expressions, carrying its admissibility. -/
 @[expose] def casesW (p : ℕ) (br : (Fin p → Bool) → COf 1) : sig.W :=
-  ⟨casesRaw p (fun v ↦ (br v).1.1.1),
-    wValid_casesRaw p _ (fun v ↦ (br v).1.1.2) (fun v ↦ (br v).2)⟩
+  ⟨casesRaw p (fun v ↦ (br v).val.val.val),
+    wValid_casesRaw p _ (fun v ↦ (br v).val.val.property) (fun v ↦ (br v).property)⟩
 
 /-- The case tree's arity, in the form `fst_eval` composes with. -/
 theorem arity_casesW (p : ℕ) (br : (Fin p → Bool) → COf 1) :
@@ -276,7 +276,7 @@ theorem casesSem_eq : ∀ (p : ℕ) (br : (Fin p → Bool) → COf 1)
     (fun br sel x ↦ by
       have hb : bits 0 sel = Fin.elim0 := funext fun i ↦ i.elim0
       rw [hb]
-      change semAt 1 (br Fin.elim0).1.1 (br Fin.elim0).2 (fun _ ↦ x) = _
+      change semAt 1 (br Fin.elim0).val.val (br Fin.elim0).property (fun _ ↦ x) = _
       exact congrArg _ (funext fun i ↦ match i with | ⟨0, _⟩ => rfl))
     (fun p ih br sel x ↦ by
       rw [bits_succ]
@@ -310,7 +310,7 @@ theorem recBounded_casesW : ∀ (p : ℕ) (br : (Fin p → Bool) → COf 1),
   Nat.rec (fun br ↦ recBounded_liftRaw (br Fin.elim0))
     (fun p ih br ↦
       ⟨trivial, fun d ↦ match d with
-        | .inl () => cond.1.2
+        | .inl () => cond.val.property
         | .inr i =>
           match i with
           | 0 => ⟨trivial, fun c ↦ c.elim0⟩
@@ -337,7 +337,7 @@ Unlike the scan combinator's counterpart this is not a `rfl`: `arity_casesW` is
 a theorem rather than a definitional equality, so the transport it carries is
 opaque. -/
 theorem casesSem_eq_eval (p : ℕ) (br : (Fin p → Bool) → COf 1) :
-    transport (casesOf p br).2 (casesOf p br).1.eval = casesSem p br :=
+    transport (casesOf p br).property (casesOf p br).val.eval = casesSem p br :=
   transport_transport (fst_eval (casesW p br)) (arity_casesW p br)
     (eval (casesW p br)).2
 
@@ -380,10 +380,10 @@ theorem stepWord_constAtOf (u r : List Bool) :
 
 /-- The diagonal reads its argument in both positions. -/
 theorem stepWord_diagOf (e : COf 2) (u : List Bool) :
-    stepWord (diagOf e) u = semAt 2 e.1.1 e.2 ![u, u] := by
+    stepWord (diagOf e) u = semAt 2 e.val.val e.property ![u, u] := by
   have hfun : (fun _ : Fin 2 ↦ u) = ![u, u] :=
     funext fun i ↦ match i with | 0 => rfl | 1 => rfl
-  exact congrArg (semAt 2 e.1.1 e.2) hfun
+  exact congrArg (semAt 2 e.val.val e.property) hfun
 
 end
 

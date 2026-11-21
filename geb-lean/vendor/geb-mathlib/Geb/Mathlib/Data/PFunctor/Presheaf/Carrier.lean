@@ -100,7 +100,7 @@ variable {I : Type uI} [Category.{vI} I] (F : PresheafPFunctor.{uI, uI, uA, uB, 
 /-! ## Root restriction and naturality -/
 
 /-- The output index of a tree's root shape is its index. -/
-theorem q_dest (t : S.T) : F.q (S.dest t).1.1 = S.index t :=
+theorem q_dest (t : S.T) : F.q (S.dest t).val.1 = S.index t :=
   S.obj_dest t
 
 /-- The root-only restriction of a tree {lit}`t` indexed at {lit}`j` along a
@@ -113,7 +113,7 @@ def restrTree ⦃j j' : I⦄ (g : j' ⟶ j) (t : S.T) (hq : S.index t = j) : S.T
 /-- The index of a root-restricted tree is the source of the morphism. -/
 theorem index_restrTree ⦃j j' : I⦄ (g : j' ⟶ j) (t : S.T) (hq : S.index t = j) :
     S.index (F.restrTree S g t hq) = j' :=
-  (S.index_mk _).trans (F.shapeRestr g ⟨(S.dest t).1.1, (F.q_dest S t).trans hq⟩).2
+  (S.index_mk _).trans (F.shapeRestr g ⟨(S.dest t).val.1, (F.q_dest S t).trans hq⟩).property
 
 /-- Restriction along an identity fixes the tree. -/
 theorem restrTree_id ⦃j : I⦄ (t : S.T) (hq : S.index t = j) : F.restrTree S (𝟙 j) t hq = t := by
@@ -127,7 +127,7 @@ theorem restrTree_comp ⦃j j' j'' : I⦄ (g : j' ⟶ j) (h : j'' ⟶ j') (t : S
     F.restrTree S (h ≫ g) t hq = F.restrTree S h (F.restrTree S g t hq) hq2 := by
   simp only [restrTree, S.dest_mk]
   rw [F.objRestrElt_comp g h (S.dest t) ((F.q_dest S t).trans hq)
-    (F.shapeRestr g ⟨(S.dest t).1.1, (F.q_dest S t).trans hq⟩).2]
+    (F.shapeRestr g ⟨(S.dest t).val.1, (F.q_dest S t).trans hq⟩).property]
 
 /-- {name}`restrTree` respects equality of trees; the index witnesses are
 proof-irrelevant. -/
@@ -140,14 +140,14 @@ theorem restrTree_congr ⦃j j' : I⦄ (g : j' ⟶ j) {t t' : S.T} (ht : t = t')
 /-- The root restriction of a tree is the constructor applied to the
 restriction of any node equal to the tree's root node. -/
 private theorem restrTree_eq_mk ⦃j j' : I⦄ (g : j' ⟶ j) (t : S.T) (hq : S.index t = j)
-    (y : F.toSliceDomPFunctor.Obj S.index) (hy : S.dest t = y) (hy' : F.q y.1.1 = j) :
+    (y : F.toSliceDomPFunctor.Obj S.index) (hy : S.dest t = y) (hy' : F.q y.val.1 = j) :
     F.restrTree S g t hq = S.mk (F.objRestrElt g y hy') := by
   subst hy
   rfl
 
 /-- Restricting a constructed tree restricts its root node. -/
 theorem restrTree_mk ⦃j j' : I⦄ (g : j' ⟶ j) (x : F.toSliceDomPFunctor.Obj S.index)
-    (hq : S.index (S.mk x) = j) (hx : F.q x.1.1 = j) :
+    (hq : S.index (S.mk x) = j) (hx : F.q x.val.1 = j) :
     F.restrTree S g (S.mk x) hq = S.mk (F.objRestrElt g x hx) :=
   restrTree_eq_mk F S g (S.mk x) hq x (S.dest_mk x) hx
 
@@ -155,22 +155,23 @@ theorem restrTree_mk ⦃j j' : I⦄ (g : j' ⟶ j) (x : F.toSliceDomPFunctor.Obj
 morphism agrees with the child at the restricted direction. The analogue for
 trees of {name}`PresheafDomPFunctorData.IsNatural`. -/
 def NodeNatural (x : F.toSliceDomPFunctor.Obj S.index) : Prop :=
-  ∀ ⦃i i' : I⦄ (g : i' ⟶ i) (b : F.toSliceDomPFunctor.Direction x.1.1 i),
-    x.1.2 (F.directionRestr x.1.1 g b).1 =
-      F.restrTree S g (x.1.2 b.1)
-        (((F.toSliceDomPFunctor.compatible_iff _ x.1.1 x.1.2).mp x.2 b.1).trans b.2)
+  ∀ ⦃i i' : I⦄ (g : i' ⟶ i) (b : F.toSliceDomPFunctor.Direction x.val.1 i),
+    x.val.2 (F.directionRestr x.val.1 g b).val =
+      F.restrTree S g (x.val.2 b.val)
+        (((F.toSliceDomPFunctor.compatible_iff _ x.val.1 x.val.2).mp x.property b.val).trans
+          b.property)
 
 /-- Restricting a natural node gives a natural node: its children are the
 original children at the reindexed directions, and naturality transports
 along {name}`PresheafPFunctorData.IsFunctorial.reindex_naturality`. -/
 theorem nodeNatural_objRestrElt ⦃j j' : I⦄ (g : j' ⟶ j) (x : F.toSliceDomPFunctor.Obj S.index)
-    (hq : F.q x.1.1 = j) (hx : F.NodeNatural S x) : F.NodeNatural S (F.objRestrElt g x hq) := by
+    (hq : F.q x.val.1 = j) (hx : F.NodeNatural S x) : F.NodeNatural S (F.objRestrElt g x hq) := by
   intro i i' h b
   obtain ⟨bv, rfl⟩ := b
   refine (F.snd_objRestrElt g x hq _).trans ?_
-  have hr := congrFun (F.isFunctorial.reindex_naturality g ⟨x.1.1, hq⟩ h) ⟨bv, rfl⟩
-  exact (congrArg (fun d : F.toSliceDomPFunctor.Direction x.1.1 _ ↦ x.1.2 d.1) hr.symm).trans
-    (hx h (F.reindex g ⟨x.1.1, hq⟩ ⟨bv, rfl⟩))
+  have hr := congrFun (F.isFunctorial.reindex_naturality g ⟨x.val.1, hq⟩ h) ⟨bv, rfl⟩
+  exact (congrArg (fun d : F.toSliceDomPFunctor.Direction x.val.1 _ ↦ x.val.2 d.val) hr.symm).trans
+    (hx h (F.reindex g ⟨x.val.1, hq⟩ ⟨bv, rfl⟩))
 
 /-! ## Hereditary naturality -/
 
@@ -181,7 +182,7 @@ structure HereditaryNaturality : Type (max uA uB + 1) where
   /-- The predicate. -/
   holds : S.T → Prop
   /-- The unfolding equation. -/
-  holds_iff : ∀ t, holds t ↔ F.NodeNatural S (S.dest t) ∧ ∀ b, holds ((S.dest t).1.2 b)
+  holds_iff : ∀ t, holds t ↔ F.NodeNatural S (S.dest t) ∧ ∀ b, holds ((S.dest t).val.2 b)
 
 namespace HereditaryNaturality
 
@@ -189,7 +190,7 @@ variable {F S} (N : F.HereditaryNaturality S)
 
 /-- The unfolding equation at a constructed tree. -/
 theorem holds_mk (x : F.toSliceDomPFunctor.Obj S.index) :
-    N.holds (S.mk x) ↔ F.NodeNatural S x ∧ ∀ b, N.holds (x.1.2 b) := by
+    N.holds (S.mk x) ↔ F.NodeNatural S x ∧ ∀ b, N.holds (x.val.2 b) := by
   rw [N.holds_iff, S.dest_mk]
 
 /-- Hereditary naturality is preserved by the root-only restriction: the
@@ -199,7 +200,7 @@ theorem holds_restrTree ⦃j j' : I⦄ (g : j' ⟶ j) (t : S.T) (hq : S.index t 
     (ht : N.holds t) : N.holds (F.restrTree S g t hq) := by
   obtain ⟨hloc, hch⟩ := (N.holds_iff t).mp ht
   exact (N.holds_mk _).mpr ⟨F.nodeNatural_objRestrElt S g (S.dest t) _ hloc,
-    fun b ↦ hch (F.reindex g ⟨_, (F.q_dest S t).trans hq⟩ ⟨b, rfl⟩).1⟩
+    fun b ↦ hch (F.reindex g ⟨_, (F.q_dest S t).trans hq⟩ ⟨b, rfl⟩).val⟩
 
 end HereditaryNaturality
 
@@ -214,8 +215,9 @@ abbrev carrierFiber (j : I) : Type (max uI uA uB) :=
 
 /-- Restriction on fibres. -/
 def carrierRestr ⦃j j' : I⦄ (g : j' ⟶ j) : F.carrierFiber N j → F.carrierFiber N j' :=
-  fun w ↦ ULift.up ⟨F.restrTree S g w.down.1 w.down.2.1,
-    F.index_restrTree S g w.down.1 w.down.2.1, N.holds_restrTree g w.down.1 w.down.2.1 w.down.2.2⟩
+  fun w ↦ ULift.up ⟨F.restrTree S g w.down.val w.down.property.1,
+    F.index_restrTree S g w.down.val w.down.property.1,
+    N.holds_restrTree g w.down.val w.down.property.1 w.down.property.2⟩
 
 /-- The carrier presheaf of the hereditarily natural trees: its fibre over
 {lit}`j` is {name}`carrierFiber`, and its restriction maps are
@@ -225,11 +227,11 @@ def carrier : Iᵒᵖ ⥤ Type (max uI uA uB) where
   map g := ↾ (F.carrierRestr N g.unop)
   map_id j := by
     ext w
-    exact F.restrTree_id S w.down.1 w.down.2.1
+    exact F.restrTree_id S w.down.val w.down.property.1
   map_comp g h := by
     ext w
-    exact F.restrTree_comp S g.unop h.unop w.down.1 w.down.2.1
-      (F.index_restrTree S g.unop w.down.1 w.down.2.1)
+    exact F.restrTree_comp S g.unop h.unop w.down.val w.down.property.1
+      (F.index_restrTree S g.unop w.down.val w.down.property.1)
 
 namespace carrier
 
@@ -238,12 +240,12 @@ variable {F N}
 /-- Casting a fibre element along an index equality leaves its tree
 unchanged. -/
 private theorem cast_down {k k' : I} (e : k = k') (u : (F.carrier N).obj ⟨k⟩) :
-    (cast (congrArg (fun k : I ↦ (F.carrier N).obj ⟨k⟩) e) u).down.1 = u.down.1 := by
+    (cast (congrArg (fun k : I ↦ (F.carrier N).obj ⟨k⟩) e) u).down.val = u.down.val := by
   cases e
   rfl
 
 /-- Fibre elements with equal trees are equal. -/
-theorem obj_ext {k : I} {u u' : (F.carrier N).obj ⟨k⟩} (h : u.down.1 = u'.down.1) : u = u' := by
+theorem obj_ext {k : I} {u u' : (F.carrier N).obj ⟨k⟩} (h : u.down.val = u'.down.val) : u = u' := by
   obtain ⟨u⟩ := u
   obtain ⟨u'⟩ := u'
   exact congrArg ULift.up (Subtype.ext h)
@@ -251,22 +253,23 @@ theorem obj_ext {k : I} {u u' : (F.carrier N).obj ⟨k⟩} (h : u.down.1 = u'.do
 /-- The tree of a restricted fibre element is the root restriction of its
 tree. -/
 theorem map_down ⦃i i' : I⦄ (f : i' ⟶ i) (u : (F.carrier N).obj ⟨i⟩) :
-    ((F.carrier N).map f.op u).down.1 = F.restrTree S f u.down.1 u.down.2.1 :=
+    ((F.carrier N).map f.op u).down.val = F.restrTree S f u.down.val u.down.property.1 :=
   rfl
 
 /-- The tree of the value a node over the carrier presheaf gives a direction
 is the tree of the child it carries. -/
 theorem value_down
     (n : F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj (F.carrier N))) ⦃i : I⦄
-    (b : F.toSliceDomPFunctor.Direction n.1.1 i) :
-    (F.toPresheafDomPFunctorData.value n b).down.1 = (n.1.2 b.1).2.down.1 :=
+    (b : F.toSliceDomPFunctor.Direction n.val.1 i) :
+    (F.toPresheafDomPFunctorData.value n b).down.val = (n.val.2 b.val).2.down.val :=
   cast_down (((F.toSliceDomPFunctor.compatible_iff
-    (PresheafDomPFunctorData.elemProj (F.carrier N)) n.1.1 n.1.2).mp n.2 b.1).trans b.2)
-    (n.1.2 b.1).2
+    (PresheafDomPFunctorData.elemProj (F.carrier N)) n.val.1 n.val.2).mp n.property b.val).trans
+      b.property)
+    (n.val.2 b.val).2
 
 /-- A fibre element is its tree placed over the tree's index. -/
 theorem sigma_eta {i : I} (w : (F.carrier N).obj ⟨i⟩) :
-    (⟨S.index w.down.1, ULift.up ⟨w.down.1, rfl, w.down.2.2⟩⟩ :
+    (⟨S.index w.down.val, ULift.up ⟨w.down.val, rfl, w.down.property.2⟩⟩ :
       Σ i : I, (F.carrier N).obj ⟨i⟩) = ⟨i, w⟩ := by
   obtain ⟨⟨t, hi, hh⟩⟩ := w
   cases hi
@@ -275,35 +278,35 @@ theorem sigma_eta {i : I} (w : (F.carrier N).obj ⟨i⟩) :
 /-- Forget a node over the carrier presheaf to the node of trees it carries. -/
 def forgetNode (n : F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj (F.carrier N))) :
     F.toSliceDomPFunctor.Obj S.index :=
-  ⟨⟨n.1.1, fun b ↦ (n.1.2 b).2.down.1⟩,
+  ⟨⟨n.val.1, fun b ↦ (n.val.2 b).2.down.val⟩,
     (F.toSliceDomPFunctor.compatible_iff _ _ _).mpr fun b ↦
-      ((n.1.2 b).2.down.2.1).trans ((F.toSliceDomPFunctor.compatible_iff
-        (PresheafDomPFunctorData.elemProj (F.carrier N)) _ _).mp n.2 b)⟩
+      ((n.val.2 b).2.down.property.1).trans ((F.toSliceDomPFunctor.compatible_iff
+        (PresheafDomPFunctorData.elemProj (F.carrier N)) _ _).mp n.property b)⟩
 
 /-- Remember a node of hereditarily natural trees as a node over the carrier
 presheaf, each child placed over its own index. -/
-def rememberNode (y : F.toSliceDomPFunctor.Obj S.index) (hch : ∀ b, N.holds (y.1.2 b)) :
+def rememberNode (y : F.toSliceDomPFunctor.Obj S.index) (hch : ∀ b, N.holds (y.val.2 b)) :
     F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj (F.carrier N)) :=
-  ⟨⟨y.1.1, fun b ↦ ⟨S.index (y.1.2 b), ULift.up ⟨y.1.2 b, rfl, hch b⟩⟩⟩,
+  ⟨⟨y.val.1, fun b ↦ ⟨S.index (y.val.2 b), ULift.up ⟨y.val.2 b, rfl, hch b⟩⟩⟩,
     (F.toSliceDomPFunctor.compatible_iff (PresheafDomPFunctorData.elemProj (F.carrier N)) _ _).mpr
-      fun b ↦ (F.toSliceDomPFunctor.compatible_iff _ _ _).mp y.2 b⟩
+      fun b ↦ (F.toSliceDomPFunctor.compatible_iff _ _ _).mp y.property b⟩
 
 /-- {name}`rememberNode` depends on the node only. -/
 theorem rememberNode_congr {y y' : F.toSliceDomPFunctor.Obj S.index} (e : y = y')
-    (hy : ∀ b, N.holds (y.1.2 b)) (hy' : ∀ b, N.holds (y'.1.2 b)) :
+    (hy : ∀ b, N.holds (y.val.2 b)) (hy' : ∀ b, N.holds (y'.val.2 b)) :
     rememberNode y hy = rememberNode y' hy' := by
   subst e
   rfl
 
 /-- {name}`forgetNode` inverts {name}`rememberNode`. -/
 theorem forgetNode_rememberNode (y : F.toSliceDomPFunctor.Obj S.index)
-    (hch : ∀ b, N.holds (y.1.2 b)) : forgetNode (rememberNode y hch) = y :=
+    (hch : ∀ b, N.holds (y.val.2 b)) : forgetNode (rememberNode y hch) = y :=
   rfl
 
 /-- {name}`rememberNode` inverts {name}`forgetNode`. -/
 theorem rememberNode_forgetNode
     (n : F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj (F.carrier N)))
-    (hch : ∀ b, N.holds ((forgetNode n).1.2 b)) :
+    (hch : ∀ b, N.holds ((forgetNode n).val.2 b)) :
     rememberNode (forgetNode n) hch = n := by
   apply Subtype.ext
   obtain ⟨⟨a, v⟩, hc⟩ := n
@@ -320,41 +323,42 @@ theorem nodeNatural_forgetNode
     simp only [value_down, map_down]
     exact hloc f b
   · intro hnat i i' g b
-    have h := congrArg (fun u ↦ u.down.1) (hnat g b)
+    have h := congrArg (fun u ↦ u.down.val) (hnat g b)
     simp only [value_down n, map_down g] at h
     exact h
 
 /-- The constructor: the value of {name}`PresheafPFunctor.objPresheaf` at the
 carrier presheaf maps into it, fibrewise. -/
 def mk {j : I} (x : (F.objPresheaf (F.carrier N)).obj ⟨j⟩) : (F.carrier N).obj ⟨j⟩ :=
-  ULift.up ⟨S.mk (forgetNode x.1.1), (S.index_mk _).trans x.2,
-    (N.holds_mk _).mpr ⟨(nodeNatural_forgetNode x.1.1).mpr x.1.2,
-      fun b ↦ (x.1.1.1.2 b).2.down.2.2⟩⟩
+  ULift.up ⟨S.mk (forgetNode x.val.val), (S.index_mk _).trans x.property,
+    (N.holds_mk _).mpr ⟨(nodeNatural_forgetNode x.val.val).mpr x.val.property,
+      fun b ↦ (x.val.val.val.2 b).2.down.property.2⟩⟩
 
 /-- The destructor, inverse to {name}`mk`: the root node of the tree, its
 children placed over their indices. -/
 def dest {j : I} (z : (F.carrier N).obj ⟨j⟩) : (F.objPresheaf (F.carrier N)).obj ⟨j⟩ :=
-  ⟨⟨rememberNode (S.dest z.down.1) ((N.holds_iff z.down.1).mp z.down.2.2).2,
-      (nodeNatural_forgetNode _).mp ((N.holds_iff z.down.1).mp z.down.2.2).1⟩,
-    (F.q_dest S z.down.1).trans z.down.2.1⟩
+  ⟨⟨rememberNode (S.dest z.down.val) ((N.holds_iff z.down.val).mp z.down.property.2).2,
+      (nodeNatural_forgetNode _).mp ((N.holds_iff z.down.val).mp z.down.property.2).1⟩,
+    (F.q_dest S z.down.val).trans z.down.property.1⟩
 
 /-- The destructor inverts the constructor. -/
 @[simp] theorem dest_mk {j : I} (x : (F.objPresheaf (F.carrier N)).obj ⟨j⟩) :
     dest (mk x) = x := by
   apply Subtype.ext
   apply Subtype.ext
-  exact (rememberNode_congr (S.dest_mk _) ((N.holds_iff (mk x).down.1).mp (mk x).down.2.2).2
-    fun b ↦ (x.1.1.1.2 b).2.down.2.2).trans (rememberNode_forgetNode x.1.1 _)
+  exact (rememberNode_congr (S.dest_mk _)
+    ((N.holds_iff (mk x).down.val).mp (mk x).down.property.2).2
+    fun b ↦ (x.val.val.val.2 b).2.down.property.2).trans (rememberNode_forgetNode x.val.val _)
 
 /-- The constructor inverts the destructor. -/
 @[simp] theorem mk_dest {j : I} (z : (F.carrier N).obj ⟨j⟩) : mk (dest z) = z :=
-  obj_ext (S.mk_dest z.down.1)
+  obj_ext (S.mk_dest z.down.val)
 
 /-- The constructor commutes with restriction: restricting a node and then
 constructing is constructing and then restricting the root. -/
 theorem mk_map ⦃i i' : I⦄ (g : i' ⟶ i) (x : (F.objPresheaf (F.carrier N)).obj ⟨i⟩) :
     mk ((F.objPresheaf (F.carrier N)).map g.op x) = (F.carrier N).map g.op (mk x) :=
-  obj_ext (F.restrTree_mk S g (forgetNode x.1.1) (mk x).down.2.1 x.2).symm
+  obj_ext (F.restrTree_mk S g (forgetNode x.val.val) (mk x).down.property.1 x.property).symm
 
 /-- The destructor commutes with restriction. -/
 theorem dest_map ⦃i i' : I⦄ (g : i' ⟶ i) (z : (F.carrier N).obj ⟨i⟩) :

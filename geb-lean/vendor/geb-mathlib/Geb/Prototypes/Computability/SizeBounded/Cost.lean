@@ -196,9 +196,9 @@ head read at the arguments' values; a recursion is {lit}`evalSRNC`. -/
 {lit}`ℕ`. -/
 @[expose] def evalStepC :
     sig.toSliceDomPFunctor.Obj (Sigma.fst (β := SemC)) → Σ i, SemC i :=
-  fun z ↦ ⟨sig.q z.1.1,
-    evalValueC z.1.1 z.1.2
-      ((sig.toSliceDomPFunctor.compatible_iff _ z.1.1 z.1.2).mp z.2)⟩
+  fun z ↦ ⟨sig.q z.val.1,
+    evalValueC z.val.1 z.val.2
+      ((sig.toSliceDomPFunctor.compatible_iff _ z.val.1 z.val.2).mp z.property)⟩
 
 /-- The accounted interpretation of a tree. -/
 @[expose] def evalC : sig.W → Σ n, SemC n :=
@@ -214,7 +214,7 @@ theorem fst_evalC (z : S) : (evalC z).1 = arity z :=
   transportC ((fst_evalC e).trans he) (evalC e).2
 
 /-- The account of an expression of a given arity. -/
-@[expose] def SOf.account {n : ℕ} (e : SOf n) : SemC n := accountAt n e.1 e.2
+@[expose] def SOf.account {n : ℕ} (e : SOf n) : SemC n := accountAt n e.val e.property
 
 /-- The value component of an accounted meaning, as a meaning. -/
 @[expose] def valueOf {n : ℕ} (f : SemC n) : Sem n := fun x ↦ (f x).value
@@ -279,7 +279,7 @@ arity. -/
 theorem valueC_eq : ∀ e : S, (⟨(evalC e).1, valueOf (evalC e).2⟩ : Σ n, Sem n) = eval e :=
   SlicePFunctor.W.induction fun x ih ↦
     Sigma.ext rfl (heq_of_eq
-      ((valueOf_evalValueC x.1.1 (fun b ↦ evalC (x.1.2 b)) _).trans
+      ((valueOf_evalValueC x.val.1 (fun b ↦ evalC (x.val.2 b)) _).trans
         (evalValue_congr _ _ _ (funext ih) _ _)))
 
 /-- Two meanings whose pairs with their arities agree are equal once transported
@@ -293,9 +293,9 @@ theorem transport_eq_of_sigma_eq {i j k : ℕ} {u : Sem i} {v : Sem j}
 
 /-- The meaning of an expression is the value component of its account. -/
 theorem SOf.sem_eq_account {n : ℕ} (e : SOf n) : e.sem = valueOf e.account := by
-  change transport _ (eval e.1).2 = valueOf (transportC _ (evalC e.1).2)
+  change transport _ (eval e.val).2 = valueOf (transportC _ (evalC e.val).2)
   rw [valueOf_transportC]
-  exact (transport_eq_of_sigma_eq (valueC_eq e.1) _ _).symm
+  exact (transport_eq_of_sigma_eq (valueC_eq e.val) _ _).symm
 
 /-- An accounted meaning is non-size-increasing with constant {lit}`k` in value
 and in greatest length: whenever every argument has length at most {lit}`m`,
@@ -427,15 +427,15 @@ theorem nsiC_evalValueC (a : Shape) (c : Direction a → Σ i, SemC i)
 
 /-- Every expression's account is non-size-increasing in value and greatest
 length, with the constant {name}`Geb.SizeBounded.nsiConst`. -/
-theorem nsiC_evalC : ∀ e : S, NSIC (nsiConst e.1) (evalC e).2 :=
-  SlicePFunctor.W.induction fun x ih ↦ nsiC_evalValueC x.1.1 (fun b ↦ evalC (x.1.2 b)) _ _ ih
+theorem nsiC_evalC : ∀ e : S, NSIC (nsiConst e.val) (evalC e).2 :=
+  SlicePFunctor.W.induction fun x ih ↦ nsiC_evalValueC x.val.1 (fun b ↦ evalC (x.val.2 b)) _ _ ih
 
 /-- Every length the evaluator accounts for, on arguments of length at most
 {lit}`m`, is at most {lit}`max m k` with {lit}`k` the expression's constant:
 linear space. -/
 theorem space_le {n : ℕ} (e : SOf n) (x : Fin n → List Bool) (m : ℕ)
-    (hx : ∀ i, (x i).length ≤ m) : (e.account x).space ≤ max m (nsiConst e.1.1) :=
-  (nsiC_transportC _ (nsiC_evalC e.1) x m hx).2
+    (hx : ∀ i, (x i).length ≤ m) : (e.account x).space ≤ max m (nsiConst e.val.val) :=
+  (nsiC_transportC _ (nsiC_evalC e.val) x m hx).2
 
 /-- A function on lengths is bounded by a polynomial. -/
 @[expose] def IsPolyBounded (p : ℕ → ℕ) : Prop := ∃ c d, ∀ m, p m ≤ c * (m + 1) ^ d
@@ -677,10 +677,11 @@ theorem time_evalValueC (a : Shape) (c : Direction a → Σ i, SemC i)
 /-- Every expression's time is at most its polynomial, on arguments of length at
 most {lit}`m`. -/
 theorem time_le : ∀ (e : S) (x : Fin (evalC e).1 → List Bool) (m : ℕ),
-    (∀ i, (x i).length ≤ m) → ((evalC e).2 x).time ≤ timePoly e.1 m :=
+    (∀ i, (x i).length ≤ m) → ((evalC e).2 x).time ≤ timePoly e.val m :=
   SlicePFunctor.W.induction fun x ih ↦
-    time_evalValueC x.1.1 (fun b ↦ evalC (x.1.2 b)) _ (fun b ↦ costData (x.1.2 b).1)
-      (fun b ↦ nsiC_mono (Nat.le_of_eq (costData_fst (x.1.2 b).1).symm) (nsiC_evalC (x.1.2 b)))
+    time_evalValueC x.val.1 (fun b ↦ evalC (x.val.2 b)) _ (fun b ↦ costData (x.val.2 b).val)
+      (fun b ↦
+        nsiC_mono (Nat.le_of_eq (costData_fst (x.val.2 b).val).symm) (nsiC_evalC (x.val.2 b)))
       ih
 
 /-- Every expression's polynomial is a polynomial. -/
@@ -713,11 +714,11 @@ theorem isPolyBounded_timePoly : ∀ w : sig.toPFunctor.W, IsPolyBounded (timePo
 arguments: polynomial time. -/
 theorem time_le_poly {n : ℕ} (e : SOf n) : ∃ c d, ∀ (x : Fin n → List Bool) (m : ℕ),
     (∀ i, (x i).length ≤ m) → (e.account x).time ≤ c * (m + 1) ^ d :=
-  (isPolyBounded_timePoly e.1.1).elim fun c hc ↦ hc.elim fun d hd ↦
+  (isPolyBounded_timePoly e.val.val).elim fun c hc ↦ hc.elim fun d hd ↦
     ⟨c, d, fun x m hx ↦ Nat.le_trans
-      (transportC_prop _ (evalC e.1).2
+      (transportC_prop _ (evalC e.val).2
         (fun f ↦ ∀ (x : Fin _ → List Bool) (m : ℕ), (∀ i, (x i).length ≤ m) →
-          (f x).time ≤ timePoly e.1.1 m) (time_le e.1) x m hx)
+          (f x).time ≤ timePoly e.val.val m) (time_le e.val) x m hx)
       (hd m)⟩
 
 end

@@ -158,7 +158,7 @@ and the children are as many as the shape's directions. -/
   match C.decode s with
   | some a =>
     if h : cs.length = C.card a then
-      some (WType.mk a fun b ↦ cs[(C.idx a b).1]'(Nat.lt_of_lt_of_eq (C.idx a b).2 h.symm))
+      some (WType.mk a fun b ↦ cs[(C.idx a b).val]'(Nat.lt_of_lt_of_eq (C.idx a b).isLt h.symm))
     else none
   | none => none
 
@@ -270,7 +270,7 @@ many as the shape's directions, and the node is the shape over them. -/
 theorem close_eq_some (s : List Bool) (cs : List C.P.toPFunctor.W) (c : C.P.toPFunctor.W)
     (hc : C.close s cs = some c) :
     ∃ (a : C.P.A) (h : cs.length = C.card a), C.decode s = some a ∧
-      c = WType.mk a fun b ↦ cs[(C.idx a b).1]'(Nat.lt_of_lt_of_eq (C.idx a b).2 h.symm) := by
+      c = WType.mk a fun b ↦ cs[(C.idx a b).val]'(Nat.lt_of_lt_of_eq (C.idx a b).isLt h.symm) := by
   unfold close at hc
   cases hd : C.decode s with
   | none => rw [hd] at hc; cases hc
@@ -472,7 +472,7 @@ theorem info_spine_ofFn (s : List Bool) : ∀ (n : ℕ) (ts : Fin n → Tree),
       (C.info (spine (leaf s) (List.ofFn ts))).spine = n ∧
         ((C.info (spine (leaf s) (List.ofFn ts))).edges = true ↔
           (∀ i, (C.info (ts i)).edges = true) ∧
-            ∀ i : Fin n, C.edgeSpec s i.1 (C.info (ts i)).label = true) :=
+            ∀ i : Fin n, C.edgeSpec s i.val (C.info (ts i)).label = true) :=
   Nat.rec (fun ts ↦ ⟨by rw [List.ofFn_zero]; rfl, by rw [List.ofFn_zero]; rfl, by
       rw [List.ofFn_zero]
       exact ⟨fun _ ↦ ⟨fun i ↦ i.elim0, fun i ↦ i.elim0⟩, fun _ ↦ rfl⟩⟩)
@@ -511,7 +511,7 @@ theorem wValid_mk_iff (a : C.P.A) (f : C.P.B a → C.P.toPFunctor.W)
     unfold edgeSpec
     rw [C.decode_code, C.decode_code]
     dsimp only
-    rw [dif_pos (show i.1 < C.card a from i.2), decide_eq_true_iff]
+    rw [dif_pos (show i.val < C.card a from i.isLt), decide_eq_true_iff]
     rfl
 
 /-- A W-tree is admissible exactly when the edges of its spelling are in

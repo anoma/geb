@@ -37,6 +37,8 @@
   - [30. `Wiring.force_force` exceeds the default heartbeat limit in v4.29](#30-wiringforce_force-exceeds-the-default-heartbeat-limit-in-v429)
   - [31. `haveI`/`letI` linter module added in v4.36](#31-haveileti-linter-module-added-in-v436)
   - [32. Universe level of `ULift.down` left unassigned in v4.29](#32-universe-level-of-uliftdown-left-unassigned-in-v429)
+  - [33. `List.filterMap_congr` takes a list equation in v4.37](#33-listfiltermap_congr-takes-a-list-equation-in-v437)
+  - [34. Equation lemmas keep root `let` bindings in v4.37](#34-equation-lemmas-keep-root-let-bindings-in-v437)
 - [Updating the patch for a new upstream](#updating-the-patch-for-a-new-upstream)
   - [The no-op condition](#the-no-op-condition)
 - [Module exclusion](#module-exclusion)
@@ -48,7 +50,7 @@
 
 These notes catalogue the categories of change in
 `scripts/geb-mathlib-backport.patch`, which adapts the vendored
-`geb-mathlib` `Geb` source (mathlib `v4.36.0`) to compile under this
+`geb-mathlib` `Geb` source (mathlib `v4.37.0-rc1`) to compile under this
 repository's `v4.29.0-rc6`. When a refresh fails, check whether the new
 failure matches a category below (extend the corresponding hunk) or is
 genuinely new (decide the adaptation, add a category here).
@@ -476,7 +478,7 @@ genuinely new (decide the adaptation, add a category here).
   `rw [reindex_cast_shape (hh := ...), ← reindex_comp_apply P hP]`. The
   goal carries a `cast` transporting `d` along the shape equality
   `hh`, and `reindex_cast_shape` states that transport with the motive
-  `fun u ↦ (P.fam (F.q u.1)).Dir i`.
+  `fun u ↦ (P.fam (F.q u.val)).Dir i`.
 - v4.29 symptom: `Did not find an occurrence of the pattern`
   `P.reindex ?k (cast ⋯ ?d)`, on a target that visibly contains such a
   subterm. The `simp only [pullback]` rewrites the goal but not the
@@ -491,7 +493,7 @@ genuinely new (decide the adaptation, add a category here).
 
   ```lean
   change _ = P.reindex _ (P.reindex _
-    (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam (F.q u.1)).Dir i)
+    (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam (F.q u.val)).Dir i)
       (congrFun (F.isFunctorial.shapeRestr_comp g h) s)) d))
   ```
 
@@ -1050,6 +1052,32 @@ genuinely new (decide the adaptation, add a category here).
   `Prototypes/FreeTopos/Converse.lean` lifts the objects of a
   `ChosenTopos.{u, v}` as `ULift.{v} T.Obj`, and `relTopos` is a
   `ChosenTopos.{1, 0}`.
+
+### 33. `List.filterMap_congr` takes a list equation in v4.37
+
+- Upstream cause: mathlib pull request 44093 (2026-11-19) restates
+  `List.filterMap_congr` with two lists `l l'` and a leading hypothesis
+  `hl : l = l'`. `Prototypes/FreeTopos/Internal/Params.lean` applies it
+  as `List.filterMap_congr rfl fun v hv ↦ ...` in `foldEnvIn_retype`
+  and `foldParams_rename_of_lt`.
+- v4.29 symptom: `Application type mismatch` at the `rfl` argument,
+  which has type `?a = ?a` where the pinned statement's only explicit
+  argument, `h : ∀ x ∈ l, f x = g x`, is expected.
+- Adaptation: delete the `rfl` argument at both sites.
+
+### 34. Equation lemmas keep root `let` bindings in v4.37
+
+- Upstream cause: Lean pull request 16208 (v4.37.0-rc1) keeps the
+  `have` and `let` bindings at the root of an equation lemma's
+  right-hand side when the definition splits no `match`. `inst` in
+  `Prototypes/PartialHorn/Basic.lean` binds four `let`s at the root, so
+  `rw [..., inst]` in `ax` in `Prototypes/PartialHorn/Completeness.lean`
+  leaves them in the goal, and upstream follows the rewrite with
+  `dsimp only` to zeta-reduce them.
+- v4.29 symptom: `` `dsimp` made no progress ``: the pinned toolchain
+  states `inst.eq_1` with every `let` already substituted, so the
+  rewrite leaves nothing for `dsimp only` to reduce.
+- Adaptation: delete the `dsimp only`.
 
 ## Updating the patch for a new upstream
 

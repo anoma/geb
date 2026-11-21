@@ -371,7 +371,7 @@ def applyAlgOf {r : ℕ} (algI : COf r) : COf 1 :=
 /-- The algebra application's value at a step. -/
 theorem stepWord_applyAlgOf {r : ℕ} (algI : COf r) (u : List Bool) :
     stepWord (applyAlgOf algI) u =
-      semAt r algI.1.1 algI.2 fun j ↦ stepWord (entryOf j.val) u :=
+      semAt r algI.val.val algI.property fun j ↦ stepWord (entryOf j.val) u :=
   stepWord_compOf algI _ u
 
 /-- The stack after the pop: the algebra's value spelled as an entry, then the
@@ -503,7 +503,7 @@ theorem stepWord_foldStepV (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (b : Bool) (s : FoldScan (List Bool)) (h : s.buf.length < R.width) :
     stepWord (foldStepV R algOf b) (stateWordV R s) =
       stateWordV R (foldScanStep R alg b s) := by
@@ -574,7 +574,7 @@ theorem foldSemV_eq (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult : ℕ) (w : List Bool) :
     foldSemV R algOf mult ![w] = stateWordV R (foldScanFinal R alg w) := by
   rw [foldSemV, scanBSem_eq]
@@ -598,7 +598,7 @@ theorem length_foldSemV_le (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
@@ -631,7 +631,7 @@ theorem length_foldSemV_le (R : RankedAlphabet)
 def foldExprOfV (R : RankedAlphabet) (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
@@ -644,12 +644,12 @@ def foldExprOfV (R : RankedAlphabet) (algOf : (i : Fin R.card) → COf (R.arity 
 def foldExprV (R : RankedAlphabet) (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
     (hmult : 2 * c + 2 ≤ mult) : C :=
-  (foldExprOfV R algOf alg halg mult c hsize hmult).1
+  (foldExprOfV R algOf alg halg mult c hsize hmult).val
 
 /-- The meaning `foldSemV` reads at the raw tree is the meaning `foldExprV`
 carries. -/
@@ -657,13 +657,13 @@ theorem foldSemV_eq_eval (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
     (hmult : 2 * c + 2 ≤ mult) :
-    transport (foldExprOfV R algOf alg halg mult c hsize hmult).2
-        (foldExprOfV R algOf alg halg mult c hsize hmult).1.eval =
+    transport (foldExprOfV R algOf alg halg mult c hsize hmult).property
+        (foldExprOfV R algOf alg halg mult c hsize hmult).val.eval =
       foldSemV R algOf mult := rfl
 
 /-- A fixed-width carrier's algebra transported to the bitstring carrier: decode
@@ -781,7 +781,7 @@ theorem stepWord_readOfV (R : RankedAlphabet) (s : FoldScan (List Bool))
 def foldOutOfV (R : RankedAlphabet) (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
@@ -792,37 +792,37 @@ def foldOutOfV (R : RankedAlphabet) (algOf : (i : Fin R.card) → COf (R.arity i
 def foldOutExprV (R : RankedAlphabet) (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
     (hmult : 2 * c + 2 ≤ mult) : C :=
-  (foldOutOfV R algOf alg halg mult c hsize hmult).1
+  (foldOutOfV R algOf alg halg mult c hsize hmult).val
 
 /-- The fold's meaning at its arity, read at the raw tree. -/
 def foldOutSemV (R : RankedAlphabet) (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
     (hmult : 2 * c + 2 ≤ mult) : Sem 1 :=
-  semAt 1 (foldOutOfV R algOf alg halg mult c hsize hmult).1.1
-    (foldOutOfV R algOf alg halg mult c hsize hmult).2
+  semAt 1 (foldOutOfV R algOf alg halg mult c hsize hmult).val.val
+    (foldOutOfV R algOf alg halg mult c hsize hmult).property
 
 /-- The meaning read at the raw tree is the meaning the expression carries. -/
 theorem foldOutSemV_eq_eval (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
     (hmult : 2 * c + 2 ≤ mult) :
-    transport (foldOutOfV R algOf alg halg mult c hsize hmult).2
-        (foldOutOfV R algOf alg halg mult c hsize hmult).1.eval =
+    transport (foldOutOfV R algOf alg halg mult c hsize hmult).property
+        (foldOutOfV R algOf alg halg mult c hsize hmult).val.eval =
       foldOutSemV R algOf alg halg mult c hsize hmult := rfl
 
 /-- The expression at a bitstring carrier computes the fold: the readout on the
@@ -833,7 +833,7 @@ theorem foldOutSemV_eq (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)
@@ -842,7 +842,7 @@ theorem foldOutSemV_eq (R : RankedAlphabet)
       outWordV (foldOut R alg w) := by
   have happly : foldOutSemV R algOf alg halg mult c hsize hmult ![w] =
       stepWord (readOfV R) (foldSemV R algOf mult ![w]) :=
-    congrArg (semAt 1 (readOfV R).1.1 (readOfV R).2)
+    congrArg (semAt 1 (readOfV R).val.val (readOfV R).property)
       (funext fun i ↦ match i with | ⟨0, _⟩ => rfl)
   rw [happly, foldSemV_eq R algOf alg halg mult w,
     stepWord_readOfV R _ (length_buf_foldScanFinal_lt R alg w), foldOut]

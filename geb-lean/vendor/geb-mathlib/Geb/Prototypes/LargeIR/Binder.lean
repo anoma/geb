@@ -92,8 +92,8 @@ def PiFormerValue (Z : (Fin 2)ᵒᵖ ⥤ Type) : Type :=
 
 /-- At {lit}`termsPsh n` the product former's value is {lit}`Fin n → Fin n`. -/
 def piFormerEquiv (n : ℕ) : PiFormerValue (termsPsh n) ≃ (Fin n → Fin n) where
-  toFun v i := (v.2.2 ⟨i, termsPsh_zero_eq _ _⟩).1
-  invFun f := ⟨(), fun _ ↦ (), fun x ↦ ⟨f x.1, rfl⟩⟩
+  toFun v i := (v.2.2 ⟨i, termsPsh_zero_eq _ _⟩).val
+  invFun f := ⟨(), fun _ ↦ (), fun x ↦ ⟨f x.val, rfl⟩⟩
   left_inv v := by
     obtain ⟨a, b, t⟩ := v
     obtain rfl : a = () := termsPsh_zero_eq _ _
@@ -125,12 +125,12 @@ theorem not_piFormer (F : PresheafPFunctor.{0, 0, 0, 0, 0, 0} (Fin 2) (Fin 2))
       funext fun _ ↦ Subsingleton.elim _ _
     exact congrArg Sigma.fst ((e' 1).injective h)
   -- At `n = 0` the value is a point, so that shape has no level-`1` directions.
-  have hdir : ∀ (a : F.Shape 1), F.Direction a.1 1 → False := by
+  have hdir : ∀ (a : F.Shape 1), F.Direction a.val 1 → False := by
     intro a d
     have x₀ : TermsElem F 0 := (e' 0).symm fun i ↦ i
     have h : x₀.1 = a := hshape _ _
     subst h
-    exact (x₀.2.2 d).1.elim0
+    exact (x₀.2.2 d).val.elim0
   -- Then the value at every `n` is a point.
   have hsub : ∀ x y : TermsElem F 2, x = y := by
     intro x y

@@ -227,7 +227,7 @@ operation transport-free: the arity of the shape `a` is `fam a`, not
   /-- Reindexing along shape restriction, in the direction of
   `PresheafPFunctorData.reindex`. -/
   reindex : ∀ ⦃j j' : J⦄ (g : j' ⟶ j) (s : F.Shape j) ⦃i : I⦄,
-    (fam (F.shapeRestr g s).1).Dir i → (fam s.1).Dir i
+    (fam (F.shapeRestr g s).val).Dir i → (fam s.val).Dir i
 
 namespace ShapeArity
 
@@ -243,21 +243,21 @@ structure IsFunctorial (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J)
     (P.fam a).restr (g ≫ f) = (P.fam a).restr g ∘ (P.fam a).restr f
   /-- Reindexing is a morphism of presheaves on `I`. -/
   reindex_naturality : ∀ ⦃j j' : J⦄ (g : j' ⟶ j) (s : F.Shape j) ⦃i i' : I⦄ (f : i' ⟶ i),
-    (P.fam s.1).restr f ∘ P.reindex g s (i := i) =
-      P.reindex g s (i := i') ∘ (P.fam (F.shapeRestr g s).1).restr f
+    (P.fam s.val).restr f ∘ P.reindex g s (i := i) =
+      P.reindex g s (i := i') ∘ (P.fam (F.shapeRestr g s).val).restr f
   /-- Reindexing along an identity is the transport along `F.shapeRestr_id`. -/
   reindex_id : ∀ ⦃j : J⦄ (s : F.Shape j) ⦃i : I⦄
-      (d : (P.fam (F.shapeRestr (𝟙 j) s).1).Dir i),
+      (d : (P.fam (F.shapeRestr (𝟙 j) s).val).Dir i),
     P.reindex (𝟙 j) s d =
-      cast (congrArg (fun u : F.Shape j ↦ (P.fam u.1).Dir i)
+      cast (congrArg (fun u : F.Shape j ↦ (P.fam u.val).Dir i)
         (congrFun (F.isFunctorial.shapeRestr_id j) s)) d
   /-- Reindexing along a composite factors, modulo the transport along
   `F.shapeRestr_comp`. -/
   reindex_comp : ∀ ⦃j j' j'' : J⦄ (g : j' ⟶ j) (h : j'' ⟶ j') (s : F.Shape j) ⦃i : I⦄
-      (d : (P.fam (F.shapeRestr (h ≫ g) s).1).Dir i),
+      (d : (P.fam (F.shapeRestr (h ≫ g) s).val).Dir i),
     P.reindex (h ≫ g) s d =
       P.reindex g s (P.reindex h (F.shapeRestr g s)
-        (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam u.1).Dir i)
+        (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam u.val).Dir i)
           (congrFun (F.isFunctorial.shapeRestr_comp g h) s)) d))
 
 end ShapeArity
@@ -272,35 +272,37 @@ def adjoinArityData (F : PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J) (P :
   q := F.q
   directionRestr := fun a _ _ g d ↦
     match d with
-    | ⟨Sum.inl c, h⟩ => ⟨Sum.inl ((P.fam a).restr g ⟨c, h⟩).1, ((P.fam a).restr g ⟨c, h⟩).2⟩
-    | ⟨Sum.inr b, h⟩ => ⟨Sum.inr (F.directionRestr a g ⟨b, h⟩).1, (F.directionRestr a g ⟨b, h⟩).2⟩
+    | ⟨Sum.inl c, h⟩ =>
+      ⟨Sum.inl ((P.fam a).restr g ⟨c, h⟩).val, ((P.fam a).restr g ⟨c, h⟩).property⟩
+    | ⟨Sum.inr b, h⟩ =>
+      ⟨Sum.inr (F.directionRestr a g ⟨b, h⟩).val, (F.directionRestr a g ⟨b, h⟩).property⟩
   shapeRestr := fun {_ _} g s ↦ F.shapeRestr g s
   reindex := fun {_ _} g s _ d ↦
     match d with
-    | ⟨Sum.inl c, h⟩ => ⟨Sum.inl (P.reindex g s ⟨c, h⟩).1, (P.reindex g s ⟨c, h⟩).2⟩
-    | ⟨Sum.inr b, h⟩ => ⟨Sum.inr (F.reindex g s ⟨b, h⟩).1, (F.reindex g s ⟨b, h⟩).2⟩
+    | ⟨Sum.inl c, h⟩ => ⟨Sum.inl (P.reindex g s ⟨c, h⟩).val, (P.reindex g s ⟨c, h⟩).property⟩
+    | ⟨Sum.inr b, h⟩ => ⟨Sum.inr (F.reindex g s ⟨b, h⟩).val, (F.reindex g s ⟨b, h⟩).property⟩
 
 variable (F : PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J) (P : ShapeArity F)
 
 /-- Transport of an adjoined direction along an equality of shapes is the
 transport of that direction inside the arity. -/
 theorem adjoinArity_cast_inl {j : J} {i : I} {t t' : F.Shape j} (e : t = t')
-    (d : (P.fam t.1).Dir i) :
-    cast (congrArg (fun u : F.Shape j ↦ (adjoinArityData F P).Direction u.1 i) e)
-        (⟨Sum.inl d.1, d.2⟩ : (adjoinArityData F P).Direction t.1 i) =
-      ⟨Sum.inl (cast (congrArg (fun u : F.Shape j ↦ (P.fam u.1).Dir i) e) d).1,
-        (cast (congrArg (fun u : F.Shape j ↦ (P.fam u.1).Dir i) e) d).2⟩ := by
+    (d : (P.fam t.val).Dir i) :
+    cast (congrArg (fun u : F.Shape j ↦ (adjoinArityData F P).Direction u.val i) e)
+        (⟨Sum.inl d.val, d.property⟩ : (adjoinArityData F P).Direction t.val i) =
+      ⟨Sum.inl (cast (congrArg (fun u : F.Shape j ↦ (P.fam u.val).Dir i) e) d).val,
+        (cast (congrArg (fun u : F.Shape j ↦ (P.fam u.val).Dir i) e) d).property⟩ := by
   cases e
   rfl
 
 /-- Transport of an original direction along an equality of shapes is the
 transport of that direction inside `F`. -/
 theorem adjoinArity_cast_inr {j : J} {i : I} {t t' : F.Shape j} (e : t = t')
-    (d : F.Direction t.1 i) :
-    cast (congrArg (fun u : F.Shape j ↦ (adjoinArityData F P).Direction u.1 i) e)
-        (⟨Sum.inr d.1, d.2⟩ : (adjoinArityData F P).Direction t.1 i) =
-      ⟨Sum.inr (cast (congrArg (fun u : F.Shape j ↦ F.Direction u.1 i) e) d).1,
-        (cast (congrArg (fun u : F.Shape j ↦ F.Direction u.1 i) e) d).2⟩ := by
+    (d : F.Direction t.val i) :
+    cast (congrArg (fun u : F.Shape j ↦ (adjoinArityData F P).Direction u.val i) e)
+        (⟨Sum.inr d.val, d.property⟩ : (adjoinArityData F P).Direction t.val i) =
+      ⟨Sum.inr (cast (congrArg (fun u : F.Shape j ↦ F.Direction u.val i) e) d).val,
+        (cast (congrArg (fun u : F.Shape j ↦ F.Direction u.val i) e) d).property⟩ := by
   cases e
   rfl
 
@@ -321,10 +323,10 @@ def adjoinArity (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J)
         obtain ⟨b, h⟩ := d
         cases b with
         | inl c =>
-            exact Subtype.ext (congrArg (fun x : (P.fam a).Dir i ↦ Sum.inl x.1)
+            exact Subtype.ext (congrArg (fun x : (P.fam a).Dir i ↦ Sum.inl x.val)
               (congrFun (hP.restr_id a i) ⟨c, h⟩))
         | inr b =>
-            exact Subtype.ext (congrArg (fun x : F.Direction a i ↦ Sum.inr x.1)
+            exact Subtype.ext (congrArg (fun x : F.Direction a i ↦ Sum.inr x.val)
               (congrFun (F.isFunctorial.directionRestr_id a i) ⟨b, h⟩))
       directionRestr_comp := by
         intro a i i' i'' f g
@@ -332,10 +334,10 @@ def adjoinArity (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J)
         obtain ⟨b, h⟩ := d
         cases b with
         | inl c =>
-            exact Subtype.ext (congrArg (fun x : (P.fam a).Dir i'' ↦ Sum.inl x.1)
+            exact Subtype.ext (congrArg (fun x : (P.fam a).Dir i'' ↦ Sum.inl x.val)
               (congrFun (hP.restr_comp a f g) ⟨c, h⟩))
         | inr b =>
-            exact Subtype.ext (congrArg (fun x : F.Direction a i'' ↦ Sum.inr x.1)
+            exact Subtype.ext (congrArg (fun x : F.Direction a i'' ↦ Sum.inr x.val)
               (congrFun (F.isFunctorial.directionRestr_comp a f g) ⟨b, h⟩))
       shapeRestr_id := F.isFunctorial.shapeRestr_id
       shapeRestr_comp := F.isFunctorial.shapeRestr_comp
@@ -345,10 +347,10 @@ def adjoinArity (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J)
         obtain ⟨b, h⟩ := d
         cases b with
         | inl c =>
-            exact Subtype.ext (congrArg (fun x : (P.fam a.1).Dir i' ↦ Sum.inl x.1)
+            exact Subtype.ext (congrArg (fun x : (P.fam a.val).Dir i' ↦ Sum.inl x.val)
               (congrFun (hP.reindex_naturality g a f) ⟨c, h⟩))
         | inr b =>
-            exact Subtype.ext (congrArg (fun x : F.Direction a.1 i' ↦ Sum.inr x.1)
+            exact Subtype.ext (congrArg (fun x : F.Direction a.val i' ↦ Sum.inr x.val)
               (congrFun (F.isFunctorial.reindex_naturality g a f) ⟨b, h⟩))
       reindex_id := by
         intro j a i d
@@ -357,12 +359,12 @@ def adjoinArity (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J)
         | inl c =>
             refine Eq.trans ?_ (adjoinArity_cast_inl F.toPresheafPFunctorData P
               (congrFun (F.isFunctorial.shapeRestr_id j) a) ⟨c, h⟩).symm
-            exact Subtype.ext (congrArg (fun x : (P.fam a.1).Dir i ↦ Sum.inl x.1)
+            exact Subtype.ext (congrArg (fun x : (P.fam a.val).Dir i ↦ Sum.inl x.val)
               (hP.reindex_id a ⟨c, h⟩))
         | inr b =>
             refine Eq.trans ?_ (adjoinArity_cast_inr F.toPresheafPFunctorData P
               (congrFun (F.isFunctorial.shapeRestr_id j) a) ⟨b, h⟩).symm
-            exact Subtype.ext (congrArg (fun x : F.Direction a.1 i ↦ Sum.inr x.1)
+            exact Subtype.ext (congrArg (fun x : F.Direction a.val i ↦ Sum.inr x.val)
               (F.isFunctorial.reindex_id a ⟨b, h⟩))
       reindex_comp := by
         intro j j' j'' g h a i d
@@ -375,7 +377,7 @@ def adjoinArity (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J)
                   ((adjoinArityData F.toPresheafPFunctorData P).shapeRestr g a) z))
               (adjoinArity_cast_inl F.toPresheafPFunctorData P
                 (congrFun (F.isFunctorial.shapeRestr_comp g h) a) ⟨c, hb⟩)).symm
-            exact Subtype.ext (congrArg (fun x : (P.fam a.1).Dir i ↦ Sum.inl x.1)
+            exact Subtype.ext (congrArg (fun x : (P.fam a.val).Dir i ↦ Sum.inl x.val)
               (hP.reindex_comp g h a ⟨c, hb⟩))
         | inr b =>
             refine Eq.trans ?_ (congrArg (fun z ↦
@@ -384,7 +386,7 @@ def adjoinArity (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J)
                   ((adjoinArityData F.toPresheafPFunctorData P).shapeRestr g a) z))
               (adjoinArity_cast_inr F.toPresheafPFunctorData P
                 (congrFun (F.isFunctorial.shapeRestr_comp g h) a) ⟨b, hb⟩)).symm
-            exact Subtype.ext (congrArg (fun x : F.Direction a.1 i ↦ Sum.inr x.1)
+            exact Subtype.ext (congrArg (fun x : F.Direction a.val i ↦ Sum.inr x.val)
               (F.isFunctorial.reindex_comp g h a ⟨b, hb⟩)) }
 
 section Base
@@ -468,10 +470,10 @@ theorem reindex_comp_apply (hP : P.IsFunctorial) {x y z : J} (k₁ : x ⟶ y) (k
 /-- Reindexing after a transport along an equality of shapes is reindexing
 along the composite with that equality's `eqToHom`. -/
 theorem reindex_cast_shape (F : PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J)
-    {j : J} {t t' : F.Shape j} (hh : t = t') {x : J} (k : F.q t'.1 ⟶ x) {i : I}
-    (d : (P.fam (F.q t.1)).Dir i) :
-    P.reindex k (cast (congrArg (fun u : F.Shape j ↦ (P.fam (F.q u.1)).Dir i) hh) d) =
-      P.reindex (eqToHom (congrArg (fun u : F.Shape j ↦ F.q u.1) hh) ≫ k) d := by
+    {j : J} {t t' : F.Shape j} (hh : t = t') {x : J} (k : F.q t'.val ⟶ x) {i : I}
+    (d : (P.fam (F.q t.val)).Dir i) :
+    P.reindex k (cast (congrArg (fun u : F.Shape j ↦ (P.fam (F.q u.val)).Dir i) hh) d) =
+      P.reindex (eqToHom (congrArg (fun u : F.Shape j ↦ F.q u.val) hh) ≫ k) d := by
   cases hh
   simp
 
@@ -481,7 +483,7 @@ transported by the two shape-membership proofs. -/
 def pullback (F : PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J) : ShapeArity F where
   fam := fun a ↦ P.fam (F.q a)
   reindex := fun {_ _} g s {_} d ↦
-    P.reindex (eqToHom (F.shapeRestr g s).2 ≫ g ≫ eqToHom s.2.symm) d
+    P.reindex (eqToHom (F.shapeRestr g s).property ≫ g ≫ eqToHom s.property.symm) d
 
 /-- The pullback of a functorial `BaseArity` is functorial. The two transported
 laws reduce, via `reindex_eqToHom` and `reindex_cast_shape`, to equalities of
@@ -493,20 +495,21 @@ theorem isFunctorial_pullback (hP : P.IsFunctorial)
   restr_comp := by intro a i i' i'' f g; exact hP.restr_comp (F.q a) f g
   reindex_naturality := by
     intro j j' g s i i' f
-    exact hP.reindex_naturality (eqToHom (F.shapeRestr g s).2 ≫ g ≫ eqToHom s.2.symm) f
+    exact hP.reindex_naturality
+      (eqToHom (F.shapeRestr g s).property ≫ g ≫ eqToHom s.property.symm) f
   reindex_id := by
     intro j s i d
     simp only [pullback] at d ⊢
     rw [show
-      (eqToHom (F.shapeRestr (𝟙 j) s).2 ≫ (𝟙 j) ≫ eqToHom s.2.symm) =
-        eqToHom (((F.shapeRestr (𝟙 j) s).2).trans s.2.symm) by simp,
+      (eqToHom (F.shapeRestr (𝟙 j) s).property ≫ (𝟙 j) ≫ eqToHom s.property.symm) =
+        eqToHom (((F.shapeRestr (𝟙 j) s).property).trans s.property.symm) by simp,
       reindex_eqToHom P hP]
     rfl
   reindex_comp := by
     intro j j' j'' g h s i d
     simp only [pullback] at d ⊢
     change _ = P.reindex _ (P.reindex _
-      (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam (F.q u.1)).Dir i)
+      (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam (F.q u.val)).Dir i)
         (congrFun (F.isFunctorial.shapeRestr_comp g h) s)) d))
     rw [reindex_cast_shape (hh := congrFun (F.isFunctorial.shapeRestr_comp g h) s),
       ← reindex_comp_apply P hP]
@@ -535,11 +538,11 @@ established here. It is written out rather than reused so that the
 instance elCategory (S : Jᵒᵖ ⥤ Type uS) : Category.{vJ} (ElObj.{uJ, uS, vJ} S) where
   Hom x y := {g : x.1 ⟶ y.1 // S.map g.op y.2 = x.2}
   id x := ⟨𝟙 x.1, by simp⟩
-  comp {x y z} f g := ⟨f.1 ≫ g.1, by
-    rw [op_comp, S.map_comp, types_comp_apply, g.2, f.2]⟩
-  id_comp f := Subtype.ext (Category.id_comp f.1)
-  comp_id f := Subtype.ext (Category.comp_id f.1)
-  assoc f g h := Subtype.ext (Category.assoc f.1 g.1 h.1)
+  comp {x y z} f g := ⟨f.val ≫ g.val, by
+    rw [op_comp, S.map_comp, types_comp_apply, g.property, f.property]⟩
+  id_comp f := Subtype.ext (Category.id_comp f.val)
+  comp_id f := Subtype.ext (Category.comp_id f.val)
+  assoc f g h := Subtype.ext (Category.assoc f.val g.val h.val)
 
 /-- The morphism of `ElObj S` a shape's membership proof turns `g` into, whose
 underlying `J`-morphism is: `g` followed by
@@ -547,8 +550,8 @@ the transport identifying `j` with the base of the shape's output object. -/
 def sigmaLiftHom (S : Jᵒᵖ ⥤ Type uS)
     (F : PresheafPFunctorData.{uI, max uJ uS, uA, uB, vI, vJ} I (ElObj S))
     {j j' : J} (g : j' ⟶ j) (s : {a : F.A // (F.q a).1 = j}) :
-    (⟨j', S.map (g ≫ eqToHom s.2.symm).op (F.q s.1).2⟩ : ElObj S) ⟶ F.q s.1 :=
-  ⟨g ≫ eqToHom s.2.symm, rfl⟩
+    (⟨j', S.map (g ≫ eqToHom s.property.symm).op (F.q s.val).2⟩ : ElObj S) ⟶ F.q s.val :=
+  ⟨g ≫ eqToHom s.property.symm, rfl⟩
 
 /-- Operations of the `σ` case: push a functor over the base `ElObj S` forward
 to one over `J`. The shapes and arities are unchanged; only the shape-output map
@@ -563,25 +566,25 @@ def sigmaPshData (S : Jᵒᵖ ⥤ Type uS)
   q := fun a ↦ (F.q a).1
   directionRestr := F.directionRestr
   shapeRestr := fun {_ _} g s ↦
-    ⟨(F.shapeRestr (sigmaLiftHom S F g s) ⟨s.1, rfl⟩).1,
-      congrArg Sigma.fst (F.shapeRestr (sigmaLiftHom S F g s) ⟨s.1, rfl⟩).2⟩
-  reindex := fun {_ _} g s {_} d ↦ F.reindex (sigmaLiftHom S F g s) ⟨s.1, rfl⟩ d
+    ⟨(F.shapeRestr (sigmaLiftHom S F g s) ⟨s.val, rfl⟩).val,
+      congrArg Sigma.fst (F.shapeRestr (sigmaLiftHom S F g s) ⟨s.val, rfl⟩).property⟩
+  reindex := fun {_ _} g s {_} d ↦ F.reindex (sigmaLiftHom S F g s) ⟨s.val, rfl⟩ d
 
 universe uK vK
 
 /-- The underlying `J`-morphism of an identity in the category of elements. -/
 @[simp] theorem elCategory_id_val (S : Jᵒᵖ ⥤ Type uS) (x : ElObj.{uJ, uS, vJ} S) :
-    (𝟙 x : x ⟶ x).1 = 𝟙 x.1 := rfl
+    (𝟙 x : x ⟶ x).val = 𝟙 x.1 := rfl
 
 /-- The underlying `J`-morphism of a composite in the category of elements. -/
 @[simp] theorem elCategory_comp_val (S : Jᵒᵖ ⥤ Type uS) {x y z : ElObj.{uJ, uS, vJ} S}
-    (f : x ⟶ y) (g : y ⟶ z) : (f ≫ g).1 = f.1 ≫ g.1 := rfl
+    (f : x ⟶ y) (g : y ⟶ z) : (f ≫ g).val = f.val ≫ g.val := rfl
 
 /-- The underlying `J`-morphism of a transport in the category of elements is
 the transport of the underlying objects. -/
 @[simp]
 theorem elCategory_eqToHom_val (S : Jᵒᵖ ⥤ Type uS) {x y : ElObj.{uJ, uS, vJ} S} (h : x = y) :
-    (eqToHom h : x ⟶ y).1 = eqToHom (congrArg Sigma.fst h) := by
+    (eqToHom h : x ⟶ y).val = eqToHom (congrArg Sigma.fst h) := by
   cases h
   rfl
 
@@ -595,7 +598,7 @@ theorem shapeRestr_eqToHom {K : Type uK} [Category.{vK} K]
 /-- A transport of shapes leaves the underlying shape alone. -/
 theorem cast_shape_val {K : Type uK} [Category.{vK} K]
     (F : PresheafPFunctorData.{uI, uK, uA, uB, vI, vK} I K) {x y : K} (h : x = y)
-    (s : F.Shape x) : (cast (congrArg F.Shape h) s).1 = s.1 := by
+    (s : F.Shape x) : (cast (congrArg F.Shape h) s).val = s.val := by
   cases h
   rfl
 
@@ -604,7 +607,7 @@ shape where restricting along the morphism alone leaves it. -/
 theorem shapeRestr_val_eqToHom_comp {K : Type uK} [Category.{vK} K]
     (F : PresheafPFunctor.{uI, uK, uA, uB, vI, vK} I K) {x x' y : K} (hx : x = x')
     (m : x' ⟶ y) (s : F.Shape y) :
-    (F.shapeRestr (eqToHom hx ≫ m) s).1 = (F.shapeRestr m s).1 := by
+    (F.shapeRestr (eqToHom hx ≫ m) s).val = (F.shapeRestr m s).val := by
   rw [F.isFunctorial.shapeRestr_comp, Function.comp_apply, shapeRestr_eqToHom]
   exact cast_shape_val F.toPresheafPFunctorData hx.symm _
 
@@ -626,24 +629,24 @@ theorem elEqToHom_eq (S : Jᵒᵖ ⥤ Type uS) {x y : ElObj.{uJ, uS, vJ} S} (h :
 base and its underlying `J`-morphism: the element is forced to be the
 restriction of the target's. -/
 theorem elObj_eq_of_hom (S : Jᵒᵖ ⥤ Type uS) {x x' y : ElObj.{uJ, uS, vJ} S}
-    (m : x ⟶ y) (m' : x' ⟶ y) (hb : x.1 = x'.1) (hm : m.1 = eqToHom hb ≫ m'.1) : x = x' := by
+    (m : x ⟶ y) (m' : x' ⟶ y) (hb : x.1 = x'.1) (hm : m.val = eqToHom hb ≫ m'.val) : x = x' := by
   cases x with
   | mk xb xe =>
     cases x' with
     | mk xb' xe' =>
       cases hb
       refine Sigma.ext rfl (heq_of_eq ?_)
-      rw [← m.2, ← m'.2, hm]
+      rw [← m.property, ← m'.property, hm]
       simp
 
 /-- Two morphisms into the same object with equal underlying `J`-morphisms
 differ by the transport identifying their sources. -/
 theorem elHom_eq_eqToHom_comp (S : Jᵒᵖ ⥤ Type uS) {x x' y : ElObj.{uJ, uS, vJ} S}
-    (m : x ⟶ y) (m' : x' ⟶ y) (hb : x.1 = x'.1) (hm : m.1 = eqToHom hb ≫ m'.1) :
+    (m : x ⟶ y) (m' : x' ⟶ y) (hb : x.1 = x'.1) (hm : m.val = eqToHom hb ≫ m'.val) :
     m = eqToHom (elObj_eq_of_hom S m m' hb hm) ≫ m' := by
   refine Subtype.ext ?_
   rw [hm]
-  change _ = (eqToHom (elObj_eq_of_hom S m m' hb hm) : x ⟶ x').1 ≫ m'.1
+  change _ = (eqToHom (elObj_eq_of_hom S m m' hb hm) : x ⟶ x').val ≫ m'.val
   rw [elCategory_eqToHom_val]
 
 /-- The `σ` operation preserves the shape-restriction identity law. -/
@@ -655,9 +658,9 @@ theorem sigmaPsh_shapeRestr_id (S : Jᵒᵖ ⥤ Type uS)
   obtain ⟨a, rfl⟩ := s
   refine Subtype.ext ?_
   have hsrc : (⟨(F.q a).1, S.map (sigmaLiftHom S F.toPresheafPFunctorData
-      (𝟙 ((F.q a).1)) ⟨a, rfl⟩).1.op (F.q a).2⟩ : ElObj S) = F.q a :=
+      (𝟙 ((F.q a).1)) ⟨a, rfl⟩).val.op (F.q a).2⟩ : ElObj S) = F.q a :=
     Sigma.ext rfl (heq_of_eq (by simp [sigmaLiftHom]))
-  have hval : (eqToHom hsrc : _ ⟶ F.q a).1 = 𝟙 (F.q a).1 := by
+  have hval : (eqToHom hsrc : _ ⟶ F.q a).val = 𝟙 (F.q a).1 := by
     rw [elCategory_eqToHom_val]
     simp
   have hm : sigmaLiftHom S F.toPresheafPFunctorData (𝟙 ((F.q a).1)) ⟨a, rfl⟩
@@ -665,7 +668,7 @@ theorem sigmaPsh_shapeRestr_id (S : Jᵒᵖ ⥤ Type uS)
     Subtype.ext (by
       simp only [sigmaLiftHom, eqToHom_refl, op_comp, op_id, Category.comp_id]
       exact hval.symm)
-  change (F.shapeRestr (sigmaLiftHom S F.toPresheafPFunctorData (𝟙 _) ⟨a, rfl⟩) ⟨a, rfl⟩).1 = a
+  change (F.shapeRestr (sigmaLiftHom S F.toPresheafPFunctorData (𝟙 _) ⟨a, rfl⟩) ⟨a, rfl⟩).val = a
   rw [hm]
   refine Eq.trans (shapeRestr_val_eqToHom_comp F hsrc (𝟙 (F.q a)) ⟨a, rfl⟩) ?_
   exact congrArg Subtype.val (congrFun (F.isFunctorial.shapeRestr_id (F.q a)) ⟨a, rfl⟩)
@@ -678,27 +681,28 @@ theorem sigmaPsh_shapeRestr_comp (S : Jᵒᵖ ⥤ Type uS)
   funext s
   obtain ⟨a, rfl⟩ := s
   refine Subtype.ext ?_
-  change (F.shapeRestr (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩) ⟨a, rfl⟩).1 =
+  change (F.shapeRestr (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩) ⟨a, rfl⟩).val =
     (F.shapeRestr (sigmaLiftHom S F.toPresheafPFunctorData h
         ((sigmaPshData S F.toPresheafPFunctorData).shapeRestr g ⟨a, rfl⟩))
-      ⟨(F.shapeRestr (sigmaLiftHom S F.toPresheafPFunctorData g ⟨a, rfl⟩) ⟨a, rfl⟩).1, rfl⟩).1
+      ⟨(F.shapeRestr (sigmaLiftHom S F.toPresheafPFunctorData g ⟨a, rfl⟩) ⟨a, rfl⟩).val, rfl⟩).val
   set Lg := sigmaLiftHom S F.toPresheafPFunctorData g ⟨a, rfl⟩ with hLgdef
   set b := F.shapeRestr Lg ⟨a, rfl⟩ with hbdef
   set Lh := sigmaLiftHom S F.toPresheafPFunctorData h
     ((sigmaPshData S F.toPresheafPFunctorData).shapeRestr g ⟨a, rfl⟩) with hLhdef
-  have hval : (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩).1 =
-      eqToHom (rfl : j'' = j'') ≫ ((Lh ≫ elEqToHom S b.2) ≫ Lg).1 := by
+  have hval : (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩).val =
+      eqToHom (rfl : j'' = j'') ≫ ((Lh ≫ elEqToHom S b.property) ≫ Lg).val := by
     simp [hLhdef, hLgdef, sigmaLiftHom, elEqToHom]
-  have hsplit : (F.shapeRestr (Lh ≫ elEqToHom S b.2) b).1 = (F.shapeRestr Lh ⟨b.1, rfl⟩).1 := by
+  have hsplit : (F.shapeRestr (Lh ≫ elEqToHom S b.property) b).val =
+      (F.shapeRestr Lh ⟨b.val, rfl⟩).val := by
     refine Eq.trans (congrArg Subtype.val
-      (congrFun (F.isFunctorial.shapeRestr_comp (elEqToHom S b.2) Lh) b)) ?_
-    refine congrArg (fun t ↦ (F.shapeRestr Lh t).1) ?_
+      (congrFun (F.isFunctorial.shapeRestr_comp (elEqToHom S b.property) Lh) b)) ?_
+    refine congrArg (fun t ↦ (F.shapeRestr Lh t).val) ?_
     rw [elEqToHom_eq, shapeRestr_eqToHom]
-    exact Subtype.ext (cast_shape_val F.toPresheafPFunctorData b.2.symm b)
+    exact Subtype.ext (cast_shape_val F.toPresheafPFunctorData b.property.symm b)
   rw [elHom_eq_eqToHom_comp S (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩)
-      ((Lh ≫ elEqToHom S b.2) ≫ Lg) rfl hval,
+      ((Lh ≫ elEqToHom S b.property) ≫ Lg) rfl hval,
     shapeRestr_val_eqToHom_comp,
-    congrFun (F.isFunctorial.shapeRestr_comp Lg (Lh ≫ elEqToHom S b.2)) ⟨a, rfl⟩,
+    congrFun (F.isFunctorial.shapeRestr_comp Lg (Lh ≫ elEqToHom S b.property)) ⟨a, rfl⟩,
     Function.comp_apply]
   exact hsplit
 
@@ -709,13 +713,13 @@ theorem sigmaPsh_reindex_naturality (S : Jᵒᵖ ⥤ Type uS)
     (sigmaPshData S F.toPresheafPFunctorData).ReindexNaturality := by
   intro j j' g s i i' f
   exact F.isFunctorial.reindex_naturality (sigmaLiftHom S F.toPresheafPFunctorData g s)
-    ⟨s.1, rfl⟩ f
+    ⟨s.val, rfl⟩ f
 
 /-- Reindexing along a transport is heterogeneously the identity. -/
 theorem reindex_heq_eqToHom {K : Type uK} [Category.{vK} K]
     (F : PresheafPFunctor.{uI, uK, uA, uB, vI, vK} I K) {x y : K} {m : x ⟶ y} (h : x = y)
     (hm : m = eqToHom h) (s : F.Shape y) {i : I}
-    (d : F.Direction (F.shapeRestr m s).1 i) : HEq (F.reindex m s d) d := by
+    (d : F.Direction (F.shapeRestr m s).val i) : HEq (F.reindex m s d) d := by
   cases hm
   cases h
   exact HEq.trans (heq_of_eq (F.isFunctorial.reindex_id s d)) (cast_heq _ d)
@@ -725,8 +729,8 @@ directions. -/
 theorem reindex_eq_of_eq_comp {K : Type uK} [Category.{vK} K]
     (F : PresheafPFunctor.{uI, uK, uA, uB, vI, vK} I K) {x y z : K} {m : x ⟶ z}
     (m₁ : x ⟶ y) (m₂ : y ⟶ z) (hm : m = m₁ ≫ m₂) (s : F.Shape z) {i : I}
-    (d : F.Direction (F.shapeRestr m s).1 i)
-    (d' : F.Direction (F.shapeRestr m₁ (F.shapeRestr m₂ s)).1 i) (hd : HEq d d') :
+    (d : F.Direction (F.shapeRestr m s).val i)
+    (d' : F.Direction (F.shapeRestr m₁ (F.shapeRestr m₂ s)).val i) (hd : HEq d d') :
     F.reindex m s d = F.reindex m₂ s (F.reindex m₁ (F.shapeRestr m₂ s) d') := by
   cases hm
   refine Eq.trans (F.isFunctorial.reindex_comp m₂ m₁ s d) ?_
@@ -738,7 +742,7 @@ directions. -/
 theorem reindex_heq_congr_shape {K : Type uK} [Category.{vK} K]
     (F : PresheafPFunctor.{uI, uK, uA, uB, vI, vK} I K) {x y : K} (m : x ⟶ y)
     {s s' : F.Shape y} (hs : s = s') {i : I}
-    (d : F.Direction (F.shapeRestr m s).1 i) (d' : F.Direction (F.shapeRestr m s').1 i)
+    (d : F.Direction (F.shapeRestr m s).val i) (d' : F.Direction (F.shapeRestr m s').val i)
     (hd : HEq d d') : HEq (F.reindex m s d) (F.reindex m s' d') := by
   cases hs
   cases hd
@@ -748,8 +752,8 @@ theorem reindex_heq_congr_shape {K : Type uK} [Category.{vK} K]
 theorem reindex_eq_of_eq_eqToHom_comp {K : Type uK} [Category.{vK} K]
     (F : PresheafPFunctor.{uI, uK, uA, uB, vI, vK} I K) {w x y z : K} {m : w ⟶ z}
     (e : w = x) (m₁ : x ⟶ y) (m₂ : y ⟶ z) (hm : m = eqToHom e ≫ (m₁ ≫ m₂)) (s : F.Shape z)
-    {i : I} (d : F.Direction (F.shapeRestr m s).1 i)
-    (d' : F.Direction (F.shapeRestr m₁ (F.shapeRestr m₂ s)).1 i) (hd : HEq d d') :
+    {i : I} (d : F.Direction (F.shapeRestr m s).val i)
+    (d' : F.Direction (F.shapeRestr m₁ (F.shapeRestr m₂ s)).val i) (hd : HEq d d') :
     F.reindex m s d = F.reindex m₂ s (F.reindex m₁ (F.shapeRestr m₂ s) d') := by
   cases hm
   cases e
@@ -763,9 +767,9 @@ theorem sigmaPsh_reindex_id (S : Jᵒᵖ ⥤ Type uS)
   obtain ⟨a, rfl⟩ := s
   refine eq_of_heq (HEq.trans ?_ (cast_heq _ d).symm)
   have hsrc : (⟨(F.q a).1, S.map (sigmaLiftHom S F.toPresheafPFunctorData
-      (𝟙 ((F.q a).1)) ⟨a, rfl⟩).1.op (F.q a).2⟩ : ElObj S) = F.q a :=
+      (𝟙 ((F.q a).1)) ⟨a, rfl⟩).val.op (F.q a).2⟩ : ElObj S) = F.q a :=
     Sigma.ext rfl (heq_of_eq (by simp [sigmaLiftHom]))
-  have hval : (eqToHom hsrc : _ ⟶ F.q a).1 = 𝟙 (F.q a).1 := by
+  have hval : (eqToHom hsrc : _ ⟶ F.q a).val = 𝟙 (F.q a).1 := by
     rw [elCategory_eqToHom_val]
     simp
   have hm : sigmaLiftHom S F.toPresheafPFunctorData (𝟙 ((F.q a).1)) ⟨a, rfl⟩ = eqToHom hsrc :=
@@ -786,35 +790,35 @@ theorem sigmaPsh_reindex_comp (S : Jᵒᵖ ⥤ Type uS)
   set b := F.shapeRestr Lg ⟨a, rfl⟩ with hbdef
   set Lh := sigmaLiftHom S F.toPresheafPFunctorData h
     ((sigmaPshData S F.toPresheafPFunctorData).shapeRestr g ⟨a, rfl⟩) with hLhdef
-  have hval : (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩).1 =
-      eqToHom (rfl : j'' = j'') ≫ ((Lh ≫ elEqToHom S b.2) ≫ Lg).1 := by
+  have hval : (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩).val =
+      eqToHom (rfl : j'' = j'') ≫ ((Lh ≫ elEqToHom S b.property) ≫ Lg).val := by
     simp [hLhdef, hLgdef, sigmaLiftHom, elEqToHom]
   have hm := elHom_eq_eqToHom_comp S (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩)
-    ((Lh ≫ elEqToHom S b.2) ≫ Lg) rfl hval
-  have hsh : F.shapeRestr (elEqToHom S b.2) b = ⟨b.1, rfl⟩ := by
+    ((Lh ≫ elEqToHom S b.property) ≫ Lg) rfl hval
+  have hsh : F.shapeRestr (elEqToHom S b.property) b = ⟨b.val, rfl⟩ := by
     rw [elEqToHom_eq, shapeRestr_eqToHom]
-    exact Subtype.ext (cast_shape_val F.toPresheafPFunctorData b.2.symm b)
+    exact Subtype.ext (cast_shape_val F.toPresheafPFunctorData b.property.symm b)
   have hs1 : (F.shapeRestr (sigmaLiftHom S F.toPresheafPFunctorData (h ≫ g) ⟨a, rfl⟩)
-      ⟨a, rfl⟩).1 = (F.shapeRestr (Lh ≫ elEqToHom S b.2) b).1 := by
+      ⟨a, rfl⟩).val = (F.shapeRestr (Lh ≫ elEqToHom S b.property) b).val := by
     rw [hm, shapeRestr_val_eqToHom_comp,
-      congrFun (F.isFunctorial.shapeRestr_comp Lg (Lh ≫ elEqToHom S b.2)) ⟨a, rfl⟩,
+      congrFun (F.isFunctorial.shapeRestr_comp Lg (Lh ≫ elEqToHom S b.property)) ⟨a, rfl⟩,
       Function.comp_apply]
-  have hs2 : (F.shapeRestr (Lh ≫ elEqToHom S b.2) b).1 =
-      (F.shapeRestr Lh (F.shapeRestr (elEqToHom S b.2) b)).1 :=
-    congrArg Subtype.val (congrFun (F.isFunctorial.shapeRestr_comp (elEqToHom S b.2) Lh) b)
-  refine Eq.trans (reindex_eq_of_eq_eqToHom_comp F _ (Lh ≫ elEqToHom S b.2) Lg hm ⟨a, rfl⟩ d
+  have hs2 : (F.shapeRestr (Lh ≫ elEqToHom S b.property) b).val =
+      (F.shapeRestr Lh (F.shapeRestr (elEqToHom S b.property) b)).val :=
+    congrArg Subtype.val (congrFun (F.isFunctorial.shapeRestr_comp (elEqToHom S b.property) Lh) b)
+  refine Eq.trans (reindex_eq_of_eq_eqToHom_comp F _ (Lh ≫ elEqToHom S b.property) Lg hm ⟨a, rfl⟩ d
     (cast (congrArg (fun x ↦ F.Direction x i) hs1) d) (cast_heq _ d).symm) ?_
   refine congrArg (F.reindex Lg ⟨a, rfl⟩ (i := i)) ?_
-  refine Eq.trans (reindex_eq_of_eq_comp F Lh (elEqToHom S b.2) rfl b _
+  refine Eq.trans (reindex_eq_of_eq_comp F Lh (elEqToHom S b.property) rfl b _
     (cast (congrArg (fun x ↦ F.Direction x i) hs2)
       (cast (congrArg (fun x ↦ F.Direction x i) hs1) d)) (cast_heq _ _).symm) ?_
-  refine eq_of_heq (HEq.trans (reindex_heq_eqToHom F b.2 (elEqToHom_eq S b.2) b _) ?_)
-  have hs3 : (F.shapeRestr Lh (F.shapeRestr (elEqToHom S b.2) b)).1 =
-      (F.shapeRestr Lh (⟨b.1, rfl⟩ : F.Shape (F.q b.1))).1 :=
-    congrArg (fun t ↦ (F.shapeRestr Lh t).1) hsh
+  refine eq_of_heq (HEq.trans (reindex_heq_eqToHom F b.property (elEqToHom_eq S b.property) b _) ?_)
+  have hs3 : (F.shapeRestr Lh (F.shapeRestr (elEqToHom S b.property) b)).val =
+      (F.shapeRestr Lh (⟨b.val, rfl⟩ : F.Shape (F.q b.val))).val :=
+    congrArg (fun t ↦ (F.shapeRestr Lh t).val) hsh
   refine HEq.trans (reindex_heq_congr_shape F Lh hsh _
     (cast (congrArg (fun x ↦ F.Direction x i) hs3) _) (cast_heq _ _).symm) ?_
-  refine heq_of_eq (congrArg (F.reindex Lh ⟨b.1, rfl⟩ (i := i)) (eq_of_heq ?_))
+  refine heq_of_eq (congrArg (F.reindex Lh ⟨b.val, rfl⟩ (i := i)) (eq_of_heq ?_))
   exact (cast_heq _ _).trans ((cast_heq _ _).trans ((cast_heq _ d).trans (cast_heq _ d).symm))
 
 /-- The `σ` case as a `PresheafPFunctor`: pushing a functor over the base
@@ -873,14 +877,14 @@ destructures to its fibre without transporting the element. -/
   restr := fun {_ y'} f d ↦
     match d with
     | ⟨⟨_, p⟩, rfl⟩ =>
-        ⟨⟨y', ⟨G.restr f.1 p.1, by rw [s.naturality, p.2]; exact f.2⟩⟩, rfl⟩
+        ⟨⟨y', ⟨G.restr f.val p.val, by rw [s.naturality, p.property]; exact f.property⟩⟩, rfl⟩
 
 /-- The underlying element of a restricted fibre direction, so that the two
 laws below need not unfold `fibreArity`'s matcher. -/
 theorem fibreArity_restr_val {G : DomArity.{uI, uD, vI} I} {D : Iᵒᵖ ⥤ Type uD}
     (s : PshMor G D) {y' z : ElObj.{uI, uD, vI} D}
     (p : {q : G.Dir z.1 // s.app q = z.2}) (f : y' ⟶ z) :
-    (((fibreArity s).restr f ⟨⟨z, p⟩, rfl⟩).1).2.1 = G.restr f.1 p.1 := rfl
+    (((fibreArity s).restr f ⟨⟨z, p⟩, rfl⟩).val).2.val = G.restr f.val p.val := rfl
 
 /-- The fibre arity is a presheaf: both laws are `G`'s own, the fibre condition
 being carried along by `s`'s naturality. -/
@@ -892,7 +896,7 @@ theorem isFunctorial_fibreArity {G : DomArity.{uI, uD, vI} I} (hG : G.IsFunctori
     obtain ⟨⟨z, p⟩, rfl⟩ := d
     refine Subtype.ext (Sigma.ext rfl (heq_of_eq (Subtype.ext ?_)))
     exact (fibreArity_restr_val s p (𝟙 z)).trans (by
-      simpa using congrFun (hG.restr_id z.1) p.1)
+      simpa using congrFun (hG.restr_id z.1) p.val)
   restr_comp := by
     intro y y' y'' f g
     funext d
@@ -900,9 +904,9 @@ theorem isFunctorial_fibreArity {G : DomArity.{uI, uD, vI} I} (hG : G.IsFunctori
     refine Subtype.ext (Sigma.ext rfl (heq_of_eq (Subtype.ext ?_)))
     refine Eq.trans (fibreArity_restr_val s p (g ≫ f)) ?_
     refine Eq.trans ?_ (fibreArity_restr_val s
-      (⟨G.restr f.1 p.1, by rw [s.naturality, p.2]; exact f.2⟩ :
+      (⟨G.restr f.val p.val, by rw [s.naturality, p.property]; exact f.property⟩ :
         {q : G.Dir y'.1 // s.app q = y'.2}) g).symm
-    exact congrFun (hG.restr_comp f.1 g.1) p.1
+    exact congrFun (hG.restr_comp f.val g.val) p.val
 
 /-- The decoding presheaf of an output-varying arity: over the output object
 `b`, the decodings of the arity there. Restriction along `g : b' ⟶ b` is
@@ -945,8 +949,8 @@ def decArity {J : Type uJ} [Category.{vJ} J] (A : BaseArity.{uI, uJ, uD, vI, vJ}
   reindex := fun {y y'} f z d ↦
     match d with
     | ⟨⟨_, ⟨x, hx⟩⟩, rfl⟩ =>
-        ⟨⟨z, ⟨A.reindex f.1 x, by rw [show y.2.app (A.reindex f.1 x) = y'.2.app x from
-          congrArg (fun t : PshMor (A.fam y'.1) D ↦ t.app x) f.2, hx]⟩⟩, rfl⟩
+        ⟨⟨z, ⟨A.reindex f.val x, by rw [show y.2.app (A.reindex f.val x) = y'.2.app x from
+          congrArg (fun t : PshMor (A.fam y'.1) D ↦ t.app x) f.property, hx]⟩⟩, rfl⟩
 
 /-- The underlying fibre element of a reindexed `decArity` direction, so the
 laws below need not unfold the matcher. -/
@@ -954,7 +958,7 @@ theorem decArity_reindex_val {J : Type uJ} [Category.{vJ} J]
     (A : BaseArity.{uI, uJ, uD, vI, vJ} I J) (hA : A.IsFunctorial) (D : Iᵒᵖ ⥤ Type uD)
     {y y' : ElObj.{uJ, max uI uD vI, vJ} (decPresheaf A hA D)} (f : y' ⟶ y)
     {z : ElObj.{uI, uD, vI} D} (x : (A.fam y'.1).Dir z.1) (hx : y'.2.app x = z.2) :
-    (((decArity A hA D).reindex f ⟨⟨z, ⟨x, hx⟩⟩, rfl⟩).1).2.1 = A.reindex f.1 x := rfl
+    (((decArity A hA D).reindex f ⟨⟨z, ⟨x, hx⟩⟩, rfl⟩).val).2.val = A.reindex f.val x := rfl
 
 /-- The adjoined arity is functorial: the fibre laws are `A`'s own, and the
 reindexing laws are `A.reindex`'s. -/
@@ -977,13 +981,13 @@ theorem isFunctorial_decArity {J : Type uJ} [Category.{vJ} J]
     obtain ⟨⟨w, ⟨x, hx⟩⟩, rfl⟩ := d
     refine Subtype.ext (Sigma.ext rfl (heq_of_eq (Subtype.ext ?_)))
     refine Eq.trans (decArity_reindex_val A hA D (h ≫ g) x hx) ?_
-    exact congrFun (hA.reindex_comp g.1 h.1 w.1) x
+    exact congrFun (hA.reindex_comp g.val h.val w.1) x
   reindex_naturality := by
     intro y y' g z z' f
     funext d
     obtain ⟨⟨w, ⟨x, hx⟩⟩, rfl⟩ := d
     refine Subtype.ext (Sigma.ext rfl (heq_of_eq (Subtype.ext ?_)))
-    exact congrFun (hA.reindex_naturality g.1 f.1) x
+    exact congrFun (hA.reindex_naturality g.val f.val) x
 
 /-- The `δ` rule: an arity that varies over the output object, whose
 continuation depends on the decoding. It is the presheaf reading of the `δ`
@@ -1046,14 +1050,14 @@ def arityVariesBase : BaseArity.{0, 0, 0, 0, 0} (Fin 1) (Fin 2) where
   fam b :=
     { carrier := ArityB b
       proj := fun _ ↦ 0
-      restr := fun {_ _} _f d ↦ ⟨d.1, Subsingleton.elim _ _⟩ }
+      restr := fun {_ _} _f d ↦ ⟨d.val, Subsingleton.elim _ _⟩ }
   reindex := fun {_ _} g {_} d ↦
-    ⟨⟨Fin.castLE (leOfHom g) d.1.down⟩, Subsingleton.elim _ _⟩
+    ⟨⟨Fin.castLE (leOfHom g) d.val.down⟩, Subsingleton.elim _ _⟩
 
 /-- Each fibre of `arityVariesBase` has at most one element. -/
 theorem arityVariesBase_dir_ext (b : Fin 2) (i : Fin 1)
     (x y : (arityVariesBase.fam b).Dir i) : x = y :=
-  Subtype.ext (Subsingleton.elim (α := ArityB b) x.1 y.1)
+  Subtype.ext (Subsingleton.elim (α := ArityB b) x.val y.val)
 
 /-- The arity is functorial; its content is the variation of the fibres, not
 the laws. -/
@@ -1164,11 +1168,11 @@ def codeAlg :
     (codePFunctor.{u, v} I D).toSliceDomPFunctor.Obj
         (Sigma.fst : Interp.{u, v} I D → Cat.{v, u}) →
       Interp.{u, v} I D :=
-  fun x ↦ ⟨x.1.1.1, codeAlgOn I D x.1.1.1 x.1.1.2 fun b ↦
+  fun x ↦ ⟨x.val.1.1, codeAlgOn I D x.val.1.1 x.val.1.2 fun b ↦
     cast (congrArg (fun 𝔻 : Cat.{v, u} ↦
         PresheafPFunctor.{u, u, max u v, u, u, v} (ElObj.{u, u, u} D) 𝔻)
-      (((codePFunctor.{u, v} I D).toSliceDomPFunctor.compatible_iff _ _ _).mp x.2 b))
-      (x.1.2 b).2⟩
+      (((codePFunctor.{u, v} I D).toSliceDomPFunctor.compatible_iff _ _ _).mp x.property b))
+      (x.val.2 b).2⟩
 
 /-- The interpretation of a code, as the fold of `codeAlg`. -/
 def interp : Code.{u, v} I D → Interp.{u, v} I D :=

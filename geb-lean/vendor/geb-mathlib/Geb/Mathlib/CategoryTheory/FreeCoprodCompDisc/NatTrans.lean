@@ -130,25 +130,25 @@ def NatTrans.vcomp {F G H : Map.{u, v, w} I O} {mF : MapMor I O F}
     {mG : MapMor I O G} {mH : MapMor I O H}
     (η : NatTrans I O F G mF mG) (θ : NatTrans I O G H mG mH) :
     NatTrans I O F H mF mH :=
-  ⟨fun X ↦ Hom.comp O (η.1 X) (θ.1 X),
+  ⟨fun X ↦ Hom.comp O (η.val X) (θ.val X),
     fun X Y h ↦
-      (Hom.comp_assoc O (mF X Y h) (η.1 Y) (θ.1 Y)).symm.trans
-        ((congrArg (fun t ↦ Hom.comp O t (θ.1 Y)) (η.2 X Y h)).trans
-          ((Hom.comp_assoc O (η.1 X) (mG X Y h) (θ.1 Y)).trans
-            ((congrArg (Hom.comp O (η.1 X)) (θ.2 X Y h)).trans
-              (Hom.comp_assoc O (η.1 X) (θ.1 X) (mH X Y h)).symm)))⟩
+      (Hom.comp_assoc O (mF X Y h) (η.val Y) (θ.val Y)).symm.trans
+        ((congrArg (fun t ↦ Hom.comp O t (θ.val Y)) (η.property X Y h)).trans
+          ((Hom.comp_assoc O (η.val X) (mG X Y h) (θ.val Y)).trans
+            ((congrArg (Hom.comp O (η.val X)) (θ.property X Y h)).trans
+              (Hom.comp_assoc O (η.val X) (θ.val X) (mH X Y h)).symm)))⟩
 
 /-- Vertical left identity. -/
 theorem NatTrans.id_vcomp {F G : Map.{u, v, w} I O} {mF : MapMor I O F}
     {mG : MapMor I O G} (η : NatTrans I O F G mF mG) :
     NatTrans.vcomp (NatTrans.id F mF) η = η :=
-  Subtype.ext (funext (fun X ↦ Hom.id_comp O (η.1 X)))
+  Subtype.ext (funext (fun X ↦ Hom.id_comp O (η.val X)))
 
 /-- Vertical right identity. -/
 theorem NatTrans.vcomp_id {F G : Map.{u, v, w} I O} {mF : MapMor I O F}
     {mG : MapMor I O G} (η : NatTrans I O F G mF mG) :
     NatTrans.vcomp η (NatTrans.id G mG) = η :=
-  Subtype.ext (funext (fun X ↦ Hom.comp_id O (η.1 X)))
+  Subtype.ext (funext (fun X ↦ Hom.comp_id O (η.val X)))
 
 /-- Vertical associativity. -/
 theorem NatTrans.vcomp_assoc {F G H K : Map.{u, v, w} I O}
@@ -157,7 +157,7 @@ theorem NatTrans.vcomp_assoc {F G H K : Map.{u, v, w} I O}
     (θ : NatTrans I O G H mG mH) (ρ : NatTrans I O H K mH mK) :
     NatTrans.vcomp (NatTrans.vcomp η θ) ρ =
       NatTrans.vcomp η (NatTrans.vcomp θ ρ) :=
-  Subtype.ext (funext (fun X ↦ Hom.comp_assoc O (η.1 X) (θ.1 X) (ρ.1 X)))
+  Subtype.ext (funext (fun X ↦ Hom.comp_assoc O (η.val X) (θ.val X) (ρ.val X)))
 
 /-- Preservation of identities by a morphism map. -/
 def PreservesId (F : Map.{u, v, w} I O) (mF : MapMor I O F) : Prop :=
@@ -188,7 +188,7 @@ def NatTrans.whiskerRight {F' G' : Map.{u, w, x} O P}
     (mF : MapMor I O F) (θ : NatTrans O P F' G' mF' mG') :
     NatTrans I P (mapComp F F') (mapComp F G')
       (mapMorComp mF mF') (mapMorComp mF mG') :=
-  ⟨fun X ↦ θ.1 (F X), fun X Y h ↦ θ.2 (F X) (F Y) (mF X Y h)⟩
+  ⟨fun X ↦ θ.val (F X), fun X Y h ↦ θ.property (F X) (F Y) (mF X Y h)⟩
 
 /-- Left whiskering: postcomposition of a transformation with an
 object map, whose naturality consumes the outer morphism map's
@@ -199,11 +199,11 @@ def NatTrans.whiskerLeft {F G : Map.{u, v, w} I O} {mF : MapMor I O F}
     (hF' : PreservesComp F' mF') :
     NatTrans I P (mapComp F F') (mapComp G F')
       (mapMorComp mF mF') (mapMorComp mG mF') :=
-  ⟨fun X ↦ mF' (F X) (G X) (η.1 X),
+  ⟨fun X ↦ mF' (F X) (G X) (η.val X),
     fun X Y h ↦
-      (hF' (F X) (F Y) (G Y) (mF X Y h) (η.1 Y)).symm.trans
-        ((congrArg (mF' (F X) (G Y)) (η.2 X Y h)).trans
-          (hF' (F X) (G X) (G Y) (η.1 X) (mG X Y h)))⟩
+      (hF' (F X) (F Y) (G Y) (mF X Y h) (η.val Y)).symm.trans
+        ((congrArg (mF' (F X) (G Y)) (η.property X Y h)).trans
+          (hF' (F X) (G X) (G Y) (η.val X) (mG X Y h)))⟩
 
 /-- Horizontal composition of natural transformations, in the
 `whiskerLeft`-then-`whiskerRight` orientation. -/
@@ -227,7 +227,7 @@ theorem NatTrans.hcomp_eq_vcomp_whisker {F G : Map.{u, v, w} I O}
     NatTrans.hcomp η θ hF' =
       NatTrans.vcomp (NatTrans.whiskerRight F mF θ)
         (NatTrans.whiskerLeft η G' mG' hG') :=
-  Subtype.ext (funext (fun X ↦ θ.2 (F X) (G X) (η.1 X)))
+  Subtype.ext (funext (fun X ↦ θ.property (F X) (G X) (η.val X)))
 
 /-- The horizontal composite of identity transformations is the
 identity (consuming the outer morphism map's identity-preservation
@@ -250,7 +250,7 @@ theorem NatTrans.hcomp_id_right {F G : Map.{u, v, w} I O}
     (hF' : PreservesComp F' mF') :
     NatTrans.hcomp η (NatTrans.id F' mF') hF' =
       NatTrans.whiskerLeft η F' mF' hF' :=
-  Subtype.ext (funext (fun X ↦ Hom.comp_id P (mF' (F X) (G X) (η.1 X))))
+  Subtype.ext (funext (fun X ↦ Hom.comp_id P (mF' (F X) (G X) (η.val X))))
 
 /-- Whiskering by an identity-transformation on the left is right
 whiskering. -/
@@ -262,8 +262,8 @@ theorem NatTrans.hcomp_id_left {F : Map.{u, v, w} I O}
     NatTrans.hcomp (NatTrans.id F mF) θ hF'comp =
       NatTrans.whiskerRight F mF θ :=
   Subtype.ext (funext (fun X ↦
-    (congrArg (fun t ↦ Hom.comp P t (θ.1 (F X))) (hF'id (F X))).trans
-      (Hom.id_comp P (θ.1 (F X)))))
+    (congrArg (fun t ↦ Hom.comp P t (θ.val (F X))) (hF'id (F X))).trans
+      (Hom.id_comp P (θ.val (F X)))))
 
 /-- The identity object map. -/
 def idMap : Map.{u, v, v} I I :=
@@ -313,12 +313,12 @@ theorem NatTrans.hcomp_vcomp {F G H : Map.{u, v, w} I O}
         (NatTrans.hcomp η' θ' hG') :=
   Subtype.ext (funext (fun X ↦
     (congrArg (fun t ↦ Hom.comp P t
-        (Hom.comp P (θ.1 (H X)) (θ'.1 (H X))))
-      (hF' (F X) (G X) (H X) (η.1 X) (η'.1 X))).trans
+        (Hom.comp P (θ.val (H X)) (θ'.val (H X))))
+      (hF' (F X) (G X) (H X) (η.val X) (η'.val X))).trans
     (congrArg (fun t ↦
-        Hom.comp P (Hom.comp P (mF' (F X) (G X) (η.1 X)) t)
-          (θ'.1 (H X)))
-      (θ.2 (G X) (H X) (η'.1 X)))))
+        Hom.comp P (Hom.comp P (mF' (F X) (G X) (η.val X)) t)
+          (θ'.val (H X)))
+      (θ.property (G X) (H X) (η'.val X)))))
 
 /-- Two natural transformations are inverse when their vertical
 composites in both orders are identities. -/
@@ -337,13 +337,13 @@ theorem isNatTrans_invHom {F G : Map.{u, v, w} I O}
     IsNatTrans I O G F mG mF (fun X ↦ Iso.invHom O (iso X)) :=
   fun X Y h ↦
     Subtype.ext (funext (fun b ↦
-      (congrArg (fun t ↦ (iso Y).1.symm ((mG X Y h).1 t))
-          ((iso X).1.apply_symm_apply b).symm).trans
-        ((congrArg (fun t ↦ (iso Y).1.symm t)
+      (congrArg (fun t ↦ (iso Y).val.symm ((mG X Y h).val t))
+          ((iso X).val.apply_symm_apply b).symm).trans
+        ((congrArg (fun t ↦ (iso Y).val.symm t)
             (congrFun (congrArg Subtype.val (hnat X Y h))
-              ((iso X).1.symm b)).symm).trans
-          ((iso Y).1.symm_apply_apply
-            ((mF X Y h).1 ((iso X).1.symm b))))))
+              ((iso X).val.symm b)).symm).trans
+          ((iso Y).val.symm_apply_apply
+            ((mF X Y h).val ((iso X).val.symm b))))))
 
 /-- Package a natural family of isomorphisms as a natural
 transformation. -/
@@ -430,15 +430,15 @@ def natCoprodEquiv (A : Type u) (Fa : A → Map.{u, v, w} I O)
           (fun a ↦ Fa a Y) (fun a ↦ mFa a X Y h)) mG ≃
       ((a : A) → NatTrans I O (Fa a) G (mFa a) mG) :=
   { toFun := fun η a ↦
-      ⟨fun X ↦ Hom.comp O (coprodInj O A (fun a' ↦ Fa a' X) a) (η.1 X),
+      ⟨fun X ↦ Hom.comp O (coprodInj O A (fun a' ↦ Fa a' X) a) (η.val X),
         fun X Y h ↦
           congrArg (Hom.comp O (coprodInj O A (fun a' ↦ Fa a' X) a))
-            (η.2 X Y h)⟩,
+            (η.property X Y h)⟩,
     invFun := fun θ ↦
-      ⟨fun X ↦ coprodDesc O A (fun a ↦ Fa a X) (G X) (fun a ↦ (θ a).1 X),
+      ⟨fun X ↦ coprodDesc O A (fun a ↦ Fa a X) (G X) (fun a ↦ (θ a).val X),
         fun X Y h ↦
           congrArg (coprodDesc O A (fun a ↦ Fa a X) (G Y))
-            (funext (fun a ↦ (θ a).2 X Y h))⟩,
+            (funext (fun a ↦ (θ a).property X Y h))⟩,
     left_inv := fun _ ↦ Subtype.ext (funext (fun _ ↦ Subtype.ext rfl)),
     right_inv := fun _ ↦
       funext (fun _ ↦ Subtype.ext (funext (fun _ ↦ Subtype.ext rfl))) }
@@ -481,11 +481,11 @@ def natCopowerPlusToFun (c : FreeCoprodCompDisc.{u, v} I)
       (Hom.comp O
         (coprodInj O (Hom I c (plus I c X)) (fun _ ↦ F (plus I c X))
           (coprodPairInl I c X))
-        (η.1 (plus I c X))),
+        (η.val (plus I c X))),
     fun X Y h ↦
       Subtype.ext (funext (fun a ↦
         (congrArg
-            (fun t ↦ (η.1 (plus I c Y)).1 ⟨coprodPairInl I c Y, t⟩)
+            (fun t ↦ (η.val (plus I c Y)).val ⟨coprodPairInl I c Y, t⟩)
             ((congrFun (congrArg Subtype.val
                   (hFcomp X Y (plus I c Y) h (coprodPairInr I c Y)))
                 a).symm.trans
@@ -495,10 +495,10 @@ def natCopowerPlusToFun (c : FreeCoprodCompDisc.{u, v} I)
                     (coprodPairMor I (Hom.id I c) h)))
                 a))).trans
           (congrFun (congrArg Subtype.val
-              (η.2 (plus I c X) (plus I c Y)
+              (η.property (plus I c X) (plus I c Y)
                 (coprodPairMor I (Hom.id I c) h)))
             ⟨coprodPairInl I c X,
-              (mF X (plus I c X) (coprodPairInr I c X)).1 a⟩)))⟩
+              (mF X (plus I c X) (coprodPairInr I c X)).val a⟩)))⟩
 
 /-- The backward direction of the copower–plus correspondence: from a
 transformation into the `plus`-precomposed map to one out of the
@@ -512,26 +512,26 @@ def natCopowerPlusInvFun (c : FreeCoprodCompDisc.{u, v} I)
   ⟨fun X ↦
     coprodDesc O (Hom I c X) (fun _ ↦ F X) (G X)
       (fun e ↦
-        Hom.comp O (θ.1 X)
+        Hom.comp O (θ.val X)
           (mG (plus I c X) X (coprodPairDesc I e (Hom.id I X)))),
     fun X Y h ↦
       Subtype.ext (funext (fun p ↦
         (congrArg
             (fun t ↦ (mG (plus I c Y) Y
-                (coprodPairDesc I (Hom.comp I p.1 h) (Hom.id I Y))).1 t)
-            (congrFun (congrArg Subtype.val (θ.2 X Y h)) p.2)).trans
+                (coprodPairDesc I (Hom.comp I p.1 h) (Hom.id I Y))).val t)
+            (congrFun (congrArg Subtype.val (θ.property X Y h)) p.2)).trans
           ((congrFun (congrArg Subtype.val
                 (hGcomp (plus I c X) (plus I c Y) Y
                   (coprodPairMor I (Hom.id I c) h)
                   (coprodPairDesc I (Hom.comp I p.1 h) (Hom.id I Y))))
-              ((θ.1 X).1 p.2)).symm.trans
+              ((θ.val X).val p.2)).symm.trans
             ((congrArg
-                (fun k ↦ (mG (plus I c X) Y k).1 ((θ.1 X).1 p.2))
+                (fun k ↦ (mG (plus I c X) Y k).val ((θ.val X).val p.2))
                 (coprodPairMor_id_desc I h p.1)).trans
               (congrFun (congrArg Subtype.val
                   (hGcomp (plus I c X) X Y
                     (coprodPairDesc I p.1 (Hom.id I X)) h))
-                ((θ.1 X).1 p.2))))))⟩
+                ((θ.val X).val p.2))))))⟩
 
 /-- The backward direction inverts the forward direction of the
 copower–plus correspondence. -/
@@ -543,10 +543,10 @@ theorem natCopowerPlus_invFun_toFun (c : FreeCoprodCompDisc.{u, v} I)
     natCopowerPlusInvFun c hGcomp (natCopowerPlusToFun c hFcomp η) = η :=
   Subtype.ext (funext (fun X ↦ Subtype.ext (funext (fun p ↦
     (congrFun (congrArg Subtype.val
-          (η.2 (plus I c X) X (coprodPairDesc I p.1 (Hom.id I X))))
+          (η.property (plus I c X) X (coprodPairDesc I p.1 (Hom.id I X))))
         ⟨coprodPairInl I c X,
-          (mF X (plus I c X) (coprodPairInr I c X)).1 p.2⟩).symm.trans
-      (congrArg (fun t ↦ (η.1 X).1 ⟨p.1, t⟩)
+          (mF X (plus I c X) (coprodPairInr I c X)).val p.2⟩).symm.trans
+      (congrArg (fun t ↦ (η.val X).val ⟨p.1, t⟩)
         ((congrFun (congrArg Subtype.val
               (hFcomp X (plus I c X) X (coprodPairInr I c X)
                 (coprodPairDesc I p.1 (Hom.id I X)))) p.2).symm.trans
@@ -565,20 +565,20 @@ theorem natCopowerPlus_toFun_invFun (c : FreeCoprodCompDisc.{u, v} I)
     (congrArg
         (fun t ↦ (mG (plus I c (plus I c X)) (plus I c X)
             (coprodPairDesc I (coprodPairInl I c X)
-              (Hom.id I (plus I c X)))).1 t)
+              (Hom.id I (plus I c X)))).val t)
         (congrFun (congrArg Subtype.val
-            (θ.2 X (plus I c X) (coprodPairInr I c X))) a)).trans
+            (θ.property X (plus I c X) (coprodPairInr I c X))) a)).trans
       ((congrFun (congrArg Subtype.val
             (hGcomp (plus I c X) (plus I c (plus I c X)) (plus I c X)
               (coprodPairMor I (Hom.id I c) (coprodPairInr I c X))
               (coprodPairDesc I (coprodPairInl I c X)
                 (Hom.id I (plus I c X)))))
-          ((θ.1 X).1 a)).symm.trans
+          ((θ.val X).val a)).symm.trans
         ((congrArg
-            (fun k ↦ (mG (plus I c X) (plus I c X) k).1 ((θ.1 X).1 a))
+            (fun k ↦ (mG (plus I c X) (plus I c X) k).val ((θ.val X).val a))
             (coprodPairMor_inr_desc_inl I (Z := c) (X := X))).trans
           (congrFun (congrArg Subtype.val (hGid (plus I c X)))
-            ((θ.1 X).1 a))))))))
+            ((θ.val X).val a))))))))
 
 /-- The copower–Yoneda adjunction: transformations out of the
 copowered map correspond to transformations into the

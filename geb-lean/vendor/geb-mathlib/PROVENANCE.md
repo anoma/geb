@@ -1,8 +1,8 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: c51a0b4a99364cd6735f8c90c26f9ce345ae9575
-- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 bfbbcc5b65f284b8bce7a1e203e9dc0b1d1970dc71198d43c3bfa4da1d4d1b45)
+- Source commit: 0ad1af44d4071ca7d59cfd67fd4f808b3eee1336
+- Back-port patch: scripts/geb-mathlib-backport.patch (sha256 1d1abdd5496d0784426b2ac4e59c3e62088a428a6575170d33832cce1add40bb)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
   - Geb.Cslib
   - Geb.Prototypes.BitStream.Oitavem

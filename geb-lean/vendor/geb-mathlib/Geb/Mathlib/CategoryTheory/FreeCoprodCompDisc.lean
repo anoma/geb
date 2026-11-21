@@ -164,7 +164,7 @@ def homOfEq {X Y Y' : FreeCoprodCompDisc.{u, v} D} :
 diagrammatic order. -/
 def Hom.comp {X Y Z : FreeCoprodCompDisc.{u, v} D} (f : Hom D X Y)
     (g : Hom D Y Z) : Hom D X Z :=
-  ⟨g.1 ∘ f.1, (congrArg (· ∘ f.1) g.2).trans f.2⟩
+  ⟨g.val ∘ f.val, (congrArg (· ∘ f.val) g.property).trans f.property⟩
 
 /-- The identity morphism of the free coproduct completion. -/
 def Hom.id (X : FreeCoprodCompDisc.{u, v} D) : Hom D X X :=
@@ -215,8 +215,8 @@ def coprodMor.{w} (ι κ : Type w) (r : ι → κ)
     (gk : κ → FreeCoprodCompDisc.{u, v} D)
     (hom : (i : ι) → Hom D (fi i) (gk (r i))) :
     Hom D (coprod D ι fi) (coprod D κ gk) :=
-  ⟨Sigma.map r (fun i ↦ (hom i).1),
-    funext (fun p ↦ congrFun (hom p.1).2 p.2)⟩
+  ⟨Sigma.map r (fun i ↦ (hom i).val),
+    funext (fun p ↦ congrFun (hom p.1).property p.2)⟩
 
 /-- The functorial action of `coprod` preserves identities. -/
 theorem coprodMor_id.{w} (ι : Type w)
@@ -267,7 +267,7 @@ coproduct. -/
 def coprodDesc.{u'} (ι : Type w) (fi : ι → FreeCoprodCompDisc.{u, v} D)
     (Z : FreeCoprodCompDisc.{u', v} D)
     (m : (i : ι) → Hom D (fi i) Z) : Hom D (coprod D ι fi) Z :=
-  ⟨fun p ↦ (m p.1).1 p.2, funext (fun p ↦ congrFun (m p.1).2 p.2)⟩
+  ⟨fun p ↦ (m p.1).val p.2, funext (fun p ↦ congrFun (m p.1).property p.2)⟩
 
 /-- The universal property of the indexed coproduct: morphisms out of
 `coprod ι fi` correspond to `ι`-indexed families of morphisms out of
@@ -277,7 +277,7 @@ def coprodHomEquiv.{u'} (ι : Type w)
     (Z : FreeCoprodCompDisc.{u', v} D) :
     Hom D (coprod D ι fi) Z ≃ ((i : ι) → Hom D (fi i) Z) :=
   { toFun := fun h i ↦
-      ⟨fun a ↦ h.1 ⟨i, a⟩, funext (fun a ↦ congrFun h.2 ⟨i, a⟩)⟩,
+      ⟨fun a ↦ h.val ⟨i, a⟩, funext (fun a ↦ congrFun h.property ⟨i, a⟩)⟩,
     invFun := coprodDesc D ι fi Z,
     left_inv := fun _ ↦ Subtype.ext rfl,
     right_inv := fun _ ↦ funext (fun _ ↦ Subtype.ext rfl) }
@@ -379,9 +379,9 @@ coproduct. -/
 def coprodPairDesc {X Y Z : FreeCoprodCompDisc.{u, v} D}
     (f : Hom D X Z) (g : Hom D Y Z) :
     Hom D (coprodPair.{v, u, u} D X Y) Z :=
-  ⟨Sum.elim f.1 g.1,
+  ⟨Sum.elim f.val g.val,
     funext (fun s ↦
-      Sum.casesOn s (fun a ↦ congrFun f.2 a) (fun b ↦ congrFun g.2 b))⟩
+      Sum.casesOn s (fun a ↦ congrFun f.property a) (fun b ↦ congrFun g.property b))⟩
 
 /-- The cotuple restricted along the left injection is the left
 component. -/
@@ -415,9 +415,9 @@ def coprodPairMor.{uX, uY, uX', uY'} {X : FreeCoprodCompDisc.{uX, v} D}
     {Y' : FreeCoprodCompDisc.{uY', v} D}
     (f : Hom D X X') (g : Hom D Y Y') :
     Hom D (coprodPair D X Y) (coprodPair D X' Y') :=
-  ⟨Sum.map f.1 g.1,
+  ⟨Sum.map f.val g.val,
     funext (fun s ↦
-      Sum.casesOn s (fun a ↦ congrFun f.2 a) (fun b ↦ congrFun g.2 b))⟩
+      Sum.casesOn s (fun a ↦ congrFun f.property a) (fun b ↦ congrFun g.property b))⟩
 
 /-- `coprodPairMor` preserves identities (at one index universe per
 side). -/
@@ -485,14 +485,14 @@ def Iso.refl (X : FreeCoprodCompDisc.{u, v} D) : Iso D X X :=
 /-- The inverse of an isomorphism. -/
 def Iso.symm.{u₁, u₂} {X : FreeCoprodCompDisc.{u₁, v} D}
     {Y : FreeCoprodCompDisc.{u₂, v} D} (e : Iso D X Y) : Iso D Y X :=
-  ⟨e.1.symm, funext (fun y ↦
-    (congrFun e.2 (e.1.symm y)).symm.trans (congrArg Y.2 (e.1.apply_symm_apply y)))⟩
+  ⟨e.val.symm, funext (fun y ↦
+    (congrFun e.property (e.val.symm y)).symm.trans (congrArg Y.2 (e.val.apply_symm_apply y)))⟩
 
 /-- The composite of two isomorphisms. -/
 def Iso.trans.{u₁, u₂, u₃} {X : FreeCoprodCompDisc.{u₁, v} D}
     {Y : FreeCoprodCompDisc.{u₂, v} D} {Z : FreeCoprodCompDisc.{u₃, v} D}
     (e : Iso D X Y) (f : Iso D Y Z) : Iso D X Z :=
-  ⟨e.1.trans f.1, (congrArg (· ∘ ⇑e.1) f.2).trans e.2⟩
+  ⟨e.val.trans f.val, (congrArg (· ∘ ⇑e.val) f.property).trans e.property⟩
 
 /-- Transport an isomorphism along an equality of objects. -/
 def isoOfEq {X Y : FreeCoprodCompDisc.{u, v} D} : X = Y → Iso D X Y
@@ -501,26 +501,26 @@ def isoOfEq {X Y : FreeCoprodCompDisc.{u, v} D} : X = Y → Iso D X Y
 /-- The underlying morphism of an isomorphism. -/
 def Iso.hom {X Y : FreeCoprodCompDisc.{u, v} D} (e : Iso D X Y) :
     Hom D X Y :=
-  ⟨fun a ↦ e.1 a, e.2⟩
+  ⟨fun a ↦ e.val a, e.property⟩
 
 /-- The underlying morphism of the inverse of an isomorphism. -/
 def Iso.invHom {X Y : FreeCoprodCompDisc.{u, v} D} (e : Iso D X Y) :
     Hom D Y X :=
-  ⟨fun b ↦ e.1.symm b, (Iso.symm D e).2⟩
+  ⟨fun b ↦ e.val.symm b, (Iso.symm D e).property⟩
 
 /-- The underlying morphisms of an isomorphism compose to the
 identity, forward-then-backward. -/
 theorem Iso.hom_invHom {X Y : FreeCoprodCompDisc.{u, v} D}
     (e : Iso D X Y) :
     Hom.comp D (Iso.hom D e) (Iso.invHom D e) = Hom.id D X :=
-  Subtype.ext (funext (fun a ↦ e.1.symm_apply_apply a))
+  Subtype.ext (funext (fun a ↦ e.val.symm_apply_apply a))
 
 /-- The underlying morphisms of an isomorphism compose to the
 identity, backward-then-forward. -/
 theorem Iso.invHom_hom {X Y : FreeCoprodCompDisc.{u, v} D}
     (e : Iso D X Y) :
     Hom.comp D (Iso.invHom D e) (Iso.hom D e) = Hom.id D Y :=
-  Subtype.ext (funext (fun b ↦ e.1.apply_symm_apply b))
+  Subtype.ext (funext (fun b ↦ e.val.apply_symm_apply b))
 
 /-- Cancellation through an isomorphism: a factorization through the
 forward component determines the factorization through the inverse. -/
@@ -567,9 +567,9 @@ def coprodIso.{u₁, u₂, w₁, w₂} (ι : Type w₁) (κ : Type w₂) (e : ι
     (gk : κ → FreeCoprodCompDisc.{u₂, v} D)
     (iso : (i : ι) → Iso D (fi i) (gk (e i))) :
     Iso D (coprod.{u₁, v, w₁} D ι fi) (coprod.{u₂, v, w₂} D κ gk) :=
-  ⟨(sigmaCongrRight' (fun i ↦ (iso i).1)).trans
+  ⟨(sigmaCongrRight' (fun i ↦ (iso i).val)).trans
       (Equiv.sigmaCongrLeft (β := fun j ↦ (gk j).1) e),
-    funext (fun p ↦ congrFun (iso p.1).2 p.2)⟩
+    funext (fun p ↦ congrFun (iso p.1).property p.2)⟩
 
 /-- The copower `X ⊗ i`: the `X`-fold coproduct of `i`
 ([HancockMcBrideGhaniMalatestaAltenkirch2013], Lemma 3). -/
@@ -584,9 +584,9 @@ def copowerEquiv.{w} (X : Type w) (i : FreeCoprodCompDisc.{max u w, v} D)
     (Z : FreeCoprodCompDisc.{max u w, v} D) :
     Hom D (copower.{max u w, v, w} D X i) Z ≃ (X → Hom D i Z) :=
   { toFun := fun h x ↦
-      ⟨fun a ↦ h.1 ⟨x, a⟩, funext (fun a ↦ congrFun h.2 ⟨x, a⟩)⟩,
+      ⟨fun a ↦ h.val ⟨x, a⟩, funext (fun a ↦ congrFun h.property ⟨x, a⟩)⟩,
     invFun := fun m ↦
-      ⟨fun p ↦ (m p.1).1 p.2, funext (fun p ↦ congrFun (m p.1).2 p.2)⟩,
+      ⟨fun p ↦ (m p.1).val p.2, funext (fun p ↦ congrFun (m p.1).property p.2)⟩,
     left_inv := fun _ ↦ Subtype.ext rfl,
     right_inv := fun _ ↦ funext (fun _ ↦ Subtype.ext rfl) }
 
@@ -603,9 +603,9 @@ def homLiftEquiv.{w} (X : FreeCoprodCompDisc.{u, v} D)
     (Y : FreeCoprodCompDisc.{max u w, v} D) :
     Hom D (lift.{u, v, w} D X) Y ≃ Hom D X Y :=
   { toFun := fun f ↦
-      ⟨f.1 ∘ ULift.up, funext (fun a ↦ congrFun f.2 (ULift.up a))⟩,
+      ⟨f.val ∘ ULift.up, funext (fun a ↦ congrFun f.property (ULift.up a))⟩,
     invFun := fun h ↦
-      ⟨h.1 ∘ ULift.down, funext (fun a ↦ congrFun h.2 a.down)⟩,
+      ⟨h.val ∘ ULift.down, funext (fun a ↦ congrFun h.property a.down)⟩,
     left_inv := fun _ ↦ Subtype.ext rfl,
     right_inv := fun _ ↦ Subtype.ext rfl }
 
@@ -622,9 +622,9 @@ over its value. -/
 def homSingletonEquiv (d : D) (Z : FreeCoprodCompDisc.{u, v} D) :
     Hom D (⟨ULift Unit, fun _ ↦ d⟩ : FreeCoprodCompDisc.{u, v} D) Z ≃
       {z : Z.1 // Z.2 z = d} :=
-  { toFun := fun f ↦ ⟨f.1 (ULift.up Unit.unit),
-      congrFun f.2 (ULift.up Unit.unit)⟩,
-    invFun := fun z ↦ ⟨fun _ ↦ z.1, funext (fun _ ↦ z.2)⟩,
+  { toFun := fun f ↦ ⟨f.val (ULift.up Unit.unit),
+      congrFun f.property (ULift.up Unit.unit)⟩,
+    invFun := fun z ↦ ⟨fun _ ↦ z.val, funext (fun _ ↦ z.property)⟩,
     left_inv := fun _ ↦ Subtype.ext rfl,
     right_inv := fun _ ↦ rfl }
 

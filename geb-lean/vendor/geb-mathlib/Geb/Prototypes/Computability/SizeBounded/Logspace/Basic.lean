@@ -99,11 +99,11 @@ theorem sbsFree_mk (a : Shape) (f : Direction a → sig.toPFunctor.W) :
 /-- The expressions of the subalgebra {lit}`[I, C_W; comp, simn]` of
 \[Kristiansen2005\] of a given arity: the successor-free expressions of
 {name}`Geb.SizeBounded.S` of that arity. -/
-@[expose] def LOf (n : ℕ) : Type := { e : SOf n // sbsFree e.1.1 = true }
+@[expose] def LOf (n : ℕ) : Type := { e : SOf n // sbsFree e.val.val = true }
 
 /-- The meaning of an expression of the subalgebra: its meaning in
 {name}`Geb.SizeBounded.S`. -/
-@[expose] def LOf.sem {n : ℕ} (e : LOf n) : Cobham.Sem n := e.1.sem
+@[expose] def LOf.sem {n : ℕ} (e : LOf n) : Cobham.Sem n := e.val.sem
 
 /-- The constant word {lit}`w` at arity {lit}`n`. -/
 @[expose] def constL (n : ℕ) (w : List Bool) : LOf n := ⟨constOf n w, rfl⟩
@@ -113,18 +113,19 @@ theorem sbsFree_mk (a : Shape) (f : Direction a → sig.toPFunctor.W) :
 
 /-- A substitution is successor-free exactly when its head and its arguments are. -/
 theorem sbsFree_comp_iff {n m : ℕ} (h : SOf m) (g : Fin m → SOf n) :
-    sbsFree (compOf h g).1.1 = true ↔ sbsFree h.1.1 = true ∧ ∀ i, sbsFree (g i).1.1 = true := by
-  change (sbsFree h.1.1 && finAll m fun i ↦ sbsFree (g i).1.1) = true ↔ _
+    sbsFree (compOf h g).val.val = true ↔
+      sbsFree h.val.val = true ∧ ∀ i, sbsFree (g i).val.val = true := by
+  change (sbsFree h.val.val && finAll m fun i ↦ sbsFree (g i).val.val) = true ↔ _
   rw [Bool.and_eq_true, finAll_eq_true_iff]
 
 /-- A recursion is successor-free exactly when its bases and its steps are. -/
 theorem sbsFree_srn_iff {a b : ℕ} (g : Fin b → SOf a) (h : Bool → Fin b → SOf (b + a + 1))
     (j : Fin b) :
-    sbsFree (srnOf g h j).1.1 = true ↔
-      (∀ l, sbsFree (g l).1.1 = true) ∧ ∀ i l, sbsFree (h i l).1.1 = true := by
-  change (finAll b (fun l ↦ sbsFree (g l).1.1) &&
-    (finAll b (fun l ↦ sbsFree (h false l).1.1) &&
-      finAll b fun l ↦ sbsFree (h true l).1.1)) = true ↔ _
+    sbsFree (srnOf g h j).val.val = true ↔
+      (∀ l, sbsFree (g l).val.val = true) ∧ ∀ i l, sbsFree (h i l).val.val = true := by
+  change (finAll b (fun l ↦ sbsFree (g l).val.val) &&
+    (finAll b (fun l ↦ sbsFree (h false l).val.val) &&
+      finAll b fun l ↦ sbsFree (h true l).val.val)) = true ↔ _
   rw [Bool.and_eq_true, Bool.and_eq_true, finAll_eq_true_iff, finAll_eq_true_iff,
     finAll_eq_true_iff]
   constructor
@@ -139,15 +140,15 @@ theorem sbsFree_srn_iff {a b : ℕ} (g : Fin b → SOf a) (h : Bool → Fin b �
 /-- The substitution of {lit}`m` expressions of arity {lit}`n` into one of arity
 {lit}`m`. -/
 @[expose] def compL {n m : ℕ} (h : LOf m) (g : Fin m → LOf n) : LOf n :=
-  ⟨compOf h.1 fun i ↦ (g i).1, (sbsFree_comp_iff _ _).mpr ⟨h.2, fun i ↦ (g i).2⟩⟩
+  ⟨compOf h.val fun i ↦ (g i).val, (sbsFree_comp_iff _ _).mpr ⟨h.property, fun i ↦ (g i).property⟩⟩
 
 /-- The {lit}`j`th of the {lit}`b` functions defined by simultaneous recursion on
 notation from the bases {lit}`g` and the steps {lit}`h`, with {lit}`a`
 parameters. -/
 @[expose] def srnL {a b : ℕ} (g : Fin b → LOf a) (h : Bool → Fin b → LOf (b + a + 1))
     (j : Fin b) : LOf (a + 1) :=
-  ⟨srnOf (fun l ↦ (g l).1) (fun i l ↦ (h i l).1) j,
-    (sbsFree_srn_iff _ _ _).mpr ⟨fun l ↦ (g l).2, fun i l ↦ (h i l).2⟩⟩
+  ⟨srnOf (fun l ↦ (g l).val) (fun i l ↦ (h i l).val) j,
+    (sbsFree_srn_iff _ _ _).mpr ⟨fun l ↦ (g l).property, fun i l ↦ (h i l).property⟩⟩
 
 end
 

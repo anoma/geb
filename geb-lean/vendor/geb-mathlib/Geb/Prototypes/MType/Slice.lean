@@ -106,38 +106,39 @@ def SliceM : Type (max uA uB) := { w : M F.toPFunctor // MValid F w }
 namespace SliceM
 
 /-- The structure map into {lit}`I`: the index of the underlying tree. -/
-def index (z : SliceM F) : I := mIndexRoot F z.1
+def index (z : SliceM F) : I := mIndexRoot F z.val
 
 variable {F}
 
 /-- Elements with equal underlying trees are equal. -/
-theorem ext {z z' : SliceM F} (h : z.1 = z'.1) : z = z' := Subtype.ext h
+theorem ext {z z' : SliceM F} (h : z.val = z'.val) : z = z' := Subtype.ext h
 
 /-- The constructor: the slice endofunctor's value at {lit}`(SliceM F, index)`
 maps into {lit}`SliceM F`. -/
 def mk (x : F.toSliceDomPFunctor.Obj (index F)) : SliceM F :=
-  ⟨M.mk (F.toPFunctor.map Subtype.val x.1), (mValid_mk F _).mpr ⟨x.2, fun b ↦ (x.1.2 b).2⟩⟩
+  ⟨M.mk (F.toPFunctor.map Subtype.val x.val),
+    (mValid_mk F _).mpr ⟨x.property, fun b ↦ (x.val.2 b).property⟩⟩
 
 /-- The destructor: the root shape with its admissible children, compatible
 with the direction-input map. -/
 def dest (z : SliceM F) : F.toSliceDomPFunctor.Obj (index F) :=
-  ⟨⟨z.1.head, fun b ↦ ⟨z.1.children b, ((mValid_iff F z.1).mp z.2).2 b⟩⟩,
-    ((mValid_iff F z.1).mp z.2).1⟩
+  ⟨⟨z.val.head, fun b ↦ ⟨z.val.children b, ((mValid_iff F z.val).mp z.property).2 b⟩⟩,
+    ((mValid_iff F z.val).mp z.property).1⟩
 
 /-- The destructor inverts the constructor. -/
 @[simp] theorem dest_mk (x : F.toSliceDomPFunctor.Obj (index F)) : (mk x).dest = x :=
   Subtype.ext (PFunctor.map_injective Subtype.val_injective
-    (M.dest_mk (F.toPFunctor.map Subtype.val x.1)))
+    (M.dest_mk (F.toPFunctor.map Subtype.val x.val)))
 
 /-- The constructor inverts the destructor. -/
 @[simp] theorem mk_dest (z : SliceM F) : mk z.dest = z :=
-  ext (M.mk_dest z.1)
+  ext (M.mk_dest z.val)
 
 /-- The constructor lies over {lit}`I`: its index is the output index of the
 layer's shape. -/
 theorem index_mk (x : F.toSliceDomPFunctor.Obj (index F)) : index F (mk x) = F.obj (index F) x :=
   congrArg (fun d : F.toPFunctor.Obj (M F.toPFunctor) ↦ F.q d.1)
-    (M.dest_mk (F.toPFunctor.map Subtype.val x.1))
+    (M.dest_mk (F.toPFunctor.map Subtype.val x.val))
 
 /-- The destructor lies over {lit}`I`. -/
 theorem obj_dest (z : SliceM F) : F.obj (index F) z.dest = index F z :=
@@ -173,21 +174,21 @@ variable (F) {Y : Type uY} (p : Y → I) (g : Y → F.toSliceDomPFunctor.Obj p)
 include hg
 
 /-- The root index of the underlying corecursion from {lit}`y` is {lit}`p y`. -/
-theorem mIndexRoot_corec (y : Y) : mIndexRoot F (M.corec (fun y ↦ (g y).1) y) = p y :=
+theorem mIndexRoot_corec (y : Y) : mIndexRoot F (M.corec (fun y ↦ (g y).val) y) = p y :=
   (congrArg (fun d : F.toPFunctor.Obj (M F.toPFunctor) ↦ F.q d.1) (M.dest_corec _ y)).trans
     (congrFun hg y)
 
 /-- The underlying corecursion from a slice coalgebra is admissible: its
 root layers are admissible, by {name}`mIndexRoot_corec`, so it is admissible by
 {name}`Geb.MType.hereditary_of_hom`. -/
-theorem mValid_corec (y : Y) : MValid F (M.corec (fun y ↦ (g y).1) y) := by
-  refine hereditary_of_hom M.dest _ (fun y ↦ (g y).1) _ (M.dest_corec _) (fun y ↦ ?_) y
+theorem mValid_corec (y : Y) : MValid F (M.corec (fun y ↦ (g y).val) y) := by
+  refine hereditary_of_hom M.dest _ (fun y ↦ (g y).val) _ (M.dest_corec _) (fun y ↦ ?_) y
   change NodeAdmissible F (M.corec _ y).dest
   rw [M.dest_corec]
-  exact funext fun b ↦ (mIndexRoot_corec F p g hg ((g y).1.2 b)).trans (congrFun (g y).2 b)
+  exact funext fun b ↦ (mIndexRoot_corec F p g hg ((g y).val.2 b)).trans (congrFun (g y).property b)
 
 /-- The corecursor from a slice coalgebra {lit}`(Y, p, g)` over {lit}`I`. -/
-def corec (y : Y) : SliceM F := ⟨M.corec (fun y ↦ (g y).1) y, mValid_corec F p g hg y⟩
+def corec (y : Y) : SliceM F := ⟨M.corec (fun y ↦ (g y).val) y, mValid_corec F p g hg y⟩
 
 /-- The corecursor lies over {lit}`I`. -/
 theorem comp_corec : index F ∘ corec F p g hg = p :=
@@ -198,15 +199,15 @@ coalgebras. -/
 @[simp] theorem dest_corec (y : Y) :
     (corec F p g hg y).dest =
       F.toSliceDomPFunctor.map (corec F p g hg) (comp_corec F p g hg) (g y) :=
-  Subtype.ext (PFunctor.map_injective Subtype.val_injective (M.dest_corec (fun y ↦ (g y).1) y))
+  Subtype.ext (PFunctor.map_injective Subtype.val_injective (M.dest_corec (fun y ↦ (g y).val) y))
 
 /-- The corecursor is the only morphism of slice coalgebras into
 {lit}`SliceM F`. -/
 theorem corec_unique (f : Y → SliceM F) (hfp : index F ∘ f = p)
     (hf : ∀ y, (f y).dest = F.toSliceDomPFunctor.map f hfp (g y)) : f = corec F p g hg := by
-  have h : (fun y ↦ (f y).1) = M.corec fun y ↦ (g y).1 :=
+  have h : (fun y ↦ (f y).val) = M.corec fun y ↦ (g y).val :=
     M.corec_unique _ _ fun y ↦
-      congrArg (fun x : F.toSliceDomPFunctor.Obj (index F) ↦ F.toPFunctor.map Subtype.val x.1)
+      congrArg (fun x : F.toSliceDomPFunctor.Obj (index F) ↦ F.toPFunctor.map Subtype.val x.val)
         (hf y)
   exact funext fun y ↦ ext (congrFun h y)
 

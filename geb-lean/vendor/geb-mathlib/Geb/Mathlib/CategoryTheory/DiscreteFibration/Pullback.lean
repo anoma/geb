@@ -65,7 +65,7 @@ def codPair (p : C ⥤ B) (a : Arrow C) : CodPullback p :=
   ⟨(Arrow.mk (p.map a.hom), a.right), rfl⟩
 
 @[simp] theorem codPair_val (p : C ⥤ B) (a : Arrow C) :
-    (codPair p a).1 = (Arrow.mk (p.map a.hom), a.right) := rfl
+    (codPair p a).val = (Arrow.mk (p.map a.hom), a.right) := rfl
 
 /-- The pullback-square formulation: `p` is a discrete fibration iff its
 codomain square is a pullback of sets, i.e. iff `codPair p` is a
@@ -78,10 +78,10 @@ theorem DiscreteFibration.isDiscreteFibration {p : C ⥤ B}
     (D : DiscreteFibration p) : IsDiscreteFibration p := by
   constructor
   · rintro ⟨x₁, y₁, f₁⟩ ⟨x₂, y₂, f₂⟩ h
-    have hy : y₁ = y₂ := congrArg (fun q : CodPullback p => q.1.2) h
+    have hy : y₁ = y₂ := congrArg (fun q : CodPullback p => q.val.2) h
     subst hy
     have hf : Arrow.mk (p.map f₁) = Arrow.mk (p.map f₂) :=
-      congrArg (fun q : CodPullback p => q.1.1) h
+      congrArg (fun q : CodPullback p => q.val.1) h
     exact (D.eq_liftArrow (p.map f₂) f₁ hf).trans
       (D.eq_liftArrow (p.map f₂) f₂ rfl).symm
   · rintro ⟨⟨⟨X, Y, g⟩, c⟩, (hg : Y = p.obj c)⟩

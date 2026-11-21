@@ -118,9 +118,9 @@ def toData : PresheafPFunctorData.{uC, uC, uA, max uB uC vC, vC, vC} C C where
   r := fun x ↦ x.2.2.1
   q := S.q
   directionRestr := fun a _ i' g d ↦
-    ⟨S.restrDir a g d.1 d.2, by obtain ⟨⟨b, c, k⟩, rfl⟩ := d; rfl⟩
-  shapeRestr := fun _ _ g a ↦ ⟨S.restr g a.1, S.q_restr g a.1 a.2⟩
-  reindex := fun _ _ g a _ d ↦ ⟨S.reindexDir g a.1 d.1, d.2⟩
+    ⟨S.restrDir a g d.val d.property, by obtain ⟨⟨b, c, k⟩, rfl⟩ := d; rfl⟩
+  shapeRestr := fun _ _ g a ↦ ⟨S.restr g a.val, S.q_restr g a.val a.property⟩
+  reindex := fun _ _ g a _ d ↦ ⟨S.reindexDir g a.val d.val, d.property⟩
 
 /-- Restriction of directions along an identity is the identity. -/
 theorem directionRestr_id : S.toData.DirectionRestrId := by
@@ -143,7 +143,7 @@ theorem reindex_naturality : S.toData.ReindexNaturality := by
   funext d
   obtain ⟨⟨b, c, k⟩, rfl⟩ := d
   exact Subtype.ext (Sigma.ext rfl (heq_of_eq (Sigma.ext rfl
-    (heq_of_eq (Category.assoc f k (S.reindex g a.1 b).2).symm))))
+    (heq_of_eq (Category.assoc f k (S.reindex g a.val b).2).symm))))
 
 /-- The presheaf polynomial functor of an instance, from the laws of its shape
 restriction and argument reindexing. -/
@@ -193,22 +193,23 @@ theorem map_freeNode (Z : Cᵒᵖ ⥤ Type w) (a : S.A) {c c' : C} (hq : S.q a =
 direction's morphism, of the value it gives the argument at the argument's object. -/
 theorem value_dir {Z : Cᵒᵖ ⥤ Type w} {c : C}
     (n : ((S.toPresheaf restr_id restr_comp reindex_id reindex_comp).objPresheaf Z).obj ⟨c⟩)
-    (b : S.Gen n.1.1.1.1) {c' : C} (k : c' ⟶ S.gobj n.1.1.1.1 b) :
-    PresheafDomPFunctorData.value _ n.1.1 ⟨⟨b, c', k⟩, rfl⟩ =
-      Z.map k.op (PresheafDomPFunctorData.value _ n.1.1 ⟨⟨b, S.gobj n.1.1.1.1 b, 𝟙 _⟩, rfl⟩) :=
-  (congrArg (fun m : c' ⟶ S.gobj n.1.1.1.1 b ↦
-    PresheafDomPFunctorData.value _ n.1.1 ⟨⟨b, c', m⟩, rfl⟩) (Category.comp_id k)).symm.trans
-    (n.1.2 k ⟨⟨b, S.gobj n.1.1.1.1 b, 𝟙 _⟩, rfl⟩)
+    (b : S.Gen n.val.val.val.1) {c' : C} (k : c' ⟶ S.gobj n.val.val.val.1 b) :
+    PresheafDomPFunctorData.value _ n.val.val ⟨⟨b, c', k⟩, rfl⟩ =
+      Z.map k.op
+        (PresheafDomPFunctorData.value _ n.val.val ⟨⟨b, S.gobj n.val.val.val.1 b, 𝟙 _⟩, rfl⟩) :=
+  (congrArg (fun m : c' ⟶ S.gobj n.val.val.val.1 b ↦
+    PresheafDomPFunctorData.value _ n.val.val ⟨⟨b, c', m⟩, rfl⟩) (Category.comp_id k)).symm.trans
+    (n.val.property k ⟨⟨b, S.gobj n.val.val.val.1 b, 𝟙 _⟩, rfl⟩)
 
 /-- Every node is the node of its shape with the values it gives its arguments at their
 objects. -/
 theorem eq_freeNode {Z : Cᵒᵖ ⥤ Type w} {c : C}
     (n : ((S.toPresheaf restr_id restr_comp reindex_id reindex_comp).objPresheaf Z).obj ⟨c⟩) :
-    n = freeNode Z n.1.1.1.1 n.2 fun b ↦
-      PresheafDomPFunctorData.value _ n.1.1 ⟨⟨b, S.gobj n.1.1.1.1 b, 𝟙 _⟩, rfl⟩ := by
+    n = freeNode Z n.val.val.val.1 n.property fun b ↦
+      PresheafDomPFunctorData.value _ n.val.val ⟨⟨b, S.gobj n.val.val.val.1 b, 𝟙 _⟩, rfl⟩ := by
   refine Subtype.ext (Subtype.ext (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun d ↦ ?_)))))
   obtain ⟨b, c', k⟩ := d
-  exact (PresheafDomPFunctorData.snd_eq_value _ n.1.1 ⟨⟨b, c', k⟩, rfl⟩).trans
+  exact (PresheafDomPFunctorData.snd_eq_value _ n.val.val ⟨⟨b, c', k⟩, rfl⟩).trans
     (congrArg (Sigma.mk c') (value_dir n b k))
 
 /-- Induction on the W-type of a functor with free arities: a property of every tree
@@ -225,13 +226,13 @@ theorem W_induction
   have step' : ∀ {c : C}
       (n : ((S.toPresheaf restr_id restr_comp reindex_id reindex_comp).objPresheaf
         (S.toPresheaf restr_id restr_comp reindex_id reindex_comp).W).obj ⟨c⟩),
-      (∀ b, motive _ (PresheafDomPFunctorData.value _ n.1.1
-        ⟨⟨b, S.gobj n.1.1.1.1 b, 𝟙 _⟩, rfl⟩)) → motive c (PresheafPFunctor.W.mk n) := by
+      (∀ b, motive _ (PresheafDomPFunctorData.value _ n.val.val
+        ⟨⟨b, S.gobj n.val.val.val.1 b, 𝟙 _⟩, rfl⟩)) → motive c (PresheafPFunctor.W.mk n) := by
     intro c n h
     obtain ⟨n, hq⟩ := n
-    have key : ∀ {c' : C} (hq' : S.q n.1.1.1 = c'),
-        motive c' (PresheafPFunctor.W.mk (freeNode _ n.1.1.1 hq' fun b ↦
-          PresheafDomPFunctorData.value _ n.1 ⟨⟨b, S.gobj n.1.1.1 b, 𝟙 _⟩, rfl⟩)) := by
+    have key : ∀ {c' : C} (hq' : S.q n.val.val.1 = c'),
+        motive c' (PresheafPFunctor.W.mk (freeNode _ n.val.val.1 hq' fun b ↦
+          PresheafDomPFunctorData.value _ n.val ⟨⟨b, S.gobj n.val.val.1 b, 𝟙 _⟩, rfl⟩)) := by
       intro c' hq'
       subst hq'
       exact step _ _ h
@@ -240,15 +241,15 @@ theorem W_induction
   refine SlicePFunctor.W.induction
     (motive := fun z ↦ ∀ (c : C)
       (v : (S.toPresheaf restr_id restr_comp reindex_id reindex_comp).W.obj ⟨c⟩),
-      v.down.1 = z → motive c v)
-    (fun x ih c v hv ↦ ?_) t.down.1 c t rfl
+      v.down.val = z → motive c v)
+    (fun x ih c v hv ↦ ?_) t.down.val c t rfl
   obtain ⟨⟨z, hz, hn⟩⟩ := v
   obtain rfl : z = _ := hv
   let u : (S.toPresheaf restr_id restr_comp reindex_id reindex_comp).W.obj ⟨c⟩ :=
     ULift.up ⟨SlicePFunctor.W.mk x, hz, hn⟩
   exact (PresheafPFunctor.W.mk_dest u).subst (motive := motive c)
     (step' _ fun b ↦ ih ⟨b, _, 𝟙 _⟩ _ _
-      (PresheafPFunctor.carrier.value_down (PresheafPFunctor.W.dest u).1.1 _))
+      (PresheafPFunctor.carrier.value_down (PresheafPFunctor.W.dest u).val.val _))
 
 end FreeArity
 

@@ -185,8 +185,8 @@ theorem algTerm_unit (a : S.A) {c : I × WalkingParallelPair} (hq : S.q a = c)
 terms: its constructor applied to the classes it gives its arguments. -/
 def algNode {c : I × WalkingParallelPair} (hc : c.2 = .zero)
     (x : (𝐅.objPresheaf (discrete (quotient 𝐅))).obj ⟨c⟩) : (discrete (quotient 𝐅)).obj ⟨c⟩ :=
-  algTerm hcong x.1.1.1.1 x.2 hc fun b ↦
-    PresheafDomPFunctorData.value _ x.1.1 ⟨⟨b, S.gobj x.1.1.1.1 b, 𝟙 _⟩, rfl⟩
+  algTerm hcong x.val.val.val.1 x.property hc fun b ↦
+    PresheafDomPFunctorData.value _ x.val.val ⟨⟨b, S.gobj x.val.val.val.1 b, 𝟙 _⟩, rfl⟩
 
 /-- The algebra on the image of a node with given argument values is the class of the
 tree the node builds. -/
@@ -205,8 +205,8 @@ theorem algNode_unit {c : I × WalkingParallelPair} (hc : c.2 = .zero)
     (n : (𝐅.objPresheaf 𝐅.W).obj ⟨c⟩) :
     algNode hcong hc ((𝐅.mapPresheaf (coeqUnit 𝐅.W)).app ⟨c⟩ n) =
       (coeqUnit 𝐅.W).app ⟨c⟩ (PresheafPFunctor.W.mk n) := by
-  have key := algNode_unit_freeNode hcong n.1.1.1.1 n.2 hc fun b ↦
-    PresheafDomPFunctorData.value _ n.1.1 ⟨⟨b, S.gobj n.1.1.1.1 b, 𝟙 _⟩, rfl⟩
+  have key := algNode_unit_freeNode hcong n.val.val.val.1 n.property hc fun b ↦
+    PresheafDomPFunctorData.value _ n.val.val ⟨⟨b, S.gobj n.val.val.val.1 b, 𝟙 _⟩, rfl⟩
   rwa [← FreeArity.eq_freeNode n] at key
 
 /-- The algebra on the quotient: on a node over the terms, {lit}`algNode`; on a node over
@@ -251,12 +251,13 @@ W-type: choose representatives of the classes it gives its arguments. -/
 theorem mapPresheaf_unit_surjective (c : (I × WalkingParallelPair)ᵒᵖ)
     (x : (𝐅.objPresheaf (discrete (quotient 𝐅))).obj c) :
     ∃ n : (𝐅.objPresheaf 𝐅.W).obj c, (𝐅.mapPresheaf (coeqUnit 𝐅.W)).app c n = x := by
-  let _ := hfin x.1.1.1.1
-  obtain ⟨us, hus⟩ := exists_forall_of_finEnum fun b ↦ unit_surjective hcong (S.gobj x.1.1.1.1 b)
-    (PresheafDomPFunctorData.value _ x.1.1 ⟨⟨b, S.gobj x.1.1.1.1 b, 𝟙 _⟩, rfl⟩)
-  exact ⟨FreeArity.freeNode 𝐅.W x.1.1.1.1 x.2 us,
-    (FreeArity.mapPresheaf_freeNode _ _ x.2 us).trans
-      ((congrArg (FreeArity.freeNode _ x.1.1.1.1 x.2) (funext hus)).trans
+  let _ := hfin x.val.val.val.1
+  obtain ⟨us, hus⟩ := exists_forall_of_finEnum fun b ↦
+    unit_surjective hcong (S.gobj x.val.val.val.1 b)
+      (PresheafDomPFunctorData.value _ x.val.val ⟨⟨b, S.gobj x.val.val.val.1 b, 𝟙 _⟩, rfl⟩)
+  exact ⟨FreeArity.freeNode 𝐅.W x.val.val.val.1 x.property us,
+    (FreeArity.mapPresheaf_freeNode _ _ x.property us).trans
+      ((congrArg (FreeArity.freeNode _ x.val.val.val.1 x.property) (funext hus)).trans
         (FreeArity.eq_freeNode x).symm)⟩
 
 /-- The model structure on the quotient. It is natural because the unit is a morphism

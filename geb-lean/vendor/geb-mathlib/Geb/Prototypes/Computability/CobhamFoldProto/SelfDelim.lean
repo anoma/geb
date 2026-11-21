@@ -123,9 +123,10 @@ open Cobham
 
 /-- The arity-two scan node over expressions, carrying its admissibility. -/
 def scan2W (base : COf 0) (step₀ step₁ : COf 2) : sig.W :=
-  ⟨scan2Raw base.1.1.1 step₀.1.1.1 step₁.1.1.1 (boundRaw 0),
-    wValid_scan2Raw _ _ _ _ base.1.1.2 base.2 step₀.1.1.2 step₀.2
-      step₁.1.1.2 step₁.2 (wValid_boundRaw 0) (wIndexRoot_boundRaw 0)⟩
+  ⟨scan2Raw base.val.val.val step₀.val.val.val step₁.val.val.val (boundRaw 0),
+    wValid_scan2Raw _ _ _ _ base.val.val.property base.property step₀.val.val.property
+      step₀.property step₁.val.val.property step₁.property (wValid_boundRaw 0)
+      (wIndexRoot_boundRaw 0)⟩
 
 /-- The arity-two scan node's arity. -/
 theorem arity_scan2W (base : COf 0) (step₀ step₁ : COf 2) :
@@ -138,7 +139,7 @@ def scan2Sem (base : COf 0) (step₀ step₁ : COf 2) : Sem 1 :=
 /-- The word an arity-two step contributes at the remaining word and the
 recursive value. -/
 def step2Word (e : COf 2) (v r : List Bool) : List Bool :=
-  semAt 2 e.1.1 e.2 ![v, r]
+  semAt 2 e.val.val e.property ![v, r]
 
 /-- The arity-two scan on the empty bitstring is its base's word. -/
 theorem scan2Sem_nil (base : COf 0) (step₀ step₁ : COf 2) :
@@ -154,10 +155,10 @@ theorem scan2Sem_cons (base : COf 0) (step₀ step₁ : COf 2) (b : Bool)
       (Fin.cons v (Fin.cons r Fin.elim0) : Fin 2 → List Bool) = ![v, r] :=
     fun v r ↦ funext fun i ↦ match i with | 0 => rfl | 1 => rfl
   cases b
-  · change transport ((fst_eval step₀.1.1).trans step₀.2) (eval step₀.1.1).2
+  · change transport ((fst_eval step₀.val.val).trans step₀.property) (eval step₀.val.val).2
       (Fin.cons w (Fin.cons (scan2Sem base step₀ step₁ ![w]) Fin.elim0)) = _
     exact congrArg _ (hfun _ _)
-  · change transport ((fst_eval step₁.1.1).trans step₁.2) (eval step₁.1.1).2
+  · change transport ((fst_eval step₁.val.val).trans step₁.property) (eval step₁.val.val).2
       (Fin.cons w (Fin.cons (scan2Sem base step₀ step₁ ![w]) Fin.elim0)) = _
     exact congrArg _ (hfun _ _)
 
@@ -174,9 +175,9 @@ def scan2 (base : COf 0) (step₀ step₁ : COf 2)
       exact hbound (x 0)
     · refine fun b : Fin 4 ↦ ?_
       match b with
-      | 0 => exact base.1.2
-      | 1 => exact step₀.1.2
-      | 2 => exact step₁.1.2
+      | 0 => exact base.val.property
+      | 1 => exact step₀.val.property
+      | 2 => exact step₁.val.property
       | 3 => exact recBounded_boundRaw 0⟩
 
 /-- `scan2` at its declared arity. -/
@@ -188,8 +189,8 @@ def scan2Of (base : COf 0) (step₀ step₁ : COf 2)
 /-- The meaning read at the raw tree is the meaning the expression carries. -/
 theorem scan2Sem_eq_eval (base : COf 0) (step₀ step₁ : COf 2)
     (hbound : ∀ w : List Bool, (scan2Sem base step₀ step₁ ![w]).length ≤ w.length) :
-    transport (scan2Of base step₀ step₁ hbound).2
-        (scan2Of base step₀ step₁ hbound).1.eval =
+    transport (scan2Of base step₀ step₁ hbound).property
+        (scan2Of base step₀ step₁ hbound).val.eval =
       scan2Sem base step₀ step₁ := rfl
 
 /-- Prepending a word prepends it to what an arity-two step contributes. -/
@@ -209,7 +210,7 @@ theorem step2Word_projOf (i : Fin 2) (v r : List Bool) :
 /-- A composition contributes its head's value at its argument's. -/
 theorem step2Word_comp1Of (e : COf 1) (a : COf 2) (v r : List Bool) :
     step2Word (comp1Of e a) v r = stepWord e (step2Word a v r) :=
-  congrArg (semAt 1 e.1.1 e.2) (funext fun i ↦ match i with | ⟨0, _⟩ => rfl)
+  congrArg (semAt 1 e.val.val e.property) (funext fun i ↦ match i with | ⟨0, _⟩ => rfl)
 
 /-- A concatenation contributes its second argument's value followed by its
 first's. -/
@@ -441,7 +442,7 @@ def takeEntryOf : COf 1 :=
 theorem stepWord_compOf {m : ℕ} (head : COf m) (args : Fin m → COf 1)
     (u : List Bool) :
     stepWord (compOf head args) u =
-      semAt m head.1.1 head.2 fun i ↦ stepWord (args i) u :=
+      semAt m head.val.val head.property fun i ↦ stepWord (args i) u :=
   semAt_compOf head args ![u]
 
 /-- An arity-one composition's value at an arity-one step. -/

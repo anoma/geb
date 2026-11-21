@@ -127,10 +127,10 @@ laws come from the dom `map_id` / `map_comp`. -/
   map {Z Z'} α := F.mapPresheaf α
   map_id Z := by
     ext j w
-    exact Subtype.ext (congrFun (F.toPresheafDomPFunctorData.map_id Z) w.1)
+    exact Subtype.ext (congrFun (F.toPresheafDomPFunctorData.map_id Z) w.val)
   map_comp α β := by
     ext j w
-    exact Subtype.ext (congrFun (F.toPresheafDomPFunctorData.map_comp α β) w.1)
+    exact Subtype.ext (congrFun (F.toPresheafDomPFunctorData.map_comp α β) w.val)
 
 /-- `functor.obj` is the output presheaf `objPresheaf`. The
 categorical object map carries no data beyond the core. -/
@@ -146,7 +146,7 @@ theorem functor_map {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{vJ}
     (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) {Z Z' : Iᵒᵖ ⥤ Type uZ}
     (α : Z ⟶ Z') (X : Jᵒᵖ) (w : (F.functor.obj Z).obj X) :
     (F.functor.map α).app X w =
-      (⟨F.toPresheafDomPFunctorData.map α w.1, w.2⟩ : (F.functor.obj Z').obj X) :=
+      (⟨F.toPresheafDomPFunctorData.map α w.val, w.property⟩ : (F.functor.obj Z').obj X) :=
   rfl
 
 end PresheafPFunctor

@@ -434,7 +434,7 @@ theorem length_rankedSem_le (R : RankedAlphabet) (w : List Bool) :
 /-- The meaning `rankedSem` reads at the raw tree is the meaning `ranked`
 carries. -/
 theorem rankedSem_eq_eval (R : RankedAlphabet) :
-    transport (rankedOf R).2 (rankedOf R).1.eval = rankedSem R :=
+    transport (rankedOf R).property (rankedOf R).val.eval = rankedSem R :=
   scanSem_eq_eval (constAtOf 0 (stateWord R ⟨[], 0, true⟩)) (rankedStep R false)
     (rankedStep R true) (R.width + 1) (length_rankedSem_le R)
 
@@ -509,27 +509,27 @@ theorem stepWord_acceptTest (R : RankedAlphabet) (u : List Bool) :
 @[expose] def isRankedRaw (R : RankedAlphabet) : sig.toPFunctor.W :=
   WType.mk (.comp 1 1) fun d ↦
     match d with
-    | .inl () => (acceptTest R).1.1.1
-    | .inr _ => (rankedOf R).1.1.1
+    | .inl () => (acceptTest R).val.val.val
+    | .inr _ => (rankedOf R).val.val.val
 
 /-- The recognizer's tree is admissible, from its two components'. `decide`
 does not apply: at a symbolic alphabet nothing reduces, so the pair of a case
 analysis and the index condition's `funext` is written out. -/
 theorem wValid_isRankedRaw (R : RankedAlphabet) : sig.WValid (isRankedRaw R) :=
   ⟨fun d ↦ match d with
-    | .inl () => (acceptTest R).1.1.2
-    | .inr _ => (rankedOf R).1.1.2,
+    | .inl () => (acceptTest R).val.val.property
+    | .inr _ => (rankedOf R).val.val.property,
   funext fun d ↦ match d with
-    | .inl () => (sig.wIndexValid_index_eq_wIndexRoot _).trans (acceptTest R).2
-    | .inr _ => (sig.wIndexValid_index_eq_wIndexRoot _).trans (rankedOf R).2⟩
+    | .inl () => (sig.wIndexValid_index_eq_wIndexRoot _).trans (acceptTest R).property
+    | .inr _ => (sig.wIndexValid_index_eq_wIndexRoot _).trans (rankedOf R).property⟩
 
 /-- The recognizer as an expression of the class: whether a bitstring spells a
 term of the alphabet. -/
 @[expose] def isRanked (R : RankedAlphabet) : C :=
   ⟨⟨isRankedRaw R, wValid_isRankedRaw R⟩,
     ⟨trivial, fun d ↦ match d with
-      | .inl () => (acceptTest R).1.2
-      | .inr _ => (rankedOf R).1.2⟩⟩
+      | .inl () => (acceptTest R).val.property
+      | .inr _ => (rankedOf R).val.property⟩⟩
 
 /-- `isRanked` at its declared arity. -/
 @[expose] def isRankedOf (R : RankedAlphabet) : COf 1 := ⟨isRanked R, rfl⟩
@@ -541,14 +541,14 @@ term of the alphabet. -/
 /-- The meaning `isRankedSem` reads at the raw tree is the meaning `isRanked`
 carries. -/
 theorem isRankedSem_eq_eval (R : RankedAlphabet) :
-    transport (isRankedOf R).2 (isRankedOf R).1.eval = isRankedSem R := rfl
+    transport (isRankedOf R).property (isRankedOf R).val.eval = isRankedSem R := rfl
 
 /-- One step of the recognizer: the verdict test on the scan's value. The
 composition applies its head at `fun _ : Fin 1 ↦ r` while `stepWord` applies it
 at `![r]`, and the two agree only by `funext`. -/
 theorem isRankedSem_apply (R : RankedAlphabet) (w : List Bool) :
     isRankedSem R ![w] = stepWord (acceptTest R) (rankedSem R ![w]) :=
-  congrArg (semAt 1 (acceptTest R).1.1 (acceptTest R).2)
+  congrArg (semAt 1 (acceptTest R).val.val (acceptTest R).property)
     (funext fun i ↦ match i with | ⟨0, _⟩ => rfl)
 
 /-- The recognizer's value on both branches: a rejected word receives the empty

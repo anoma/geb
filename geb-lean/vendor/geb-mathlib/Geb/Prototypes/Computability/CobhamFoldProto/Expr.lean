@@ -217,7 +217,7 @@ def foldExprF (R : RankedAlphabet) (p : ℕ) (enc : α → Fin p → Bool)
     (dec : (Fin p → Bool) → α) (hdec : ∀ a, dec (enc a) = a)
     (alg : (i : Fin R.card) → (Fin (R.arity i) → α) → α) (mult : ℕ)
     (hmult : p + 1 ≤ mult * R.width) : C :=
-  (foldExprOfF R p enc dec hdec alg mult hmult).1
+  (foldExprOfF R p enc dec hdec alg mult hmult).val
 
 /-- The meaning `foldSemF` reads at the raw tree is the meaning `foldExprF`
 carries. -/
@@ -225,8 +225,8 @@ theorem foldSemF_eq_eval (R : RankedAlphabet) (p : ℕ) (enc : α → Fin p → 
     (dec : (Fin p → Bool) → α) (hdec : ∀ a, dec (enc a) = a)
     (alg : (i : Fin R.card) → (Fin (R.arity i) → α) → α) (mult : ℕ)
     (hmult : p + 1 ≤ mult * R.width) :
-    transport (foldExprOfF R p enc dec hdec alg mult hmult).2
-        (foldExprOfF R p enc dec hdec alg mult hmult).1.eval =
+    transport (foldExprOfF R p enc dec hdec alg mult hmult).property
+        (foldExprOfF R p enc dec hdec alg mult hmult).val.eval =
       foldSemF R p enc dec alg mult := rfl
 
 /-- The number of state bits the readout dispatches on: the flag, the slot, and
@@ -332,15 +332,15 @@ def foldOutExpr (R : RankedAlphabet) (p : ℕ) (enc : α → Fin p → Bool)
     (dec : (Fin p → Bool) → α) (hdec : ∀ a, dec (enc a) = a)
     (alg : (i : Fin R.card) → (Fin (R.arity i) → α) → α) (mult : ℕ)
     (hmult : p + 1 ≤ mult * R.width) : C :=
-  (foldOutOf R p enc dec hdec alg mult hmult).1
+  (foldOutOf R p enc dec hdec alg mult hmult).val
 
 /-- The fold's meaning at its arity, read at the raw tree. -/
 def foldOutSem (R : RankedAlphabet) (p : ℕ) (enc : α → Fin p → Bool)
     (dec : (Fin p → Bool) → α) (hdec : ∀ a, dec (enc a) = a)
     (alg : (i : Fin R.card) → (Fin (R.arity i) → α) → α) (mult : ℕ)
     (hmult : p + 1 ≤ mult * R.width) : Sem 1 :=
-  semAt 1 (foldOutOf R p enc dec hdec alg mult hmult).1.1
-    (foldOutOf R p enc dec hdec alg mult hmult).2
+  semAt 1 (foldOutOf R p enc dec hdec alg mult hmult).val.val
+    (foldOutOf R p enc dec hdec alg mult hmult).property
 
 /-- The meaning `foldOutSem` reads at the raw tree is the meaning `foldOutExpr`
 carries. -/
@@ -348,8 +348,8 @@ theorem foldOutSem_eq_eval (R : RankedAlphabet) (p : ℕ) (enc : α → Fin p �
     (dec : (Fin p → Bool) → α) (hdec : ∀ a, dec (enc a) = a)
     (alg : (i : Fin R.card) → (Fin (R.arity i) → α) → α) (mult : ℕ)
     (hmult : p + 1 ≤ mult * R.width) :
-    transport (foldOutOf R p enc dec hdec alg mult hmult).2
-        (foldOutOf R p enc dec hdec alg mult hmult).1.eval =
+    transport (foldOutOf R p enc dec hdec alg mult hmult).property
+        (foldOutOf R p enc dec hdec alg mult hmult).val.eval =
       foldOutSem R p enc dec hdec alg mult hmult := rfl
 
 /-- One step of the fold: the readout on the scan's value. -/
@@ -359,7 +359,7 @@ theorem foldOutSem_apply (R : RankedAlphabet) (p : ℕ) (enc : α → Fin p → 
     (hmult : p + 1 ≤ mult * R.width) (w : List Bool) :
     foldOutSem R p enc dec hdec alg mult hmult ![w] =
       stepWord (readOf R p enc dec) (foldSemF R p enc dec alg mult ![w]) :=
-  congrArg (semAt 1 (readOf R p enc dec).1.1 (readOf R p enc dec).2)
+  congrArg (semAt 1 (readOf R p enc dec).val.val (readOf R p enc dec).property)
     (funext fun i ↦ match i with | ⟨0, _⟩ => rfl)
 
 /-- The expression computes the fold: at a bitstring spelling a term, the marked

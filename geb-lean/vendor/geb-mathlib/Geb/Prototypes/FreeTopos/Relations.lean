@@ -136,7 +136,7 @@ def Eqz (f g : FunRel A B) : Type := {a : A // ∀ b, a ~[f.rel] b ↔ a ~[g.rel
 relation that equalizes them: an element is related to the element of the equalizer that is its
 image. -/
 def eqLift (f g : FunRel A B) (h : FunRel X A) (hh : comp f h = comp g h) : FunRel X (Eqz f g) :=
-  ⟨{(x, e) | x ~[h.rel] e.1}, fun x ↦ by
+  ⟨{(x, e) | x ~[h.rel] e.val}, fun x ↦ by
     obtain ⟨a, ha, hau⟩ := h.functional x
     have hfg : ∀ b, a ~[f.rel] b ↔ a ~[g.rel] b := fun b ↦ by
       have e := congrArg (fun k : FunRel X B ↦ x ~[k.rel] b) hh
@@ -147,7 +147,7 @@ def eqLift (f g : FunRel A B) (h : FunRel X A) (hh : comp f h = comp g h) : FunR
         fun hb ↦ by
           obtain ⟨a', ha', hf⟩ := e.mpr ⟨a, ha, hb⟩
           exact hau a' ha' ▸ hf⟩
-    exact ⟨⟨a, hfg⟩, ha, fun e he ↦ Subtype.ext (hau e.1 he)⟩⟩
+    exact ⟨⟨a, hfg⟩, ha, fun e he ↦ Subtype.ext (hau e.val he)⟩⟩
 
 /-- The copairing of two functional relations of one codomain: an element of the coproduct is
 related to the image of the element it injects. -/
@@ -234,9 +234,9 @@ theorem injective_of_cancel {m : FunRel A B}
 map: an element of the pullback, an image, is related to the element whose image it is. -/
 def chiInv (m : FunRel A B) (hm : ∀ {X : Type} (f g : FunRel X A), comp m f = comp m g → f = g) :
     FunRel (Eqz (chi m) (comp tru (bang B))) A :=
-  ⟨{(e, a) | a ~[m.rel] e.1}, fun e ↦ by
-    have ht := (e.2 True).mpr ⟨(), rfl, trivial⟩
-    obtain ⟨a, ha⟩ : ∃ a, a ~[m.rel] e.1 := ht ▸ trivial
+  ⟨{(e, a) | a ~[m.rel] e.val}, fun e ↦ by
+    have ht := (e.property True).mpr ⟨(), rfl, trivial⟩
+    obtain ⟨a, ha⟩ : ∃ a, a ~[m.rel] e.val := ht ▸ trivial
     exact ⟨a, ha, fun a' ha' ↦ injective_of_cancel hm ha' ha⟩⟩
 
 /-- The relation the fold of the natural numbers with a start and a step determines, by
@@ -335,7 +335,7 @@ theorem eqIncl_eq (f g : FunRel A B) :
     comp f (ofFun (Subtype.val : Eqz f g → A)) = comp g (ofFun Subtype.val) :=
   ext_of_le fun e b ⟨a, ha, hb⟩ ↦ by
     subst ha
-    exact ⟨_, rfl, (e.2 b).mp hb⟩
+    exact ⟨_, rfl, (e.property b).mp hb⟩
 
 /-- The inclusion of an equalizer after a factorization. -/
 theorem eqIncl_eqLift (f g : FunRel A B) (h : FunRel X A) (hh : comp f h = comp g h) :
@@ -346,7 +346,7 @@ theorem eqIncl_eqLift (f g : FunRel A B) (h : FunRel X A) (hh : comp f h = comp 
 factors is its factorization. -/
 theorem eq_eqLift (f g : FunRel A B) (h : FunRel X A) (hh : comp f h = comp g h)
     (k : FunRel X (Eqz f g)) (hk : comp (ofFun Subtype.val) k = h) : k = eqLift f g h hh :=
-  ext_of_le fun x e hxe ↦ show x ~[h.rel] e.1 from hk ▸ ⟨e, hxe, rfl⟩
+  ext_of_le fun x e hxe ↦ show x ~[h.rel] e.val from hk ▸ ⟨e, hxe, rfl⟩
 
 /-- Every functional relation from the empty type is the graph of its elimination. -/
 theorem eq_absurd (f : FunRel Empty A) : f = ofFun Empty.elim := ext_of_le fun e _ _ ↦ e.elim
@@ -435,7 +435,7 @@ theorem chiInv_comp (m : FunRel A B)
     (k : FunRel A (Eqz (chi m) (comp tru (bang B)))) (hk : comp (ofFun Subtype.val) k = m) :
     comp (chiInv m hm) k = ofFun id :=
   ext_of_le fun a _ ⟨e, hke, he⟩ ↦ by
-    have h₁ : a ~[(comp (ofFun Subtype.val) k).rel] e.1 := ⟨e, hke, rfl⟩
+    have h₁ : a ~[(comp (ofFun Subtype.val) k).rel] e.val := ⟨e, hke, rfl⟩
     rw [hk] at h₁
     exact injective_of_cancel hm h₁ he
 
@@ -455,13 +455,13 @@ theorem eq_chi (m : FunRel A B) (φ : FunRel B Prop) (k : FunRel A (Eqz φ (comp
     have h₁ : (⟨b, he⟩ : Eqz φ _) ~[(comp k k').rel] e' := ⟨a, ha, he'⟩
     rw [hkk] at h₁
     have hee : (⟨b, he⟩ : Eqz φ _) = e' := h₁
-    have hm : a ~[m.rel] e'.1 := hk ▸ ⟨e', he', rfl⟩
+    have hm : a ~[m.rel] e'.val := hk ▸ ⟨e', he', rfl⟩
     rw [← hee] at hm
     exact ⟨a, hm⟩
   · obtain ⟨e, he, -⟩ := k.functional a
-    have hae : a ~[m.rel] e.1 := hk ▸ ⟨e, he, rfl⟩
-    obtain rfl : b = e.1 := m.unique ha hae
-    have ht : e.1 ~[φ.rel] True := (e.2 True).mpr ⟨(), rfl, trivial⟩
+    have hae : a ~[m.rel] e.val := hk ▸ ⟨e, he, rfl⟩
+    obtain rfl : b = e.val := m.unique ha hae
+    have ht : e.val ~[φ.rel] True := (e.property True).mpr ⟨(), rfl, trivial⟩
     exact φ.unique hbp ht ▸ trivial
 
 /-- The fold of the natural numbers at zero is the start. -/

@@ -84,7 +84,7 @@ def localNaturality (decI : DecidableEq I) (feI : FinEnum I)
               match decI (F.q (PFunctor.W.head (f b))) i with
               | isFalse _ => true
               | isTrue hq =>
-                  (decEqW (f (F.directionRestr a g ⟨b, hb⟩).1)
+                  (decEqW (f (F.directionRestr a g ⟨b, hb⟩).val)
                     (F.wRestrTreeRaw g (f b) hq)).decide
 
 /-- The native checker is precisely the scan of its local tests, on all raw trees. -/
@@ -112,10 +112,10 @@ theorem native_eq_scan (decI : DecidableEq I) (feI : FinEnum I)
 theorem scan_eq_true_iff (decI : DecidableEq I) (feI : FinEnum I)
     (feHom : ∀ i i' : I, FinEnum (i' ⟶ i)) (feB : ∀ a, FinEnum (F.toPFunctor.B a))
     (decEqW : DecidableEq (WType F.toPFunctor.B)) (z : F.toSlicePFunctor.W) :
-    (occurrences feB z.1).all (localNaturality F decI feI feHom feB decEqW) = true ↔
+    (occurrences feB z.val).all (localNaturality F decI feI feHom feB decEqW) = true ↔
       F.IsHereditarilyNatural z := by
   exact (congrArg (fun b ↦ b = true)
-    (native_eq_scan F decI feI feHom feB decEqW z.1).symm).to_iff.trans
+    (native_eq_scan F decI feI feHom feB decEqW z.val).symm).to_iff.trans
       (F.isHereditarilyNaturalBoolCore_eq_true_iff decI feI feHom feB decEqW z)
 
 /-- A suffix scan agrees with the native checker when positions enumerate all input
@@ -152,12 +152,12 @@ def restrictedEq (decA : DecidableEq F.A) (feB : ∀ a, FinEnum (F.toPFunctor.B 
     (t u : WType F.toPFunctor.B) (hq : F.q (PFunctor.W.head u) = j) : Bool :=
   match t, u, hq with
   | WType.mk a f, WType.mk a' f', hq =>
-      match decA a (F.shapeRestr g ⟨a', hq⟩).1 with
+      match decA a (F.shapeRestr g ⟨a', hq⟩).val with
       | isFalse _ => false
       | isTrue h =>
           (feB a).toList.all fun b ↦
             eq (f b) (f' (F.reindex g ⟨a', hq⟩
-              (i := F.rCurried (F.shapeRestr g ⟨a', hq⟩).1 (h ▸ b)) ⟨h ▸ b, rfl⟩).1)
+              (i := F.rCurried (F.shapeRestr g ⟨a', hq⟩).val (h ▸ b)) ⟨h ▸ b, rfl⟩).val)
 
 /-- The root comparison tests exactly equality with the root-restricted tree. -/
 theorem restrictedEq_eq_true_iff (decA : DecidableEq F.A)

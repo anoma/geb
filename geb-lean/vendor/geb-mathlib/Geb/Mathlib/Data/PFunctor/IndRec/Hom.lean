@@ -212,14 +212,14 @@ def deltaEmptyPushStep :
           (fun j ↦ precomp I O B i (M (precompMerge I B i cl.down j))))
         (ULift.up (fun x ↦ (e x).elim))
         (m (ULift.up i) {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
-          (fun z ↦ (e z.1).elim)
+          (fun z ↦ (e z.val).elim)
           (fun j ↦ precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
           (cast (congrArg
             (fun a ↦ Hom I O (c (ULift.up i)) (precomp I O B i (M a)))
             (funext (fun x ↦ (e x).elim) :
               (fun x ↦ (e x).elim) = precompMerge I B i (fun x ↦ (e x).elim)
                     (fun z : {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
-                      ↦ ((e z.1).elim : PEmpty.{1}).elim)))
+                      ↦ ((e z.val).elim : PEmpty.{1}).elim)))
             (f i)))
 
 /-- Postcomposition with the `δ`-injection at an empty direction witness
@@ -276,14 +276,14 @@ theorem deltaEmptyPush_mk_delta (B : Type uB)
         (ULift.up (fun x ↦ (e x).elim))
         (deltaEmptyPush I O (d (ULift.up i))
           {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
-          (fun z ↦ (e z.1).elim)
+          (fun z ↦ (e z.val).elim)
           (fun j ↦ precomp I O B i (M (precompMerge I B i (fun x ↦ (e x).elim) j)))
           (cast (congrArg
             (fun a ↦ Hom I O (d (ULift.up i)) (precomp I O B i (M a)))
             (funext (fun x ↦ (e x).elim) :
               (fun x ↦ (e x).elim) = precompMerge I B i (fun x ↦ (e x).elim)
                     (fun z : {z : E // (fun x ↦ (e x).elim) z = Sum.inr PUnit.unit}
-                      ↦ ((e z.1).elim : PEmpty.{1}).elim)))
+                      ↦ ((e z.val).elim : PEmpty.{1}).elim)))
             (f i))) :=
   congrFun (congrFun (congrFun (congrFun
     (rec_mk I O (deltaEmptyPushStep I O) (Sum.inr (Sum.inr B)) d) E) e) M) f
@@ -346,14 +346,14 @@ def deltaNavBase (D : IR.{max uA uB, uB, uI, uO} I O) (Bout : Type uB) (iout : B
       (fun j ↦ precomp I O Bout iout (K (precompMerge I Bout iout cl.down j))))
     (ULift.up (fun b ↦ Sum.inl (g b)))
     (deltaEmptyPush I O D {z : Bin // (fun b ↦ Sum.inl (g b)) z = Sum.inr PUnit.unit}
-      (fun z ↦ nomatch z.2)
+      (fun z ↦ nomatch z.property)
       (fun j ↦ precomp I O Bout iout
         (K (precompMerge I Bout iout (fun b ↦ Sum.inl (g b)) j)))
       (cast (congrArg (fun a ↦ Hom I O D (precomp I O Bout iout (K a)))
         (funext (fun _b ↦ rfl) :
           (iout ∘ g) = precompMerge I Bout iout (fun b ↦ Sum.inl (g b))
                 (fun z : {z : Bin // (fun b ↦ Sum.inl (g b)) z = Sum.inr PUnit.unit}
-                  ↦ (nomatch z.2 : I)))) f))
+                  ↦ (nomatch z.property : I)))) f))
 
 /-- The navigation up an iterated-precomposition tower: at each stack
 layer, inject through the all-unresolved classifier (`msigmaPush`),
@@ -383,7 +383,7 @@ def deltaNav (D : IR.{max uA uB, uB, uI, uO} I O) (Bout : Type uB) (iout : Bout 
               = Sum.inr PUnit.unit}
           (fun m ↦ precomp.{max uA uB, uB, uI, uO, uB} I O a.1 a.2
             (K (precompMerge I a.1 a.2 (fun _ ↦ Sum.inr PUnit.unit) m)))
-          (fun z ↦ g z.1) f))
+          (fun z ↦ g z.val) f))
     Bin K g f
 
 /-- The motive of `IR.preUnitStack` (named so `IR.rec_mk` applies). -/

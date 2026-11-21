@@ -127,12 +127,12 @@ def deltaInto (B : Type uB)
         (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩)
         (interpObj I O (c i)) X)
       (interpObj I O (delta I O B c) X) :=
-  ⟨fun p ↦ ⟨p.1.1 ∘ ULift.up,
+  ⟨fun p ↦ ⟨p.1.val ∘ ULift.up,
       cast (congrArg (fun t ↦ (interpObj I O (c t) X).1)
-        (congrArg (· ∘ ULift.up) p.1.2).symm) p.2⟩,
+        (congrArg (· ∘ ULift.up) p.1.property).symm) p.2⟩,
     funext (fun p ↦
       interpObj_snd_cast I O B c X
-        (congrArg (· ∘ ULift.up) p.1.2).symm p.2)⟩
+        (congrArg (· ∘ ULift.up) p.1.property).symm p.2)⟩
 
 /-- The cotuple out of the `delta` interpretation: a delta name
 `⟨g, n⟩` is dispatched to the component of `m` at the direction
@@ -147,9 +147,9 @@ def deltaDesc (B : Type uB)
         (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩)
         (interpObj I O (c i)) X) Z) :
     FreeCoprodCompDisc.Hom O (interpObj I O (delta I O B c) X) Z :=
-  ⟨fun q ↦ (m (X.2 ∘ q.1)).1 ⟨⟨q.1 ∘ ULift.down, rfl⟩, q.2⟩,
+  ⟨fun q ↦ (m (X.2 ∘ q.1)).val ⟨⟨q.1 ∘ ULift.down, rfl⟩, q.2⟩,
     funext (fun q ↦
-      congrFun (m (X.2 ∘ q.1)).2 ⟨⟨q.1 ∘ ULift.down, rfl⟩, q.2⟩)⟩
+      congrFun (m (X.2 ∘ q.1)).property ⟨⟨q.1 ∘ ULift.down, rfl⟩, q.2⟩)⟩
 
 /-- The transport-elimination step of `IR.deltaInto_desc`: the target
 direction assignment is generalized together with the transport
@@ -166,17 +166,17 @@ theorem deltaInto_desc_aux (B : Type uB)
     (e : FreeCoprodCompDisc.Hom I
       (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, i⟩) X)
     (n : (interpObj I O (c i) X).1) (j : B → I) (h : i = j)
-    (pf : X.2 ∘ ((e.1 ∘ ULift.up) ∘ ULift.down) =
+    (pf : X.2 ∘ ((e.val ∘ ULift.up) ∘ ULift.down) =
       (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, j⟩).2) :
-    (m j).1 ⟨⟨(e.1 ∘ ULift.up) ∘ ULift.down, pf⟩,
+    (m j).val ⟨⟨(e.val ∘ ULift.up) ∘ ULift.down, pf⟩,
         cast (congrArg (fun t ↦ (interpObj I O (c t) X).1) h) n⟩ =
-      (m i).1 ⟨e, n⟩ :=
+      (m i).val ⟨e, n⟩ :=
   Eq.rec (motive := fun j' h' ↦
-      ∀ pf' : X.2 ∘ ((e.1 ∘ ULift.up) ∘ ULift.down) =
+      ∀ pf' : X.2 ∘ ((e.val ∘ ULift.up) ∘ ULift.down) =
         (FreeCoprodCompDisc.lift.{uB, uI, max uA uB} I ⟨B, j'⟩).2,
-      (m j').1 ⟨⟨(e.1 ∘ ULift.up) ∘ ULift.down, pf'⟩,
+      (m j').val ⟨⟨(e.val ∘ ULift.up) ∘ ULift.down, pf'⟩,
           cast (congrArg (fun t ↦ (interpObj I O (c t) X).1) h') n⟩ =
-        (m i).1 ⟨e, n⟩)
+        (m i).val ⟨e, n⟩)
     (fun _ ↦ rfl) h pf
 
 /-- Restricting the delta cotuple along the `i`-th injection recovers
@@ -193,8 +193,8 @@ theorem deltaInto_desc (B : Type uB)
       (deltaDesc I O B c X Z m) = m i :=
   Subtype.ext (funext (fun p ↦
     deltaInto_desc_aux I O B c i X Z m p.1 p.2
-      (X.2 ∘ (p.1.1 ∘ ULift.up))
-      ((congrArg (· ∘ ULift.up) p.1.2).symm) rfl))
+      (X.2 ∘ (p.1.val ∘ ULift.up))
+      ((congrArg (· ∘ ULift.up) p.1.property).symm) rfl))
 
 /-- Every morphism out of the delta interpretation is the cotuple of
 its restrictions along the injections. -/
@@ -232,13 +232,13 @@ theorem interpMor_cast (B : Type uB)
     (h : FreeCoprodCompDisc.Hom I X Y) {i j : B → I} (e : i = j)
     (n : (interpObj I O (c i) X).1) :
     cast (congrArg (fun t ↦ (interpObj I O (c t) Y).1) e)
-        ((interpMor I O (c i) X Y h).1 n) =
-      (interpMor I O (c j) X Y h).1
+        ((interpMor I O (c i) X Y h).val n) =
+      (interpMor I O (c j) X Y h).val
         (cast (congrArg (fun t ↦ (interpObj I O (c t) X).1) e) n) :=
   Eq.rec (motive := fun j' e' ↦
       cast (congrArg (fun t ↦ (interpObj I O (c t) Y).1) e')
-          ((interpMor I O (c i) X Y h).1 n) =
-        (interpMor I O (c j') X Y h).1
+          ((interpMor I O (c i) X Y h).val n) =
+        (interpMor I O (c j') X Y h).val
           (cast (congrArg (fun t ↦ (interpObj I O (c t) X).1) e') n))
     rfl e
 
@@ -270,10 +270,10 @@ theorem deltaInto_natural_base (B : Type uB)
     DeltaIntoNaturalMotive I O B c i X1 Y h1 (Y.2 ∘ h1) rfl :=
   Subtype.ext (funext (fun p ↦
     congrArg
-      (fun t ↦ (⟨h1 ∘ (p.1.1 ∘ ULift.up), t⟩ :
+      (fun t ↦ (⟨h1 ∘ (p.1.val ∘ ULift.up), t⟩ :
         Σ g : B → Y.1, (interpObj I O (c (Y.2 ∘ g)) Y).1))
       (interpMor_cast I O B c ⟨X1, Y.2 ∘ h1⟩ Y ⟨h1, rfl⟩
-        ((congrArg (· ∘ ULift.up) p.1.2).symm) p.2)))
+        ((congrArg (· ∘ ULift.up) p.1.property).symm) p.2)))
 
 /-- Naturality of `IR.deltaInto` in the object. -/
 theorem deltaInto_natural (B : Type uB)
@@ -318,21 +318,21 @@ def natDeltaEquiv (B : Type uB)
           (interpMor I O (c i))) mG) :=
   { toFun := fun η i ↦
       ⟨fun X ↦
-        FreeCoprodCompDisc.Hom.comp O (deltaInto I O B c i X) (η.1 X),
+        FreeCoprodCompDisc.Hom.comp O (deltaInto I O B c i X) (η.val X),
         fun X Y h ↦
           (congrArg
-              (fun t ↦ FreeCoprodCompDisc.Hom.comp O t (η.1 Y))
+              (fun t ↦ FreeCoprodCompDisc.Hom.comp O t (η.val Y))
               (deltaInto_natural I O B c i X Y h)).trans
             (congrArg
               (FreeCoprodCompDisc.Hom.comp O (deltaInto I O B c i X))
-              (η.2 X Y h))⟩,
+              (η.property X Y h))⟩,
     invFun := fun θ ↦
-      ⟨fun X ↦ deltaDesc I O B c X (G X) (fun i ↦ (θ i).1 X),
+      ⟨fun X ↦ deltaDesc I O B c X (G X) (fun i ↦ (θ i).val X),
         fun X Y h ↦
           deltaHom_ext I O B c X (G Y) _ _ (fun i ↦
             (((congrArg
                   (fun t ↦ FreeCoprodCompDisc.Hom.comp O t
-                    (deltaDesc I O B c Y (G Y) (fun i' ↦ (θ i').1 Y)))
+                    (deltaDesc I O B c Y (G Y) (fun i' ↦ (θ i').val Y)))
                   (deltaInto_natural I O B c i X Y h)).symm.trans
               ((congrArg
                   (FreeCoprodCompDisc.Hom.comp O
@@ -341,16 +341,16 @@ def natDeltaEquiv (B : Type uB)
                         I ⟨B, i⟩)
                       (interpMor I O (c i)) X Y h))
                   (deltaInto_desc I O B c i Y (G Y)
-                    (fun i' ↦ (θ i').1 Y))).trans
-                ((θ i).2 X Y h))).trans
+                    (fun i' ↦ (θ i').val Y))).trans
+                ((θ i).property X Y h))).trans
             (congrArg
               (fun t ↦ FreeCoprodCompDisc.Hom.comp O t (mG X Y h))
               (deltaInto_desc I O B c i X (G X)
-                (fun i' ↦ (θ i').1 X)).symm)))⟩,
+                (fun i' ↦ (θ i').val X)).symm)))⟩,
     left_inv := fun η ↦ Subtype.ext (funext (fun X ↦
-      deltaDesc_eta I O B c X (G X) (η.1 X))),
+      deltaDesc_eta I O B c X (G X) (η.val X))),
     right_inv := fun θ ↦ funext (fun i ↦ Subtype.ext (funext (fun X ↦
-      deltaInto_desc I O B c i X (G X) (fun i' ↦ (θ i').1 X)))) }
+      deltaInto_desc I O B c i X (G X) (fun i' ↦ (θ i').val X)))) }
 
 /-- The right-hand object map of the Lemma 4 naturality square: the
 direct interpretation of `γ` at the coproduct of `⟨Q, i⟩` with the
@@ -405,18 +405,18 @@ theorem interpMor_isoOfEq (B : Type uB)
     (pm : FreeCoprodCompDisc.Hom I V W) {m₀ m₁ : B → I} (e : m₀ = m₁)
     (u : (interpObj I O (c m₀) V).1) :
     (FreeCoprodCompDisc.isoOfEq O
-        (congrArg (fun m ↦ interpObj I O (c m) W) e)).1
-        ((interpMor I O (c m₀) V W pm).1 u) =
-      (interpMor I O (c m₁) V W pm).1
+        (congrArg (fun m ↦ interpObj I O (c m) W) e)).val
+        ((interpMor I O (c m₀) V W pm).val u) =
+      (interpMor I O (c m₁) V W pm).val
         ((FreeCoprodCompDisc.isoOfEq O
-          (congrArg (fun m ↦ interpObj I O (c m) V) e)).1 u) :=
+          (congrArg (fun m ↦ interpObj I O (c m) V) e)).val u) :=
   Eq.rec (motive := fun m' e' ↦
       (FreeCoprodCompDisc.isoOfEq O
-          (congrArg (fun m ↦ interpObj I O (c m) W) e')).1
-          ((interpMor I O (c m₀) V W pm).1 u) =
-        (interpMor I O (c m') V W pm).1
+          (congrArg (fun m ↦ interpObj I O (c m) W) e')).val
+          ((interpMor I O (c m₀) V W pm).val u) =
+        (interpMor I O (c m') V W pm).val
           ((FreeCoprodCompDisc.isoOfEq O
-            (congrArg (fun m ↦ interpObj I O (c m) V) e')).1 u))
+            (congrArg (fun m ↦ interpObj I O (c m) V) e')).val u))
     rfl e
 
 /-- The motive of the commutation-proof elimination in
@@ -433,15 +433,15 @@ def PrecompNatDeltaPairMotive (B : Type uB)
     ∀ (eX : m₀ = v2 ∘ gx) (eY : m₀ = W.2 ∘ gy)
       (u : (interpObj I O (c m₀) ⟨V1, v2⟩).1),
     (⟨gy, (FreeCoprodCompDisc.isoOfEq O
-        (congrArg (fun m ↦ interpObj I O (c m) W) eY)).1
-        ((interpMor I O (c m₀) ⟨V1, v2⟩ W ⟨p1, p2⟩).1 u)⟩ :
+        (congrArg (fun m ↦ interpObj I O (c m) W) eY)).val
+        ((interpMor I O (c m₀) ⟨V1, v2⟩ W ⟨p1, p2⟩).val u)⟩ :
       (interpObj I O (delta I O B c) W).1) =
     ⟨p1 ∘ gx,
       (FreeCoprodCompDisc.homOfEq O
           (congrArg (fun t ↦ interpObj I O (c (t ∘ gx)) W) p2.symm)
-          (interpMor I O (c (v2 ∘ gx)) ⟨V1, v2⟩ W ⟨p1, p2⟩)).1
+          (interpMor I O (c (v2 ∘ gx)) ⟨V1, v2⟩ W ⟨p1, p2⟩)).val
         ((FreeCoprodCompDisc.isoOfEq O
-          (congrArg (fun m ↦ interpObj I O (c m) ⟨V1, v2⟩) eX)).1 u)⟩
+          (congrArg (fun m ↦ interpObj I O (c m) ⟨V1, v2⟩) eX)).val u)⟩
 
 /-- The motive of the reassembled-assignment elimination inside the
 base case of `IR.precompNatDeltaPair`: the codomain-side assignment is
@@ -455,13 +455,13 @@ def PrecompNatDeltaPairInnerMotive (B : Type uB)
   ∀ (eX : m₀ = (W.2 ∘ p1) ∘ gx) (eY : m₀ = W.2 ∘ gy)
     (u : (interpObj I O (c m₀) ⟨V1, W.2 ∘ p1⟩).1),
   (⟨gy, (FreeCoprodCompDisc.isoOfEq O
-      (congrArg (fun m ↦ interpObj I O (c m) W) eY)).1
-      ((interpMor I O (c m₀) ⟨V1, W.2 ∘ p1⟩ W ⟨p1, rfl⟩).1 u)⟩ :
+      (congrArg (fun m ↦ interpObj I O (c m) W) eY)).val
+      ((interpMor I O (c m₀) ⟨V1, W.2 ∘ p1⟩ W ⟨p1, rfl⟩).val u)⟩ :
     (interpObj I O (delta I O B c) W).1) =
   ⟨p1 ∘ gx,
-    (interpMor I O (c ((W.2 ∘ p1) ∘ gx)) ⟨V1, W.2 ∘ p1⟩ W ⟨p1, rfl⟩).1
+    (interpMor I O (c ((W.2 ∘ p1) ∘ gx)) ⟨V1, W.2 ∘ p1⟩ W ⟨p1, rfl⟩).val
       ((FreeCoprodCompDisc.isoOfEq O
-        (congrArg (fun m ↦ interpObj I O (c m) ⟨V1, W.2 ∘ p1⟩) eX)).1 u)⟩
+        (congrArg (fun m ↦ interpObj I O (c m) ⟨V1, W.2 ∘ p1⟩) eX)).val u)⟩
 
 /-- The base case of both eliminations in `IR.precompNatDeltaPair`:
 at the factored assignment `p1 ∘ gx`, the two assignment-equality
@@ -576,7 +576,7 @@ theorem precompNat_mk_sigma (A : Type (max uA uB))
     ((congrArg
         (FreeCoprodCompDisc.Iso.hom O
           (interpPrecompIsoStep I O (Sum.inr (Sum.inl A)) d
-            (fun x ↦ interpPrecompIso I O (d x)) Q i Y)).1
+            (fun x ↦ interpPrecompIso I O (d x)) Q i Y)).val
         (congrFun (congrArg Subtype.val
             (congrFun (congrFun (congrFun
               (interpMor_sigma I O (ULift.{uB} A)
@@ -599,7 +599,7 @@ theorem precompNat_mk_sigma (A : Type (max uA uB))
             (FreeCoprodCompDisc.Hom.id I ⟨Q, i⟩) ⟨h1, rfl⟩)))
       ((FreeCoprodCompDisc.Iso.hom O
         (interpPrecompIsoStep I O (Sum.inr (Sum.inl A)) d
-          (fun x ↦ interpPrecompIso I O (d x)) Q i ⟨X1, Y.2 ∘ h1⟩)).1 p)).symm))
+          (fun x ↦ interpPrecompIso I O (d x)) Q i ⟨X1, Y.2 ∘ h1⟩)).val p)).symm))
 
 /-- The `delta` case of the naturality upgrade: after the
 characterizing equations, a name of the precomposed `delta`
@@ -619,7 +619,7 @@ theorem precompNat_mk_delta (B : Type uB)
     ((congrArg
         (FreeCoprodCompDisc.Iso.hom O
           (interpPrecompIsoStep I O (Sum.inr (Sum.inr B)) d
-            (fun x ↦ interpPrecompIso I O (d x)) Q i Y)).1
+            (fun x ↦ interpPrecompIso I O (d x)) Q i Y)).val
         (congrFun (congrArg Subtype.val
             (congrFun (congrFun (congrFun
               (interpMor_sigma I O
@@ -632,7 +632,7 @@ theorem precompNat_mk_delta (B : Type uB)
       ((congrArg
           (fun t ↦ (FreeCoprodCompDisc.Iso.hom O
             (interpPrecompIsoStep I O (Sum.inr (Sum.inr B)) d
-              (fun x ↦ interpPrecompIso I O (d x)) Q i Y)).1
+              (fun x ↦ interpPrecompIso I O (d x)) Q i Y)).val
             (⟨p.1, t⟩ :
               (interpObj I O
                 (precomp I O Q i (mk I O (Sum.inr (Sum.inr B)) d)) Y).1))
@@ -649,7 +649,7 @@ theorem precompNat_mk_delta (B : Type uB)
                 (congrArg
                   (fun m ↦ interpObj I O (d (ULift.up m))
                     (FreeCoprodCompDisc.plus I ⟨Q, i⟩ Y))
-                  (precompMerge_elim I Q i Y B p.1.down (h1 ∘ p.2.1)))).1 t⟩ :
+                  (precompMerge_elim I Q i Y B p.1.down (h1 ∘ p.2.1)))).val t⟩ :
               (interpObj I O (mk I O (Sum.inr (Sum.inr B)) d)
                 (FreeCoprodCompDisc.plus I ⟨Q, i⟩ Y)).1))
             (congrFun (congrArg Subtype.val
@@ -665,7 +665,7 @@ theorem precompNat_mk_delta (B : Type uB)
             (FreeCoprodCompDisc.coprodPairMor I
               (FreeCoprodCompDisc.Hom.id I ⟨Q, i⟩)
               (⟨h1, rfl⟩ :
-                FreeCoprodCompDisc.Hom I ⟨X1, Y.2 ∘ h1⟩ Y)).2
+                FreeCoprodCompDisc.Hom I ⟨X1, Y.2 ∘ h1⟩ Y)).property
             (arrowSumMerge p.1.down (h1 ∘ p.2.1))
             (funext (fun b ↦ arrowSumMerge_map p.1.down p.2.1 h1 b))
             (precompMerge_elim I Q i ⟨X1, Y.2 ∘ h1⟩ B p.1.down p.2.1)
@@ -674,7 +674,7 @@ theorem precompNat_mk_delta (B : Type uB)
               (interpPrecompIso I O
                 (d (ULift.up
                   (precompMerge I Q i p.1.down ((Y.2 ∘ h1) ∘ p.2.1)))) Q i
-                ⟨X1, Y.2 ∘ h1⟩)).1 p.2.2))))).trans
+                ⟨X1, Y.2 ∘ h1⟩)).val p.2.2))))).trans
     (congrFun (congrArg Subtype.val
         (congrFun (congrFun (congrFun
           (interpMor_mk I O (Sum.inr (Sum.inr B)) d)
@@ -684,7 +684,7 @@ theorem precompNat_mk_delta (B : Type uB)
             (FreeCoprodCompDisc.Hom.id I ⟨Q, i⟩) ⟨h1, rfl⟩)))
       ((FreeCoprodCompDisc.Iso.hom O
         (interpPrecompIsoStep I O (Sum.inr (Sum.inr B)) d
-          (fun x ↦ interpPrecompIso I O (d x)) Q i ⟨X1, Y.2 ∘ h1⟩)).1 p)).symm))
+          (fun x ↦ interpPrecompIso I O (d x)) Q i ⟨X1, Y.2 ∘ h1⟩)).val p)).symm))
 
 /-- The per-shape dispatch of the naturality upgrade's base case. -/
 theorem precompNat_mk_base (s : Shape.{max uA uB, uB, uO} O)
@@ -789,17 +789,17 @@ def natIotaEquiv (o : O) (γ' : IR.{max uA uB, uB, uI, uO} I O) :
       FreeCoprodCompDisc.Hom O
         (interpObj I O (iota.{max uA uB, uB, uI, uO} I O o) (FreeCoprodCompDisc.emptyObj I))
         (interpObj I O γ' (FreeCoprodCompDisc.emptyObj I)) :=
-  { toFun := fun η ↦ η.1 (FreeCoprodCompDisc.emptyObj I),
+  { toFun := fun η ↦ η.val (FreeCoprodCompDisc.emptyObj I),
     invFun := natIotaInvFun I O o γ',
     left_inv := fun η ↦ Subtype.ext (funext (fun X ↦
-      (η.2 (FreeCoprodCompDisc.emptyObj I) X
+      (η.property (FreeCoprodCompDisc.emptyObj I) X
           (FreeCoprodCompDisc.emptyDesc I X)).symm.trans
         (congrArg
           (fun (t : MorMapSig I O (iota.{max uA uB, uB, uI, uO} I O o)) ↦
             FreeCoprodCompDisc.Hom.comp O
               (t (FreeCoprodCompDisc.emptyObj I) X
                 (FreeCoprodCompDisc.emptyDesc I X))
-              (η.1 X))
+              (η.val X))
           (interpMor_iota.{max uA uB, uB, uI, uO} I O o)))),
     right_inv := fun f ↦
       (congrArg
@@ -850,7 +850,7 @@ def innerHomEquivStep (o : O) :
   fun s c m ↦ match s, c, m with
   | Sum.inl _, _, _ =>
       { toFun := fun h ↦ ⟨ULift.up Unit.unit, h.down.down.symm⟩,
-        invFun := fun z ↦ ULift.up (PLift.up z.2.symm),
+        invFun := fun z ↦ ULift.up (PLift.up z.property.symm),
         left_inv := fun _ ↦ rfl,
         right_inv := fun _ ↦ rfl }
   | Sum.inr (Sum.inl _), c, m =>

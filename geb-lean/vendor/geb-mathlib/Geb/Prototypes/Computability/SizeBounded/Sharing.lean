@@ -114,9 +114,9 @@ holds its arguments as thunks before entering the head, and a recursion is
 slice over {lit}`ℕ`. -/
 @[expose] def evalStepVec :
     sig.toSliceDomPFunctor.Obj (Sigma.fst (β := Sem)) → Σ i, Sem i :=
-  fun z ↦ ⟨sig.q z.1.1,
-    evalValueVec z.1.1 z.1.2
-      ((sig.toSliceDomPFunctor.compatible_iff _ z.1.1 z.1.2).mp z.2)⟩
+  fun z ↦ ⟨sig.q z.val.1,
+    evalValueVec z.val.1 z.val.2
+      ((sig.toSliceDomPFunctor.compatible_iff _ z.val.1 z.val.2).mp z.property)⟩
 
 /-- The shared interpretation of a tree. -/
 @[expose] def evalVec : sig.W → Σ n, Sem n :=
@@ -132,7 +132,7 @@ theorem fst_evalVec (z : S) : (evalVec z).1 = arity z :=
   transport ((fst_evalVec e).trans he) (evalVec e).2
 
 /-- The shared meaning of an expression of a given arity. -/
-@[expose] def SOf.semVec {n : ℕ} (e : SOf n) : Sem n := semVecAt n e.1 e.2
+@[expose] def SOf.semVec {n : ℕ} (e : SOf n) : Sem n := semVecAt n e.val e.property
 
 /-- One node's shared meaning is its meaning: the thunks read back the families
 they hold. -/
@@ -155,12 +155,12 @@ theorem evalValueVec_eq (a : Shape) (c : Direction a → Σ i, Sem i)
 theorem evalVec_eq : ∀ e : S, evalVec e = eval e :=
   SlicePFunctor.W.induction fun x ih ↦
     Sigma.ext rfl (heq_of_eq
-      ((evalValueVec_eq x.1.1 (fun b ↦ evalVec (x.1.2 b)) _).trans
+      ((evalValueVec_eq x.val.1 (fun b ↦ evalVec (x.val.2 b)) _).trans
         (evalValue_congr _ _ _ (funext ih) _ _)))
 
 /-- The shared meaning of an expression is its meaning. -/
 theorem SOf.semVec_eq {n : ℕ} (e : SOf n) : e.semVec = e.sem :=
-  transport_eq_of_sigma_eq (evalVec_eq e.1) _ _
+  transport_eq_of_sigma_eq (evalVec_eq e.val) _ _
 
 end
 
