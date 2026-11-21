@@ -54,24 +54,24 @@ public section
 /-- The recognizer accepts a word exactly when it spells an expression of the
 algebra. -/
 theorem sigRecognizer_iff (y : List Bool) :
-    sigRecognizer.sem ![y] = [true] ↔ ∃ e : S, sigCoded.spell e.1 = y := by
+    sigRecognizer.sem ![y] = [true] ↔ ∃ e : S, sigCoded.spell e.val = y := by
   rw [sigRecognizer, sigCoded.recognizeExprSem_eq_singleton_iff_isW labelOk edgeOk y
     (computesLabel y) (computesEdge y)]
-  exact ⟨fun ⟨t, hv, hs⟩ ↦ ⟨⟨t, hv⟩, hs⟩, fun ⟨e, hs⟩ ↦ ⟨e.1, e.2, hs⟩⟩
+  exact ⟨fun ⟨t, hv, hs⟩ ↦ ⟨⟨t, hv⟩, hs⟩, fun ⟨e, hs⟩ ↦ ⟨e.val, e.property, hs⟩⟩
 
 /-- The recognizer accepts the spelling of every expression of the algebra. -/
-theorem sigRecognizer_spell (e : S) : sigRecognizer.sem ![sigCoded.spell e.1] = [true] :=
+theorem sigRecognizer_spell (e : S) : sigRecognizer.sem ![sigCoded.spell e.val] = [true] :=
   (sigRecognizer_iff _).mpr ⟨e, rfl⟩
 
 /-- The recognizer accepts the spelling of every expression of the subalgebra,
 its own included. -/
 theorem sigRecognizer_self {n : ℕ} (e : LOf n) :
-    sigRecognizer.sem ![sigCoded.spell e.1.1.1] = [true] :=
-  sigRecognizer_spell e.1.1
+    sigRecognizer.sem ![sigCoded.spell e.val.val.val] = [true] :=
+  sigRecognizer_spell e.val.val
 
 /-- The recognizer accepts its own spelling. -/
 theorem sigRecognizer_sigRecognizer :
-    sigRecognizer.sem ![sigCoded.spell sigRecognizer.1.1.1] = [true] :=
+    sigRecognizer.sem ![sigCoded.spell sigRecognizer.val.val.val] = [true] :=
   sigRecognizer_self sigRecognizer
 
 end

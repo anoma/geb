@@ -156,11 +156,11 @@ theorem smashFreeBool_prependRaw (n : ℕ) (e : sig.toPFunctor.W)
 
 /-- The empty bitstring at an arity, as an expression, carries no `smash`. -/
 theorem smashFreeBool_zeroAtOf (n : ℕ) :
-    smashFreeBool (zeroAtOf n).1.1.1 = true := smashFreeBool_zeroAtRaw n
+    smashFreeBool (zeroAtOf n).val.val.val = true := smashFreeBool_zeroAtRaw n
 
 /-- A constant word carries no `smash`. -/
 theorem smashFreeBool_constAtOf (n : ℕ) (u : List Bool) :
-    smashFreeBool (constAtOf n u).1.1.1 = true :=
+    smashFreeBool (constAtOf n u).val.val.val = true :=
   smashFreeBool_prependRaw n _ (smashFreeBool_zeroAtRaw n) u
 
 /-- The predecessor carries no `smash`. -/
@@ -180,7 +180,7 @@ theorem smashFreeBool_predIterRaw : ∀ k : ℕ,
 
 /-- The iterated predecessor expression carries no `smash`. -/
 theorem smashFreeBool_predIterOf (k : ℕ) :
-    smashFreeBool (predIterOf k).1.1.1 = true := smashFreeBool_predIterRaw k
+    smashFreeBool (predIterOf k).val.val.val = true := smashFreeBool_predIterRaw k
 
 /-- The diagonal carries no `smash` when what it diagonalises does. -/
 theorem smashFreeBool_diagRaw (e : sig.toPFunctor.W)
@@ -283,31 +283,31 @@ theorem smashFreeBool_scanBRaw (base step₀ step₁ bnd : sig.toPFunctor.W)
 /-- A composition of expressions carries no `smash` when its head and arguments
 do. -/
 theorem smashFreeBool_compOf {n m : ℕ} (head : COf m) (args : Fin m → COf n)
-    (hh : smashFreeBool head.1.1.1 = true)
-    (ha : ∀ i, smashFreeBool (args i).1.1.1 = true) :
-    smashFreeBool (compOf head args).1.1.1 = true :=
+    (hh : smashFreeBool head.val.val.val = true)
+    (ha : ∀ i, smashFreeBool (args i).val.val.val = true) :
+    smashFreeBool (compOf head args).val.val.val = true :=
   smashFreeBool_compRaw n m _ fun d ↦ match d with
     | .inl () => hh
     | .inr i => ha i
 
 /-- The case combinator carries no `smash` when every branch does. -/
 theorem smashFreeBool_casesOf (p : ℕ) (br : (Fin p → Bool) → COf 1)
-    (h : ∀ v, smashFreeBool (br v).1.1.1 = true) :
-    smashFreeBool (casesOf p br).1.1.1 = true :=
+    (h : ∀ v, smashFreeBool (br v).val.val.val = true) :
+    smashFreeBool (casesOf p br).val.val.val = true :=
   smashFreeBool_casesRaw p _ h
 
 /-- The diagonal of a case tree whose branches all carry no `smash` carries
 none: the shape every step and readout of both fold constructions takes. -/
 theorem smashFreeBool_diagCasesOf (p : ℕ) (br : (Fin p → Bool) → COf 1)
-    (h : ∀ v, smashFreeBool (br v).1.1.1 = true) :
-    smashFreeBool (diagOf (casesOf p br)).1.1.1 = true :=
+    (h : ∀ v, smashFreeBool (br v).val.val.val = true) :
+    smashFreeBool (diagOf (casesOf p br)).val.val.val = true :=
   smashFreeBool_diagRaw _ (smashFreeBool_casesOf p br h)
 
 /-- The fixed-width readout carries no `smash`: every branch is a constant
 word. -/
 theorem smashFreeBool_readOf {α : Type u} {p : ℕ} (R : RankedAlphabet)
     (enc : α → Fin p → Bool) (dec : (Fin p → Bool) → α) :
-    smashFreeBool (readOf R p enc dec).1.1.1 = true :=
+    smashFreeBool (readOf R p enc dec).val.val.val = true :=
   smashFreeBool_diagCasesOf _ _ fun _ ↦ smashFreeBool_constAtOf 1 _
 
 /-- A step of the fixed-width fold carries no `smash`: every branch prepends a
@@ -315,7 +315,7 @@ constant word to an iterated predecessor. -/
 theorem smashFreeBool_foldStepF {α : Type u} {p : ℕ} (R : RankedAlphabet)
     (enc : α → Fin p → Bool) (dec : (Fin p → Bool) → α)
     (alg : (i : Fin R.card) → (Fin (R.arity i) → α) → α) (b : Bool) :
-    smashFreeBool (foldStepF R p enc dec alg b).1.1.1 = true :=
+    smashFreeBool (foldStepF R p enc dec alg b).val.val.val = true :=
   smashFreeBool_diagCasesOf _ _ fun _ ↦
     smashFreeBool_prependRaw 1 _ (smashFreeBool_predIterOf _) _
 
@@ -349,26 +349,26 @@ theorem smashFreeBool_boundRaw : ∀ growth : ℕ,
 do. -/
 theorem smashFreeBool_scan2Of (base : COf 0) (step₀ step₁ : COf 2)
     (hbound : ∀ w : List Bool, (scan2Sem base step₀ step₁ ![w]).length ≤ w.length)
-    (hb : smashFreeBool base.1.1.1 = true)
-    (h₀ : smashFreeBool step₀.1.1.1 = true)
-    (h₁ : smashFreeBool step₁.1.1.1 = true) :
-    smashFreeBool (scan2Of base step₀ step₁ hbound).1.1.1 = true :=
+    (hb : smashFreeBool base.val.val.val = true)
+    (h₀ : smashFreeBool step₀.val.val.val = true)
+    (h₁ : smashFreeBool step₁.val.val.val = true) :
+    smashFreeBool (scan2Of base step₀ step₁ hbound).val.val.val = true :=
   smashFreeBool_scan2Raw _ _ _ _ hb h₀ h₁ (smashFreeBool_boundRaw 0)
 
 /-- A projection expression carries no `smash`. -/
 theorem smashFreeBool_projOf (n : ℕ) (i : Fin n) :
-    smashFreeBool (projOf n i).1.1.1 = true := smashFreeBool_projRaw n i
+    smashFreeBool (projOf n i).val.val.val = true := smashFreeBool_projRaw n i
 
 /-- An arity-one composition carries no `smash` when its parts do. -/
 theorem smashFreeBool_comp1Of {n : ℕ} (e : COf 1) (a : COf n)
-    (he : smashFreeBool e.1.1.1 = true) (ha : smashFreeBool a.1.1.1 = true) :
-    smashFreeBool (comp1Of e a).1.1.1 = true :=
+    (he : smashFreeBool e.val.val.val = true) (ha : smashFreeBool a.val.val.val = true) :
+    smashFreeBool (comp1Of e a).val.val.val = true :=
   smashFreeBool_compOf e _ he fun _ ↦ ha
 
 /-- A concatenation of expressions carries no `smash` when its parts do. -/
 theorem smashFreeBool_concatCompOf (n : ℕ) (a b : COf n)
-    (ha : smashFreeBool a.1.1.1 = true) (hb : smashFreeBool b.1.1.1 = true) :
-    smashFreeBool (concatCompOf n a b).1.1.1 = true :=
+    (ha : smashFreeBool a.val.val.val = true) (hb : smashFreeBool b.val.val.val = true) :
+    smashFreeBool (concatCompOf n a b).val.val.val = true :=
   smashFreeBool_compOf concatOf _ smashFreeBool_concatRaw fun i ↦ match i with
     | 0 => ha
     | 1 => hb
@@ -376,48 +376,48 @@ theorem smashFreeBool_concatCompOf (n : ℕ) (a b : COf n)
 /-- Prepending a word to an expression carries no `smash` when the expression
 does. -/
 theorem smashFreeBool_prependOf {n : ℕ} (u : List Bool) (e : COf n)
-    (he : smashFreeBool e.1.1.1 = true) :
-    smashFreeBool (prependOf u e).1.1.1 = true :=
+    (he : smashFreeBool e.val.val.val = true) :
+    smashFreeBool (prependOf u e).val.val.val = true :=
   smashFreeBool_prependRaw n _ he u
 
 /-- The identity carries no `smash`. -/
-theorem smashFreeBool_idOf : smashFreeBool idOf.1.1.1 = true :=
+theorem smashFreeBool_idOf : smashFreeBool idOf.val.val.val = true :=
   smashFreeBool_projOf 1 0
 
 /-- The first-bit primitive carries no `smash`. -/
-theorem smashFreeBool_firstBitOf : smashFreeBool firstBitOf.1.1.1 = true :=
+theorem smashFreeBool_firstBitOf : smashFreeBool firstBitOf.val.val.val = true :=
   smashFreeBool_scan2Of _ _ _ _ (smashFreeBool_zeroAtRaw 0)
     (smashFreeBool_constAtOf 2 _) (smashFreeBool_constAtOf 2 _)
 
 /-- The unary primitive carries no `smash`. -/
-theorem smashFreeBool_unaryOf : smashFreeBool unaryOf.1.1.1 = true :=
+theorem smashFreeBool_unaryOf : smashFreeBool unaryOf.val.val.val = true :=
   smashFreeBool_scan2Of _ _ _ _ (smashFreeBool_zeroAtRaw 0)
     (smashFreeBool_prependOf _ _ (smashFreeBool_projOf 2 1))
     (smashFreeBool_prependOf _ _ (smashFreeBool_projOf 2 1))
 
 /-- The run primitive carries no `smash`. -/
 theorem smashFreeBool_takeUnaryOf :
-    smashFreeBool takeUnaryOf.1.1.1 = true :=
+    smashFreeBool takeUnaryOf.val.val.val = true :=
   smashFreeBool_scan2Of _ _ _ _ (smashFreeBool_zeroAtRaw 0)
     (smashFreeBool_zeroAtRaw 2)
     (smashFreeBool_prependOf _ _ (smashFreeBool_projOf 2 1))
 
 /-- The prefix-dropping primitive carries no `smash`. -/
 theorem smashFreeBool_dropUnaryOf :
-    smashFreeBool dropUnaryOf.1.1.1 = true :=
+    smashFreeBool dropUnaryOf.val.val.val = true :=
   smashFreeBool_scan2Of _ _ _ _ (smashFreeBool_zeroAtRaw 0)
     (smashFreeBool_projOf 2 0) (smashFreeBool_projOf 2 1)
 
 /-- The entry-dropping primitive carries no `smash`. -/
 theorem smashFreeBool_dropEntryOf :
-    smashFreeBool dropEntryOf.1.1.1 = true :=
+    smashFreeBool dropEntryOf.val.val.val = true :=
   smashFreeBool_scan2Of _ _ _ _ (smashFreeBool_zeroAtRaw 0)
     (smashFreeBool_projOf 2 0)
     (smashFreeBool_comp1Of _ _ smashFreeBool_predRaw (smashFreeBool_projOf 2 1))
 
 /-- The payload primitive carries no `smash`. -/
 theorem smashFreeBool_takeEntryOf :
-    smashFreeBool takeEntryOf.1.1.1 = true :=
+    smashFreeBool takeEntryOf.val.val.val = true :=
   smashFreeBool_scan2Of _ _ _ _ (smashFreeBool_zeroAtRaw 0)
     (smashFreeBool_zeroAtRaw 2)
     (smashFreeBool_concatCompOf 2 _ _
@@ -428,19 +428,19 @@ theorem smashFreeBool_takeEntryOf :
 
 /-- Dropping a fixed number of entries carries no `smash`. -/
 theorem smashFreeBool_dropEntriesOf : ∀ k : ℕ,
-    smashFreeBool (dropEntriesOf k).1.1.1 = true :=
+    smashFreeBool (dropEntriesOf k).val.val.val = true :=
   Nat.rec smashFreeBool_idOf fun _ ih ↦
     smashFreeBool_comp1Of _ _ ih smashFreeBool_dropEntryOf
 
 /-- The `j`-th entry carries no `smash`. -/
 theorem smashFreeBool_entryOf (j : ℕ) :
-    smashFreeBool (entryOf j).1.1.1 = true :=
+    smashFreeBool (entryOf j).val.val.val = true :=
   smashFreeBool_comp1Of _ _ smashFreeBool_takeEntryOf
     (smashFreeBool_dropEntriesOf j)
 
 /-- The self-delimiting spelling carries no `smash`. -/
 theorem smashFreeBool_entryWordOf :
-    smashFreeBool entryWordOf.1.1.1 = true :=
+    smashFreeBool entryWordOf.val.val.val = true :=
   smashFreeBool_concatCompOf 1 _ _
     (smashFreeBool_prependOf _ _ smashFreeBool_idOf) smashFreeBool_unaryOf
 
@@ -448,14 +448,14 @@ theorem smashFreeBool_entryWordOf :
 algebra's expression does. This is where the bitstring construction's hypothesis
 enters: the algebra is spliced into the tree, so its own freedom is needed. -/
 theorem smashFreeBool_applyAlgOf {r : ℕ} (algI : COf r)
-    (h : smashFreeBool algI.1.1.1 = true) :
-    smashFreeBool (applyAlgOf algI).1.1.1 = true :=
+    (h : smashFreeBool algI.val.val.val = true) :
+    smashFreeBool (applyAlgOf algI).val.val.val = true :=
   smashFreeBool_compOf algI _ h fun j ↦ smashFreeBool_entryOf j.val
 
 /-- The rebuilt stack carries no `smash` when the algebra's expression does. -/
 theorem smashFreeBool_newStackOf {r : ℕ} (algI : COf r)
-    (h : smashFreeBool algI.1.1.1 = true) :
-    smashFreeBool (newStackOf algI).1.1.1 = true :=
+    (h : smashFreeBool algI.val.val.val = true) :
+    smashFreeBool (newStackOf algI).val.val.val = true :=
   smashFreeBool_concatCompOf 1 _ _ (smashFreeBool_dropEntriesOf r)
     (smashFreeBool_comp1Of _ _ smashFreeBool_entryWordOf
       (smashFreeBool_applyAlgOf algI h))
@@ -463,8 +463,8 @@ theorem smashFreeBool_newStackOf {r : ℕ} (algI : COf r)
 /-- The state past the flag and the slot, rebuilt, carries no `smash` when the
 algebra's expression does. -/
 theorem smashFreeBool_rebuildOf {r : ℕ} (algI : COf r)
-    (h : smashFreeBool algI.1.1.1 = true) :
-    smashFreeBool (rebuildOf algI).1.1.1 = true :=
+    (h : smashFreeBool algI.val.val.val = true) :
+    smashFreeBool (rebuildOf algI).val.val.val = true :=
   smashFreeBool_concatCompOf 1 _ _
     (smashFreeBool_prependOf _ _
       (smashFreeBool_comp1Of _ _ (smashFreeBool_newStackOf algI h)
@@ -475,8 +475,8 @@ theorem smashFreeBool_rebuildOf {r : ℕ} (algI : COf r)
 algebra's expressions do. -/
 theorem smashFreeBool_branchV (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
-    (halg : ∀ i, smashFreeBool (algOf i).1.1.1 = true) (b : Bool) (t : Scan) :
-    smashFreeBool (branchV R algOf b t).1.1.1 = true := by
+    (halg : ∀ i, smashFreeBool (algOf i).val.val.val = true) (b : Bool) (t : Scan) :
+    smashFreeBool (branchV R algOf b t).val.val.val = true := by
   obtain ⟨buf, depth, live⟩ := t
   rw [branchV]
   dsimp only
@@ -503,14 +503,14 @@ theorem smashFreeBool_branchV (R : RankedAlphabet)
 expressions do. -/
 theorem smashFreeBool_foldStepV (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
-    (halg : ∀ i, smashFreeBool (algOf i).1.1.1 = true) (b : Bool) :
-    smashFreeBool (foldStepV R algOf b).1.1.1 = true :=
+    (halg : ∀ i, smashFreeBool (algOf i).val.val.val = true) (b : Bool) :
+    smashFreeBool (foldStepV R algOf b).val.val.val = true :=
   smashFreeBool_diagCasesOf _ _ fun _ ↦ smashFreeBool_branchV R algOf halg b _
 
 /-- The bitstring readout carries no `smash`: one branch prepends a marker to
 the payload primitive, the other is a constant word. -/
 theorem smashFreeBool_readOfV (R : RankedAlphabet) :
-    smashFreeBool (readOfV R).1.1.1 = true :=
+    smashFreeBool (readOfV R).val.val.val = true :=
   smashFreeBool_diagCasesOf _ _ fun v ↦ by
     by_cases hacc : ((decodeVAt R (readoutWidthV R) v).live &&
         (decodeVAt R (readoutWidthV R) v).buf.isEmpty &&
@@ -531,10 +531,10 @@ the fold is then computable simultaneously in polynomial time and linear
 space. -/
 theorem smashFree_foldOutExprV (R : RankedAlphabet)
     (algOf : (i : Fin R.card) → COf (R.arity i))
-    (halg' : ∀ i, smashFreeBool (algOf i).1.1.1 = true)
+    (halg' : ∀ i, smashFreeBool (algOf i).val.val.val = true)
     (alg : (i : Fin R.card) → (Fin (R.arity i) → List Bool) → List Bool)
     (halg : ∀ (i : Fin R.card) (f : Fin (R.arity i) → List Bool),
-      semAt (R.arity i) (algOf i).1.1 (algOf i).2 f = alg i f)
+      semAt (R.arity i) (algOf i).val.val (algOf i).property f = alg i f)
     (mult c : ℕ)
     (hsize : ∀ w : List Bool,
       stackSize (foldScanFinal R alg w).stack ≤ c * w.length)

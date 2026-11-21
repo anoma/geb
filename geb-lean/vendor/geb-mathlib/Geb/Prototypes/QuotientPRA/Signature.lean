@@ -375,7 +375,7 @@ variable (S)
 /-- The value of the model's algebra on a node over the discrete graph. -/
 def modelApp {c : Objᵒᵖ}
     (n : ((qpra P eqns).objPresheaf (discrete (constPsh Y))).obj c) : Y :=
-  algVal S n.1.1.1.1 fun d ↦ (n.1.1.1.2 d).2
+  algVal S n.val.val.val.1 fun d ↦ (n.val.val.val.2 d).2
 
 /-- The model of the quotient presheaf polynomial functor given by an algebra of the
 signature that satisfies the equations: a node goes to the value of its source
@@ -386,7 +386,7 @@ def model (sat : Satisfies (eqns := eqns) S) :
   naturality c c' g := by
     ext n
     obtain ⟨⟨n, hn⟩, hq⟩ := n
-    exact algVal_restr sat g.unop n.1.1 hq (fun d ↦ (n.1.2 d).2)
+    exact algVal_restr sat g.unop n.val.1 hq (fun d ↦ (n.val.2 d).2)
       fun b c c' f k ↦ hn f ⟨⟨b, c, k⟩, rfl⟩
 
 /-- The eliminator of the quotient W-type of the system into an algebra of the

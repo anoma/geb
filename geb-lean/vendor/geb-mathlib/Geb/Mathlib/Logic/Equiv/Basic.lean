@@ -102,8 +102,8 @@ second component is constrained is a constrained dependent pair. -/
 def sigmaSubtypeEquiv.{p, q} {A : Type p} (N : A → Type q)
     (P : (a : A) → N a → Prop) :
     (Σ a, {n : N a // P a n}) ≃ {z : Σ a, N a // P z.1 z.2} :=
-  { toFun := fun x ↦ ⟨⟨x.1, x.2.1⟩, x.2.2⟩,
-    invFun := fun z ↦ ⟨z.1.1, ⟨z.1.2, z.2⟩⟩,
+  { toFun := fun x ↦ ⟨⟨x.1, x.2.val⟩, x.2.property⟩,
+    invFun := fun z ↦ ⟨z.val.1, ⟨z.val.2, z.property⟩⟩,
     left_inv := fun _ ↦ rfl,
     right_inv := fun _ ↦ rfl }
 
@@ -152,7 +152,7 @@ def arrowSumResolve.{w, p} {B : Type u} {X : Type v}
   Sum.casesOn
     (motive := fun s ↦
       Sum.map _root_.id (fun _ ↦ PUnit.unit) s = Sum.inr PUnit.unit → Y)
-    (g bp.1) (fun _ h ↦ nomatch h) (fun y _ ↦ y) bp.2
+    (g bp.val) (fun _ h ↦ nomatch h) (fun y _ ↦ y) bp.property
 
 /-- The value of `arrowSumMerge c j b` as the `Sum.casesOn` of any
 `s` equal to `c b`, generalizing the otherwise-dependent scrutinee. -/
@@ -226,7 +226,7 @@ def ArrowSumEta.{w, p} {B : Type u} {X : Type v} {Y : Type w}
     (c' : ArrowSumClassifier.{u, v, p} B X) (eq1 : c = c') : Prop :=
   ∀ j' : {b : B // c' b = Sum.inr PUnit.unit} → Y,
     (∀ bp : {b : B // c' b = Sum.inr PUnit.unit},
-      j ⟨bp.1, (congrFun eq1 bp.1).trans bp.2⟩ = j' bp) →
+      j ⟨bp.val, (congrFun eq1 bp.val).trans bp.property⟩ = j' bp) →
     (⟨c, j⟩ : Σ c : B → X ⊕ PUnit.{p + 1},
         {b : B // c b = Sum.inr PUnit.unit} → Y) = ⟨c', j'⟩
 
@@ -257,10 +257,10 @@ def arrowSumEquivSigma.{w, p} (B : Type u) (X : Type v)
       (funext (fun b ↦ arrowSumClassify_merge q.1 q.2 b))
       q.2
       (fun bp ↦
-        arrowSumResolve_eq (arrowSumMerge q.1 q.2) bp.1
-          ((congrFun (funext (fun b ↦ arrowSumClassify_merge q.1 q.2 b)) bp.1).trans bp.2)
+        arrowSumResolve_eq (arrowSumMerge q.1 q.2) bp.val
+          ((congrFun (funext (fun b ↦ arrowSumClassify_merge q.1 q.2 b)) bp.val).trans bp.property)
           (Sum.inr (q.2 bp))
-          (arrowSumMerge_eq q.1 q.2 bp.1 (Sum.inr PUnit.unit) bp.2))
+          (arrowSumMerge_eq q.1 q.2 bp.val (Sum.inr PUnit.unit) bp.property))
 
 /-- Transport a function type along an equivalence of its domain,
 choice-free (unlike `Equiv.arrowCongr` and the `Equiv.piCongrLeft`

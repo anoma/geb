@@ -125,17 +125,17 @@ def projOf (n : ℕ) (i : Fin n) : COf n :=
 def compOf {n m : ℕ} (head : COf m) (args : Fin m → COf n) : COf n :=
   ⟨⟨⟨WType.mk (.comp n m) fun d ↦
         match d with
-        | .inl () => head.1.1.1
-        | .inr i => (args i).1.1.1,
+        | .inl () => head.val.val.val
+        | .inr i => (args i).val.val.val,
       ⟨fun d ↦ match d with
-        | .inl () => head.1.1.2
-        | .inr i => (args i).1.1.2,
+        | .inl () => head.val.val.property
+        | .inr i => (args i).val.val.property,
       funext fun d ↦ match d with
-        | .inl () => (sig.wIndexValid_index_eq_wIndexRoot _).trans head.2
-        | .inr i => (sig.wIndexValid_index_eq_wIndexRoot _).trans (args i).2⟩⟩,
+        | .inl () => (sig.wIndexValid_index_eq_wIndexRoot _).trans head.property
+        | .inr i => (sig.wIndexValid_index_eq_wIndexRoot _).trans (args i).property⟩⟩,
     ⟨trivial, fun d ↦ match d with
-      | .inl () => head.1.2
-      | .inr i => (args i).1.2⟩⟩, rfl⟩
+      | .inl () => head.val.property
+      | .inr i => (args i).val.property⟩⟩, rfl⟩
 
 /-- An arity-one expression applied to an `n`-ary one: `compOf` at one
 argument. -/
@@ -180,40 +180,41 @@ theorem recBounded_concatCompRaw (n : ℕ) (a b : sig.toPFunctor.W)
 at every arity. `Cobham.stepWord_prependOf` is this at arity one. -/
 theorem semAt_prependOf {n : ℕ} (e : COf n) (x : Fin n → List Bool) :
     ∀ u : List Bool,
-      semAt n (prependOf u e).1.1 (prependOf u e).2 x = u ++ semAt n e.1.1 e.2 x :=
+      semAt n (prependOf u e).val.val (prependOf u e).property x =
+        u ++ semAt n e.val.val e.property x :=
   List.rec rfl fun b v ih ↦ by
-    change b :: semAt n (prependOf v e).1.1 (prependOf v e).2 x = _
+    change b :: semAt n (prependOf v e).val.val (prependOf v e).property x = _
     rw [ih]
     rfl
 
 /-- A constant word's meaning, at every arity. -/
 @[simp] theorem semAt_constAtOf (n : ℕ) (u : List Bool) (x : Fin n → List Bool) :
-    semAt n (constAtOf n u).1.1 (constAtOf n u).2 x = u :=
+    semAt n (constAtOf n u).val.val (constAtOf n u).property x = u :=
   (semAt_prependOf (zeroAtOf n) x u).trans (List.append_nil u)
 
 /-- A projection's meaning is the slot it names. -/
 @[simp] theorem semAt_projOf (n : ℕ) (i : Fin n) (x : Fin n → List Bool) :
-    semAt n (projOf n i).1.1 (projOf n i).2 x = x i := rfl
+    semAt n (projOf n i).val.val (projOf n i).property x = x i := rfl
 
 /-- A concatenation's meaning is its second argument's followed by its
 first's. -/
 theorem semAt_concatCompOf (n : ℕ) (a b : COf n) (x : Fin n → List Bool) :
-    semAt n (concatCompOf n a b).1.1 (concatCompOf n a b).2 x =
-      semAt n b.1.1 b.2 x ++ semAt n a.1.1 a.2 x := rfl
+    semAt n (concatCompOf n a b).val.val (concatCompOf n a b).property x =
+      semAt n b.val.val b.property x ++ semAt n a.val.val a.property x := rfl
 
 /-- A composition's meaning at every arity. `Geb.CobhamFold.stepWord_compOf`
 is this at arity one. -/
 theorem semAt_compOf {n m : ℕ} (head : COf m) (args : Fin m → COf n)
     (x : Fin n → List Bool) :
-    semAt n (compOf head args).1.1 (compOf head args).2 x =
-      semAt m head.1.1 head.2 fun i ↦ semAt n (args i).1.1 (args i).2 x := rfl
+    semAt n (compOf head args).val.val (compOf head args).property x =
+      semAt m head.val.val head.property fun i ↦ semAt n (args i).val.val (args i).property x := rfl
 
 /-- An arity-one expression's meaning at an `n`-ary argument.
 `Geb.CobhamFold.stepWord_comp1Of` is this at arity one. -/
 theorem semAt_comp1Of {n : ℕ} (e : COf 1) (a : COf n) (x : Fin n → List Bool) :
-    semAt n (comp1Of e a).1.1 (comp1Of e a).2 x =
-      stepWord e (semAt n a.1.1 a.2 x) :=
-  congrArg (semAt 1 e.1.1 e.2) (funext fun i ↦ match i with | ⟨0, _⟩ => rfl)
+    semAt n (comp1Of e a).val.val (comp1Of e a).property x =
+      stepWord e (semAt n a.val.val a.property x) :=
+  congrArg (semAt 1 e.val.val e.property) (funext fun i ↦ match i with | ⟨0, _⟩ => rfl)
 
 /-- The `mult`-fold self-concatenation of the recursion variable, of arity one:
 the empty bitstring at `mult = 0`, and one more copy of the sole argument at
@@ -231,7 +232,7 @@ theorem wIndexRoot_multRaw (mult : ℕ) : sig.wIndexRoot (multRaw mult) = 1 := b
 
 /-- The multiplier is admissible, at every multiplicity. -/
 theorem wValid_multRaw (mult : ℕ) : sig.WValid (multRaw mult) :=
-  Nat.rec (zeroAt 1).1.2
+  Nat.rec (zeroAt 1).val.property
     (fun k ih ↦ wValid_concatCompRaw 1 _ _ ih (wIndexRoot_multRaw k)
       ⟨fun c ↦ c.elim0, funext fun c ↦ c.elim0⟩ rfl)
     mult
@@ -244,7 +245,7 @@ theorem arity_multRaw (mult : ℕ) :
 `proj`, or the `concat` or `zero` generator. -/
 theorem recBounded_multRaw (mult : ℕ) :
     RecBounded ⟨multRaw mult, wValid_multRaw mult⟩ :=
-  Nat.rec (zeroAt 1).2
+  Nat.rec (zeroAt 1).property
     (fun k ih ↦ recBounded_concatCompRaw 1 (multRaw k)
       (WType.mk (.proj 1 0) Fin.elim0) (wValid_multRaw k)
       ⟨fun c ↦ c.elim0, funext fun c ↦ c.elim0⟩ (wValid_multRaw (k + 1)) ih
@@ -376,9 +377,9 @@ theorem wValid_scanBRaw (base step₀ step₁ bnd : sig.toPFunctor.W)
 def scanBW (base : COf 0) (step₀ step₁ : COf 1)
     (bnd : sig.toPFunctor.W) (hn : sig.WValid bnd)
     (hn' : sig.wIndexRoot bnd = 1) : sig.W :=
-  ⟨scanBRaw base.1.1.1 step₀.1.1.1 step₁.1.1.1 bnd,
-    wValid_scanBRaw _ _ _ bnd base.1.1.2 base.2 step₀.1.1.2 step₀.2
-      step₁.1.1.2 step₁.2 hn hn'⟩
+  ⟨scanBRaw base.val.val.val step₀.val.val.val step₁.val.val.val bnd,
+    wValid_scanBRaw _ _ _ bnd base.val.val.property base.property step₀.val.val.property
+      step₀.property step₁.val.val.property step₁.property hn hn'⟩
 
 /-- The scan node's arity, in the form `Cobham.fst_eval` composes with. -/
 theorem arity_scanBW (base : COf 0) (step₀ step₁ : COf 1)
@@ -410,10 +411,10 @@ theorem scanBSem_cons (base : COf 0) (step₀ step₁ : COf 1)
   have hfun : ∀ r : List Bool, (fun _ : Fin 1 ↦ r) = ![r] :=
     fun r ↦ funext fun i ↦ match i with | ⟨0, _⟩ => rfl
   cases b
-  · change transport ((fst_eval step₀.1.1).trans step₀.2) (eval step₀.1.1).2
+  · change transport ((fst_eval step₀.val.val).trans step₀.property) (eval step₀.val.val).2
       (fun _ ↦ scanBSem base step₀ step₁ bnd hn hn' ![w]) = _
     exact congrArg _ (hfun _)
-  · change transport ((fst_eval step₁.1.1).trans step₁.2) (eval step₁.1.1).2
+  · change transport ((fst_eval step₁.val.val).trans step₁.property) (eval step₁.val.val).2
       (fun _ ↦ scanBSem base step₀ step₁ bnd hn hn' ![w]) = _
     exact congrArg _ (hfun _)
 
@@ -446,7 +447,7 @@ def scanMul (base : COf 0) (step₀ step₁ : COf 1) (mult growth : ℕ)
       exact Nat.le_trans (hbound (x 0)) (Nat.le_of_eq (Nat.add_comm _ _))
     · refine fun b : Fin 4 ↦ ?_
       match b with
-      | 0 => exact base.1.2
+      | 0 => exact base.val.property
       | 1 => exact recBounded_liftRaw step₀
       | 2 => exact recBounded_liftRaw step₁
       | 3 => exact recBounded_boundMulRaw mult growth⟩
@@ -466,8 +467,8 @@ theorem scanMulSem_eq_eval (base : COf 0) (step₀ step₁ : COf 1)
       (scanBSem base step₀ step₁ (boundMulRaw mult growth)
         (wValid_boundMulRaw mult growth) (wIndexRoot_boundMulRaw mult growth)
         ![w]).length ≤ mult * w.length + growth) :
-    transport (scanMulOf base step₀ step₁ mult growth hbound).2
-        (scanMulOf base step₀ step₁ mult growth hbound).1.eval =
+    transport (scanMulOf base step₀ step₁ mult growth hbound).property
+        (scanMulOf base step₀ step₁ mult growth hbound).val.eval =
       scanBSem base step₀ step₁ (boundMulRaw mult growth)
         (wValid_boundMulRaw mult growth)
         (wIndexRoot_boundMulRaw mult growth) := rfl

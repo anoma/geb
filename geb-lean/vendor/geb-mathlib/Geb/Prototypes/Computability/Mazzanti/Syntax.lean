@@ -170,9 +170,9 @@ def transport {a b : ℕ} (h : a = b) (c : Certified a) : Certified b := h ▸ c
 
 /-- The interpreting algebra in the slice over arities. -/
 def evalStep : sig.toSliceDomPFunctor.Obj (Sigma.fst (β := Certified)) → Σ n, Certified n :=
-  fun z ↦ ⟨resultArity z.1.1, evalNode z.1.1 fun d ↦
-    transport (((sig.toSliceDomPFunctor.compatible_iff _ z.1.1 z.1.2).mp z.2) d)
-      (z.1.2 d).2⟩
+  fun z ↦ ⟨resultArity z.val.1, evalNode z.val.1 fun d ↦
+    transport (((sig.toSliceDomPFunctor.compatible_iff _ z.val.1 z.val.2).mp z.property) d)
+      (z.val.2 d).2⟩
 
 /-- Interpretation of an arity-correct tree, by the slice W-type eliminator. -/
 def interpret : sig.W → Σ n, Certified n :=
@@ -190,8 +190,8 @@ namespace Expr
 
 /-- Build an arity-correct node from arity-correct children. -/
 def node (s : Shape) (c : (d : Direction s) → Expr (childArity s d)) : Expr (resultArity s) :=
-  ⟨⟨WType.mk s (fun d ↦ (c d).1.1), (sig.wValid_mk _ _).mpr
-    ⟨fun d ↦ (c d).1.2, funext fun d ↦ (c d).2⟩⟩, rfl⟩
+  ⟨⟨WType.mk s (fun d ↦ (c d).val.val), (sig.wValid_mk _ _).mpr
+    ⟨fun d ↦ (c d).val.property, funext fun d ↦ (c d).property⟩⟩, rfl⟩
 
 /-- Constant functions are permitted at every arity. -/
 def constant (n value : ℕ) : Expr n := node (.constant n value) fun d ↦ d.elim0
@@ -218,7 +218,7 @@ def recursion {a b : ℕ} (g : Fin b → Expr a)
 
 /-- Evaluate the syntax, inferring a size certificate in the same fold. -/
 def certified {n : ℕ} (e : Expr n) : Certified n :=
-  transport ((fst_interpret e.1).trans e.2) (interpret e.1).2
+  transport ((fst_interpret e.val).trans e.property) (interpret e.val).2
 
 /-- The numerical meaning of an expression. -/
 def eval {n : ℕ} (e : Expr n) : Sem n := e.certified.fn

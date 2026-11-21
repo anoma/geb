@@ -83,7 +83,7 @@ theorem surjective_of_injective_of_length_le (r : List Bool → List Bool) (k : 
 theorem sem_surjective_of_injective (e : SOf 1)
     (hinj : Function.Injective (fun w ↦ e.sem (fun _ ↦ w))) :
     Function.Surjective (fun w ↦ e.sem (fun _ ↦ w)) :=
-  surjective_of_injective_of_length_le _ (nsiConst e.1.1)
+  surjective_of_injective_of_length_le _ (nsiConst e.val.val)
     (fun w ↦ nsi_sem e (fun _ ↦ w) w.length (fun _ ↦ le_rfl)) hinj
 
 end Geb.SizeBounded

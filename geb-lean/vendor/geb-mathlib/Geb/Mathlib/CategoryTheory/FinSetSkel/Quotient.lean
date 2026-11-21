@@ -122,7 +122,7 @@ class. -/
 def rep (Y : FinSetSkel.{u}) (v : UnionFind.Sized Y.len) :
     Vector (Fin Y.len) (obj Y v).len :=
   let e := Fin.compressEquiv (isRoot v)
-  Vector.ofFnC fun c ↦ (e c).1
+  Vector.ofFnC fun c ↦ (e c).val
 
 /-- The projection onto the carrier: an index goes to the compressed
 index of its root. -/
@@ -155,7 +155,7 @@ theorem π_get (Y : FinSetSkel.{u}) (v : UnionFind.Sized Y.len)
 /-- The representative of a class. -/
 theorem rep_get (Y : FinSetSkel.{u}) (v : UnionFind.Sized Y.len)
     (c : Fin (obj Y v).len) :
-    (rep Y v).get c = (Fin.compressEquiv (isRoot v) c).1 :=
+    (rep Y v).get c = (Fin.compressEquiv (isRoot v) c).val :=
   Vector.get_ofFnC _ _
 
 /-- The factorisation at a class. -/
@@ -180,7 +180,7 @@ theorem desc_get (Y : FinSetSkel.{u}) (v : UnionFind.Sized Y.len)
     (π Y v).toVec.get ((rep Y v).get c) = c := by
   have h : v.root ((rep Y v).get c) = (rep Y v).get c := by
     rw [rep_get]
-    exact of_decide_eq_true (Fin.compressEquiv (isRoot v) c).2
+    exact of_decide_eq_true (Fin.compressEquiv (isRoot v) c).property
   rw [π_get]
   simp only [h]
   exact (congrArg _ (Subtype.ext (rep_get Y v c))).trans

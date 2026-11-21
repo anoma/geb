@@ -85,22 +85,22 @@ variable {C : Type uC} [Category.{vC} C] {F : PresheafPFunctor.{uC, uC, uA, uB, 
   {S : SlicePFunctor.FixedPoint.{max uA uB} F.toSlicePFunctor} (N : F.HereditaryNaturality S)
 
 /-- The root shape of a tree of the carrier presheaf. -/
-def head {c : C} (w : (F.carrier N).obj ⟨c⟩) : F.A := (S.dest w.down.1).1.1
+def head {c : C} (w : (F.carrier N).obj ⟨c⟩) : F.A := (S.dest w.down.val).val.1
 
 /-- The root shape of a restriction along {lit}`g` is {lit}`shapeRestr g` of the root
 shape. -/
 theorem head_map {c c' : C} (g : c' ⟶ c) (w : (F.carrier N).obj ⟨c⟩) :
     head N ((F.carrier N).map g.op w) =
-      (F.shapeRestr g ⟨head N w, (F.q_dest S w.down.1).trans w.down.2.1⟩).1 :=
-  congrArg (fun x ↦ x.1.1) (S.dest_mk _)
+      (F.shapeRestr g ⟨head N w, (F.q_dest S w.down.val).trans w.down.property.1⟩).val :=
+  congrArg (fun x ↦ x.val.1) (S.dest_mk _)
 
 /-- Restriction along {lit}`g` sends a family of trees all of root shape {lit}`ρ` to a
 family of trees all of root shape {lit}`shapeRestr g ρ`. -/
 theorem head_map_of_head_eq {A : Sort u} {c c' : C} (g : c' ⟶ c)
-    (s : A → (F.carrier N).obj ⟨c⟩) (ρ : F.Shape c) (hs : ∀ a, head N (s a) = ρ.1) (a : A) :
-    head N ((F.carrier N).map g.op (s a)) = (F.shapeRestr g ρ).1 :=
+    (s : A → (F.carrier N).obj ⟨c⟩) (ρ : F.Shape c) (hs : ∀ a, head N (s a) = ρ.val) (a : A) :
+    head N ((F.carrier N).map g.op (s a)) = (F.shapeRestr g ρ).val :=
   (head_map N g (s a)).trans
-    (congrArg (fun r ↦ (F.shapeRestr g r).1) (Subtype.ext (hs a)))
+    (congrArg (fun r ↦ (F.shapeRestr g r).val) (Subtype.ext (hs a)))
 
 end Head
 
@@ -116,7 +116,7 @@ theorem no_uniform_refl {i : I} (t₁ t₂ : (F.carrier N).obj ⟨termObj i⟩)
     (h : head N t₁ ≠ head N t₂) :
     ¬ ∃ (ρ : F.Shape (eqObj i))
       (refl : (F.carrier N).obj ⟨termObj i⟩ → (F.carrier N).obj ⟨eqObj i⟩),
-      (∀ t, head N (refl t) = ρ.1) ∧ ∀ t, src (F.carrier N) i (refl t) = t := by
+      (∀ t, head N (refl t) = ρ.val) ∧ ∀ t, src (F.carrier N) i (refl t) = t := by
   rintro ⟨ρ, refl, hρ, hsrc⟩
   have key := head_map_of_head_eq N (srcHom i) refl ρ hρ
   exact h (((congrArg (head N) (hsrc t₁)).symm.trans (key t₁)).trans
@@ -129,7 +129,7 @@ theorem no_uniform_symm {i : I} (e₁ e₂ : (F.carrier N).obj ⟨eqObj i⟩)
     (h : head N (tgt (F.carrier N) i e₁) ≠ head N (tgt (F.carrier N) i e₂)) :
     ¬ ∃ (ρ : F.Shape (eqObj i))
       (symm : (F.carrier N).obj ⟨eqObj i⟩ → (F.carrier N).obj ⟨eqObj i⟩),
-      (∀ e, head N (symm e) = ρ.1) ∧
+      (∀ e, head N (symm e) = ρ.val) ∧
         ∀ e, src (F.carrier N) i (symm e) = tgt (F.carrier N) i e := by
   rintro ⟨ρ, symm, hρ, hsrc⟩
   have key := head_map_of_head_eq N (srcHom i) symm ρ hρ
@@ -143,12 +143,12 @@ one root shape. -/
 theorem no_uniform_trans {i : I}
     (p₁ p₂ : {p : (F.carrier N).obj ⟨eqObj i⟩ × (F.carrier N).obj ⟨eqObj i⟩ //
       tgt (F.carrier N) i p.1 = src (F.carrier N) i p.2})
-    (h : head N (src (F.carrier N) i p₁.1.1) ≠ head N (src (F.carrier N) i p₂.1.1)) :
+    (h : head N (src (F.carrier N) i p₁.val.1) ≠ head N (src (F.carrier N) i p₂.val.1)) :
     ¬ ∃ (ρ : F.Shape (eqObj i))
       (trans : {p : (F.carrier N).obj ⟨eqObj i⟩ × (F.carrier N).obj ⟨eqObj i⟩ //
         tgt (F.carrier N) i p.1 = src (F.carrier N) i p.2} → (F.carrier N).obj ⟨eqObj i⟩),
-      (∀ p, head N (trans p) = ρ.1) ∧
-        ∀ p, src (F.carrier N) i (trans p) = src (F.carrier N) i p.1.1 := by
+      (∀ p, head N (trans p) = ρ.val) ∧
+        ∀ p, src (F.carrier N) i (trans p) = src (F.carrier N) i p.val.1 := by
   rintro ⟨ρ, trans, hρ, hsrc⟩
   have key := head_map_of_head_eq N (srcHom i) trans ρ hρ
   exact h (((congrArg (head N) (hsrc p₁)).symm.trans (key p₁)).trans
@@ -162,12 +162,12 @@ such witnesses have one root shape. -/
 theorem no_uniform_transport {i' i : I} (f : i' ⟶ i)
     (p₁ p₂ : {p : (F.carrier N).obj ⟨eqObj i'⟩ × (F.carrier N).obj ⟨termObj i⟩ //
       restr (F.carrier N) f p.2 = src (F.carrier N) i' p.1})
-    (h : head N (tgt (F.carrier N) i' p₁.1.1) ≠ head N (tgt (F.carrier N) i' p₂.1.1)) :
+    (h : head N (tgt (F.carrier N) i' p₁.val.1) ≠ head N (tgt (F.carrier N) i' p₂.val.1)) :
     ¬ ∃ (ρ : F.Shape (termObj i))
       (transport : {p : (F.carrier N).obj ⟨eqObj i'⟩ × (F.carrier N).obj ⟨termObj i⟩ //
         restr (F.carrier N) f p.2 = src (F.carrier N) i' p.1} → (F.carrier N).obj ⟨termObj i⟩),
-      (∀ p, head N (transport p) = ρ.1) ∧
-        ∀ p, restr (F.carrier N) f (transport p) = tgt (F.carrier N) i' p.1.1 := by
+      (∀ p, head N (transport p) = ρ.val) ∧
+        ∀ p, restr (F.carrier N) f (transport p) = tgt (F.carrier N) i' p.val.1 := by
   rintro ⟨ρ, transport, hρ, hidx⟩
   have key := head_map_of_head_eq N (termHom f) transport ρ hρ
   exact h (((congrArg (head N) (hidx p₁)).symm.trans (key p₁)).trans

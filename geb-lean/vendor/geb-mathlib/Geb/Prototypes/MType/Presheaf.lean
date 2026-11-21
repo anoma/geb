@@ -86,14 +86,14 @@ namespace PresheafM
 through children is natural. The coinductive form, by
 {name}`Geb.MType.Hereditary`, of {name}`PresheafPFunctor.NodeNatural`. -/
 def IsHereditarilyNatural : SliceM F.toSlicePFunctor → Prop :=
-  Hereditary (Q := F.toPFunctor) (fun z ↦ z.dest.1)
+  Hereditary (Q := F.toPFunctor) (fun z ↦ z.dest.val)
     (F.NodeNatural (SliceM.fixedPoint F.toSlicePFunctor) ∘ SliceM.dest)
 
 /-- Hereditary naturality unfolded one level. -/
 theorem isHereditarilyNatural_iff (z : SliceM F.toSlicePFunctor) :
     IsHereditarilyNatural F z ↔
       F.NodeNatural (SliceM.fixedPoint F.toSlicePFunctor) z.dest ∧
-        ∀ b, IsHereditarilyNatural F (z.dest.1.2 b) := by
+        ∀ b, IsHereditarilyNatural F (z.dest.val.2 b) := by
   unfold IsHereditarilyNatural
   exact hereditary_iff _ _ z
 
@@ -125,13 +125,13 @@ total space of {lit}`Y`: an element over {lit}`i` goes to the node
 {lit}`α` gives it. -/
 def sliceStep (e : Σ i : I, Y.obj ⟨i⟩) :
     F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj Y) :=
-  (α.app ⟨e.1⟩ e.2).1.1
+  (α.app ⟨e.1⟩ e.2).val.val
 
 /-- The underlying slice coalgebra lies over {lit}`I`. -/
 theorem obj_sliceStep :
     F.toSlicePFunctor.obj (PresheafDomPFunctorData.elemProj Y) ∘ sliceStep F Y α =
       PresheafDomPFunctorData.elemProj Y :=
-  funext fun e ↦ (α.app ⟨e.1⟩ e.2).2
+  funext fun e ↦ (α.app ⟨e.1⟩ e.2).property
 
 /-- The corecursion of the underlying slice coalgebra. -/
 def sliceCorec : (Σ i : I, Y.obj ⟨i⟩) → SliceM F.toSlicePFunctor :=
@@ -154,10 +154,10 @@ theorem dest_sliceCorec (e : Σ i : I, Y.obj ⟨i⟩) :
 node it gives the element: the naturality of {lit}`α`. -/
 theorem sliceStep_map ⦃i i' : I⦄ (f : i' ⟶ i) (y : Y.obj ⟨i⟩) :
     sliceStep F Y α ⟨i', Y.map f.op y⟩ =
-      F.objRestrElt f (sliceStep F Y α ⟨i, y⟩) (α.app ⟨i⟩ y).2 := by
+      F.objRestrElt f (sliceStep F Y α ⟨i, y⟩) (α.app ⟨i⟩ y).property := by
   have h : α.app ⟨i'⟩ (Y.map f.op y) = (F.objPresheaf Y).map f.op (α.app ⟨i⟩ y) :=
     FunctorToTypes.naturality _ _ α f.op y
-  exact congrArg (fun w : (F.objPresheaf Y).obj ⟨i'⟩ ↦ w.1.1) h
+  exact congrArg (fun w : (F.objPresheaf Y).obj ⟨i'⟩ ↦ w.val.val) h
 
 /-- The underlying corecursion from a restricted element is the root
 restriction of the corecursion from the element. A one-level argument: both
@@ -177,12 +177,12 @@ a natural node of trees. -/
 theorem nodeNatural_map_sliceCorec (x : F.toPresheafDomPFunctorData.obj Y) :
     F.NodeNatural (SliceM.fixedPoint F.toSlicePFunctor) (F.toSliceDomPFunctor.map
       (sliceCorec F Y α)
-      (SliceM.comp_corec F.toSlicePFunctor _ (sliceStep F Y α) (obj_sliceStep F Y α)) x.1) := by
+      (SliceM.comp_corec F.toSlicePFunctor _ (sliceStep F Y α) (obj_sliceStep F Y α)) x.val) := by
   intro i i' g b
-  change sliceCorec F Y α (x.1.1.2 (F.directionRestr x.1.1.1 g b).1) =
-    F.restrTree (SliceM.fixedPoint F.toSlicePFunctor) g (sliceCorec F Y α (x.1.1.2 b.1)) _
-  rw [F.snd_eq_value x.1 (F.directionRestr x.1.1.1 g b), x.2 g b, sliceCorec_map]
-  exact F.restrTree_congr _ g (congrArg (sliceCorec F Y α) (F.snd_eq_value x.1 b).symm) _ _
+  change sliceCorec F Y α (x.val.val.2 (F.directionRestr x.val.val.1 g b).val) =
+    F.restrTree (SliceM.fixedPoint F.toSlicePFunctor) g (sliceCorec F Y α (x.val.val.2 b.val)) _
+  rw [F.snd_eq_value x.val (F.directionRestr x.val.val.1 g b), x.property g b, sliceCorec_map]
+  exact F.restrTree_congr _ g (congrArg (sliceCorec F Y α) (F.snd_eq_value x.val b).symm) _ _
 
 /-- The underlying corecursion is hereditarily natural: its nodes are natural,
 by {name}`nodeNatural_map_sliceCorec`, so it is hereditarily natural by
@@ -190,11 +190,11 @@ by {name}`nodeNatural_map_sliceCorec`, so it is hereditarily natural by
 theorem isHereditarilyNatural_sliceCorec (e : Σ i : I, Y.obj ⟨i⟩) :
     IsHereditarilyNatural F (sliceCorec F Y α e) := by
   unfold IsHereditarilyNatural
-  refine hereditary_of_hom (Q := F.toPFunctor) _ _ (fun e ↦ (sliceStep F Y α e).1)
+  refine hereditary_of_hom (Q := F.toPFunctor) _ _ (fun e ↦ (sliceStep F Y α e).val)
     (sliceCorec F Y α) (fun e ↦ congrArg Subtype.val (dest_sliceCorec F Y α e)) (fun e ↦ ?_) e
   change F.NodeNatural (SliceM.fixedPoint F.toSlicePFunctor) (sliceCorec F Y α e).dest
   rw [dest_sliceCorec]
-  exact nodeNatural_map_sliceCorec F Y α (α.app ⟨e.1⟩ e.2).1
+  exact nodeNatural_map_sliceCorec F Y α (α.app ⟨e.1⟩ e.2).val
 
 /-- The corecursor from a presheaf coalgebra {lit}`(Y, α)`: a natural
 transformation into the carrier presheaf, whose component at {lit}`j` is the
@@ -219,7 +219,7 @@ theorem dest_corec {j : I} (y : Y.obj ⟨j⟩) :
     fun b ↦ isHereditarilyNatural_sliceCorec F Y α _).trans ?_
   apply Subtype.ext
   exact Sigma.ext rfl (heq_of_eq (funext fun b ↦
-    carrier.sigma_eta ((corec F Y α).app ⟨_⟩ ((sliceStep F Y α ⟨j, y⟩).1.2 b).2)))
+    carrier.sigma_eta ((corec F Y α).app ⟨_⟩ ((sliceStep F Y α ⟨j, y⟩).val.2 b).2)))
 
 /-- The corecursor is the only morphism of presheaf coalgebras into the
 carrier presheaf: its underlying slice-level function is a morphism of slice
@@ -228,9 +228,10 @@ theorem corec_unique (f : NatTrans Y (PresheafM F))
     (hf : ∀ (j : I) (y : Y.obj ⟨j⟩),
       carrier.dest (f.app ⟨j⟩ y) = (F.mapPresheaf f).app ⟨j⟩ (α.app ⟨j⟩ y)) :
     f = corec F Y α := by
-  have h : (fun e : Σ i : I, Y.obj ⟨i⟩ ↦ (f.app ⟨e.1⟩ e.2).down.1) = sliceCorec F Y α :=
-    SliceM.corec_unique F.toSlicePFunctor _ _ _ _ (funext fun e ↦ (f.app ⟨e.1⟩ e.2).down.2.1)
-      fun e ↦ congrArg (fun w : (F.objPresheaf (PresheafM F)).obj ⟨e.1⟩ ↦ carrier.forgetNode w.1.1)
+  have h : (fun e : Σ i : I, Y.obj ⟨i⟩ ↦ (f.app ⟨e.1⟩ e.2).down.val) = sliceCorec F Y α :=
+    SliceM.corec_unique F.toSlicePFunctor _ _ _ _ (funext fun e ↦ (f.app ⟨e.1⟩ e.2).down.property.1)
+      fun e ↦ congrArg
+        (fun w : (F.objPresheaf (PresheafM F)).obj ⟨e.1⟩ ↦ carrier.forgetNode w.val.val)
         (hf e.1 e.2)
   ext j y
   exact carrier.obj_ext (congrFun h ⟨j.unop, y⟩)

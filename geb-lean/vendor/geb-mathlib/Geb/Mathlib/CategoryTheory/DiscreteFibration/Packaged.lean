@@ -86,17 +86,17 @@ noncomputable def IsDiscreteFibration.toDiscreteFibration {p : C ⥤ B}
     (H.equiv_apply _).symm.trans (H.equiv.apply_symm_apply q)
   have hr : ∀ {b : B} {c : C} (g : b ⟶ p.obj c),
       (H.equiv.symm ⟨(Arrow.mk g, c), rfl⟩).right = c :=
-    fun g => congrArg (fun q : CodPullback p => q.1.2) (hl _)
+    fun g => congrArg (fun q : CodPullback p => q.val.2) (hl _)
   have hm : ∀ {b : B} {c : C} (g : b ⟶ p.obj c),
       Arrow.mk (p.map (H.equiv.symm ⟨(Arrow.mk g, c), rfl⟩).hom) =
         Arrow.mk g :=
-    fun g => congrArg (fun q : CodPullback p => q.1.1) (hl _)
+    fun g => congrArg (fun q : CodPullback p => q.val.1) (hl _)
   refine
     { src := fun {b c} g => (H.equiv.symm ⟨(Arrow.mk g, c), rfl⟩).left
       hom := fun {b c} g =>
         (H.equiv.symm ⟨(Arrow.mk g, c), rfl⟩).hom ≫ eqToHom (hr g)
       obj_src := fun {b c} g =>
-        congrArg (fun q : CodPullback p => q.1.1.left) (hl _)
+        congrArg (fun q : CodPullback p => q.val.1.left) (hl _)
       map_hom := fun {b c} g => ?_
       unique := fun {b c} g {c'} h eh hh => ?_ }
   · obtain ⟨hX, hY, hf⟩ := (Arrow.mk_eq_mk_iff _ _).1 (hm g)

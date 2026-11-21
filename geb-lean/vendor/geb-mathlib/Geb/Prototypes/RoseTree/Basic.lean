@@ -67,7 +67,7 @@ variable {α : Type} {β : Type u}
 built once, so that each is reached in constant time. -/
 def node (a : α) (cs : List (RoseTree α)) : RoseTree α :=
   let arr := cs.toArray
-  WType.mk (a, cs.length) fun i ↦ arr[i.1]'(by simp [arr])
+  WType.mk (a, cs.length) fun i ↦ arr[i.val]'(by simp [arr])
 
 /-- The label of a tree. -/
 def label : RoseTree α → α
@@ -86,7 +86,7 @@ def children : RoseTree α → List (RoseTree α)
 /-- A node over a list tabulating a direction function is the tree of that
 function. -/
 theorem node_eq_mk (a : α) (cs : List (RoseTree α)) {n : ℕ} (hlen : cs.length = n)
-    (f : Fin n → RoseTree α) (key : ∀ i : Fin n, cs[i.1]? = some (f i)) :
+    (f : Fin n → RoseTree α) (key : ∀ i : Fin n, cs[i.val]? = some (f i)) :
     node a cs = WType.mk (a, n) f := by
   subst hlen
   unfold node
@@ -94,7 +94,7 @@ theorem node_eq_mk (a : α) (cs : List (RoseTree α)) {n : ℕ} (hlen : cs.lengt
   congr 1
   funext i
   rw [List.getElem_toArray]
-  exact Option.some.inj ((List.getElem?_eq_getElem i.2).symm.trans (key i))
+  exact Option.some.inj ((List.getElem?_eq_getElem i.isLt).symm.trans (key i))
 
 /-- A tree is the node of its label over its children. -/
 @[simp] theorem node_label_children (t : RoseTree α) : node t.label t.children = t := by

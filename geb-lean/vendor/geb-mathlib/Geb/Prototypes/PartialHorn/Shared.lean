@@ -311,7 +311,7 @@ theorem sorts_spec (hst : st.WF) (S : Sig) (Γ : List ℕ) :
         subst hjk
         rcases hn : st.nodes[k] with ⟨l, cs⟩
         have hx : st.nodes[(k : ℕ)]? = some (l, cs) := by
-          rw [Array.getElem?_eq_getElem k.2]
+          rw [Array.getElem?_eq_getElem k.isLt]
           exact congrArg some hn
         have hs : (k : ℕ) = b.size := hb.1.symm
         rw [hs, Array.getElem?_push_size, ← hs, sortStep_eq hst S Γ hx hb.2]⟩)

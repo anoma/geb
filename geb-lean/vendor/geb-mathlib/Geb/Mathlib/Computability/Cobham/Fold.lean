@@ -150,7 +150,7 @@ theorem length_foldSem_le (w : List Bool) :
 
 /-- The meaning read at the raw tree is the meaning the expression carries. -/
 theorem foldSem_eq_eval :
-    transport (foldOf enc dec init step).2 (foldOf enc dec init step).1.eval =
+    transport (foldOf enc dec init step).property (foldOf enc dec init step).val.eval =
       foldSem enc dec init step :=
   scanSem_eq_eval (constAtOf 0 (List.ofFn (enc init))) (foldStep enc dec step false)
     (foldStep enc dec step true) p (length_foldSem_le enc dec init step)

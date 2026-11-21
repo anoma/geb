@@ -227,9 +227,9 @@ child's index is the one {lit}`rc` prescribes. -/
 /-- {lit}`evalValue` as an algebra for {lit}`sig` in the slice over {lit}`ℕ`. -/
 @[expose] def evalStep :
     sig.toSliceDomPFunctor.Obj (Sigma.fst (β := Sem)) → Σ i, Sem i :=
-  fun z ↦ ⟨sig.q z.1.1,
-    evalValue z.1.1 z.1.2
-      ((sig.toSliceDomPFunctor.compatible_iff _ z.1.1 z.1.2).mp z.2)⟩
+  fun z ↦ ⟨sig.q z.val.1,
+    evalValue z.val.1 z.val.2
+      ((sig.toSliceDomPFunctor.compatible_iff _ z.val.1 z.val.2).mp z.property)⟩
 
 /-- The interpretation of a tree: its arity together with its meaning at that
 arity, by the slice W-type's eliminator. -/
@@ -255,7 +255,7 @@ theorem fst_eval (z : S) : (eval z).1 = arity z :=
   transport ((fst_eval e).trans he) (eval e).2
 
 /-- The meaning of an expression of a given arity. -/
-@[expose] def SOf.sem {n : ℕ} (e : SOf n) : Sem n := semAt n e.1 e.2
+@[expose] def SOf.sem {n : ℕ} (e : SOf n) : Sem n := semAt n e.val e.property
 
 /-- A function is non-size-increasing with constant {lit}`k`: whenever every
 argument has length at most {lit}`m`, the value has length at most
@@ -405,12 +405,12 @@ theorem nsi_evalValue (a : Shape) (c : Direction a → Σ i, Sem i)
 {lit}`nsiConst` reads off its syntax: the bitstring form of \[Mazzanti2016\]
 Lemma 2.1 for {lit}`S(sbs₀, sbs₁)`. By structural induction on the slice W-type,
 each node being {lit}`nsi_evalValue` at its children. -/
-theorem nsi_eval : ∀ e : S, NSI (nsiConst e.1) (eval e).2 :=
-  SlicePFunctor.W.induction fun x ih ↦ nsi_evalValue x.1.1 (fun b ↦ eval (x.1.2 b)) _ _ ih
+theorem nsi_eval : ∀ e : S, NSI (nsiConst e.val) (eval e).2 :=
+  SlicePFunctor.W.induction fun x ih ↦ nsi_evalValue x.val.1 (fun b ↦ eval (x.val.2 b)) _ _ ih
 
 /-- The non-size-increase of an expression of a given arity, at that arity. -/
-theorem nsi_sem {n : ℕ} (e : SOf n) : NSI (nsiConst e.1.1) e.sem :=
-  nsi_transport _ (nsi_eval e.1)
+theorem nsi_sem {n : ℕ} (e : SOf n) : NSI (nsiConst e.val.val) e.sem :=
+  nsi_transport _ (nsi_eval e.val)
 
 end
 

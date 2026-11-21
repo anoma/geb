@@ -164,9 +164,9 @@ def universeData (former : Former) : PresheafPFunctorData Card Card where
   r := fun x ↦ x.2.2.1
   q := fun a ↦ a.2.1
   directionRestr := fun _a _i i' g d ↦
-    ⟨⟨d.1.1, i', g ≫ eqToHom d.2.symm ≫ d.1.2.2⟩, rfl⟩
+    ⟨⟨d.val.1, i', g ≫ eqToHom d.property.symm ≫ d.val.2.2⟩, rfl⟩
   shapeRestr := fun _j j' g a ↦
-    ⟨⟨a.1.1, j', g ≫ eqToHom a.2.symm ≫ a.1.2.2⟩, rfl⟩
+    ⟨⟨a.val.1, j', g ≫ eqToHom a.property.symm ≫ a.val.2.2⟩, rfl⟩
   reindex := fun _j _j' _g _a _i d ↦ d
 
 /-! ### The functor laws

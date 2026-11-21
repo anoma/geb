@@ -43,7 +43,7 @@ Choice-free rebuild of `List.Nodup.getEquiv`. -/
 def getEquivC {α : Type u} [DecidableEq α] (l : List α) (H : l.Nodup) :
     Fin l.length ≃ {x // x ∈ l} where
   toFun i := ⟨l.get i, List.get_mem _ _⟩
-  invFun x := ⟨l.idxOf ↑x, List.idxOf_lt_length_of_mem x.2⟩
+  invFun x := ⟨l.idxOf ↑x, List.idxOf_lt_length_of_mem x.property⟩
   left_inv i := by simp only [List.get_idxOf, Fin.eta, H]
   right_inv x := by
     simp only [List.get_eq_getElem, List.getElem_idxOf, Subtype.coe_eta]

@@ -208,7 +208,7 @@ restricted to the compatibility subtype. -/
     {X : Type uX} {X' : Type uX'}
     {p : X → dom} {p' : X' → dom} (f : X → X') (hf : p' ∘ f = p) :
     F.Obj p → F.Obj p' :=
-  fun x ↦ ⟨F.toPFunctor.map f x.1, by
+  fun x ↦ ⟨F.toPFunctor.map f x.val, by
     obtain ⟨⟨a, v⟩, hx⟩ := x
     change p' ∘ (f ∘ v) = F.r ∘ Sigma.mk a
     rw [← Function.comp_assoc, hf]
@@ -218,12 +218,12 @@ restricted to the compatibility subtype. -/
 theorem map_fst {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
     {X : Type uX} {X' : Type uX'}
     {p : X → dom} {p' : X' → dom} (f : X → X') (hf : p' ∘ f = p)
-    (x : F.Obj p) : (F.map f hf x).1.1 = x.1.1 := rfl
+    (x : F.Obj p) : (F.map f hf x).val.1 = x.val.1 := rfl
 
 /-- Functoriality: identity. -/
 theorem map_id {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) {X : Type uX}
     (p : X → dom) : F.map id (by simp) = (id : F.Obj p → F.Obj p) :=
-  funext fun x ↦ Subtype.ext (F.toPFunctor.id_map x.1)
+  funext fun x ↦ Subtype.ext (F.toPFunctor.id_map x.val)
 
 /-- Functoriality: composition. -/
 theorem map_comp {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
@@ -232,7 +232,7 @@ theorem map_comp {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom)
     (hf : p' ∘ f = p) (hg : p'' ∘ g = p') :
     F.map (g ∘ f) (by rw [← hf, ← hg, Function.comp_assoc]) =
       F.map g hg ∘ F.map f hf :=
-  funext fun x ↦ Subtype.ext (F.toPFunctor.map_map f g x.1).symm
+  funext fun x ↦ Subtype.ext (F.toPFunctor.map_map f g x.val).symm
 
 end SliceDomPFunctor
 
@@ -243,7 +243,7 @@ structure map into `cod`, the shape-output map applied to each shape. The
 carrier is the `SliceDomPFunctor` value `F.toSliceDomPFunctor.Obj p`. -/
 @[expose] def obj {dom : Type uD} {cod : Type uC} (F : SlicePFunctor.{uA, uB, uD, uC} dom cod)
     {X : Type uX} (p : X → dom) : F.toSliceDomPFunctor.Obj p → cod :=
-  fun z ↦ F.q z.1.1
+  fun z ↦ F.q z.val.1
 
 /-- The slice functor's action on a morphism: the `SliceDomPFunctor` morphism
 map underlying it. -/

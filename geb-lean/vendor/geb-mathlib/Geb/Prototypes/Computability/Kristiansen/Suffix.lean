@@ -115,18 +115,18 @@ theorem preserves_evalValue (a : Shape) (ha : AllowedShape a)
         (Nat.le_max_right _ _)) (preserves_transport _ (hk (.inr (.inr l))))
 
 /-- Every allowed expression preserves the invariant, with its syntactic constant bound. -/
-theorem preserves_eval : ∀ e : S, Allowed e.1 → Preserves (nsiConst e.1) (eval e).2 :=
+theorem preserves_eval : ∀ e : S, Allowed e.val → Preserves (nsiConst e.val) (eval e).2 :=
   SlicePFunctor.W.induction fun x ih ha ↦
-    preserves_evalValue x.1.1 ha.1 (fun d ↦ eval (x.1.2 d)) _ _ (fun d ↦ ih d (ha.2 d))
+    preserves_evalValue x.val.1 ha.1 (fun d ↦ eval (x.val.2 d)) _ _ (fun d ↦ ih d (ha.2 d))
 
 /-- Equation (4.6) of \[Kristiansen2005\], with the constants bounded by their maximum. -/
-theorem preserves_sem {n : ℕ} (e : LOf n) : Preserves (nsiConst e.1.1.1) e.sem :=
-  preserves_transport _ (preserves_eval e.1.1 e.2)
+theorem preserves_sem {n : ℕ} (e : LOf n) : Preserves (nsiConst e.val.val.val) e.sem :=
+  preserves_transport _ (preserves_eval e.val.val e.property)
 
 /-- Lemma 4.5 of \[Kristiansen2005\]: every output is short or an input suffix. -/
 theorem short_or_suffix {n : ℕ} (e : LOf n) (x : Fin n → List Bool) :
-    (e.sem x).length ≤ nsiConst e.1.1.1 ∨ ∃ i, e.sem x <:+ x i := by
-  apply preserves_sem e (fun w ↦ w.length ≤ nsiConst e.1.1.1 ∨ ∃ i, w <:+ x i)
+    (e.sem x).length ≤ nsiConst e.val.val.val ∨ ∃ i, e.sem x <:+ x i := by
+  apply preserves_sem e (fun w ↦ w.length ≤ nsiConst e.val.val.val ∨ ∃ i, w <:+ x i)
   · exact fun _ hw ↦ Or.inl hw
   · intro b v hv
     rcases hv with hv | ⟨i, hi⟩
@@ -136,7 +136,7 @@ theorem short_or_suffix {n : ℕ} (e : LOf n) (x : Fin n → List Bool) :
 
 /-- Above the expression's constant bound, its output is a suffix of an input word. -/
 theorem suffix_of_length_gt {n : ℕ} (e : LOf n) (x : Fin n → List Bool)
-    (h : nsiConst e.1.1.1 < (e.sem x).length) : ∃ i, e.sem x <:+ x i :=
+    (h : nsiConst e.val.val.val < (e.sem x).length) : ∃ i, e.sem x <:+ x i :=
   (short_or_suffix e x).resolve_left (Nat.not_le_of_gt h)
 
 end

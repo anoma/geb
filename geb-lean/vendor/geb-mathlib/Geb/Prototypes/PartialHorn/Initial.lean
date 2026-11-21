@@ -112,15 +112,15 @@ theorem dom_closed {t : Tree} (h : Derivable T #[] [] [] ⟨t, t⟩) : (eval M [
 
 /-- Interpretation of a representative of the closed term model. -/
 def interpretRep (r : Rep T #[] [] []) : M.Val :=
-  (eval M [] r.1.2).get (dom_closed M hM r.2.2)
+  (eval M [] r.val.2).get (dom_closed M hM r.property.2)
 
 /-- A representative evaluates to its interpretation. -/
 theorem eval_interpretRep (r : Rep T #[] [] []) :
-    eval M [] r.1.2 = Part.some (interpretRep M hM r) := (Part.some_get _).symm
+    eval M [] r.val.2 = Part.some (interpretRep M hM r) := (Part.some_get _).symm
 
 /-- Interpretation preserves the sort of a representative. -/
-theorem interpretRep_sort (r : Rep T #[] [] []) : (interpretRep M hM r).1 = r.1.1 := by
-  exact sort_eval (M := M) (ρ := []) rfl r.1.2 r.2.1 (eval_interpretRep M hM r)
+theorem interpretRep_sort (r : Rep T #[] [] []) : (interpretRep M hM r).1 = r.val.1 := by
+  exact sort_eval (M := M) (ρ := []) rfl r.val.2 r.property.1 (eval_interpretRep M hM r)
 
 /-- Derivably equal representatives have equal interpretations. -/
 theorem interpretRep_respects (r s : Rep T #[] [] []) (h : r ≈ s) :
@@ -138,11 +138,11 @@ theorem interpretCls_sort (w : Cls T #[] [] []) : (interpretCls M hM w).1 = w.so
   Quotient.inductionOn w (interpretRep_sort M hM)
 
 /-- Interpretation on sorted values of the closed term model. -/
-def interpret (w : (termModel T #[] [] []).Val) : M.Val := interpretCls M hM w.2.1
+def interpret (w : (termModel T #[] [] []).Val) : M.Val := interpretCls M hM w.2.val
 
 /-- Interpretation preserves sorts. -/
 theorem interpret_sort (w : (termModel T #[] [] []).Val) : (interpret M hM w).1 = w.1 :=
-  (interpretCls_sort M hM w.2.1).trans w.2.2
+  (interpretCls_sort M hM w.2.val).trans w.2.property
 
 /-- Interpretation of a class presented as a sorted value. -/
 theorem interpret_val (r : Rep T #[] [] []) :
@@ -164,7 +164,7 @@ theorem interpret_op (k : ℕ) (args : List (termModel T #[] [] []).Val)
   have hs : (terms rs).map (eval (termModel T #[] [] []) []) =
       (rs.map fun r ↦ val ⟦r⟧).map Part.some := by
     simp only [terms, List.map_map]
-    exact List.map_congr_left fun r _ ↦ eval_generic _ r.2.1 r.2.2
+    exact List.map_congr_left fun r _ ↦ eval_generic _ r.property.1 r.property.2
   have ht : (terms rs).map (eval M []) =
       ((rs.map fun r ↦ val ⟦r⟧).map (interpret M hM)).map Part.some := by
     simp only [terms, List.map_map]
@@ -190,8 +190,8 @@ theorem interpretHom_unique (f : ModelHom (termModel T #[] [] []) M) :
   subst s
   change f.toFun (val c) = interpret M hM (val c)
   refine Quotient.inductionOn c fun r ↦ ?_
-  have he : eval (termModel T #[] [] []) [] r.1.2 = Part.some (val ⟦r⟧) :=
-    eval_generic _ r.2.1 r.2.2
+  have he : eval (termModel T #[] [] []) [] r.val.2 = Part.some (val ⟦r⟧) :=
+    eval_generic _ r.property.1 r.property.2
   exact Part.some_inj.mp ((f.map_closed _ _ he).symm.trans (eval_interpretRep M hM r))
 
 /-- The closed term model admits exactly one homomorphism into every model of its theory. -/

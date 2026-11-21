@@ -316,7 +316,7 @@ transported along the fibre's index proof. -/
 @[nolint checkUnivs]
 def wDecode (c : IIR.{max uA uI uD, uB, uI, uD, uI, uD} I D I D) (n : I)
     (x : W.{uA, uB, uI, uD} I D c n) : D n :=
-  x.2 ▸ (IR.wDecode (Σ i, D i) (toIR I D I D c) x.1).2
+  x.property ▸ (IR.wDecode (Σ i, D i) (toIR I D I D c) x.val).2
 
 end IIR
 

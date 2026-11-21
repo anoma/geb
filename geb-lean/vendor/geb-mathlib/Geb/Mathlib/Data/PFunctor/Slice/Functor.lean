@@ -86,7 +86,7 @@ under the polynomial functor's action, supplied by the core `map`. -/
 @[expose] def domSubfunctor {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) :
     Subfunctor (Over.forget dom ⋙ PFunctor.functor.{uA, uB, uD} F.toPFunctor) where
   obj Y := {x | F.Compatible (Y.hom) x.1 x.2}
-  map i x hx := (F.map (i.left) (over_hom_comp i) ⟨x, hx⟩).2
+  map i x hx := (F.map (i.left) (over_hom_comp i) ⟨x, hx⟩).property
 
 /-- The functor `Over dom ⥤ Type` restricting the `PFunctor`
 interpretation to `r`-compatible assignments: the subfunctor
@@ -107,8 +107,8 @@ the `Functor.toOver` triangle obligation for `functor`, shared with
 private theorem output_triangle {dom : Type uD} {cod : Type (max uA uB uD)}
     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod)
     {Y Z : Over dom} (g : Y ⟶ Z) :
-    F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z ↦ F.q z.1.1) =
-      (↾fun z ↦ F.q z.1.1) := by
+    F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z ↦ F.q z.val.1) =
+      (↾fun z ↦ F.q z.val.1) := by
   ext z
   exact congrArg F.q (F.toSliceDomPFunctor.map_fst (g.left)
     (SliceDomPFunctor.over_hom_comp g) z)
@@ -119,7 +119,7 @@ private theorem output_triangle {dom : Type uD} {cod : Type (max uA uB uD)}
     (F : SlicePFunctor.{uA, uB, uD, max uA uB uD} dom cod) :
     CategoryTheory.Functor (Over dom) (Over cod) :=
   Functor.toOver F.toSliceDomPFunctor.domFunctor cod
-    (fun _ ↦ ↾(fun z ↦ F.q z.1.1))
+    (fun _ ↦ ↾(fun z ↦ F.q z.val.1))
     (by intro Y Z g; exact F.output_triangle g)
 
 /-- The wrapper forgets back to `domFunctor`. -/

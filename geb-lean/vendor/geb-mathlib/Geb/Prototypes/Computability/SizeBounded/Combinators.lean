@@ -104,14 +104,14 @@ of arity {lit}`m`. -/
 @[expose] def compOf {n m : ℕ} (h : SOf m) (g : Fin m → SOf n) : SOf n :=
   ⟨⟨WType.mk (.comp n m) fun d ↦
       match d with
-      | .inl () => h.1.1
-      | .inr i => (g i).1.1,
+      | .inl () => h.val.val
+      | .inr i => (g i).val.val,
     ⟨fun d ↦ match d with
-      | .inl () => h.1.2
-      | .inr i => (g i).1.2,
+      | .inl () => h.val.property
+      | .inr i => (g i).val.property,
     funext fun d ↦ match d with
-      | .inl () => (sig.wIndexValid_index_eq_wIndexRoot h.1.1).trans h.2
-      | .inr i => (sig.wIndexValid_index_eq_wIndexRoot (g i).1.1).trans (g i).2⟩⟩,
+      | .inl () => (sig.wIndexValid_index_eq_wIndexRoot h.val.val).trans h.property
+      | .inr i => (sig.wIndexValid_index_eq_wIndexRoot (g i).val.val).trans (g i).property⟩⟩,
   rfl⟩
 
 /-- The meaning of a substitution. -/
@@ -125,18 +125,19 @@ parameters. -/
     (j : Fin b) : SOf (a + 1) :=
   ⟨⟨WType.mk (.srn a b j) fun d ↦
       match d with
-      | .inl l => (g l).1.1
-      | .inr (.inl l) => (h false l).1.1
-      | .inr (.inr l) => (h true l).1.1,
+      | .inl l => (g l).val.val
+      | .inr (.inl l) => (h false l).val.val
+      | .inr (.inr l) => (h true l).val.val,
     ⟨fun d ↦ match d with
-      | .inl l => (g l).1.2
-      | .inr (.inl l) => (h false l).1.2
-      | .inr (.inr l) => (h true l).1.2,
+      | .inl l => (g l).val.property
+      | .inr (.inl l) => (h false l).val.property
+      | .inr (.inr l) => (h true l).val.property,
     funext fun d ↦ match d with
-      | .inl l => (sig.wIndexValid_index_eq_wIndexRoot (g l).1.1).trans (g l).2
-      | .inr (.inl l) => (sig.wIndexValid_index_eq_wIndexRoot (h false l).1.1).trans (h false l).2
+      | .inl l => (sig.wIndexValid_index_eq_wIndexRoot (g l).val.val).trans (g l).property
+      | .inr (.inl l) =>
+        (sig.wIndexValid_index_eq_wIndexRoot (h false l).val.val).trans (h false l).property
       | .inr (.inr l) =>
-        (sig.wIndexValid_index_eq_wIndexRoot (h true l).1.1).trans (h true l).2⟩⟩,
+        (sig.wIndexValid_index_eq_wIndexRoot (h true l).val.val).trans (h true l).property⟩⟩,
   rfl⟩
 
 /-- The meaning of a recursion node is {name}`evalSRN` at its children's meanings,

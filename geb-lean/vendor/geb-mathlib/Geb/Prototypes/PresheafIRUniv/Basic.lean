@@ -178,7 +178,7 @@ theorem univDirection_empty (K : Type uK) (a : univShape K) :
     IsEmpty (SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor a
       (1 : Fin 2)) := by
   exact IsEmpty.mk fun d => by
-    have h := d.2
+    have h := d.property
     change (0 : Fin 2) = 1 at h
     omega
 
@@ -245,8 +245,8 @@ theorem univShapeRestr_over (K : Type uK) (a : univShape K) (t : Fin 2)
 /-- The shape-restriction of `univPsh`. -/
 def univShapeRestr (K : Type uK) ⦃j j' : Fin 2⦄ (g : j' ⟶ j)
     (s : SlicePFunctor.Shape (univSlice K) j) : SlicePFunctor.Shape (univSlice K) j' :=
-  ⟨univRestrShape K s.1 j', univShapeRestr_over K s.1 j' (by
-    have hs : univQ K s.1 = j := s.2
+  ⟨univRestrShape K s.val j', univShapeRestr_over K s.val j' (by
+    have hs : univQ K s.val = j := s.property
     rw [hs]
     exact leOfHom g)⟩
 
@@ -268,11 +268,11 @@ def univReindexDir (K : Type uK) (a : univShape K) (t : Fin 2) :
 def univReindex (K : Type uK) ⦃j j' : Fin 2⦄ (g : j' ⟶ j)
     (a : SlicePFunctor.Shape (univSlice K) j) ⦃i : Fin 2⦄
     (d : SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-      (univShapeRestr K g a).1 i) :
-    SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor a.1 i := by
+      (univShapeRestr K g a).val i) :
+    SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor a.val i := by
   match i with
-  | 0 => exact ⟨univReindexDir K a.1 j' d.1, rfl⟩
-  | 1 => exact (univDirection_empty K (univShapeRestr K g a).1).elim d
+  | 0 => exact ⟨univReindexDir K a.val j' d.val, rfl⟩
+  | 1 => exact (univDirection_empty K (univShapeRestr K g a).val).elim d
 
 /-- The operations of the presheaf polynomial endofunctor of the universe. -/
 def univPshData (K : Type uK) : PresheafPFunctorData.{0, 0, uK, 0, 0, 0}
@@ -289,7 +289,7 @@ theorem univShapeRestr_id_thm (K : Type uK) : (univPshData K).ShapeRestrId := by
   intro j
   funext s
   refine Subtype.ext ?_
-  change univRestrShape K s.1 j = s.1
+  change univRestrShape K s.val j = s.val
   obtain ⟨a, ha⟩ := s
   cases a with
   | iota k => rfl
@@ -315,7 +315,7 @@ theorem univShapeRestr_comp_thm (K : Type uK) : (univPshData K).ShapeRestrComp :
   intro j j' j'' g h
   funext s
   refine Subtype.ext ?_
-  change univRestrShape K s.1 j'' = univRestrShape K (univRestrShape K s.1 j') j''
+  change univRestrShape K s.val j'' = univRestrShape K (univRestrShape K s.val j') j''
   obtain ⟨a, ha⟩ := s
   cases a with
   | iota k => rfl
@@ -429,27 +429,27 @@ theorem univPshLaws (K : Type uK) : (univPshData K).IsFunctorial := {
         omega
     · have hi1 : i = (1 : Fin 2) := by omega
       subst hi1
-      exact (univDirection_empty K (univShapeRestr K g a).1).elim d
+      exact (univDirection_empty K (univShapeRestr K g a).val).elim d
   reindex_id := by
     intro j a i b
     by_cases hi : i = (0 : Fin 2)
     · subst hi
       obtain ⟨ashape, ha⟩ := a
       cases ashape with
-      | iota k => cases b.1
+      | iota k => cases b.val
       | sigma =>
           have hsub : ∀ x y : SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-              (⟨.sigma, ha⟩ : SlicePFunctor.Shape (univSlice K) j).1 (0 : Fin 2), x = y := by
+              (⟨.sigma, ha⟩ : SlicePFunctor.Shape (univSlice K) j).val (0 : Fin 2), x = y := by
             intro x y
             apply Subtype.ext
-            cases x.1; cases y.1; rfl
+            cases x.val; cases y.val; rfl
           exact hsub _ _
       | pi =>
           have hsub : ∀ x y : SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-              (⟨.pi, ha⟩ : SlicePFunctor.Shape (univSlice K) j).1 (0 : Fin 2), x = y := by
+              (⟨.pi, ha⟩ : SlicePFunctor.Shape (univSlice K) j).val (0 : Fin 2), x = y := by
             intro x y
             apply Subtype.ext
-            cases x.1; cases y.1; rfl
+            cases x.val; cases y.val; rfl
           exact hsub _ _
       | termSigma =>
           have hq : (univPshData K).q .termSigma = j := by exact ha
@@ -458,11 +458,11 @@ theorem univPshLaws (K : Type uK) : (univPshData K).IsFunctorial := {
             exact hq.symm
           subst hj
           have e : SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-              (univShapeRestr K (𝟙 (1 : Fin 2)) ⟨.termSigma, ha⟩).1 0 =
+              (univShapeRestr K (𝟙 (1 : Fin 2)) ⟨.termSigma, ha⟩).val 0 =
               SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-                (⟨.termSigma, ha⟩ : SlicePFunctor.Shape (univSlice K) (1 : Fin 2)).1 0 :=
+                (⟨.termSigma, ha⟩ : SlicePFunctor.Shape (univSlice K) (1 : Fin 2)).val 0 :=
             congrArg (fun s : SlicePFunctor.Shape (univSlice K) (1 : Fin 2) ↦
-              SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor s.1 0)
+              SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor s.val 0)
               (congrFun (univShapeRestr_id_thm K (1 : Fin 2)) ⟨.termSigma, ha⟩)
           cases e
           apply Subtype.ext
@@ -474,11 +474,11 @@ theorem univPshLaws (K : Type uK) : (univPshData K).IsFunctorial := {
             exact hq.symm
           subst hj
           have e : SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-              (univShapeRestr K (𝟙 (1 : Fin 2)) ⟨.termPi, ha⟩).1 0 =
+              (univShapeRestr K (𝟙 (1 : Fin 2)) ⟨.termPi, ha⟩).val 0 =
               SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-                (⟨.termPi, ha⟩ : SlicePFunctor.Shape (univSlice K) (1 : Fin 2)).1 0 :=
+                (⟨.termPi, ha⟩ : SlicePFunctor.Shape (univSlice K) (1 : Fin 2)).val 0 :=
             congrArg (fun s : SlicePFunctor.Shape (univSlice K) (1 : Fin 2) ↦
-              SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor s.1 0)
+              SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor s.val 0)
               (congrFun (univShapeRestr_id_thm K (1 : Fin 2)) ⟨.termPi, ha⟩)
           cases e
           apply Subtype.ext
@@ -486,27 +486,27 @@ theorem univPshLaws (K : Type uK) : (univPshData K).IsFunctorial := {
     · have hi1 : i = (1 : Fin 2) := by
         omega
       subst hi1
-      exact (univDirection_empty K (univShapeRestr K (𝟙 j) a).1).elim b
+      exact (univDirection_empty K (univShapeRestr K (𝟙 j) a).val).elim b
   reindex_comp := by
     intro j j' j'' g h a i b
     by_cases hi : i = (0 : Fin 2)
     · subst hi
       obtain ⟨ashape, ha⟩ := a
       cases ashape with
-      | iota k => cases b.1
+      | iota k => cases b.val
       | sigma =>
           have hsub : ∀ x y : SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-              (⟨.sigma, ha⟩ : SlicePFunctor.Shape (univSlice K) j).1 (0 : Fin 2), x = y := by
+              (⟨.sigma, ha⟩ : SlicePFunctor.Shape (univSlice K) j).val (0 : Fin 2), x = y := by
             intro x y
             apply Subtype.ext
-            cases x.1; cases y.1; rfl
+            cases x.val; cases y.val; rfl
           exact hsub _ _
       | pi =>
           have hsub : ∀ x y : SliceDomPFunctor.Direction (univSlice K).toSliceDomPFunctor
-              (⟨.pi, ha⟩ : SlicePFunctor.Shape (univSlice K) j).1 (0 : Fin 2), x = y := by
+              (⟨.pi, ha⟩ : SlicePFunctor.Shape (univSlice K) j).val (0 : Fin 2), x = y := by
             intro x y
             apply Subtype.ext
-            cases x.1; cases y.1; rfl
+            cases x.val; cases y.val; rfl
           exact hsub _ _
       | termSigma =>
           have hq : (univPshData K).q .termSigma = j := by exact ha
@@ -515,12 +515,12 @@ theorem univPshLaws (K : Type uK) : (univPshData K).IsFunctorial := {
             exact hq.symm
           subst hj
           have ec : (univPshData K).Direction
-              ((univPshData K).shapeRestr (h ≫ g) ⟨.termSigma, ha⟩).1 0 =
+              ((univPshData K).shapeRestr (h ≫ g) ⟨.termSigma, ha⟩).val 0 =
               (univPshData K).Direction
                 ((univPshData K).shapeRestr h
-                  ((univPshData K).shapeRestr g ⟨.termSigma, ha⟩)).1 0 :=
+                  ((univPshData K).shapeRestr g ⟨.termSigma, ha⟩)).val 0 :=
             congrArg (fun s : (univPshData K).toSlicePFunctor.Shape j'' ↦
-              (univPshData K).Direction s.1 0)
+              (univPshData K).Direction s.val 0)
               (congrFun (univShapeRestr_comp_thm K g h) ⟨.termSigma, ha⟩)
           by_cases hj' : j' = (0 : Fin 2)
           · subst hj'
@@ -568,12 +568,12 @@ theorem univPshLaws (K : Type uK) : (univPshData K).IsFunctorial := {
             exact hq.symm
           subst hj
           have ec : (univPshData K).Direction
-              ((univPshData K).shapeRestr (h ≫ g) ⟨.termPi, ha⟩).1 0 =
+              ((univPshData K).shapeRestr (h ≫ g) ⟨.termPi, ha⟩).val 0 =
               (univPshData K).Direction
                 ((univPshData K).shapeRestr h
-                  ((univPshData K).shapeRestr g ⟨.termPi, ha⟩)).1 0 :=
+                  ((univPshData K).shapeRestr g ⟨.termPi, ha⟩)).val 0 :=
             congrArg (fun s : (univPshData K).toSlicePFunctor.Shape j'' ↦
-              (univPshData K).Direction s.1 0)
+              (univPshData K).Direction s.val 0)
               (congrFun (univShapeRestr_comp_thm K g h) ⟨.termPi, ha⟩)
           by_cases hj' : j' = (0 : Fin 2)
           · subst hj'
@@ -617,7 +617,7 @@ theorem univPshLaws (K : Type uK) : (univPshData K).IsFunctorial := {
     · have hi1 : i = (1 : Fin 2) := by
         omega
       subst hi1
-      exact (univDirection_empty K (univShapeRestr K (h ≫ g) a).1).elim b
+      exact (univDirection_empty K (univShapeRestr K (h ≫ g) a).val).elim b
 
   }
 
@@ -662,7 +662,7 @@ def iotaNode (K : Type uK) (k : K) :
         (by intro b; cases b)⟩,
     by
       intro i i' f b
-      cases b.1⟩,
+      cases b.val⟩,
     rfl⟩
 
 /-- The `iota` code at the starting type `k`. -/
@@ -680,7 +680,7 @@ def sigmaNode (K : Type uK) (u : Codes K) :
     by
       intro i i' f b
       have hb : (0 : Fin 2) = i := by
-        have hb' : univR K ⟨.sigma, b.1⟩ = i := b.2
+        have hb' : univR K ⟨.sigma, b.val⟩ = i := b.property
         change (0 : Fin 2) = i at hb'
         exact hb'
       subst hb
@@ -709,7 +709,7 @@ def piNode (K : Type uK) (u : Codes K) :
     by
       intro i i' f b
       have hb : (0 : Fin 2) = i := by
-        have hb' : univR K ⟨.pi, b.1⟩ = i := b.2
+        have hb' : univR K ⟨.pi, b.val⟩ = i := b.property
         change (0 : Fin 2) = i at hb'
         exact hb'
       subst hb
@@ -743,7 +743,7 @@ def termSigmaNode (K : Type uK) (p d : Codes K) :
     by
       intro i i' f b
       have hb : (0 : Fin 2) = i := by
-        have hb' : univR K ⟨.termSigma, b.1⟩ = i := b.2
+        have hb' : univR K ⟨.termSigma, b.val⟩ = i := b.property
         change (0 : Fin 2) = i at hb'
         exact hb'
       subst hb
@@ -775,7 +775,7 @@ def termPiNode (K : Type uK) (p d : Codes K) :
     by
       intro i i' f b
       have hb : (0 : Fin 2) = i := by
-        have hb' : univR K ⟨.termPi, b.1⟩ = i := b.2
+        have hb' : univR K ⟨.termPi, b.val⟩ = i := b.property
         change (0 : Fin 2) = i at hb'
         exact hb'
       subst hb

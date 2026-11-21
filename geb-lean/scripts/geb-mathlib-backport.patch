@@ -76,7 +76,7 @@ index e17f8a9..eeaea83 100644
  @[simp] theorem homBase_id (x : F.CoElements) : homBase (𝟙 x) = 𝟙 x.base := rfl
  
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/FiberPresheaf.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/FiberPresheaf.lean
-index 78839a9..25f674a 100644
+index 8815594..59e1c63 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/FiberPresheaf.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/FiberPresheaf.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -116,7 +116,7 @@ index 78839a9..25f674a 100644
  /-- Naturality of `fiberPresheafEquiv`: restriction in the fiber presheaf of
  `π F` is restriction in `F`. -/
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/Packaged.lean b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/Packaged.lean
-index 74f7b97..4eaea77 100644
+index 18c59cf..3806bfb 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/Packaged.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/CategoryTheory/DiscreteFibration/Packaged.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -501,7 +501,7 @@ index 6ed36e0..e0bce89 100644
  end
  
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Computability/Cobham/RankedTree.lean b/vendor/geb-mathlib/Geb/Mathlib/Computability/Cobham/RankedTree.lean
-index d844385..74afec4 100644
+index dfb05a0..f4aed82 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Computability/Cobham/RankedTree.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Computability/Cobham/RankedTree.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -546,7 +546,7 @@ index d844385..74afec4 100644
  
  /-- At the two-symbol alphabet the generic recognizer accepts the language the
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Computability/Cobham/Tree.lean b/vendor/geb-mathlib/Geb/Mathlib/Computability/Cobham/Tree.lean
-index a97d8df..4101aaf 100644
+index 2591f48..4c60d13 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Computability/Cobham/Tree.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Computability/Cobham/Tree.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -609,7 +609,7 @@ index a97d8df..4101aaf 100644
  
  /-- The recognizer accepts exactly the preorder spellings of the two-symbol
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean
-index cda508b..3e7d009 100644
+index 07b622f..52c4ea9 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -710,7 +710,7 @@ index cda508b..3e7d009 100644
    fun _ ↦ ⟨ULift Unit, fun _ ↦ o⟩
  
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Indexed.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Indexed.lean
-index f6e0899..016629e 100644
+index 8929b18..8440959 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Indexed.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Indexed.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -862,7 +862,7 @@ index f6e0899..016629e 100644
 +@[nolint checkUnivs]
  def wDecode (c : IIR.{max uA uI uD, uB, uI, uD, uI, uD} I D I D) (n : I)
      (x : W.{uA, uB, uI, uD} I D c n) : D n :=
-   x.2 ▸ (IR.wDecode (Σ i, D i) (toIR I D I D c) x.1).2
+   x.property ▸ (IR.wDecode (Σ i, D i) (toIR I D I D c) x.val).2
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean
 index 51af76e..5927206 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/Slice.lean
@@ -938,7 +938,7 @@ index 51af76e..5927206 100644
      Alg.{uA, uB, uI, uO, max (max uA uB uI + 1) (uB + 1) uI uO} I O
        (SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :=
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/W.lean
-index 72793cc..b962839 100644
+index 204c4a6..cf0f35c 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/IndRec/W.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -963,7 +963,7 @@ index 72793cc..b962839 100644
      (F : SlicePFunctor.{max uA uB uI, uB, uI, uO} I O) :
      Type (max (uA + 1) (uB + 1) uI) :=
    (X : FreeCoprodCompDisc.{max uA uB, uI} I) → (z : (α X).1) →
-     { y : F.toSliceDomPFunctor.Obj X.2 // F.q y.1.1 = (α X).2 z }
+     { y : F.toSliceDomPFunctor.Obj X.2 // F.q y.val.1 = (α X).2 z }
  
 -set_option linter.checkUnivs false in
  /-- The constant (`iota`) step of `IR.posToSlice`: the one shape of
@@ -983,7 +983,7 @@ index 72793cc..b962839 100644
      (F : A → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O)
 @@ -127,11 +128,11 @@ def posToSliceSigma (A : Type uA)
      let w := m z.1 X z.2
-     ⟨⟨⟨⟨z.1, w.1.1.1⟩, w.1.1.2⟩, w.1.2⟩, w.2⟩
+     ⟨⟨⟨⟨z.1, w.val.val.1⟩, w.val.val.2⟩, w.val.property⟩, w.property⟩
  
 -set_option linter.checkUnivs false in
  /-- The dependent product (`delta`) step of `IR.posToSlice`: the node's
@@ -995,8 +995,8 @@ index 72793cc..b962839 100644
      (α : (B → I) → FreeCoprodCompDisc.Map.{max uA uB, uI, uO} I O)
      (F : (B → I) → SlicePFunctor.{max uA uB uI, uB, uI, uO} I O)
 @@ -146,13 +147,13 @@ def posToSliceDelta (B : Type uB)
-           | Sum.inr d => congrFun w.1.2 d⟩,
-       w.2⟩
+           | Sum.inr d => congrFun w.val.property d⟩,
+       w.property⟩
  
 -set_option linter.checkUnivs false in
  /-- The interpretation of a code, the code's slice polynomial functor, and
@@ -1109,7 +1109,7 @@ index 72793cc..b962839 100644
  def W.mk (γ : IR.{max uA uI, uB, uI, uI} I I)
      (z : ((posSlice.{max uA uI, uB, uI, uI} I I γ).interp (wObj.{uA, uB, uI} I γ)).1) :
      W.{uA, uB, uI} I γ :=
-   SlicePFunctor.W.mk ((posSlice.{max uA uI, uB, uI, uI} I I γ).tr (wObj I γ) z).1
+   SlicePFunctor.W.mk ((posSlice.{max uA uI, uB, uI, uI} I I γ).tr (wObj I γ) z).val
  
 -set_option linter.checkUnivs false in
  /-- The decoder of a constructed element is the interpretation's decoding
@@ -1119,7 +1119,7 @@ index 72793cc..b962839 100644
      (z : ((posSlice.{max uA uI, uB, uI, uI} I I γ).interp (wObj.{uA, uB, uI} I γ)).1) :
      wDecode I γ (W.mk.{uA, uB, uI} I γ z) =
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
-index 2675808..66313c5 100644
+index 96c64df..fa96d95 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1151,17 +1151,17 @@ index 2675808..66313c5 100644
  structure PresheafDomPFunctorData (I : Type uI) [Category.{vI} I] :
      Type (max (uA + 1) (uB + 1) uI vI)
      extends SliceDomPFunctor.{uA, uB} I where
-@@ -264,8 +265,7 @@ private theorem value_map {I : Type uI} [Category.{vI} I]
+@@ -266,8 +267,7 @@ private theorem value_map {I : Type uI} [Category.{vI} I]
      intro i i' f b
      simp only [value_map]
-     refine (congrArg (fun w ↦ α.app ⟨i'⟩ w) (x.2 f b)).trans ?_
+     refine (congrArg (fun w ↦ α.app ⟨i'⟩ w) (x.property f b)).trans ?_
 -    simp only [← ConcreteCategory.comp_apply]
 -    rw [α.naturality f.op]⟩
 +    exact FunctorToTypes.naturality _ _ α f.op _⟩
  
  /-- Functoriality in the input presheaf: the identity transformation acts as
  the identity. -/
-@@ -294,10 +294,10 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
+@@ -296,10 +296,10 @@ theorem map_comp {I : Type uI} [Category.{vI} I] (F : PresheafDomPFunctorData.{u
  
  end PresheafDomPFunctorData
  
@@ -1173,7 +1173,7 @@ index 2675808..66313c5 100644
  structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
      Type (max (uA + 1) (uB + 1) uI vI)
      extends PresheafDomPFunctorData.{uI, uA, uB, vI} I where
-@@ -306,10 +306,10 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
+@@ -308,10 +308,10 @@ structure PresheafDomPFunctor (I : Type uI) [Category.{vI} I] :
  
  attribute [ext] PresheafDomPFunctorData PresheafDomPFunctor
  
@@ -1185,7 +1185,7 @@ index 2675808..66313c5 100644
  structure PresheafPFunctorData (I : Type uI) [Category.{vI} I]
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafDomPFunctorData.{uI, uA, uB, vI} I, SlicePFunctor.{uA, uB, uI, uJ} I J where
-@@ -399,9 +399,9 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
+@@ -401,9 +401,9 @@ structure IsFunctorial {I : Type uI} [Category.{vI} I] {J : Type uJ} [Category.{
  
  end PresheafPFunctorData
  
@@ -1197,7 +1197,7 @@ index 2675808..66313c5 100644
      (J : Type uJ) [Category.{vJ} J] : Type (max (uA + 1) (uB + 1) uI uJ vI vJ)
      extends PresheafPFunctorData.{uI, uJ, uA, uB, vI, vJ} I J where
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
-index 5fd87ef..9c67fd7 100644
+index 8a7a3a7..d2ac650 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Carrier.lean
 @@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1234,9 +1234,9 @@ index 5fd87ef..9c67fd7 100644
  
  /-! ## Root restriction and naturality -/
  
-@@ -322,7 +323,7 @@ theorem nodeNatural_forgetNode
+@@ -325,7 +326,7 @@ theorem nodeNatural_forgetNode
    · intro hnat i i' g b
-     have h := congrArg (fun u ↦ u.down.1) (hnat g b)
+     have h := congrArg (fun u ↦ u.down.val) (hnat g b)
      simp only [value_down n, map_down g] at h
 -    exact h.trans (F.restrTree_congr S g (value_down n b) _ _)
 +    exact h
@@ -1244,7 +1244,7 @@ index 5fd87ef..9c67fd7 100644
  /-- The constructor: the value of {name}`PresheafPFunctor.objPresheaf` at the
  carrier presheaf maps into it, fibrewise. -/
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean
-index d7afa37..18a25ba 100644
+index 48049c3..3e3780d 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/Decidable.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1256,7 +1256,7 @@ index d7afa37..18a25ba 100644
  
  public import Geb.Mathlib.Data.PFunctor.Presheaf.W
 @@ -125,6 +126,7 @@ theorem isHereditarilyNaturalBoolCore_eq_true_iff {I : Type uI} [Category.{vI} I
-     (motive := fun z ↦ F.isHereditarilyNaturalBoolCore decI feI feHom feB decEqW z.1 = true ↔
+     (motive := fun z ↦ F.isHereditarilyNaturalBoolCore decI feI feHom feB decEqW z.val = true ↔
        F.IsHereditarilyNatural z)
      (fun x ih ↦ ?_) z
 +  beta_reduce
@@ -1288,7 +1288,7 @@ index 46d5bfe..2729e13 100644
      (J : Type uJ) [Category.{vJ} J] :
      Type (max (uA + 1) (uB + 1) uI uJ vI vJ) where
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
-index 8696e1d..30eb169 100644
+index cbc318d..49c77d1 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/W.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1307,11 +1307,11 @@ index 8696e1d..30eb169 100644
 -        ((ConcreteCategory.congr_hom (α.naturality f.op).symm _).trans
 -          (ConcreteCategory.comp_apply _ _ _))
 +      (FunctorToTypes.naturality _ _ α f.op _).symm
-     change (α.app ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩
+     change (α.app ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).val⟩
            (⟨⟨F.objRestrElt f (pNodeSlice (fun b ↦ pElimData F Y α (fchild b)) hv hn.1) hqi,
-             hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).1⟩)) ≍
+             hn'.2 hn'.1⟩, rfl⟩ : (F.objPresheaf Y).obj ⟨F.q (F.shapeRestr f ⟨a, hqi⟩).val⟩)) ≍
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
-index 0963552..17115e9 100644
+index 37f0eb8..9059b31 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Presheaf/WalkingArrow.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1325,14 +1325,14 @@ index 0963552..17115e9 100644
 @@ -80,7 +81,7 @@ def baseNode (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) (x : (basePFunctor F).Obj (Z.obj 
      have hg : g = 𝟙 (0 : Fin 2) := Subsingleton.elim _ _
      subst g
-     rw [congrFun (F.isFunctorial.directionRestr_id x.1.1 0) b]
--    exact (Z.map_id_apply _ _).symm⟩, x.1.2⟩
-+    exact (FunctorToTypes.map_id_apply Z _).symm⟩, x.1.2⟩
+     rw [congrFun (F.isFunctorial.directionRestr_id x.1.val 0) b]
+-    exact (Z.map_id_apply _ _).symm⟩, x.1.property⟩
++    exact (FunctorToTypes.map_id_apply Z _).symm⟩, x.1.property⟩
  
  /-- The base component depends only on the base of the input presheaf. -/
  def baseObjEquiv (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) :
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
-index 1dce60f..1a30765 100644
+index 4f96914..b67105f 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1458,7 +1458,7 @@ index 121a672..919b61f 100644
        change ((decide (∀ b, F.wValidBool (f b) = true)) &&
          decide (∀ b, (F.wValidData (f b)).1 = F.rCurried a b)) = true ↔ _
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
-index 77feb14..8dfbe2d 100644
+index 2c2b211..862c193 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/Functor.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -1500,16 +1500,16 @@ index 77feb14..8dfbe2d 100644
  @[expose] def domSubfunctor {dom : Type uD} (F : SliceDomPFunctor.{uA, uB} dom) :
 -    Subfunctor (Over.forget dom ⋙ F.toPFunctor.functor.{uA, uB, uD}) where
 -  obj Y := {x | F.Compatible (ConcreteCategory.hom Y.hom) x.1 x.2}
--  map i x hx := (F.map (ConcreteCategory.hom i.left) (over_hom_comp i) ⟨x, hx⟩).2
+-  map i x hx := (F.map (ConcreteCategory.hom i.left) (over_hom_comp i) ⟨x, hx⟩).property
 +    Subfunctor (Over.forget dom ⋙ PFunctor.functor.{uA, uB, uD} F.toPFunctor) where
 +  obj Y := {x | F.Compatible (Y.hom) x.1 x.2}
-+  map i x hx := (F.map (i.left) (over_hom_comp i) ⟨x, hx⟩).2
++  map i x hx := (F.map (i.left) (over_hom_comp i) ⟨x, hx⟩).property
  
  /-- The functor `Over dom ⥤ Type` restricting the `PFunctor`
  interpretation to `r`-compatible assignments: the subfunctor
 @@ -111,7 +110,7 @@ private theorem output_triangle {dom : Type uD} {cod : Type (max uA uB uD)}
-     F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z ↦ F.q z.1.1) =
-       (↾fun z ↦ F.q z.1.1) := by
+     F.toSliceDomPFunctor.domFunctor.map g ≫ (↾fun z ↦ F.q z.val.1) =
+       (↾fun z ↦ F.q z.val.1) := by
    ext z
 -  exact congrArg F.q (F.toSliceDomPFunctor.map_fst (ConcreteCategory.hom g.left)
 +  exact congrArg F.q (F.toSliceDomPFunctor.map_fst (g.left)
@@ -1535,7 +1535,7 @@ index 77feb14..8dfbe2d 100644
  
  end SlicePFunctor
 diff --git a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
-index 2f62943..568cbe6 100644
+index df82643..d7aa3a4 100644
 --- a/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
 +++ b/vendor/geb-mathlib/Geb/Mathlib/Data/PFunctor/Slice/W.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2162,7 +2162,7 @@ index 020b944..642b42a 100644
  
  end Geb.CobhamFold
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Destruct.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Destruct.lean
-index 737bed3..37a70a1 100644
+index 7a78557..2353dce 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Destruct.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Destruct.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2394,7 +2394,7 @@ index 21bc5a3..60bbf53 100644
  
  end Geb.CobhamFold
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/SelfDelim.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/SelfDelim.lean
-index 933d872..2107e9c 100644
+index cc11f20..32bcd30 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/SelfDelim.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/SelfDelim.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2405,7 +2405,7 @@ index 933d872..2107e9c 100644
  module
  
  public import Geb.Prototypes.Computability.CobhamFoldProto.Bound
-@@ -307,9 +308,9 @@ theorem length_dropUnarySem_le : ∀ w : List Bool,
+@@ -308,9 +309,9 @@ theorem length_dropUnarySem_le : ∀ w : List Bool,
    List.rec (Nat.le_refl 0) fun b v ih ↦ by
      rw [dropUnarySem_cons, List.length_cons]
      cases b
@@ -2417,7 +2417,7 @@ index 933d872..2107e9c 100644
        omega
  
  /-- The word past a unary length prefix, as an expression of arity one. -/
-@@ -345,9 +346,9 @@ theorem length_dropEntrySem_le : ∀ w : List Bool,
+@@ -346,9 +347,9 @@ theorem length_dropEntrySem_le : ∀ w : List Bool,
    List.rec (Nat.le_refl 0) fun b v ih ↦ by
      rw [dropEntrySem_cons, List.length_cons]
      cases b
@@ -2429,7 +2429,7 @@ index 933d872..2107e9c 100644
        omega
  
  /-- The word past a whole self-delimiting entry, as an expression of arity
-@@ -390,9 +391,9 @@ theorem length_takeEntrySem_le : ∀ w : List Bool,
+@@ -391,9 +392,9 @@ theorem length_takeEntrySem_le : ∀ w : List Bool,
    List.rec (Nat.le_refl 0) fun b v ih ↦ by
      rw [takeEntrySem_cons, List.length_cons]
      cases b
@@ -2441,7 +2441,7 @@ index 933d872..2107e9c 100644
        have := length_firstBitSem_le (dropEntrySem ![v])
        have := length_dropEntrySem_le v
        have hfb : (firstBitSem ![dropEntrySem ![v]]).length ≤ 1 := by
-@@ -412,9 +413,9 @@ theorem two_mul_length_takeEntrySem_add_length_dropEntrySem_le :
+@@ -413,9 +414,9 @@ theorem two_mul_length_takeEntrySem_add_length_dropEntrySem_le :
    List.rec (Nat.le_refl 0) fun b v ih ↦ by
      rw [takeEntrySem_cons, dropEntrySem_cons, List.length_cons]
      cases b
@@ -2453,7 +2453,7 @@ index 933d872..2107e9c 100644
          firstBitSem_eq]
        match hd : dropEntrySem ![v] with
        | [] =>
-@@ -485,9 +486,9 @@ theorem length_takeUnarySem_le : ∀ w : List Bool,
+@@ -486,9 +487,9 @@ theorem length_takeUnarySem_le : ∀ w : List Bool,
    List.rec (Nat.le_refl 0) fun b v ih ↦ by
      rw [takeUnarySem_cons, List.length_cons]
      cases b
@@ -2465,7 +2465,7 @@ index 933d872..2107e9c 100644
        omega
  
  /-- The leading run of `true`, as an expression of arity one. -/
-@@ -503,9 +504,9 @@ def takeUnaryOf : COf 1 :=
+@@ -504,9 +505,9 @@ def takeUnaryOf : COf 1 :=
  theorem takeUnarySem_replicate (X : List Bool) : ∀ k : ℕ,
      takeUnarySem ![List.replicate k true ++ false :: X] = List.replicate k true :=
    Nat.rec (by rw [List.replicate_zero, List.nil_append, takeUnarySem_cons,
@@ -2477,7 +2477,7 @@ index 933d872..2107e9c 100644
          ih]
  
  /-- Dropping a fixed number of whole self-delimiting entries. -/
-@@ -552,16 +553,16 @@ follows the sentinel. -/
+@@ -553,16 +554,16 @@ follows the sentinel. -/
  theorem dropUnarySem_replicate (X : List Bool) : ∀ k : ℕ,
      dropUnarySem ![List.replicate k true ++ false :: X] = X :=
    Nat.rec rfl fun k ih ↦ by
@@ -2497,7 +2497,7 @@ index 933d872..2107e9c 100644
          ih, List.tail_drop]
  
  /-- Splitting a truncation at its last bit. Proved here rather than by
-@@ -580,9 +581,9 @@ counts. -/
+@@ -581,9 +582,9 @@ counts. -/
  theorem takeEntrySem_replicate (X : List Bool) : ∀ k : ℕ,
      takeEntrySem ![List.replicate k true ++ false :: X] = X.take k :=
    Nat.rec (by rw [List.replicate_zero, List.nil_append, takeEntrySem_cons,
@@ -2510,7 +2510,7 @@ index 933d872..2107e9c 100644
          ← take_succ_append_take_one]
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/SmashFree.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/SmashFree.lean
-index c3bbad2..78a0ae1 100644
+index f0e4565..c037a1c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/SmashFree.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/SmashFree.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2560,7 +2560,7 @@ index c3bbad2..78a0ae1 100644
  
  /-- The fold at a bitstring carrier lies in the subalgebra `Cobham.SmashFree`
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Variable.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Variable.lean
-index bd7a3b3..7b99890 100644
+index 48979a9..0219686 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Variable.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/CobhamFoldProto/Variable.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2727,7 +2727,7 @@ index 2563bf1..f638be5 100644
  
  end Geb.Mazzanti.Expr
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
-index 8a19f99..6b255e9 100644
+index f31fc1a..3b8215d 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2750,7 +2750,7 @@ index 8a19f99..6b255e9 100644
  /-- Simultaneous recursion on notation preserves the property, with the maximum of
  the base and step constants: the bitstring form of {citeKey}`Mazzanti2016` Lemma 2.1's
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
-index 28f6733..4fc9f9c 100644
+index 9bc913c..d23c114 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/BitTree.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2772,7 +2772,7 @@ index 28f6733..4fc9f9c 100644
  /-- The three registers of the scan, as expressions of arity two: the counter and
  the word. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
-index 3419013..69c3328 100644
+index e559dda..e26f9a7 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Cost.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2802,7 +2802,7 @@ index 3419013..69c3328 100644
            (fun i ↦ Nat.le_trans (hy i) hm)
          have hstep : ∀ l, (srnStepsC c h i l (stepEnv v
              (fun l ↦ (evalSRNC (srnBasesC c h) (srnStepsC c h) v l (Fin.tail x)).value)
-@@ -689,7 +693,7 @@ theorem isPolyBounded_timePoly : ∀ w : sig.toPFunctor.W, IsPolyBounded (timePo
+@@ -690,7 +694,7 @@ theorem isPolyBounded_timePoly : ∀ w : sig.toPFunctor.W, IsPolyBounded (timePo
      | sbs _ =>
        have hsbs : IsPolyBounded fun m ↦ 2 * m + 1 :=
          isPolyBounded_of_le (p := fun m ↦ (m + 1) + (m + 1))
@@ -2959,7 +2959,7 @@ index ef83dea..61cebc9 100644
        rw [show z - (c + 1) = z - c - 1 by omega]
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
-index 72b0622..2e97670 100644
+index d75cdbd..c64c222 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/EndSegment.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -2982,7 +2982,7 @@ index 72b0622..2e97670 100644
  /-- Simultaneous recursion on notation preserves a suffix-closed property its
  bases and steps preserve: the recursion variable's suffixes satisfy it, so each
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
-index e380b8d..bf5e5f8 100644
+index 7ddee74..20b549a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/Rep.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3786,7 +3786,7 @@ index c679543..88dfe2e 100644
  
  /-- The expression accepts exactly the words the recognizer accepts, when its
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
-index c49fc47..11beb99 100644
+index f5f6596..82930de 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Sig.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -3801,8 +3801,8 @@ index c49fc47..11beb99 100644
      else .inr (.inr ⟨j - 2 * b, by omega⟩)
    left_inv x := by
      rcases x with i | i | i
--    · exact dite_eq_left i.2
-+    · exact dif_pos i.2
+-    · exact dite_eq_left i.isLt
++    · exact dif_pos i.isLt
      · dsimp only
 -      rw [dite_eq_right (by omega), dite_eq_left (by omega)]
 +      rw [dif_neg (by omega), dif_pos (by omega)]
@@ -3817,8 +3817,8 @@ index c49fc47..11beb99 100644
      change (readNatCode (natCode i)).bind _ = _
      rw [← List.append_nil (natCode i), readNatCode_natCode_append, Option.bind_some]
      dsimp only
--    rw [ite_eq_left rfl, dite_eq_left i.2]
-+    rw [if_pos rfl, dif_pos i.2]
+-    rw [ite_eq_left rfl, dite_eq_left i.isLt]
++    rw [if_pos rfl, dif_pos i.isLt]
    | .sbs b => rfl
    | .comp n m => by
      change (readNatCode (natCode n ++ natCode m)).bind _ = _
@@ -3835,8 +3835,8 @@ index c49fc47..11beb99 100644
      change (readNatCode (natCode j)).bind _ = _
      rw [← List.append_nil (natCode j), readNatCode_natCode_append, Option.bind_some]
      dsimp only
--    rw [ite_eq_left rfl, dite_eq_left j.2]
-+    rw [if_pos rfl, dif_pos j.2]
+-    rw [ite_eq_left rfl, dite_eq_left j.isLt]
++    rw [if_pos rfl, dif_pos j.isLt]
  
  /-- A word that decodes is the code of what it decodes to. -/
  theorem code_of_decode {w : List Bool} {a : Shape} (h : decode w = some a) : code a = w := by
@@ -4014,7 +4014,7 @@ index 74b4d99..b7d68ce 100644
          exact ⟨fun h ↦ absurd h.1 (by omega), fun h ↦ absurd h (by decide)⟩
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
-index 6739ba6..3971c71 100644
+index 0604a88..be9acaa 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/SigLabel.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4175,7 +4175,7 @@ index 6739ba6..3971c71 100644
  
  include hs hk in
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean
-index 026ba4d..5f5cee9 100644
+index c5c69fb..53a44d1 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Computability/SizeBounded/Logspace/WTree/Spell.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4224,8 +4224,8 @@ index 026ba4d..5f5cee9 100644
      unfold edgeSpec
      rw [C.decode_code, C.decode_code]
      dsimp only
--    rw [dite_eq_left (show i.1 < C.card a from i.2), decide_eq_true_iff]
-+    rw [dif_pos (show i.1 < C.card a from i.2), decide_eq_true_iff]
+-    rw [dite_eq_left (show i.val < C.card a from i.isLt), decide_eq_true_iff]
++    rw [dif_pos (show i.val < C.card a from i.isLt), decide_eq_true_iff]
      rfl
  
  /-- A W-tree is admissible exactly when the edges of its spelling are in
@@ -4318,7 +4318,7 @@ index 2d27b91..9028c0e 100644
          -- reduce the match on the `some` just produced, exposing the second child
          simp only []
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FinCardUniverse/Value.lean b/vendor/geb-mathlib/Geb/Prototypes/FinCardUniverse/Value.lean
-index 6474159..ab77451 100644
+index ec51fe0..1ecd872 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FinCardUniverse/Value.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FinCardUniverse/Value.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4348,7 +4348,7 @@ index 6474159..ab77451 100644
  /-- The morphism of the counterexample: the unique map from the empty object to
  the singleton. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/ArrowValue.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/ArrowValue.lean
-index 678755f..a36f037 100644
+index b4ca75d..d9fcfef 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/ArrowValue.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/ArrowValue.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4367,7 +4367,7 @@ index 678755f..a36f037 100644
 -    obtain rfl : B' = B := congrArg ULift.down (by simpa using e₂)
 +    obtain rfl : A' = A := congrArg ULift.down.{0} (by simpa using e₁)
 +    obtain rfl : B' = B := congrArg ULift.down.{0} (by simpa using e₂)
-     exact ⟨φ, by unfold ArrVal; exact hvs⟩
+     exact ⟨φ, by delta ArrVal; exact hvs⟩
    · exact (Part.some_ne_none _
        (hop.symm.trans (show relTopos.model.op 0 [⟨s + 1 + 1, c⟩] = Part.none from rfl))).elim
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Chosen.lean
@@ -4403,7 +4403,7 @@ index 391f38b..903c9cc 100644
    /-- The laws. -/
    laws : toToposData.Laws
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Elementary.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Elementary.lean
-index 71ba9c0..b67b46c 100644
+index b0ea33b..9e5f11a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Elementary.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Elementary.lean
 @@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4449,7 +4449,7 @@ index 71ba9c0..b67b46c 100644
  pullback of truth it factors by an arrow with an inverse, is a pullback. -/
  theorem isPullback_of_iso {A B : C} {m : A ⟶ B} {φ : B ⟶ (ElementaryTopos.classifier (C := C)).Ω}
 @@ -416,6 +418,7 @@ theorem isPullback_of_iso {A B : C} {m : A ⟶ B} {φ : B ⟶ (ElementaryTopos.c
-     rw [(Fork.IsLimit.lift' e _ _).2, Category.assoc, hk, hg]
+     rw [(Fork.IsLimit.lift' e _ _).property, Category.assoc, hk, hg]
  
  variable (C) in
 +set_option backward.isDefEq.respectTransparency false in
@@ -4575,7 +4575,7 @@ index 6ac84f3..ac9cd17 100644
  
  /-- The substitution of objects, by a function, in the types and arrows of a label. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Params.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Params.lean
-index e2059e6..2cc691d 100644
+index ff9560c..2cc691d 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Params.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Params.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -4595,6 +4595,24 @@ index e2059e6..2cc691d 100644
          simp only [List.getElem_cons_succ, List.idxOf?_cons, hne, Bool.false_eq_true, ↓reduceIte,
            ih hw.2 j hj', Option.map_some])
      ws hw j hj
+@@ -258,7 +259,7 @@ theorem foldEnvIn_retype {k : ℕ} {z s : Term} {e e' : List (Tree × Tree)}
+       exact ⟨fun _ ↦ hlt i hi, fun _ ↦ (List.getElem?_eq_some_iff.mp hq).1⟩
+   have hT : (foldPs k e' z s).map Prod.snd = (foldPs k e z s).map Prod.snd := by
+     simp only [foldPs, hV, List.map_filterMap]
+-    exact List.filterMap_congr rfl fun v hv ↦ he v (mem_foldParams.mp hv).2
++    exact List.filterMap_congr fun v hv ↦ he v (mem_foldParams.mp hv).2
+   simp only [foldEnvIn, hV, hT]
+ 
+ /-- Lifting a strictly increasing renaming under a binder keeps it strictly increasing. -/
+@@ -599,7 +600,7 @@ theorem foldParams_rename_of_lt {k : ℕ} {z s : Term} {e e' : List (Tree × Tre
+   refine ⟨hV, ?_⟩
+   unfold foldPs
+   rw [hV, List.filterMap_map]
+-  exact List.filterMap_congr rfl fun v hv ↦ hf v (mem_foldParams.mp hv).1
++  exact List.filterMap_congr fun v hv ↦ hf v (mem_foldParams.mp hv).1
+ 
+ /-- A fold that compiles in an environment, renamed by a strictly increasing map into an
+ environment that has at each renamed variable the first's entry, has as parameters the renamings
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean
 index fc67300..e1b0c97 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Internal/Reduce.lean
@@ -4740,7 +4758,7 @@ index 3125020..81041be 100644
    | lam a =>
      rw [typeOf_node, compile_node]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean
-index 1da9d68..7c8f0c1 100644
+index 0fbd15b..3069399 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/FreeTopos/Relations.lean
 @@ -3,14 +3,16 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6361,7 +6379,7 @@ index f33b53b..a9b9366 100644
    change (piTele Ds R).headDepth.2 + 1 = _
    omega
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
-index fe8e3dc..f822eb8 100644
+index 92cae5d..6a5b8f1 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Basic.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6399,7 +6417,7 @@ index fe8e3dc..f822eb8 100644
  
  /-- An element of {lit}`E` as an element of the pullback of {lit}`ofSlice p`
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
-index 4ae4840..2cf3a7a 100644
+index c4ebb5d..15fa9ac 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Code.lean
 @@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6429,7 +6447,7 @@ index 4ae4840..2cf3a7a 100644
  
  open CategoryTheory PresheafIRUniv IndRec
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
-index d3b42ad..918ecad 100644
+index 0cbcd1f..00e3d8d 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/General.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6467,7 +6485,7 @@ index d3b42ad..918ecad 100644
  /-- The raw assignment at a direction over {lit}`1`. -/
  theorem assign_one {a : F.A} (g : F.Direction a 0 → Z.obj ⟨0⟩)
      (w : ∀ d : F.Direction a 1, (famOfPsh Z).2 (g (dirRestr F a d))) {b : F.B a}
-     (h : F.r ⟨a, b⟩ = 1) : assign F Z g w b = ⟨1, (w ⟨b, h⟩).1⟩ :=
+     (h : F.r ⟨a, b⟩ = 1) : assign F Z g w b = ⟨1, (w ⟨b, h⟩).val⟩ :=
 -  dite_eq_right fun h' ↦ Fin.zero_ne_one (h'.symm.trans h)
 +  dif_neg fun h' ↦ Fin.zero_ne_one (h'.symm.trans h)
  
@@ -6523,7 +6541,7 @@ index 391e826..37d256b 100644
    right_inv _ := rfl
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
-index 86a1b2b..6ca7a4b 100644
+index 7fc0c3d..0a9b4de 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Morphism.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6561,7 +6579,7 @@ index 86a1b2b..6ca7a4b 100644
  
  /-- A morphism of families as a morphism of the walking-arrow presheaves of
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
-index df18754..5954d83 100644
+index 26ae1f7..1a7203b 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/LargeIR/Product.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6592,7 +6610,7 @@ index df18754..5954d83 100644
  
  open CategoryTheory
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
-index f14aa79..f2ce270 100644
+index 25b39f7..ab6b621 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Approx.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6613,7 +6631,7 @@ index f14aa79..f2ce270 100644
        right_inv := fun _ ↦ rfl }
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
-index d0cc3f2..6ff272a 100644
+index a532e84..a7db44c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Basic.lean
 @@ -3,13 +3,15 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6666,7 +6684,7 @@ index 77dd9cb..8d65e3d 100644
  
  namespace Depth
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
-index 7cb949f..ca803e7 100644
+index f4ffe68..75f2e1c 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Presheaf.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6679,16 +6697,16 @@ index 7cb949f..ca803e7 100644
  public import Geb.Prototypes.MType.Slice
 @@ -156,8 +157,7 @@ theorem sliceStep_map ⦃i i' : I⦄ (f : i' ⟶ i) (y : Y.obj ⟨i⟩) :
      sliceStep F Y α ⟨i', Y.map f.op y⟩ =
-       F.objRestrElt f (sliceStep F Y α ⟨i, y⟩) (α.app ⟨i⟩ y).2 := by
+       F.objRestrElt f (sliceStep F Y α ⟨i, y⟩) (α.app ⟨i⟩ y).property := by
    have h : α.app ⟨i'⟩ (Y.map f.op y) = (F.objPresheaf Y).map f.op (α.app ⟨i⟩ y) :=
 -    (ConcreteCategory.comp_apply _ _ _).symm.trans
 -      ((ConcreteCategory.congr_hom (α.naturality f.op) y).trans (ConcreteCategory.comp_apply _ _ _))
 +    FunctorToTypes.naturality _ _ α f.op y
-   exact congrArg (fun w : (F.objPresheaf Y).obj ⟨i'⟩ ↦ w.1.1) h
+   exact congrArg (fun w : (F.objPresheaf Y).obj ⟨i'⟩ ↦ w.val.val) h
  
  /-- The underlying corecursion from a restricted element is the root
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean b/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
-index 39b473d..b5cf7e5 100644
+index b9f28ba..250fa04 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/MType/Slice.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6699,7 +6717,7 @@ index 39b473d..b5cf7e5 100644
  module
  
  public import Geb.Prototypes.MType.Hereditary
-@@ -156,7 +157,7 @@ variable (F) in
+@@ -157,7 +158,7 @@ variable (F) in
  /-- {lit}`SliceM F` as a fixed point of the slice endofunctor
  ({name}`SlicePFunctor.FixedPoint`). Reducible, so that instance resolution sees
  {lit}`SliceM F` and its index through the fixed point's fields. -/
@@ -6739,7 +6757,7 @@ index b7fed2b..1d524db 100644
  
  /-- Evaluation at `false`, which separates the identity from the constant map at
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
-index ff1b6b0..6013355 100644
+index fbbccac..67c726a 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/PartialHorn/Completeness.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6768,7 +6786,13 @@ index ff1b6b0..6013355 100644
      hr', Option.map_some]
    rfl
  
-@@ -193,7 +194,7 @@ theorem ax {j : ℕ} {a : Seq} (ha : T.axioms[j]? = some a) (hsc : a.Scoped = tr
+@@ -188,13 +189,12 @@ theorem ax {j : ℕ} {a : Seq} (ha : T.axioms[j]? = some a) (hsc : a.Scoped = tr
+       List.drop_left' (by simpa)]
+   simp only [checkStep]
+   rw [Cert.leaf, leafIndex_leaf, Option.bind_some, ha, Option.bind_some, inst]
+-  dsimp only
+   rw [h₁, h₂, h₃]
+   have hds' : (ds.map f).map (fun c ↦ (c.2 Γ H).map Eqn.lhs) = ts.map some := by
      simpa [f, Function.comp_def] using congrArg (List.map (Option.map Eqn.lhs)) hds
    have hhs' : (hs.map f).map (fun c ↦ c.2 Γ H) = a.hyps.map fun h ↦ some (h.subst ts) := by
      simpa [f, Function.comp_def] using hhs
@@ -6838,7 +6862,7 @@ index 6bc7f09..0a10b22 100644
          ((List.map_congr_left fun c hc ↦ ih c hc (ht.2 c hc)).trans cs.map_id)
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean
-index 1bcea11..cbb2cdf 100644
+index c7a6614..f9110f9 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6860,8 +6884,8 @@ index 1bcea11..cbb2cdf 100644
      have ha := a.isLt
 @@ -468,8 +469,7 @@ def postcompArityHom (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) (a : F.
      intro i i' f b
-     change ν.app ⟨i'⟩ (μ.1 i' (F.directionRestr a f b)) = Z'.map f.op (ν.app ⟨i⟩ (μ.1 i b))
-     rw [μ.2 f b]
+     change ν.app ⟨i'⟩ (μ.val i' (F.directionRestr a f b)) = Z'.map f.op (ν.app ⟨i⟩ (μ.val i b))
+     rw [μ.property f b]
 -    simp only [← ConcreteCategory.comp_apply]
 -    rw [ν.naturality f.op]⟩
 +    exact FunctorToTypes.naturality _ _ ν f.op _⟩
@@ -6869,7 +6893,7 @@ index 1bcea11..cbb2cdf 100644
  /-- The identity arity hom, of `F` at `a` into `F`'s own arity presheaf. -/
  def idArityHom (F : PresheafPFunctor.{uI, uJ, uA, uB, vI, vJ} I J) (a : F.A) :
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Codes.lean b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Codes.lean
-index 7c59265..ea6ff41 100644
+index 8c04a89..19477a3 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Codes.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRProto/Codes.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -6880,7 +6904,7 @@ index 7c59265..ea6ff41 100644
  module
  
  public import Geb.Prototypes.PresheafIRProto.Basic
-@@ -448,7 +449,6 @@ def reindexHom (hP : P.IsFunctorial) ⦃j j' : J⦄ (g : j' ⟶ j) :
+@@ -450,7 +451,6 @@ def reindexHom (hP : P.IsFunctorial) ⦃j j' : J⦄ (g : j' ⟶ j) :
    naturality := by
      intro i i' f
      ext d
@@ -6888,16 +6912,16 @@ index 7c59265..ea6ff41 100644
      exact congrFun (hP.reindex_naturality g f.unop).symm d
  
  /-- Reindexing along an `eqToHom` is the transport along the underlying
-@@ -501,9 +501,13 @@ theorem isFunctorial_pullback (hP : P.IsFunctorial)
-       (eqToHom (F.shapeRestr (𝟙 j) s).2 ≫ (𝟙 j) ≫ eqToHom s.2.symm) =
-         eqToHom (((F.shapeRestr (𝟙 j) s).2).trans s.2.symm) by simp,
+@@ -504,9 +504,13 @@ theorem isFunctorial_pullback (hP : P.IsFunctorial)
+       (eqToHom (F.shapeRestr (𝟙 j) s).property ≫ (𝟙 j) ≫ eqToHom s.property.symm) =
+         eqToHom (((F.shapeRestr (𝟙 j) s).property).trans s.property.symm) by simp,
        reindex_eqToHom P hP]
 +    rfl
    reindex_comp := by
      intro j j' j'' g h s i d
      simp only [pullback] at d ⊢
 +    change _ = P.reindex _ (P.reindex _
-+      (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam (F.q u.1)).Dir i)
++      (cast (congrArg (fun u : F.Shape j'' ↦ (P.fam (F.q u.val)).Dir i)
 +        (congrFun (F.isFunctorial.shapeRestr_comp g h) s)) d))
      rw [reindex_cast_shape (hh := congrFun (F.isFunctorial.shapeRestr_comp g h) s),
        ← reindex_comp_apply P hP]
@@ -6924,7 +6948,7 @@ index 4662a0e..daf6edc 100644
    right_inv _ := rfl
  
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRUniv/Basic.lean b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRUniv/Basic.lean
-index 61de149..36f5865 100644
+index f9b2b16..19415ec 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/PresheafIRUniv/Basic.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/PresheafIRUniv/Basic.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -7056,7 +7080,7 @@ index 503b5d7..a3aeeba 100644
      exact ⟨e, rfl, rfl⟩
    · rintro _ _ ⟨e, rfl, rfl⟩
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
-index 883191a..9b4dc0b 100644
+index aa7e409..8cc57e6 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/FreeArity.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -7094,7 +7118,7 @@ index 883191a..9b4dc0b 100644
  /-- The value a node gives an argument at a direction is the restriction, along the
  direction's morphism, of the value it gives the argument at the argument's object. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
-index eb54fad..0d12c5d 100644
+index 4aeb76f..f887844 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/InitialModel.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -7114,7 +7138,7 @@ index eb54fad..0d12c5d 100644
  
  /-- The algebra on the image of a node over the W-type is the class of the tree the node
  builds. -/
-@@ -306,6 +307,7 @@ theorem unit_eq_of_isModelHom {h : NatTrans (quotient 𝐅) P}
+@@ -307,6 +308,7 @@ theorem unit_eq_of_isModelHom {h : NatTrans (quotient 𝐅) P}
        (discreteMap h).app ⟨c⟩ ((coeqUnit 𝐅.W).app ⟨c⟩ t) =
          (discreteMap (elim 𝐅 P α)).app ⟨c⟩ ((coeqUnit 𝐅.W).app ⟨c⟩ t))
      (fun a ts ih ↦ by
@@ -7123,7 +7147,7 @@ index eb54fad..0d12c5d 100644
          FreeArity.mapPresheaf_freeNode, FreeArity.mapPresheaf_freeNode,
          FreeArity.mapPresheaf_freeNode]
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
-index c1f124e..89c11eb 100644
+index 92470f8..545dacb 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Obstruction.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -7142,7 +7166,7 @@ index c1f124e..89c11eb 100644
 +  {S : SlicePFunctor.FixedPoint.{max uA uB} F.toSlicePFunctor} (N : F.HereditaryNaturality S)
  
  /-- The root shape of a tree of the carrier presheaf. -/
- def head {c : C} (w : (F.carrier N).obj ⟨c⟩) : F.A := (S.dest w.down.1).1.1
+ def head {c : C} (w : (F.carrier N).obj ⟨c⟩) : F.A := (S.dest w.down.val).val.1
 @@ -107,7 +108,7 @@ end Head
  variable {I : Type uI} [Category.{vI} I]
    {F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} (I × WalkingParallelPair)
@@ -7153,7 +7177,7 @@ index c1f124e..89c11eb 100644
  /-- Reflexivity is not a witness constructor of fixed shape: a function sending each
  term to a witness with that term as source, all of one root shape, makes all terms
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
-index 46f4617..e277e3d 100644
+index 33ab518..a1a0b82 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/QuotientPRA/Signature.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.

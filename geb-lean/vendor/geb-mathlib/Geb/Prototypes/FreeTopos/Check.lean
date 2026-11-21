@@ -82,7 +82,7 @@ theorem annotate_spec (E : ExtEnv) (Γ : List ℕ) (H : List Eqn) {st : Store}
         subst hjk
         rcases hn : st.nodes[k] with ⟨l, cs⟩
         have hx : st.nodes[(k : ℕ)]? = some (l, cs) := by
-          rw [Array.getElem?_eq_getElem k.2]
+          rw [Array.getElem?_eq_getElem k.isLt]
           exact congrArg some hn
         have hc : ∀ c ∈ cs, (b[c]?.map Thunk.get).getD (RoseTree.node 0 [], none) =
             (st.denote c, (infers E Γ H (inferFuel + 1)).2 (st.denote c)) := fun c hc' ↦ by

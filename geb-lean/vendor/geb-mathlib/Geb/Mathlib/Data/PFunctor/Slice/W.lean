@@ -233,9 +233,9 @@ namespace W
 `(W, wIndex)` maps into `W`. The algebra structure map. -/
 @[expose] def mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     (x : F.toSliceDomPFunctor.Obj F.wIndex) : F.W :=
-  ⟨WType.mk x.1.1 (Subtype.val ∘ x.1.2),
-    (F.wValid_mk _ _).mpr ⟨fun b ↦ (x.1.2 b).property,
-      funext ((F.toSliceDomPFunctor.compatible_iff F.wIndex x.1.1 x.1.2).mp x.2)⟩⟩
+  ⟨WType.mk x.val.1 (Subtype.val ∘ x.val.2),
+    (F.wValid_mk _ _).mpr ⟨fun b ↦ (x.val.2 b).property,
+      funext ((F.toSliceDomPFunctor.compatible_iff F.wIndex x.val.1 x.val.2).mp x.property)⟩⟩
 
 /-- The destructor of the slice W-type: every admissible tree decomposes as a
 shape together with a compatible family of admissible subtrees. Inverse to
@@ -375,14 +375,14 @@ admissibility subtype. -/
 theorem induction {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     {motive : F.W → Prop}
     (mk : ∀ (x : F.toSliceDomPFunctor.Obj F.wIndex),
-        (∀ b, motive (x.1.2 b)) → motive (W.mk x)) :
+        (∀ b, motive (x.val.2 b)) → motive (W.mk x)) :
     ∀ z, motive z :=
   fun z ↦
     WType.rec (motive := fun w ↦ ∀ (hw : F.WValid w), motive ⟨w, hw⟩)
       (fun a f ih hw' ↦ by
         rw [← mk_dest ⟨WType.mk a f, hw'⟩]
         exact mk _ fun b ↦ ih b (((F.wValid_mk a f).mp hw').1 b))
-      z.1 z.2
+      z.val z.property
 
 /-- Paramorphism from the slice W-type into `Prop`: `step` sees the node `x`,
 hence its child subtrees `x.1.2 b`, together with the children's predicate
@@ -390,23 +390,23 @@ values. The value is computed by `WType.rec` with a `Prop` motive, so no
 `noncomputable` flag arises. `@[expose]` so the presheaf layer can unfold it. -/
 @[expose] def RecProp {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     (step : (x : F.toSliceDomPFunctor.Obj F.wIndex) →
-      (F.toPFunctor.B x.1.1 → Prop) → Prop) :
+      (F.toPFunctor.B x.val.1 → Prop) → Prop) :
     F.W → Prop :=
   fun z ↦
     WType.rec (motive := fun w ↦ F.WValid w → Prop)
       (fun a f ih hv ↦
         step (dest ⟨WType.mk a f, hv⟩)
           (fun b ↦ ih b (((F.wValid_mk a f).mp hv).1 b)))
-      z.1 z.2
+      z.val z.property
 
 /-- The one-level computation rule for `RecProp`: on `mk x` it applies `step`
 to the node `x` and the family of child values. Definitional; stated for
 downstream unfolding. -/
 theorem recProp_mk {I : Type uI} {F : SlicePFunctor.{uA, uB, uI, uI} I I}
     (step : (x : F.toSliceDomPFunctor.Obj F.wIndex) →
-      (F.toPFunctor.B x.1.1 → Prop) → Prop)
+      (F.toPFunctor.B x.val.1 → Prop) → Prop)
     (x : F.toSliceDomPFunctor.Obj F.wIndex) :
-    W.RecProp step (W.mk x) = step x (fun b ↦ W.RecProp step (x.1.2 b)) := by
+    W.RecProp step (W.mk x) = step x (fun b ↦ W.RecProp step (x.val.2 b)) := by
   obtain ⟨⟨a, v⟩, hc⟩ := x
   rfl
 

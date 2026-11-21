@@ -695,12 +695,12 @@ def interpMorDelta (B : Type uB)
     (μ : (f : B → I) → FreeCoprodCompDisc.MapMor I O (α f)) :
     FreeCoprodCompDisc.MapMor I O (interpObjDelta I O B α) :=
   fun X Y h ↦
-    FreeCoprodCompDisc.coprodMor O (B → X.1) (B → Y.1) (fun g ↦ h.1 ∘ g)
+    FreeCoprodCompDisc.coprodMor O (B → X.1) (B → Y.1) (fun g ↦ h.val ∘ g)
       (fun g ↦ α (X.2 ∘ g) X)
       (fun g ↦ α (Y.2 ∘ g) Y)
       (fun g ↦
         FreeCoprodCompDisc.homOfEq O
-          (congrArg (fun t ↦ α (t ∘ g) Y) h.2.symm)
+          (congrArg (fun t ↦ α (t ∘ g) Y) h.property.symm)
           (μ (X.2 ∘ g) X Y h))
 
 /-- The step argument to the recursor which generates the morphism map

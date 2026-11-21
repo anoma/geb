@@ -229,8 +229,8 @@ abbrev Rep : Type :=
 /-- Representatives are equivalent when they have one sort and their terms are derivably
 equal. -/
 instance setoid : Setoid (Rep T E Γ H) where
-  r a b := a.1.1 = b.1.1 ∧ Derivable T E Γ H ⟨a.1.2, b.1.2⟩
-  iseqv := ⟨fun a ↦ ⟨rfl, a.2.2⟩, fun h ↦ ⟨h.1.symm, h.2.symm⟩,
+  r a b := a.val.1 = b.val.1 ∧ Derivable T E Γ H ⟨a.val.2, b.val.2⟩
+  iseqv := ⟨fun a ↦ ⟨rfl, a.property.2⟩, fun h ↦ ⟨h.1.symm, h.2.symm⟩,
     fun h h' ↦ ⟨h.1.trans h'.1, h.2.trans h'.2⟩⟩
 
 /-- The classes of representatives. -/
@@ -239,7 +239,7 @@ abbrev Cls : Type := Quotient (setoid T E Γ H)
 variable {T E Γ H}
 
 /-- The sort of a class. -/
-def Cls.sort : Cls T E Γ H → ℕ := Quotient.lift (fun r ↦ r.1.1) fun _ _ h ↦ h.1
+def Cls.sort : Cls T E Γ H → ℕ := Quotient.lift (fun r ↦ r.val.1) fun _ _ h ↦ h.1
 
 variable (T E Γ H)
 
@@ -281,7 +281,7 @@ theorem eq_of_mem_cls {t : Tree} {v : Cls T E Γ H} (h : v ∈ cls t) :
   exact ⟨_, (Option.some_get h₁).symm, h₂, rfl⟩
 
 /-- The terms of a list of representatives. -/
-def terms (rs : List (Rep T E Γ H)) : List Tree := rs.map fun r ↦ r.1.2
+def terms (rs : List (Rep T E Γ H)) : List Tree := rs.map fun r ↦ r.val.2
 
 /-- The operation at a list of representatives: the class of the application to their
 terms. -/
@@ -294,7 +294,7 @@ theorem opRep_respects (k : ℕ) (rs rs' : List (Rep T E Γ H))
   have hsorts : (terms rs).map (sortOf T.sig Γ) = (terms rs').map (sortOf T.sig Γ) := by
     rw [← List.forall₂_eq_eq_eq, terms, terms, List.map_map, List.map_map,
       List.forall₂_map_left_iff, List.forall₂_map_right_iff]
-    exact h.imp fun r r' hr ↦ by simp [r.2.1, r'.2.1, hr.1]
+    exact h.imp fun r r' hr ↦ by simp [r.property.1, r'.property.1, hr.1]
   have hsort : sortOf T.sig Γ (op k (terms rs)) = sortOf T.sig Γ (op k (terms rs')) := by
     rw [op, op, sortOf_node_succ, sortOf_node_succ, hsorts]
   have hrel : List.Forall₂ (fun t u ↦ Derivable T E Γ H ⟨t, u⟩) (terms rs) (terms rs') := by
@@ -329,9 +329,9 @@ application to their representatives has a sort and is derivably defined, with t
 class. -/
 def termModel : Model.{0} T.sig where
   Car := Car T E Γ H
-  op k args := Quot.lift (opRep k) (opRep_respects k) (seq (args.map fun w ↦ w.2.1))
+  op k args := Quot.lift (opRep k) (opRep_respects k) (seq (args.map fun w ↦ w.2.val))
   op_sort {k args w} hw := by
-    generalize seq (args.map fun w ↦ w.2.1) = q at hw
+    generalize seq (args.map fun w ↦ w.2.val) = q at hw
     induction q using Quot.ind with
     | mk rs =>
       obtain ⟨v, hv, rfl⟩ := (Part.mem_map_iff _).mp hw
@@ -351,7 +351,7 @@ def val (v : Cls T E Γ H) : (termModel T E Γ H).Val := toVal v
 them. -/
 theorem op_termModel (k : ℕ) (rs : List (Rep T E Γ H)) :
     (termModel T E Γ H).op k (rs.map fun r ↦ val ⟦r⟧) = opRep k rs := by
-  change Quot.lift _ _ (seq ((rs.map fun r ↦ toVal ⟦r⟧).map fun w ↦ w.2.1)) = _
+  change Quot.lift _ _ (seq ((rs.map fun r ↦ toVal ⟦r⟧).map fun w ↦ w.2.val)) = _
   rw [List.map_map]
   exact congrArg (Quot.lift _ _) (seq_mk rs)
 
@@ -368,7 +368,7 @@ variable (T E Γ H)
 
 /-- The class of a variable of the context. -/
 def varCls (i : Fin Γ.length) : Cls T E Γ H :=
-  ⟦⟨(Γ[i], var i), by simp [var, sortOf_node_zero], Derivable.refl i.2⟩⟧
+  ⟦⟨(Γ[i], var i), by simp [var, sortOf_node_zero], Derivable.refl i.isLt⟩⟧
 
 /-- The generic assignment: each variable of the context to its class. -/
 def generic : List (termModel T E Γ H).Val := List.ofFn fun i ↦ val (varCls T E Γ H i)
@@ -405,8 +405,8 @@ theorem eq_of_mem_opRep {k : ℕ} {rs : List (Rep T E Γ H)} {w : Val T E Γ H} 
 /-- The representatives of a list of terms, each of a sort and derivably defined. -/
 def repsOf (cs : List Tree) (hs : ∀ c ∈ cs, (sortOf T.sig Γ c).isSome)
     (hd : ∀ c ∈ cs, Derivable T E Γ H ⟨c, c⟩) : List (Rep T E Γ H) :=
-  cs.attach.map fun c ↦ ⟨((sortOf T.sig Γ c.1).get (hs c.1 c.2), c.1),
-    (Option.some_get _).symm, hd c.1 c.2⟩
+  cs.attach.map fun c ↦ ⟨((sortOf T.sig Γ c.val).get (hs c.val c.property), c.val),
+    (Option.some_get _).symm, hd c.val c.property⟩
 
 /-- The terms of the representatives of a list of terms are the terms. -/
 theorem terms_repsOf {cs : List Tree} {hs hd} :
@@ -424,7 +424,7 @@ theorem eval_op_generic {k : ℕ} {cs : List Tree} {hs hd}
       ((repsOf cs hs hd).map fun r ↦ val ⟦r⟧).map Part.some := by
     rw [repsOf, List.map_map, List.map_map]
     conv_lhs => rw [← List.attach_map_subtype_val cs, List.map_map]
-    exact List.map_congr_left fun c _ ↦ hev c.1 c.2
+    exact List.map_congr_left fun c _ ↦ hev c.val c.property
   rw [eval_op, (mapM_part_eq_some_iff _ _).mpr hmap, Part.bind_some, op_termModel]
 
 /-- A term of a sort, derivably defined, has its class as value at the generic assignment. -/
@@ -524,7 +524,7 @@ theorem holds_generic_iff {t u : Tree} :
   · rintro ⟨w, h₁, h₂⟩
     obtain ⟨s, hs, hd, rfl⟩ := eq_of_eval_generic t h₁
     obtain ⟨s', hs', hd', he⟩ := eq_of_eval_generic u h₂
-    obtain ⟨hss, htu⟩ := Quotient.exact (congrArg (fun w ↦ w.2.1) he)
+    obtain ⟨hss, htu⟩ := Quotient.exact (congrArg (fun w ↦ w.2.val) he)
     have hss' : s = s' := hss
     exact ⟨htu, s, hs, hss' ▸ hs'⟩
   · rintro ⟨htu, s, hs, hs'⟩
@@ -544,10 +544,10 @@ theorem isModel (hT : ∀ a ∈ T.axioms, a.Scoped = true ∧ SidesSorted T.sig 
   have hev : (terms rs).map (eval (termModel T E Γ H) (generic T E Γ H)) =
       (rs.map fun r ↦ val ⟦r⟧).map Part.some := by
     rw [terms, List.map_map, List.map_map]
-    exact List.map_congr_left fun r _ ↦ eval_generic _ r.2.1 r.2.2
+    exact List.map_congr_left fun r _ ↦ eval_generic _ r.property.1 r.property.2
   have hsorts : (terms rs).map (sortOf T.sig Γ) = a.ctx.map some := by
     rw [← hσ, terms, List.map_map, List.map_map, List.map_map]
-    exact List.map_congr_left fun r _ ↦ r.2.1
+    exact List.map_congr_left fun r _ ↦ r.property.1
   have hsc' := hsc
   simp only [Seq.Scoped, Bool.and_eq_true, List.all_eq_true, Eqn.Scoped] at hsc'
   obtain ⟨hsh, hscl, hscr⟩ := hsc'
@@ -559,7 +559,7 @@ theorem isModel (hT : ∀ a ∈ T.axioms, a.Scoped = true ∧ SidesSorted T.sig 
       ⟨w, (eval_subst hev _ hl').trans h₁, (eval_subst hev _ hr').trans h₂⟩).1
   have hc := Derivable.ax hj hsc hsorts (fun t ht ↦ by
     obtain ⟨r, -, rfl⟩ := List.mem_map.mp ht
-    exact r.2.2) hhyp
+    exact r.property.2) hhyp
   obtain ⟨w, h₁, h₂⟩ := holds_generic_iff.mpr
     ⟨hc, s, sortOf_subst hsorts _ hl, sortOf_subst hsorts _ hr⟩
   exact ⟨w, (eval_subst hev _ hscl).symm.trans h₁, (eval_subst hev _ hscr).symm.trans h₂⟩

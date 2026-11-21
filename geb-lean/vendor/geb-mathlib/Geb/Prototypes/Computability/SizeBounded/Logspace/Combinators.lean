@@ -70,7 +70,7 @@ theorem sem_srnL_cons {a b : ℕ} (g : Fin b → LOf a) (h : Bool → Fin b → 
     (j : Fin b) (i : Bool) (v : List Bool) (y : Fin a → List Bool) :
     (srnL g h j).sem (Fin.cons (i :: v) y) =
       (h i j).sem (stepEnv v (fun l ↦ (srnL g h l).sem (Fin.cons v y)) y) :=
-  sem_srnOf_cons (fun l ↦ (g l).1) (fun i l ↦ (h i l).1) j i v y
+  sem_srnOf_cons (fun l ↦ (g l).val) (fun i l ↦ (h i l).val) j i v y
 
 /-- The tail, {name}`Geb.SizeBounded.tailOf`, is successor-free. -/
 @[expose] def tailL : LOf 1 := ⟨tailOf, rfl⟩
@@ -80,30 +80,31 @@ theorem sem_srnL_cons {a b : ℕ} (g : Fin b → LOf a) (h : Bool → Fin b → 
 
 /-- The conditional applied to four expressions of a common arity. -/
 @[expose] def cond4L {n : ℕ} (s e t f : LOf n) : LOf n :=
-  ⟨cond4 s.1 e.1 t.1 f.1, (sbsFree_comp_iff _ _).mpr
-    ⟨rfl, fun i ↦ match i with | 0 => s.2 | 1 => e.2 | 2 => t.2 | 3 => f.2⟩⟩
+  ⟨cond4 s.val e.val t.val f.val, (sbsFree_comp_iff _ _).mpr
+    ⟨rfl, fun i ↦ match i with
+      | 0 => s.property | 1 => e.property | 2 => t.property | 3 => f.property⟩⟩
 
 /-- The meaning of an applied conditional. -/
 theorem sem_cond4L {n : ℕ} (s e t f : LOf n) (x : Fin n → List Bool) :
     (cond4L s e t f).sem x = cond4Sem (s.sem x) (e.sem x) (t.sem x) (f.sem x) :=
-  sem_cond4 s.1 e.1 t.1 f.1 x
+  sem_cond4 s.val e.val t.val f.val x
 
 /-- The tail applied to an expression. -/
 @[expose] def tailAppL {n : ℕ} (e : LOf n) : LOf n :=
-  ⟨tailApp e.1, (sbsFree_comp_iff _ _).mpr ⟨rfl, fun i ↦ match i with | 0 => e.2⟩⟩
+  ⟨tailApp e.val, (sbsFree_comp_iff _ _).mpr ⟨rfl, fun i ↦ match i with | 0 => e.property⟩⟩
 
 /-- The meaning of an applied tail. -/
 theorem sem_tailAppL {n : ℕ} (e : LOf n) (x : Fin n → List Bool) :
     (tailAppL e).sem x = (e.sem x).tail :=
-  sem_tailApp e.1 x
+  sem_tailApp e.val x
 
 /-- A binary expression at its sole argument in both positions. -/
 @[expose] def diagL (e : LOf 2) : LOf 1 :=
-  ⟨diagOf e.1, (sbsFree_comp_iff _ _).mpr ⟨e.2, fun _ ↦ rfl⟩⟩
+  ⟨diagOf e.val, (sbsFree_comp_iff _ _).mpr ⟨e.property, fun _ ↦ rfl⟩⟩
 
 /-- The meaning of the diagonal. -/
 theorem sem_diagL (e : LOf 2) (w : List Bool) : (diagL e).sem ![w] = e.sem ![w, w] :=
-  sem_diagOf e.1 w
+  sem_diagOf e.val w
 
 end
 

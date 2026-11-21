@@ -421,7 +421,7 @@ def algChOf (R : RankedAlphabet) (i : Fin R.card) : COf (R.arity i) :=
 /-- The expression computes the algebra. -/
 theorem semAt_algChOf (R : RankedAlphabet) (i : Fin R.card)
     (f : Fin (R.arity i) → List Bool) :
-    semAt (R.arity i) (algChOf R i).1.1 (algChOf R i).2 f = algCh R i f := by
+    semAt (R.arity i) (algChOf R i).val.val (algChOf R i).property f = algCh R i f := by
   rw [algChOf, semAt_concatCompOf, semAt_prependOf, semAt_comp1Of,
     semAt_compOf, semAt_compOf, semAt_flattenOf, semAt_flattenOf, algCh,
     algPara, algMk]
@@ -431,7 +431,7 @@ theorem semAt_algChOf (R : RankedAlphabet) (i : Fin R.card)
 /-- The expression carries no `smash`, which is
 `Geb.CobhamFold.smashFree_foldOutExprV`'s hypothesis at this algebra. -/
 theorem smashFreeBool_algChOf (R : RankedAlphabet) (i : Fin R.card) :
-    smashFreeBool (algChOf R i).1.1.1 = true :=
+    smashFreeBool (algChOf R i).val.val.val = true :=
   smashFreeBool_concatCompOf (R.arity i) _ _
     (smashFreeBool_prependOf _ _
       (smashFreeBool_compOf _ _ (smashFreeBool_flattenOf (R.arity i))
@@ -585,7 +585,7 @@ theorem stepWord_childOf_of_le (R : RankedAlphabet) (i : Fin R.card)
 /-- The delimited-children fold carries no `smash`, its algebra's own
 expressions carrying none. -/
 theorem smashFreeBool_chFoldOf (R : RankedAlphabet) :
-    smashFreeBool (chFoldOf R).1.1.1 = true :=
+    smashFreeBool (chFoldOf R).val.val.val = true :=
   smashFree_foldOutExprV R (algChOf R) (smashFreeBool_algChOf R) (algCh R)
     (semAt_algChOf R) (2 * chGrowth R + 2) (chGrowth R) (stackSize_algCh_le R)
     (Nat.le_refl _)
@@ -594,7 +594,7 @@ theorem smashFreeBool_chFoldOf (R : RankedAlphabet) :
 left-to-right inclusion it is computable simultaneously in polynomial time
 and linear space. -/
 theorem smashFreeBool_childOf (R : RankedAlphabet) (j : ℕ) :
-    smashFreeBool (childOf R j).1.1.1 = true :=
+    smashFreeBool (childOf R j).val.val.val = true :=
   smashFreeBool_comp1Of _ _ (smashFreeBool_entryOf j)
     (smashFreeBool_comp1Of _ _ smashFreeBool_takeEntryOf
       (smashFreeBool_chFoldOf R))
@@ -612,7 +612,7 @@ identity on representations, which is what `RankedAlphabet.spell_mk`
 states. -/
 theorem semAt_mkOf_spell (R : RankedAlphabet) (i : Fin R.card)
     (ch : Fin (R.arity i) → R.Term) :
-    semAt (R.arity i) (mkOf R i).1.1 (mkOf R i).2 (fun d ↦ R.spell (ch d)) =
+    semAt (R.arity i) (mkOf R i).val.val (mkOf R i).property (fun d ↦ R.spell (ch d)) =
       R.spell (Term.mk R i ch) := by
   rw [semAt_mkOf, algMk, ← spell_mk]
 
@@ -624,7 +624,7 @@ recognized language. -/
 theorem semAt_mkOf_childOf (R : RankedAlphabet) (i : Fin R.card)
     (ch : Fin (R.arity i) → R.Term) (w : List Bool)
     (hw : R.parse w = some (Term.mk R i ch)) :
-    semAt (R.arity i) (mkOf R i).1.1 (mkOf R i).2
+    semAt (R.arity i) (mkOf R i).val.val (mkOf R i).property
         (fun d ↦ stepWord (childOf R d.val) w) = w := by
   have hspell : R.spell (Term.mk R i ch) = w := R.parse_eq_some_iff.mp hw
   have hchild : (fun d : Fin (R.arity i) ↦ stepWord (childOf R d.val) w) =

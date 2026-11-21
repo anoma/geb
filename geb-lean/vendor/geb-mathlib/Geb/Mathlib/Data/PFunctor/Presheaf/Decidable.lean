@@ -63,8 +63,8 @@ instance decidableIsNatural {I : Type uI} [Category.{vI} I]
     [∀ i : I, DecidableEq (Z.obj ⟨i⟩)]
     (x : F.toSliceDomPFunctor.Obj (elemProj Z)) : Decidable (F.IsNatural x) :=
   inferInstanceAs (Decidable (∀ ⦃i i' : I⦄ (f : i' ⟶ i)
-    (b : F.toSliceDomPFunctor.Direction x.1.1 i),
-      F.value x (F.directionRestr x.1.1 f b) = Z.map f.op (F.value x b)))
+    (b : F.toSliceDomPFunctor.Direction x.val.1 i),
+      F.value x (F.directionRestr x.val.1 f b) = Z.map f.op (F.value x b)))
 
 end PresheafDomPFunctorData
 
@@ -79,14 +79,14 @@ witness `hq` is retained because `objRestrElt` consumes it. -/
     (w : F.toPFunctor.W) (hq : F.q (PFunctor.W.head w) = j) : WType F.toPFunctor.B :=
   match w, hq with
   | WType.mk a f, hq =>
-      WType.mk (F.shapeRestr g ⟨a, hq⟩).1
-        fun b' ↦ f (F.reindex g ⟨a, hq⟩ (i := F.rCurried _ b') ⟨b', rfl⟩).1
+      WType.mk (F.shapeRestr g ⟨a, hq⟩).val
+        fun b' ↦ f (F.reindex g ⟨a, hq⟩ (i := F.rCurried _ b') ⟨b', rfl⟩).val
 
 /-- The underlying tree of `wRestrTree` is `wRestrTreeRaw`. -/
 theorem wRestrTree_val {I : Type uI} [Category.{vI} I]
     (F : PresheafPFunctor.{uI, uI, uA, uB, vI, vI} I I) ⦃j j' : I⦄ (g : j' ⟶ j)
-    (z : F.toSlicePFunctor.W) (hq : F.q (PFunctor.W.head z.1) = j) :
-    (F.wRestrTree g z hq).1 = F.wRestrTreeRaw g z.1 hq := by
+    (z : F.toSlicePFunctor.W) (hq : F.q (PFunctor.W.head z.val) = j) :
+    (F.wRestrTree g z hq).val = F.wRestrTreeRaw g z.val hq := by
   obtain ⟨w, hw⟩ := z
   cases w with
   | mk a f => rfl
@@ -110,7 +110,7 @@ inference traverses the `PresheafPFunctor` diamond. -/
             match decI (F.q (PFunctor.W.head (x.2 b').1)) i with
             | isFalse _ => true
             | isTrue hq =>
-              (decEqW (x.2 (F.directionRestr x.1 g ⟨b', hb⟩).1).1
+              (decEqW (x.2 (F.directionRestr x.1 g ⟨b', hb⟩).val).1
                 (F.wRestrTreeRaw g (x.2 b').1 hq)).decide)
     && ((feB x.1).toList).all fun b' ↦ (x.2 b').2
 
@@ -120,10 +120,10 @@ theorem isHereditarilyNaturalBoolCore_eq_true_iff {I : Type uI} [Category.{vI} I
     (decI : DecidableEq I) (feI : FinEnum I) (feHom : ∀ i i' : I, FinEnum (i' ⟶ i))
     (feB : ∀ a, FinEnum (F.toPFunctor.B a)) (decEqW : DecidableEq (WType F.toPFunctor.B))
     (z : F.toSlicePFunctor.W) :
-    F.isHereditarilyNaturalBoolCore decI feI feHom feB decEqW z.1 = true ↔
+    F.isHereditarilyNaturalBoolCore decI feI feHom feB decEqW z.val = true ↔
       F.IsHereditarilyNatural z := by
   refine SlicePFunctor.W.induction
-    (motive := fun z ↦ F.isHereditarilyNaturalBoolCore decI feI feHom feB decEqW z.1 = true ↔
+    (motive := fun z ↦ F.isHereditarilyNaturalBoolCore decI feI feHom feB decEqW z.val = true ↔
       F.IsHereditarilyNatural z)
     (fun x ih ↦ ?_) z
   beta_reduce
@@ -134,17 +134,17 @@ theorem isHereditarilyNaturalBoolCore_eq_true_iff {I : Type uI} [Category.{vI} I
   · simp only [List.all_eq_true, FinEnum.mem_toList, forall_const]
     constructor
     · intro H i i' g b
-      have hb : F.rCurried x.1.1 b.1 = i := b.2
-      have hqval : F.q (PFunctor.W.head (x.1.2 b.1).1) = i :=
-        (((F.toSliceDomPFunctor.compatible_iff F.toSlicePFunctor.wIndex x.1.1 x.1.2).mp
-          x.2 b.1).trans hb)
-      have hthis := H i i' g b.1
+      have hb : F.rCurried x.val.1 b.val = i := b.property
+      have hqval : F.q (PFunctor.W.head (x.val.2 b.val).val) = i :=
+        (((F.toSliceDomPFunctor.compatible_iff F.toSlicePFunctor.wIndex x.val.1 x.val.2).mp
+          x.property b.val).trans hb)
+      have hthis := H i i' g b.val
       split at hthis
       · exact absurd hb (by assumption)
       · split at hthis
         · exact absurd hqval (by assumption)
         · simp only [decide_eq_true_iff] at hthis
-          exact Subtype.ext (hthis.trans (F.wRestrTree_val g (x.1.2 b.1) hqval).symm)
+          exact Subtype.ext (hthis.trans (F.wRestrTree_val g (x.val.2 b.val) hqval).symm)
     · intro H i i' g b'
       split
       · rfl
@@ -152,7 +152,7 @@ theorem isHereditarilyNaturalBoolCore_eq_true_iff {I : Type uI} [Category.{vI} I
         · rfl
         · simp only [decide_eq_true_iff]
           exact (congrArg Subtype.val (H g ⟨b', by assumption⟩)).trans
-            (F.wRestrTree_val g (x.1.2 b') _)
+            (F.wRestrTree_val g (x.val.2 b') _)
   · rw [List.all_eq_true]
     constructor
     · intro H b

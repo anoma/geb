@@ -210,18 +210,18 @@ theorem fibR_reindexFib (P : SlicePFunctor.{0, 0, 0, 0} X Y) (s : Y ⊕ P.A) (t 
 /-- The direction restriction along a walking-arrow morphism. -/
 def directionRestr (P : SlicePFunctor.{0, 0, 0, 0} X Y) (s : Y ⊕ P.A) ⦃i i' : Fin 2⦄
     (f : i' ⟶ i) (d : (arrowSlice P).Direction s i) : (arrowSlice P).Direction s i' :=
-  ⟨restrDir P s i' d.1, restrDir_over P s i' d.1 d.2 (leOfHom f)⟩
+  ⟨restrDir P s i' d.val, restrDir_over P s i' d.val d.property (leOfHom f)⟩
 
 /-- The shape restriction along a walking-arrow morphism. -/
 def shapeRestr (P : SlicePFunctor.{0, 0, 0, 0} X Y) ⦃j j' : Fin 2⦄ (g : j' ⟶ j)
     (s : (arrowSlice P).Shape j) : (arrowSlice P).Shape j' :=
-  ⟨restrShape P j' s.1, restrShape_over P j' s.1 s.2 (leOfHom g)⟩
+  ⟨restrShape P j' s.val, restrShape_over P j' s.val s.property (leOfHom g)⟩
 
 /-- The reindexing of directions along a walking-arrow morphism. -/
 def reindex (P : SlicePFunctor.{0, 0, 0, 0} X Y) ⦃j j' : Fin 2⦄ (g : j' ⟶ j)
     (s : (arrowSlice P).Shape j) ⦃i : Fin 2⦄
-    (d : (arrowSlice P).Direction (shapeRestr P g s).1 i) : (arrowSlice P).Direction s.1 i :=
-  ⟨reindexDir P s.1 j' d.1, (reindexDir_over P s.1 j' d.1).trans d.2⟩
+    (d : (arrowSlice P).Direction (shapeRestr P g s).val i) : (arrowSlice P).Direction s.val i :=
+  ⟨reindexDir P s.val j' d.val, (reindexDir_over P s.val j' d.val).trans d.property⟩
 
 /-- The operations of the transcription. -/
 def arrowData (P : SlicePFunctor.{0, 0, 0, 0} X Y) :
@@ -308,7 +308,7 @@ theorem reindex_naturality (P : SlicePFunctor.{0, 0, 0, 0} X Y) :
     subst hd
     match i' with
     | 1 => rfl
-    | 0 => exact congrArg Sum.inl (fibR_reindexFib P s.1 j' b)
+    | 0 => exact congrArg Sum.inl (fibR_reindexFib P s.val j' b)
 
 /-- Reindexing along an identity is the identity. -/
 theorem reindex_id (P : SlicePFunctor.{0, 0, 0, 0} X Y) :
@@ -387,8 +387,8 @@ is the identity. -/
 theorem isNatural_iff (F : PresheafDomPFunctorData.{0, 0, 0, 0} (Fin 2))
     (hid : F.DirectionRestrId) (Z : (Fin 2)ᵒᵖ ⥤ Type)
     (x : F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj Z)) :
-    F.IsNatural x ↔ ∀ d : F.Direction x.1.1 1,
-      F.value x (F.directionRestr x.1.1 waHom d) = Z.map waHom.op (F.value x d) := by
+    F.IsNatural x ↔ ∀ d : F.Direction x.val.1 1,
+      F.value x (F.directionRestr x.val.1 waHom d) = Z.map waHom.op (F.value x d) := by
   refine ⟨fun h d ↦ h waHom d, fun h i i' f d ↦ ?_⟩
   match i, i' with
   | 0, 0 =>
@@ -448,15 +448,15 @@ def ofLevels (o : Levels P Z) : (arrowPsh P).obj Z :=
         | ⟨.inl _, hd⟩ => absurd hd Fin.zero_ne_one
         | ⟨.inr e, _⟩ => PEmpty.elim e⟩
   | .inr ⟨f₀, o⟩ =>
-    ⟨⟨⟨.inr o.1.1, fun d ↦ match d with
+    ⟨⟨⟨.inr o.val.1, fun d ↦ match d with
         | .inl x₀ => ⟨0, f₀ x₀⟩
-        | .inr b => ⟨1, (o.1.2 b).2.1⟩⟩,
+        | .inr b => ⟨1, (o.val.2 b).2.val⟩⟩,
       funext fun d ↦ match d with
         | .inl _ => rfl
         | .inr _ => rfl⟩,
       (isNatural_iff _ (directionRestr_id P) Z _).mpr fun d ↦ match d with
         | ⟨.inl _, hd⟩ => absurd hd Fin.zero_ne_one
-        | ⟨.inr b, _⟩ => ((o.1.2 b).2.2.trans (congrArg f₀ (congrFun o.2 b))).symm⟩
+        | ⟨.inr b, _⟩ => ((o.val.2 b).2.property.trans (congrArg f₀ (congrFun o.property b))).symm⟩
 
 /-- A dependent pair reassembled from its components after a cast of the
 second along an equation of the first is the original pair. -/
@@ -469,8 +469,8 @@ private theorem sigma_mk_cast {j i : Fin 2} (z : Z.obj ⟨j⟩) (e : j = i) :
 direction's level, is the element's raw assignment. -/
 theorem sigma_value (F : PresheafDomPFunctorData.{0, 0, 0, 0} (Fin 2))
     (x : F.toSliceDomPFunctor.Obj (PresheafDomPFunctorData.elemProj Z)) ⦃i : Fin 2⦄
-    (b : F.Direction x.1.1 i) :
-    (⟨i, F.value x b⟩ : Σ k : Fin 2, Z.obj ⟨k⟩) = x.1.2 b.1 := by
+    (b : F.Direction x.val.1 i) :
+    (⟨i, F.value x b⟩ : Σ k : Fin 2, Z.obj ⟨k⟩) = x.val.2 b.val := by
   obtain ⟨⟨a, v⟩, hc⟩ := x
   obtain ⟨b, hb⟩ := b
   exact sigma_mk_cast Z (v b).2 (((F.compatible_iff _ a v).mp hc b).trans hb)
@@ -479,7 +479,7 @@ theorem sigma_value (F : PresheafDomPFunctorData.{0, 0, 0, 0} (Fin 2))
 of its base point is the original element. -/
 theorem pullbackAlong_ext {f₀ : X → Z.obj ⟨0⟩} (q : pullbackAlong Z f₀) (x : X)
     (h : q.1 = x) :
-    (⟨x, q.2.1, by rw [← h]; exact q.2.2⟩ : pullbackAlong Z f₀) = q := by
+    (⟨x, q.2.val, by rw [← h]; exact q.2.property⟩ : pullbackAlong Z f₀) = q := by
   obtain ⟨_, _, _⟩ := q
   subst h
   rfl
@@ -503,7 +503,7 @@ def objEquiv : (arrowPsh P).obj Z ≃ Levels P Z where
     | .inl _ => rfl
     | .inr ⟨_, o⟩ =>
       congrArg Sum.inr (Sigma.ext rfl (heq_of_eq (Subtype.ext (Sigma.ext rfl (heq_of_eq
-        (funext fun b ↦ pullbackAlong_ext Z (o.1.2 b) _ (congrFun o.2 b)))))))
+        (funext fun b ↦ pullbackAlong_ext Z (o.val.2 b) _ (congrFun o.property b)))))))
 
 /-- Restricting a level-{lit}`1` element over {lit}`(y, f₀)` along {lit}`0 ⟶ 1`
 gives the level-{lit}`0` element {lit}`(y, f₀)`, where {lit}`y` is the slice
@@ -580,11 +580,11 @@ the level of the slice functor's values: the level-{lit}`1` fibre of the
 transcription over {lit}`(y, id)` is the slice functor's value. -/
 def pullbackIdEquiv {E : Type} (p : E → X) :
     P.toSliceDomPFunctor.Obj (pullbackProj (ofSlice p) id) ≃ P.toSliceDomPFunctor.Obj p where
-  toFun := P.map (fun q ↦ q.2.1) (funext fun q ↦ q.2.2)
+  toFun := P.map (fun q ↦ q.2.val) (funext fun q ↦ q.2.property)
   invFun := P.map (toPullback p) rfl
   left_inv q :=
     Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b ↦
-      pullbackAlong_ext (ofSlice p) (q.1.2 b) _ (q.1.2 b).2.2.symm)))
+      pullbackAlong_ext (ofSlice p) (q.val.2 b) _ (q.val.2 b).2.property.symm)))
   right_inv _ := Subtype.ext rfl
 
 /-- The comparison map from the slice functor's value at {lit}`p` to the

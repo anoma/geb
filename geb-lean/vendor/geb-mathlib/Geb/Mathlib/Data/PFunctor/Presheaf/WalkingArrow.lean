@@ -59,33 +59,34 @@ variable (F : PresheafPFunctor.{0, 0, uA, uB, 0, 0} (Fin 2) (Fin 2))
 
 /-- Base-level constructors recurse only on the base type. -/
 def BaseIndependent : Prop :=
-  ∀ (a : F.Shape 0) (b : F.B a.1), F.rCurried a.1 b = 0
+  ∀ (a : F.Shape 0) (b : F.B a.val), F.rCurried a.val b = 0
 
 /-- The polynomial whose shapes are the base shapes and whose directions are their fields. -/
 def basePFunctor : PFunctor.{uA, uB} :=
-  ⟨F.Shape 0, fun a ↦ F.B a.1⟩
+  ⟨F.Shape 0, fun a ↦ F.B a.val⟩
 
 variable {F} (hF : BaseIndependent F)
 
 /-- A node of the ordinary base polynomial as a node of the presheaf functor. -/
 def baseNode (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) (x : (basePFunctor F).Obj (Z.obj ⟨0⟩)) :
     (F.objPresheaf Z).obj ⟨0⟩ :=
-  ⟨⟨⟨⟨x.1.1, fun b ↦ ⟨0, x.2 b⟩⟩,
+  ⟨⟨⟨⟨x.1.val, fun b ↦ ⟨0, x.2 b⟩⟩,
       (F.compatible_iff _ _ _).mpr (fun b ↦ (hF x.1 b).symm)⟩, by
     intro i i' g b
-    have hi : i = 0 := b.2.symm.trans (hF x.1 b.1)
+    have hi : i = 0 := b.property.symm.trans (hF x.1 b.val)
     subst i
     have hi' : i' = 0 := by have hg := g.down.down; apply Fin.ext; change i'.val = 0; omega
     subst i'
     have hg : g = 𝟙 (0 : Fin 2) := Subsingleton.elim _ _
     subst g
-    rw [congrFun (F.isFunctorial.directionRestr_id x.1.1 0) b]
-    exact (FunctorToTypes.map_id_apply Z _).symm⟩, x.1.2⟩
+    rw [congrFun (F.isFunctorial.directionRestr_id x.1.val 0) b]
+    exact (FunctorToTypes.map_id_apply Z _).symm⟩, x.1.property⟩
 
 /-- The base component depends only on the base of the input presheaf. -/
 def baseObjEquiv (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) :
     (F.objPresheaf Z).obj ⟨0⟩ ≃ (basePFunctor F).Obj (Z.obj ⟨0⟩) where
-  toFun x := ⟨⟨x.1.shape, x.2⟩, fun b ↦ F.value x.1.1 ⟨b, hF ⟨x.1.shape, x.2⟩ b⟩⟩
+  toFun x :=
+    ⟨⟨x.val.shape, x.property⟩, fun b ↦ F.value x.val.val ⟨b, hF ⟨x.val.shape, x.property⟩ b⟩⟩
   invFun := baseNode hF Z
   left_inv x := by
     apply Subtype.ext
@@ -93,7 +94,8 @@ def baseObjEquiv (Z : (Fin 2)ᵒᵖ ⥤ Type uZ) :
     apply Subtype.ext
     refine Sigma.ext rfl (heq_of_eq (funext fun b ↦ ?_))
     exact Sigma.ext
-      (((F.compatible_iff _ _ _).mp x.1.1.2 b).trans (hF ⟨x.1.shape, x.2⟩ b)).symm
+      (((F.compatible_iff _ _ _).mp x.val.val.property b).trans
+        (hF ⟨x.val.shape, x.property⟩ b)).symm
       (cast_heq _ _)
   right_inv x := rfl
 
@@ -108,7 +110,7 @@ def ofBaseW : (basePFunctor F).W → F.W.obj ⟨0⟩ :=
   WType.elim _ (fun x ↦ W.mk (baseNode hF F.W x))
 
 /-- The embedding preserves constructors. -/
-theorem ofBaseW_mk (a : F.Shape 0) (f : F.B a.1 → (basePFunctor F).W) :
+theorem ofBaseW_mk (a : F.Shape 0) (f : F.B a.val → (basePFunctor F).W) :
     ofBaseW hF (WType.mk a f) =
       W.mk (baseNode hF F.W ⟨a, fun b ↦ ofBaseW hF (f b)⟩) := rfl
 
@@ -118,8 +120,8 @@ abbrev BaseValue := Σ i : Fin 2, i = 0 → (basePFunctor F).W
 /-- The slice algebra for reading the base tree; independence supplies every child index. -/
 def readBaseStep (x : F.toSliceDomPFunctor.Obj
     (Sigma.fst : BaseValue (F := F) → Fin 2)) : BaseValue (F := F) :=
-  ⟨F.q x.1.1, fun ha ↦ WType.mk ⟨x.1.1, ha⟩ (fun b ↦
-    (x.1.2 b).2 (((F.compatible_iff _ _ _).mp x.2 b).trans (hF ⟨x.1.1, ha⟩ b)))⟩
+  ⟨F.q x.val.1, fun ha ↦ WType.mk ⟨x.val.1, ha⟩ (fun b ↦
+    (x.val.2 b).2 (((F.compatible_iff _ _ _).mp x.property b).trans (hF ⟨x.val.1, ha⟩ b)))⟩
 
 /-- The index-preserving slice fold underlying the base-tree reader. -/
 def readBase : F.toSlicePFunctor.W → BaseValue (F := F) :=
@@ -137,46 +139,46 @@ def toBaseW (w : F.toSlicePFunctor.W) (hw : F.toSlicePFunctor.wIndex w = 0) :
 
 /-- The reader's constructor equation on a base-indexed slice node. -/
 theorem toBaseW_mk (x : F.toSliceDomPFunctor.Obj F.toSlicePFunctor.wIndex)
-    (hx : F.q x.1.1 = 0) :
-    toBaseW hF (SlicePFunctor.W.mk x) hx = WType.mk (β := (basePFunctor F).B) ⟨x.1.1, hx⟩
-      (fun b ↦ toBaseW hF (x.1.2 b)
-        (((F.compatible_iff _ _ _).mp x.2 b).trans (hF ⟨x.1.1, hx⟩ b))) := rfl
+    (hx : F.q x.val.1 = 0) :
+    toBaseW hF (SlicePFunctor.W.mk x) hx = WType.mk (β := (basePFunctor F).B) ⟨x.val.1, hx⟩
+      (fun b ↦ toBaseW hF (x.val.2 b)
+        (((F.compatible_iff _ _ _).mp x.property b).trans (hF ⟨x.val.1, hx⟩ b))) := rfl
 
 /-- Reading an embedded base tree recovers the original ordinary W-tree. -/
 theorem toBaseW_ofBaseW (w : (basePFunctor F).W) :
-    toBaseW hF (ofBaseW hF w).down.1 (ofBaseW hF w).down.2.1 = w := by
+    toBaseW hF (ofBaseW hF w).down.val (ofBaseW hF w).down.property.1 = w := by
   apply WType.rec (motive := fun w ↦
-    toBaseW hF (ofBaseW hF w).down.1 (ofBaseW hF w).down.2.1 = w) _ w
+    toBaseW hF (ofBaseW hF w).down.val (ofBaseW hF w).down.property.1 = w) _ w
   intro a f ih
   change WType.mk a (fun b ↦
-    toBaseW hF (ofBaseW hF (f b)).down.1 (ofBaseW hF (f b)).down.2.1) = WType.mk a f
+    toBaseW hF (ofBaseW hF (f b)).down.val (ofBaseW hF (f b)).down.property.1) = WType.mk a f
   rw [funext ih]
 
 /-- Embedding the read base tree recovers the underlying slice tree. -/
 theorem ofBaseW_toBaseW_val (w : F.toSlicePFunctor.W)
     (hw : F.toSlicePFunctor.wIndex w = 0) :
-    (ofBaseW hF (toBaseW hF w hw)).down.1.1 = w.1 := by
+    (ofBaseW hF (toBaseW hF w hw)).down.val.val = w.val := by
   apply SlicePFunctor.W.induction (motive := fun w ↦
     ∀ hw : F.toSlicePFunctor.wIndex w = 0,
-      (ofBaseW hF (toBaseW hF w hw)).down.1.1 = w.1) _ w hw
+      (ofBaseW hF (toBaseW hF w hw)).down.val.val = w.val) _ w hw
   intro x ih hx
-  change WType.mk x.1.1 (fun b ↦
-    (ofBaseW hF (toBaseW hF (x.1.2 b)
-      (((F.compatible_iff _ _ _).mp x.2 b).trans (hF ⟨x.1.1, hx⟩ b)))).down.1.1) =
-    WType.mk x.1.1 (fun b ↦ (x.1.2 b).1)
+  change WType.mk x.val.1 (fun b ↦
+    (ofBaseW hF (toBaseW hF (x.val.2 b)
+      (((F.compatible_iff _ _ _).mp x.property b).trans (hF ⟨x.val.1, hx⟩ b)))).down.val.val) =
+    WType.mk x.val.1 (fun b ↦ (x.val.2 b).val)
   congr 1
   funext b
   exact ih b _
 
 /-- The base of the presheaf W-type is equivalent to mathlib's ordinary W-type. -/
 def baseWEquiv : F.W.obj ⟨0⟩ ≃ (basePFunctor F).W where
-  toFun w := toBaseW hF w.down.1 w.down.2.1
+  toFun w := toBaseW hF w.down.val w.down.property.1
   invFun := ofBaseW hF
   left_inv w := by
     apply ULift.ext
     apply Subtype.ext
     apply Subtype.ext
-    exact ofBaseW_toBaseW_val hF w.down.1 w.down.2.1
+    exact ofBaseW_toBaseW_val hF w.down.val w.down.property.1
   right_inv := toBaseW_ofBaseW hF
 
 /-- The base equivalence preserves the polynomial constructor. -/
@@ -218,7 +220,7 @@ def dependentMk (x : (F.objPresheaf F.W).obj ⟨1⟩) :
 
 /-- The total space of the dependent family recovers the presheaf W-type's total space. -/
 def totalEquiv : (Σ w, DependentW hF w) ≃ F.W.obj ⟨1⟩ where
-  toFun x := x.2.1
+  toFun x := x.2.val
   invFun t := ⟨index hF t, t, rfl⟩
   left_inv := fun ⟨w, t, ht⟩ ↦ by cases ht; rfl
   right_inv _ := rfl

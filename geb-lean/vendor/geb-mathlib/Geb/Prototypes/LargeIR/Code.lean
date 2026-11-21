@@ -101,7 +101,7 @@ variable {X Y : Type} (P : SlicePFunctor.{0, 0, 0, 0} X Y)
 family {lit}`A : X → Type`: a shape over {lit}`y` with an element of the
 family at each direction's input index. -/
 def fibreValue (y : Y) (A : X → Type) : Type :=
-  Σ a : P.Shape y, ∀ b : P.B a.1, A (P.r ⟨a.1, b⟩)
+  Σ a : P.Shape y, ∀ b : P.B a.val, A (P.r ⟨a.val, b⟩)
 
 /-- The code {lit}`σ Y (fun y ↦ δ X (fun A ↦ ι (fibreValue P y A)))`: a
 constructor for each output index, whose recursive arguments are indexed by
@@ -168,12 +168,12 @@ of {name}`GebProto.LargeIR.Levels` at level {lit}`j`. -/
 def objLevelEquiv (j : Fin 2) :
     { x : (arrowPsh P).obj Z // (arrowPsh P).q x.shape = j } ≃
       { l : Levels P Z // levelOf P Z l = j } where
-  toFun x := ⟨toLevels P Z x.1, (q_shape_eq_levelOf P Z x.1).symm.trans x.2⟩
-  invFun l := ⟨ofLevels P Z l.1,
+  toFun x := ⟨toLevels P Z x.val, (q_shape_eq_levelOf P Z x.val).symm.trans x.property⟩
+  invFun l := ⟨ofLevels P Z l.val,
     (q_shape_eq_levelOf P Z _).trans
-      ((congrArg (levelOf P Z) (toLevels_ofLevels P Z l.1)).trans l.2)⟩
-  left_inv x := Subtype.ext (ofLevels_toLevels P Z x.1)
-  right_inv l := Subtype.ext (toLevels_ofLevels P Z l.1)
+      ((congrArg (levelOf P Z) (toLevels_ofLevels P Z l.val)).trans l.property)⟩
+  left_inv x := Subtype.ext (ofLevels_toLevels P Z x.val)
+  right_inv l := Subtype.ext (toLevels_ofLevels P Z l.val)
 
 /-- The elements of a sum at level {lit}`0` are its left summand. -/
 def sumLeftEquiv {α β : Type} :
@@ -236,9 +236,9 @@ def levelsFibreEquiv :
     (Σ f₀ : X → Z.obj ⟨0⟩, P.toSliceDomPFunctor.Obj (pullbackProj Z f₀)) ≃
       Σ yf : Y × (X → Z.obj ⟨0⟩), levelsFibre P Z yf where
   toFun s := ⟨(P.obj (pullbackProj Z s.1) s.2, s.1), ⟨s.2, rfl⟩⟩
-  invFun s := ⟨s.1.2, s.2.1⟩
+  invFun s := ⟨s.1.2, s.2.val⟩
   left_inv _ := rfl
-  right_inv s := levelsFibre_ext P Z s.2.1 s.2.2
+  right_inv s := levelsFibre_ext P Z s.2.val s.2.property
 
 /-- {name}`GebProto.LargeIR.Levels` as a walking-arrow presheaf: the
 projection of the regrouped level-{lit}`1` part onto the level-{lit}`0`
@@ -276,12 +276,13 @@ def codeBaseEquiv :
 {lit}`y` applied to the decoded family {lit}`T ∘ f₀`. -/
 def codeFibreEquiv (yf : Y × (X → Z.obj ⟨0⟩)) :
     levelsFibre P Z yf ≃ fibreValue P yf.1 ((famOfPsh Z).2 ∘ yf.2) where
-  toFun o := ⟨⟨o.1.1.1, o.2⟩,
-    fun b ↦ ⟨(o.1.1.2 b).2.1, (o.1.1.2 b).2.2.trans (congrArg yf.2 (congrFun o.1.2 b))⟩⟩
-  invFun w := ⟨⟨⟨w.1.1, fun b ↦ ⟨P.r ⟨w.1.1, b⟩, w.2 b⟩⟩, rfl⟩, w.1.2⟩
+  toFun o := ⟨⟨o.val.val.1, o.property⟩,
+    fun b ↦ ⟨(o.val.val.2 b).2.val,
+      (o.val.val.2 b).2.property.trans (congrArg yf.2 (congrFun o.val.property b))⟩⟩
+  invFun w := ⟨⟨⟨w.1.val, fun b ↦ ⟨P.r ⟨w.1.val, b⟩, w.2 b⟩⟩, rfl⟩, w.1.property⟩
   left_inv o :=
     Subtype.ext (Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun b ↦
-      pullbackAlong_ext Z (o.1.1.2 b) _ (congrFun o.1.2 b)))))
+      pullbackAlong_ext Z (o.val.val.2 b) _ (congrFun o.val.property b)))))
   right_inv _ := rfl
 
 /-- {lit}`levelsPsh` is the presheaf of the code's interpretation at the

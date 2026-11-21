@@ -184,13 +184,13 @@ public section
   ⟨⟨oneAtRaw n,
       ⟨fun d ↦ match d with
         | .inl () => ⟨fun c ↦ c.elim0, funext fun c ↦ c.elim0⟩
-        | .inr _ => (zeroAt n).1.2,
+        | .inr _ => (zeroAt n).val.property,
       funext fun d ↦ match d with
         | .inl () => rfl
         | .inr _ => rfl⟩⟩,
     ⟨trivial, fun d ↦ match d with
       | .inl () => ⟨trivial, fun c ↦ c.elim0⟩
-      | .inr _ => (zeroAt n).2⟩⟩
+      | .inr _ => (zeroAt n).property⟩⟩
 
 /-- `oneAt n` at its declared arity. -/
 @[expose] def oneAtOf (n : ℕ) : COf n := ⟨oneAt n, rfl⟩
@@ -207,13 +207,13 @@ public section
   ⟨⟨falseAtRaw n,
       ⟨fun d ↦ match d with
         | .inl () => ⟨fun c ↦ c.elim0, funext fun c ↦ c.elim0⟩
-        | .inr _ => (zeroAt n).1.2,
+        | .inr _ => (zeroAt n).val.property,
       funext fun d ↦ match d with
         | .inl () => rfl
         | .inr _ => rfl⟩⟩,
     ⟨trivial, fun d ↦ match d with
       | .inl () => ⟨trivial, fun c ↦ c.elim0⟩
-      | .inr _ => (zeroAt n).2⟩⟩
+      | .inr _ => (zeroAt n).property⟩⟩
 
 /-- `falseAt n` at its declared arity. -/
 @[expose] def falseAtOf (n : ℕ) : COf n := ⟨falseAt n, rfl⟩
@@ -252,10 +252,10 @@ bitstring, or a depth below two. -/
 @[expose] def predPred : C :=
   ⟨⟨predPredRaw, by decide⟩,
     ⟨trivial, fun d ↦ match d with
-      | .inl () => pred.1.2
+      | .inl () => pred.val.property
       | .inr _ =>
         ⟨trivial, fun e ↦ match e with
-          | .inl () => pred.1.2
+          | .inl () => pred.val.property
           | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩⟩⟩
 
 /-- `predPred` at its declared arity. -/
@@ -280,14 +280,14 @@ arity one, the state being the sole argument a fold's step reads. -/
 @[expose] def combFalseStep : C :=
   ⟨⟨combFalseStepRaw, by decide⟩,
     ⟨trivial, fun d ↦ match d with
-      | .inl () => cond.1.2
+      | .inl () => cond.val.property
       | .inr 0 => ⟨trivial, fun c ↦ c.elim0⟩
-      | .inr 1 => (falseAt 1).2
+      | .inr 1 => (falseAt 1).property
       | .inr 2 =>
         ⟨trivial, fun e ↦ match e with
-          | .inl () => inc.2
+          | .inl () => inc.property
           | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩
-      | .inr 3 => (falseAt 1).2⟩⟩
+      | .inr 3 => (falseAt 1).property⟩⟩
 
 /-- `combFalseStep` at its declared arity. -/
 @[expose] def combFalseStepOf : COf 1 := ⟨combFalseStep, rfl⟩
@@ -318,19 +318,19 @@ empty. Of arity one, as `combFalseStep`. -/
 @[expose] def combTrueStep : C :=
   ⟨⟨combTrueStepRaw, by decide⟩,
     ⟨trivial, fun d ↦ match d with
-      | .inl () => cond.1.2
+      | .inl () => cond.val.property
       | .inr 0 =>
         ⟨trivial, fun e ↦ match e with
-          | .inl () => predPred.2
+          | .inl () => predPred.property
           | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩
-      | .inr 1 => (falseAt 1).2
+      | .inr 1 => (falseAt 1).property
       | .inr 2 =>
         ⟨trivial, fun e ↦ match e with
-          | .inl () => pred.1.2
+          | .inl () => pred.val.property
           | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩
       | .inr 3 =>
         ⟨trivial, fun e ↦ match e with
-          | .inl () => pred.1.2
+          | .inl () => pred.val.property
           | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩⟩⟩
 
 /-- `combTrueStep` at its declared arity. -/
@@ -457,7 +457,7 @@ recursion bound. -/
 /-- The meaning `combSem` reads at the raw tree is the meaning `comb` carries:
 the statements about the scan are statements about the member of `C` whose
 recursion bound `comb` discharges. -/
-theorem combSem_eq_eval : transport combOf.2 combOf.1.eval = combSem :=
+theorem combSem_eq_eval : transport combOf.property combOf.val.eval = combSem :=
   scanSem_eq_eval (oneAtOf 0) combFalseStepOf combTrueStepOf 1 length_combSem_le
 
 /-- The inner conditional of `eqOne`: whether the predecessor of the argument
@@ -477,14 +477,14 @@ is empty. -/
 @[expose] def eqOneInner : C :=
   ⟨⟨eqOneInnerRaw, by decide⟩,
     ⟨trivial, fun d ↦ match d with
-      | .inl () => cond.1.2
+      | .inl () => cond.val.property
       | .inr 0 =>
         ⟨trivial, fun e ↦ match e with
-          | .inl () => pred.1.2
+          | .inl () => pred.val.property
           | .inr _ => ⟨trivial, fun c ↦ c.elim0⟩⟩
-      | .inr 1 => (oneAt 1).2
-      | .inr 2 => (zeroAt 1).2
-      | .inr 3 => (zeroAt 1).2⟩⟩
+      | .inr 1 => (oneAt 1).property
+      | .inr 2 => (zeroAt 1).property
+      | .inr 3 => (zeroAt 1).property⟩⟩
 
 /-- `eqOneInner` at its declared arity. -/
 @[expose] def eqOneInnerOf : COf 1 := ⟨eqOneInner, rfl⟩
@@ -502,11 +502,11 @@ otherwise the argument is one exactly when its predecessor is empty. -/
 @[expose] def eqOne : C :=
   ⟨⟨eqOneRaw, by decide⟩,
     ⟨trivial, fun d ↦ match d with
-      | .inl () => cond.1.2
+      | .inl () => cond.val.property
       | .inr 0 => ⟨trivial, fun c ↦ c.elim0⟩
-      | .inr 1 => (zeroAt 1).2
-      | .inr 2 => eqOneInner.2
-      | .inr 3 => eqOneInner.2⟩⟩
+      | .inr 1 => (zeroAt 1).property
+      | .inr 2 => eqOneInner.property
+      | .inr 3 => eqOneInner.property⟩⟩
 
 /-- `eqOne` at its declared arity, as `combOf` and `isTreeOf`. -/
 @[expose] def eqOneOf : COf 1 := ⟨eqOne, rfl⟩
@@ -549,11 +549,11 @@ tree, as an expression of arity one. -/
 @[expose] def isTree : C :=
   ⟨⟨isTreeRaw, by decide⟩,
     ⟨trivial, fun d ↦ match d with
-      | .inl () => eqOne.2
+      | .inl () => eqOne.property
       | .inr _ =>
         ⟨trivial, fun e ↦ match e with
-          | .inl () => pred.1.2
-          | .inr _ => comb.2⟩⟩⟩
+          | .inl () => pred.val.property
+          | .inr _ => comb.property⟩⟩⟩
 
 /-- `isTree` at its declared arity. -/
 @[expose] def isTreeOf : COf 1 := ⟨isTree, rfl⟩
@@ -566,7 +566,7 @@ at `isTree`, as `combSem`. -/
 /-- The meaning `isTreeSem` reads at the raw tree is the meaning `isTree`
 carries, as `combSem_eq_eval` for the scan: the correctness statements below
 are statements about the member of `C` that `isTree_smashFree` concerns. -/
-theorem isTreeSem_eq_eval : transport isTreeOf.2 isTreeOf.1.eval = isTreeSem := rfl
+theorem isTreeSem_eq_eval : transport isTreeOf.property isTreeOf.val.eval = isTreeSem := rfl
 
 /-- One step of the recognizer: the one-test on the scan's predecessor. The
 scan's value is `[false]` on failure, whose predecessor is empty, and

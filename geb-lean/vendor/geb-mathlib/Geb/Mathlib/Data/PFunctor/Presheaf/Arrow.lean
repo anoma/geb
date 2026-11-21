@@ -130,23 +130,23 @@ theorem isHereditarilyNatural_mk_iff_arrow
     (F : PresheafPFunctor.{0, 0, uA, uB, 0, 0} (Fin 2) (Fin 2))
     (x : F.toSliceDomPFunctor.Obj F.toSlicePFunctor.wIndex) :
     F.IsHereditarilyNatural (SlicePFunctor.W.mk x) ↔
-      (∀ b : F.toSliceDomPFunctor.Direction x.1.1 1,
-          x.1.2 (F.directionRestr x.1.1 arrow b).1
-            = F.wRestrTree arrow (x.1.2 b.1)
-                (((F.toSliceDomPFunctor.compatible_iff F.toSlicePFunctor.wIndex x.1.1 x.1.2).mp
-                  x.2 b.1).trans b.2)) ∧
-        ∀ b, F.IsHereditarilyNatural (x.1.2 b) := by
+      (∀ b : F.toSliceDomPFunctor.Direction x.val.1 1,
+          x.val.2 (F.directionRestr x.val.1 arrow b).val
+            = F.wRestrTree arrow (x.val.2 b.val)
+                (((F.toSliceDomPFunctor.compatible_iff F.toSlicePFunctor.wIndex x.val.1 x.val.2).mp
+                  x.property b.val).trans b.property)) ∧
+        ∀ b, F.IsHereditarilyNatural (x.val.2 b) := by
   rw [F.isHereditarilyNatural_mk]
   refine and_congr ⟨fun h b ↦ h arrow b, fun h i i' g b ↦ ?_⟩ Iff.rfl
   match i, i', g, b with
   | 0, 0, g, b =>
     obtain rfl : g = 𝟙 _ := Subsingleton.elim _ _
-    exact (congrArg (fun d ↦ x.1.2 d.1)
-      (congrFun (F.isFunctorial.directionRestr_id x.1.1 0) b)).trans (F.wRestrTree_id _ _).symm
+    exact (congrArg (fun d ↦ x.val.2 d.val)
+      (congrFun (F.isFunctorial.directionRestr_id x.val.1 0) b)).trans (F.wRestrTree_id _ _).symm
   | 1, 1, g, b =>
     obtain rfl : g = 𝟙 _ := Subsingleton.elim _ _
-    exact (congrArg (fun d ↦ x.1.2 d.1)
-      (congrFun (F.isFunctorial.directionRestr_id x.1.1 1) b)).trans (F.wRestrTree_id _ _).symm
+    exact (congrArg (fun d ↦ x.val.2 d.val)
+      (congrFun (F.isFunctorial.directionRestr_id x.val.1 1) b)).trans (F.wRestrTree_id _ _).symm
   | 1, 0, g, b =>
     obtain rfl : g = arrow := Subsingleton.elim _ _
     exact h b
@@ -347,29 +347,31 @@ theorem restrDir_reindexDir (j' i' : Fin 2) (x : Shape P fam)
   r := fun x ↦ dirIndex P fam x.1 x.2
   q := shapeIndex P fam
   directionRestr := fun x _ i' f d ↦
-    ⟨restrDir P fam i' x d.1, dirIndex_restrDir P fam i' x d.1 ((leOfHom f).trans_eq d.2.symm)⟩
+    ⟨restrDir P fam i' x d.val,
+      dirIndex_restrDir P fam i' x d.val ((leOfHom f).trans_eq d.property.symm)⟩
   shapeRestr := fun _ j' g s ↦
-    ⟨restrShape P fam j' s.1, shapeIndex_restrShape P fam j' s.1 ((leOfHom g).trans_eq s.2.symm)⟩
+    ⟨restrShape P fam j' s.val,
+      shapeIndex_restrShape P fam j' s.val ((leOfHom g).trans_eq s.property.symm)⟩
   reindex := fun _ j' _ s _ d ↦
-    ⟨reindexDir P fam j' s.1 d.1, (dirIndex_reindexDir P fam j' s.1 d.1).trans d.2⟩
+    ⟨reindexDir P fam j' s.val d.val, (dirIndex_reindexDir P fam j' s.val d.val).trans d.property⟩
 
 /-- The operations satisfy the functor laws. -/
 theorem isFunctorial_data : (data P fam).IsFunctorial where
   directionRestr_id x i := by
     funext b
-    exact Subtype.ext (restrDir_of_dirIndex P fam i x b.1 b.2)
+    exact Subtype.ext (restrDir_of_dirIndex P fam i x b.val b.property)
   directionRestr_comp x i i' i'' f g := by
     funext b
-    exact Subtype.ext (restrDir_restrDir P fam i' i'' x b.1 (leOfHom g)).symm
+    exact Subtype.ext (restrDir_restrDir P fam i' i'' x b.val (leOfHom g)).symm
   shapeRestr_id j := by
     funext s
-    exact Subtype.ext (restrShape_of_shapeIndex P fam j s.1 s.2)
+    exact Subtype.ext (restrShape_of_shapeIndex P fam j s.val s.property)
   shapeRestr_comp j j' j'' g h := by
     funext s
-    exact Subtype.ext (restrShape_restrShape P fam j' j'' s.1 (leOfHom h)).symm
+    exact Subtype.ext (restrShape_restrShape P fam j' j'' s.val (leOfHom h)).symm
   reindex_naturality j j' g s i i' f := by
     funext b
-    exact Subtype.ext (restrDir_reindexDir P fam j' i' s.1 b.1)
+    exact Subtype.ext (restrDir_reindexDir P fam j' i' s.val b.val)
   reindex_id j s i b := by
     match j, s with
     | 0, ⟨Sum.inl _, _⟩ => exact Subtype.ext rfl
@@ -463,18 +465,18 @@ theorem isHereditarilyNatural_ofBase (t : P.W) :
         ⟨⟨Sum.inl a, fun b ↦ ⟨ofBase P fam (f b), wValid_ofBase P fam (f b)⟩⟩,
           ((dependent P fam).toSliceDomPFunctor.compatible_iff _ _ _).mpr fun b ↦
             wIndexRoot_ofBase P fam (f b)⟩).mpr
-        ⟨fun b ↦ absurd b.2 (by decide : (0 : Fin 2) ≠ 1), ih⟩)
+        ⟨fun b ↦ absurd b.property (by decide : (0 : Fin 2) ≠ 1), ih⟩)
     t
 
 /-- The W-type's fiber over {lit}`0` is {lit}`P.W`: the folds {lit}`toBase` and
 {lit}`ofBase`, the latter landing in the fiber by {lit}`wValid_ofBase`,
 {lit}`wIndexRoot_ofBase` and {lit}`isHereditarilyNatural_ofBase`. -/
 @[expose] def baseEquiv : ((dependent P fam).W).obj ⟨(0 : Fin 2)⟩ ≃ P.W where
-  toFun u := toBase P fam u.down.1.1
+  toFun u := toBase P fam u.down.val.val
   invFun t := ULift.up ⟨⟨ofBase P fam t, wValid_ofBase P fam t⟩, wIndexRoot_ofBase P fam t,
     isHereditarilyNatural_ofBase P fam t⟩
   left_inv u := congrArg ULift.up (Subtype.ext (Subtype.ext
-    (ofBase_toBase P fam u.down.1.1 u.down.1.2 u.down.2.1)))
+    (ofBase_toBase P fam u.down.val.val u.down.val.property u.down.property.1)))
   right_inv t := toBase_ofBase P fam t
 
 /-- The type family over {lit}`P.W` the W-type carries: the fiber of the
@@ -485,9 +487,9 @@ W-type's restriction map along the arrow, read through {lit}`baseEquiv`. -/
 
 /-- Root restriction along the arrow does not change the base tree. -/
 theorem toBase_wRestrTree (z : (dependent P fam).toSlicePFunctor.W)
-    (hq : (dependent P fam).q (PFunctor.W.head z.1) = 1) :
-    toBase P fam ((dependent P fam).wRestrTree PresheafPFunctor.arrow z hq).1 =
-      toBase P fam z.1 := by
+    (hq : (dependent P fam).q (PFunctor.W.head z.val) = 1) :
+    toBase P fam ((dependent P fam).wRestrTree PresheafPFunctor.arrow z hq).val =
+      toBase P fam z.val := by
   obtain ⟨w, hw⟩ := z
   cases w with
   | mk _ _ => rfl
@@ -497,11 +499,11 @@ theorem toBase_wRestrTree (z : (dependent P fam).toSlicePFunctor.W)
 tree exactly when the base tree of its own tree is that base tree. -/
 theorem fiber_iff (u : ((dependent P fam).W).obj ⟨(1 : Fin 2)⟩) (t : P.W) :
     ((dependent P fam).W).map PresheafPFunctor.arrow.op u = (baseEquiv P fam).symm t ↔
-      toBase P fam u.down.1.1 = t := by
+      toBase P fam u.down.val.val = t := by
   constructor
   · intro h
-    exact (toBase_wRestrTree P fam u.down.1 u.down.2.1).symm.trans
-      ((congrArg (fun z ↦ toBase P fam z.down.1.1) h).trans (toBase_ofBase P fam t))
+    exact (toBase_wRestrTree P fam u.down.val u.down.property.1).symm.trans
+      ((congrArg (fun z ↦ toBase P fam z.down.val.val) h).trans (toBase_ofBase P fam t))
   · intro h
     obtain ⟨⟨⟨w, hw⟩, hi, hn⟩⟩ := u
     subst h
@@ -526,7 +528,7 @@ theorem child_inr_eq (p : Σ a : P.A, (fam a).A)
     c (Sum.inr ((fam p.1).r ⟨p.2, d⟩)) =
       ((dependent P fam).wRestrTree PresheafPFunctor.arrow
         ⟨c (Sum.inl d), (((dependent P fam).toSlicePFunctor.wValid_mk _ _).mp hw).1 _⟩
-        (congrFun (((dependent P fam).toSlicePFunctor.wValid_mk _ _).mp hw).2 _)).1 :=
+        (congrFun (((dependent P fam).toSlicePFunctor.wValid_mk _ _).mp hw).2 _)).val :=
   congrArg Subtype.val
     ((((dependent P fam).isHereditarilyNatural_mk_iff_arrow
       (SlicePFunctor.W.dest (F := (dependent P fam).toSlicePFunctor)
@@ -564,8 +566,8 @@ fiber elements and the base children the carried children of {lit}`t`. -/
     (x : (fam (PFunctor.W.head t)).Obj
       (Sigma.fst : (Σ b, Fiber P fam (PFunctor.W.children t b)) → P.B (PFunctor.W.head t))) :
     (dependent P fam).toPFunctor.W :=
-  WType.mk (Sum.inr ⟨PFunctor.W.head t, x.1.1⟩)
-    (Sum.elim (fun d ↦ (x.1.2 d).2.1.down.1.1)
+  WType.mk (Sum.inr ⟨PFunctor.W.head t, x.val.1⟩)
+    (Sum.elim (fun d ↦ (x.val.2 d).2.val.down.val.val)
       (fun b ↦ ofBase P fam (PFunctor.W.children t b)))
 
 /-- The constructed tree is admissible. -/
@@ -576,11 +578,11 @@ theorem wValid_mkRaw (t : P.W)
   ((dependent P fam).toSlicePFunctor.wValid_mk _ _).mpr
     ⟨fun b ↦ by
       cases b with
-      | inl d => exact (x.1.2 d).2.1.down.1.2
+      | inl d => exact (x.val.2 d).2.val.down.val.property
       | inr b => exact wValid_ofBase P fam _,
     funext fun b ↦ by
       cases b with
-      | inl d => exact (x.1.2 d).2.1.down.2.1
+      | inl d => exact (x.val.2 d).2.val.down.property.1
       | inr b => exact wIndexRoot_ofBase P fam _⟩
 
 /-- The constructed tree is hereditarily natural: its base child at the
@@ -599,12 +601,12 @@ theorem isHereditarilyNatural_mkRaw (t : P.W)
     | inr _ => exact absurd hb (by decide : (0 : Fin 2) ≠ 1)
     | inl d =>
       refine Subtype.ext ?_
-      have h := congrArg (fun z ↦ z.down.1.1) (x.1.2 d).2.2
+      have h := congrArg (fun z ↦ z.down.val.val) (x.val.2 d).2.property
       exact (congrArg (fun b ↦ ofBase P fam (PFunctor.W.children t b))
-        (((fam (PFunctor.W.head t)).compatible_iff _ _ _).mp x.2 d)).symm.trans h.symm
+        (((fam (PFunctor.W.head t)).compatible_iff _ _ _).mp x.property d)).symm.trans h.symm
   · intro b
     cases b with
-    | inl d => exact (x.1.2 d).2.1.down.2.2
+    | inl d => exact (x.val.2 d).2.val.down.property.2
     | inr _ => exact isHereditarilyNatural_ofBase P fam _
 
 /-- The base tree of the constructed tree is {lit}`t`. -/
@@ -639,7 +641,7 @@ theorem mkRaw_destRaw (w : (dependent P fam).toPFunctor.W)
 /-- Two elements of the family of fibers over the children with equal indices
 and equal trees are equal. -/
 theorem sigma_fiber_ext {a : P.A} {f : P.B a → P.W} {p q : Σ b, Fiber P fam (f b)}
-    (h1 : p.1 = q.1) (h2 : p.2.1.down.1.1 = q.2.1.down.1.1) : p = q := by
+    (h1 : p.1 = q.1) (h2 : p.2.val.down.val.val = q.2.val.down.val.val) : p = q := by
   obtain ⟨b, ⟨⟨⟨⟨w, hw⟩, hi, hn⟩⟩, hf⟩⟩ := p
   obtain ⟨b', ⟨⟨⟨⟨w', hw'⟩, hi', hn'⟩⟩, hf'⟩⟩ := q
   cases h1
@@ -651,7 +653,7 @@ pointwise equal trees are equal. -/
 theorem obj_ext {a : P.A} {f : P.B a → P.W} {a' : (fam a).A}
     (v v' : (fam a).B a' → Σ b, Fiber P fam (f b)) (hv : (fam a).Compatible Sigma.fst a' v)
     (hv' : (fam a).Compatible Sigma.fst a' v')
-    (h : ∀ d, (v d).2.1.down.1.1 = (v' d).2.1.down.1.1) :
+    (h : ∀ d, (v d).2.val.down.val.val = (v' d).2.val.down.val.val) :
     (⟨⟨a', v⟩, hv⟩ : (fam a).Obj (Sigma.fst : (Σ b, Fiber P fam (f b)) → P.B a)) =
       ⟨⟨a', v'⟩, hv'⟩ :=
   Subtype.ext (Sigma.ext rfl (heq_of_eq (funext fun d ↦ sigma_fiber_ext P fam
@@ -662,7 +664,7 @@ theorem obj_ext {a : P.A} {f : P.B a → P.W} {a' : (fam a).A}
 theorem obj_heq {a : P.A} {f f' : P.B a → P.W} (hf : f' = f) {a' : (fam a).A}
     (v : (fam a).B a' → Σ b, Fiber P fam (f' b)) (hv : (fam a).Compatible Sigma.fst a' v)
     (v' : (fam a).B a' → Σ b, Fiber P fam (f b)) (hv' : (fam a).Compatible Sigma.fst a' v')
-    (h : ∀ d, (v d).2.1.down.1.1 = (v' d).2.1.down.1.1) :
+    (h : ∀ d, (v d).2.val.down.val.val = (v' d).2.val.down.val.val) :
     (⟨⟨a', v⟩, hv⟩ : (fam a).Obj (Sigma.fst : (Σ b, Fiber P fam (f' b)) → P.B a)) ≍
       (⟨⟨a', v'⟩, hv'⟩ : (fam a).Obj (Sigma.fst : (Σ b, Fiber P fam (f b)) → P.B a)) := by
   subst hf
@@ -678,8 +680,9 @@ by {name}`cast_eq` and {name}`cast_heq`. -/
       (Sigma.fst : (Σ b, Fiber P fam (PFunctor.W.children t b)) → P.B (PFunctor.W.head t)) where
   toFun u := cast (congrArg (fun t ↦ (fam (PFunctor.W.head t)).Obj
       (Sigma.fst : (Σ b, Fiber P fam (PFunctor.W.children t b)) → P.B (PFunctor.W.head t)))
-      ((fiber_iff P fam u.1 t).mp u.2))
-    (destRaw P fam u.1.down.1.1 u.1.down.1.2 u.1.down.2.1 u.1.down.2.2)
+      ((fiber_iff P fam u.val t).mp u.property))
+    (destRaw P fam u.val.down.val.val u.val.down.val.property u.val.down.property.1
+      u.val.down.property.2)
   invFun x := ⟨ULift.up ⟨⟨mkRaw P fam t x, wValid_mkRaw P fam t x⟩, rfl,
       isHereditarilyNatural_mkRaw P fam t x⟩,
     (fiber_iff P fam _ t).mpr (toBase_mkRaw P fam t x)⟩

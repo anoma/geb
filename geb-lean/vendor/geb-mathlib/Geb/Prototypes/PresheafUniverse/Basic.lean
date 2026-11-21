@@ -438,17 +438,19 @@ arrow. Reducible so its shape and direction types unfold, which is what lets the
   B := Dir
   r := fun x ↦ rDir x.1 x.2
   q := qShp
-  directionRestr := fun a _i i' g d ↦ ⟨dirTo i' a d.1, rDir_dirTo a _i i' d.1 d.2 (leOfHom g)⟩
+  directionRestr := fun a _i i' g d ↦
+    ⟨dirTo i' a d.val, rDir_dirTo a _i i' d.val d.property (leOfHom g)⟩
   shapeRestr := fun _j j' g s ↦
-    ⟨restrShp j' s.1, qShp_restrShp s.1 j' (le_of_le_of_eq (leOfHom g) s.2.symm)⟩
-  reindex := fun _j j' _g a _i d ↦ ⟨reindexTo j' a.1 d.1, (rDir_reindexTo j' a.1 d.1).trans d.2⟩
+    ⟨restrShp j' s.val, qShp_restrShp s.val j' (le_of_le_of_eq (leOfHom g) s.property.symm)⟩
+  reindex := fun _j j' _g a _i d ↦
+    ⟨reindexTo j' a.val d.val, (rDir_reindexTo j' a.val d.val).trans d.property⟩
 
 /-- The underlying value of a direction cast along an equality of shapes is the
 original underlying value. -/
 theorem cast_direction_val {j : Fin 2} {s s' : universeData.Shape j} (h : s = s') {i : Fin 2}
-    (p : universeData.Direction s.1 i) :
-    (cast (congrArg (fun t : universeData.Shape j ↦ universeData.Direction t.1 i) h) p).1
-      ≍ p.1 := by
+    (p : universeData.Direction s.val i) :
+    (cast (congrArg (fun t : universeData.Shape j ↦ universeData.Direction t.val i) h) p).val
+      ≍ p.val := by
   cases h
   rfl
 
@@ -457,29 +459,29 @@ theorem cast_direction_val {j : Fin 2} {s s' : universeData.Shape j} (h : s = s'
   toPresheafPFunctorData := universeData
   isFunctorial :=
     { directionRestr_id := fun a i ↦ funext fun d ↦
-        Subtype.ext (dirTo_self a i d.1 d.2)
+        Subtype.ext (dirTo_self a i d.val d.property)
       directionRestr_comp := fun a _i _i' _i'' _f g ↦ funext fun d ↦
-        Subtype.ext (dirTo_dirTo a _i' _i'' (leOfHom g) d.1).symm
-      shapeRestr_id := fun j ↦ funext fun s ↦ Subtype.ext (restrShp_self s.1 j s.2)
+        Subtype.ext (dirTo_dirTo a _i' _i'' (leOfHom g) d.val).symm
+      shapeRestr_id := fun j ↦ funext fun s ↦ Subtype.ext (restrShp_self s.val j s.property)
       shapeRestr_comp := fun _j _j' _j'' _g h ↦ funext fun s ↦
-        Subtype.ext (restrShp_restrShp s.1 _j' _j'' (leOfHom h)).symm
+        Subtype.ext (restrShp_restrShp s.val _j' _j'' (leOfHom h)).symm
       reindex_naturality := fun _j j' _g a _i i' f ↦ funext fun d ↦
-        Subtype.ext (dirTo_reindexTo j' i' a.1 d.1)
+        Subtype.ext (dirTo_reindexTo j' i' a.val d.val)
       reindex_id := fun j a i b ↦ by
         apply Subtype.ext
         apply eq_of_heq
-        refine HEq.trans (reindexTo_self j a.1 a.2 b.1) ?_
+        refine HEq.trans (reindexTo_self j a.val a.property b.val) ?_
         exact (cast_direction_val
           (show universeData.shapeRestr (𝟙 j) a = id a from
-            Subtype.ext (restrShp_self a.1 j a.2)) b).symm
+            Subtype.ext (restrShp_self a.val j a.property)) b).symm
       reindex_comp := fun _j j' j'' g h a _i b ↦ by
         apply Subtype.ext
         apply eq_of_heq
-        refine (reindexTo_reindexTo j' j'' (leOfHom h) a.1 b.1 _ ?_).symm
+        refine (reindexTo_reindexTo j' j'' (leOfHom h) a.val b.val _ ?_).symm
         exact cast_direction_val
           (show universeData.shapeRestr (h ≫ g) a
               = universeData.shapeRestr h (universeData.shapeRestr g a) from
-            Subtype.ext (restrShp_restrShp a.1 j' j'' (leOfHom h)).symm) b }
+            Subtype.ext (restrShp_restrShp a.val j' j'' (leOfHom h)).symm) b }
 
 set_option warn.classDefReducibility false in
 /-- Each shape has finitely many directions. -/

@@ -755,7 +755,7 @@ theorem projCase_iff (r : List Bool) (h0 : y.drop l.pos = false :: false :: true
       omega
     · rw [isTrueWord_andF_iff _ _ _ _ (natLtAt_E1_F1 y l k m1 i _ _ hw1 hw2'),
         sem_kZero y l k (by omega), isTrueWord_boolWord, decide_eq_true_eq, decide_eq_true_eq]
-      exact ⟨i.2, hka.symm⟩
+      exact ⟨i.isLt, hka.symm⟩
 
 include hs hk in
 /-- The successor case decides the label condition at a label with the
@@ -969,7 +969,7 @@ theorem srnCase_iff (r : List Bool) (h0 : y.drop l.pos = true :: false :: false 
     · rw [isTrueWord_andF_iff _ _ _ _ hlt, hkm, isTrueWord_boolWord, decide_eq_true_eq,
         decide_eq_true_eq]
       change 3 * m2 = k at hka
-      exact ⟨j.2, by omega⟩
+      exact ⟨j.isLt, by omega⟩
 
 
 /-- Every code has at least four bits. -/

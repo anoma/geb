@@ -226,8 +226,8 @@ def Cat : Type v := T.Obj
 instance : Category T.Cat where
   Hom a b := {f : T.Ar // T.domOf f = a ∧ T.codOf f = b}
   id a := ⟨T.idOf a, T.domOf_idOf a, T.codOf_idOf a⟩
-  comp f g := ⟨T.compOf g.1 f.1 (f.2.2.trans g.2.1.symm),
-    (T.domOf_compOf _).trans f.2.1, (T.codOf_compOf _).trans g.2.2⟩
+  comp f g := ⟨T.compOf g.val f.val (f.property.2.trans g.property.1.symm),
+    (T.domOf_compOf _).trans f.property.1, (T.codOf_compOf _).trans g.property.2⟩
   id_comp f := by
     obtain ⟨f, rfl, rfl⟩ := f
     exact Subtype.ext (T.compOf_idOf f)
@@ -268,9 +268,9 @@ theorem map_cod (F : ModelHom A.model B.model) (f : A.Ar) :
 /-- A homomorphism of models gives a functor between their underlying categories. -/
 def toFunctor (F : ModelHom A.model B.model) : A.Cat ⥤ B.Cat where
   obj := F.app obj
-  map f := ⟨F.app arr f.1,
-    (map_dom F f.1).trans (congrArg (F.app obj) f.2.1),
-    (map_cod F f.1).trans (congrArg (F.app obj) f.2.2)⟩
+  map f := ⟨F.app arr f.val,
+    (map_dom F f.val).trans (congrArg (F.app obj) f.property.1),
+    (map_cod F f.val).trans (congrArg (F.app obj) f.property.2)⟩
   map_id a := by
     apply Subtype.ext
     have h := F.map_op 2 _ _ (A.op_idOf a)
@@ -279,10 +279,10 @@ def toFunctor (F : ModelHom A.model B.model) : A.Cat ⥤ B.Cat where
     exact B.val_inj (Part.some_inj.mp (h.symm.trans (B.op_idOf _)))
   map_comp f g := by
     apply Subtype.ext
-    have h := F.map_op 3 _ _ (A.op_compOf (f.2.2.trans g.2.1.symm))
+    have h := F.map_op 3 _ _ (A.op_compOf (f.property.2.trans g.property.1.symm))
     simp only [List.map_cons, List.map_nil, ModelHom.toFun_mk] at h
-    have hh := (map_cod F f.1).trans
-      ((congrArg (F.app obj) (f.2.2.trans g.2.1.symm)).trans (map_dom F g.1).symm)
+    have hh := (map_cod F f.val).trans
+      ((congrArg (F.app obj) (f.property.2.trans g.property.1.symm)).trans (map_dom F g.val).symm)
     exact B.val_inj (Part.some_inj.mp (h.symm.trans (B.op_compOf hh)))
 
 /-- The canonical interpretation of the syntactic category in a model. -/

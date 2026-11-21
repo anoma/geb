@@ -162,19 +162,19 @@ variable (Q) in
 /-- Agreeing families of observations are mathlib's M-type. -/
 def consistentFamilyEquiv :
     { x : ∀ n : Depth.{uA, uB}, Approx Q n // Consistent x } ≃ Q.M where
-  toFun x := ⟨familyEquiv Q x.1, (consistent_familyEquiv_symm _).mp
-    (((familyEquiv Q).symm_apply_apply x.1).symm ▸ x.2)⟩
+  toFun x := ⟨familyEquiv Q x.val, (consistent_familyEquiv_symm _).mp
+    (((familyEquiv Q).symm_apply_apply x.val).symm ▸ x.property)⟩
   invFun y := ⟨(familyEquiv Q).symm y.approx, (consistent_familyEquiv_symm _).mpr y.consistent⟩
-  left_inv x := Subtype.ext ((familyEquiv Q).symm_apply_apply x.1)
+  left_inv x := Subtype.ext ((familyEquiv Q).symm_apply_apply x.val)
   right_inv y := PFunctor.M.ext' Q _ _ fun n ↦
     congrFun ((familyEquiv Q).apply_symm_apply y.approx) n
 
 variable (Q) in
 /-- Forgetting the outer W-tree identifies the M-type with agreeing families. -/
 def consistentEquiv : M Q ≃ { x : ∀ n : Depth.{uA, uB}, Approx Q n // Consistent x } where
-  toFun w := ⟨readBundle w.1, w.2⟩
-  invFun x := ⟨bundle x.1, x.2⟩
-  left_inv w := Subtype.ext (bundle_readBundle w.1)
+  toFun w := ⟨readBundle w.val, w.property⟩
+  invFun x := ⟨bundle x.val, x.property⟩
+  left_inv w := Subtype.ext (bundle_readBundle w.val)
   right_inv _ := rfl
 
 variable (Q) in

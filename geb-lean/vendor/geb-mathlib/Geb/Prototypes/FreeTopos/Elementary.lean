@@ -92,17 +92,17 @@ def inr (X Y : C) : Y ⟶ coprod X Y :=
 
 /-- The copairing of two arrows of one codomain. -/
 def copair {X Y Z : C} (f : X ⟶ Z) (g : Y ⟶ Z) : coprod X Y ⟶ Z :=
-  (BinaryCofan.IsColimit.desc' (ElementaryTopos.binaryCoproductCocone X Y).isColimit f g).1
+  (BinaryCofan.IsColimit.desc' (ElementaryTopos.binaryCoproductCocone X Y).isColimit f g).val
 
 /-- The copairing after the first injection is the first arrow. -/
 @[reassoc (attr := simp)]
 theorem inl_copair {X Y Z : C} (f : X ⟶ Z) (g : Y ⟶ Z) : inl X Y ≫ copair f g = f :=
-  (BinaryCofan.IsColimit.desc' (ElementaryTopos.binaryCoproductCocone X Y).isColimit f g).2.1
+  (BinaryCofan.IsColimit.desc' (ElementaryTopos.binaryCoproductCocone X Y).isColimit f g).property.1
 
 /-- The copairing after the second injection is the second arrow. -/
 @[reassoc (attr := simp)]
 theorem inr_copair {X Y Z : C} (f : X ⟶ Z) (g : Y ⟶ Z) : inr X Y ≫ copair f g = g :=
-  (BinaryCofan.IsColimit.desc' (ElementaryTopos.binaryCoproductCocone X Y).isColimit f g).2.2
+  (BinaryCofan.IsColimit.desc' (ElementaryTopos.binaryCoproductCocone X Y).isColimit f g).property.2
 
 /-- Arrows from the chosen coproduct are equal when they are after each injection. -/
 theorem coprod_hom_ext {X Y Z : C} {f g : coprod X Y ⟶ Z} (hl : inl X Y ≫ f = inl X Y ≫ g)
@@ -304,7 +304,7 @@ objects' folds. -/
   pair f g := lift f g
   eqz f g := (ElementaryTopos.equalizerCone f g).cone.pt
   eqIncl f g := Fork.ι (ElementaryTopos.equalizerCone f g).cone
-  eqLift f g h hh := (Fork.IsLimit.lift' (ElementaryTopos.equalizerCone f g).isLimit h hh).1
+  eqLift f g h hh := (Fork.IsLimit.lift' (ElementaryTopos.equalizerCone f g).isLimit h hh).val
   zero := (ElementaryTopos.initialCocone (C := C)).cocone.pt
   absurd X := (ElementaryTopos.isInitial C).to X
   coprod := coprod
@@ -314,7 +314,7 @@ objects' folds. -/
   coeqz f g := (ElementaryTopos.coequalizerCocone f g).cocone.pt
   coeqProj f g := Cofork.π (ElementaryTopos.coequalizerCocone f g).cocone
   coeqDesc f g h hh :=
-    (Cofork.IsColimit.desc' (ElementaryTopos.coequalizerCocone f g).isColimit h hh).1
+    (Cofork.IsColimit.desc' (ElementaryTopos.coequalizerCocone f g).isColimit h hh).val
   exp A B := (ihom A).obj B
   ev A B := lift (snd _ _) (fst _ _) ≫ (ihom.ev A).app B
   curry f := MonoidalClosed.curry (lift (snd _ _) (fst _ _) ≫ f)
@@ -405,17 +405,17 @@ theorem isPullback_of_iso {A B : C} {m : A ⟶ B} {φ : B ⟶ (ElementaryTopos.c
   refine IsPullback.of_isLimit (c := PullbackCone.mk _ _ w) (PullbackCone.IsLimit.mk w
     (fun s ↦ (Fork.IsLimit.lift' e s.fst (by
       rw [s.condition, eq_to_Ω₀ s.snd (toUnit _ ≫ unitIso.hom)]
-      simp)).1 ≫ k') ?_ ?_ ?_)
+      simp)).val ≫ k') ?_ ?_ ?_)
   · intro s
     rw [← hk, Category.assoc, reassoc_of% hkk]
-    exact (Fork.IsLimit.lift' e _ _).2
+    exact (Fork.IsLimit.lift' e _ _).property
   · intro s
     exact eq_to_Ω₀ _ _
   · intro s g hg _
     rw [← Category.comp_id g, ← hkk', ← Category.assoc]
     congr 1
     refine Fork.IsLimit.hom_ext e ?_
-    rw [(Fork.IsLimit.lift' e _ _).2, Category.assoc, hk, hg]
+    rw [(Fork.IsLimit.lift' e _ _).property, Category.assoc, hk, hg]
 
 variable (C) in
 set_option backward.isDefEq.respectTransparency false in
@@ -430,19 +430,19 @@ theorem laws : (toposData C P D).Laws where
   snd_pair f g := lift_snd f g
   pair_eta h := hom_ext _ _ (by simp) (by simp)
   eqIncl_eq f g := Fork.condition _
-  eqIncl_eqLift f g h hh := (Fork.IsLimit.lift' _ h hh).2
+  eqIncl_eqLift f g h hh := (Fork.IsLimit.lift' _ h hh).property
   eq_eqLift f g h hh k hk :=
     Fork.IsLimit.hom_ext (ElementaryTopos.equalizerCone f g).isLimit
-      (hk.trans (Fork.IsLimit.lift' _ h hh).2.symm)
+      (hk.trans (Fork.IsLimit.lift' _ h hh).property.symm)
   eq_absurd f := (ElementaryTopos.isInitial C).hom_ext _ _
   copair_inl f g := inl_copair f g
   copair_inr f g := inr_copair f g
   copair_eta h := coprod_hom_ext (by simp) (by simp)
   coeqProj_eq f g := Cofork.condition _
-  coeqDesc_proj f g h hh := (Cofork.IsColimit.desc' _ h hh).2
+  coeqDesc_proj f g h hh := (Cofork.IsColimit.desc' _ h hh).property
   eq_coeqDesc f g h hh k hk :=
     Cofork.IsColimit.hom_ext (ElementaryTopos.coequalizerCocone f g).isColimit
-      (hk.trans (Cofork.IsColimit.desc' _ h hh).2.symm)
+      (hk.trans (Cofork.IsColimit.desc' _ h hh).property.symm)
   ev_curry {_ A _} f := by
     change lift (fst _ _ ≫ MonoidalClosed.curry _) (snd _ _) ≫ lift (snd _ _) (fst _ _) ≫
       (ihom.ev A).app _ = f

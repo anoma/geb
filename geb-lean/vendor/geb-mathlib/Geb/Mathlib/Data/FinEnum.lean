@@ -73,7 +73,7 @@ instance decidableForallSubtype {α : Type u} {p : α → Prop} [DecidablePred p
     {q : Subtype p → Prop} [DecidablePred q] [FinEnum α] :
     Decidable (∀ x : Subtype p, q x) :=
   @decidable_of_iff (∀ x : Subtype p, q x) (∀ a ∈ FinEnum.toList α, ∀ h : p a, q ⟨a, h⟩)
-    ⟨fun H x ↦ H x.1 (FinEnum.mem_toList x.1) x.2, fun H x _ h ↦ H ⟨x, h⟩⟩
+    ⟨fun H x ↦ H x.val (FinEnum.mem_toList x.val) x.property, fun H x _ h ↦ H ⟨x, h⟩⟩
     (List.decidableBAll _ (FinEnum.toList α))
 
 /-- Equality of functions out of a finitely enumerable type is decidable.

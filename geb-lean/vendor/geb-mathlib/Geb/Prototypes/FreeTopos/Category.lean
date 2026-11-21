@@ -64,8 +64,8 @@ abbrev Cat : Type v := T.Obj
 instance : Category T.Cat where
   Hom a b := {f : T.Ar // T.domOf f = a ∧ T.codOf f = b}
   id a := ⟨T.idOf a, T.domOf_idOf a, T.codOf_idOf a⟩
-  comp f g := ⟨T.compOf g.1 f.1 (f.2.2.trans g.2.1.symm),
-    (T.domOf_compOf _).trans f.2.1, (T.codOf_compOf _).trans g.2.2⟩
+  comp f g := ⟨T.compOf g.val f.val (f.property.2.trans g.property.1.symm),
+    (T.domOf_compOf _).trans f.property.1, (T.codOf_compOf _).trans g.property.2⟩
   id_comp f := by
     obtain ⟨f, rfl, rfl⟩ := f
     exact Subtype.ext (T.compOf_idOf f)
@@ -81,14 +81,14 @@ instance : Category T.Cat where
 variable {T}
 
 /-- Two morphisms of the model's category are equal when their arrows are. -/
-theorem hom_ext {a b : T.Cat} {f g : a ⟶ b} (h : f.1 = g.1) : f = g := Subtype.ext h
+theorem hom_ext {a b : T.Cat} {f g : a ⟶ b} (h : f.val = g.val) : f = g := Subtype.ext h
 
 /-- The arrow of a composite is the composite of the arrows. -/
 theorem comp_val {a b c : T.Cat} (f : a ⟶ b) (g : b ⟶ c) :
-    (f ≫ g).1 = T.compOf g.1 f.1 (f.2.2.trans g.2.1.symm) := rfl
+    (f ≫ g).val = T.compOf g.val f.val (f.property.2.trans g.property.1.symm) := rfl
 
 /-- The arrow of an identity is the identity of the object. -/
-theorem id_val (a : T.Cat) : (𝟙 a : a ⟶ a).1 = T.idOf a := rfl
+theorem id_val (a : T.Cat) : (𝟙 a : a ⟶ a).val = T.idOf a := rfl
 
 variable (T)
 
@@ -116,8 +116,9 @@ variable {T}
 
 /-- The pairing of two morphisms of one domain. -/
 def prodLift {a b c : T.Cat} (f : c ⟶ a) (g : c ⟶ b) : c ⟶ T.prod a b :=
-  ⟨T.pairOf f.1 g.1 (f.2.1.trans g.2.1.symm), (T.domOf_pairOf _).trans f.2.1,
-    (T.codOf_pairOf _).trans (by rw [f.2.2, g.2.2])⟩
+  ⟨T.pairOf f.val g.val (f.property.1.trans g.property.1.symm),
+    (T.domOf_pairOf _).trans f.property.1,
+    (T.codOf_pairOf _).trans (by rw [f.property.2, g.property.2])⟩
 
 /-- A pairing after the first projection is its first component. -/
 @[reassoc]
@@ -142,16 +143,16 @@ theorem prodLift_uniq {a b c : T.Cat} (m : c ⟶ T.prod a b) :
   exact Subtype.ext (T.pairOf_eta hm).symm
 
 /-- Two parallel morphisms of the category have parallel arrows. -/
-theorem par_of_hom {a b : T.Cat} (f g : a ⟶ b) : T.Par f.1 g.1 :=
-  ⟨f.2.1.trans g.2.1.symm, f.2.2.trans g.2.2.symm⟩
+theorem par_of_hom {a b : T.Cat} (f g : a ⟶ b) : T.Par f.val g.val :=
+  ⟨f.property.1.trans g.property.1.symm, f.property.2.trans g.property.2.symm⟩
 
 /-- The equalizer of two parallel morphisms, as an object of the category. -/
-abbrev equalizer {a b : T.Cat} (f g : a ⟶ b) : T.Cat := T.eqzOf f.1 g.1 (par_of_hom f g)
+abbrev equalizer {a b : T.Cat} (f g : a ⟶ b) : T.Cat := T.eqzOf f.val g.val (par_of_hom f g)
 
 /-- The inclusion of an equalizer. -/
 def equalizerι {a b : T.Cat} (f g : a ⟶ b) : equalizer f g ⟶ a :=
-  ⟨T.eqInclOf f.1 g.1 (par_of_hom f g), T.domOf_eqInclOf (par_of_hom f g),
-    (T.codOf_eqInclOf (par_of_hom f g)).trans f.2.1⟩
+  ⟨T.eqInclOf f.val g.val (par_of_hom f g), T.domOf_eqInclOf (par_of_hom f g),
+    (T.codOf_eqInclOf (par_of_hom f g)).trans f.property.1⟩
 
 /-- An equalizer's inclusion equalizes the morphisms. -/
 @[reassoc]
@@ -162,16 +163,18 @@ theorem equalizerι_condition {a b : T.Cat} (f g : a ⟶ b) :
 /-- The factorization through an equalizer of a morphism that equalizes the pair. -/
 def equalizerLift {a b c : T.Cat} {f g : a ⟶ b} (k : c ⟶ a) (w : k ≫ f = k ≫ g) :
     c ⟶ equalizer f g :=
-  ⟨T.eqLiftOf f.1 g.1 k.1 (par_of_hom f g) (k.2.2.trans f.2.1.symm) (congrArg Subtype.val w),
-    (T.domOf_eqLiftOf (par_of_hom f g) (k.2.2.trans f.2.1.symm) (congrArg Subtype.val w)).trans
-      k.2.1,
-    T.codOf_eqLiftOf (par_of_hom f g) (k.2.2.trans f.2.1.symm) (congrArg Subtype.val w)⟩
+  ⟨T.eqLiftOf f.val g.val k.val (par_of_hom f g) (k.property.2.trans f.property.1.symm)
+      (congrArg Subtype.val w),
+    (T.domOf_eqLiftOf (par_of_hom f g) (k.property.2.trans f.property.1.symm)
+      (congrArg Subtype.val w)).trans k.property.1,
+    T.codOf_eqLiftOf (par_of_hom f g) (k.property.2.trans f.property.1.symm)
+      (congrArg Subtype.val w)⟩
 
 /-- A factorization through an equalizer after the inclusion is the factored morphism. -/
 @[reassoc]
 theorem equalizerLift_ι {a b c : T.Cat} {f g : a ⟶ b} (k : c ⟶ a) (w : k ≫ f = k ≫ g) :
     equalizerLift k w ≫ equalizerι f g = k :=
-  Subtype.ext (T.eqInclOf_eqLiftOf (par_of_hom f g) (k.2.2.trans f.2.1.symm)
+  Subtype.ext (T.eqInclOf_eqLiftOf (par_of_hom f g) (k.property.2.trans f.property.1.symm)
     (congrArg Subtype.val w))
 
 /-- A morphism into an equalizer is the factorization of its composite with the inclusion. -/
@@ -209,8 +212,9 @@ variable {T}
 
 /-- The copairing of two morphisms of one codomain. -/
 def coprodDesc {a b c : T.Cat} (f : a ⟶ c) (g : b ⟶ c) : T.coprod a b ⟶ c :=
-  ⟨T.copairOf f.1 g.1 (f.2.2.trans g.2.2.symm), (T.domOf_copairOf _).trans (by rw [f.2.1, g.2.1]),
-    (T.codOf_copairOf _).trans f.2.2⟩
+  ⟨T.copairOf f.val g.val (f.property.2.trans g.property.2.symm),
+    (T.domOf_copairOf _).trans (by rw [f.property.1, g.property.1]),
+    (T.codOf_copairOf _).trans f.property.2⟩
 
 /-- The first injection after a copairing is its first component. -/
 @[reassoc]
@@ -235,11 +239,12 @@ theorem coprodDesc_uniq {a b c : T.Cat} (m : T.coprod a b ⟶ c) :
   exact Subtype.ext (T.copairOf_eta hm).symm
 
 /-- The coequalizer of two parallel morphisms, as an object of the category. -/
-abbrev coequalizer {a b : T.Cat} (f g : a ⟶ b) : T.Cat := T.coeqzOf f.1 g.1 (par_of_hom f g)
+abbrev coequalizer {a b : T.Cat} (f g : a ⟶ b) : T.Cat := T.coeqzOf f.val g.val (par_of_hom f g)
 
 /-- The projection onto a coequalizer. -/
 def coequalizerπ {a b : T.Cat} (f g : a ⟶ b) : b ⟶ coequalizer f g :=
-  ⟨T.coeqProjOf f.1 g.1 (par_of_hom f g), (T.domOf_coeqProjOf (par_of_hom f g)).trans f.2.2,
+  ⟨T.coeqProjOf f.val g.val (par_of_hom f g),
+    (T.domOf_coeqProjOf (par_of_hom f g)).trans f.property.2,
     T.codOf_coeqProjOf (par_of_hom f g)⟩
 
 /-- A coequalizer's projection coequalizes the morphisms. -/
@@ -251,16 +256,18 @@ theorem coequalizerπ_condition {a b : T.Cat} (f g : a ⟶ b) :
 /-- The descent through a coequalizer of a morphism that coequalizes the pair. -/
 def coequalizerDesc {a b c : T.Cat} {f g : a ⟶ b} (k : b ⟶ c) (w : f ≫ k = g ≫ k) :
     coequalizer f g ⟶ c :=
-  ⟨T.coeqDescOf f.1 g.1 k.1 (par_of_hom f g) (f.2.2.trans k.2.1.symm) (congrArg Subtype.val w),
-    T.domOf_coeqDescOf (par_of_hom f g) (f.2.2.trans k.2.1.symm) (congrArg Subtype.val w),
-    (T.codOf_coeqDescOf (par_of_hom f g) (f.2.2.trans k.2.1.symm)
-      (congrArg Subtype.val w)).trans k.2.2⟩
+  ⟨T.coeqDescOf f.val g.val k.val (par_of_hom f g) (f.property.2.trans k.property.1.symm)
+      (congrArg Subtype.val w),
+    T.domOf_coeqDescOf (par_of_hom f g) (f.property.2.trans k.property.1.symm)
+      (congrArg Subtype.val w),
+    (T.codOf_coeqDescOf (par_of_hom f g) (f.property.2.trans k.property.1.symm)
+      (congrArg Subtype.val w)).trans k.property.2⟩
 
 /-- The projection after a descent through a coequalizer is the descended morphism. -/
 @[reassoc]
 theorem coequalizerπ_desc {a b c : T.Cat} {f g : a ⟶ b} (k : b ⟶ c) (w : f ≫ k = g ≫ k) :
     coequalizerπ f g ≫ coequalizerDesc k w = k :=
-  Subtype.ext (T.coeqDescOf_coeqProjOf (par_of_hom f g) (f.2.2.trans k.2.1.symm)
+  Subtype.ext (T.coeqDescOf_coeqProjOf (par_of_hom f g) (f.property.2.trans k.property.1.symm)
     (congrArg Subtype.val w))
 
 /-- A morphism from a coequalizer is the descent of its composite with the projection. -/
@@ -295,7 +302,7 @@ theorem prodMap_comp {c d e : T.Cat} (k : c ⟶ d) (l : d ⟶ e) (a : T.Cat) :
 /-- The arrow of {lit}`k × id` is the model's product of {lit}`k`'s arrow with the
 identity. -/
 theorem prodMap_val {c d : T.Cat} (k : c ⟶ d) (a : T.Cat) :
-    (prodMap k a).1 = T.prodMapLeftOf k.1 a := by
+    (prodMap k a).val = T.prodMapLeftOf k.val a := by
   obtain ⟨k, rfl, rfl⟩ := k
   rfl
 
@@ -311,8 +318,8 @@ variable {T}
 
 /-- The currying of a morphism from a product. -/
 def curry {c a b : T.Cat} (f : T.prod c a ⟶ b) : c ⟶ T.exp a b :=
-  ⟨T.curryOf c a f.1 f.2.1, T.domOf_curryOf f.2.1,
-    (T.codOf_curryOf f.2.1).trans (congrArg (T.expOf a) f.2.2)⟩
+  ⟨T.curryOf c a f.val f.property.1, T.domOf_curryOf f.property.1,
+    (T.codOf_curryOf f.property.1).trans (congrArg (T.expOf a) f.property.2)⟩
 
 /-- Evaluation after the product of a currying with the identity is the curried morphism. -/
 @[reassoc]
@@ -320,7 +327,7 @@ theorem prodMap_curry_ev {c a b : T.Cat} (f : T.prod c a ⟶ b) :
     prodMap (curry f) a ≫ T.ev a b = f := by
   obtain ⟨f, hf, rfl⟩ := f
   refine Subtype.ext ?_
-  calc (prodMap (curry ⟨f, hf, rfl⟩) a ≫ T.ev a (T.codOf f)).1
+  calc (prodMap (curry ⟨f, hf, rfl⟩) a ≫ T.ev a (T.codOf f)).val
       = T.compOf (T.evOf a (T.codOf f)) (T.prodMapLeftOf (T.curryOf c a f hf) a)
           (T.codOf_prodMapLeftOf_curryOf hf) :=
         (comp_val _ _).trans (T.compOf_congr rfl (prodMap_val _ _) _ _)
@@ -334,10 +341,10 @@ theorem curry_uniq {c a b : T.Cat} (k : c ⟶ T.exp a b) :
   have hc : T.codOf (T.prodMapLeftOf k a) = T.domOf (T.evOf a b) := by
     rw [codOf_prodMapLeftOf, domOf_evOf, hk]
   refine Subtype.ext ?_
-  calc (curry (prodMap ⟨k, hd, hk⟩ a ≫ T.ev a b)).1
+  calc (curry (prodMap ⟨k, hd, hk⟩ a ≫ T.ev a b)).val
       = T.curryOf c a (T.compOf (T.evOf a b) (T.prodMapLeftOf k a) hc)
           (T.domOf_evOf_prodMapLeftOf hd hc) :=
-        T.curryOf_congr (h := (prodMap ⟨k, hd, hk⟩ a ≫ T.ev a b).2.1)
+        T.curryOf_congr (h := (prodMap ⟨k, hd, hk⟩ a ≫ T.ev a b).property.1)
           ((comp_val _ _).trans (T.compOf_congr rfl (prodMap_val _ _) _ _))
     _ = k := T.curryOf_eta hd hk
 
@@ -373,7 +380,7 @@ theorem equalizer_hom_ext {a b c : T.Cat} {f g : a ⟶ b} {m n : c ⟶ equalizer
 
 /-- A monomorphism of the category is a monomorphism of the model: its kernel pair's
 projections are equal. -/
-theorem isMono_of_mono {u x : T.Cat} (m : u ⟶ x) [Mono m] : T.IsMono m.1 := by
+theorem isMono_of_mono {u x : T.Cat} (m : u ⟶ x) [Mono m] : T.IsMono m.val := by
   obtain ⟨m, rfl, rfl⟩ := m
   let k : equalizer (T.prodFst (T.domOf m) (T.domOf m) ≫ ⟨m, rfl, rfl⟩)
       (T.prodSnd (T.domOf m) (T.domOf m) ≫ ⟨m, rfl, rfl⟩) ⟶ T.prod (T.domOf m) (T.domOf m) :=
@@ -385,82 +392,82 @@ theorem isMono_of_mono {u x : T.Cat} (m : u ⟶ x) [Mono m] : T.IsMono m.1 := by
   exact congrArg Subtype.val (cancel_mono _ |>.mp hk)
 
 /-- The characteristic map of a monomorphism of the model, as a morphism. -/
-def chiHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) : x ⟶ T.omega :=
-  ⟨T.chiOf m.1 hm, (T.domOf_chiOf hm).trans m.2.2, T.codOf_chiOf hm⟩
+def chiHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) : x ⟶ T.omega :=
+  ⟨T.chiOf m.val hm, (T.domOf_chiOf hm).trans m.property.2, T.codOf_chiOf hm⟩
 
 /-- A characteristic map's square commutes. -/
-theorem chiHom_square {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
+theorem chiHom_square {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) :
     m ≫ chiHom m hm = T.toOne u ≫ T.truth := by
   obtain ⟨m, rfl, rfl⟩ := m
   exact Subtype.ext (T.chiOf_square hm)
 
 /-- A monomorphism equalizes its characteristic map and truth after the morphism to the
 terminal object. -/
-theorem chiHom_equalizes {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
+theorem chiHom_equalizes {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) :
     m ≫ chiHom m hm = m ≫ (T.toOne x ≫ T.truth) := by
   rw [chiHom_square, ← Category.assoc, T.toOne_uniq (m ≫ T.toOne x)]
 
 /-- The pullback of truth along a characteristic map: the equalizer of the map and truth after
 the morphism to the terminal object. -/
-abbrev truthEqz {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) : T.Cat :=
+abbrev truthEqz {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) : T.Cat :=
   equalizer (chiHom m hm) (T.toOne x ≫ T.truth)
 
 /-- Truth after the morphism to the terminal object from a characteristic map's domain, at the
 arrows. -/
-theorem truth_val {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
-    (T.toOne x ≫ T.truth).1 = T.compOf T.truOf (T.bangOf (T.domOf (T.chiOf m.1 hm)))
+theorem truth_val {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) :
+    (T.toOne x ≫ T.truth).val = T.compOf T.truOf (T.bangOf (T.domOf (T.chiOf m.val hm)))
       (T.codOf_bangOf_eq_domOf_truOf _) :=
-  T.compOf_congr rfl (congrArg T.bangOf ((T.domOf_chiOf hm).trans m.2.2).symm)
-    ((T.toOne x).2.2.trans T.truth.2.1.symm) _
+  T.compOf_congr rfl (congrArg T.bangOf ((T.domOf_chiOf hm).trans m.property.2).symm)
+    ((T.toOne x).property.2.trans T.truth.property.1.symm) _
 
 /-- The pullback of truth along a characteristic map is the model's. -/
-theorem truthEqz_eq {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
-    truthEqz m hm = T.truthEqOf (T.chiOf m.1 hm) (T.codOf_chiOf hm) :=
+theorem truthEqz_eq {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) :
+    truthEqz m hm = T.truthEqOf (T.chiOf m.val hm) (T.codOf_chiOf hm) :=
   T.eqzOf_congr (truth_val m hm) _ _
 
 /-- The inverse of a monomorphism's comparison with the pullback of truth, as a morphism. -/
-def chiInvHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) : truthEqz m hm ⟶ u :=
-  ⟨T.chiInvOf m.1 hm, (T.domOf_chiInvOf hm).trans (truthEqz_eq m hm).symm,
-    (T.codOf_chiInvOf hm).trans m.2.1⟩
+def chiInvHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) : truthEqz m hm ⟶ u :=
+  ⟨T.chiInvOf m.val hm, (T.domOf_chiInvOf hm).trans (truthEqz_eq m hm).symm,
+    (T.codOf_chiInvOf hm).trans m.property.1⟩
 
 /-- The comparison of a monomorphism with the pullback of truth. -/
-def chiLiftHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) : u ⟶ truthEqz m hm :=
+def chiLiftHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) : u ⟶ truthEqz m hm :=
   equalizerLift m (chiHom_equalizes m hm)
 
 /-- The comparison's arrow is the model's. -/
-theorem chiLiftHom_val {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
-    (chiLiftHom m hm).1 = T.truthLiftOf m.1 hm :=
+theorem chiLiftHom_val {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) :
+    (chiLiftHom m hm).val = T.truthLiftOf m.val hm :=
   T.eqLiftOf_congr (truth_val m hm) (par_of_hom (chiHom m hm) (T.toOne x ≫ T.truth))
-    (T.par_truth (T.codOf_chiOf hm)) (m.2.2.trans (chiHom m hm).2.1.symm)
+    (T.par_truth (T.codOf_chiOf hm)) (m.property.2.trans (chiHom m hm).property.1.symm)
     (congrArg Subtype.val (chiHom_equalizes m hm)) (T.chiOf_equalizes hm)
 
 /-- The comparison after its inverse is the identity of the pullback. -/
-theorem chiInvHom_chiLiftHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
+theorem chiInvHom_chiLiftHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) :
     chiInvHom m hm ≫ chiLiftHom m hm = 𝟙 (truthEqz m hm) := by
   refine Subtype.ext ?_
-  calc (chiInvHom m hm ≫ chiLiftHom m hm).1
-      = T.compOf (T.truthLiftOf m.1 hm) (T.chiInvOf m.1 hm)
+  calc (chiInvHom m hm ≫ chiLiftHom m hm).val
+      = T.compOf (T.truthLiftOf m.val hm) (T.chiInvOf m.val hm)
           ((T.codOf_chiInvOf hm).trans (T.domOf_truthLiftOf hm).symm) :=
         T.compOf_congr (chiLiftHom_val m hm) rfl
-          ((chiInvHom m hm).2.2.trans (chiLiftHom m hm).2.1.symm) _
-    _ = T.idOf (T.truthEqOf (T.chiOf m.1 hm) (T.codOf_chiOf hm)) := T.truthLiftOf_chiInvOf hm
-    _ = (𝟙 (truthEqz m hm) : truthEqz m hm ⟶ truthEqz m hm).1 :=
+          ((chiInvHom m hm).property.2.trans (chiLiftHom m hm).property.1.symm) _
+    _ = T.idOf (T.truthEqOf (T.chiOf m.val hm) (T.codOf_chiOf hm)) := T.truthLiftOf_chiInvOf hm
+    _ = (𝟙 (truthEqz m hm) : truthEqz m hm ⟶ truthEqz m hm).val :=
         congrArg T.idOf (truthEqz_eq m hm).symm
 
 /-- The inverse after the comparison is the identity of the monomorphism's domain. -/
-theorem chiLiftHom_chiInvHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
+theorem chiLiftHom_chiInvHom {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) :
     chiLiftHom m hm ≫ chiInvHom m hm = 𝟙 u := by
   refine Subtype.ext ?_
-  calc (chiLiftHom m hm ≫ chiInvHom m hm).1
-      = T.compOf (T.chiInvOf m.1 hm) (T.truthLiftOf m.1 hm)
+  calc (chiLiftHom m hm ≫ chiInvHom m hm).val
+      = T.compOf (T.chiInvOf m.val hm) (T.truthLiftOf m.val hm)
           ((T.codOf_truthLiftOf hm).trans (T.domOf_chiInvOf hm).symm) :=
         T.compOf_congr rfl (chiLiftHom_val m hm)
-          ((chiLiftHom m hm).2.2.trans (chiInvHom m hm).2.1.symm) _
-    _ = T.idOf (T.domOf m.1) := T.chiInvOf_truthLiftOf hm
-    _ = (𝟙 u : u ⟶ u).1 := congrArg T.idOf m.2.1
+          ((chiLiftHom m hm).property.2.trans (chiInvHom m hm).property.1.symm) _
+    _ = T.idOf (T.domOf m.val) := T.chiInvOf_truthLiftOf hm
+    _ = (𝟙 u : u ⟶ u).val := congrArg T.idOf m.property.1
 
 /-- The inverse after the monomorphism is the pullback's inclusion. -/
-theorem chiInvHom_comp {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
+theorem chiInvHom_comp {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) :
     chiInvHom m hm ≫ m = equalizerι _ _ := by
   have h : chiLiftHom m hm ≫ equalizerι _ _ = m := equalizerLift_ι _ _
   refine (congrArg (chiInvHom m hm ≫ ·) h.symm).trans ?_
@@ -468,19 +475,19 @@ theorem chiInvHom_comp {u x : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) :
 
 /-- The factorization through a monomorphism of a morphism along which the characteristic map is
 truth: the pullback's lift. -/
-def chiLift {u x w : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) (s : w ⟶ x)
+def chiLift {u x w : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) (s : w ⟶ x)
     (hs : s ≫ chiHom m hm = T.toOne w ≫ T.truth) : w ⟶ u :=
   equalizerLift s (by rw [hs, ← Category.assoc, T.toOne_uniq (s ≫ T.toOne x)]) ≫ chiInvHom m hm
 
 /-- The pullback's lift after the monomorphism is the lifted morphism. -/
-theorem chiLift_fac {u x w : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.1) (s : w ⟶ x)
+theorem chiLift_fac {u x w : T.Cat} (m : u ⟶ x) (hm : T.IsMono m.val) (s : w ⟶ x)
     (hs : s ≫ chiHom m hm = T.toOne w ≫ T.truth) : chiLift m hm s hs ≫ m = s := by
   rw [chiLift, Category.assoc, chiInvHom_comp, equalizerLift_ι]
 
 /-- A morphism into the classifier along which a monomorphism is a pullback of truth, through
 a morphism from the pullback that factors the inclusion, is the monomorphism's characteristic
 map. -/
-theorem chiHom_uniq {u x : T.Cat} (m : u ⟶ x) [Mono m] (hm : T.IsMono m.1) (φ : x ⟶ T.omega)
+theorem chiHom_uniq {u x : T.Cat} (m : u ⟶ x) [Mono m] (hm : T.IsMono m.val) (φ : x ⟶ T.omega)
     (hmφ : m ≫ φ = T.toOne u ≫ T.truth)
     (j : equalizer φ (T.toOne x ≫ T.truth) ⟶ u)
     (hj : j ≫ m = equalizerι φ (T.toOne x ≫ T.truth)) : φ = chiHom m hm := by
@@ -495,9 +502,9 @@ theorem chiHom_uniq {u x : T.Cat} (m : u ⟶ x) [Mono m] (hm : T.IsMono m.1) (φ
   obtain ⟨φ, hφd, hφc⟩ := φ
   obtain ⟨m', hmd, hmc⟩ := m
   subst hmd hφd
-  refine Subtype.ext (T.eq_chiOf hm hmc.symm hφc (i := i.1) (j := j.1)
-    (i.2.2.trans (T.domOf_eqInclOf _).symm) ?_ (j.2.2.trans i.2.1.symm) ?_
-    (i.2.2.trans j.2.1.symm) ?_)
+  refine Subtype.ext (T.eq_chiOf hm hmc.symm hφc (i := i.val) (j := j.val)
+    (i.property.2.trans (T.domOf_eqInclOf _).symm) ?_ (j.property.2.trans i.property.1.symm) ?_
+    (i.property.2.trans j.property.1.symm) ?_)
   · exact congrArg Subtype.val hi
   · exact congrArg Subtype.val hji
   · exact congrArg Subtype.val hij
@@ -518,27 +525,31 @@ variable {T}
 /-- The morphism from the natural numbers object that recursion with a start and a step
 defines. -/
 def natRec {a : T.Cat} (z : T.one ⟶ a) (s : a ⟶ a) : T.nat ⟶ a :=
-  ⟨T.natRecOf z.1 s.1 z.2.1 (z.2.2.trans s.2.1.symm) (s.2.1.trans s.2.2.symm),
-    T.domOf_natRecOf _ _ _, (T.codOf_natRecOf _ _ _).trans z.2.2⟩
+  ⟨T.natRecOf z.val s.val z.property.1 (z.property.2.trans s.property.1.symm)
+      (s.property.1.trans s.property.2.symm),
+    T.domOf_natRecOf _ _ _, (T.codOf_natRecOf _ _ _).trans z.property.2⟩
 
 /-- A recursion after zero is its start. -/
 @[reassoc]
 theorem zeroN_natRec {a : T.Cat} (z : T.one ⟶ a) (s : a ⟶ a) : T.zeroN ≫ natRec z s = z :=
-  Subtype.ext (T.natRecOf_zeroNOf z.2.1 (z.2.2.trans s.2.1.symm) (s.2.1.trans s.2.2.symm))
+  Subtype.ext (T.natRecOf_zeroNOf z.property.1 (z.property.2.trans s.property.1.symm)
+    (s.property.1.trans s.property.2.symm))
 
 /-- A recursion after the successor is the step after the recursion. -/
 @[reassoc]
 theorem succ_natRec {a : T.Cat} (z : T.one ⟶ a) (s : a ⟶ a) :
     T.succ ≫ natRec z s = natRec z s ≫ s :=
-  Subtype.ext (T.natRecOf_succOf z.2.1 (z.2.2.trans s.2.1.symm) (s.2.1.trans s.2.2.symm))
+  Subtype.ext (T.natRecOf_succOf z.property.1 (z.property.2.trans s.property.1.symm)
+    (s.property.1.trans s.property.2.symm))
 
 /-- A morphism from the natural numbers object satisfying the recursion equations is the
 recursion. -/
 theorem natRec_uniq {a : T.Cat} (z : T.one ⟶ a) (s : a ⟶ a) (u : T.nat ⟶ a)
     (h0 : T.zeroN ≫ u = z) (h1 : T.succ ≫ u = u ≫ s) : u = natRec z s := by
   obtain ⟨u, hu, huc⟩ := u
-  exact Subtype.ext (T.eq_natRecOf z.2.1 (z.2.2.trans s.2.1.symm) (s.2.1.trans s.2.2.symm) hu
-    (congrArg Subtype.val h0) (huc.trans s.2.1.symm) (congrArg Subtype.val h1))
+  exact Subtype.ext (T.eq_natRecOf z.property.1 (z.property.2.trans s.property.1.symm)
+    (s.property.1.trans s.property.2.symm) hu (congrArg Subtype.val h0)
+    (huc.trans s.property.1.symm) (congrArg Subtype.val h1))
 
 /-- The morphism {lit}`id × k`, from the product of {lit}`a` and {lit}`k`'s domain to the
 product of {lit}`a` and its codomain. -/
@@ -547,7 +558,7 @@ def prodMapRight (a : T.Cat) {c d : T.Cat} (k : c ⟶ d) : T.prod a c ⟶ T.prod
 
 /-- The arrow of {lit}`id × k` is the model's product of the identity with {lit}`k`'s arrow. -/
 theorem prodMapRight_val (a : T.Cat) {c d : T.Cat} (k : c ⟶ d) :
-    (prodMapRight a k).1 = T.prodMapRightOf a k.1 := by
+    (prodMapRight a k).val = T.prodMapRightOf a k.val := by
   obtain ⟨k, rfl, rfl⟩ := k
   rfl
 
@@ -568,36 +579,38 @@ variable {T}
 /-- The morphism from the list object of {lit}`a` that recursion with a start and a step
 defines. -/
 def listRec {a b : T.Cat} (z : T.one ⟶ b) (s : T.prod a b ⟶ b) : T.list a ⟶ b :=
-  ⟨T.listRecOf a z.1 s.1 z.2.1 (z.2.2.trans s.2.2.symm)
-      (s.2.1.trans (congrArg (T.prodOf a) s.2.2.symm)),
-    T.domOf_listRecOf _ _ _, (T.codOf_listRecOf _ _ _).trans z.2.2⟩
+  ⟨T.listRecOf a z.val s.val z.property.1 (z.property.2.trans s.property.2.symm)
+      (s.property.1.trans (congrArg (T.prodOf a) s.property.2.symm)),
+    T.domOf_listRecOf _ _ _, (T.codOf_listRecOf _ _ _).trans z.property.2⟩
 
 /-- A recursion on lists after the empty list is its start. -/
 @[reassoc]
 theorem nil_listRec {a b : T.Cat} (z : T.one ⟶ b) (s : T.prod a b ⟶ b) :
     T.nil a ≫ listRec z s = z :=
-  Subtype.ext (T.listRecOf_nilOf z.2.1 (z.2.2.trans s.2.2.symm)
-    (s.2.1.trans (congrArg (T.prodOf a) s.2.2.symm)))
+  Subtype.ext (T.listRecOf_nilOf z.property.1 (z.property.2.trans s.property.2.symm)
+    (s.property.1.trans (congrArg (T.prodOf a) s.property.2.symm)))
 
 /-- A recursion on lists after the construction of a list is the step after the product of
 the identity with the recursion. -/
 @[reassoc]
 theorem cons_listRec {a b : T.Cat} (z : T.one ⟶ b) (s : T.prod a b ⟶ b) :
     T.cons a ≫ listRec z s = prodMapRight a (listRec z s) ≫ s :=
-  Subtype.ext <| (T.listRecOf_consOf z.2.1 (z.2.2.trans s.2.2.symm)
-    (s.2.1.trans (congrArg (T.prodOf a) s.2.2.symm))).trans
+  Subtype.ext <| (T.listRecOf_consOf z.property.1 (z.property.2.trans s.property.2.symm)
+    (s.property.1.trans (congrArg (T.prodOf a) s.property.2.symm))).trans
     ((T.compOf_congr rfl (prodMapRight_val a (listRec z s)).symm _ _).trans (comp_val _ _).symm)
 
 /-- A morphism from a list object satisfying the recursion equations is the recursion. -/
 theorem listRec_uniq {a b : T.Cat} (z : T.one ⟶ b) (s : T.prod a b ⟶ b) (u : T.list a ⟶ b)
     (h0 : T.nil a ≫ u = z) (h1 : T.cons a ≫ u = prodMapRight a u ≫ s) : u = listRec z s := by
-  have hus : T.codOf (T.prodMapRightOf a u.1) = T.domOf s.1 :=
-    (T.codOf_prodMapRightOf a u.1).trans ((congrArg (T.prodOf a) u.2.2).trans s.2.1.symm)
+  have hus : T.codOf (T.prodMapRightOf a u.val) = T.domOf s.val :=
+    (T.codOf_prodMapRightOf a u.val).trans
+      ((congrArg (T.prodOf a) u.property.2).trans s.property.1.symm)
   have k1 := congrArg Subtype.val h1
   rw [comp_val, comp_val] at k1
   simp only [prodMapRight_val] at k1
-  refine Subtype.ext (T.eq_listRecOf z.2.1 (z.2.2.trans s.2.2.symm)
-    (s.2.1.trans (congrArg (T.prodOf a) s.2.2.symm)) u.2.1 (congrArg Subtype.val h0) hus k1)
+  refine Subtype.ext (T.eq_listRecOf z.property.1 (z.property.2.trans s.property.2.symm)
+    (s.property.1.trans (congrArg (T.prodOf a) s.property.2.symm)) u.property.1
+    (congrArg Subtype.val h0) hus k1)
 
 /-- The action of the list object on a morphism: recursion with the empty list and the
 construction of a list after the morphism. -/
@@ -605,7 +618,7 @@ def listMap {a b : T.Cat} (f : a ⟶ b) : T.list a ⟶ T.list b :=
   listRec (T.nil b) (prodMap f (T.list b) ≫ T.cons b)
 
 /-- The arrow of the list object's action is the model's. -/
-theorem listMap_val {a b : T.Cat} (f : a ⟶ b) : (listMap f).1 = T.listMapOf f.1 := by
+theorem listMap_val {a b : T.Cat} (f : a ⟶ b) : (listMap f).val = T.listMapOf f.val := by
   obtain ⟨f, rfl, rfl⟩ := f
   rfl
 
@@ -622,8 +635,9 @@ variable {T}
 /-- The fold of the rose-tree object into an algebra of the functor
 {lit}`x ↦ nat × list x`. -/
 def roseRec {b : T.Cat} (f : T.prod T.nat (T.list b) ⟶ b) : T.rose ⟶ b :=
-  ⟨T.roseRecOf f.1 (f.2.1.trans (congrArg (fun c ↦ T.prodOf T.natOf (T.listOf c)) f.2.2.symm)),
-    T.domOf_roseRecOf _, (T.codOf_roseRecOf _).trans f.2.2⟩
+  ⟨T.roseRecOf f.val
+      (f.property.1.trans (congrArg (fun c ↦ T.prodOf T.natOf (T.listOf c)) f.property.2.symm)),
+    T.domOf_roseRecOf _, (T.codOf_roseRecOf _).trans f.property.2⟩
 
 /-- A fold after the construction of a rose tree is the algebra after the fold of the
 children. -/
@@ -631,19 +645,19 @@ children. -/
 theorem node_roseRec {b : T.Cat} (f : T.prod T.nat (T.list b) ⟶ b) :
     T.node ≫ roseRec f = prodMapRight T.nat (listMap (roseRec f)) ≫ f :=
   Subtype.ext <| (T.roseRecOf_nodeOf
-    (f.2.1.trans (congrArg (fun c ↦ T.prodOf T.natOf (T.listOf c)) f.2.2.symm))).trans
+    (f.property.1.trans (congrArg (fun c ↦ T.prodOf T.natOf (T.listOf c)) f.property.2.symm))).trans
     ((T.compOf_congr rfl ((prodMapRight_val _ _).trans (congrArg (T.prodMapRightOf T.natOf)
       (listMap_val (roseRec f)))).symm _ _).trans (comp_val _ _).symm)
 
 /-- A morphism from the rose-tree object satisfying the fold's equation is the fold. -/
 theorem roseRec_uniq {b : T.Cat} (f : T.prod T.nat (T.list b) ⟶ b) (u : T.rose ⟶ b)
     (h : T.node ≫ u = prodMapRight T.nat (listMap u) ≫ f) : u = roseRec f := by
-  have hf := f.2.1.trans (congrArg (fun c ↦ T.prodOf T.natOf (T.listOf c)) f.2.2.symm)
-  have huc := u.2.2.trans f.2.2.symm
+  have hf := f.property.1.trans (congrArg (fun c ↦ T.prodOf T.natOf (T.listOf c)) f.property.2.symm)
+  have huc := u.property.2.trans f.property.2.symm
   have k := congrArg Subtype.val h
   rw [comp_val, comp_val] at k
   simp only [prodMapRight_val, listMap_val] at k
-  exact Subtype.ext (T.eq_roseRecOf hf u.2.1 huc k)
+  exact Subtype.ext (T.eq_roseRecOf hf u.property.1 huc k)
 
 end ToposModel
 

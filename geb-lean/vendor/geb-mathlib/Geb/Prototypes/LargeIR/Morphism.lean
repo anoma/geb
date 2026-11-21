@@ -167,9 +167,9 @@ the level-{lit}`0` component on index types, and the level-{lit}`1` component
 on the fibres of the restriction, which it preserves by naturality. -/
 def famHomOfNatTrans {Z Z' : (Fin 2)ᵒᵖ ⥤ Type} (α : NatTrans Z Z') :
     FamHom (famOfPsh Z) (famOfPsh Z') :=
-  ⟨α.app ⟨0⟩, fun _ z ↦ ⟨α.app ⟨1⟩ z.1,
-    ((congrArg (fun k : Z.obj ⟨1⟩ ⟶ Z'.obj ⟨0⟩ ↦ k z.1) (α.naturality waHom.op)).symm.trans
-      (congrArg (α.app ⟨0⟩) z.2))⟩⟩
+  ⟨α.app ⟨0⟩, fun _ z ↦ ⟨α.app ⟨1⟩ z.val,
+    ((congrArg (fun k : Z.obj ⟨1⟩ ⟶ Z'.obj ⟨0⟩ ↦ k z.val) (α.naturality waHom.op)).symm.trans
+      (congrArg (α.app ⟨0⟩) z.property))⟩⟩
 
 /-! # Naturality of the isomorphism -/
 

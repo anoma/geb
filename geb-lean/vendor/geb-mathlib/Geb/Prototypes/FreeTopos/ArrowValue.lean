@@ -82,7 +82,7 @@ theorem exists_arrVal_of_dom_cod {g X Y : Tree}
         hop')
     obtain rfl : A' = A := congrArg ULift.down.{0} (by simpa using e₁)
     obtain rfl : B' = B := congrArg ULift.down.{0} (by simpa using e₂)
-    exact ⟨φ, by unfold ArrVal; exact hvs⟩
+    exact ⟨φ, by delta ArrVal; exact hvs⟩
   · exact (Part.some_ne_none _
       (hop.symm.trans (show relTopos.model.op 0 [⟨s + 1 + 1, c⟩] = Part.none from rfl))).elim
 
