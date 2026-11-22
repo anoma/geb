@@ -266,6 +266,7 @@ EXCLUDED_MODULES=(
   Geb.Prototypes.Kernel.LoadCommand
   Geb.Prototypes.Kernel.ManifestCommand
   Geb.Prototypes.Kernel.MarkupVerso
+  Geb.Prototypes.Kernel.Requests
   Geb.Prototypes.LF.Topos.ProofsMod
   Geb.Prototypes.PHOAS
   Geb.Prototypes.RoseTree.Bits

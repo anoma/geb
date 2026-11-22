@@ -32,9 +32,10 @@ set_option doc.verso true in
 
 The kernel language of the bootstrap, System T over rose trees with natural-number labels:
 its types, its checker-evaluator, which is its denotation, its readable syntax, its bundles and
-images, the host driver that builds and runs them, substitution in its terms, an evaluator of its
-terms with fuel, adequate to the denotation, and the loading of a program one definition at a
-time, each step checked by the kernel.
+images, the host driver that builds and runs them, the protocol of the requests a program makes
+of its host, substitution in its terms, an evaluator of its terms with fuel, adequate to the
+denotation, and the loading of a program one definition at a time, each step checked by the
+kernel.
 -/
 
 set_option doc.verso true
