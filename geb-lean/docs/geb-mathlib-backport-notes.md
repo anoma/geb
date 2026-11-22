@@ -1310,9 +1310,9 @@ The rules then exclude the following.
   `RoseTree.Bits`, `Bootstrap`, and `FreeTopos.Translation` import
   `Oitavem.Word`; `RoseTree.Spine` imports `RoseTree.Bits` and
   `BitTree.EliasBinary.Bound`, `RoseTree.Packed` imports
-  `RoseTree.Spine`, `Kernel.Image` imports `RoseTree.Packed`, and
-  `Kernel.Command` and `Kernel.LoadCommand` import `Kernel.Image`, and
-  `Kernel.ManifestCommand` imports `Kernel.Command`;
+  `RoseTree.Spine`, `Kernel.Image` imports `RoseTree.Packed`,
+  `Kernel.Command`, `Kernel.LoadCommand`, and `Kernel.Requests` import
+  `Kernel.Image`, and `Kernel.ManifestCommand` imports `Kernel.Command`;
   `FreeTopos.Tactics.Hypotheses` and `FreeTopos.Tactics.Induction`
   import `FreeTopos.Translation`, `FreeTopos.Tactics.Search` imports
   both, and `FreeTopos.Tactics.Trees` imports `FreeTopos.Tactics.Search`;

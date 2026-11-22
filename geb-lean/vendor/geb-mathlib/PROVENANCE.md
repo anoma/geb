@@ -1,7 +1,7 @@
 # Vendored geb-mathlib provenance
 
 - Source: https://github.com/rokopt/geb-mathlib.git
-- Source commit: 0ad1af44d4071ca7d59cfd67fd4f808b3eee1336
+- Source commit: c65a01f9c5357df8965a36e272ade16cb61643e2
 - Back-port patch: scripts/geb-mathlib-backport.patch (sha256 1d1abdd5496d0784426b2ac4e59c3e62088a428a6575170d33832cce1add40bb)
 - Excluded modules, each dropped along with its submodules and every import of it (see scripts/refresh-geb-mathlib.sh):
   - Geb.Cslib
@@ -236,6 +236,7 @@
   - Geb.Prototypes.Kernel.LoadCommand
   - Geb.Prototypes.Kernel.ManifestCommand
   - Geb.Prototypes.Kernel.MarkupVerso
+  - Geb.Prototypes.Kernel.Requests
   - Geb.Prototypes.LF.Topos.ProofsMod
   - Geb.Prototypes.PHOAS
   - Geb.Prototypes.RoseTree.Bits
