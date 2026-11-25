@@ -21,8 +21,9 @@ points. It is one form of the authoring profile,
 ```
 
 so that it holds comments and the formatter applies to it. In place of {lit}`(sources PATH…)` a
-program whose sources are compiled a part at a time writes {lit}`(layers (NAME PATH…)…)`, its
-sources being those of its layers in order.
+program whose sources are compiled a part at a time writes {lit}`(layers (NAME PATH…)…)`.
+A layer {lit}`(NAME (manifest PATH))` takes the sources of the named manifest in order as one
+layer. Each path is relative to the manifest that names it. The client supplies its own entries.
 
 The grammar is as narrow as present programs require: the fields stand in this order, each once,
 and nothing else is read. A source is a relative path of ASCII characters without white space,
@@ -62,6 +63,8 @@ structure Manifest.Layer where
   name : String
   /-- The layer's sources, relative to the manifest's directory. -/
   sources : List String
+  /-- The dependency manifest named in place of an explicit list of sources, if any. -/
+  dependency : Option String := none
 
 /-- What a manifest records of a program. -/
 structure Manifest where
@@ -75,6 +78,8 @@ structure Manifest where
   layers : List Manifest.Layer
   /-- The definitions applied from outside the program. -/
   entries : List String
+  /-- The dependency manifests and the sources each lists directly, relative to the root. -/
+  dependencies : List (String × List String) := []
 
 namespace Manifest
 
@@ -107,17 +112,25 @@ def validSource (p : String) : Bool :=
 /-- The first element of a list that the list holds more than once. -/
 def firstRepeated (xs : List String) : Option String := xs.find? (xs.count · > 1)
 
-/-- A layer: its name followed by at least one source. -/
+/-- A layer names its sources directly or takes them from a dependency manifest. -/
 def layerOf (e : SExp) : Except String Layer := do
+  if let [n, ref] := e.children then
+    if ref.label.isNone then
+      let some name := n.label.map String.ofList | throw "a layer's name is not an atom"
+      let [path] ← atoms "the manifest field" (← field "manifest" ref)
+        | throw "a manifest field holds one path"
+      unless validSource path do
+        throw s!"the dependency {path} is not a relative path within the manifest's directory"
+      return ⟨name, [], some path⟩
   match ← atoms "a layer" e.children with
-  | n :: s :: ss => return ⟨n, s :: ss⟩
+  | n :: s :: ss => return ⟨n, s :: ss, none⟩
   | _ => throw "a layer is a name followed by its sources"
 
 /-- A program's layers, from its field of sources or of layers. -/
 def layersOf (name : String) (e : SExp) : Except String (List Layer) :=
   match e.children with
   | h :: args =>
-    if isKw h "sources" then return [⟨name, ← atoms "the sources" args⟩]
+    if isKw h "sources" then return [⟨name, ← atoms "the sources" args, none⟩]
     else if isKw h "layers" then args.mapM layerOf
     else throw "the field sources or layers is expected"
   | [] => throw "the field sources or layers is expected"
@@ -144,8 +157,8 @@ def parse (text : List Char) : Except String Manifest := do
     let profile ← Document.Profile.parse doc
     let layers ← layersOf name src
     let entries ← atoms "the entries" (← field "entries" en)
-    let m : Manifest := ⟨name, edition, profile, layers, entries⟩
-    if m.sources.isEmpty then throw "the program has no sources"
+    let m : Manifest := { name, edition, profile, layers, entries }
+    if m.sources.isEmpty && layers.all (·.dependency.isNone) then throw "the program has no sources"
     if let some s := m.sources.find? (!validSource ·) then
       throw s!"the source {s} is not a relative path within the manifest's directory"
     if let some s := firstRepeated m.sources then throw s!"the source {s} is listed twice"
@@ -156,19 +169,100 @@ def parse (text : List Char) : Except String Manifest := do
   | _ => throw "a program is (program NAME (edition N) (document …) (sources PATH…) \
       (entries NAME…))"
 
-/-- The manifest of a file, read as bytes, one character per byte, raising what rejects it. -/
-def read (path : System.FilePath) : IO Manifest := do
-  match parse ((← IO.FS.readBinFile path).data.toList.map fun b ↦ Char.ofNat b.toNat) with
-  | .ok m => return m
-  | .error msg => throw <| IO.userError s!"{path}: {msg}"
-
 /-- A source of a manifest at a path, resolved against the manifest's directory. -/
 def resolve (path : System.FilePath) (source : String) : System.FilePath :=
   "/".intercalate ((path.toString.splitOn "/").dropLast ++ [source])
 
+open scoped FinEnum in
+/-- Read the manifests of a program, expanding each dependency in place. The supplied reader
+also serves the editor, which reads open manifests from its buffers. The paths retained are
+relative to the root even where a dependency is reached through a symbolic link. -/
+def read (path : System.FilePath)
+    (readBytes : System.FilePath → IO ByteArray := IO.FS.readBinFile) : IO Manifest := do
+  let parseFile (p : System.FilePath) := do
+    let bytes ← readBytes p
+    IO.ofExcept <| (parse (bytes.data.toList.map fun b ↦ Char.ofNat b.toNat)).mapError
+      (s!"{p}: {·}")
+  let root ← parseFile path
+  if root.layers.all (·.dependency.isNone) then return root
+  let mut seen := [← IO.FS.realPath path]
+  let mut dependencies := #[]
+  let mut layers := #[]
+  for layer in root.layers do
+    let (sources, visited, deps) ← IO.iterate ([("", layer)], #[], seen, dependencies) fun
+      (pending, sources, visited, deps) ↦ do
+      let (parent, next) :: rest := pending | return .inr (sources, visited, deps)
+      let rebase := fun s ↦ (resolve parent s).toString
+      if let some ref := next.dependency then
+        let relative := rebase ref
+        let file := resolve path relative
+        let real ← IO.FS.realPath file
+        if visited.contains real then
+          throw <| IO.userError s!"{path}: repeated or cyclic manifest dependency {relative}"
+        let dep ← parseFile file
+        unless decide (dep.profile.toSExp = root.profile.toSExp) do
+          throw <| IO.userError s!"{path}: the document profile of dependency {relative} differs"
+        let own := dep.sources.map fun s ↦ (resolve relative s).toString
+        return .inl (dep.layers.map (relative, ·) ++ rest, sources, real :: visited,
+          deps.push (relative, own))
+      else
+        return .inl (rest, sources ++ (next.sources.map rebase).toArray, visited, deps)
+    layers := layers.push { layer with sources := sources.toList }
+    seen := visited
+    dependencies := deps
+  let m := { root with layers := layers.toList, dependencies := dependencies.toList }
+  if let some s := firstRepeated m.sources then
+    throw <| IO.userError s!"{path}: the source {s} is listed twice"
+  return m
+
 /-- The paths of a manifest's sources, the manifest being at a path. -/
 def sourcePaths (path : System.FilePath) (m : Manifest) : List System.FilePath :=
   m.sources.map (resolve path)
+
+/-- The root manifest, its dependency manifests and all their sources. -/
+def documentPaths (path : System.FilePath) (m : Manifest) : List System.FilePath :=
+  path :: m.dependencies.map (fun d ↦ resolve path d.1) ++ sourcePaths path m
+
+/-- The qualified names of the modules declared in a form, descending only into module bodies. -/
+def moduleNames (form : SExp) : List String :=
+  RoseTree.para (β := Ident → List String) (fun _ parts pre ↦ match parts with
+    | (kw, _) :: (n, _) :: body =>
+      if isKw kw "module" then
+        match n.label with
+        | some name =>
+          let path := qualify pre name
+          String.ofList path :: body.flatMap (·.2 path)
+        | none => []
+      else []
+    | _ => []) form []
+
+/-- Check that two dependencies do not declare the same module, even when their exports are
+disjoint. A source check can restrict the comparison to the prefix it compiles. -/
+def checkModules (path : System.FilePath) (m : Manifest)
+    (included : System.FilePath → Bool := fun _ ↦ true)
+    (readBytes : System.FilePath → IO ByteArray := IO.FS.readBinFile) : IO Unit := do
+  if m.dependencies.length < 2 then return
+  let mut owners : List (String × String) := []
+  for (dep, files) in m.dependencies do
+    for file in files do
+      let p := resolve path file
+      if included p then
+        let text := (← readBytes p).data.toList.map fun b ↦ Char.ofNat b.toNat
+        let forms := match Document.readBasic text with
+          | some (_, doc) => doc.items.map RoseTree.erase
+          | none => (readSExps text).getD []
+        for name in forms.flatMap moduleNames do
+          if let some other := owners.lookup name then
+            if other != dep then
+              throw <| IO.userError s!"{path}: the module {name} is declared by {other} and {dep}"
+          else
+            owners := (name, dep) :: owners
+
+/-- A manifest for compilation, with its dependency modules checked for ambiguity. -/
+def readProgram (path : System.FilePath) : IO Manifest := do
+  let m ← read path
+  checkModules path m
+  return m
 
 /-- The paths of the sources of a manifest's layers up to the layer of a name, that layer
 included, the manifest being at a path. -/

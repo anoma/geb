@@ -29,6 +29,18 @@ parameters is declared, it is elaborated once more at opaque arguments, into a f
 {lit}`(%generic …)` that the stage-1 compiler checks and every reader drops
 ({lit}`genericOf`).
 
+A definition, a function and a datatype take type parameters of their own, written after the
+name: {lit}`(def (x A …) e)`, {lit}`(defn (f A …) binders R e)` and
+{lit}`(data (D A …) (c F …) …)`. A use supplies a type for each, as the kernel's constants take
+theirs: {lit}`(f B … e …)` in a term, the instance itself where no term follows the types and
+its application otherwise; {lit}`(D B …)` in a type; and {lit}`(c B … x …)` in a pattern. A use
+denotes an instance, the declaration with each parameter a type abbreviation of its argument,
+which is written before the declaration that first uses it. An instance is named by the
+S-expression of its use, {lit}`(f B …)`, whose names are those of the flat program and whose
+type abbreviations are expanded, so that uses at equal arguments denote one instance wherever
+they are written ({lit}`instName`). Where it is declared, such a declaration is elaborated once
+at opaque arguments, as a module with parameters is.
+
 Source binders and their occurrences are renamed with {lit}`%%` before datatype expansion.
 The source entry rejects unquoted names beginning with {lit}`%`, so these private names cannot
 capture a generated primitive, recognizer or single-{lit}`%` temporary. Patterns retain their
@@ -53,6 +65,8 @@ name a declaration. A program without modules or either chain still receives pri
 
 * {lit}`rename` — the renaming of an S-expression in a role.
 * {lit}`letChain`, {lit}`condChain` — sequential bindings and guarded clauses as nested forms.
+* {lit}`instName`, {lit}`nameUses` — an instance's name, and a renamed form with its uses of
+  declarations with type parameters named.
 * {lit}`expandModules` — the elaboration of a program's modules.
 * {lit}`readProgram`, {lit}`runMain`, {lit}`diagnose` — the reading of a program through the
   elaboration of its modules.
@@ -61,11 +75,27 @@ name a declaration. A program without modules or either chain still receives pri
 
 The elaboration of a block is a fold over its forms; the elaboration of a nested module and of
 an instance is one level of a tower built by {lit}`Nat.rec`, bounded by the number of module
-forms in the program, since a module imports only modules declared before it.
+forms and of declarations with type parameters in the program, since a module imports only
+modules declared before it and a declaration uses only declarations before it. A datatype
+whose declaration applies it to types other than its parameters has no finite set of instances
+and exhausts the tower.
+
+The renaming is a paramorphism with no state, so it writes a use of a declaration with type
+parameters as a node no reader writes, an atom's label over children ({lit}`polyUse`). The
+uses of a renamed form are named, and the instances they denote written, where the form is
+emitted ({lit}`emitForm`).
+
+An instance's name spells an atom that is a token of \[RFC9804\] as it is and any other
+atom verbatim, by its length, so that distinct uses have distinct names whatever characters
+their atoms hold.
+
+## References
+
+* \[RFC9804\]
 
 ## Tags
 
-module, import, export, parameter, qualified name
+module, import, export, parameter, type parameter, instance, qualified name
 -/
 
 @[expose] public section
@@ -115,16 +145,36 @@ inductive Role where
   | letBindings
   /-- A conditional clause: a test and a result, or the final default. -/
   | condClause
+  /-- A pattern {lit}`(c x …)`, whose constructor is renamed and whose variables are bound. -/
+  | pattern
   /-- A quoted datum or the name of a hole, unchanged. -/
   | datum
   deriving DecidableEq
 
+/-- A name declared with type parameters: their number, and the declaration's name in the flat
+program, which a constructor shares with its datatype. -/
+structure PolyRef where
+  /-- The number of the type parameters. -/
+  arity : ℕ
+  /-- The declaration's name in the flat program. -/
+  principal : Ident
+
+/-- The names declared with type parameters, by their names in the flat program. -/
+abbrev Polys : Type := List (Ident × PolyRef)
+
 /-- The names a binder or a list of binders binds. -/
 def boundBy (b : SExp) : List Ident := (binders b).filterMap fun c ↦ c.children.head?.bind (·.label)
 
-/-- The variables a pattern {lit}`(c x …)` binds. -/
-def patternVars (p : SExp) : List Ident :=
-  ((p.children.drop 1).filterMap (·.label)).filter fun s ↦ s != ['&'] && s != ['_']
+/-- The variables a pattern {lit}`(c x …)` binds, after the type arguments of a constructor
+that takes a number of them. -/
+def patternVars (p : SExp) (types : ℕ := 0) : List Ident :=
+  ((p.children.drop (1 + types)).filterMap (·.label)).filter fun s ↦ s != ['&'] && s != ['_']
+
+/-- A use of a name declared with type parameters at type arguments, as the renaming writes
+it: the name over the declaration's and the arguments, an atom's label over children, which no
+reader writes. -/
+def polyUse (name : Ident) (ref : PolyRef) (args : List SExp) : SExp :=
+  RoseTree.node (some name) (atom ref.principal :: args)
 
 /-- A source binder's private name. Source names beginning with {lit}`%` are rejected before
 elaboration; {lit}`%%` is distinct from every name introduced by datatype expansion. -/
@@ -166,18 +216,48 @@ def condChain (cs : List SExp) : SExp :=
 
 /-- One node renamed in each role, from its children renamed in each: in a term, a bound atom
 receives its private name and any other visible name is qualified. The forms of the kernel and
-datatype language give each child its role; in a type every visible name is renamed. -/
-def renameStep (vis : Visible) (a : Option Ident)
+datatype language give each child its role; in a type every visible name is renamed. A name
+declared with type parameters is written as its use at the types that follow it
+({name}`polyUse`): in a type all the elements after it, and in a term and in a pattern as many
+as it has parameters. -/
+def renameStep (vis : Visible) (polys : Polys) (a : Option Ident)
     (rs : List (SExp × (Role → List Ident → SExp))) (r : Role) (bound : List Ident) : SExp :=
   let orig := RoseTree.node a (rs.map Prod.fst)
   let as (r : Role) (bound : List Ident) (xs : List (SExp × (Role → List Ident → SExp))) :=
     xs.map (·.2 r bound)
+  let isLocal (s : Ident) : Bool := bound.contains s && (numeral? s).isNone
+  -- the name in the flat program and the declaration of an atom declared with type parameters
+  let polyOf (e : SExp) : Option (Ident × PolyRef) :=
+    e.label.bind fun s ↦ (polys.lookup (flat vis s)).map fun ref ↦ (flat vis s, ref)
   match r, a with
   | .datum, _ => orig
-  | .type, some s => atom (flat vis s)
-  | .type, none => slist (as .type [] rs)
-  | .term, some s => atom (if bound.contains s && (numeral? s).isNone then localName s
-      else flat vis s)
+  | .type, some s =>
+    match polyOf orig with
+    | some (fl, ref) => polyUse fl ref []
+    | none => atom (flat vis s)
+  | .type, none =>
+    match rs with
+    | (h, _) :: rest =>
+      match polyOf h with
+      | some (fl, ref) => polyUse fl ref (as .type [] rest)
+      | none => slist (as .type [] rs)
+    | [] => orig
+  | .term, some s =>
+    if isLocal s then atom (localName s)
+    else match polyOf orig with
+      | some (fl, ref) => polyUse fl ref []
+      | none => atom (flat vis s)
+  | .pattern, some _ => orig
+  | .pattern, none =>
+    match rs with
+    | (c, _) :: xs =>
+      let vars (xs : List (SExp × (Role → List Ident → SExp))) : List SExp :=
+        xs.map fun (x, _) ↦ if isKw x "&" || isKw x "_" then x else localAtom x
+      match polyOf c with
+      | some (fl, ref) =>
+        slist (polyUse fl ref (as .type [] (xs.take ref.arity)) :: vars (xs.drop ref.arity))
+      | none => slist (atom (c.label.map (flat vis) |>.getD []) :: vars xs)
+    | [] => orig
   | .letBinding, _ =>
     match a, rs with
     | none, [(x, _), (_, rA), (_, e)] => slist [localAtom x, rA .type [], e .term bound]
@@ -201,14 +281,11 @@ def renameStep (vis : Visible) (a : Option Ident)
   | .clause, some _ => orig
   | .clause, none =>
     match rs with
-    | [(p, _), (_, body)] =>
+    | [(p, rp), (_, body)] =>
       if p.label.isSome then slist [p, body .term bound]
       else
-        let pat := match p.children with
-          | c :: xs => slist (atom (c.label.map (flat vis) |>.getD []) ::
-              xs.map fun x ↦ if isKw x "&" || isKw x "_" then x else localAtom x)
-          | [] => p
-        slist [pat, body .term (patternVars p ++ bound)]
+        let types := ((p.children.head?.bind polyOf).map (·.2.arity)).getD 0
+        slist [rp .pattern [], body .term (patternVars p types ++ bound)]
     | _ => orig
   | .term, none =>
     match rs with
@@ -259,12 +336,78 @@ def renameStep (vis : Visible) (a : Option Ident)
         | (_, rD) :: (_, rR) :: (_, e) :: cs =>
           slist (h :: rD .type [] :: rR .type [] :: e .term bound :: as .clause bound cs)
         | _ => orig
-      else slist (rh .term bound :: as .term bound rest)
+      else
+        match (if h.label.any isLocal then none else polyOf h) with
+        | some (fl, ref) =>
+          let use := polyUse fl ref (as .type [] (rest.take ref.arity))
+          if rest.length ≤ ref.arity then use
+          else slist (use :: as .term bound (rest.drop ref.arity))
+        | none => slist (rh .term bound :: as .term bound rest)
 
-/-- An S-expression renamed in a role, under the visible names and the names bound around
-it. -/
-def rename (vis : Visible) (e : SExp) (r : Role) (bound : List Ident) : SExp :=
-  RoseTree.para (renameStep vis) e r bound
+/-- An S-expression renamed in a role, under the visible names, the names declared with type
+parameters and the names bound around it. -/
+def rename (vis : Visible) (polys : Polys) (e : SExp) (r : Role) (bound : List Ident) : SExp :=
+  RoseTree.para (renameStep vis polys) e r bound
+
+/-! ## Instances -/
+
+/-- The spelling of an S-expression in an instance's name: a list in parentheses, its elements
+a space apart; an atom that is a token as it is, and any other atom verbatim, its length in
+decimal, a colon and its characters, as the advanced encoding of \[RFC9804\] spells it.
+Distinct S-expressions have distinct spellings. -/
+def spellOf : SExp → Ident :=
+  RoseTree.elim fun a cs ↦
+    match a with
+    | some s => if Document.isToken s then s else Csexp.decOf s.length ++ ':' :: s
+    | none => '(' :: [' '].intercalate cs ++ [')']
+
+/-- The name of the instance of a name declared with type parameters at arguments: the spelling
+of its use, {lit}`(f B …)`. -/
+def instName (name : Ident) (args : List SExp) : Ident := spellOf (slist (atom name :: args))
+
+/-- The use an instance's name spells, and what follows it: the declaration's name in the flat
+program, the arguments, and the name written after a full stop, that of a parameter's type
+abbreviation or of a datatype's recognizer; nothing where the name spells no use. -/
+def useOf? (name : Ident) : Option (Ident × List SExp × Ident) :=
+  match readSExps name with
+  | some (e :: rest) =>
+    match e.label, e.children, rest with
+    | none, h :: args, [] => h.label.map fun f ↦ (f, args, [])
+    | none, h :: args, [s] =>
+      match h.label, s.label with
+      | some f, some ('.' :: suffix) => some (f, args, suffix)
+      | _, _ => none
+    | _, _, _ => none
+  | _ => none
+
+/-- The type abbreviations declared, each by its name in the flat program with the type it
+abbreviates, itself with its abbreviations expanded. -/
+abbrev Abbrs : Type := List (Ident × SExp)
+
+/-- A type with its abbreviations expanded. -/
+def expandAbbrs (abbrs : Abbrs) : SExp → SExp :=
+  RoseTree.elim fun a cs ↦
+    match a, cs with
+    | some s, [] => (abbrs.lookup s).getD (atom s)
+    | _, _ => RoseTree.node a cs
+
+/-- One node of a renamed form with its uses of names declared with type parameters named, from
+its children's: a use becomes the atom of its instance's name, its arguments' abbreviations
+expanded, and the uses are listed, each the declaration's name over the arguments, those of an
+argument before the use it is an argument of. -/
+def nameUsesStep (abbrs : Abbrs) (a : Option Ident) (rs : List (SExp × List SExp)) :
+    SExp × List SExp :=
+  let cs := rs.map Prod.fst
+  let uses := rs.flatMap Prod.snd
+  match a, cs with
+  | some s, d :: args =>
+    let args := args.map (expandAbbrs abbrs)
+    (atom (instName s args), uses ++ [RoseTree.node d.label args])
+  | _, _ => (RoseTree.node a cs, uses)
+
+/-- A renamed form with its uses of names declared with type parameters named, and the uses. -/
+def nameUses (abbrs : Abbrs) : SExp → SExp × List SExp :=
+  RoseTree.elim (nameUsesStep abbrs)
 
 /-! ## Elaboration -/
 
@@ -296,22 +439,53 @@ structure ModNode where
   /-- The module's exports, with what they denote. -/
   exports : Visible
 
+/-- A declaration with type parameters, elaborated at each list of arguments it is used at: its
+parameters, its keyword, its forms after its name, the names visible where it is declared, a
+datatype's own among them, and the prefix its constructors' names are qualified by. -/
+structure PolyDecl where
+  /-- The type parameters. -/
+  params : List Ident
+  /-- The keyword. -/
+  kw : SExp
+  /-- The forms after the name. -/
+  rest : List SExp
+  /-- The names visible where it is declared. -/
+  scope : Visible
+  /-- The prefix of the block that declares it. -/
+  pre : Ident
+
 /-- The state of the elaboration of a block: the names visible in it, the declarations emitted,
 the modules declared, by their paths from the root, the names the block exports, the block's
-members and the modules elaborated. -/
+members and the modules elaborated; and of the declarations with type parameters, the names
+declared, the declarations, the instances written, the type abbreviations declared, and whether
+the block is elaborated at opaque arguments. -/
 structure ElabState where
   /-- The names visible in the block. -/
-  vis : Visible
+  vis : Visible := []
   /-- The declarations emitted, in order. -/
-  out : List SExp
+  out : List SExp := []
   /-- The modules declared, by their paths from the root. -/
-  reg : List (Ident × ModDef)
+  reg : List (Ident × ModDef) := []
   /-- The names the block's export lists name. -/
-  exports : List Ident
+  exports : List Ident := []
   /-- The block's members, in order. -/
-  members : List Member
+  members : List Member := []
   /-- The modules elaborated, each after the modules nested in it. -/
-  mods : List ModNode
+  mods : List ModNode := []
+  /-- The names declared with type parameters. -/
+  polys : Polys := []
+  /-- The declarations with type parameters, by their names in the flat program. -/
+  decls : List (Ident × PolyDecl) := []
+  /-- The names of the instances written. -/
+  insts : List Ident := []
+  /-- The type abbreviations declared. -/
+  abbrs : Abbrs := []
+  /-- Whether the block is elaborated at opaque arguments, inside a form {lit}`(%generic …)`. -/
+  generic : Bool := false
+  /-- Each instance written, a datatype's and its constructors' alike, with the name of the form
+  that first uses it: what a failure of the instance is reported at. The elaboration reads none
+  of it. -/
+  users : List (Ident × Ident) := []
 
 /-- The result of an elaboration: a value, or the message of its first failure. -/
 abbrev Elab : Type → Type := Except String
@@ -353,12 +527,47 @@ def splitHead (k : String) (es : List SExp) : List SExp × List SExp :=
   (es.filter fun e ↦ e.children.head?.any (isKw · k),
     es.filter fun e ↦ !e.children.head?.any (isKw · k))
 
+/-- The elaboration of a form in a block under a prefix, from a state: the type of one level of
+the tower of nesting and instantiation. -/
+abbrev ElabK : Type := Ident → ElabState → SExp → Elab ElabState
+
+/-- A renamed form emitted, with members of the block: its uses of names declared with type
+parameters named, each instance not yet written elaborated before it, one level further in,
+and the type abbreviation it declares, if any, recorded with its abbreviations expanded. A use
+at a number of types other than that of the declaration's parameters is rejected. -/
+def emitForm (rec : ElabK) (st : ElabState) (form : SExp) (mem : List Member := []) :
+    Elab ElabState := do
+  let (f, uses) := nameUses st.abbrs form
+  let user := (f.children[1]?.bind (·.label)).getD []
+  let st ← uses.foldlM (fun st u ↦ do
+    let name ← need u.label "a use names no declaration"
+    let d ← need (st.decls.lookup name) s!"{String.ofList name} takes no type arguments"
+    if d.params.length != u.children.length then
+      throw s!"{String.ofList name} is used at {u.children.length} types and takes \
+        {d.params.length}"
+    let inst := instName name u.children
+    if st.insts.contains inst then pure st
+    else do
+      let st ← rec [] st u
+      -- a datatype's constructors are instances of the same use
+      let ctors := if isKw d.kw "data" then
+          d.rest.filterMap fun c ↦ c.children.head?.bind (·.label) else []
+      pure { st with users := st.users ++
+        (inst :: ctors.map fun c ↦ instName (qualify d.pre c) u.children).map (·, user) }) st
+  let abbrs := match f.label, f.children with
+    | none, [kw, n, A] =>
+      match n.label with
+      | some s => if isKw kw "deftype" then st.abbrs ++ [(s, expandAbbrs st.abbrs A)] else st.abbrs
+      | none => st.abbrs
+    | _, _ => st.abbrs
+  pure { st with out := st.out ++ [f], members := st.members ++ mem, abbrs }
+
 /-- The argument of a parameter bound at an instance: a sort {lit}`(parameter A)` as a type
 abbreviation of the argument, and an operation {lit}`(parameter (f (A …) R))` as a definition
 of the argument applied to fresh variables of the argument types, its result bound at type
 {lit}`R` so that the argument's type is checked; the parameter's types are renamed in the
 template's scope and the argument in the importer's. -/
-def bindParam (inst : Ident) (importer : Visible) (st : ElabState) (p arg : SExp) :
+def bindParam (rec : ElabK) (inst : Ident) (importer : Visible) (st : ElabState) (p arg : SExp) :
     Elab ElabState := do
   let bad := "a parameter is neither a sort nor an operation"
   match p.children with
@@ -366,62 +575,123 @@ def bindParam (inst : Ident) (importer : Visible) (st : ElabState) (p arg : SExp
     match sig.label, sig.children with
     | some s, _ => do
       let fl := qualify inst s
-      let st ← declare st s fl
-      pure { st with out := st.out ++ [slist [atom ['d', 'e', 'f', 't', 'y', 'p', 'e'], atom fl,
-        rename importer arg .type []]] }
+      emitForm rec (← declare st s fl) (slist [atom ['d', 'e', 'f', 't', 'y', 'p', 'e'], atom fl,
+        rename importer st.polys arg .type []])
     | none, [x, args, res] => do
       let s ← need x.label bad
       let fl := qualify inst s
       let vars := (args.children.zipIdx).map fun (_, i) ↦ '%' :: 'm' :: Csexp.decOf i
       let rv := ['%', 'r']
-      let call := if vars.isEmpty then rename importer arg .term []
-        else slist (rename importer arg .term [] :: vars.map atom)
-      let body := slist [atom ['l', 'e', 't'], atom rv, rename st.vis res .type [], call, atom rv]
+      let callee := rename importer st.polys arg .term []
+      let call := if vars.isEmpty then callee else slist (callee :: vars.map atom)
+      let body := slist [atom ['l', 'e', 't'], atom rv, rename st.vis st.polys res .type [], call,
+        atom rv]
       let term := if vars.isEmpty then body
         else slist [atom ['l', 'a', 'm'], slist ((args.children.zip vars).map fun (A, v) ↦
-          slist [atom v, rename st.vis A .type []]), body]
-      let st ← declare st s fl
-      pure { st with
-        out := st.out ++ [slist [atom ['d', 'e', 'f'], atom fl, term]]
-        members := st.members ++ [.decl fl] }
+          slist [atom v, rename st.vis st.polys A .type []]), body]
+      emitForm rec (← declare st s fl) (slist [atom ['d', 'e', 'f'], atom fl, term]) [.decl fl]
     | _, _ => throw bad
   | _ => throw bad
 
+/-- What a form that no branch of the elaboration reads is rejected with. -/
+def otherForm : String := "a form is neither a declaration, a module, an import nor an export"
+
+/-- A datatype's constructors, each by its name with its fields' types. -/
+def ctorsOf (cs : List SExp) : Elab (List (Ident × List SExp)) :=
+  cs.mapM fun c ↦ match c.children with
+    | n :: fs => need (n.label.map fun cn ↦ (cn, fs)) otherForm
+    | [] => throw otherForm
+
+/-- A declaration's forms after its name, renamed under visible names and emitted under a name
+of the flat program, a datatype's constructors under the names a function gives them. -/
+def emitDecl (rec : ElabK) (st : ElabState) (vis : Visible) (kw : SExp) (fl : Ident)
+    (ctor : Ident → Ident) (rest : List SExp) : Elab ElabState := do
+  let ren (e : SExp) (r : Role) (bound : List Ident := []) : SExp := rename vis st.polys e r bound
+  let form (body : List SExp) : SExp := slist (kw :: atom fl :: body)
+  if isKw kw "def" then
+    match rest with
+    | [b] => emitForm rec st (form [ren b .term]) [.decl fl]
+    | _ => throw otherForm
+  else if isKw kw "deftype" || isKw kw "defnum" then
+    match rest with
+    | [b] => emitForm rec st (form [ren b .type])
+    | _ => throw otherForm
+  else if isKw kw "defn" then
+    match rest with
+    | [ps, res, b] =>
+      emitForm rec st (form [ren ps .binders, ren res .type, ren b .term (boundBy ps)]) [.decl fl]
+    | _ => throw otherForm
+  else if isKw kw "data" then do
+    let ctors ← ctorsOf rest
+    emitForm rec st
+      (form (ctors.map fun (c, fs) ↦ slist (atom (ctor c) :: fs.map (ren · .type))))
+      (ctors.map fun (c, _) ↦ .decl (ctor c))
+  else throw otherForm
+
+/-- The instance of a declaration with type parameters at arguments, elaborated from the state
+of its first use: each parameter a type abbreviation of its argument, under the instance's
+name, and the declaration's forms elaborated in the scope of its declaration under the names
+of its uses at the arguments. The instance is recorded before its forms are elaborated, so that
+a datatype's use of itself at its parameters denotes the instance. -/
+def instanceOf (rec : ElabK) (st : ElabState) (name : Ident) (args : List SExp) :
+    Elab ElabState := do
+  let d ← need (st.decls.lookup name) s!"{String.ofList name} takes no type arguments"
+  let inst := instName name args
+  let st1 ← (d.params.zip args).foldlM (fun acc (p, A) ↦ do
+      let fl := qualify inst p
+      emitForm rec (← declare acc p fl)
+        (slist [atom ['d', 'e', 'f', 't', 'y', 'p', 'e'], atom fl, A]))
+    { st with vis := d.scope, exports := [], members := [], insts := st.insts ++ [inst] }
+  let st2 ← emitDecl rec st1 st1.vis d.kw inst (fun c ↦ instName (qualify d.pre c) args) d.rest
+  pure { st2 with vis := st.vis, exports := st.exports, members := st.members }
+
 /-- One declaration elaborated in a block under a prefix: its name qualified and made visible,
-its body renamed. -/
-def elabDecl (pre : Ident) (st : ElabState) (e : SExp) : Elab ElabState := do
-  let other := "a form is neither a declaration, a module, an import nor an export"
+its body renamed. A declaration with type parameters, {lit}`(kw (x A …) …)`, a definition, a
+function or a datatype, is recorded with the names visible where it is declared and elaborated
+once at opaque arguments, a sort {lit}`(%sort S)` for each parameter: in a form
+{lit}`(%generic …)` that the stage-1 compiler checks and every reader drops, or, in a block that
+is itself elaborated at opaque arguments, among that block's forms. -/
+def elabDecl (rec : ElabK) (pre : Ident) (st : ElabState) (e : SExp) : Elab ElabState := do
   match e.children with
   | kw :: x :: rest => do
-    let s ← need x.label other
+    let isData := isKw kw "data"
+    let (s, params?) ← match x.label, x.children with
+      | some s, _ => pure (s, none)
+      | none, h :: ps => do
+        let s ← need h.label otherForm
+        pure (s, some (← ps.mapM fun p ↦ need p.label "a type parameter is not a name"))
+      | none, [] => throw otherForm
+    let forms := if isKw kw "def" || isKw kw "deftype" || isKw kw "defnum" then some 1
+      else if isKw kw "defn" then some 3 else if isData then some rest.length else none
+    unless forms == some rest.length do throw otherForm
+    if let some params := params? then
+      unless isKw kw "def" || isKw kw "defn" || isData do
+        throw "only a def, a defn and a data take type parameters"
+      if params.isEmpty then throw s!"{String.ofList s} names no type parameter"
     let fl := qualify pre s
-    let emit (st : ElabState) (body : List SExp) (mem : List Member) : ElabState :=
-      { st with out := st.out ++ [slist (kw :: atom fl :: body)], members := st.members ++ mem }
-    if isKw kw "def" then
-      match rest with
-      | [b] => return emit (← declare st s fl) [rename st.vis b .term []] [.decl fl]
-      | _ => throw other
-    else if isKw kw "deftype" || isKw kw "defnum" then
-      match rest with
-      | [b] => return emit (← declare st s fl) [rename st.vis b .type []] []
-      | _ => throw other
-    else if isKw kw "defn" then
-      match rest with
-      | [ps, res, b] => return emit (← declare st s fl) [rename st.vis ps .binders [],
-          rename st.vis res .type [], rename st.vis b .term (boundBy ps)] [.decl fl]
-      | _ => throw other
-    else if isKw kw "data" then do
-      let st1 ← declare st s fl
-      let ctors ← rest.mapM fun c ↦ match c.children with
-        | n :: fs => need (n.label.map fun cn ↦ (cn, fs)) other
-        | [] => throw other
-      let st2 ← declareAll st1 (ctors.map fun (cn, _) ↦ (cn, qualify pre cn))
-      return { st2 with
-        out := st.out ++ [slist (kw :: atom fl :: ctors.map fun (cn, fs) ↦
-          slist (atom (qualify pre cn) :: fs.map (rename st1.vis · .type [])))]
-        members := st.members ++ ctors.map fun (cn, _) ↦ .decl (qualify pre cn) }
-    else throw other
-  | _ => throw other
+    let st1 ← declare st s fl
+    let ctors : List (Ident × List SExp) ← if isData then ctorsOf rest else pure []
+    let st2 ← declareAll st1 (ctors.map fun (c, _) ↦ (c, qualify pre c))
+    let scope := if isData then st1.vis else st.vis
+    match params? with
+    | none => emitDecl rec st2 scope kw fl (qualify pre) rest
+    | some params => do
+      let ref : PolyRef := ⟨params.length, fl⟩
+      let ctorRefs : Polys := ctors.map fun c ↦ (qualify pre c.1, ref)
+      let st3 := { st2 with
+        polys := st2.polys ++ (fl, ref) :: ctorRefs
+        decls := st2.decls ++ [(fl, (⟨params, kw, rest, scope, pre⟩ : PolyDecl))] }
+      let sorts := (List.range params.length).map fun i ↦ atom ('%' :: 't' :: Csexp.decOf i)
+      let sortForms := sorts.map fun a ↦ slist [atom ['%', 's', 'o', 'r', 't'], a]
+      let use := RoseTree.node (some fl) sorts
+      if st3.generic then rec [] { st3 with out := st3.out ++ sortForms } use
+      else do
+        let g ← rec [] { st3 with out := [], generic := true } use
+        pure { st3 with
+          out := st3.out ++
+            [slist (atom ['%', 'g', 'e', 'n', 'e', 'r', 'i', 'c'] :: sortForms ++ g.out)]
+          users := g.users }
+  | _ => throw otherForm
 
 /-- An import's module path, arguments and the name it is imported as, if any:
 {lit}`(import P)`, {lit}`(import (P a …))`, each optionally followed by {lit}`as N`. -/
@@ -443,21 +713,22 @@ def importAs (as? : Option Ident) (exports : Visible) : Visible :=
 
 /-- A template's instance under a path at arguments, elaborated from its importer's state: its
 parameters bound to the arguments and its forms elaborated in the scope of its declaration. -/
-def instantiate (rec : Ident → ElabState → SExp → Elab ElabState) (st : ElabState)
+def instantiate (rec : ElabK) (st : ElabState)
     (params : List SExp) (exports : List Ident) (forms : List SExp) (scope : Visible)
     (inst : Ident) (args : List SExp) : Elab ElabState := do
-  let st1 ← (params.zip args).foldlM (fun acc (prm, arg) ↦ bindParam inst st.vis acc prm arg)
-    ⟨scope, st.out, st.reg, exports, [], st.mods⟩
+  let st1 ← (params.zip args).foldlM (fun acc (prm, arg) ↦ bindParam rec inst st.vis acc prm arg)
+    { st with vis := scope, exports := exports, members := [] }
   forms.foldlM (rec inst) st1
 
 /-- A template's instance at opaque arguments, which the stage-1 compiler checks and every
 compiler then drops: the form {lit}`(%generic …)` over the declarations of fresh arguments, a sort
 {lit}`(%sort S)` for each sort parameter and a constant {lit}`(%postulate P A)` of the parameter's
 type for each operation, the parameter's sorts read as their arguments, followed by the
-instance's forms. -/
-def genericOf (rec : Ident → ElabState → SExp → Elab ElabState) (st : ElabState)
+instance's forms; with it, the users of the instances written, those of the instance's among
+them. -/
+def genericOf (rec : ElabK) (st : ElabState)
     (params : List SExp) (exports : List Ident) (forms : List SExp) (scope : Visible)
-    (path : Ident) : Elab SExp := do
+    (path : Ident) : Elab (SExp × List (Ident × Ident)) := do
   let isSort (p : SExp) : Bool := (p.children[1]?.bind (·.label)).isSome
   let args := params.zipIdx.map fun (p, i) ↦
     atom ('%' :: (if isSort p then 's' else 'p') :: Csexp.decOf i)
@@ -473,19 +744,23 @@ def genericOf (rec : Ident → ElabState → SExp → Elab ElabState) (st : Elab
       match sig.label, sig.children with
       | some _, _ => slist [sortKw, a]
       | none, [_, xs, res] => slist [postulateKw, a, xs.children.foldr
-          (fun A r ↦ slist [arrowKw, rename vis A .type [], r]) (rename vis res .type [])]
+          (fun A r ↦ slist [arrowKw, rename vis st.polys A .type [], r])
+          (rename vis st.polys res .type [])]
       | none, _ => slist [postulateKw, a]
     | none => slist [postulateKw, a]
-  let st2 ← instantiate rec { st with out := [] } params exports forms scope
+  let st1 ← decls.foldlM (fun acc d ↦ emitForm rec acc d) { st with out := [], generic := true }
+  let st2 ← instantiate rec st1 params exports forms scope
     (path ++ '%' :: ['g', 'e', 'n', 'e', 'r', 'i', 'c']) args
-  pure (slist (atom ['%', 'g', 'e', 'n', 'e', 'r', 'i', 'c'] :: decls ++ st2.out))
+  pure (slist (atom ['%', 'g', 'e', 'n', 'e', 'r', 'i', 'c'] :: st2.out), st2.users)
 
 /-- The elaboration of one form of a block, given the elaboration of the forms of the modules
-nested in it and of the templates it instantiates, one level of nesting fewer. -/
-def elabStep (rec : Ident → ElabState → SExp → Elab ElabState) (pre : Ident)
-    (st : ElabState) (e : SExp) : Elab ElabState :=
-  match e.children with
-  | kw :: rest =>
+nested in it and of the templates and the declarations with type parameters it instantiates,
+one level of nesting fewer. A use of a declaration with type parameters, the declaration's name
+over the arguments, is elaborated as its instance ({name}`instanceOf`). -/
+def elabStep (rec : ElabK) (pre : Ident) (st : ElabState) (e : SExp) : Elab ElabState :=
+  match e.label, e.children with
+  | some name, _ :: _ => instanceOf rec st name e.children
+  | _, kw :: rest =>
     if isKw kw "export" then pure { st with exports := st.exports ++ rest.filterMap (·.label) }
     else if isKw kw "import" then do
       let (p, args, as?) ← need (importSpec e) "an import is not well formed"
@@ -500,9 +775,9 @@ def elabStep (rec : Ident → ElabState → SExp → Elab ElabState) (pre : Iden
         let inst := pre ++ '/' :: (as?.getD p)
         let st2 ← instantiate rec st params exports forms scope inst args
         let ex ← exportsOf st2
-        declareAll { st with
-          out := st2.out
-          reg := st2.reg
+        declareAll { st2 with
+          vis := st.vis
+          exports := st.exports
           members := st.members ++ [.sub inst]
           mods := st2.mods ++ [⟨inst, st2.members, ex⟩] } (importAs as? ex)
     else if isKw kw "module" then
@@ -514,41 +789,65 @@ def elabStep (rec : Ident → ElabState → SExp → Elab ElabState) (pre : Iden
         if params.isEmpty then do
           let st1 ← forms.foldlM (rec path) { st with exports := [], members := [] }
           let ex ← exportsOf st1
-          declareAll ⟨st.vis, st1.out, st1.reg ++ [(path, .plain ex)], st.exports,
-            st.members ++ [.sub path], st1.mods ++ [⟨path, st1.members, ex⟩]⟩
-            (importAs (some s) ex)
+          declareAll { st1 with
+            vis := st.vis
+            reg := st1.reg ++ [(path, .plain ex)]
+            exports := st.exports
+            members := st.members ++ [.sub path]
+            mods := st1.mods ++ [⟨path, st1.members, ex⟩] } (importAs (some s) ex)
         else
           let (exs, body) := splitHead "export" others
           let exports := exs.flatMap fun x ↦ (x.children.drop 1).filterMap (·.label)
-          let g ← genericOf rec st params exports body st.vis path
+          let (g, users) ← genericOf rec st params exports body st.vis path
           pure { st with out := st.out ++ [g]
-                         reg := st.reg ++ [(path, .template params exports body st.vis)] }
+                         reg := st.reg ++ [(path, .template params exports body st.vis)]
+                         users }
       | [] => throw "a module is not named"
-    else elabDecl pre st e
-  | [] => throw "a form is neither a declaration, a module, an import nor an export"
+    else elabDecl rec pre st e
+  | _, [] => throw otherForm
 
 /-- The elaboration of a form at a depth of nesting and instantiation: none beyond it. -/
-def elabAt (n : ℕ) : Ident → ElabState → SExp → Elab ElabState :=
-  Nat.rec (motive := fun _ ↦ Ident → ElabState → SExp → Elab ElabState)
-    (fun _ _ _ ↦ throw "modules nest or instantiate beyond their number")
+def elabAt (n : ℕ) : ElabK :=
+  Nat.rec (motive := fun _ ↦ ElabK)
+    (fun _ _ _ ↦ throw "modules or declarations nest or instantiate beyond their number")
     (fun _ rec ↦ elabStep rec) n
 
-/-- The number of module forms in a list of S-expressions, a bound on the depth of nesting and
-of instantiation. -/
+/-- Whether an S-expression's elements are those of a declaration with type parameters: a
+keyword that takes them, and a list where a declaration's name stands. -/
+def isPolyDecl (es : List SExp) : Bool :=
+  match es with
+  | kw :: x :: _ => x.label.isNone && (isKw kw "def" || isKw kw "defn" || isKw kw "data")
+  | _ => false
+
+/-- The number of module forms and of declarations with type parameters in a list of
+S-expressions, a bound on the depth of nesting and of instantiation. -/
 def moduleCount (es : List SExp) : ℕ :=
-  (es.map (RoseTree.elim fun a (rs : List ℕ) ↦
-    rs.sum + if a.any (String.ofList · == "module") then 1 else 0)).sum
+  (es.map (RoseTree.para fun a (rs : List (SExp × ℕ)) ↦
+    (rs.map Prod.snd).sum + (if a.any (String.ofList · == "module") then 1 else 0) +
+      if isPolyDecl (rs.map Prod.fst) then 1 else 0)).sum
+
+/-- The state of the elaboration after a program's forms, elaborated in the root block. -/
+def elabForms (es : List SExp) : Elab ElabState :=
+  es.foldlM (elabAt (moduleCount es + 1) []) {}
 
 /-- A program's forms with its modules elaborated, with its tree of modules, each module after
 those nested in it and the root block last: each declaration under its qualified name,
-the instances of modules with parameters at their imports, and every name renamed to what it
-denotes; a failure when a name clashes with one visible, an import names no module or leaves a
-parameter unsupplied, an export names nothing, or a form is not a declaration, a module, an
-import or an export. -/
+the instances of modules with parameters at their imports and of declarations with type
+parameters at their uses, and every name renamed to what it denotes; a failure when a name
+clashes with one visible, an import names no module or leaves a parameter unsupplied, an export
+names nothing, a use supplies a number of types other than that of the type parameters, or a
+form is not a declaration, a module, an import or an export. -/
 def elabTree (es : List SExp) : Elab (List SExp × List ModNode) := do
-  let st ← es.foldlM (elabAt (moduleCount es + 1) []) ⟨[], [], [], [], [], []⟩
+  let st ← elabForms es
   if st.exports.isEmpty then pure (st.out, st.mods ++ [⟨[], st.members, []⟩])
   else throw "the program exports names"
+
+/-- Each instance a program's elaboration writes, those at opaque arguments included, with the
+name of the form that first uses it; none where the modules do not elaborate. -/
+def instanceUsers (es : List SExp) : List (Ident × Ident) :=
+  match elabForms es with
+  | .ok st => st.users
+  | .error _ => []
 
 /-- A program's forms with its modules elaborated, or the message of the first failure. -/
 def elabModules (es : List SExp) : Elab (List SExp) := (elabTree es).map Prod.fst

@@ -527,7 +527,7 @@ def fill (L : Lifted) (name : List Char) (e : SExp) : Except String Lifted := do
     | .error "the hole's declaration is missing"
   if (reservedSourceName? e).isSome then
     throw s!"the filling of {String.ofList name} names an implementation name"
-  let e := rename [] e .term (d.context.map (sourceName ∘ Prod.fst))
+  let e := rename [] [] e .term (d.context.map (sourceName ∘ Prod.fst))
   let some m := resolve q.tys q.defs (expandNums q.nums e) (d.context.map Prod.fst)
     | .error s!"the filling of {String.ofList name} does not resolve in its context"
   let u := wk (L.decls.length - p - 1) (closure d.context m)

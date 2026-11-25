@@ -5275,7 +5275,7 @@ index 9d82d58..c6c9a6c 100644
  {name}`Geb.Kernel.SExp`, an atom's characters or nothing for a list, each decorated with its
  trivia. -/
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
-index da4072a..262a467 100644
+index 83a768c..9ac9956 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Durable.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5333,7 +5333,7 @@ index e8ac40b..f8544a2 100644
  
  namespace Geb.Kernel.Eval
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Holes.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Holes.lean
-index f7114f1..4a099d8 100644
+index 877bfed..1c58b37 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Holes.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Holes.lean
 @@ -3,6 +3,7 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5423,7 +5423,7 @@ index 7694330..573a1d4 100644
  
  namespace Geb.Kernel.Markup
 diff --git a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
-index 6bb7bfe..7b2256e 100644
+index e344b94..1e752fd 100644
 --- a/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
 +++ b/vendor/geb-mathlib/Geb/Prototypes/Kernel/Modules.lean
 @@ -3,12 +3,14 @@ Copyright (c) 2026 Terence Rokop. All rights reserved.
@@ -5442,8 +5442,8 @@ index 6bb7bfe..7b2256e 100644
  /-!
  # Modules
  
-@@ -67,8 +69,6 @@ forms in the program, since a module imports only modules declared before it.
- module, import, export, parameter, qualified name
+@@ -97,8 +99,6 @@ their atoms hold.
+ module, import, export, parameter, type parameter, instance, qualified name
  -/
  
 -set_option doc.verso true
