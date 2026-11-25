@@ -381,9 +381,12 @@ def isNote (t : SExpr) : Bool := headIs kwNote t
 /-- Whether an S-expression with comments is a declaration. -/
 def isDecl (t : SExpr) : Bool := declHeads.any (headIs · t)
 
-/-- The name of a declaration, its second element. -/
+/-- The name of a declaration: its second element, or the atom that begins that element where
+the declaration takes type parameters, {lit}`(kw (x A …) …)`. -/
 def declName? (t : SExpr) : Option (List Char) :=
-  t.children[1]?.bind fun x ↦ if x.children.isEmpty then x.label.2 else none
+  t.children[1]?.bind fun x ↦
+    if x.children.isEmpty then x.label.2
+    else x.children.head?.bind fun h ↦ if h.children.isEmpty then h.label.2 else none
 
 /-- The path of a declaration: the names of the modules enclosing it, outermost first, and its
 own. -/
